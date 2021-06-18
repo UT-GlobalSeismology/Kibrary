@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.linear.RealMatrix;
 
-import com.amazonaws.util.CollectionUtils;
 
 public class Tradeoff {
 

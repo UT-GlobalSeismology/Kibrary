@@ -47,7 +47,6 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
-import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
 
 /**
  * @author Anselme Borgeaud

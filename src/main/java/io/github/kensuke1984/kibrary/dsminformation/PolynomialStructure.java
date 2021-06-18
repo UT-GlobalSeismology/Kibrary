@@ -259,36 +259,6 @@ public class PolynomialStructure implements Serializable {
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    /**
-     * i-th layer is merged to (i-1)th layer.
-     * in other words, ith boundary is gone.
-     * values in the i-th layer becomes those of the (i-1)th layer.
-     * So far you can not merge a layer beneath CMB.
-     *
-     * @param i index of a layer which disappears after the merge
-     * @return slimmed Structure
-     */
-    public PolynomialStructure mergeLayer(int i) {
-        if (i <= coreZone) throw new IllegalArgumentException("Cannot merge layers in the core.");
-        if (nzone - 2 < i) throw new IllegalArgumentException("Input i must be less than " + (nzone - 1));
-        UnaryOperator<double[]> one =
-                old -> IntStream.range(0, nzone).filter(j -> j != i).mapToDouble(j -> old[j]).toArray();
-        Function<PolynomialFunction[], double[][]> two =
-                old -> IntStream.range(0, nzone).filter(j -> j != i).mapToObj(j -> old[j].getCoefficients())
-                        .toArray(double[][]::new);
-        double[] rmin = one.apply(this.rmin);
-        double[] rmax = one.apply(this.rmax);
-        rmax[i - 1] = this.rmax[i];
-        double[][] rho = two.apply(this.rho);
-        double[][] vpv = two.apply(this.vpv);
-        double[][] vph = two.apply(this.vph);
-        double[][] vsv = two.apply(this.vsv);
-        double[][] vsh = two.apply(this.vsh);
-        double[][] eta = two.apply(this.eta);
-        double[] qMu = one.apply(this.qMu);
-        double[] qKappa = one.apply(this.qKappa);
-        return set(nzone - 1, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-    }
 
 	private PolynomialStructure(PolynomialStructure ps) {
 		this.nzone = ps.nzone;
@@ -1014,23 +984,6 @@ public class PolynomialStructure implements Serializable {
 		return structure;
 	}
 	
-	 /**
-     * Homogeneous earth structure used for test purposes
-     */
-    private static PolynomialStructure homogeneous() {
-        int nzone = 3;
-        double[] rmin = new double[]{0, 1221.5, 3480.0};
-        double[] rmax = new double[]{1221.5, 3480.0, 6371};
-        double[][] rho = new double[][]{{10.0, 0.0, 0.0, 0.0}, {10.0, 0.0, 0.0, 0.0}, {10.0, 0.0, 0.0, 0.0}};
-        double[][] vpv = new double[][]{{0, 17., 0.0, 0.0}, {0, 17., 0.0, 0.0}, {0, 17., 0.0, 0.0}};
-        double[][] vph = new double[][]{{0, 17.51, 0.0, 0.0}, {0, 17.51, 0.0, 0.0}, {0, 17.51, 0.0, 0.0}};
-        double[][] vsv = new double[][]{{0, 10., 0.0, 0.0}, {0, 10., 0.0, 0.0}, {0, 10., 0.0, 0.0}};
-        double[][] vsh = new double[][]{{0, 10.3, 0.0, 0.0}, {0, 10.3, 0.0, 0.0}, {0, 10.3, 0.0, 0.0}};
-        double[][] eta = new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}}; // ok
-        double[] qMu = new double[]{84.6, -1, 600}; // ok
-        double[] qKappa = new double[]{1327.7, 57823, 57823}; // OK
-        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-    }
 
     /**
      * i-th layer is merged to (i-1)th layer.

@@ -28,7 +28,6 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import com.sun.jna.ptr.ByteByReference;
 
 public class Weighting {
 	

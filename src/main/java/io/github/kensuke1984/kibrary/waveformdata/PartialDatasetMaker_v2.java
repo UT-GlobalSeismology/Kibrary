@@ -29,9 +29,6 @@ import javax.management.RuntimeErrorException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.jsoup.select.Collector;
-
-import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
