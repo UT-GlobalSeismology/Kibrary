@@ -19,6 +19,7 @@ import java.nio.file.Path;
  *
  * @author Kensuke Konishi
  * @version 0.0.1.1
+ * @author anselme add network
  */
 public class FormattedSPCFile extends SPCFile {
 
@@ -34,6 +35,7 @@ public class FormattedSPCFile extends SPCFile {
     private SPCType fileType;
     private String x, y;
     private String observerID;
+    private String observerNetwork;
     private String sourceID;
 
     /**
@@ -133,11 +135,20 @@ public class FormattedSPCFile extends SPCFile {
         return sourceID;
     }
 
+    /**
+     * @param fileName
+     * @author anselme add network
+     */
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
-        observerID = fileName.split("\\.")[0];
+//        observerID = fileName.split("\\.")[0];
+        observerID = fileName.split("\\.")[0].split("_")[0];
         sourceID = getEventID(fileName);
         fileType = getFileType(fileName);
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+        	observerNetwork = null;
+        else
+        	observerNetwork = fileName.split("\\.")[0].split("_")[1];
         mode = getMode(fileName);
         x = getX(fileName);
         y = getY(fileName);
@@ -161,6 +172,13 @@ public class FormattedSPCFile extends SPCFile {
     @Override
     public String getObserverID() {
         return observerID;
+    }
+    
+    @Override
+    public String getObserverNetwork() {
+    	if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+			throw new RuntimeException("PB and PF waveforms have no network");
+    	return observerNetwork;
     }
 
     public String getX() {
