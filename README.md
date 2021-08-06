@@ -66,5 +66,5 @@ java io.github.kensuke1984.kibrary.About
 
 [ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
-
+[Java8]:https://www.java.com/
 
