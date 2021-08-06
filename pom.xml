@@ -5,10 +5,10 @@
   
   <groupId>kibrary</groupId>
   <artifactId>kibrary</artifactId>
-  <version>1.2a</version>
+  <version>1.1a</version>
   
   <name>Kibrary</name>
-  <url>https://github.com/kensuke1984/Kibrary</url>
+  <url>https://github.com/afeborgeaud/Kibrary</url>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -104,6 +104,30 @@
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.0.2</version>
         </plugin>
+	<plugin>
+	  <artifactId>maven-assembly-plugin</artifactId>
+	  <version>3.3.0</version>
+	  <configuration>
+	    <archive>
+	      <manifest>
+		<mainClass>io.github.kensuke1984.kibrary.About</mainClass>
+	      </manifest>
+	    </archive>
+	    <descriptorRefs>
+	      <descriptorRef>jar-with-dependencies</descriptorRef>
+	    </descriptorRefs>
+	  </configuration>
+	  <executions>
+	    <execution>
+	      <id>make-assembly</id> <!-- this is used for inheritance merges -->
+	      <phase>package</phase> <!-- bind to the packaging phase -->
+	      <goals>
+		<goal>single</goal>
+	      </goals>
+	    </execution>
+	  </executions>
+	</plugin>
+        <plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
           <version>2.5.2</version>
