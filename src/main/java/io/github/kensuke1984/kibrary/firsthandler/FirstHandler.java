@@ -7,6 +7,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.*;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -135,14 +136,19 @@ public class FirstHandler implements Operation {
         // creates environment (make write folder ...)
         Files.createDirectories(outPath);
         System.err.println("Output directory is " + outPath);
-
+        
+        // for debug... 
+//        for (Iterator<Path> itr = seedPaths.iterator(); itr.hasNext();) {
+//            System.out.println("hogehoge"+itr.next());//
+//       }
+        
         Set<SeedSAC> seedSacs = seedPaths.stream().map(seedPath -> {
-            try {
+           try {
                 return new SeedSAC(seedPath, outPath);
             } catch (Exception e) {
                 try {
                     System.err.println(seedPath + " has problems. " + e);
-                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true);
+                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true); //
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }

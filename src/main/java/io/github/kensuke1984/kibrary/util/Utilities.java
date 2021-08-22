@@ -757,4 +757,45 @@ public final class Utilities {
 		else
 			return true;
 	}
+	
+	/**
+	 * @param n
+	 * @param maxn
+	 * @return formatted number (String)
+	 * @author kenji
+	 */
+	static public String formatNumber(int n,int maxn){
+		String formatted;
+
+		int lengthMaxn = Integer.toString(maxn).length();
+
+		switch (lengthMaxn){
+		case 1:
+			formatted = String.format("%01d", n);
+			break;
+		case 2:
+			formatted = String.format("%02d", n);
+			break;
+		case 3:
+			formatted = String.format("%03d", n);
+			break;
+		case 4:
+			formatted = String.format("%04d", n);
+			break;
+		case 5:
+			formatted = String.format("%05d", n);
+			break;
+		case 6:
+			formatted = String.format("%06d", n);
+			break;
+		default:
+			formatted = ""; // dummy
+			System.out.println("Error in FormatNumber: maxn is improper!");
+			System.exit(1);
+			break;
+		}
+
+		return formatted;
+	}
+
 }

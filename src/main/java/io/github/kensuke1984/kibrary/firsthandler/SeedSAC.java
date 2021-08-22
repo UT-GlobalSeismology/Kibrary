@@ -104,6 +104,7 @@ class SeedSAC implements Runnable {
      *                     the seed file.
      */
     SeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
+
         SEED_FILE = new SEEDFile(seedPath);
         if (id != null) this.id = id;
         else setID();
@@ -162,10 +163,12 @@ class SeedSAC implements Runnable {
         // try to find id in the name of the file
         id = findIDinFilename();
         if (id != null) return;
+
         if (GlobalCMTID.isGlobalCMTID(SEED_FILE.getVolumeLabel())) {
             id = new GlobalCMTID(SEED_FILE.getVolumeLabel());
-            return;
+          return;
         }
+
         System.err.println("Dataset in this seed file starts " + SEED_FILE.getStartingDate());
         GlobalCMTSearch sc = new GlobalCMTSearch(SEED_FILE.getStartingDate(), SEED_FILE.getEndingDate());
         id = sc.select();
@@ -191,7 +194,8 @@ class SeedSAC implements Runnable {
      * @return global cmt id が日付的に合っているかどうか （startが発震時刻より前かつendがCMT時刻より後かどうか）
      */
     private boolean idValidity() {
-        event = id.getEvent();
+
+    	event = id.getEvent();
         return event != null && id != null && SEED_FILE.getStartingDate().isBefore(event.getPDETime()) &&
                 SEED_FILE.getEndingDate().isAfter(event.getCMTTime());
     }
@@ -260,7 +264,8 @@ class SeedSAC implements Runnable {
 
                 String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
                 Path afterPath = EVENT_DIR.toPath().resolve(afterName);
-
+//                System.out.println("deconvolute: "+ afterPath); // 4debug
+                
                 // run evalresp
                 // If it fails, throw MOD and RESP files to trash
                 if (!runEvalresp(headerMap)) {
@@ -289,7 +294,11 @@ class SeedSAC implements Runnable {
                     // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
                     Utilities.moveToDirectory(modPath, noSpectraPath, true);
                     // throw SPECTRA files which cannot produce SPECTRA to noSpectraPath
-                    Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
+                    // In case that outdated RESP file cannot produce any SPECTRA file
+                    // the existence condition is added (2021.08.21 kenji)
+                    if(Files.exists(spectraPath)) {
+                    	Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
+                    }
                     // throw RESP files which cannot produce SPECTRA to noSpectraPath
                     Utilities.moveToDirectory(respPath, noSpectraPath, true);
                     continue;
@@ -369,10 +378,12 @@ class SeedSAC implements Runnable {
     /**
      * Convert/rotate all files with (.E, .N), (.1, .2) to (.R, .T).
      * successful files are put in rotatedNE the others are in nonrotatedNE
+     * The prpcess from (.1, .2) to (.R, .T)  is added (2021.08.21 kenji)
      */
     private void rotate() throws IOException {
         Path trashBox = EVENT_DIR.toPath().resolve("nonRotatedNE");
         Path neDir = EVENT_DIR.toPath().resolve("rotatedNE");
+        
         try (DirectoryStream<Path> eStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.E")) {
             for (Path ePath : eStream) {
                 String[] parts = ePath.getFileName().toString().split("\\.");
@@ -394,11 +405,41 @@ class SeedSAC implements Runnable {
                 }
             }
         }
+        
+        // if the difference in CMPAZ is 90 degrees, (.1, .2) is converted to (.R, .T)  (2021.08.21 kenji)
+        try (DirectoryStream<Path> oneStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.1")) {
+            for (Path onePath : oneStream) {
+                String[] parts = onePath.getFileName().toString().split("\\.");
+                Path twoPath = EVENT_DIR.toPath().resolve(parts[0] + "." + parts[1] + ".2");
+                Path rPath = EVENT_DIR.toPath().resolve(parts[0] + "." + parts[1] + ".R");
+                Path tPath = EVENT_DIR.toPath().resolve(parts[0] + "." + parts[1] + ".T");
 
+                if (!Files.exists(twoPath)) {
+                    Utilities.moveToDirectory(onePath, trashBox, true);
+                    continue;
+                }
+                boolean rotated = SACUtil.rotate(onePath, twoPath, rPath, tPath);
+                if (rotated) {
+                    Utilities.moveToDirectory(twoPath, neDir, true);
+                    Utilities.moveToDirectory(onePath, neDir, true);
+                } else {
+                    Utilities.moveToDirectory(onePath, trashBox, true);
+                    Utilities.moveToDirectory(twoPath, trashBox, true);
+                }
+            }
+        }
+
+        
         // If there are files (.N) which had no pairs (.E), move them to trash
         try (DirectoryStream<Path> nPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.N")) {
             for (Path nPath : nPaths)
                 Utilities.moveToDirectory(nPath, trashBox, true);
+        }
+
+        // If there are files (.2) which had no pairs (.1), move them to trash (2021.08.21 kenji)
+        try (DirectoryStream<Path> twoPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.2")) {
+            for (Path twoPath : twoPaths)
+                Utilities.moveToDirectory(twoPath, trashBox, true);
         }
 
     }
@@ -561,7 +602,7 @@ class SeedSAC implements Runnable {
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
                         samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) + " -s lin -r cs -u vel";
-
+//        System.out.println("runevalresp: "+ command);// 4debug
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(EVENT_DIR.getAbsoluteFile());
         try {
