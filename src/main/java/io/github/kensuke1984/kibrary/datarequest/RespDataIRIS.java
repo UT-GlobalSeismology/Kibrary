@@ -8,20 +8,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Calendar;
+import java.time.LocalDateTime;
+
 
 
 /**
  * Class for RESP files, which allows us to download RESP files IRIS DMC IRISWS RESP Web Service
  * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web Service Documentation
  * @author Kenji Kawai
- * @version 0.1.1
+ * @version 0.1.3
  */
 public class RespDataIRIS {
 
 	private String url = "http://service.iris.edu/irisws/resp/1/query";
 	private String responseFile = "RESP.";
-
+	
 	/**
 	 * Constructor with options for IRIS DMC IRISWS RESP Web Service
 	 * 
@@ -31,17 +32,19 @@ public class RespDataIRIS {
 	 * @param station  (String) Station code.
 	 * @param location (String) Location code. Use "--" instead of spaces.
 	 * @param channel  (String) Channel code.
-	 * @param time     (Calendar) Find the response for the given time.
+	 * @param time     (LocalDateTime) Find the response for the given time.
 	 */
-	public RespDataIRIS(String network, String station, String location, String channel, Calendar time) {
+	public RespDataIRIS(String network, String station, String location, String channel, LocalDateTime time) {
 
-		String yyyy = Utilities.formatNumber(time.get(Calendar.YEAR), 3000);
-		String MM = Utilities.formatNumber(time.get(Calendar.MONTH) + 1, 12);
-		String dd = Utilities.formatNumber(time.get(Calendar.DATE), 31);
-		String HH = Utilities.formatNumber(time.get(Calendar.HOUR_OF_DAY), 24);
-		String mm = Utilities.formatNumber(time.get(Calendar.MINUTE), 60);
-		String ss = Utilities.formatNumber(time.get(Calendar.SECOND), 60);
 
+		String yyyy = Utilities.formatNumber(time.getYear(), 3000);
+		String MM = Utilities.formatNumber(time.getMonthValue(), 12);
+		String dd = Utilities.formatNumber(time.getDayOfMonth(), 31);
+		String HH = Utilities.formatNumber(time.getHour(), 24);
+		String mm = Utilities.formatNumber(time.getMinute(), 60);
+		String ss = Utilities.formatNumber(time.getSecond(), 60);
+
+		
 		url = "http://service.iris.edu/irisws/resp/1/query?" + "net=" + network + "&" + "sta=" + station + "&" + "cha="
 				+ channel + "&" + "loc=" + location + "&" + "time=" + yyyy + "-" + MM + "-" + dd + "T" + HH + ":" + mm
 				+ ":" + ss;
@@ -53,7 +56,7 @@ public class RespDataIRIS {
 	}
 
 	public void downloadResp() {
-		Path outPath = Paths.get(responseFile); // TODO　出力のディレクトリの指定
+		Path outPath = Paths.get(responseFile); 
 		
 		try {
 			URL IRISWSURL = new URL(url);
@@ -65,21 +68,33 @@ public class RespDataIRIS {
 		} catch (IOException e) {
 			System.out.println(e);
 		}
-
 	}
 
+	public void downloadRespPath (Path outDir) {
+		Path outPath = outDir.resolve(responseFile); // 　出力のディレクトリの指定
+		
+		try {
+			URL IRISWSURL = new URL(url);
+			long size = 0L;
+
+			size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+			System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+
+		} catch (IOException e) {
+			System.out.println(e);
+		}
+	}
+
+	
 	/**
 	 * @param args
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
 
-		Calendar time = Calendar.getInstance();
-		time.set(2000, 0, 1);
-
+		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0); 
 		RespDataIRIS rd = new RespDataIRIS("II", "PFO", "00", "BHE", time);
-		rd.downloadResp();
-
+//		rd.downloadResp();
 	}
 
 }
