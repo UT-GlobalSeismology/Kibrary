@@ -212,7 +212,7 @@ class MseedSAC implements Runnable {
      * Deconvolute instrument function for all the MOD files in the event folder.
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
      */
-    private void deconvolute() { //TODO STATIONINFORMATIONも削除しないといけない。(kenji)
+    private void deconvolute() { 
         // System.out.println("Conducting deconvolution");
         Path noSpectraPath = EVENT_DIR.toPath().resolve("noSpectraOrInvalidMOD");
         Path duplicateChannelPath = EVENT_DIR.toPath().resolve("duplicateChannel");
@@ -226,12 +226,136 @@ class MseedSAC implements Runnable {
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
                 String componentName = headerMap.get(SACHeaderEnum.KCMPNM);
+            	String khole = headerMap.get(SACHeaderEnum.KHOLE);
+ //           	if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
                 String respFileName =
                         resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                headerMap.get(SACHeaderEnum.KHOLE) + "." + componentName;
+                                khole + "." + componentName;
                 String spectraFileName =
                         spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                headerMap.get(SACHeaderEnum.KHOLE) + "." + componentName;
+                                khole + "." + componentName;
+                Path spectraPath = EVENT_DIR.toPath().resolve(spectraFileName);
+                Path respPath = EVENT_DIR.toPath().resolve(respFileName);
+                String component;
+                switch (componentName) {
+                    case "BHE":
+                    case "BLE":
+                    case "HHE":
+                    case "HLE":
+                        component = "E";
+                        break;
+                    case "BHN":
+                    case "BLN":
+                    case "HHN":
+                    case "HLN":
+                        component = "N";
+                        break;
+                    case "BHZ":
+                    case "BLZ":
+                    case "HHZ":
+                    case "HLZ":
+                        component = "Z";
+                        break;
+                    case "BH1":
+                    case "BL1":
+                    case "HH1":
+                    case "HL1":
+                        component = "1";
+                        break;
+                    case "BH2":
+                    case "BL2":
+                    case "HH2":
+                    case "HL2":
+                        component = "2";
+                        break;
+                    default:
+                        continue;
+                }
+
+                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
+                Path afterPath = EVENT_DIR.toPath().resolve(afterName);
+//                System.out.println("deconvolute: "+ afterPath); // 4debug
+                
+                // run evalresp
+                // If it fails, throw MOD and RESP files to trash
+                if (!runEvalresp(headerMap)) {
+                    // throw MOD.* files which cannot produce SPECTRA to noSpectra
+                    Utilities.moveToDirectory(modPath, noSpectraPath, true);
+                    // throw RESP.* files which cannot produce SPECTRA to noSpectra
+                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+                    continue;
+                }
+
+                // run seedsac
+                try {
+                    int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
+                    // duplication of channel
+                    if (Files.exists(afterPath)) {
+                        // throw *.MOD files which cannot produce SPECTRA to duplicateChannelPath
+                        Utilities.moveToDirectory(modPath, duplicateChannelPath, true);
+                        // throw SPECTRA files which cannot produce SPECTRA to duplicateChannelPath
+                        Utilities.moveToDirectory(spectraPath, duplicateChannelPath, true);
+                        // throw RESP files which cannot produce SPECTRA to duplicateChannelPath
+                        Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
+                        continue;
+                    }
+                    SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                } catch (Exception e) {
+                    // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
+                    Utilities.moveToDirectory(modPath, noSpectraPath, true);
+                    // throw SPECTRA files which cannot produce SPECTRA to noSpectraPath
+                    // In case that outdated RESP file cannot produce any SPECTRA file
+                    // the existence condition is added (2021.08.21 kenji)
+                    if(Files.exists(spectraPath)) {
+                    	Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
+                    }
+                    // throw RESP files which cannot produce SPECTRA to noSpectraPath
+                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+                    continue;
+                }
+
+                // move processed RESP files to respBox
+                Utilities.moveToDirectory(respPath, respBoxPath, true);
+
+                // move processed SPECTRA files to spectraBox
+                Utilities.moveToDirectory(spectraPath, spectraBoxPath, true);
+
+                // move processed MOD files to modBox
+                Utilities.moveToDirectory(modPath, modBoxPath, true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Deconvolute instrument function for all the MOD files in the event folder.
+     * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
+     */
+    private void deconvoluteSACMSEED() { //TODO STATIONINFORMATIONも削除しないといけない。(kenji)
+        // System.out.println("Conducting deconvolution");
+        Path noSpectraPath = EVENT_DIR.toPath().resolve("noSpectraOrInvalidMOD");
+        Path duplicateChannelPath = EVENT_DIR.toPath().resolve("duplicateChannel");
+        // evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
+        Path respBoxPath = EVENT_DIR.toPath().resolve("resp");
+        Path spectraBoxPath = EVENT_DIR.toPath().resolve("spectra");
+        Path modBoxPath = EVENT_DIR.toPath().resolve("mod");
+        try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.MOD")) {
+            String resp = "RESP.";
+            String spectra = "SPECTRA.";
+            for (Path modPath : eventDirStream) {
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
+                String componentName = headerMap.get(SACHeaderEnum.KCMPNM);
+            	String khole = headerMap.get(SACHeaderEnum.KHOLE);
+            	if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
+                String respFileName =
+                        resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
+                                khole + "." + componentName;
+               if(khole.matches("--")) {khole = "";} // this is for MSEEDSAC
+               String spectraFileName =
+                        spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
+                                khole + "." + componentName;
                 Path spectraPath = EVENT_DIR.toPath().resolve(spectraFileName);
                 Path respPath = EVENT_DIR.toPath().resolve(respFileName);
                 String component;
@@ -355,7 +479,7 @@ class MseedSAC implements Runnable {
 
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
             for (Path sacPath : sacPathStream) {
-                SACModifier sm = new SACModifier(event, sacPath, byPDE);
+                SACModifierMSEED sm = new SACModifierMSEED(event, sacPath, byPDE);
 
                 // TODO 00 01 "" duplication detect
                 // header check khole e.t.c
@@ -474,15 +598,9 @@ class MseedSAC implements Runnable {
     private void downloadViaIRISWS() throws IOException {
         Path backupPath = EVENT_DIR.toPath().resolve("rdseedOutputBackup");
         Files.createDirectories(backupPath);
-//        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
-//            for (Path sacPath : sacPaths) {
-//            	System.out.println(sacPath.toString());
-//            }
-//        }
-//        System.exit(9);
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
- //           	System.out.println("Enter: "+sacPath.toString());
+//            	System.out.println("Enter: "+sacPath.toString());
             	String[] tmp = sacPath.toString().split("\\.");
             	if(tmp.length !=9) {continue;} //TODO too ad-hoc!!!
             	Files.copy(sacPath, backupPath.resolve(sacPath.getFileName()));
@@ -505,11 +623,12 @@ class MseedSAC implements Runnable {
                 // set SAC headers related to stations
  //               System.out.println("Enter: FIXHEADER");
                 fixHeader(sacPath,sii);
+                Files.move(EVENT_DIR.toPath().resolve(sii.getStationFile()), backupPath.resolve(sii.getStationFile())); //なぜか重い？
  //               System.out.println("Enter: FIXNAME");
                 fixSACName(sacPath);
 
                 // request RESP files via IRIS/WS
-//                System.out.println("Enter: RESPFILES");
+  //              System.out.println("Enter: RESPFILES");
                 RespDataIRIS rdi = new RespDataIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1], 
                 		loc, sacPath.getFileName().toString().split("\\.")[3], time);
                 rdi.downloadRespPath(EVENT_DIR.toPath());
@@ -603,7 +722,8 @@ class MseedSAC implements Runnable {
         }
 
         try {
-            modifySACs();
+//        	System.out.println("Enter: modifySACs");
+        	modifySACs();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error on modifying " + MSEED_FILE, e);
@@ -613,14 +733,16 @@ class MseedSAC implements Runnable {
         // Use only BH[12ENZ]
         // remove waveforms of .[~NEZ]
         try {
+//        	System.out.println("Enter: selectChannels");
            selectChannels();
         } catch (IOException e) {
             throw new RuntimeException("Error on selecting channels " + MSEED_FILE, e);
         }
 
+
         // instrumentation function deconvolution
-        deconvolute();
-        
+ //   	System.out.println("Enter: deconvolute");
+        deconvoluteSACMSEED();
         // rotation (.N, .E -> .R, .T)
         try {
             rotate();
