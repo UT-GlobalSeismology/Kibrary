@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -26,7 +27,7 @@ public final class GlobalCMTCatalogUpdate {
     }
 
     private static void downloadCatalog() throws IOException {
-        Utilities.download(new URL("http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/jan76_dec20.ndk"), CATALOG_PATH, false);
+        Utilities.download(new URL("https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/jan76_dec20.ndk"), CATALOG_PATH, false);
     }
 
     private static void backupCatalog() throws IOException {
@@ -34,7 +35,7 @@ public final class GlobalCMTCatalogUpdate {
         Files.createDirectories(backupPath);
 
         if (Files.exists(CATALOG_PATH)) {
-            Utilities.moveToDirectory(CATALOG_PATH, backupPath, true);
+            Utilities.moveToDirectory(CATALOG_PATH, backupPath, true, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
