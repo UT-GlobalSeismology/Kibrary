@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util.globalcmt.update;
+package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.IOException;
 import java.net.URL;
