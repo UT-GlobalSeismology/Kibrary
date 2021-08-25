@@ -34,9 +34,10 @@ import java.util.stream.Stream;
  * however, no one knows which channel is used for extraction until you see the
  * intermediate files. If you want to see them, you have to leave the
  * intermediate files explicitly.
- *
- * @author Kensuke Konishi
- * @version 0.2.3
+ * <p>
+ * mseedに対応した (v0.3.1; 2021-08-24)
+ * @author Kensuke Konishi & Kenji Kawai
+ * @version 0.3.1
  */
 public class FirstHandler implements Operation {
     private double samplingHz;

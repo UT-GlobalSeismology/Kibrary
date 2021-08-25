@@ -11,7 +11,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 
 
-
 /**
  * Class for RESP files, which allows us to download RESP files IRIS DMC IRISWS RESP Web Service
  * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web Service Documentation
@@ -44,17 +43,20 @@ public class RespDataIRIS {
 		String mm = Utilities.formatNumber(time.getMinute(), 60);
 		String ss = Utilities.formatNumber(time.getSecond(), 60);
 
-		
+		// set url here (version 2021-08-23).
 		url = "http://service.iris.edu/irisws/resp/1/query?" + "net=" + network + "&" + "sta=" + station + "&" + "cha="
 				+ channel + "&" + "loc=" + location + "&" + "time=" + yyyy + "-" + MM + "-" + dd + "T" + HH + ":" + mm
 				+ ":" + ss;
 
+		// file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU.--.BHE"
 		responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
 
-//		System.out.println(responseFile);
-//		System.out.println(url);
 	}
 
+	/**
+	 * Method downloading the Station information from IRIS/WS.
+	 * Output directory is here.
+	 */
 	public void downloadResp() {
 		Path outPath = Paths.get(responseFile); 
 		
@@ -69,7 +71,11 @@ public class RespDataIRIS {
 			System.out.println(e);
 		}
 	}
-
+	
+	/**
+	 * Method downloading the Station information from IRIS/WS.
+	 * @param outDir (Path) Output directory
+	 */
 	public void downloadRespPath (Path outDir) {
 		Path outPath = outDir.resolve(responseFile); // 　出力のディレクトリの指定
 		
@@ -87,6 +93,7 @@ public class RespDataIRIS {
 
 	
 	/**
+	 * This main method is for debug.
 	 * @param args
 	 * @throws IOException
 	 */

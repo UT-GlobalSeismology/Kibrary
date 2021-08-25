@@ -45,7 +45,7 @@ public class StationInformationIRIS {
 	private LocalDateTime endTime;
 	
 	/**
-	 * Set Options for IRIS DMC FDSNWS STATION Web Service
+	 * Constructor with options for IRIS DMC FDSNWS STATION Web Service
 	 * 
 	 * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
 	 *      Service Documentation
@@ -65,18 +65,21 @@ public class StationInformationIRIS {
 		String mm = Utilities.formatNumber(time.getMinute(), 60);
 		String ss = Utilities.formatNumber(time.getSecond(), 60);
 
+		// set url here (version 2021-08-23) Requested Level is "Channel."
 		url = "http://service.iris.edu/fdsnws/station/1/query?" + "net=" + network + "&" + "sta=" + station 
 				+ "&" + "loc=" + location + "&" + "cha=" + channel + "&" + "time=" + yyyy + "-" + MM + "-" + dd + "T" + HH + ":" + mm
 				+ ":" + ss + "&level=channel&format=text&includecomments=true&nodata=404";
 
+		// file name is "STATION.II.PFO.00.BHE" or "STATION.IU.INU.--.BHE"
 		stationFile = "STATION." + network + "." + station + "." + location + "." + channel;
-
-//		System.out.println(responseFile);
-//		System.out.println(url);
 
 	}
 
 	
+	/**
+	 * Method downloading the Station information from IRIS/WS.
+	 * Output directory is here.
+	 */
 	public void downloadStationInformation() {
 		Path outPath = Paths.get(stationFile); // 出力のディレクトリの指定
 		
@@ -92,6 +95,10 @@ public class StationInformationIRIS {
 		}
 	}
 
+	/**
+	 * Method downloading the Station information from IRIS/WS.
+	 * @param outDir (Path) Output directory
+	 */
 	public void downloadStationInformation(Path outDir) {
 		Path outPath = outDir.resolve(stationFile); // 出力のディレクトリの指定
 		
@@ -108,6 +115,12 @@ public class StationInformationIRIS {
 	}
 
 	
+	/**
+	 * Methods reading the station information and setting them as local variables.
+	 * @param outDir (Path) Directory including Station information file (e.g., STATION.II.PFO.00.BHE)
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public void readStationInformation(Path outDir) throws FileNotFoundException, IOException {
 
 		Path outPath = outDir.resolve(stationFile); 
@@ -143,11 +156,17 @@ public class StationInformationIRIS {
 			else if(head[i].matches("ScaleUnits")) {scaleunits = data[i];}
 			else if(head[i].matches("SampleRate")) {samplerate = data[i];}
 			else if(head[i].matches("StartTime")) {startTime = LocalDateTime.parse(data[i]);}
-//			else if(head[i].matches("EndTime")) {if(data[i]!=null){endTime = LocalDateTime.parse(data[i]);}} // TODO
+//			else if(head[i].matches("EndTime")) {if(data[i]!=null){endTime = LocalDateTime.parse(data[i]);}} // TODO Some station information not including EndTime
 		}
 
 	}
-
+	
+	/**
+	 * Methods reading the station information and setting them as local variables.
+	 * Input directory including Station information file (e.g., STATION.II.PFO.00.BHE) is here.
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public void readStationInformation() throws FileNotFoundException, IOException {
 		Path outPath = Paths.get(stationFile); 
 		
@@ -181,22 +200,19 @@ public class StationInformationIRIS {
 			else if(head[i].matches("ScaleUnits")) {scaleunits = data[i];}
 			else if(head[i].matches("SampleRate")) {samplerate = data[i];}
 			else if(head[i].matches("StartTime")) {startTime = LocalDateTime.parse(data[i]);}
-			else if(head[i].matches("EndTime")) {endTime = LocalDateTime.parse(data[i]);}
+//			else if(head[i].matches("EndTime")) {endTime = LocalDateTime.parse(data[i]);} // TODO Some station information not including EndTime
 		}
 	}
 
 	
 	/**
+	 * This main method is for debug.
 	 * @param args
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
 
-//		Calendar time = Calendar.getInstance();
-//		time.set(2000, 0, 1);
-
 		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0); 
-// @formatter:on
 
 		
 		StationInformationIRIS rd = new StationInformationIRIS("II", "PFO", "00", "BHE", time);
@@ -206,9 +222,6 @@ public class StationInformationIRIS {
 		
 		LocalDateTime test = LocalDateTime.of(2014,7,21,0,0,0); 
 		System.out.println(test.getDayOfYear());
-//		rd.get4debug();
-//		rd.selectCMTSolution("./");
-
 	}
 
 

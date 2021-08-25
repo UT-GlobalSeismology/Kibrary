@@ -69,6 +69,11 @@ public class MSEEDFile {
     private final Path TEMP_LINK;
 
 
+    /**
+     * Constructor for MSEEDFile 
+     * @param mseedPath
+     * @throws IOException
+     */
     public MSEEDFile(Path mseedPath) throws IOException {
         ORIGINAL_PATH = mseedPath;
         volumeLabel = mseedPath.toString().split(Pattern.quote("."))[0];
@@ -81,6 +86,7 @@ public class MSEEDFile {
     }
 
     /**
+     * OBSOLETE
      * Displays Global CMT IDs which might be contained in the mseedfile
      *
      * @param args [seed file name]
@@ -136,9 +142,9 @@ public class MSEEDFile {
 
     /**
      * mseed2sac を行ったときの出力を返す
-     * @param outputPath
-     * @param mseedfile
-     * @return 
+     * @param outputPath (Path) 実行パス
+     * @param mseedfile (Path) mseedファイル
+     * @return (boolean)
      * @throws IOException
      * @author kenji
      */

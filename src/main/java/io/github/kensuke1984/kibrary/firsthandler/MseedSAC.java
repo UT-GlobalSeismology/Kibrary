@@ -332,6 +332,7 @@ class MseedSAC implements Runnable {
     /**
      * Deconvolute instrument function for all the MOD files in the event folder.
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
+     * mseed2sacで解凍したSACのlocation(KHOLE)ヘッダーに"-12345"が入る場合に対応 (2021-08-23)
      */
     private void deconvoluteSACMSEED() { //TODO STATIONINFORMATIONも削除しないといけない。(kenji)
         // System.out.println("Conducting deconvolution");
@@ -577,6 +578,7 @@ class MseedSAC implements Runnable {
     }
 
     /**
+     * OBSOLETE
      * Adjusts delta, cmpinc and cmpaz in SAC files extracted by 'rdseed'
      * The SAC files are copied in 'rdseedOutputBackup' for backup.
      */
@@ -593,7 +595,8 @@ class MseedSAC implements Runnable {
     }
 
     /**
-     * NOW editing...
+     * This method downloads both station information (STATION...) and instrument response (RESP...) files from IRIS/WS
+     * and fixes SAC headers related to stations (STLA, STLO, CMPAZ, CMPINC) not included with SAC files extracted form miniseed file.
      */
     private void downloadViaIRISWS() throws IOException {
         Path backupPath = EVENT_DIR.toPath().resolve("rdseedOutputBackup");
@@ -643,9 +646,10 @@ class MseedSAC implements Runnable {
     
     /**
      * Set SAC headers related to stations via StationInformation downloaded from IRIS/WS
-     * @param sacPath
-     * @param sii
+     * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @param sii (StationInformationIRIS) provides station information
      * @throws IOException
+     * @author kenji
      */
     private void fixHeader(Path sacPath, StationInformationIRIS sii) throws IOException {
         try (SAC sacD = SAC.createProcess()) {
@@ -660,6 +664,14 @@ class MseedSAC implements Runnable {
         }
 	}
     
+    /**
+     * This method makes SAC name changed from MSEED style to SEED style.
+     * MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC"
+     * SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC"
+     * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @throws IOException
+     * @author kenji
+     */
     private void fixSACName(Path sacPath) throws IOException {
     	String[] oldFile = sacPath.getFileName().toString().split("\\.");
     	
@@ -679,11 +691,13 @@ class MseedSAC implements Runnable {
     		}catch(IOException e){
     		  System.out.println(e);
     		}
-//  	System.out.println("fixname: " + sacPath + " " + newName);
-//    	LocalDateTime ldt = LocalDateTime.of(i1,1,1,i3,i4,i5,i6*1000*1000);
-//   	ldt = ldt.withDayOfYear(i2);
     }
 
+	/**
+	 * This main method is obsolete.
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("It works only for one mseed file.");
         Path seedPath = Paths.get(args[0]);
@@ -700,22 +714,21 @@ class MseedSAC implements Runnable {
         System.err.println("Opening " + MSEED_FILE + " in " + EVENT_DIR.getPath());
         // run rdseed -q [output directory] -fRd
         try {
-            MSEED_FILE.extract(EVENT_DIR.toPath()); //いまここ 20210822 DONE
+            MSEED_FILE.extract(EVENT_DIR.toPath()); 
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Error on extracting " + MSEED_FILE, e);
         }
 
-        // TODO ここにIRIS/WSから観測点のデータを入手するプロセスを入れる。DONE
         
         try {
             if (CMPMOD)
             // download station information
-            	downloadViaIRISWS(); //いまここ 20210823 DONE
+            	downloadViaIRISWS(); 
             // fix delta values
-//            	preprocess();
+//            	preprocess(); // この前処理は、downloadViaIRISWSで実行したので、後で消す。
             // merge uneven SAC files
-//            	mergeUnevenSac(); //TODO
+//            	mergeUnevenSac(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Error on pre-processing " + MSEED_FILE, e);
@@ -743,7 +756,7 @@ class MseedSAC implements Runnable {
         // instrumentation function deconvolution
  //   	System.out.println("Enter: deconvolute");
         deconvoluteSACMSEED();
-        // rotation (.N, .E -> .R, .T)
+        // rotation ((.N,.E) & (.1 & .2) -> (.R,.T))
         try {
             rotate();
         } catch (IOException e) {
@@ -821,8 +834,9 @@ class MseedSAC implements Runnable {
     }
 
     /**
-     * evalresp station component year julian day minfreq maxfreq
-     * npts -s lin -r cs -u vel
+     * Run external process "evalresp".
+     * Command: "evalresp station component year julian day minfreq maxfreq
+     * npts -s lin -r cs -u vel"
      *
      * @param headerMap header of sac file
      * @return if succeed
