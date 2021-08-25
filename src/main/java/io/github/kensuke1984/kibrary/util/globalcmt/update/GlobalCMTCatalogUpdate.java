@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.util.globalcmt.update;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -26,28 +26,56 @@ public final class GlobalCMTCatalogUpdate {
     private GlobalCMTCatalogUpdate() {
     }
 
-    private static void downloadCatalog() throws IOException {
-        Utilities.download(new URL("https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/jan76_dec20.ndk"), CATALOG_PATH, false);
-    }
+    private static void downloadCatalog(String update) throws IOException {
+    	String catalogName = "jan76_" + update + ".ndk";
+    	Path catalogPath = SHARE_DIR_PATH.resolve(catalogName);
 
-    private static void backupCatalog() throws IOException {
-        Path backupPath = SHARE_DIR_PATH.resolve("backup");
-        Files.createDirectories(backupPath);
+    	if (Files.exists(catalogPath)) {
+    		System.err.println("Catalog " + catalogName + " already exists.");
+    		return;
+    	}
 
-        if (Files.exists(CATALOG_PATH)) {
-            Utilities.moveToDirectory(CATALOG_PATH, backupPath, true, StandardCopyOption.REPLACE_EXISTING);
+		System.err.println("Downloading catalog " + catalogName + " ...");
+
+    	String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
+        Utilities.download(new URL(catalogUrl), catalogPath, false);
+
+        if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            // checks whether the symbolic link itself exists, regardless of the existence of its target
+        	Files.delete(CATALOG_PATH);
         }
+
+        Files.createSymbolicLink(CATALOG_PATH, catalogPath);
+
+
     }
 
+//    private static void linkCatalog() throws IOException {
+//        Path backupPath = SHARE_DIR_PATH.resolve("backup");
+//        Files.createDirectories(backupPath);
+
+//        if (Files.exists(CATALOG_PATH)) {
+//           Utilities.moveToDirectory(CATALOG_PATH, backupPath, true, StandardCopyOption.REPLACE_EXISTING);
+//        }
+//    }
+
+    /**
+     * @param args [month and year of update]<br>
+     *             Should take the form mmmYY,
+     *             where mmm is the first three letters of the name of the month,
+     *             and YY is the lower two digits of the year.
+     * @throws IOException if any
+     */
     public static void main(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException(
+                "Usage:[month and year of update] Should take the form mmmYY, where mmm is the first three letters of the name of the month, and YY is the lower two digits of the year.");
     	try {
-    		backupCatalog();
-    		downloadCatalog();
+    		downloadCatalog(args[0]);
     	} catch (IOException e) {
             e.printStackTrace();
         }
 
-    	System.err.println("finished");
+    	System.err.println("Catalog update finished :)");
     }
 }
 
