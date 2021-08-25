@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  * Updating the catalog of global CMT solutions.
  * <p>
- * The old version of the catalog will be moved to a backup directory.
+ * The old version of the catalog will be moved to a backup directory before downloading the new one.
  *
  * @author Keisuke Otsuru
  * @version 0.1.8
@@ -33,6 +33,9 @@ public final class GlobalCMTCatalogUpdate {
         Path backupPath = SHARE_DIR_PATH.resolve("backup");
         Files.createDirectories(backupPath);
 
+        if (Files.exists(CATALOG_PATH)) {
+            Utilities.moveToDirectory(CATALOG_PATH, backupPath, true);
+        }
     }
 
     public static void main(String[] args) {
