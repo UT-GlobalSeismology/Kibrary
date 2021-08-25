@@ -12,14 +12,15 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  * Updating the catalog of global CMT solutions.
  * <p>
- * The old version of the catalog will be moved to a backup directory before downloading the new one.
+ * The specified version of the catalog will be downloaded if it does not already exist.
+ * The active version of the catalog will be set to the one specified.
  *
  * @author Keisuke Otsuru
- * @version 0.1.8
+ * @version 0.0.1
  */
 public final class GlobalCMTCatalogUpdate {
 
-	private final static Path SHARE_DIR_PATH = Environment.KIBRARY_HOME.resolve("share");
+    private final static Path SHARE_DIR_PATH = Environment.KIBRARY_HOME.resolve("share");
     private final static Path CATALOG_PATH = Environment.KIBRARY_HOME.resolve("share/globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
     //TODO get path from GCMTCatalog
 
@@ -27,26 +28,28 @@ public final class GlobalCMTCatalogUpdate {
     }
 
     private static void downloadCatalog(String update) throws IOException {
-    	String catalogName = "jan76_" + update + ".ndk";
-    	Path catalogPath = SHARE_DIR_PATH.resolve(catalogName);
+        String catalogName = "jan76_" + update + ".ndk";
+        Path catalogPath = SHARE_DIR_PATH.resolve(catalogName);
 
-    	if (Files.exists(catalogPath)) {
-    		System.err.println("Catalog " + catalogName + " already exists.");
-    		return;
-    	}
+        // Download
+        if (Files.exists(catalogPath)) {
+            System.err.println("Catalog " + catalogName + " already exists.");
+        }
+        else {
+            System.err.println("Downloading catalog " + catalogName + " ...");
 
-		System.err.println("Downloading catalog " + catalogName + " ...");
-
-    	String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
-        Utilities.download(new URL(catalogUrl), catalogPath, false);
-
-        if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-            // checks whether the symbolic link itself exists, regardless of the existence of its target
-        	Files.delete(CATALOG_PATH);
+            String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
+            Utilities.download(new URL(catalogUrl), catalogPath, false);
         }
 
+        // Activate
+        if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            // checks whether the symbolic link itself exists, regardless of the existence of its target
+            Files.delete(CATALOG_PATH);
+        }
         Files.createSymbolicLink(CATALOG_PATH, catalogPath);
 
+        System.err.println("Catalog is set to " + catalogName);
 
     }
 
@@ -69,13 +72,13 @@ public final class GlobalCMTCatalogUpdate {
     public static void main(String[] args) {
         if (args.length != 1) throw new IllegalArgumentException(
                 "Usage:[month and year of update] Should take the form mmmYY, where mmm is the first three letters of the name of the month, and YY is the lower two digits of the year.");
-    	try {
-    		downloadCatalog(args[0]);
-    	} catch (IOException e) {
+        try {
+            downloadCatalog(args[0]);
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-    	System.err.println("Catalog update finished :)");
+        System.err.println("Catalog update finished :)");
     }
 }
 
