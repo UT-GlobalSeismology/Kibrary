@@ -41,6 +41,7 @@ public final class GlobalCMTCatalogUpdate {
     public static void main(String[] args) {
     	try {
     		backupCatalog();
+    		downloadCatalog();
     	} catch (IOException e) {
             e.printStackTrace();
         }
