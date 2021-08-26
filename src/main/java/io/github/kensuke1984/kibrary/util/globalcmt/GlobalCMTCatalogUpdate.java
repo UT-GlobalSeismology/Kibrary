@@ -39,10 +39,18 @@ public final class GlobalCMTCatalogUpdate {
             System.err.println("Downloading catalog " + catalogName + " ...");
 
             String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
-            Utilities.download(new URL(catalogUrl), catalogPath, false);
+            try {
+                Utilities.download(new URL(catalogUrl), catalogPath, false);
+            } catch(IOException e) {
+                if(Files.exists(catalogPath)) {
+                    Files.delete(catalogPath); // delete the trash that may be made
+                }
+                throw e;
+            }
+            // If download fails, IOException will be thrown here. Symbolic link will not be changed.
         }
 
-        // Activate
+        // Activate (change target of symbolic link)
         if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
             // checks whether the symbolic link itself exists, regardless of the existence of its target
             Files.delete(CATALOG_PATH);
@@ -50,6 +58,7 @@ public final class GlobalCMTCatalogUpdate {
         Files.createSymbolicLink(CATALOG_PATH, catalogPath);
 
         System.err.println("Catalog is set to " + catalogName);
+        System.err.println("Catalog update finished :)");
 
     }
 
@@ -78,7 +87,6 @@ public final class GlobalCMTCatalogUpdate {
             e.printStackTrace();
         }
 
-        System.err.println("Catalog update finished :)");
     }
 }
 
