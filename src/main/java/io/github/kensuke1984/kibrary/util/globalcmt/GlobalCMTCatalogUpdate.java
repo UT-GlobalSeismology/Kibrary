@@ -21,8 +21,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 public final class GlobalCMTCatalogUpdate {
 
     private final static Path SHARE_DIR_PATH = Environment.KIBRARY_HOME.resolve("share");
-    private final static Path CATALOG_PATH = Environment.KIBRARY_HOME.resolve("share/globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
-    //TODO get path from GCMTCatalog
+    private final static Path CATALOG_PATH = SHARE_DIR_PATH.resolve("globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
 
     private GlobalCMTCatalogUpdate() {
     }
