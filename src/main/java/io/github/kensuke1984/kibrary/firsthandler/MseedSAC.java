@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import io.github.kensuke1984.kibrary.datarequest.RespDataIRIS;
+import io.github.kensuke1984.kibrary.datarequest.StationInformationIRIS;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -12,23 +14,26 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
 /**
- * Class for extracting a seed file. It creates SAC files from the seed file.
+ * Class for extracting a mseed file. It creates SAC files from the mseed file.
  * <p>
- * This class requires that rdseed, evalresp and sac exists in your PATH.
+ * This class requires that mseed2sac, evalresp and sac exists in your PATH.
  * The software
- * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/rdseed/>rdseed</a>,
+ * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/mseed2sac/>mseed2sac</a>,
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/>evalresp</a> and
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found in IRIS.
  *
- * @author Kensuke Konishi
- * @version 0.1.9
+ * @author Kenji Kawai
+ * @version 0.1.1
  */
-class SeedSAC implements Runnable {
+class MseedSAC implements Runnable {
 	
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
@@ -58,7 +63,7 @@ class SeedSAC implements Runnable {
     /**
      * seed file to process
      */
-    private final SEEDFile SEED_FILE;
+    private final MSEEDFile MSEED_FILE;
     /**
      * event ID
      */
@@ -84,31 +89,32 @@ class SeedSAC implements Runnable {
     private boolean problem;
 
     /**
-     * @param seedPath            to be extracted from
+     * @param mseedPath            to be extracted from
      * @param outputDirectoryPath Path where extracted files are placed
      * @throws IOException if the outputDirectoryPath already has events which also
      *                     exists in the seed file or an error occurs
      */
-    SeedSAC(Path seedPath, Path outputDirectoryPath) throws IOException {
-        this(seedPath, outputDirectoryPath, null);
+    MseedSAC(Path mseedPath, Path outputDirectoryPath) throws IOException {
+        this(mseedPath, outputDirectoryPath, null);
     }
 
     /**
-     * seed file to extract
+     * mseed file to extract
      *
-     * @param seedPath            SEED file to extract
+     * @param mseedPath           MSEED file to extract
      * @param outputDirectoryPath inside this folder, the seed file is extracted. If the folder
      *                            does not exist, it will be created.
      * @param id                  global cmt id
      * @throws IOException If the folder already has event folders which also exists in
      *                     the seed file.
      */
-    SeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
+    MseedSAC(Path mseedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
 
-        SEED_FILE = new SEEDFile(seedPath);
-        if (id != null) this.id = id;
+        MSEED_FILE = new MSEEDFile(mseedPath);
+        if (id != null && this.id != null) this.id = id; // slighly changed (kenji)
         else setID();
-        if (!idValidity()) throw new RuntimeException("The ID " + this.id + " is invalid for " + seedPath);
+
+        if (!idValidity()) throw new RuntimeException("The ID " + this.id + " is invalid for " + mseedPath);
 
         Files.createDirectories(outputDirectoryPath);
         EVENT_DIR = new EventFolder(outputDirectoryPath.resolve(this.id.toString()));
@@ -116,7 +122,7 @@ class SeedSAC implements Runnable {
         if (EVENT_DIR.exists()) EVENT_DIR_ALREADY_EXIST = false;
         else if (!EVENT_DIR.mkdirs()) throw new RuntimeException("Can't create " + EVENT_DIR);
         else EVENT_DIR_ALREADY_EXIST = true;
-        SEED_FILE.createLink(EVENT_DIR.toPath());
+        MSEED_FILE.createLink(EVENT_DIR.toPath());
     }
 
     /**
@@ -144,7 +150,7 @@ class SeedSAC implements Runnable {
     }
 
     Path getSeedPath() {
-        return SEED_FILE.getSeedPath();
+        return MSEED_FILE.getSeedPath();
     }
 
     /**
@@ -164,13 +170,13 @@ class SeedSAC implements Runnable {
         id = findIDinFilename();
         if (id != null) return;
 
-        if (GlobalCMTID.isGlobalCMTID(SEED_FILE.getVolumeLabel())) {
-            id = new GlobalCMTID(SEED_FILE.getVolumeLabel());
+        if (GlobalCMTID.isGlobalCMTID(MSEED_FILE.getVolumeLabel())) {
+            id = new GlobalCMTID(MSEED_FILE.getVolumeLabel());
           return;
         }
 
-        System.err.println("Dataset in this seed file starts " + SEED_FILE.getStartingDate());
-        GlobalCMTSearch sc = new GlobalCMTSearch(SEED_FILE.getStartingDate(), SEED_FILE.getEndingDate());
+        System.err.println("Dataset in this seed file starts " + MSEED_FILE.getStartingDate());
+        GlobalCMTSearch sc = new GlobalCMTSearch(MSEED_FILE.getStartingDate(), MSEED_FILE.getEndingDate());
         id = sc.select();
         Objects.requireNonNull(id, "There is no event in the global CMT catalog.");
     }
@@ -182,7 +188,7 @@ class SeedSAC implements Runnable {
      * returns null
      */
     private GlobalCMTID findIDinFilename() {
-        String fileName = SEED_FILE.getSeedPath().getFileName().toString();
+        String fileName = MSEED_FILE.getSeedPath().getFileName().toString();
         Matcher m1 = GlobalCMTID.RECENT_GLOBALCMTID_PATTERN.matcher(fileName);
         if (m1.find()) return new GlobalCMTID(m1.group());
 
@@ -196,15 +202,17 @@ class SeedSAC implements Runnable {
     private boolean idValidity() {
 
     	event = id.getEvent();
-        return event != null && id != null && SEED_FILE.getStartingDate().isBefore(event.getPDETime()) &&
-                SEED_FILE.getEndingDate().isAfter(event.getCMTTime());
+//        return event != null && id != null && MSEED_FILE.getStartingDate().isBefore(event.getPDETime()) &&
+ //               MSEED_FILE.getEndingDate().isAfter(event.getCMTTime()); // TODO this expression should be deleted (kenji)
+        return event != null && id != null;
+
     }
 
     /**
      * Deconvolute instrument function for all the MOD files in the event folder.
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
      */
-    private void deconvolute() {
+    private void deconvolute() { 
         // System.out.println("Conducting deconvolution");
         Path noSpectraPath = EVENT_DIR.toPath().resolve("noSpectraOrInvalidMOD");
         Path duplicateChannelPath = EVENT_DIR.toPath().resolve("duplicateChannel");
@@ -218,12 +226,137 @@ class SeedSAC implements Runnable {
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
                 String componentName = headerMap.get(SACHeaderEnum.KCMPNM);
+            	String khole = headerMap.get(SACHeaderEnum.KHOLE);
+ //           	if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
                 String respFileName =
                         resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                headerMap.get(SACHeaderEnum.KHOLE) + "." + componentName;
+                                khole + "." + componentName;
                 String spectraFileName =
                         spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                headerMap.get(SACHeaderEnum.KHOLE) + "." + componentName;
+                                khole + "." + componentName;
+                Path spectraPath = EVENT_DIR.toPath().resolve(spectraFileName);
+                Path respPath = EVENT_DIR.toPath().resolve(respFileName);
+                String component;
+                switch (componentName) {
+                    case "BHE":
+                    case "BLE":
+                    case "HHE":
+                    case "HLE":
+                        component = "E";
+                        break;
+                    case "BHN":
+                    case "BLN":
+                    case "HHN":
+                    case "HLN":
+                        component = "N";
+                        break;
+                    case "BHZ":
+                    case "BLZ":
+                    case "HHZ":
+                    case "HLZ":
+                        component = "Z";
+                        break;
+                    case "BH1":
+                    case "BL1":
+                    case "HH1":
+                    case "HL1":
+                        component = "1";
+                        break;
+                    case "BH2":
+                    case "BL2":
+                    case "HH2":
+                    case "HL2":
+                        component = "2";
+                        break;
+                    default:
+                        continue;
+                }
+
+                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
+                Path afterPath = EVENT_DIR.toPath().resolve(afterName);
+//                System.out.println("deconvolute: "+ afterPath); // 4debug
+                
+                // run evalresp
+                // If it fails, throw MOD and RESP files to trash
+                if (!runEvalresp(headerMap)) {
+                    // throw MOD.* files which cannot produce SPECTRA to noSpectra
+                    Utilities.moveToDirectory(modPath, noSpectraPath, true);
+                    // throw RESP.* files which cannot produce SPECTRA to noSpectra
+                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+                    continue;
+                }
+
+                // run seedsac
+                try {
+                    int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
+                    // duplication of channel
+                    if (Files.exists(afterPath)) {
+                        // throw *.MOD files which cannot produce SPECTRA to duplicateChannelPath
+                        Utilities.moveToDirectory(modPath, duplicateChannelPath, true);
+                        // throw SPECTRA files which cannot produce SPECTRA to duplicateChannelPath
+                        Utilities.moveToDirectory(spectraPath, duplicateChannelPath, true);
+                        // throw RESP files which cannot produce SPECTRA to duplicateChannelPath
+                        Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
+                        continue;
+                    }
+                    SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                } catch (Exception e) {
+                    // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
+                    Utilities.moveToDirectory(modPath, noSpectraPath, true);
+                    // throw SPECTRA files which cannot produce SPECTRA to noSpectraPath
+                    // In case that outdated RESP file cannot produce any SPECTRA file
+                    // the existence condition is added (2021.08.21 kenji)
+                    if(Files.exists(spectraPath)) {
+                    	Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
+                    }
+                    // throw RESP files which cannot produce SPECTRA to noSpectraPath
+                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+                    continue;
+                }
+
+                // move processed RESP files to respBox
+                Utilities.moveToDirectory(respPath, respBoxPath, true);
+
+                // move processed SPECTRA files to spectraBox
+                Utilities.moveToDirectory(spectraPath, spectraBoxPath, true);
+
+                // move processed MOD files to modBox
+                Utilities.moveToDirectory(modPath, modBoxPath, true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Deconvolute instrument function for all the MOD files in the event folder.
+     * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
+     * mseed2sacで解凍したSACのlocation(KHOLE)ヘッダーに"-12345"が入る場合に対応 (2021-08-23)
+     */
+    private void deconvoluteSACMSEED() { //TODO STATIONINFORMATIONも削除しないといけない。(kenji)
+        // System.out.println("Conducting deconvolution");
+        Path noSpectraPath = EVENT_DIR.toPath().resolve("noSpectraOrInvalidMOD");
+        Path duplicateChannelPath = EVENT_DIR.toPath().resolve("duplicateChannel");
+        // evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
+        Path respBoxPath = EVENT_DIR.toPath().resolve("resp");
+        Path spectraBoxPath = EVENT_DIR.toPath().resolve("spectra");
+        Path modBoxPath = EVENT_DIR.toPath().resolve("mod");
+        try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.MOD")) {
+            String resp = "RESP.";
+            String spectra = "SPECTRA.";
+            for (Path modPath : eventDirStream) {
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
+                String componentName = headerMap.get(SACHeaderEnum.KCMPNM);
+            	String khole = headerMap.get(SACHeaderEnum.KHOLE);
+            	if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
+                String respFileName =
+                        resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
+                                khole + "." + componentName;
+               if(khole.matches("--")) {khole = "";} // this is for MSEEDSAC
+               String spectraFileName =
+                        spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
+                                khole + "." + componentName;
                 Path spectraPath = EVENT_DIR.toPath().resolve(spectraFileName);
                 Path respPath = EVENT_DIR.toPath().resolve(respFileName);
                 String component;
@@ -347,7 +480,7 @@ class SeedSAC implements Runnable {
 
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
             for (Path sacPath : sacPathStream) {
-                SACModifier sm = new SACModifier(event, sacPath, byPDE);
+                SACModifierMSEED sm = new SACModifierMSEED(event, sacPath, byPDE);
 
                 // TODO 00 01 "" duplication detect
                 // header check khole e.t.c
@@ -445,6 +578,7 @@ class SeedSAC implements Runnable {
     }
 
     /**
+     * OBSOLETE
      * Adjusts delta, cmpinc and cmpaz in SAC files extracted by 'rdseed'
      * The SAC files are copied in 'rdseedOutputBackup' for backup.
      */
@@ -460,63 +594,174 @@ class SeedSAC implements Runnable {
 
     }
 
-    public static void main(String[] args) throws IOException {
-        if (args.length != 1) throw new IllegalArgumentException("It works only for one seed file.");
+    /**
+     * This method downloads both station information (STATION...) and instrument response (RESP...) files from IRIS/WS
+     * and fixes SAC headers related to stations (STLA, STLO, CMPAZ, CMPINC) not included with SAC files extracted form miniseed file.
+     */
+    private void downloadViaIRISWS() throws IOException {
+        Path backupPath = EVENT_DIR.toPath().resolve("rdseedOutputBackup");
+        Files.createDirectories(backupPath);
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
+            for (Path sacPath : sacPaths) {
+//            	System.out.println("Enter: "+sacPath.toString());
+            	String[] tmp = sacPath.toString().split("\\.");
+            	if(tmp.length !=9) {continue;} //TODO too ad-hoc!!!
+            	Files.copy(sacPath, backupPath.resolve(sacPath.getFileName()));
+
+                // $time for IRIS/WS is made from SAC File name extracted from MiniSeed 
+                LocalDateTime time = LocalDateTime.of(Integer.parseInt(sacPath.getFileName().toString().split("\\.")[5]),1,1,0,0,0)
+                		.withDayOfYear(Integer.parseInt(sacPath.getFileName().toString().split("\\.")[6]));
+                // $location for IRIS/WS is made from SAC File name extracted from MiniSeed 
+                String loc = "";
+                if(sacPath.getFileName().toString().split("\\.")[2].isEmpty()) {loc = "--";}
+                else {loc = sacPath.getFileName().toString().split("\\.")[2];}
+                
+                // request STATION files via IRIS/WS
+//                System.out.println("Enter: STATIONFILES");
+                StationInformationIRIS sii = new StationInformationIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1], 
+                		loc, sacPath.getFileName().toString().split("\\.")[3], time);
+                sii.downloadStationInformation(EVENT_DIR.toPath());
+                sii.readStationInformation(EVENT_DIR.toPath());
+                
+                // set SAC headers related to stations
+ //               System.out.println("Enter: FIXHEADER");
+                fixHeader(sacPath,sii);
+                Files.move(EVENT_DIR.toPath().resolve(sii.getStationFile()), backupPath.resolve(sii.getStationFile())); //なぜか重い？
+ //               System.out.println("Enter: FIXNAME");
+                fixSACName(sacPath);
+
+                // request RESP files via IRIS/WS
+  //              System.out.println("Enter: RESPFILES");
+                RespDataIRIS rdi = new RespDataIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1], 
+                		loc, sacPath.getFileName().toString().split("\\.")[3], time);
+                rdi.downloadRespPath(EVENT_DIR.toPath());
+                
+//               System.exit(0); // TODO 一旦止める
+//                System.out.println("download: "+sacPath+" "+ sacPath.getFileName());
+
+            }
+        }
+    }
+
+    
+    /**
+     * Set SAC headers related to stations via StationInformation downloaded from IRIS/WS
+     * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @param sii (StationInformationIRIS) provides station information
+     * @throws IOException
+     * @author kenji
+     */
+    private void fixHeader(Path sacPath, StationInformationIRIS sii) throws IOException {
+        try (SAC sacD = SAC.createProcess()) {
+            String cwd = sacPath.getParent().toString();
+            sacD.inputCMD("cd " + cwd);// set current directory
+            sacD.inputCMD("r " + sacPath.getFileName());// read
+            sacD.inputCMD("ch lovrok true");// overwrite permission
+            sacD.inputCMD("ch cmpaz " + sii.getAzimuth() + " cmpinc " + sii.getDip());
+            sacD.inputCMD("ch stlo "  +sii.getLongitude() + " stla " +sii.getLatitude());
+            sacD.inputCMD("interpolate delta " + delta);
+            sacD.inputCMD("w over");
+        }
+	}
+    
+    /**
+     * This method makes SAC name changed from MSEED style to SEED style.
+     * MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC"
+     * SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC"
+     * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @throws IOException
+     * @author kenji
+     */
+    private void fixSACName(Path sacPath) throws IOException {
+    	String[] oldFile = sacPath.getFileName().toString().split("\\.");
+    	
+    	Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
+    	int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
+    	int i2 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
+    	int i3 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
+    	int i4 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
+    	int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
+    	int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
+    	
+    	String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
+    			+ "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
+    			+ "." + oldFile[3] + "." + "M" + ".SAC";
+    	try{
+    		  Files.move(sacPath, EVENT_DIR.toPath().resolve(newName), StandardCopyOption.REPLACE_EXISTING);
+    		}catch(IOException e){
+    		  System.out.println(e);
+    		}
+    }
+
+	/**
+	 * This main method is obsolete.
+	 * @param args
+	 * @throws IOException
+	 */
+	public static void main(String[] args) throws IOException {
+        if (args.length != 1) throw new IllegalArgumentException("It works only for one mseed file.");
         Path seedPath = Paths.get(args[0]);
         if (!Files.exists(seedPath)) throw new NoSuchFileException(seedPath.toString());
         Path out = seedPath.resolveSibling("seedSAC" + Utilities.getTemporaryString());
-        new SeedSAC(seedPath, out).run();
+        new MseedSAC(seedPath, out).run();
         System.err.println(seedPath + " is extracted in " + out);
     }
+
 
     @Override
     public void run() {
         if (!EVENT_DIR_ALREADY_EXIST) throw new RuntimeException("The condition is no good.");
-        System.err.println("Opening " + SEED_FILE + " in " + EVENT_DIR.getPath());
+        System.err.println("Opening " + MSEED_FILE + " in " + EVENT_DIR.getPath());
         // run rdseed -q [output directory] -fRd
         try {
-            SEED_FILE.extract(EVENT_DIR.toPath());
+            MSEED_FILE.extract(EVENT_DIR.toPath()); 
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error on extracting " + SEED_FILE, e);
+            throw new RuntimeException("Error on extracting " + MSEED_FILE, e);
         }
 
+        
         try {
             if (CMPMOD)
-                // fix delta values
-                preprocess();
+            // download station information
+            	downloadViaIRISWS(); 
+            // fix delta values
+//            	preprocess(); // この前処理は、downloadViaIRISWSで実行したので、後で消す。
             // merge uneven SAC files
-            mergeUnevenSac();
+//            	mergeUnevenSac(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error on pre-processing " + SEED_FILE, e);
+            throw new RuntimeException("Error on pre-processing " + MSEED_FILE, e);
         }
 
         try {
-            modifySACs();
+//        	System.out.println("Enter: modifySACs");
+        	modifySACs();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error on modifying " + SEED_FILE, e);
+            throw new RuntimeException("Error on modifying " + MSEED_FILE, e);
         }
 
 
         // Use only BH[12ENZ]
         // remove waveforms of .[~NEZ]
         try {
-            selectChannels();
+//        	System.out.println("Enter: selectChannels");
+           selectChannels();
         } catch (IOException e) {
-            throw new RuntimeException("Error on selecting channels " + SEED_FILE, e);
+            throw new RuntimeException("Error on selecting channels " + MSEED_FILE, e);
         }
 
-        // instrumentation function deconvolution
-        deconvolute();
 
-        // rotation (.N, .E -> .R, .T)
+        // instrumentation function deconvolution
+ //   	System.out.println("Enter: deconvolute");
+        deconvoluteSACMSEED();
+        // rotation ((.N,.E) & (.1 & .2) -> (.R,.T))
         try {
             rotate();
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error on rotating " + SEED_FILE, e);
+            throw new RuntimeException("Error on rotating " + MSEED_FILE, e);
         }
 
         // trash
@@ -524,7 +769,7 @@ class SeedSAC implements Runnable {
             toTrash();
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error on moving files to the trash box " + SEED_FILE, e);
+            throw new RuntimeException("Error on moving files to the trash box " + MSEED_FILE, e);
         }
 
         problem = check();
@@ -589,8 +834,9 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * evalresp station component year julian day minfreq maxfreq
-     * npts -s lin -r cs -u vel
+     * Run external process "evalresp".
+     * Command: "evalresp station component year julian day minfreq maxfreq
+     * npts -s lin -r cs -u vel"
      *
      * @param headerMap header of sac file
      * @return if succeed
@@ -624,7 +870,7 @@ class SeedSAC implements Runnable {
         try (DirectoryStream<Path> modStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.MOD")) {
             for (Path modPath : modStream) {
                 String name = modPath.getFileName().toString();
-                String channel = name.split("\\.")[3];
+                String channel = name.split("\\.")[9]; // changed from 3 to 9 (kenji)
                 if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE") ||
                         channel.equals("BLN") || channel.equals("BLE") || channel.equals("HHZ") ||
                         channel.equals("HLZ") || channel.equals("HHN") || channel.equals("HHE") ||
@@ -637,6 +883,6 @@ class SeedSAC implements Runnable {
 
     @Override
     public String toString() {
-        return SEED_FILE.toString();
+        return MSEED_FILE.toString();
     }
 }
