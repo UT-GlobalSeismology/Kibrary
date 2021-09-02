@@ -1,14 +1,19 @@
 package io.github.kensuke1984.kibrary.datarequest;
 
-import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.net.ftp.*;
-
 import java.io.BufferedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPFileFilter;
+import org.apache.commons.net.ftp.FTPReply;
+
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * FTP access to IRIS server. OHP will be prepared
@@ -43,8 +48,8 @@ final class DataTransfer {
             // binary mode
             ftpclient.setFileType(FTP.BINARY_FILE_TYPE);
             // ftpclient.changeWorkingDirectory(userPath);
-            FTPFileFilter fff = file -> date.equals("*") || date.equals("-c") ? file.getName().endsWith(".seed") :
-                    file.getName().endsWith(".seed") && file.getName().contains(date);
+            FTPFileFilter fff = file -> date.equals("*") || date.equals("-c") ? file.getName().endsWith("seed") :
+                    file.getName().endsWith("seed") && file.getName().contains(date);
             FTPFile[] ffiles = ftpclient.listFiles(IRIS_USER_PATH, fff);
             System.err.println(ffiles.length + " seed files are found in the server.");
             for (FTPFile f : ffiles)
