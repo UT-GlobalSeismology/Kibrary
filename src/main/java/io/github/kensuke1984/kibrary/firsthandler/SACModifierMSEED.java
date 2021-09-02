@@ -1,16 +1,16 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
-import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.util.sac.SACUtil;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+
+import io.github.kensuke1984.kibrary.external.SAC;
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * Modification of SAC when running {@link SeedSAC}
@@ -188,6 +188,7 @@ class SACModifierMSEED {
         headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourceLocation.getLongitude()));
         headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourceLocation.getR()));
         headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
+        headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
         SACUtil.writeSAC(MODIFIED_PATH, headerMap, sacdata);
         return true;
     }
