@@ -1,5 +1,19 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Matcher;
+
+import org.apache.commons.io.FileUtils;
+
 import io.github.kensuke1984.kibrary.datarequest.RespDataIRIS;
 import io.github.kensuke1984.kibrary.datarequest.StationInformationIRIS;
 import io.github.kensuke1984.kibrary.external.SAC;
@@ -10,16 +24,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
-import org.apache.commons.io.FileUtils;
-
-import java.io.IOException;
-import java.nio.file.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Matcher;
 
 /**
  * Class for extracting a mseed file. It creates SAC files from the mseed file.
@@ -34,7 +38,7 @@ import java.util.regex.Matcher;
  * @version 0.1.1
  */
 class MseedSAC implements Runnable {
-	
+
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -212,7 +216,7 @@ class MseedSAC implements Runnable {
      * Deconvolute instrument function for all the MOD files in the event folder.
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
      */
-    private void deconvolute() { 
+    private void deconvolute() {
         // System.out.println("Conducting deconvolution");
         Path noSpectraPath = EVENT_DIR.toPath().resolve("noSpectraOrInvalidMOD");
         Path duplicateChannelPath = EVENT_DIR.toPath().resolve("duplicateChannel");
@@ -275,7 +279,7 @@ class MseedSAC implements Runnable {
                 String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
                 Path afterPath = EVENT_DIR.toPath().resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
-                
+
                 // run evalresp
                 // If it fails, throw MOD and RESP files to trash
                 if (!runEvalresp(headerMap)) {
@@ -395,10 +399,11 @@ class MseedSAC implements Runnable {
                         continue;
                 }
 
-                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
+                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) +
+                        "." + event + "." + component;
                 Path afterPath = EVENT_DIR.toPath().resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
-                
+
                 // run evalresp
                 // If it fails, throw MOD and RESP files to trash
                 if (!runEvalresp(headerMap)) {
@@ -516,7 +521,7 @@ class MseedSAC implements Runnable {
     private void rotate() throws IOException {
         Path trashBox = EVENT_DIR.toPath().resolve("nonRotatedNE");
         Path neDir = EVENT_DIR.toPath().resolve("rotatedNE");
-        
+
         try (DirectoryStream<Path> eStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.E")) {
             for (Path ePath : eStream) {
                 String[] parts = ePath.getFileName().toString().split("\\.");
@@ -538,7 +543,7 @@ class MseedSAC implements Runnable {
                 }
             }
         }
-        
+
         // if the difference in CMPAZ is 90 degrees, (.1, .2) is converted to (.R, .T)  (2021.08.21 kenji)
         try (DirectoryStream<Path> oneStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.1")) {
             for (Path onePath : oneStream) {
@@ -562,7 +567,7 @@ class MseedSAC implements Runnable {
             }
         }
 
-        
+
         // If there are files (.N) which had no pairs (.E), move them to trash
         try (DirectoryStream<Path> nPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.N")) {
             for (Path nPath : nPaths)
@@ -608,21 +613,21 @@ class MseedSAC implements Runnable {
             	if(tmp.length !=9) {continue;} //TODO too ad-hoc!!!
             	Files.copy(sacPath, backupPath.resolve(sacPath.getFileName()));
 
-                // $time for IRIS/WS is made from SAC File name extracted from MiniSeed 
+                // $time for IRIS/WS is made from SAC File name extracted from MiniSeed
                 LocalDateTime time = LocalDateTime.of(Integer.parseInt(sacPath.getFileName().toString().split("\\.")[5]),1,1,0,0,0)
                 		.withDayOfYear(Integer.parseInt(sacPath.getFileName().toString().split("\\.")[6]));
-                // $location for IRIS/WS is made from SAC File name extracted from MiniSeed 
+                // $location for IRIS/WS is made from SAC File name extracted from MiniSeed
                 String loc = "";
                 if(sacPath.getFileName().toString().split("\\.")[2].isEmpty()) {loc = "--";}
                 else {loc = sacPath.getFileName().toString().split("\\.")[2];}
-                
+
                 // request STATION files via IRIS/WS
 //                System.out.println("Enter: STATIONFILES");
-                StationInformationIRIS sii = new StationInformationIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1], 
+                StationInformationIRIS sii = new StationInformationIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
                 		loc, sacPath.getFileName().toString().split("\\.")[3], time);
                 sii.downloadStationInformation(EVENT_DIR.toPath());
                 sii.readStationInformation(EVENT_DIR.toPath());
-                
+
                 // set SAC headers related to stations
  //               System.out.println("Enter: FIXHEADER");
                 fixHeader(sacPath,sii);
@@ -632,10 +637,10 @@ class MseedSAC implements Runnable {
 
                 // request RESP files via IRIS/WS
   //              System.out.println("Enter: RESPFILES");
-                RespDataIRIS rdi = new RespDataIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1], 
+                RespDataIRIS rdi = new RespDataIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
                 		loc, sacPath.getFileName().toString().split("\\.")[3], time);
                 rdi.downloadRespPath(EVENT_DIR.toPath());
-                
+
 //               System.exit(0); // TODO 一旦止める
 //                System.out.println("download: "+sacPath+" "+ sacPath.getFileName());
 
@@ -643,7 +648,7 @@ class MseedSAC implements Runnable {
         }
     }
 
-    
+
     /**
      * Set SAC headers related to stations via StationInformation downloaded from IRIS/WS
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
@@ -663,7 +668,7 @@ class MseedSAC implements Runnable {
             sacD.inputCMD("w over");
         }
 	}
-    
+
     /**
      * This method makes SAC name changed from MSEED style to SEED style.
      * MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC"
@@ -674,7 +679,7 @@ class MseedSAC implements Runnable {
      */
     private void fixSACName(Path sacPath) throws IOException {
     	String[] oldFile = sacPath.getFileName().toString().split("\\.");
-    	
+
     	Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
     	int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
     	int i2 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
@@ -682,7 +687,7 @@ class MseedSAC implements Runnable {
     	int i4 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
     	int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
     	int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
-    	
+
     	String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
     			+ "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
     			+ "." + oldFile[3] + "." + "M" + ".SAC";
@@ -714,17 +719,17 @@ class MseedSAC implements Runnable {
         System.err.println("Opening " + MSEED_FILE + " in " + EVENT_DIR.getPath());
         // run rdseed -q [output directory] -fRd
         try {
-            MSEED_FILE.extract(EVENT_DIR.toPath()); 
+            MSEED_FILE.extract(EVENT_DIR.toPath());
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Error on extracting " + MSEED_FILE, e);
         }
 
-        
+
         try {
             if (CMPMOD)
             // download station information
-            	downloadViaIRISWS(); 
+            	downloadViaIRISWS();
             // fix delta values
 //            	preprocess(); // この前処理は、downloadViaIRISWSで実行したので、後で消す。
             // merge uneven SAC files
