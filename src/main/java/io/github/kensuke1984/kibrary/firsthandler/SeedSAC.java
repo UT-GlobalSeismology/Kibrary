@@ -1,5 +1,17 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Matcher;
+
+import org.apache.commons.io.FileUtils;
+
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -8,13 +20,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
-import org.apache.commons.io.FileUtils;
-
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Matcher;
 
 /**
  * Class for extracting a seed file. It creates SAC files from the seed file.
@@ -29,7 +34,7 @@ import java.util.regex.Matcher;
  * @version 0.1.9
  */
 class SeedSAC implements Runnable {
-	
+
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -265,7 +270,7 @@ class SeedSAC implements Runnable {
                 String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
                 Path afterPath = EVENT_DIR.toPath().resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
-                
+
                 // run evalresp
                 // If it fails, throw MOD and RESP files to trash
                 if (!runEvalresp(headerMap)) {
@@ -383,7 +388,7 @@ class SeedSAC implements Runnable {
     private void rotate() throws IOException {
         Path trashBox = EVENT_DIR.toPath().resolve("nonRotatedNE");
         Path neDir = EVENT_DIR.toPath().resolve("rotatedNE");
-        
+
         try (DirectoryStream<Path> eStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.E")) {
             for (Path ePath : eStream) {
                 String[] parts = ePath.getFileName().toString().split("\\.");
@@ -405,7 +410,7 @@ class SeedSAC implements Runnable {
                 }
             }
         }
-        
+
         // if the difference in CMPAZ is 90 degrees, (.1, .2) is converted to (.R, .T)  (2021.08.21 kenji)
         try (DirectoryStream<Path> oneStream = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.1")) {
             for (Path onePath : oneStream) {
@@ -429,7 +434,7 @@ class SeedSAC implements Runnable {
             }
         }
 
-        
+
         // If there are files (.N) which had no pairs (.E), move them to trash
         try (DirectoryStream<Path> nPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.N")) {
             for (Path nPath : nPaths)
@@ -625,11 +630,12 @@ class SeedSAC implements Runnable {
             for (Path modPath : modStream) {
                 String name = modPath.getFileName().toString();
                 String channel = name.split("\\.")[3];
-                if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE") ||
-                        channel.equals("BLN") || channel.equals("BLE") || channel.equals("HHZ") ||
-                        channel.equals("HLZ") || channel.equals("HHN") || channel.equals("HHE") ||
-                        channel.equals("HLN") || channel.equals("HLE") ||
-                        channel.equals("BH1") || channel.equals("BH2")) continue;
+                if (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
+                        channel.equals("BLZ") || channel.equals("BLN") || channel.equals("BLE") ||
+                        channel.equals("HHZ") || channel.equals("HHN") || channel.equals("HHE") ||
+                        channel.equals("HLZ") || channel.equals("HLN") || channel.equals("HLE") ||
+                        channel.equals("BH1") || channel.equals("BH2") ||
+                        channel.equals("HH1") || channel.equals("HH2")) continue;
                 Utilities.moveToDirectory(modPath, trashBox, true);
             }
         }
