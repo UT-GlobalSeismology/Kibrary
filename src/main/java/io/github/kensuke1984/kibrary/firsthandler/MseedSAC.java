@@ -876,11 +876,12 @@ class MseedSAC implements Runnable {
             for (Path modPath : modStream) {
                 String name = modPath.getFileName().toString();
                 String channel = name.split("\\.")[9]; // changed from 3 to 9 (kenji)
-                if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE") ||
-                        channel.equals("BLN") || channel.equals("BLE") || channel.equals("HHZ") ||
-                        channel.equals("HLZ") || channel.equals("HHN") || channel.equals("HHE") ||
-                        channel.equals("HLN") || channel.equals("HLE") ||
-                        channel.equals("BH1") || channel.equals("BH2")) continue;
+                if (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
+                        channel.equals("BLZ") || channel.equals("BLN") || channel.equals("BLE") ||
+                        channel.equals("HHZ") || channel.equals("HHN") || channel.equals("HHE") ||
+                        channel.equals("HLZ") || channel.equals("HLN") || channel.equals("HLE") ||
+                        channel.equals("BH1") || channel.equals("BH2") ||
+                        channel.equals("HH1") || channel.equals("HH2")) continue;
                 Utilities.moveToDirectory(modPath, trashBox, true);
             }
         }
