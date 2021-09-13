@@ -190,7 +190,7 @@ public class DataLobby implements Operation {
                 downloadMseed(id, mseedPath);
 
                 System.err.println(id + " : extracting mseed ...");
-                mseed2sac(mseedPath, eventDir.toPath());
+                mseed2sac(mseedFile, eventDir.toPath());
 
 
             } catch (Exception e) {
@@ -255,8 +255,8 @@ public class DataLobby implements Operation {
         return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
-    private boolean mseed2sac(Path mseedfile, Path outputPath) throws IOException {
-        String command = "mseed2sac " + mseedfile;
+    private boolean mseed2sac(String mseedFile, Path outputPath) throws IOException {
+        String command = "mseed2sac " + mseedFile;
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
 
         pb.directory(new File(outputPath.toString()).getAbsoluteFile());
