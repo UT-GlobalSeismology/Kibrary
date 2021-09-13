@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.datarequest;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -72,7 +71,7 @@ public class MseedDownload {
         String command = "mseed2sac " + mseedFile;
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
 
-        pb.directory(new File(eventDir.toString()).getAbsoluteFile());
+        pb.directory(eventDir.getAbsoluteFile());
 //        System.out.println("working directory is: " + pb.directory()); //4debug
         try {
             Process p = pb.start();
