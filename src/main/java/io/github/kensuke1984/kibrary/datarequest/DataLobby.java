@@ -1,25 +1,18 @@
 package io.github.kensuke1984.kibrary.datarequest;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Properties;
 import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -180,7 +173,10 @@ public class DataLobby implements Operation {
         System.out.println("Label contains \"" + date + "\""); //TODO erase
         requestedIDs.forEach(id -> {
             try {
-                EventFolder eventDir = new EventFolder(outPath.resolve(id.toString()));
+                MseedDownload mseedDL = new MseedDownload(id, networks, headAdjustment, footAdjustment, outPath);
+                mseedDL.downloadAll();
+
+/*                EventFolder eventDir = new EventFolder(outPath.resolve(id.toString()));
                 if (!eventDir.mkdirs()) throw new RuntimeException("Can't create " + eventDir);
 
                 String mseedFile = id + "." + date + ".mseed";
@@ -191,7 +187,7 @@ public class DataLobby implements Operation {
 
                 System.err.println(id + " : extracting mseed ...");
                 mseed2sac(mseedFile, eventDir.toPath());
-
+*/
 
             } catch (Exception e) {
                 System.err.println("Download for " + id + " failed.");
@@ -236,7 +232,7 @@ public class DataLobby implements Operation {
         search.setDepthRange(lowerDepth, upperDepth);
         return search.search();
     }
-
+/*
     private void downloadMseed(GlobalCMTID id, Path mseedPath) throws IOException {
         LocalDateTime cmtTime = id.getEvent().getCMTTime();
         LocalDateTime startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
@@ -269,7 +265,7 @@ public class DataLobby implements Operation {
         }
         return false;
     }
-
+*/
 
 /*
     private Path output(BreakFastMail mail) {
