@@ -1,9 +1,11 @@
 package io.github.kensuke1984.kibrary.datarequest;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -17,6 +19,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -156,18 +159,40 @@ public class DataLobby implements Operation {
      */
     public static void main(String[] args) throws Exception {
         DataLobby dl = new DataLobby(Property.parse(args));
+        long startT = System.nanoTime();
+        System.err.println(DataLobby.class.getName() + " is going");
         dl.run();
+        System.err.println(
+                DataLobby.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+
     }
 
     @Override
-    public void run() {
+    public void run() throws IOException {
+        System.err.println("Working directory is " + workPath);
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath.toString());
+        Path outPath = workPath.resolve("dl" + Utilities.getTemporaryString());
+        Files.createDirectories(outPath);
+        System.err.println("Output directory is " + outPath);
+
         requestedIDs = listIDs();
         System.out.println(requestedIDs.size() + " events are found.");
-        System.out.println("Label contains \"" + date + "\""); //!!!!!
+        System.out.println("Label contains \"" + date + "\""); //TODO erase
         requestedIDs.forEach(id -> {
             try {
-                System.err.println("Downloading mseed of event " + id + " ...");
-                downloadMseed(id);
+                EventFolder eventDir = new EventFolder(outPath.resolve(id.toString()));
+                if (!eventDir.mkdirs()) throw new RuntimeException("Can't create " + eventDir);
+
+                String mseedFile = id + "." + date + ".mseed";
+                Path mseedPath = eventDir.toPath().resolve(mseedFile); // 出力パスの指定
+
+                System.err.println(id + " : downloading mseed ...");
+                downloadMseed(id, mseedPath);
+
+                System.err.println(id + " : extracting mseed ...");
+                mseed2sac(mseedPath, eventDir.toPath());
+
+
             } catch (Exception e) {
                 System.err.println("Download for " + id + " failed.");
                 e.printStackTrace();
@@ -212,27 +237,39 @@ public class DataLobby implements Operation {
         return search.search();
     }
 
-    private void downloadMseed(GlobalCMTID id) throws IOException{
+    private void downloadMseed(GlobalCMTID id, Path mseedPath) throws IOException {
         LocalDateTime cmtTime = id.getEvent().getCMTTime();
         LocalDateTime startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         LocalDateTime endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
-
-        String mseedFile = id + "." + date + ".mseed";
-        Path outPath = Paths.get(mseedFile); // 出力パスの指定
 
         String url_string = dataselectURL + "net=" + networks + "&sta=*&loc=*&cha=BH?&starttime=" + toLine(startTime) +
                 "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(url_string);
         long size = 0L;
 
-        size = Files.copy(url.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+        size = Files.copy(url.openStream(), mseedPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
         System.out.println("Downloaded : " + id + " - " + size + " bytes");
-
     }
 
     private String toLine(LocalDateTime time) {
         return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
+
+    private boolean mseed2sac(Path mseedfile, Path outputPath) throws IOException {
+        String command = "mseed2sac " + mseedfile;
+        ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
+
+        pb.directory(new File(outputPath.toString()).getAbsoluteFile());
+//        System.out.println("working directory is: " + pb.directory()); //4debug
+        try {
+            Process p = pb.start();
+            return p.waitFor() == 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
 /*
     private Path output(BreakFastMail mail) {
