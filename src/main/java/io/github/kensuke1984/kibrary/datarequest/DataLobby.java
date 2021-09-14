@@ -18,7 +18,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
- * It makes a data requesting mail.
+ * Downloads mseed file and additional metadata for events that satisfy specifications.
+ * memo: All download procedures were gathered here because downloading using multiple threads in FirstHandler caused errors.
  *
  * @author Keisuke Otsuru
  * @version 2021/09/14
@@ -52,7 +53,6 @@ public class DataLobby implements Operation {
     private double upperLongitude;
 
     private Set<GlobalCMTID> requestedIDs;
-//    private boolean send;
     private Properties property;
 
 
@@ -90,8 +90,6 @@ public class DataLobby implements Operation {
             pw.println("#lowerLongitude");
             pw.println("##Upper limit of longitude [deg] (lowerLongitude:360] (180)");
             pw.println("#upperLongitude");
-//            pw.println("##If you want to send emails, then set it true (false)");
-//            pw.println("#send");
         }
         System.err.println(outPath + " is created.");
     }
@@ -118,7 +116,6 @@ public class DataLobby implements Operation {
         upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
         lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
         upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
-//        send = Boolean.parseBoolean(property.getProperty("send"));
     }
 
     private void checkAndPutDefaults() {
@@ -138,7 +135,6 @@ public class DataLobby implements Operation {
         if (!property.containsKey("upperLatitude")) property.setProperty("upperLatitude", "90");
         if (!property.containsKey("lowerLongitude")) property.setProperty("lowerLongitude", "-180");
         if (!property.containsKey("upperLongitude")) property.setProperty("upperLongitude", "180");
-//        if (!property.containsKey("send")) property.setProperty("send", "false");
     }
 
 
@@ -158,7 +154,6 @@ public class DataLobby implements Operation {
 
     @Override
     public void run() throws IOException {
-        System.err.println("Working directory is " + workPath);
         if (!Files.exists(workPath)) throw new NoSuchFileException(workPath.toString());
         Path outPath = workPath.resolve("dl" + Utilities.getTemporaryString());
         Files.createDirectories(outPath);

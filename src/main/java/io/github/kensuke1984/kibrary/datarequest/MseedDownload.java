@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
- * It makes a data requesting mail.
+ * Downloads mseed file and additional metadata for a given event
  *
  * @author Keisuke Otsuru
  * @version 2021/09/14
@@ -50,6 +50,10 @@ public class MseedDownload {
         MSEED_PATH = EVENT_DIR.toPath().resolve(MSEED_FILENAME); // 出力パスの指定
     }
 
+    /**
+     * download process for all data needed in one event
+     * @throws IOException
+     */
     public void downloadAll() throws IOException {
 
         downloadMseed();
@@ -62,6 +66,10 @@ public class MseedDownload {
         }
     }
 
+    /**
+     * downloads Mseed file
+     * @throws IOException
+     */
     private void downloadMseed() throws IOException {
         String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=BH?&starttime=" + toLine(startTime) +
                 "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
@@ -69,13 +77,18 @@ public class MseedDownload {
         long size = 0L;
 
         size = Files.copy(url.openStream(), MSEED_PATH , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.out.println("Downloaded : " + id + " - " + size + " bytes");
+        System.err.println("Downloaded : " + id + " - " + size + " bytes");
     }
 
     private String toLine(LocalDateTime time) {
         return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
+    /**
+     * mseed2sac を行ったときの出力を返す
+     * @return (boolean)
+     * @throws IOException
+     */
     private boolean mseed2sac() throws IOException {
         String command = "mseed2sac " + MSEED_FILENAME;
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
@@ -91,10 +104,15 @@ public class MseedDownload {
         return false;
     }
 
+    /**
+     * downloads Station file and Resp file
+     * @param sacPath
+     * @throws IOException
+     */
     private void downloadMetadata(Path sacPath) throws IOException {
         String[] sacInfo = sacPath.getFileName().toString().split("\\.");
         if(sacInfo.length != 9) {
-            System.out.println("invalid sac file name; skipping");
+            System.err.println("invalid sac file name; skipping");
             return;
         }
 
@@ -116,7 +134,7 @@ public class MseedDownload {
         Path stationPath = EVENT_DIR.toPath().resolve(stationFile); // 出力パスの指定
 
         stationFileSize = Files.copy(stationUrl.openStream(), stationPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.out.println("Downloaded : " + stationFile + " - " + stationFileSize + " bytes");
+        System.err.println("Downloaded : " + stationFile + " - " + stationFileSize + " bytes");
 
         // RESP : set url (version 2021-08-23).
         String respUrlString = RESP_URL + "net=" + network + "&sta=" + station + "&cha=" + channel + "&loc=" + location
@@ -129,6 +147,6 @@ public class MseedDownload {
         Path respPath = EVENT_DIR.toPath().resolve(respFile); // 出力パスの指定
 
         respFileSize = Files.copy(respUrl.openStream(), respPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.out.println("Downloaded : " + respFile + " - " + respFileSize + " bytes");
+        System.err.println("Downloaded : " + respFile + " - " + respFileSize + " bytes");
     }
 }
