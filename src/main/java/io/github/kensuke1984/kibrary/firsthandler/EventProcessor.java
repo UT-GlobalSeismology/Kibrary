@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
+import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * Class for extracting a mseed file. It creates SAC files from the mseed file.
@@ -20,6 +24,11 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
  * @version 0.1.1
  */
 class EventProcessor implements Runnable {
+    /**
+     * [s] delta for SAC files. SAC files with different delta will be interpolated
+     * or downsampled.
+     */
+    private static final double  DELTA = 0.05;
 
     private final EventFolder INPUT_DIR;
     private final Path OUTPUT_PATH;
@@ -45,11 +54,43 @@ class EventProcessor implements Runnable {
     private void preprocess() throws IOException {
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
-                Files.copy(sacPath, OUTPUT_PATH.resolve(sacPath.getFileName()));
+                SACFileName newFile = newSacName(sacPath);
+                Path newSacPath = OUTPUT_PATH.resolve(newFile.toString());
+                Files.copy(sacPath, newSacPath);
+
+                StationInformationIRIS sii = new StationInformationIRIS(newFile);
+                sii.readStationInformation(INPUT_DIR.toPath());
+                fixHeader(newSacPath,sii);
+
 //                fixDelta(sacPath);
             }
         }
 
+    }
+
+    /**
+     * This method generates a SEED style SAC name from an MSEED style one.
+     * MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC"
+     * SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC"
+     * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @throws IOException
+     * @author kenji
+     */
+    private SACFileName newSacName(Path sacPath) throws IOException {
+        String[] oldFile = sacPath.getFileName().toString().split("\\.");
+
+        Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
+        int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
+        int i2 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
+        int i3 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
+        int i4 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
+        int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
+        int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
+
+        String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
+                + "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
+                + "." + oldFile[3] + "." + "M" + ".SAC";
+        return new SACFileName(newName);
     }
 
     /**
@@ -59,7 +100,7 @@ class EventProcessor implements Runnable {
      * @throws IOException
      * @author kenji
      */
-/*    private void fixHeader(Path sacPath, StationInformationIRIS sii) throws IOException {
+    private void fixHeader(Path sacPath, StationInformationIRIS sii) throws IOException {
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
             sacD.inputCMD("cd " + cwd);// set current directory
@@ -67,9 +108,9 @@ class EventProcessor implements Runnable {
             sacD.inputCMD("ch lovrok true");// overwrite permission
             sacD.inputCMD("ch cmpaz " + sii.getAzimuth() + " cmpinc " + sii.getDip());
             sacD.inputCMD("ch stlo "  +sii.getLongitude() + " stla " +sii.getLatitude());
-            sacD.inputCMD("interpolate delta " + delta);
+            sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
     }
-*/
+
 }

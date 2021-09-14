@@ -15,7 +15,6 @@ import java.util.regex.Matcher;
 import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.datarequest.RespDataIRIS;
-import io.github.kensuke1984.kibrary.datarequest.StationInformationIRIS;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;

@@ -1,6 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
+package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,9 +12,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 
 /**
- * Class for Station files, which allows us to download Station Information files 
+ * Class for Station files, which allows us to download Station Information files
  * @see <a href=http://service.iris.edu/fdsnws/station/1/> IRIS DMC FDSNWS station Web Service
  * @author Kenji Kawai
  * @version 0.1.2
@@ -25,7 +25,7 @@ public class StationInformationIRIS {
 
 	private String url = "http://service.iris.edu/fdsnws/station/docs/1/builder/";
 	private String stationFile = "STATION.";
-	
+
 	private String network = "";
 	private String station = "";
 	private String location = "";
@@ -43,10 +43,10 @@ public class StationInformationIRIS {
 	private String samplerate = "";
 	private LocalDateTime startTime;
 	private LocalDateTime endTime;
-	
+
 	/**
 	 * Constructor with options for IRIS DMC FDSNWS STATION Web Service
-	 * 
+	 *
 	 * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
 	 *      Service Documentation
 	 * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
@@ -66,7 +66,7 @@ public class StationInformationIRIS {
 		String ss = Utilities.formatNumber(time.getSecond(), 60);
 
 		// set url here (version 2021-08-23) Requested Level is "Channel."
-		url = "http://service.iris.edu/fdsnws/station/1/query?" + "net=" + network + "&" + "sta=" + station 
+		url = "http://service.iris.edu/fdsnws/station/1/query?" + "net=" + network + "&" + "sta=" + station
 				+ "&" + "loc=" + location + "&" + "cha=" + channel + "&" + "time=" + yyyy + "-" + MM + "-" + dd + "T" + HH + ":" + mm
 				+ ":" + ss + "&level=channel&format=text&includecomments=true&nodata=404";
 
@@ -75,14 +75,22 @@ public class StationInformationIRIS {
 
 	}
 
-	
+    /**
+     * Constructor with name of corresponding SAC file
+     *
+     * @param sacFile (SacFileName) Name of corresponding SAC file.
+     */
+	public StationInformationIRIS(SACFileName sacFile) {
+	    this(sacFile.getNetwork(), sacFile.getStation(), sacFile.getLocationID(), sacFile.getChannel(), sacFile.getStartTime());
+	}
+
 	/**
 	 * Method downloading the Station information from IRIS/WS.
 	 * Output directory is here.
 	 */
 	public void downloadStationInformation() {
 		Path outPath = Paths.get(stationFile); // 出力のディレクトリの指定
-		
+
 		try {
 			URL IRISWSURL = new URL(url);
 			long size = 0L;
@@ -101,7 +109,7 @@ public class StationInformationIRIS {
 	 */
 	public void downloadStationInformation(Path outDir) {
 		Path outPath = outDir.resolve(stationFile); // 出力のディレクトリの指定
-		
+
 		try {
 			URL IRISWSURL = new URL(url);
 			long size = 0L;
@@ -114,7 +122,7 @@ public class StationInformationIRIS {
 		}
 	}
 
-	
+
 	/**
 	 * Methods reading the station information and setting them as local variables.
 	 * @param outDir (Path) Directory including Station information file (e.g., STATION.II.PFO.00.BHE)
@@ -123,16 +131,16 @@ public class StationInformationIRIS {
 	 */
 	public void readStationInformation(Path outDir) throws FileNotFoundException, IOException {
 
-		Path outPath = outDir.resolve(stationFile); 
-		
+		Path outPath = outDir.resolve(stationFile);
+
 		File file = new File(outPath.toString());
 		String line1 = ""; //TODO 複数行の対応
-		String line2 = ""; 
+		String line2 = "";
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String text;
 			while((text = br.readLine())!=null) {
 				if(text.startsWith("#")) { line1 = text.replace("#",""); continue; }
-				line2 = text; 
+				line2 = text;
 			}
 		}
 
@@ -160,7 +168,7 @@ public class StationInformationIRIS {
 		}
 
 	}
-	
+
 	/**
 	 * Methods reading the station information and setting them as local variables.
 	 * Input directory including Station information file (e.g., STATION.II.PFO.00.BHE) is here.
@@ -168,19 +176,19 @@ public class StationInformationIRIS {
 	 * @throws IOException
 	 */
 	public void readStationInformation() throws FileNotFoundException, IOException {
-		Path outPath = Paths.get(stationFile); 
-		
+		Path outPath = Paths.get(stationFile);
+
 		File file = new File(outPath.toString());
 		String line1 = ""; //TODO 複数行の対応
-		String line2 = ""; 
+		String line2 = "";
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String text;
 			while((text = br.readLine())!=null) {
 				if(text.startsWith("#")) { line1 = text.replace("#",""); continue; }
-				line2 = text; 
+				line2 = text;
 			}
 		}
-		
+
 		String [] head = line1.split("[\\s]*\\|[\\s]*");
 		String [] data = line2.split("[\\s]*\\|[\\s]*");
 		for(int i =0; i< head.length; i++) {
@@ -204,7 +212,7 @@ public class StationInformationIRIS {
 		}
 	}
 
-	
+
 	/**
 	 * This main method is for debug.
 	 * @param args
@@ -212,15 +220,15 @@ public class StationInformationIRIS {
 	 */
 	public static void main(String[] args) throws IOException {
 
-		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0); 
+		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
 
-		
+
 		StationInformationIRIS rd = new StationInformationIRIS("II", "PFO", "00", "BHE", time);
 		rd.readStationInformation();
 //		rd.downloadStationInformation();
 
-		
-		LocalDateTime test = LocalDateTime.of(2014,7,21,0,0,0); 
+
+		LocalDateTime test = LocalDateTime.of(2014,7,21,0,0,0);
 		System.out.println(test.getDayOfYear());
 	}
 

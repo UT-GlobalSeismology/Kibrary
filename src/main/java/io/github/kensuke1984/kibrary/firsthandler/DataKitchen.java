@@ -62,7 +62,7 @@ public class DataKitchen implements Operation {
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(DataKitchen.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan FirstHandler");
+            pw.println("manhattan DataKitchen");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
             pw.println("##String a name of catalog to use from [cmt, pde]  (cmt)");
