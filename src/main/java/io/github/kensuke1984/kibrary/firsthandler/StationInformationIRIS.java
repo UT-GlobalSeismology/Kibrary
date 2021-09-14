@@ -81,7 +81,9 @@ public class StationInformationIRIS {
      * @param sacFile (SacFileName) Name of corresponding SAC file.
      */
 	public StationInformationIRIS(SACFileName sacFile) {
-	    this(sacFile.getNetwork(), sacFile.getStation(), sacFile.getLocationID(), sacFile.getChannel(), sacFile.getStartTime());
+	    this(sacFile.getNetwork(), sacFile.getStation(),
+	            (sacFile.getLocationID() == "" ? "--" : sacFile.getLocationID()),
+	                    sacFile.getChannel(), sacFile.getStartTime());
 	}
 
 	/**
