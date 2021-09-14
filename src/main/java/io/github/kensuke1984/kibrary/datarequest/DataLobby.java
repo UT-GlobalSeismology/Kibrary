@@ -20,16 +20,13 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 /**
  * It makes a data requesting mail.
  *
- * @author Kensuke Konishi
- * @version 0.1.4
+ * @author Keisuke Otsuru
+ * @version 2021/09/14
  */
 public class DataLobby implements Operation {
 
-    private String dataselectURL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
-
     private Path workPath;
-    // private String label;
-    // private String[] alternateMedia;
+
     private String networks;
     private int headAdjustment;
     private int footAdjustment;
@@ -57,7 +54,6 @@ public class DataLobby implements Operation {
     private Set<GlobalCMTID> requestedIDs;
 //    private boolean send;
     private Properties property;
-    private String date = Utilities.getTemporaryString();
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -169,59 +165,18 @@ public class DataLobby implements Operation {
         System.err.println("Output directory is " + outPath);
 
         requestedIDs = listIDs();
-        System.out.println(requestedIDs.size() + " events are found.");
-        System.out.println("Label contains \"" + date + "\""); //TODO erase
+        System.err.println(requestedIDs.size() + " events are found.");
         requestedIDs.forEach(id -> {
             try {
+                System.err.println("Downloading files for " + id + " ...");
                 MseedDownload mseedDL = new MseedDownload(id, networks, headAdjustment, footAdjustment, outPath);
                 mseedDL.downloadAll();
-
-/*                EventFolder eventDir = new EventFolder(outPath.resolve(id.toString()));
-                if (!eventDir.mkdirs()) throw new RuntimeException("Can't create " + eventDir);
-
-                String mseedFile = id + "." + date + ".mseed";
-                Path mseedPath = eventDir.toPath().resolve(mseedFile); // 出力パスの指定
-
-                System.err.println(id + " : downloading mseed ...");
-                downloadMseed(id, mseedPath);
-
-                System.err.println(id + " : extracting mseed ...");
-                mseed2sac(mseedFile, eventDir.toPath());
-*/
-
             } catch (Exception e) {
                 System.err.println("Download for " + id + " failed.");
                 e.printStackTrace();
             }
         });
-        System.err.println("Download finished.");
 
-
-/*
-        requestedIDs.forEach(id -> output(createBreakFastMail(id)));
-        Path sent = workPath.resolve("sent" + Utilities.getTemporaryString());
-        if (send) try {
-            System.err.println("Sending requests in 5 sec.");
-            System.err.println("Sent mails will be in " + sent);
-            Thread.sleep(1000 * 5);
-        } catch (Exception e2) {
-        }
-        requestedIDs.forEach(id -> {
-            BreakFastMail m = createBreakFastMail(id);
-            try {
-                Path out = output(m);
-                if (!send) return;
-                Files.createDirectories(sent);
-                Files.move(out, sent.resolve(out.getFileName()));
-                System.err.println("Sending a request for " + id);
-                m.sendIris();
-                Thread.sleep(300 * 1000);
-            } catch (Exception e) {
-                System.err.println(m.getLabel() + " was not sent");
-                e.printStackTrace();
-            }
-        });
-*/
     }
 
     private Set<GlobalCMTID> listIDs() {
@@ -232,64 +187,6 @@ public class DataLobby implements Operation {
         search.setDepthRange(lowerDepth, upperDepth);
         return search.search();
     }
-/*
-    private void downloadMseed(GlobalCMTID id, Path mseedPath) throws IOException {
-        LocalDateTime cmtTime = id.getEvent().getCMTTime();
-        LocalDateTime startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
-        LocalDateTime endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
-
-        String url_string = dataselectURL + "net=" + networks + "&sta=*&loc=*&cha=BH?&starttime=" + toLine(startTime) +
-                "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
-        URL url = new URL(url_string);
-        long size = 0L;
-
-        size = Files.copy(url.openStream(), mseedPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.out.println("Downloaded : " + id + " - " + size + " bytes");
-    }
-
-    private String toLine(LocalDateTime time) {
-        return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-    }
-
-    private boolean mseed2sac(String mseedFile, Path outputPath) throws IOException {
-        String command = "mseed2sac " + mseedFile;
-        ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
-
-        pb.directory(new File(outputPath.toString()).getAbsoluteFile());
-//        System.out.println("working directory is: " + pb.directory()); //4debug
-        try {
-            Process p = pb.start();
-            return p.waitFor() == 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-*/
-
-/*
-    private Path output(BreakFastMail mail) {
-        Path out = workPath.resolve(mail.getLabel() + ".mail");
-        try {
-            Files.write(out, Arrays.asList(mail.getLines()));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return out;
-    }
-*/
-    /**
-     * write a break fast mail for the input id
-     *
-     * @param id of {@link GlobalCMTID}
-     * @return BreakFastMail for the id
-     */
-/*    public BreakFastMail createBreakFastMail(GlobalCMTID id) {
-        Channel[] channels = Channel.listChannels(networks, id, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
-                footAdjustment);
-        return new BreakFastMail(id + "." + date, channels);
-    }
-*/
 
     @Override
     public Path getWorkPath() {
