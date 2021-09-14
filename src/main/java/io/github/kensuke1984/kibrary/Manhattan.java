@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
+import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
@@ -64,6 +65,7 @@ public enum Manhattan {
 	Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
 	ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
     DataLobby(27, DataLobby.class), //
+    DataKitchen(28, DataKitchen.class), //
 	;
 
     private Class<? extends Operation> c;
