@@ -14,8 +14,6 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
 
-import io.github.kensuke1984.kibrary.datarequest.RespDataIRIS;
-import io.github.kensuke1984.kibrary.datarequest.StationInformationIRIS;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -624,7 +622,7 @@ class MseedSAC implements Runnable {
                 // request STATION files via IRIS/WS
 //                System.out.println("Enter: STATIONFILES");
                 StationInformationIRIS sii = new StationInformationIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
-                		loc, sacPath.getFileName().toString().split("\\.")[3], time);
+                		loc, sacPath.getFileName().toString().split("\\.")[3], time, time);
                 sii.downloadStationInformation(EVENT_DIR.toPath());
                 sii.readStationInformation(EVENT_DIR.toPath());
 
@@ -639,7 +637,7 @@ class MseedSAC implements Runnable {
   //              System.out.println("Enter: RESPFILES");
                 RespDataIRIS rdi = new RespDataIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
                 		loc, sacPath.getFileName().toString().split("\\.")[3], time);
-                rdi.downloadRespPath(EVENT_DIR.toPath());
+                rdi.downloadRespData(EVENT_DIR.toPath());
 
 //               System.exit(0); // TODO 一旦止める
 //                System.out.println("download: "+sacPath+" "+ sacPath.getFileName());
