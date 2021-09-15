@@ -90,7 +90,7 @@ class EventProcessor implements Runnable {
             Files.createDirectories(OUTPUT_PATH);
             preprocess();
             // merge uneven SAC files
-//          mergeUnevenSac(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
+            mergeUnevenSac(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Error on pre-processing " + INPUT_DIR.getName(), e);
@@ -204,6 +204,16 @@ class EventProcessor implements Runnable {
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
+    }
+
+    /**
+     * Eliminates problematic files made by rdseed, such as ones with different delta, and merge split files.
+     */
+    private void mergeUnevenSac() throws IOException {
+        // merge
+        UnevenSACMerger u = new UnevenSACMerger(OUTPUT_PATH);
+        u.merge();
+        u.move();
     }
 
     /**
