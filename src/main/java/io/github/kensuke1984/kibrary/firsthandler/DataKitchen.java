@@ -138,7 +138,7 @@ public class DataKitchen implements Operation {
             } catch (Exception e) {
                 try {
                     System.err.println(eventDir + " has problems. " + e);
-//                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true); //TODO
+//                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true);
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -146,7 +146,7 @@ public class DataKitchen implements Operation {
             }
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
-//        rawEvents.forEach(ss -> ss.setRemoveIntermediateFiles(removeIntermediateFile)); TODO
+        processors.forEach(p -> p.setRemoveIntermediateFiles(removeIntermediateFile));
 
         int threadNum = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threadNum);

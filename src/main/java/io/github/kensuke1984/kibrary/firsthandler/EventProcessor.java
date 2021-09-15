@@ -65,13 +65,22 @@ class EventProcessor implements Runnable {
     /**
      * if remove intermediate files
      */
-    private boolean removeIntermediateFiles = false;//TODO true;
+    private boolean removeIntermediateFiles = true;
 
     EventProcessor(EventFolder eventDir, Path outPath) throws IOException {
         INPUT_DIR = eventDir;
         OUTPUT_PATH = outPath.resolve(eventDir.getName());
 
         event = eventDir.getGlobalCMTID().getEvent();
+    }
+
+    /**
+     * If true then all intermediate files will be removed at the end.
+     *
+     * @param b set {@link #removeIntermediateFiles}
+     */
+    void setRemoveIntermediateFiles(boolean b) {
+        removeIntermediateFiles = b;
     }
 
     @Override
@@ -521,6 +530,20 @@ class EventProcessor implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @return if already run or not
+     */
+    boolean hadRun() {
+        return hadRun;
+    }
+
+    /**
+     * @return if there are no problems, returns true
+     */
+    boolean hasProblem() {
+        return problem;
     }
 
 
