@@ -378,7 +378,7 @@ class EventProcessor implements Runnable {
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
                         samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) +
-                        " -f " + inputDir + " -s lin -r cs -u vel";
+                        " -f " + inputDir.toAbsolutePath() + " -s lin -r cs -u vel";
 //        System.out.println("runevalresp: "+ command);// 4debug
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(OUTPUT_PATH.toFile());
