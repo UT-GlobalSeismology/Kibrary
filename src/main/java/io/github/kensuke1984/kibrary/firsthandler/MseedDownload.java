@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
+package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.IOException;
 import java.net.URL;
@@ -23,8 +23,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 public class MseedDownload {
 
     private static final String DATASELECT_URL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
-    private static final String STATION_URL = "http://service.iris.edu/fdsnws/station/1/query?";
-    private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
     private String date = Utilities.getTemporaryString();
 
     private GlobalCMTID id;
@@ -122,31 +120,11 @@ public class MseedDownload {
         String location = (sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
         String channel = sacInfo[3];
 
-        // STATION : set url (version 2021-08-23). Request Level is "Channel."
-        String stationUrlString = STATION_URL + "net=" + network + "&sta=" + station + "&loc=" + location + "&cha=" + channel
-                + "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime)
-                + "&level=channel&format=text&includecomments=true&nodata=404";
-        URL stationUrl = new URL(stationUrlString);
-        long stationFileSize = 0L;
+        StationInformationIRIS stationInfo = new StationInformationIRIS(network, station, location, channel, startTime, endTime);
+        stationInfo.downloadStationInformation(EVENT_DIR.toPath());
 
-        // file name is "STATION.II.PFO.00.BHE" or "STATION.IU.INU.--.BHE"
-        String stationFile = "STATION." + network + "." + station + "." + location + "." + channel;
-        Path stationPath = EVENT_DIR.toPath().resolve(stationFile); // 出力パスの指定
+        RespDataIRIS respData = new RespDataIRIS(network, station, location, channel, startTime);
+        respData.downloadRespData(EVENT_DIR.toPath());
 
-        stationFileSize = Files.copy(stationUrl.openStream(), stationPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.err.println("Downloaded : " + stationFile + " - " + stationFileSize + " bytes");
-
-        // RESP : set url (version 2021-08-23).
-        String respUrlString = RESP_URL + "net=" + network + "&sta=" + station + "&cha=" + channel + "&loc=" + location
-                + "&time=" + toLine(startTime);
-        URL respUrl = new URL(respUrlString);
-        long respFileSize = 0L;
-
-        // file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU.--.BHE"
-        String respFile = "RESP." + network + "." + station + "." + location + "." + channel;
-        Path respPath = EVENT_DIR.toPath().resolve(respFile); // 出力パスの指定
-
-        respFileSize = Files.copy(respUrl.openStream(), respPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.err.println("Downloaded : " + respFile + " - " + respFileSize + " bytes");
     }
 }

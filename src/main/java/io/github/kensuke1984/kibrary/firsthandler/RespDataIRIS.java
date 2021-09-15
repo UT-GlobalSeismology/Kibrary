@@ -1,6 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
+package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.IOException;
 import java.net.URL;
@@ -9,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 
 /**
@@ -19,12 +18,13 @@ import java.time.LocalDateTime;
  */
 public class RespDataIRIS {
 
-	private String url = "http://service.iris.edu/irisws/resp/1/query";
-	private String responseFile = "RESP.";
-	
+    private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
+	private String url;
+	private String responseFile;
+
 	/**
 	 * Constructor with options for IRIS DMC IRISWS RESP Web Service
-	 * 
+	 *
 	 * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
 	 *      Service Documentation
 	 * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
@@ -35,18 +35,9 @@ public class RespDataIRIS {
 	 */
 	public RespDataIRIS(String network, String station, String location, String channel, LocalDateTime time) {
 
-
-		String yyyy = Utilities.formatNumber(time.getYear(), 3000);
-		String MM = Utilities.formatNumber(time.getMonthValue(), 12);
-		String dd = Utilities.formatNumber(time.getDayOfMonth(), 31);
-		String HH = Utilities.formatNumber(time.getHour(), 24);
-		String mm = Utilities.formatNumber(time.getMinute(), 60);
-		String ss = Utilities.formatNumber(time.getSecond(), 60);
-
 		// set url here (version 2021-08-23).
-		url = "http://service.iris.edu/irisws/resp/1/query?" + "net=" + network + "&" + "sta=" + station + "&" + "cha="
-				+ channel + "&" + "loc=" + location + "&" + "time=" + yyyy + "-" + MM + "-" + dd + "T" + HH + ":" + mm
-				+ ":" + ss;
+		url = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
+				+ channel + "&" + "loc=" + location + "&" + "time=" + time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
 		// file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU.--.BHE"
 		responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
@@ -57,9 +48,9 @@ public class RespDataIRIS {
 	 * Method downloading the Station information from IRIS/WS.
 	 * Output directory is here.
 	 */
-	public void downloadResp() {
-		Path outPath = Paths.get(responseFile); 
-		
+	public void downloadRespData() {
+		Path outPath = Paths.get(responseFile);
+
 		try {
 			URL IRISWSURL = new URL(url);
 			long size = 0L;
@@ -71,14 +62,14 @@ public class RespDataIRIS {
 			System.out.println(e);
 		}
 	}
-	
+
 	/**
 	 * Method downloading the Station information from IRIS/WS.
 	 * @param outDir (Path) Output directory
 	 */
-	public void downloadRespPath (Path outDir) {
+	public void downloadRespData (Path outDir) {
 		Path outPath = outDir.resolve(responseFile); // 　出力のディレクトリの指定
-		
+
 		try {
 			URL IRISWSURL = new URL(url);
 			long size = 0L;
@@ -91,7 +82,7 @@ public class RespDataIRIS {
 		}
 	}
 
-	
+
 	/**
 	 * This main method is for debug.
 	 * @param args
@@ -99,9 +90,9 @@ public class RespDataIRIS {
 	 */
 	public static void main(String[] args) throws IOException {
 
-		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0); 
+		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
 		RespDataIRIS rd = new RespDataIRIS("II", "PFO", "00", "BHE", time);
-//		rd.downloadResp();
+		rd.downloadRespData();
 	}
 
 }

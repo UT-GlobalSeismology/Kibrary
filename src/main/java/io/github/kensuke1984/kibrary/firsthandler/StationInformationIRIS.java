@@ -11,8 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
+import java.time.format.DateTimeFormatter;
 
 
 /**
@@ -23,8 +22,9 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public class StationInformationIRIS {
 
-	private String url = "http://service.iris.edu/fdsnws/station/docs/1/builder/";
-	private String stationFile = "STATION.";
+    private static final String STATION_URL = "http://service.iris.edu/fdsnws/station/1/query?";
+	private String url;
+	private String stationFile;
 
 	private String network = "";
 	private String station = "";
@@ -55,20 +55,15 @@ public class StationInformationIRIS {
 	 * @param channel  (String) Channel code.
 	 * @param time     (LocalDateTime) Find the response for the given time.
 	 */
-	public StationInformationIRIS(String network, String station, String location, String channel, LocalDateTime time) {
-
-
-		String yyyy = Utilities.formatNumber(time.getYear(), 3000);
-		String MM = Utilities.formatNumber(time.getMonthValue(), 12);
-		String dd = Utilities.formatNumber(time.getDayOfMonth(), 31);
-		String HH = Utilities.formatNumber(time.getHour(), 24);
-		String mm = Utilities.formatNumber(time.getMinute(), 60);
-		String ss = Utilities.formatNumber(time.getSecond(), 60);
+	public StationInformationIRIS(String network, String station, String location, String channel,
+	        LocalDateTime startTime, LocalDateTime endTime) {
 
 		// set url here (version 2021-08-23) Requested Level is "Channel."
-		url = "http://service.iris.edu/fdsnws/station/1/query?" + "net=" + network + "&" + "sta=" + station
-				+ "&" + "loc=" + location + "&" + "cha=" + channel + "&" + "time=" + yyyy + "-" + MM + "-" + dd + "T" + HH + ":" + mm
-				+ ":" + ss + "&level=channel&format=text&includecomments=true&nodata=404";
+		url = STATION_URL + "net=" + network + "&" + "sta=" + station
+				+ "&" + "loc=" + location + "&" + "cha=" + channel
+				+ "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                + "&level=channel&format=text&includecomments=true&nodata=404";
 
 		// file name is "STATION.II.PFO.00.BHE" or "STATION.IU.INU.--.BHE"
 		stationFile = "STATION." + network + "." + station + "." + location + "." + channel;
@@ -76,14 +71,14 @@ public class StationInformationIRIS {
 	}
 
     /**
-     * Constructor with name of corresponding SAC file
+     * Constructor using name of corresponding SAC file
      *
      * @param sacFile (SacFileName) Name of corresponding SAC file.
      */
 	public StationInformationIRIS(SACFileName sacFile) {
 	    this(sacFile.getNetwork(), sacFile.getStation(),
 	            (sacFile.getLocationID().isEmpty() ? "--" : sacFile.getLocationID()),
-	                    sacFile.getChannel(), sacFile.getStartTime());
+	                    sacFile.getChannel(), sacFile.getStartTime(), sacFile.getStartTime());
 	}
 
 	/**
@@ -225,7 +220,7 @@ public class StationInformationIRIS {
 		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
 
 
-		StationInformationIRIS rd = new StationInformationIRIS("II", "PFO", "00", "BHE", time);
+		StationInformationIRIS rd = new StationInformationIRIS("II", "PFO", "00", "BHE", time, time);
 		rd.readStationInformation();
 //		rd.downloadStationInformation();
 

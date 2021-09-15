@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
+package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.IOException;
 import java.io.PrintWriter;
