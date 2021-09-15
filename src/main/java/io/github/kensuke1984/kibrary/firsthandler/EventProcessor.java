@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
+
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -55,6 +57,15 @@ class EventProcessor implements Runnable {
      * [deg] Maximum epicentral distance of SAC files to be output
      */
     private final double MAXIMUM_EPICENTRAL_DISTANCE = 180;
+    private boolean hadRun;
+    /**
+     * true: exception has occurred, false: not
+     */
+    private boolean problem;
+    /**
+     * if remove intermediate files
+     */
+    private boolean removeIntermediateFiles = false;//TODO true;
 
     EventProcessor(EventFolder eventDir, Path outPath) throws IOException {
         INPUT_DIR = eventDir;
@@ -114,6 +125,13 @@ class EventProcessor implements Runnable {
             throw new RuntimeException("Error on moving files to the trash box " + INPUT_DIR.getName(), e);
         }
 
+        problem = check();
+
+        hadRun = true;
+
+        if (removeIntermediateFiles) removeIntermediateFiles();
+
+        System.err.println("finish");
 
     }
 
@@ -250,7 +268,7 @@ class EventProcessor implements Runnable {
         Path noSpectraPath = OUTPUT_PATH.resolve("noSpectraOrInvalidMOD");
         Path duplicateChannelPath = OUTPUT_PATH.resolve("duplicateChannel");
         // evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
-        Path respBoxPath = OUTPUT_PATH.resolve("resp");
+//        Path respBoxPath = OUTPUT_PATH.resolve("resp");
         Path spectraBoxPath = OUTPUT_PATH.resolve("spectra");
         Path modBoxPath = OUTPUT_PATH.resolve("mod");
         try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
@@ -312,11 +330,11 @@ class EventProcessor implements Runnable {
 
                 // run evalresp
                 // If it fails, throw MOD and RESP files to trash
-                if (!runEvalresp(headerMap, INPUT_DIR.toPath())) {
+                if (!runEvalresp(headerMap, respPath)) {
                     // throw MOD.* files which cannot produce SPECTRA to noSpectra
                     Utilities.moveToDirectory(modPath, noSpectraPath, true);
                     // throw RESP.* files which cannot produce SPECTRA to noSpectra
-                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+//                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
                     continue;
                 }
 
@@ -330,7 +348,7 @@ class EventProcessor implements Runnable {
                         // throw SPECTRA files which cannot produce SPECTRA to duplicateChannelPath
                         Utilities.moveToDirectory(spectraPath, duplicateChannelPath, true);
                         // throw RESP files which cannot produce SPECTRA to duplicateChannelPath
-                        Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
+//                        Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
                         continue;
                     }
                     SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
@@ -344,12 +362,12 @@ class EventProcessor implements Runnable {
                         Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
                     }
                     // throw RESP files which cannot produce SPECTRA to noSpectraPath
-                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+//                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
                     continue;
                 }
 
                 // move processed RESP files to respBox
-                Utilities.moveToDirectory(respPath, respBoxPath, true);
+//                Utilities.moveToDirectory(respPath, respBoxPath, true);
 
                 // move processed SPECTRA files to spectraBox
                 Utilities.moveToDirectory(spectraPath, spectraBoxPath, true);
@@ -371,14 +389,14 @@ class EventProcessor implements Runnable {
      * @param headerMap header of sac file
      * @return if succeed
      */
-    private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputDir) {
+    private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) {
         int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
         double minFreq = samplingHz / npts;
         String command =
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
                         samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) +
-                        " -f " + inputDir.toAbsolutePath() + " -s lin -r cs -u vel";
+                        " -f " + inputPath.toAbsolutePath() + " -s lin -r cs -u vel";
 //        System.out.println("runevalresp: "+ command);// 4debug
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(OUTPUT_PATH.toFile());
@@ -470,6 +488,38 @@ class EventProcessor implements Runnable {
                 String name = path.getFileName().toString();
                 if (name.contains("SPECTRA.") || name.contains("RESP.")) Utilities.moveToDirectory(path, trash, true);
             }
+        }
+    }
+
+    /**
+     * @return if any problem
+     */
+    private boolean check() {
+        Path eventPath = OUTPUT_PATH;
+        Path rdseedOutput = eventPath.resolve("rdseedOutputBackup");
+        Path unmerged = eventPath.resolve("nonMergedUnevendata");
+        Path unrotated = eventPath.resolve("nonRotatedNE");
+        return Files.exists(rdseedOutput) || Files.exists(unmerged) || Files.exists(unrotated);
+    }
+
+    private void removeIntermediateFiles() {
+        try {
+            Path event = OUTPUT_PATH;
+            FileUtils.deleteDirectory(event.resolve("merged").toFile());
+            FileUtils.deleteDirectory(event.resolve("mod").toFile());
+            FileUtils.deleteDirectory(event.resolve("rdseedOutputBackup").toFile());
+//            FileUtils.deleteDirectory(event.resolve("resp").toFile());
+            FileUtils.deleteDirectory(event.resolve("rotatedNE").toFile());
+            FileUtils.deleteDirectory(event.resolve("nonRotatedNE").toFile());
+            FileUtils.deleteDirectory(event.resolve("spectra").toFile());
+            FileUtils.deleteDirectory(event.resolve("trash").toFile());
+            FileUtils.deleteDirectory(event.resolve("mergedUnevendata").toFile());
+            FileUtils.deleteDirectory(event.resolve("invalidChannel").toFile());
+            FileUtils.deleteDirectory(event.resolve("nonMergedUnevendata").toFile());
+            FileUtils.deleteDirectory(event.resolve("noSpectraOrInvalidMOD").toFile());
+            FileUtils.deleteDirectory(event.resolve("duplicateChannel").toFile());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
