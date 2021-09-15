@@ -82,7 +82,7 @@ public class StationInformationIRIS {
      */
 	public StationInformationIRIS(SACFileName sacFile) {
 	    this(sacFile.getNetwork(), sacFile.getStation(),
-	            (sacFile.getLocationID() == "" ? "--" : sacFile.getLocationID()),
+	            (sacFile.getLocationID().isEmpty() ? "--" : sacFile.getLocationID()),
 	                    sacFile.getChannel(), sacFile.getStartTime());
 	}
 
