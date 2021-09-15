@@ -343,7 +343,8 @@ class EventProcessor implements Runnable {
                         continue;
                 }
 
-                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "." + event + "." + component;
+                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) +
+                        "." + event + "." + component;
                 Path afterPath = OUTPUT_PATH.resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
 
