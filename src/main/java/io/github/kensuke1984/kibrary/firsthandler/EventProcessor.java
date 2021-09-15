@@ -265,7 +265,7 @@ class EventProcessor implements Runnable {
         try (DirectoryStream<Path> modStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
             for (Path modPath : modStream) {
                 String name = modPath.getFileName().toString();
-                String channel = name.split("\\.")[9]; // changed from 3 to 9 (kenji)
+                String channel = name.split("\\.")[3]; // changed from 3 to 9 (kenji) -> returned to 3 TODO
                 if (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
                         channel.equals("BLZ") || channel.equals("BLN") || channel.equals("BLE") ||
                         channel.equals("HHZ") || channel.equals("HHN") || channel.equals("HHE") ||
