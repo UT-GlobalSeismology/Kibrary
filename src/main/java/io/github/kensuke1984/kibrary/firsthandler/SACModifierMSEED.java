@@ -63,7 +63,7 @@ class SACModifierMSEED {
      */
     boolean checkHeader() {
         // System.out.println("Checking header validity in "+sacFile);
-        String channel = SAC_PATH.getFileName().toString().split("\\.")[9]; // change from 3 to 9
+        String channel = SAC_PATH.getFileName().toString().split("\\.")[3]; // change from 3 to 9 -> changed back to 3 TODO
 
         // check CMPINC this is already checked in downloadViaIRISWS (20210824 kenji)
 //        if (channel.equals("BHN") || channel.equals("BHE") || channel.equals("BH1") || channel.equals("BH2"))
