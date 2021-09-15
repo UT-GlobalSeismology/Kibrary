@@ -56,7 +56,7 @@ class SACFileName implements Comparable<SACFileName> {
      * @return PS.OGS.(locationID).BHN.D.SAC
      */
     String getRelationString() {
-        return name.substring(23);
+        return network + "." + station + "." + locationID + "." + channel + "." + qualityControl + ".SAC"; //name.substring(23);
     }
 
     /**
