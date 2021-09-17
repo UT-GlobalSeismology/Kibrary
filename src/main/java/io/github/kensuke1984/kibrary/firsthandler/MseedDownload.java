@@ -88,7 +88,7 @@ public class MseedDownload {
      * @throws IOException
      */
     private boolean mseed2sac() throws IOException {
-        String command = "mseed2sac " + MSEED_FILENAME;
+        String command = "mseed2sac " + MSEED_FILENAME + " > mseed2sac.log";
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
 
         pb.directory(EVENT_DIR.getAbsoluteFile());

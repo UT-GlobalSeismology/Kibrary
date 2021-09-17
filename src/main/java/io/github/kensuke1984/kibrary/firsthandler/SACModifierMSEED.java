@@ -63,7 +63,7 @@ class SACModifierMSEED {
      */
     boolean checkHeader() {
         // System.out.println("Checking header validity in "+sacFile);
-        String channel = SAC_PATH.getFileName().toString().split("\\.")[3]; // change from 3 to 9 -> changed back to 3 TODO
+//        String channel = SAC_PATH.getFileName().toString().split("\\.")[3]; // change from 3 to 9 -> changed back to 3
 
         // check CMPINC this is already checked in downloadViaIRISWS (20210824 kenji)
 //        if (channel.equals("BHN") || channel.equals("BHE") || channel.equals("BH1") || channel.equals("BH2"))
@@ -75,9 +75,9 @@ class SACModifierMSEED {
     }
 
     /**
-     * operate rtrend and rmean in SAC and the sac file is write to ??.MOD
+     * operate rtrend and rmean in SAC and the sac file is written to ??.MOD
      */
-    void preprocess() throws IOException {
+    void removeTrend() throws IOException {
         try (SAC sacProcess = SAC.createProcess()) {
             String cwd = SAC_PATH.getParent().toString();
             sacProcess.inputCMD("cd " + cwd);
@@ -91,7 +91,7 @@ class SACModifierMSEED {
 
     /**
      * if the startTime of sac is after the event time, and the gap is bigger
-     * than taperTime, interpolation cannot be done This method can be valid
+     * than taperTime, interpolation cannot be done. This method can be valid
      * before {@link #interpolate()} because the method changes headers.
      *
      * @return if gap between sac starting time and event time is small enough

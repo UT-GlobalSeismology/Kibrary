@@ -88,7 +88,7 @@ class EventProcessor implements Runnable {
 
         try {
             Files.createDirectories(OUTPUT_PATH);
-            preprocess();
+            setupSacs();
             // merge uneven SAC files
             mergeUnevenSac(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
         } catch (IOException e) {
@@ -97,13 +97,13 @@ class EventProcessor implements Runnable {
         }
         try {
 //          System.out.println("Enter: modifySACs");
-            modifySACs();
+            modifySacs();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error on modifying " + INPUT_DIR.getName(), e);
         }
 
-
+/* this was moved inside setupSacs() (Keisuke Otsuru)
         // Use only BH[12ENZ]
         // remove waveforms of .[~NEZ]
         try {
@@ -112,7 +112,7 @@ class EventProcessor implements Runnable {
         } catch (IOException e) {
             throw new RuntimeException("Error on selecting channels " + INPUT_DIR.getName(), e);
         }
-
+*/
 
         // instrumentation function deconvolution
  //     System.out.println("Enter: deconvolute");
@@ -144,18 +144,61 @@ class EventProcessor implements Runnable {
 
     }
 
-    private void preprocess() throws IOException {
+    /**
+     * This method sets up the SAC files to be used by carrying out the following:
+     * <ul>
+     * <li> check whether the channel is supported by this class; if not, skip the SAC file </li>
+     * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
+     * <li> read Station file; if unreadable, throw away the new SAC file </li>
+     * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
+     * <li> set SAC headers related to the station </li>
+     * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
+     * </ul>
+     * @throws IOException
+     * @author Keisuke Otsuru
+     */
+    private void setupSacs() throws IOException {
+        Path invalidStationBoxPath = OUTPUT_PATH.resolve("invalidStationFile");
+
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
-            for (Path sacPath : sacPaths) {
-                SACFileName newFile = newSacName(sacPath);
+            for (Path sacPath : sacPaths) {  // sacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
+                SACFileName newFile = newSacName(sacPath); // newFile will be made in the output event directory
+
+                // check channel validity
+                if (!checkChannel(newFile.getChannel())) {
+                    System.out.println("unsupported channel : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    // no need to move files to trash, because nothing is copied yet
+                    continue;
+                }
+
+                // copy SAC file from the input directory to the output event directory; file name changed here
                 Path newSacPath = OUTPUT_PATH.resolve(newFile.toString());
                 Files.copy(sacPath, newSacPath);
 
-                StationInformationIRIS sii = new StationInformationIRIS(newFile);
-                sii.readStationInformation(INPUT_DIR.toPath());
-                fixHeader(newSacPath,sii);
+                // read Station file; throw away new SAC file if Station file is unfound or unreadable
+                StationInformationIRIS sii = new StationInformationIRIS(newFile); // this probably won't fail, since it is merely substitution of values
+                try {
+                    sii.readStationInformation(INPUT_DIR.toPath()); // this will fail if Station file is unfound, etc.
+                } catch (IOException e) {
+                    System.out.println("unable to read Station file : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                    Utilities.moveToDirectory(newSacPath, invalidStationBoxPath, true);
+                    continue;
+                }
 
-//                fixDelta(sacPath);
+                // if the dip of a [vertical|horizontal] channel is not perfectly [vertical|horizontal], throw away the new SAC file
+                // caution: up is dip=-90, down is dip=90
+                // TODO: are there stations with downwards Z ?
+                if ((isVerticalChannel(newFile.getChannel()) && Double.parseDouble(sii.getDip()) != -90)
+                        || (!isVerticalChannel(newFile.getChannel()) && Double.parseDouble(sii.getDip()) != 0)) {
+                    System.out.println("invalid dip (or CMPINC) value : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                    Utilities.moveToDirectory(newSacPath, invalidStationBoxPath, true);
+                    continue;
+                }
+
+                //TODO: check station location here?
+
+                // set sac headers using sii, and interpolate data with DELTA
+                fixHeaderAndDelta(newSacPath,sii);
             }
         }
 
@@ -166,6 +209,7 @@ class EventProcessor implements Runnable {
      * MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC"
      * SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC"
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @return SACFileName object with the new SAC file name
      * @throws IOException
      * @author kenji
      */
@@ -182,25 +226,55 @@ class EventProcessor implements Runnable {
 
         String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
                 + "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
-                + "." + oldFile[3] + "." + "M" + ".SAC";
+                + "." + oldFile[3] + "." + "M" + ".SAC"; //TODO: the number of digits may be different from SEED style name
         return new SACFileName(newName);
     }
 
     /**
-     * Set SAC headers related to stations via StationInformation downloaded from IRIS/WS
+     * Checks whether the channel is supported by this class.
+     * Files with channels other than [BH][HL][ZNE12] will not be accepted.
+     * @param channel (String) The name of channel to check
+     * @return true if channel is supported
+     */
+    private boolean checkChannel(String channel) {
+        return (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
+                channel.equals("BH1") || channel.equals("BH2") ||
+                channel.equals("BLZ") || channel.equals("BLN") || channel.equals("BLE") ||
+                channel.equals("BL1") || channel.equals("BL2") ||
+                channel.equals("HHZ") || channel.equals("HHN") || channel.equals("HHE") ||
+                channel.equals("HH1") || channel.equals("HH2") ||
+                channel.equals("HLZ") || channel.equals("HLN") || channel.equals("HLE") ||
+                channel.equals("HL1") || channel.equals("HL2"));
+        //make sure to change isVerticalChannel() if you start accepting non-3-letter channels
+    }
+
+    /**
+     * Checks whether the channel is vertical (i.e. ??Z).
+     * @param channel (String) The name of channel to check; must be a 3-letter name
+     * @return true if channel is vertical
+     */
+    private boolean isVerticalChannel(String channel) {
+        if (channel.substring(2) == "Z") return true; // since checkChannel() is done, input should always be 3 letters
+        else return false;
+    }
+
+    /**
+     * Set SAC headers related to stations via StationInformation file,
+     * and also interpolate SAC file with DELTA (which is currently 0.05 sec thus 20 Hz)
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
      * @param sii (StationInformationIRIS) provides station information
      * @throws IOException
      * @author kenji
      */
-    private void fixHeader(Path sacPath, StationInformationIRIS sii) throws IOException {
+    private void fixHeaderAndDelta(Path sacPath, StationInformationIRIS sii) throws IOException {
+        double inclination = Double.parseDouble(sii.getDip()) + 90.0; // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
             sacD.inputCMD("cd " + cwd);// set current directory
             sacD.inputCMD("r " + sacPath.getFileName());// read
             sacD.inputCMD("ch lovrok true");// overwrite permission
-            sacD.inputCMD("ch cmpaz " + sii.getAzimuth() + " cmpinc " + sii.getDip());
-            sacD.inputCMD("ch stlo "  +sii.getLongitude() + " stla " +sii.getLatitude());
+            sacD.inputCMD("ch cmpaz " + sii.getAzimuth() + " cmpinc " + String.valueOf(inclination));
+            sacD.inputCMD("ch stlo "  + sii.getLongitude() + " stla " + sii.getLatitude());
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
@@ -208,6 +282,7 @@ class EventProcessor implements Runnable {
 
     /**
      * Eliminates problematic files made by rdseed, such as ones with different delta, and merge split files.
+     * @throws IOException
      */
     private void mergeUnevenSac() throws IOException {
         // merge
@@ -219,7 +294,7 @@ class EventProcessor implements Runnable {
     /**
      * modify merged SAC files
      */
-    private void modifySACs() throws IOException {
+    private void modifySacs() throws IOException {
         // System.out.println("Modifying sac files in "
         // + eventDir.getAbsolutePath());
         Path trashBoxPath = OUTPUT_PATH.resolve("trash");
@@ -236,20 +311,23 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                // remove trends in SAC files interpolate the files .SAC > .MOD
-                sm.preprocess();
+                // remove trends in SAC files; output in file with new name .SAC > .MOD
+                sm.removeTrend();
 
+                // interpolate the files ???
                 sm.interpolate();
 
+                //
                 sm.rebuild();
 
                 // filter by distance
+                //TODO: this is currently always 0~180
                 if (!sm.checkEpicentralDistance(MINIMUM_EPICENTRAL_DISTANCE, MAXIMUM_EPICENTRAL_DISTANCE)) {
                     Utilities.moveToDirectory(sacPath, trashBoxPath, true);
                     continue;
                 }
 
-                // move SAC files after treatment in the merged folder
+                // move SAC files after treatment into the merged folder
                 Utilities.moveToDirectory(sacPath, mergedBoxPath, true);
             }
         }
@@ -259,7 +337,7 @@ class EventProcessor implements Runnable {
      * Remove files with suffixes other than [BH][HL][ENZ12]
      * @author anselme BH1 BH2 also kept
      */
-    private void selectChannels() throws IOException {
+/*    private void selectChannels() throws IOException {
         // System.out.println("Selecting Channels");
         Path trashBox = OUTPUT_PATH.resolve("invalidChannel");
         try (DirectoryStream<Path> modStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
@@ -276,6 +354,7 @@ class EventProcessor implements Runnable {
             }
         }
     }
+*/
 
     /**
      * Deconvolute instrument function for all the MOD files in the event folder.
