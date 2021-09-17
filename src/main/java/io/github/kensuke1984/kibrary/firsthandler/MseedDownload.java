@@ -96,11 +96,13 @@ public class MseedDownload {
         pb.directory(EVENT_DIR.getAbsoluteFile());
 //        System.out.println("working directory is: " + pb.directory()); //4debug
         try {
-            Process p = pb.start();
             pb.redirectErrorStream(true);
+            Process p = pb.start();
             String str;
             BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            while((str = brstd.readLine()) != null);
+            while((str = brstd.readLine()) != null) {
+                System.out.println(str);
+            }
             brstd.close();
 //            InputStream is = p.getInputStream();
 //            int c;
