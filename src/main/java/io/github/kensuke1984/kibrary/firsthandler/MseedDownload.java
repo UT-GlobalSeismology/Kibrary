@@ -1,6 +1,8 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -88,13 +90,21 @@ public class MseedDownload {
      * @throws IOException
      */
     private boolean mseed2sac() throws IOException {
-        String command = "mseed2sac " + MSEED_FILENAME + " > mseed2sac.log";
+        String command = "mseed2sac " + MSEED_FILENAME;
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
 
         pb.directory(EVENT_DIR.getAbsoluteFile());
 //        System.out.println("working directory is: " + pb.directory()); //4debug
         try {
             Process p = pb.start();
+            pb.redirectErrorStream(true);
+            String str;
+            BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            while((str = brstd.readLine()) != null);
+            brstd.close();
+//            InputStream is = p.getInputStream();
+//            int c;
+//            while((c = is.read()) != -1);
             return p.waitFor() == 0;
         } catch (Exception e) {
             e.printStackTrace();
