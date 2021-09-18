@@ -234,7 +234,7 @@ class EventProcessor implements Runnable {
      * Checks whether the channel is supported by this class.
      * Files with channels other than [BH][HL][ZNE12] will not be accepted.
      * @param channel (String) The name of channel to check
-     * @return true if channel is supported
+     * @return (boolean) true if channel is supported
      */
     private boolean checkChannel(String channel) {
         return (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
@@ -251,7 +251,7 @@ class EventProcessor implements Runnable {
     /**
      * Checks whether the channel is vertical (i.e. ??Z).
      * @param channel (String) The name of channel to check; must be a 3-letter name
-     * @return true if channel is vertical
+     * @return (boolean) true if channel is vertical
      */
     private boolean isVerticalChannel(String channel) {
         if (channel.substring(2) == "Z") return true; // since checkChannel() is done, input should always be 3 letters
@@ -259,8 +259,8 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * Set SAC headers related to stations via StationInformation file,
-     * and also interpolate SAC file with DELTA (which is currently 0.05 sec thus 20 Hz)
+     * Sets SAC headers related to stations via StationInformation file,
+     * and also interpolates SAC file with DELTA (which is currently 0.05 sec thus 20 Hz).
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
      * @param sii (StationInformationIRIS) provides station information
      * @throws IOException
