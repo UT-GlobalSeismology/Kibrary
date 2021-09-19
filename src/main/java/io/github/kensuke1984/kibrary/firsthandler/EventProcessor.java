@@ -169,7 +169,7 @@ class EventProcessor implements Runnable {
 
         if (removeIntermediateFiles) removeIntermediateFiles();
 
-        System.err.println("finish");
+        System.err.println(event.getGlobalCMTID() + "finished");
 
     }
 
@@ -399,11 +399,10 @@ class EventProcessor implements Runnable {
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
      * mseed2sacで解凍したSACのlocation(KHOLE)ヘッダーに"-12345"が入る場合に対応 (2021-08-23)
      */
-    private void deconvoluteSACMSEED() { //TODO STATIONINFORMATIONも削除しないといけない。(kenji)
+    private void deconvoluteSACMSEED() {
         // System.out.println("Conducting deconvolution");
 //        Path noSpectraPath = OUTPUT_PATH.resolve("noSpectraOrInvalidMOD");
 //        Path duplicateChannelPath = OUTPUT_PATH.resolve("duplicateChannel");
-        // evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
 //        Path respBoxPath = OUTPUT_PATH.resolve("resp");
 //        Path spectraBoxPath = OUTPUT_PATH.resolve("spectra");
 //        Path modBoxPath = OUTPUT_PATH.resolve("mod");
@@ -467,6 +466,7 @@ class EventProcessor implements Runnable {
                 // run evalresp
                 // If it fails, throw MOD and RESP files to trash
                 if (!runEvalresp(headerMap, respPath)) {
+                    System.err.println("!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw MOD.* files which cannot produce SPECTRA to noSpectra
                     Utilities.moveToDirectory(modPath, unDeconvolutedPath, true);
                     // throw RESP.* files which cannot produce SPECTRA to noSpectra
@@ -477,8 +477,10 @@ class EventProcessor implements Runnable {
                 // run seedsac
                 try {
                     int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
+
                     // duplication of channel
                     if (Files.exists(afterPath)) {
+                        System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
                         // throw *.MOD files which cannot produce SPECTRA to duplicateChannelPath
                         Utilities.moveToDirectory(modPath, duplicateChannelPath, true);
                         // throw SPECTRA files which cannot produce SPECTRA to duplicateChannelPath
@@ -487,8 +489,10 @@ class EventProcessor implements Runnable {
 //                        Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
                         continue;
                     }
+
                     SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
                 } catch (Exception e) {
+                    System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
                     Utilities.moveToDirectory(modPath, unDeconvolutedPath, true);
                     // throw SPECTRA files which cannot produce SPECTRA to noSpectraPath
