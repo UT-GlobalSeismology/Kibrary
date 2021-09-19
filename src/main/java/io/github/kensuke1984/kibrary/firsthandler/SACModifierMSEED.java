@@ -45,6 +45,7 @@ class SACModifierMSEED {
      * @param globalCMTData cmt data
      * @param sacPath       path of sac file
      * @param byPDE         true: PDE, false: CMT
+     * @throws IOException
      */
     SACModifierMSEED(GlobalCMTData globalCMTData, Path sacPath, boolean byPDE) throws IOException {
         SAC_PATH = sacPath;
@@ -57,53 +58,7 @@ class SACModifierMSEED {
     }
 
     /**
-     * Checks of headers CMPINC, khole
-     *
-     * @return if the header is valid
-     */
-    boolean checkHeader() {
-        // System.out.println("Checking header validity in "+sacFile);
-//        String channel = SAC_PATH.getFileName().toString().split("\\.")[3]; // change from 3 to 9 -> changed back to 3
-
-        // check CMPINC this is already checked in downloadViaIRISWS (20210824 kenji)
-//        if (channel.equals("BHN") || channel.equals("BHE") || channel.equals("BH1") || channel.equals("BH2"))
-//            if (Double.parseDouble(headerMap.get(SACHeaderEnum.CMPINC)) != 90) return false;
-
-        // check "khole" value (mseed2sac produces khole of -12345 in SAC header, 20210824 kenji)
-        String khole = headerMap.get(SACHeaderEnum.KHOLE);
-        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02") || khole.equals("-12345");
-    }
-
-    /**
-     * operate rtrend and rmean in SAC and the sac file is written to ??.MOD
-     */
-    void removeTrend() throws IOException {
-        try (SAC sacProcess = SAC.createProcess()) {
-            String cwd = SAC_PATH.getParent().toString();
-            sacProcess.inputCMD("cd " + cwd);
-            sacProcess.inputCMD("r " + SAC_PATH.getFileName());
-            sacProcess.inputCMD("ch lovrok true");
-            sacProcess.inputCMD("rtrend");
-            sacProcess.inputCMD("rmean");
-            sacProcess.inputCMD("w " + MODIFIED_PATH.getFileName());
-        }
-    }
-
-    /**
-     * if the startTime of sac is after the event time, and the gap is bigger
-     * than taperTime, interpolation cannot be done. This method can be valid
-     * before {@link #interpolate()} because the method changes headers.
-     *
-     * @return if gap between sac starting time and event time is small enough
-     * (smaller than {@link #taperTime})
-     */
-    boolean canInterpolate() {
-        LocalDateTime eventTime = BYPDE ? EVENT.getPDETime() : EVENT.getCMTTime();
-        return eventTime.until(initialSacStartTime, ChronoUnit.MILLIS) < taperTime;
-    }
-
-    /**
-     * set {@link #initialSacStartTime}
+     * Sets {@link #initialSacStartTime}
      */
     private void setInitialSacStartTime() {
         int year = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
@@ -119,10 +74,59 @@ class SACModifierMSEED {
     }
 
     /**
-     * イベント時刻よりSac開始が遅い場合 Sacを補完する 補完の際 テーピングをかけ０で補完する。 <br>
-     * 開始時刻の部分を丸みをかけて０にする その幅は {@link #taperTime}
+     * Checks of headers CMPINC, khole
      *
-     * @return if success or not
+     * @return (boolean) true if the header is valid
+     */
+    boolean checkHeader() {
+        // System.out.println("Checking header validity in "+sacFile);
+//        String channel = SAC_PATH.getFileName().toString().split("\\.")[3]; // change from 3 to 9 -> changed back to 3
+
+        // check CMPINC this is already checked in downloadViaIRISWS (20210824 kenji)
+//        if (channel.equals("BHN") || channel.equals("BHE") || channel.equals("BH1") || channel.equals("BH2"))
+//            if (Double.parseDouble(headerMap.get(SACHeaderEnum.CMPINC)) != 90) return false;
+
+        // check "khole" value (mseed2sac produces khole of -12345 in SAC header, 20210824 kenji)
+        String khole = headerMap.get(SACHeaderEnum.KHOLE);
+        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02") || khole.equals("-12345");
+    }
+
+    /**
+     * if the startTime of sac is after the event time, and the gap is bigger
+     * than taperTime, interpolation cannot be done. This method can be valid
+     * before {@link #interpolate()} because the method changes headers.
+     *
+     * @return (boolean) true if gap between sac starting time and event time is small enough
+     * (smaller than {@link #taperTime})
+     */
+    boolean canInterpolate() {
+        LocalDateTime eventTime = BYPDE ? EVENT.getPDETime() : EVENT.getCMTTime();
+        return eventTime.until(initialSacStartTime, ChronoUnit.MILLIS) < taperTime;
+    }
+
+    /**
+     * Operates rtrend and rmean in SAC. The output is written to a new SAC file with the name ??.MOD
+     * @throws IOException
+     */
+    void removeTrend() throws IOException {
+        try (SAC sacProcess = SAC.createProcess()) {
+            String cwd = SAC_PATH.getParent().toString();
+            sacProcess.inputCMD("cd " + cwd);
+            sacProcess.inputCMD("r " + SAC_PATH.getFileName());
+            sacProcess.inputCMD("ch lovrok true");
+            sacProcess.inputCMD("rtrend");
+            sacProcess.inputCMD("rmean");
+            sacProcess.inputCMD("w " + MODIFIED_PATH.getFileName());
+        }
+    }
+
+    /**
+     * イベント時刻よりSac開始が遅い場合 Sacを補完する 補完の際 テーピングをかけ０で補完する。 <br>
+     * 開始時刻の部分を丸みをかけて０にする その幅は {@link #taperTime}。<br>
+     * その後ヘッダーを更新する。その際、イベント情報も入力するので、震央距離も計算される。
+     *
+     * @return (boolean) true if success
+     * @throws IOException
      */
     boolean interpolate() throws IOException {
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
@@ -143,10 +147,12 @@ class SACModifierMSEED {
         // if the gap is bigger than tapertime then the SAC file is skipped.
         // if (sacStartTime.after(eventTime)) {
         if (taperTime < timeGapInMillis) {
-            System.err.println(MODIFIED_PATH + " starts too late");
+            System.err.println("seismogram starts too late : "
+                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName()); // TODO : throw away?
             return false;
         } else if (0 <= timeGapInMillis) {
-            System.err.println("seismograms start at after the event time... interpolating...");
+            System.err.println("seismograms start after the event time, interpolating : "
+                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName());
             // delta [msec]
             long deltaInMillis = (long) (Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)) * 1000);
 
@@ -162,7 +168,7 @@ class SACModifierMSEED {
 
             // 0で補完
             double[] neosacdata = new double[sacdata.length + gapPoint];
-            // gapの部分は0でtaperをかけたsacdataをくっつける
+            // gapの部分は0で、taperをかけたsacdataをくっつける
             System.arraycopy(sacdata, 0, neosacdata, gapPoint, neosacdata.length - gapPoint);
 
             int npts = neosacdata.length;
@@ -171,6 +177,7 @@ class SACModifierMSEED {
             timeGapInMillis = 0;
             // headerMap.put(SacHeaderEnum.B, Double.toString(0));
         }
+        // TODO: 早く始まってるものは、taperいらない？
 
         Location sourceLocation = BYPDE ? EVENT.getPDELocation() : EVENT.getCmtLocation();
 
@@ -194,9 +201,10 @@ class SACModifierMSEED {
     }
 
     /**
-     * @param min [deg]
-     * @param max [deg]
-     * @return if min <= epicentral distance <= max
+     * Checks whether the epicentral distance of the SAC file is within a given range.
+     * @param min (double) [deg]
+     * @param max (double) [deg]
+     * @return (boolean) true if min <= epicentral distance <= max
      */
     boolean checkEpicentralDistance(double min, double max) {
         double epicentralDistance = Double.parseDouble(headerMap.get(SACHeaderEnum.GCARC));
@@ -204,7 +212,8 @@ class SACModifierMSEED {
     }
 
     /**
-     * Rebuild by SAC.
+     * Rebuilds the file by SAC.
+     * Also, the ending part of the file is cut so that npts = 2^n.
      *
      * @throws IOException if any
      */
