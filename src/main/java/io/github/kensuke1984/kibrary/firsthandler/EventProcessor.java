@@ -254,7 +254,7 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if channel is vertical
      */
     private boolean isVerticalChannel(String channel) {
-        if (channel.substring(2) == "Z") return true; // since checkChannel() is done, input should always be 3 letters
+        if (channel.substring(2).equals("Z")) return true; // since checkChannel() is done, input should always be 3 letters
         else return false;
     }
 
