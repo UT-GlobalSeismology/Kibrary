@@ -169,7 +169,7 @@ class EventProcessor implements Runnable {
 
         if (removeIntermediateFiles) removeIntermediateFiles();
 
-        System.err.println(event.getGlobalCMTID() + "finished");
+        System.err.println(event.getGlobalCMTID() + " finished");
 
     }
 

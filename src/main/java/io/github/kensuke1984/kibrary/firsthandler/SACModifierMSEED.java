@@ -128,7 +128,7 @@ class SACModifierMSEED {
      * @return (boolean) true if success
      * @throws IOException
      */
-    boolean interpolate() throws IOException {
+    boolean interpolate() throws IOException { //TODO: rename
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInMillis = Math.round(b * 1000);
         double e = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
@@ -152,7 +152,7 @@ class SACModifierMSEED {
             return false;
         } else if (0 <= timeGapInMillis) {
             System.err.println("seismograms start after the event time, interpolating : "
-                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName());
+                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName()); // TODO: rename
             // delta [msec]
             long deltaInMillis = (long) (Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)) * 1000);
 
