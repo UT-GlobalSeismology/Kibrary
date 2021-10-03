@@ -73,6 +73,7 @@ class SACModifierMSEED {
                 LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(bInNanos);
     }
 
+    // these were moved to setupSacs in EventProcessor , but this is still used in FirstHandler. TODO:remove
     /**
      * Checks of headers CMPINC, khole
      *
@@ -90,6 +91,7 @@ class SACModifierMSEED {
         String khole = headerMap.get(SACHeaderEnum.KHOLE);
         return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02"); // || khole.equals("-12345");
     }
+
 
     /**
      * if the startTime of sac is after the event time, and the gap is bigger
@@ -121,9 +123,11 @@ class SACModifierMSEED {
     }
 
     /**
-     * イベント時刻よりSac開始が遅い場合 Sacを補完する 補完の際 テーピングをかけ０で補完する。 <br>
-     * 開始時刻の部分を丸みをかけて０にする その幅は {@link #taperTime}。<br>
+     * イベント時刻よりSac開始が遅い場合、Sacを補完する。
+     * 補完の際、Sac開始の部分を幅 {@link #taperTime} でtaperをかけ、その前を０で補完する。 <br>
+     * イベント時刻よりSac開始が早い場合、時刻の原点をイベント時刻にずらす。<br>
      * その後ヘッダーを更新する。その際、イベント情報も入力するので、震央距離も計算される。
+     * {@link #canInterpolate()} should be checked for before executing this method!
      *
      * @return (boolean) true if success
      * @throws IOException
@@ -146,13 +150,13 @@ class SACModifierMSEED {
         // if the sac startTime is after the event time, then interpolate the gap.
         // if the gap is bigger than tapertime then the SAC file is skipped.
         // if (sacStartTime.after(eventTime)) {
-        if (taperTime < timeGapInMillis) {
-            System.err.println("seismogram starts too late : "
-                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName()); // TODO : throw away?
+        if (taperTime < timeGapInMillis) {  // this shall not happen, because this should be checked in canInterpolate()
+            System.err.println("!!!!!!!seismogram starts too late : "
+                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName());
             return false;
         } else if (0 <= timeGapInMillis) {
-            System.err.println("seismograms start after the event time, interpolating : "
-                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName()); // TODO: rename
+            System.err.println("++ seismograms start after the event time, zero-padding : "
+                    + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName());
             // delta [msec]
             long deltaInMillis = (long) (Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)) * 1000);
 
@@ -212,8 +216,8 @@ class SACModifierMSEED {
     }
 
     /**
-     * Rebuilds the file by SAC.
-     * Also, the ending part of the file is cut so that npts = 2^n.
+     * The SAC start time is set to the event time by deleting data before t=0 (set in {@link #interpolate()}). //TODO:rename
+     * The ending part of the SAC file is cut so that npts = 2^n.
      *
      * @throws IOException if any
      */

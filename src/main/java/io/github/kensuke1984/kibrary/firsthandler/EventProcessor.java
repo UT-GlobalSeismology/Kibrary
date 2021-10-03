@@ -179,7 +179,7 @@ class EventProcessor implements Runnable {
      * <li> check whether the channel is supported by this class; if not, skip the SAC file </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
-     * <li> check whether the unit is velocity (M/S); if not, throw away the new SAC file </li>
+     * <li> check whether the unit is velocity (m/s); if not, throw away the new SAC file </li>
      * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
      * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
@@ -202,6 +202,13 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
+                // check location validity  TODO: this may have to be modified or removed
+                if (!checkLocation(newFile.getLocationID())) {
+                    System.err.println("!! bad location : " + event.getGlobalCMTID() + " - " + rawSacPath.getFileName());
+                    // no need to move files to trash, because nothing is copied yet
+                    continue;
+                }
+
                 // copy SAC file from the input directory to the output event directory; file name changed here
                 Path newSacPath = OUTPUT_PATH.resolve(newFile.toString());
                 Files.copy(rawSacPath, newSacPath);
@@ -216,7 +223,7 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                // if the unit used in the Station file is not M/S, throw away the new SAC file
+                // if the unit used in the Station file is not in velocity (m/s or M/S), throw away the new SAC file
                 // TODO: is this criterion valid?
                 if (!sii.getScaleunits().equals("M/S") && !sii.getScaleunits().equals("m/s")) {
                     System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
@@ -288,6 +295,16 @@ class EventProcessor implements Runnable {
     }
 
     /**
+     * Checks whether the location isn't insane.
+     * Currently, "" "00" "01" "02" are accepted.
+     * @param location (String) The name of location to check
+     * @return (boolean) true if location is fine
+     */
+    private boolean checkLocation(String location) {
+        return location.isEmpty() || location.equals("00") || location.equals("01") || location.equals("02");
+    }
+
+    /**
      * Checks whether the channel is vertical (i.e. ??Z).
      * @param channel (String) The name of channel to check; must be a 3-letter name
      * @return (boolean) true if channel is vertical
@@ -338,9 +355,18 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * Modifies merged SAC files by {@link SACModifierMSEED}.
+     * Modifies merged SAC files by {@link SACModifierMSEED}, as follows:
+     * <ul>
+     * <li> check whether the SAC file can be zero-padded; if not, throw it away </li>
+     * <li> remove the trend in the data </li>
+     * <li> zero-pad SAC files that start after the event time </li>
+     * <li> write headers related to the event </li>
+     * <li> SAC start time is set to the event time </li>
+     * <li> SAC file is cut so that npts = 2^n </li>
+     * <li> check whether the epicentral distance is in the wanted range; if not, throw the file away </li>
+     * </ul>
      * Successful files are put in "doneModify", while files that failed to be zero-padded go in "unModified"
-     * and those with invaled epicentral distances end up in "invalidDistance".
+     * and those with invalid epicentral distances end up in "invalidDistance".
      */
     private void modifySacs() throws IOException {
         // System.out.println("Modifying sac files in "
@@ -353,9 +379,8 @@ class EventProcessor implements Runnable {
             for (Path sacPath : sacPathStream) {
                 SACModifierMSEED sm = new SACModifierMSEED(event, sacPath, byPDE);
 
-                // TODO 00 01 "" duplication detect
-                // header check khole e.t.c
-                if (!sm.canInterpolate() || !sm.checkHeader()) {
+                // check whether the file can be zero-padded
+                if (!sm.canInterpolate()) {
                     System.err.println("!! unable to zero-pad : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     Utilities.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
@@ -364,10 +389,10 @@ class EventProcessor implements Runnable {
                 // remove trends in SAC files; output in file with new name .SAC > .MOD
                 sm.removeTrend();
 
-                // interpolate the files ???
-                sm.interpolate(); // TODO: throw away if it fails?
+                // zero-pad SAC files that start after the event time
+                sm.interpolate();
 
-                //
+                // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
                 sm.rebuild();
 
                 // filter by distance
@@ -394,7 +419,7 @@ class EventProcessor implements Runnable {
         try (DirectoryStream<Path> modStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
             for (Path modPath : modStream) {
                 String name = modPath.getFileName().toString();
-                String channel = name.split("\\.")[3]; // changed from 3 to 9 (kenji) -> returned to 3 TODO
+                String channel = name.split("\\.")[3]; // changed from 3 to 9 (kenji) -> returned to 3
                 if (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
                         channel.equals("BLZ") || channel.equals("BLN") || channel.equals("BLE") ||
                         channel.equals("HHZ") || channel.equals("HHN") || channel.equals("HHE") ||
@@ -648,6 +673,8 @@ class EventProcessor implements Runnable {
         }
 
     }
+
+    // TODO 00 01 "" duplication detect
 
     /**
      * unused SPECTRA*, RESP* files ->trash

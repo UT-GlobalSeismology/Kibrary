@@ -152,7 +152,7 @@ class SACGroup {
         // <<<<以下、file0につなげていくfile1, file2, file3, ... を読み込んでつなげていく>>>>
 
         if (sacFileNameList.length > 1) {
-            System.err.println("merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
+            System.err.println("++ merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
         }
         for (int i = 1; i < sacFileNameList.length; i++) {
             // sacfilename to be joined (file1)
