@@ -88,7 +88,7 @@ class SACModifierMSEED {
 
         // check "khole" value (mseed2sac produces khole of -12345 in SAC header, 20210824 kenji)
         String khole = headerMap.get(SACHeaderEnum.KHOLE);
-        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02") || khole.equals("-12345");
+        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02"); // || khole.equals("-12345");
     }
 
     /**

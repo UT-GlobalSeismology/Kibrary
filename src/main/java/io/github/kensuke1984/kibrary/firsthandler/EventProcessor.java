@@ -237,7 +237,7 @@ class EventProcessor implements Runnable {
                 //TODO: check station location here?
 
                 // set sac headers using sii, and interpolate data with DELTA
-                fixHeaderAndDelta(newSacPath,sii);
+                fixHeaderAndDelta(newSacPath, sii, newFile.getLocationID().isEmpty());
             }
         }
 
@@ -302,10 +302,11 @@ class EventProcessor implements Runnable {
      * and also interpolates SAC file with DELTA (which is currently 0.05 sec thus 20 Hz).
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
      * @param sii (StationInformationIRIS) provides station information
+     * @param blankLocation (boolean) true if the location is blank
      * @throws IOException
      * @author kenji
      */
-    private void fixHeaderAndDelta(Path sacPath, StationInformationIRIS sii) throws IOException {
+    private void fixHeaderAndDelta(Path sacPath, StationInformationIRIS sii, boolean blankLocation) throws IOException {
         double inclination = Double.parseDouble(sii.getDip()) + 90.0; // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
@@ -314,6 +315,9 @@ class EventProcessor implements Runnable {
             sacD.inputCMD("ch lovrok true");// overwrite permission
             sacD.inputCMD("ch cmpaz " + sii.getAzimuth() + " cmpinc " + String.valueOf(inclination));
             sacD.inputCMD("ch stlo "  + sii.getLongitude() + " stla " + sii.getLatitude());
+            if (blankLocation) {
+                sacD.inputCMD("ch khole ''"); // files with empty locations may have khole '-12345', so it is set to ''
+            }
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
@@ -421,15 +425,15 @@ class EventProcessor implements Runnable {
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
                 String channel = headerMap.get(SACHeaderEnum.KCMPNM);
-                String khole = headerMap.get(SACHeaderEnum.KHOLE);
-                if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
+                String location = headerMap.get(SACHeaderEnum.KHOLE);
+//                if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
                 String respFileName =
                         resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                khole + "." + channel;
-               if(khole.matches("--")) {khole = "";} // this is for MSEEDSAC
+                                location + "." + channel;
+///               if(khole.matches("--")) {khole = "";} // this is for MSEEDSAC
                String spectraFileName =
                         spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                khole + "." + channel;
+                                location + "." + channel;
                 Path spectraPath = OUTPUT_PATH.resolve(spectraFileName);
                 Path respPath = INPUT_DIR.toPath().resolve(respFileName);
                 String component = channel.substring(2); // the 3rd letter of channel name
@@ -470,7 +474,7 @@ class EventProcessor implements Runnable {
                 }
 */
                 String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) +
-                        "." + instrument + "_" + khole + "." + event + "." + component;
+                        "." + instrument + "_" + location + "." + event + "." + component;
                 Path afterPath = OUTPUT_PATH.resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
 
