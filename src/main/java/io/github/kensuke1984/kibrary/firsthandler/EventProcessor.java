@@ -390,7 +390,7 @@ class EventProcessor implements Runnable {
                 sm.removeTrend();
 
                 // zero-pad SAC files that start after the event time
-                sm.interpolate();
+                sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
                 sm.rebuild();

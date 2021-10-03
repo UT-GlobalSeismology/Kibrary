@@ -132,7 +132,7 @@ class SACModifierMSEED {
      * @return (boolean) true if success
      * @throws IOException
      */
-    boolean interpolate() throws IOException { //TODO: rename
+    boolean zeroPad() throws IOException {
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInMillis = Math.round(b * 1000);
         double e = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
@@ -216,7 +216,7 @@ class SACModifierMSEED {
     }
 
     /**
-     * The SAC start time is set to the event time by deleting data before t=0 (set in {@link #interpolate()}). //TODO:rename
+     * The SAC start time is set to the event time by deleting data before t=0 (set in {@link #zeroPad()}).
      * The ending part of the SAC file is cut so that npts = 2^n.
      *
      * @throws IOException if any

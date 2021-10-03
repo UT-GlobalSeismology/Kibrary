@@ -495,7 +495,7 @@ class MseedSAC implements Runnable {
                 // remove trends in SAC files interpolate the files .SAC > .MOD
                 sm.removeTrend();
 
-                sm.interpolate();
+                sm.zeroPad();
 
                 sm.rebuild();
 
