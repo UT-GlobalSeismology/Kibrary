@@ -52,6 +52,7 @@ class UnevenSACMerger {
     UnevenSACMerger(Path workPath) throws IOException {
         this(workPath, workPath.resolve("mergedUnevendata"), workPath.resolve("nonMergedUnevendata"));
     }
+
     /**
      * Obtains all files with the suffix .SAC under the working directory,
      * and groups up files by {@link #createGroups(SACFileName[])}.

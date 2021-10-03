@@ -191,19 +191,19 @@ class EventProcessor implements Runnable {
 //        Path invalidStationBoxPath = OUTPUT_PATH.resolve("invalidStation");
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
-            for (Path sacPath : sacPaths) {  // sacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
-                SACFileName newFile = newSacName(sacPath); // newFile will be made in the output event directory
+            for (Path rawSacPath : sacPaths) {  // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
+                SACFileName newFile = newSacName(rawSacPath); // newFile will be made in the output event directory
 
                 // check channel validity
                 if (!checkChannel(newFile.getChannel())) {
-                    System.err.println("!! unsupported channel : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    System.err.println("!! unsupported channel : " + event.getGlobalCMTID() + " - " + rawSacPath.getFileName());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // copy SAC file from the input directory to the output event directory; file name changed here
                 Path newSacPath = OUTPUT_PATH.resolve(newFile.toString());
-                Files.copy(sacPath, newSacPath);
+                Files.copy(rawSacPath, newSacPath);
 
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
                 StationInformationIRIS sii = new StationInformationIRIS(newFile); // this probably won't fail, since it is merely substitution of values
@@ -215,12 +215,20 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
+                // if the unit used in the Station file is not M/S, throw away the new SAC file
+                // TODO: is this criterion valid?
+                if (!sii.getScaleunits().equals("M/S")) {
+                    System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                    Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
+                    continue;
+                }
+
                 // if the dip of a [vertical|horizontal] channel is not perfectly [vertical|horizontal], throw away the new SAC file
                 // caution: up is dip=-90, down is dip=90
                 // TODO: are there stations with downwards Z ?
                 if ((isVerticalChannel(newFile.getChannel()) && Double.parseDouble(sii.getDip()) != -90)
                         || (!isVerticalChannel(newFile.getChannel()) && Double.parseDouble(sii.getDip()) != 0)) {
-                    System.err.println("!! invalid dip (or CMPINC) value : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                    System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
@@ -411,20 +419,21 @@ class EventProcessor implements Runnable {
             String spectra = "SPECTRA.";
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
-                String componentName = headerMap.get(SACHeaderEnum.KCMPNM);
+                String channel = headerMap.get(SACHeaderEnum.KCMPNM);
                 String khole = headerMap.get(SACHeaderEnum.KHOLE);
                 if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
                 String respFileName =
                         resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                khole + "." + componentName;
+                                khole + "." + channel;
                if(khole.matches("--")) {khole = "";} // this is for MSEEDSAC
                String spectraFileName =
                         spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                khole + "." + componentName;
+                                khole + "." + channel;
                 Path spectraPath = OUTPUT_PATH.resolve(spectraFileName);
                 Path respPath = INPUT_DIR.toPath().resolve(respFileName);
-                String component;
-                switch (componentName) {
+                String component = channel.substring(2); // the 3rd letter of channel name
+                String instrument = channel.substring(0, 2); // the 1st&2nd letters of channel name
+/*                switch (componentName) {
                     case "BHE":
                     case "BLE":
                     case "HHE":
@@ -458,9 +467,9 @@ class EventProcessor implements Runnable {
                     default:
                         continue;
                 }
-
+*/
                 String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) +
-                        "." + event + "." + component;
+                        "." + instrument + "_" + khole + "." + event + "." + component;
                 Path afterPath = OUTPUT_PATH.resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
 
@@ -479,7 +488,7 @@ class EventProcessor implements Runnable {
                 try {
                     int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
 
-                    // duplication of channel
+                    // duplication of channel  TODO: this may not be needed any more
                     if (Files.exists(afterPath)) {
                         System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
                         // throw *.MOD files which cannot produce SPECTRA to duplicateChannelPath
@@ -553,6 +562,8 @@ class EventProcessor implements Runnable {
 
     /**
      * Converts/rotates all files with (.E, .N), (.1, .2) to (.R, .T).
+     * Input SAC file names should take the form "sta_net.inst_loc.event.comp".
+     * Output SAC file names will also take the form "sta_net.inst_loc.event.comp".
      * Successful files are put in "doneRotateNE" the others in "unRotatedNE".
      * The process from (.1, .2) to (.R, .T) is added (2021.08.21 kenji)
      * @throws IOException
@@ -564,9 +575,9 @@ class EventProcessor implements Runnable {
         try (DirectoryStream<Path> eStream = Files.newDirectoryStream(OUTPUT_PATH, "*.E")) {
             for (Path ePath : eStream) {
                 String[] parts = ePath.getFileName().toString().split("\\.");
-                Path nPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + ".N");
-                Path rPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + ".R");
-                Path tPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + ".T");
+                Path nPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".N");
+                Path rPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".R");
+                Path tPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".T");
 
                 // throw away .E file if its pair .N file does not exist
                 if (!Files.exists(nPath)) {
@@ -590,9 +601,9 @@ class EventProcessor implements Runnable {
         try (DirectoryStream<Path> oneStream = Files.newDirectoryStream(OUTPUT_PATH, "*.1")) {
             for (Path onePath : oneStream) {
                 String[] parts = onePath.getFileName().toString().split("\\.");
-                Path twoPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + ".2");
-                Path rPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + ".R");
-                Path tPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + ".T");
+                Path twoPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".2");
+                Path rPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".R");
+                Path tPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".T");
 
                 // throw away .1 file if its pair .2 file does not exist
                 if (!Files.exists(twoPath)) {
