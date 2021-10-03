@@ -29,6 +29,7 @@ public class MseedDownload {
 
     private GlobalCMTID id;
     private String networks;
+    private String channels;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
@@ -36,9 +37,10 @@ public class MseedDownload {
     private final String MSEED_FILENAME;
     private final Path MSEED_PATH;
 
-    public MseedDownload (GlobalCMTID id, String networks, int headAdjustment, int footAdjustment, Path outPath) {
+    public MseedDownload (GlobalCMTID id, String networks, String channels, int headAdjustment, int footAdjustment, Path outPath) {
         this.id = id;
         this.networks = networks;
+        this.channels = channels;
         LocalDateTime cmtTime = id.getEvent().getCMTTime();
         startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
@@ -71,8 +73,8 @@ public class MseedDownload {
      * @throws IOException
      */
     private void downloadMseed() throws IOException {
-        String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=BH?&starttime=" + toLine(startTime) +
-                "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
+        String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
+                "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
         long size = 0L;
 

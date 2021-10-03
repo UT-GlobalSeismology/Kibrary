@@ -327,7 +327,7 @@ class EventProcessor implements Runnable {
     /**
      * Modifies merged SAC files by {@link SACModifierMSEED}.
      * Successful files are put in "doneModify", while files that failed to be zero-padded go in "unModified"
-     * and those others with invaled epicentral distances end up in "invalidDistance".
+     * and those with invaled epicentral distances end up in "invalidDistance".
      */
     private void modifySacs() throws IOException {
         // System.out.println("Modifying sac files in "
