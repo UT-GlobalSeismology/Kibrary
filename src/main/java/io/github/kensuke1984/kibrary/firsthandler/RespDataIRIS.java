@@ -19,80 +19,82 @@ import java.time.format.DateTimeFormatter;
 public class RespDataIRIS {
 
     private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
-	private String url;
-	private String responseFile;
+    private String url;
+    private String responseFile;
 
-	/**
-	 * Constructor with options for IRIS DMC IRISWS RESP Web Service
-	 *
-	 * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-	 *      Service Documentation
-	 * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
-	 * @param station  (String) Station code.
-	 * @param location (String) Location code. Use "--" instead of spaces.
-	 * @param channel  (String) Channel code.
-	 * @param time     (LocalDateTime) Find the response for the given time.
-	 */
-	public RespDataIRIS(String network, String station, String location, String channel, LocalDateTime time) {
+    /**
+     * Constructor with options for IRIS DMC IRISWS RESP Web Service
+     *
+     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
+     *      Service Documentation
+     * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
+     * @param station  (String) Station code.
+     * @param location (String) Location code. Set "" if blank.
+     * @param channel  (String) Channel code.
+     * @param time     (LocalDateTime) Find the response for the given time.
+     */
+    public RespDataIRIS(String network, String station, String location, String channel, LocalDateTime time) {
 
-		// set url here (version 2021-08-23).
-		url = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
-				+ channel + "&" + "loc=" + location + "&" + "time=" + time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String requestLocation = (location.isEmpty() ? "--" : location);
 
-		// file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU.--.BHE"
-		responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
+        // set url here (version 2021-08-23).
+        url = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
+                + channel + "&" + "loc=" + requestLocation + "&" + "time=" + time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
-	}
+        // file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU..BHE"
+        responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
 
-	/**
-	 * Method downloading the Station information from IRIS/WS.
-	 * Output directory is here.
-	 */
-	public void downloadRespData() {
-		Path outPath = Paths.get(responseFile);
+    }
 
-		try {
-			URL IRISWSURL = new URL(url);
-			long size = 0L;
+    /**
+     * Method downloading the Station information from IRIS/WS.
+     * Output directory is here.
+     */
+    public void downloadRespData() {
+        Path outPath = Paths.get(responseFile);
 
-			size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-			System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+        try {
+            URL IRISWSURL = new URL(url);
+            long size = 0L;
 
-		} catch (IOException e) {
-			System.out.println(e);
-		}
-	}
+            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+            System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
-	/**
-	 * Method downloading the Station information from IRIS/WS.
-	 * @param outDir (Path) Output directory
-	 */
-	public void downloadRespData (Path outDir) {
-		Path outPath = outDir.resolve(responseFile); // 　出力のディレクトリの指定
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
 
-		try {
-			URL IRISWSURL = new URL(url);
-			long size = 0L;
+    /**
+     * Method downloading the Station information from IRIS/WS.
+     * @param outDir (Path) Output directory
+     */
+    public void downloadRespData (Path outDir) {
+        Path outPath = outDir.resolve(responseFile); // 　出力のディレクトリの指定
 
-			size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
-			System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+        try {
+            URL IRISWSURL = new URL(url);
+            long size = 0L;
 
-		} catch (IOException e) {
-			System.out.println(e);
-		}
-	}
+            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+            System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
 
 
-	/**
-	 * This main method is for debug.
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
+    /**
+     * This main method is for debug.
+     * @param args
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
 
-		LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
-		RespDataIRIS rd = new RespDataIRIS("II", "PFO", "00", "BHE", time);
-		rd.downloadRespData();
-	}
+        LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
+        RespDataIRIS rd = new RespDataIRIS("II", "PFO", "00", "BHE", time);
+        rd.downloadRespData();
+    }
 
 }

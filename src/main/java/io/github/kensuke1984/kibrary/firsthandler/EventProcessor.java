@@ -179,6 +179,7 @@ class EventProcessor implements Runnable {
      * <li> check whether the channel is supported by this class; if not, skip the SAC file </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
+     * <li> check whether the unit is velocity (M/S); if not, throw away the new SAC file </li>
      * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
      * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
@@ -547,7 +548,9 @@ class EventProcessor implements Runnable {
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
                         samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) +
-                        " -f " + inputPath.toAbsolutePath() + " -s lin -r cs -u vel";
+                        " -n " + headerMap.get(SACHeaderEnum.KNETWK) + " -l " + headerMap.get(SACHeaderEnum.KHOLE) +
+                        " -f " + inputPath.toAbsolutePath() +
+                        " -s lin -r cs -u vel";
 //        System.out.println("runevalresp: "+ command);// 4debug
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(OUTPUT_PATH.toFile());

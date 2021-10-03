@@ -135,10 +135,10 @@ public class MseedDownload {
             return;
         }
 
-        // set information based on SAC File name extracted from MiniSeed
+        // set information based on SAC File name created by mseed2sac
         String network = sacInfo[0];
         String station = sacInfo[1];
-        String location = (sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
+        String location = sacInfo[2]; //(sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
         String channel = sacInfo[3];
 
         StationInformationIRIS stationInfo = new StationInformationIRIS(network, station, location, channel, startTime, endTime);
