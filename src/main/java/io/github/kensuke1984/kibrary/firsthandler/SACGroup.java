@@ -158,7 +158,7 @@ class SACGroup {
             // sacfilename to be joined (file1)
             SACFileName joinSacFileName = sacFileNameList[i];
             Path joinSacPath = workPath.resolve(joinSacFileName.toString());
-            // System.out.println("joining " + joinSacFile);
+            System.err.println("joining " + joinSacFileName + " to " + currentEndTime); // 4debug
 
             // つなげるsacfile(file1)の読み込み
             Map<SACHeaderEnum, String> headerMap1 = SACUtil.readHeader(joinSacPath);

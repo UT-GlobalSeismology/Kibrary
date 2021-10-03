@@ -42,7 +42,7 @@ class SACFileName implements Comparable<SACFileName> {
         // sec/10000 = parts[5]; jday = parts[1];
         startTime = LocalDateTime
                 .of(Integer.parseInt(parts[0]), 1, 1, Integer.parseInt(parts[2]), Integer.parseInt(parts[3]),
-                        Integer.parseInt(parts[4]), Integer.parseInt(parts[1]) * 100 * 1000)
+                        Integer.parseInt(parts[4]), Integer.parseInt(parts[5]) * 100 * 1000)
                 .withDayOfYear(Integer.parseInt(parts[1]));
         // System.out.println(msec+" "+millisec);
         network = parts[6];
