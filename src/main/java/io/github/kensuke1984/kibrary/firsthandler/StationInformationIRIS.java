@@ -45,7 +45,7 @@ public class StationInformationIRIS {
 	private LocalDateTime endTime;
 
 	/**
-	 * Constructor with options for IRIS DMC FDSNWS STATION Web Service
+	 * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
 	 *
 	 * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
 	 *      Service Documentation
@@ -59,6 +59,7 @@ public class StationInformationIRIS {
 	        LocalDateTime startTime, LocalDateTime endTime) {
 
 		// set url here (version 2021-08-23) Requested Level is "Channel."
+	    // TODO: virtual networks may not be accepted
 		url = STATION_URL + "net=" + network + "&" + "sta=" + station
 				+ "&" + "loc=" + location + "&" + "cha=" + channel
 				+ "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
@@ -84,6 +85,7 @@ public class StationInformationIRIS {
 	/**
 	 * Method downloading the Station information from IRIS/WS.
 	 * Output directory is here.
+     * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU.--.BHE"
 	 */
 	public void downloadStationInformation() {
 		Path outPath = Paths.get(stationFile); // 出力のディレクトリの指定
@@ -102,6 +104,7 @@ public class StationInformationIRIS {
 
 	/**
 	 * Method downloading the Station information from IRIS/WS.
+     * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU.--.BHE"
 	 * @param outDir (Path) Output directory
 	 */
 	public void downloadStationInformation(Path outDir) {
@@ -122,7 +125,7 @@ public class StationInformationIRIS {
 
 	/**
 	 * Methods reading the station information and setting them as local variables.
-	 * @param outDir (Path) Directory including Station information file (e.g., STATION.II.PFO.00.BHE)
+	 * @param outDir (Path) Directory including Station information file
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
@@ -168,7 +171,7 @@ public class StationInformationIRIS {
 
 	/**
 	 * Methods reading the station information and setting them as local variables.
-	 * Input directory including Station information file (e.g., STATION.II.PFO.00.BHE) is here.
+	 * Input directory including Station information file is here.
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */

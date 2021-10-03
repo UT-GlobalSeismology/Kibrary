@@ -3,7 +3,8 @@ package io.github.kensuke1984.kibrary.firsthandler;
 import java.time.LocalDateTime;
 
 /**
- * Name of interediate SAC files used in firsthandler
+ * Class for handling tasks related to the name of SAC files.
+ * This class is only for SEED-type SAC filenames used as intermediate files in {@link FirstHandler} or {@link DataKitchen}.
  *
  * @author Kensuke Konishi
  * @version 0.0.5.1
@@ -53,10 +54,11 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
-     * @return PS.OGS.(locationID).BHN.D.SAC
+     * Creates a new SAC file name for the resulting file after being merged.
+     * @return (String) SAC file name of the form "network.station.locationID.channel.qualityControl.SAC"
      */
     String getRelationString() {
-        return network + "." + station + "." + locationID + "." + channel + "." + qualityControl + ".SAC"; //name.substring(23);
+        return network + "." + station + "." + locationID + "." + channel + "." + qualityControl + ".SAC";
     }
 
     /**
@@ -74,7 +76,7 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
-     * @return network.station.locationID.BHN.D.SAC
+     * @return network.station.locationID.BHN.(D).SAC
      */
     String getQualityControl() {
         return qualityControl;
@@ -116,10 +118,14 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
-     * ひとつなぎのファイルの一部か 分割されたものをつなげる際の判断基準
+     * Judges whether two SAC files are parts of what is supposed to be in a single SAC file.
+     * Judgements will be made based on the SAC filenames; files with the same
+     * network, station, locationID, channel, and qualityControl
+     * will be judged as related.
      *
-     * @param sacFileName name to check
-     * @return if the sacFileName ha something to do with this
+     * @param sacFileName (SACFileName) The SAC file to be checked.
+     * This file will be compared with the SAC file given to the constructor of this class.
+     * @return (boolean) true if the two SAC files are related.
      */
     boolean isRelated(SACFileName sacFileName) {
         return sacFileName.channel.equals(channel) && sacFileName.network.equals(network) &&

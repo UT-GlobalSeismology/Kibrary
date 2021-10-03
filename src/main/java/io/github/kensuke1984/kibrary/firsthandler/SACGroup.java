@@ -1,18 +1,23 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.util.sac.SACUtil;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * rdseedからできた 1993.052.07.01.12.4000.PS.OGS.(locationID).BHN.D.SAC
- * の用なファイルのうち、同じnetwork, station, locationID, channel, qualityID のもののgroup
+ * の様なファイルのうち、同じnetwork, station, locationID, channel, qualityID のもののgroup
  *
  * @author Kensuke Konishi
  * @version 0.0.6.2
@@ -56,6 +61,15 @@ class SACGroup {
     }
 
     /**
+     * Gets name of root SAC file of this group.
+     *
+     * @return (String) Name of root SAC file of this group.
+     */
+    public String getRootSacFileName() {
+        return rootSacFileName.toString();
+    }
+
+    /**
      * SacSetに{@link SACFileName}を加える 既に同じものが入っていたり
      * {@link SACFileName#isRelated(SACFileName)}がfalseの場合追加しない
      *
@@ -80,7 +94,9 @@ class SACGroup {
     }
 
     /**
-     * mergeしていく。 sortした後のファイルを一つ一つつなげていく だめな条件が出たファイルは関連するファイルも含めてゴミ箱行き
+     * Merges the series of related SAC files.
+     * The SAC files will first be sorted based on {@link SACFileName#compareTo(SACFileName)}.
+     * sortした後のファイルを一つ一つつなげていく だめな条件が出たファイルは関連するファイルも含めてゴミ箱行き
      * name1にname2をくっつける。 name1とname2が離れすぎていると そこでだめになる その一連のファイルもだめ
      *
      * @return うまくつなげられたかどうか
@@ -89,48 +105,62 @@ class SACGroup {
         // System.out.println("merging");
         SACFileName[] sacFileNameList = nameSet.toArray(new SACFileName[0]);
         // sort the sacFileNameList
-        Arrays.sort(sacFileNameList);
+        Arrays.sort(sacFileNameList); // files will be sorted in order of starttime
 
-        // 基準となるSacを読み込む
+
+        // <<<<まず基準となるSac(file0)を読み込む>>>>
+
+        // read header and data of file0
         Path standardSacPath = workPath.resolve(sacFileNameList[0].toString());
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(standardSacPath);
         double[] standardSacData = SACUtil.readSACData(standardSacPath);
+
+        // read delta of file0
         double delta = Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA));
         long deltaInMillis = Math.round(1000 * delta);
-        // currentEndTimeとスタート時刻がmaxGap(msec) を超える波形はくっつけられない
+        // calculate the largest acceptable gap. currentEndTimeとスタート時刻がmaxGap(msec) を超える波形はくっつけられない
         long maxGap = deltaInMillis * maxGapNumber;
         // half length of delta0 (msec)
         long halfDelta = deltaInMillis / 2;
+        // read npts of file0
         int currentNpts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-        // つなげていく波形
+
+        // the output waveform
         List<Double> sacdata = new ArrayList<>(currentNpts);
 
-        // timewindow length (msec)
+        // timewindow length of file0 (msec)
         long timelength = deltaInMillis * (currentNpts - 1);
-        double e0 = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
-        // System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
+        // b value of file0 (msec)
         double currentB = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
-        // b value (msec)
         long bInMillis = Math.round(currentB * 1000);
         // System.out.println(currentB*1000+" "+e0);
-        // e value (msec)
+        // e value of file0 (msec)
+        double e0 = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
         long eInMillis = Math.round(e0 * 1000);
+        // System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
         // System.out.println("b, e "+bInMillis+", "+eInMillis);
         // current start time of waveform
         LocalDateTime currentStartTime = rootSacFileName.getStartTime().plus(bInMillis, ChronoUnit.MILLIS);
         // current end time of waveform startTime+ timelength0
         LocalDateTime currentEndTime = currentStartTime.plus(timelength, ChronoUnit.MILLIS);
 
+        // add the waveform of file0 to the output waveform
         for (int j = 0; j < currentNpts; j++)
             sacdata.add(standardSacData[j]);
 
+
+        // <<<<以下、file0につなげていくfile1, file2, file3, ... を読み込んでつなげていく>>>>
+
+        if (sacFileNameList.length > 1) {
+            System.err.println("merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
+        }
         for (int i = 1; i < sacFileNameList.length; i++) {
-            // sacfilename to be joined
+            // sacfilename to be joined (file1)
             SACFileName joinSacFileName = sacFileNameList[i];
             Path joinSacPath = workPath.resolve(joinSacFileName.toString());
             // System.out.println("joining " + joinSacFile);
 
-            // つなげるsacfileの読み込み
+            // つなげるsacfile(file1)の読み込み
             Map<SACHeaderEnum, String> headerMap1 = SACUtil.readHeader(joinSacPath);
             int npts = Integer.parseInt(headerMap1.get(SACHeaderEnum.NPTS));
             // double e = Double.parseDouble(headerMap1.get(SacHeaderEnum.E));
@@ -154,6 +184,7 @@ class SACGroup {
             // 時間差がmaxGapより大きい場合NG TODO 将来的に0補完後捨てる？
             if (maxGap < timeGap) return false;
 
+            // read data of file1
             // System.out.println("yes merging");
             double[] data = SACUtil.readSACData(joinSacPath);
 
@@ -161,19 +192,20 @@ class SACGroup {
             // 半分より後の場合はjoinsacの一番端をcurrentsacのとなりにくっつける
             // 半分より前の場合は調整してくっつける
             if (halfDelta < timeGap) {
-                // joinsacがhalfDeltaより後に始まっている場合 そのままくっつける
+                // joinsacがhalfDeltaより後に始まっている場合 そのままくっつける TODO 0埋めしなくていいの？ 500 msまでなら時間ずれちゃってもいいやってこと？
                 for (int j = 0; j < npts; j++)
                     sacdata.add(data[j]);
                 // currentE += npts * delta;
                 eInMillis += npts * deltaInMillis;
                 currentNpts += npts;
-            } else {
+            } else { // timeGap < halfDelta ; 重複あり
                 // 小さい場合
                 // int gap = (int) (1.5 * delta0 * 1000 - timeGap) / 1000;
-                // currentsacの終了時刻のdelta後から joinsacのstartの時間差(msec)
+                // joinsacのstart から currentsacの終了時刻のdelta後 までの時間差(msec)
                 long gap = deltaInMillis - timeGap;
                 // joinsacのstartから何msec目がcurrentsacの隣の値になるか
                 int gapI = Math.round(gap / deltaInMillis);
+                // 重複しない部分を追加していく
                 for (int j = gapI; j < npts; j++)
                     sacdata.add(data[j]);
                 // e0の更新
@@ -187,8 +219,8 @@ class SACGroup {
         // System.out.println(mergedSacFileName);
 
         if (sacdata.size() != currentNpts) {
-            System.err.print("unexpected happened npts' are different ");
-            System.err.println(sacdata.size() + " " + currentNpts);
+            System.err.print("!! unexpected happened at merge, npts' are different ");
+            System.err.println(sacdata.size() + " " + currentNpts + " : " + workPath.getFileName() + " - " + rootSacFileName.toString());
             return false;
         }
 
@@ -196,10 +228,12 @@ class SACGroup {
         long timeDiff = (sacdata.size() - 1) * deltaInMillis + bInMillis - eInMillis;
         if (5 < timeDiff || timeDiff < -5) {
             // if ((sacdata.size()-1)*deltaInMillis+bInMillis != eInMillis) {
-            System.err.print("unexpected happened currentE' are different ");
-            System.err.println((sacdata.size() - 1) * deltaInMillis + bInMillis + " " + eInMillis);
+            System.err.print("!! unexpected happened at merge, currentE's are different ");
+            System.err.println((sacdata.size() - 1) * deltaInMillis + bInMillis + " " + eInMillis
+                    + " : " + workPath.getFileName() + " - " + rootSacFileName.toString());
             if (100 < timeDiff || timeDiff < -100) return false;
         }
+
         double e = eInMillis / 1000.0;
         // System.out.println(e+" "+eInMillis);
         headerMap.put(SACHeaderEnum.NPTS, Integer.toString(sacdata.size()));

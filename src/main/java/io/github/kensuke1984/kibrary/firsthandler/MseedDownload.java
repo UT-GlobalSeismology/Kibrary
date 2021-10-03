@@ -1,6 +1,8 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -27,6 +29,7 @@ public class MseedDownload {
 
     private GlobalCMTID id;
     private String networks;
+    private String channels;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
@@ -34,9 +37,10 @@ public class MseedDownload {
     private final String MSEED_FILENAME;
     private final Path MSEED_PATH;
 
-    public MseedDownload (GlobalCMTID id, String networks, int headAdjustment, int footAdjustment, Path outPath) {
+    public MseedDownload (GlobalCMTID id, String networks, String channels, int headAdjustment, int footAdjustment, Path outPath) {
         this.id = id;
         this.networks = networks;
+        this.channels = channels;
         LocalDateTime cmtTime = id.getEvent().getCMTTime();
         startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
@@ -49,7 +53,7 @@ public class MseedDownload {
     }
 
     /**
-     * download process for all data needed in one event
+     * A download process for all data needed in one event (Mseed file which is opened to SAC files + Station files + Resp files)
      * @throws IOException
      */
     public void downloadAll() throws IOException {
@@ -65,12 +69,12 @@ public class MseedDownload {
     }
 
     /**
-     * downloads Mseed file
+     * Downloads Mseed file using specifications set by the constructor.
      * @throws IOException
      */
     private void downloadMseed() throws IOException {
-        String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=BH?&starttime=" + toLine(startTime) +
-                "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
+        String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
+                "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
         long size = 0L;
 
@@ -78,24 +82,40 @@ public class MseedDownload {
         System.err.println("Downloaded : " + id + " - " + size + " bytes");
     }
 
+    /**
+     * Turns a date and time into a format accepted by FDSNWS
+     * @param time (LocalDateTime)
+     * @return (String) time in the format accepted by FDSNWS
+     */
     private String toLine(LocalDateTime time) {
         return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     /**
-     * mseed2sac を行ったときの出力を返す
-     * @return (boolean)
+     * Runs mseed2sac.
+     * @return (boolean) true if mseed2sac succeeds
      * @throws IOException
      */
     private boolean mseed2sac() throws IOException {
         String command = "mseed2sac " + MSEED_FILENAME;
-        ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); //  runevalresp in MseedSAC.javaを参考にした
+        ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
-        pb.directory(EVENT_DIR.getAbsoluteFile());
+        pb.directory(EVENT_DIR.getAbsoluteFile()); // this will be the working directory of the command
 //        System.out.println("working directory is: " + pb.directory()); //4debug
         try {
+            pb.redirectErrorStream(true); // the standard error stream will be redirected to the standard output stream
             Process p = pb.start();
-            return p.waitFor() == 0;
+
+            // The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
+            // Even if you want to stop printing the output from mseed2sac, just erase the line with println() and nothing else.
+            String str;
+            BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            while((str = brstd.readLine()) != null) { // reading the buffer
+                System.out.println(str); // Comment out only this single line if you don't want the output.
+            }
+            brstd.close();
+
+            return p.waitFor() == 0; // wait until the command is finished
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,8 +123,9 @@ public class MseedDownload {
     }
 
     /**
-     * downloads Station file and Resp file
-     * @param sacPath
+     * Downloads Station file and Resp file for a given SAC file that already exists.
+     * The download may be skipped if the SAC file name does not take a valid form.
+     * @param sacPath (Path) Path of an existing SAC file
      * @throws IOException
      */
     private void downloadMetadata(Path sacPath) throws IOException {

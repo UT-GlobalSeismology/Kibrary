@@ -29,6 +29,7 @@ public class DataLobby implements Operation {
     private Path workPath;
 
     private String networks;
+    private String channels;
     private int headAdjustment;
     private int footAdjustment;
 
@@ -65,6 +66,8 @@ public class DataLobby implements Operation {
             pw.println("##Network names for request, listed using commas, must be defined");
             pw.println("##Note that it will make a request for all stations in the networks.");
             pw.println("#networks II,IU");
+            pw.println("##Channels to be requested, listed using commas, from [BH?,HH?,BL?,HL?] (BH?)");
+            pw.println("#channels BH?,HH?,BL?,HL?");
             pw.println("##Adjustment at the head [min], must be integer and defined");
             pw.println("#headAdjustment -10");
             pw.println("##Adjustment at the foot [min], must be integer and defined");
@@ -103,6 +106,7 @@ public class DataLobby implements Operation {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         networks = property.getProperty("networks"); //.split("\\s+");
+        channels = property.getProperty("channels"); //.split("\\s+");
         headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
         footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
 
@@ -121,6 +125,7 @@ public class DataLobby implements Operation {
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("networks")) throw new RuntimeException("No information about networks");
+        if (!property.containsKey("channels")) property.setProperty("channels", "BH?");
         if (!property.containsKey("footAdjustment"))
             throw new RuntimeException("No information about the foot adjustment");
         if (!property.containsKey("headAdjustment"))
@@ -164,7 +169,7 @@ public class DataLobby implements Operation {
         requestedIDs.forEach(id -> {
             try {
                 System.err.println("Downloading files for " + id + " ...");
-                MseedDownload mseedDL = new MseedDownload(id, networks, headAdjustment, footAdjustment, outPath);
+                MseedDownload mseedDL = new MseedDownload(id, networks, channels, headAdjustment, footAdjustment, outPath);
                 mseedDL.downloadAll();
             } catch (Exception e) {
                 System.err.println("Download for " + id + " failed.");

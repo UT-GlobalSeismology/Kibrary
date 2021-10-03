@@ -1,7 +1,5 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,6 +7,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Merging of SAC files
@@ -43,15 +43,19 @@ class UnevenSACMerger {
      *
      * @param workPath
      */
-    UnevenSACMerger(Path workPath) throws IOException {
+    UnevenSACMerger(Path workPath, Path doneMergePath, Path unMergedPath) throws IOException {
         this.workPath = workPath;
-        unevenBoxPath = workPath.resolve("mergedUnevendata");
-        notMergedBoxPath = workPath.resolve("nonMergedUnevendata");
+        unevenBoxPath = doneMergePath;
+        notMergedBoxPath = unMergedPath;
         listUpSacFiles();
     }
-
+    UnevenSACMerger(Path workPath) throws IOException {
+        this(workPath, workPath.resolve("mergedUnevendata"), workPath.resolve("nonMergedUnevendata"));
+    }
     /**
-     * 作業フォルダの下から.SACファイルを拾う
+     * Obtains all files with the suffix .SAC under the working directory,
+     * and groups up files by {@link #createGroups(SACFileName[])}.
+     * @throws IOException
      */
     private void listUpSacFiles() throws IOException {
         // System.out.println("Listing up sac files");
@@ -68,13 +72,27 @@ class UnevenSACMerger {
     }
 
     /**
-     * すべての {@link #sacGroupSet}をmergeする その後ファイルはゴミ箱へ
+     * Groups up SAC files when the result of {@link SACFileName#isRelated(SACFileName)} is true.
+     * @param names (SACFileName[]) List of SAC files to be sorted into groups.
+     */
+    private void createGroups(SACFileName[] names) {
+        for (SACFileName name : names)
+            // 既存のグループに振り分けられなかったら新しいグループを作る
+            if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SACGroup(workPath, name));
+    }
+
+    /**
+     * すべての {@link #sacGroupSet}をmergeする。失敗した場合、ファイルはゴミ箱へ。
      */
     void merge() {
         sacGroupSet.forEach(group -> {
             try {
-                if (!group.merge()) group.move(notMergedBoxPath);
+                if (!group.merge()) {
+                    System.err.println("!! failed to merge : " + workPath.getFileName() + " - " + group.getRootSacFileName());
+                    group.move(notMergedBoxPath);
+                }
             } catch (Exception e) {
+                System.err.println("!! failed to merge : " + workPath.getFileName() + " - " + group.getRootSacFileName());
                 group.move(notMergedBoxPath);
             }
         });
@@ -94,16 +112,6 @@ class UnevenSACMerger {
                     }
                 });
 
-    }
-
-    /**
-     * 名前に従い、関連するファイルのグループに分ける {@link SACFileName#isRelated(SACFileName)}
-     * がtrue同士で分ける
-     */
-    private void createGroups(SACFileName[] names) {
-        for (SACFileName name : names)
-            // 既存のグループに振り分けられなかったら新しいグループを作る
-            if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SACGroup(workPath, name));
     }
 
 }
