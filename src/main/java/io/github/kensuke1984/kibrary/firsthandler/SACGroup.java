@@ -153,6 +153,7 @@ class SACGroup {
 
         if (sacFileNameList.length > 1) {
             System.err.println("++ merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
+            System.err.println(rootSacFileName.getStartTime() + "    " + currentStartTime + "  " + timelength);
         }
         for (int i = 1; i < sacFileNameList.length; i++) {
             // sacfilename to be joined (file1)
