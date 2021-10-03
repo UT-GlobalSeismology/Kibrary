@@ -218,7 +218,7 @@ class EventProcessor implements Runnable {
 
                 // if the unit used in the Station file is not M/S, throw away the new SAC file
                 // TODO: is this criterion valid?
-                if (!sii.getScaleunits().equals("M/S")) {
+                if (!sii.getScaleunits().equals("M/S") && !sii.getScaleunits().equals("m/s")) {
                     System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
