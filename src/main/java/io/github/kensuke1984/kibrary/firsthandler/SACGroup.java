@@ -140,7 +140,7 @@ class SACGroup {
         // System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
         // System.out.println("b, e "+bInMillis+", "+eInMillis);
         // current start time of waveform
-        LocalDateTime currentStartTime = rootSacFileName.getStartTime().plus(bInMillis, ChronoUnit.MILLIS);
+        LocalDateTime currentStartTime = sacFileNameList[0].getStartTime().plus(bInMillis, ChronoUnit.MILLIS);
         // current end time of waveform startTime+ timelength0
         LocalDateTime currentEndTime = currentStartTime.plus(timelength, ChronoUnit.MILLIS);
 
@@ -153,7 +153,7 @@ class SACGroup {
 
         if (sacFileNameList.length > 1) {
             System.err.println("++ merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
-            System.err.println(rootSacFileName.getStartTime() + "    " + currentStartTime + "  " + timelength);
+            System.err.println(sacFileNameList[0].getStartTime() + "    " + currentStartTime + "  " + timelength); // 4debug
         }
         for (int i = 1; i < sacFileNameList.length; i++) {
             // sacfilename to be joined (file1)
