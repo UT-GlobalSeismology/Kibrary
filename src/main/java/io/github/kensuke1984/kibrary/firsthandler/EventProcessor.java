@@ -727,6 +727,8 @@ class EventProcessor implements Runnable {
             for (SacTriplet otherTriplet : sacTripletSet) {
                 if (otherTriplet.isDismissed()) continue;
 
+                // if the two refer to the same triplet, skip
+                if (oneTriplet.isItself(otherTriplet)) continue;
                 // if the two triplets are of different stations, skip
                 if (!oneTriplet.atSameStation(otherTriplet)) continue;
                 //if one is {RT} and the other is {Z}, leave both

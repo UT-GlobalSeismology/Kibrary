@@ -111,6 +111,11 @@ public class SacTriplet {
         }
     }
 
+    public boolean isItself (SacTriplet other) {
+        return other.getNetwork().equals(network) && other.getStation().equals(station) &&
+                other.getLocation().equals(location) && other.getInstrument().equals(instrument);
+    }
+
     public boolean atSameStation (SacTriplet other) {
         return other.getNetwork().equals(network) && other.getStation().equals(station);
     }
