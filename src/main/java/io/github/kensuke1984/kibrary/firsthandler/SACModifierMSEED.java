@@ -248,4 +248,10 @@ class SACModifierMSEED {
         this.headerMap = SACUtil.readHeader(MODIFIED_PATH);
     }
 
+    /**
+     * @return (Path) Modified SAC path
+     */
+    Path getModifiedPath() {
+        return MODIFIED_PATH;
+    }
 }

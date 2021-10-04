@@ -106,4 +106,18 @@ public class RespDataFile {
         }
     }
 
+    /**
+     * @return (String) Name of RESP file
+     */
+    public String getRespFile() {
+        return responseFile;
+    }
+
+    /**
+     * @return (String) Name of SPECTRA file
+     */
+    public String getSpectraFile() {
+        return spectraFile;
+    }
+
 }

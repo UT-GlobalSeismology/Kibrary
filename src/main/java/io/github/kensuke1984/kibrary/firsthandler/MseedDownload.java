@@ -17,7 +17,18 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
- * Downloads mseed file and additional metadata for a given event
+ * Downloads mseed file, opens it, and downloads necessary metadata for a given event.
+ * <p>
+ * Note the convention of resulting SAC file names:
+ * <ul>
+ * <li> MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC" </li>
+ * <li> SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC" </li>
+ * </ul>
+ * <p>
+ * This class requires that mseed2sac exists in your PATH.
+ * The software
+ * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/mseed2sac/>mseed2sac</a>
+ * can be found at IRIS.
  *
  * @author Keisuke Otsuru
  * @version 2021/09/14

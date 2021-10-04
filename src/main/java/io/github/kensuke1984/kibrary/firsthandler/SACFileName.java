@@ -18,22 +18,31 @@ class SACFileName implements Comparable<SACFileName> {
      */
     private String network;
     /**
-     * components BHE BHZとか
+     * station name
      */
-    private String channel;
-    /**
-     * quality control marker D=Data of Undetermined state, M=Merged Data, R=Raw
-     * waveform Data, Q=QC'd data
-     */
-    private String qualityControl;
+    private String station;
     /**
      * location IDの部分
      */
     private String location;
     /**
-     * station name
+     * channel BHE BHZ とか
      */
-    private String station;
+    private String channel;
+    /**
+     * component E Z R T とか
+     */
+    private String component;
+    /**
+     * instrument BH HL とか
+     */
+    private String instrument;
+    /**
+     * quality control marker D=Data of Undetermined state, M=Merged Data, R=Raw
+     * waveform Data, Q=QC'd data
+     */
+    private String qualityControl;
+
 
     SACFileName(String sacFileName) {
         name = sacFileName;
@@ -69,6 +78,20 @@ class SACFileName implements Comparable<SACFileName> {
             location = parts[2];
             channel = parts[3];
             qualityControl = parts[4];
+            component = channel.substring(2); // the 3rd letter of channel name
+            instrument = channel.substring(0, 2); // the 1st&2nd letters of channel name
+            break;
+        case "X":
+        case "Y":
+        case "Z":
+        case "R":
+        case "T":
+            network = parts[0];
+            station = parts[1];
+            location = parts[2];
+            instrument = parts[3];
+            qualityControl = parts[4];
+            component = parts[5];
             break;
 
         }
@@ -100,10 +123,55 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
+     * Creates a new SAC file name for the resulting file after being deconvolved.
+     * Components "1" and "E" will be renamed to "X", and "2" and "N" to "Y".
+     * @return (String) SAC file name of the form "network.station.location.instrument.qualityControl.[XYZ]"
+     */
+    String getDeconvolvedFileName() {
+        String newComponent = "";
+        switch(component) {
+        case "1":
+        case "E":
+            newComponent = "X";
+            break;
+        case "2":
+        case "N":
+            newComponent = "Y";
+            break;
+        case "Z":
+            newComponent = "Z";
+            break;
+        }
+        return network + "." + station + "." + location + "." + instrument + "." + qualityControl + "." + newComponent;
+    }
+
+    /**
+     * Returns SAC file name corresponding to the specified component.
+     * @return (String) SAC file name of the form "network.station.location.instrument.qualityControl.[specified component]"
+     */
+    String getNameWithComponent(String specifiedComponent) {
+        return network + "." + station + "." + location + "." + instrument + "." + qualityControl + "." + specifiedComponent;
+    }
+
+    /**
      * @return (network).station.location.BHN.D.SAC
      */
     String getNetwork() {
         return network;
+    }
+
+    /**
+     * @return network.(station).location.BHN.D.SAC
+     */
+    String getStation() {
+        return station;
+    }
+
+    /**
+     * @return network.station.(location).BHN.D.SAC
+     */
+    String getLocation() {
+        return location;
     }
 
     /**
@@ -121,17 +189,17 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
-     * @return network.station.(location).BHN.D.SAC
+     * @return network.station.location.BH(N).D.SAC
      */
-    String getLocation() {
-        return location;
+    String getComponent() {
+        return component;
     }
 
     /**
-     * @return network.(station).location.BHN.D.SAC
+     * @return network.station.location.(BH)N.D.SAC
      */
-    String getStation() {
-        return station;
+    String getInstrument() {
+        return instrument;
     }
 
     LocalDateTime getStartTime() {

@@ -16,18 +16,19 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
- * Class for extracting a mseed file. It creates SAC files from the mseed file.
+ * Class for creating a dataset, for one event, that can be used in the inversion process.
+ * An event directory with SAC files, STATION files, and RESP files must be given as input.
  * <p>
- * This class requires that mseed2sac, evalresp and sac exists in your PATH.
+ * This class requires that evalresp and sac exists in your PATH.
  * The software
- * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/mseed2sac/>mseed2sac</a>,
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/>evalresp</a> and
- * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found in IRIS.
+ * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found at IRIS.
  *
- * @author Kenji Kawai
+ * @author Keisuke Otsuru
  * @version 0.1.1
  */
 class EventProcessor implements Runnable {
+
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -69,16 +70,23 @@ class EventProcessor implements Runnable {
 
     private Path doneModifyPath;
     private Path doneMergePath;
-    private Path doneDeconvolutePath;
+    private Path doneDeconvolvePath;
     private Path doneRotatePath;
     private Path unModifiedPath;
     private Path unMergedPath;
-    private Path unDeconvolutedPath;
+    private Path unDeconvolvedPath;
     private Path unRotatedPath;
     private Path invalidStationPath;
     private Path invalidDistancePath;
-    private Path duplicateChannelPath;
+    private Path duplicateComponentPath;
 
+    /**
+     * Constructor that specifies the input and output for this class.
+     *
+     * @param eventDir (EventFolder) The input event folder containing necessary SAC, STATION, and RESP files.
+     * @param outPath (Path) The path where the ouput event directory should be made under.
+     * @throws IOException
+     */
     EventProcessor(EventFolder eventDir, Path outPath) throws IOException {
         INPUT_DIR = eventDir;
         OUTPUT_PATH = outPath.resolve(eventDir.getName());
@@ -94,9 +102,9 @@ class EventProcessor implements Runnable {
         unModifiedPath = OUTPUT_PATH.resolve("unModified");
         invalidDistancePath = OUTPUT_PATH.resolve("invalidDistance");
 
-        doneDeconvolutePath = OUTPUT_PATH.resolve("doneDeconvolute");
-        unDeconvolutedPath = OUTPUT_PATH.resolve("unDeconvoluted");
-        duplicateChannelPath = OUTPUT_PATH.resolve("duplicateChannel");
+        doneDeconvolvePath = OUTPUT_PATH.resolve("doneDeconvolve");
+        unDeconvolvedPath = OUTPUT_PATH.resolve("unDeconvolved");
+        duplicateComponentPath = OUTPUT_PATH.resolve("duplicateComponent");
 
         doneRotatePath = OUTPUT_PATH.resolve("doneRotate");
         unRotatedPath = OUTPUT_PATH.resolve("unRotated");
@@ -104,9 +112,9 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * If true then all intermediate files will be removed at the end.
+     * Sets {@link #removeIntermediateFiles}.
      *
-     * @param b set {@link #removeIntermediateFiles}
+     * @param b (boolean) If this is true, then all intermediate files will be removed at the end.
      */
     void setRemoveIntermediateFiles(boolean b) {
         removeIntermediateFiles = b;
@@ -145,7 +153,7 @@ class EventProcessor implements Runnable {
 
         // instrumentation function deconvolution
  //     System.out.println("Enter: deconvolute");
-        deconvoluteSACMSEED();
+        deconvolveSacs();
         // rotation ((.N,.E) & (.1 & .2) -> (.R,.T))
         try {
             rotate();
@@ -255,13 +263,11 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * This method generates a SEED style SAC name from an MSEED style one.
-     * MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC"
-     * SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC"
-     * @param sacPath (Path) Path of SAC files whose name will be fixed.
-     * @return SACFileName object with the new SAC file name
+     * This method generates a new SAC file name containing the starting time of the internal data.
+     * @param sacPath (Path) Path of the SAC file whose name will be fixed.
+     * @param sacFile (SACFileName) The SAC file whose name will be fixed.
+     * @return (String) The new SAC file name
      * @throws IOException
-     * @author kenji
      */
     private String newSacName(Path sacPath, SACFileName sacFile) throws IOException {
 //        String[] oldFile = sacPath.getFileName().toString().split("\\.");
@@ -278,7 +284,7 @@ class EventProcessor implements Runnable {
 
 /*        String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
                 + "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
-                + "." + oldFile[3] + "." + "M" + ".SAC"; //TODO: the number of digits may be different from SEED style name
+                + "." + oldFile[3] + "." + "M" + ".SAC"; //the number of digits may be different from SEED style name
         return new SACFileName(newName);
 */
     }
@@ -325,10 +331,9 @@ class EventProcessor implements Runnable {
      * Sets SAC headers related to stations via StationInformation file,
      * and also interpolates SAC file with DELTA (which is currently 0.05 sec thus 20 Hz).
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
-     * @param sii (StationInformationIRIS) provides station information
+     * @param sif (StationInformationFile) Station information file.
      * @param blankLocation (boolean) true if the location is blank
      * @throws IOException
-     * @author kenji
      */
     private void fixHeaderAndDelta(Path sacPath, StationInformationFile sif, boolean blankLocation) throws IOException {
         double inclination = Double.parseDouble(sif.getDip()) + 90.0; // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
@@ -393,7 +398,7 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                // remove trends in SAC files; output in file with new name .SAC > .MOD
+                // remove trends in SAC files; output in file with new name .MRG > .MOD
                 sm.removeTrend();
 
                 // zero-pad SAC files that start after the event time
@@ -407,6 +412,7 @@ class EventProcessor implements Runnable {
                 if (!sm.checkEpicentralDistance(MINIMUM_EPICENTRAL_DISTANCE, MAXIMUM_EPICENTRAL_DISTANCE)) {
                     System.err.println("!! invalid epicentral distance : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     Utilities.moveToDirectory(sacPath, invalidDistancePath, true);
+                    Utilities.moveToDirectory(sm.getModifiedPath(), invalidDistancePath, true);
                     continue;
                 }
 
@@ -440,11 +446,13 @@ class EventProcessor implements Runnable {
 */
 
     /**
-     * Deconvolute instrument function for all the MOD files in the event folder.
-     * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
-     * mseed2sacで解凍したSACのlocation(KHOLE)ヘッダーに"-12345"が入る場合に対応 (2021-08-23)
+     * Deconvolve instrument function for all the MOD files in the event folder.
+     * The resulting SAC file names will have components of either "X", "Y", or "Z".
+     * If the deconvolution fails, files will be moved to "unDeconvolved".
+     * If there are both ["1" and "E"] or ["2" and "N"] files for the same instrument, one will be moved to "duplicateComponent".
+     * If everything succeeds, unneeded files will be moved to "doneDeconvolve".
      */
-    private void deconvoluteSACMSEED() {
+    private void deconvolveSacs() {
         // System.out.println("Conducting deconvolution");
 //        Path noSpectraPath = OUTPUT_PATH.resolve("noSpectraOrInvalidMOD");
 //        Path duplicateChannelPath = OUTPUT_PATH.resolve("duplicateChannel");
@@ -452,10 +460,14 @@ class EventProcessor implements Runnable {
 //        Path spectraBoxPath = OUTPUT_PATH.resolve("spectra");
 //        Path modBoxPath = OUTPUT_PATH.resolve("mod");
         try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
-            String resp = "RESP.";
-            String spectra = "SPECTRA.";
+//            String resp = "RESP.";
+//            String spectra = "SPECTRA.";
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
+
+                SACFileName modFile = new SACFileName(modPath.getFileName().toString());
+                RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
+/*
                 String channel = headerMap.get(SACHeaderEnum.KCMPNM);
                 String location = headerMap.get(SACHeaderEnum.KHOLE);
 //                if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
@@ -466,10 +478,9 @@ class EventProcessor implements Runnable {
                String spectraFileName =
                         spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
                                 location + "." + channel;
-                Path spectraPath = OUTPUT_PATH.resolve(spectraFileName);
-                Path respPath = INPUT_DIR.toPath().resolve(respFileName);
-                String component = channel.substring(2); // the 3rd letter of channel name
-                String instrument = channel.substring(0, 2); // the 1st&2nd letters of channel name
+*/
+                Path respPath = INPUT_DIR.toPath().resolve(respFile.getRespFile());
+                Path spectraPath = OUTPUT_PATH.resolve(respFile.getSpectraFile());
 /*                switch (componentName) {
                     case "BHE":
                     case "BLE":
@@ -505,62 +516,53 @@ class EventProcessor implements Runnable {
                         continue;
                 }
 */
-                String afterName = headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) +
-                        "." + instrument + "_" + location + "." + event + "." + component;
+                String afterName = modFile.getDeconvolvedFileName();
                 Path afterPath = OUTPUT_PATH.resolve(afterName);
 //                System.out.println("deconvolute: "+ afterPath); // 4debug
 
                 // run evalresp
-                // If it fails, throw MOD and RESP files to trash
+                // If it fails, throw MOD files to trash
                 if (!runEvalresp(headerMap, respPath)) {
                     System.err.println("!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
-                    // throw MOD.* files which cannot produce SPECTRA to noSpectra
-                    Utilities.moveToDirectory(modPath, unDeconvolutedPath, true);
-                    // throw RESP.* files which cannot produce SPECTRA to noSpectra
-//                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
+                    // throw MOD.* files which cannot produce SPECTRA to trash
+                    Utilities.moveToDirectory(modPath, unDeconvolvedPath, true);
                     continue;
                 }
 
-                // run seedsac
+                // execute deconvolution
                 try {
                     int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
 
-                    // duplication of channel  TODO: this may not be needed any more
+                    // duplication of channel  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
                     if (Files.exists(afterPath)) {
                         System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
-                        // throw *.MOD files which cannot produce SPECTRA to duplicateChannelPath
-                        Utilities.moveToDirectory(modPath, duplicateChannelPath, true);
-                        // throw SPECTRA files which cannot produce SPECTRA to duplicateChannelPath
-                        Utilities.moveToDirectory(spectraPath, duplicateChannelPath, true);
-                        // throw RESP files which cannot produce SPECTRA to duplicateChannelPath
-//                        Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
+                        // throw *.MOD files to duplicateComponentPath
+                        Utilities.moveToDirectory(modPath, duplicateComponentPath, true);
+                        // throw SPECTRA files to duplicateComponentPath
+                        Utilities.moveToDirectory(spectraPath, duplicateComponentPath, true);
                         continue;
                     }
 
                     SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+
                 } catch (Exception e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
-                    // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
-                    Utilities.moveToDirectory(modPath, unDeconvolutedPath, true);
-                    // throw SPECTRA files which cannot produce SPECTRA to noSpectraPath
-                    // In case that outdated RESP file cannot produce any SPECTRA file
+                    // throw *.MOD files to trash
+                    Utilities.moveToDirectory(modPath, unDeconvolvedPath, true);
+                    // throw SPECTRA files to trash
+                    // In case that outdated RESP file cannot produce any SPECTRA file,
                     // the existence condition is added (2021.08.21 kenji)
                     if(Files.exists(spectraPath)) {
-                        Utilities.moveToDirectory(spectraPath, unDeconvolutedPath, true);
+                        Utilities.moveToDirectory(spectraPath, unDeconvolvedPath, true);
                     }
-                    // throw RESP files which cannot produce SPECTRA to noSpectraPath
-//                    Utilities.moveToDirectory(respPath, noSpectraPath, true);
                     continue;
                 }
 
-                // move processed RESP files to respBox
-//                Utilities.moveToDirectory(respPath, respBoxPath, true);
+                // move processed SPECTRA files to archive
+                Utilities.moveToDirectory(spectraPath, doneDeconvolvePath, true);
 
-                // move processed SPECTRA files to spectraBox
-                Utilities.moveToDirectory(spectraPath, doneDeconvolutePath, true);
-
-                // move processed MOD files to modBox
-                Utilities.moveToDirectory(modPath, doneDeconvolutePath, true);
+                // move processed MOD files to archive
+                Utilities.moveToDirectory(modPath, doneDeconvolvePath, true);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -570,8 +572,8 @@ class EventProcessor implements Runnable {
 
     /**
      * Run external process "evalresp".
-     * Command: "evalresp station component year julian day minfreq maxfreq
-     * npts -s lin -r cs -u vel"
+     * Command: "evalresp station component year julianday minfreq maxfreq npts
+     * -n network -l location -f inputpath -s lin -r cs -u vel"
      *
      * @param headerMap (Map<SACHeaderEnum, String>) Header of sac file
      * @param inputPath (Path) Path of RESP file to be used, or the directory containing it.
@@ -600,42 +602,40 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * Converts/rotates all files with (.E, .N), (.1, .2) to (.R, .T).
-     * Input SAC file names should take the form "sta_net.inst_loc.event.comp".
-     * Output SAC file names will also take the form "sta_net.inst_loc.event.comp".
-     * Successful files are put in "doneRotateNE" the others in "unRotatedNE".
-     * The process from (.1, .2) to (.R, .T) is added (2021.08.21 kenji)
+     * Converts/rotates all files with (.X, .Y) to (.R, .T).
+     * Successful files are put in "doneRotate" the others in "unRotated".
      * @throws IOException
      */
     private void rotate() throws IOException {
 //        Path trashBox = OUTPUT_PATH.resolve("unRotated");
 //        Path neDir = OUTPUT_PATH.resolve("doneRotate");
 
-        try (DirectoryStream<Path> eStream = Files.newDirectoryStream(OUTPUT_PATH, "*.E")) {
-            for (Path ePath : eStream) {
-                String[] parts = ePath.getFileName().toString().split("\\.");
-                Path nPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".N");
-                Path rPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".R");
-                Path tPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".T");
+        try (DirectoryStream<Path> xStream = Files.newDirectoryStream(OUTPUT_PATH, "*.X")) {
+            for (Path xPath : xStream) {
+//                String[] parts = ePath.getFileName().toString().split("\\.");
+                SACFileName xFile = new SACFileName(xPath.getFileName().toString());
+                Path yPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("Y"));
+                Path rPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("R"));
+                Path tPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("T"));
 
-                // throw away .E file if its pair .N file does not exist
-                if (!Files.exists(nPath)) {
-                    System.err.println("!! pair .N file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + ePath.getFileName());
-                    Utilities.moveToDirectory(ePath, unRotatedPath, true);
+                // throw away .X file if its pair .Y file does not exist
+                if (!Files.exists(yPath)) {
+                    System.err.println("!! pair .Y file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + xFile.toString());
+                    Utilities.moveToDirectory(xPath, unRotatedPath, true);
                     continue;
                 }
-                boolean rotated = SACUtil.rotate(ePath, nPath, rPath, tPath);
+                boolean rotated = SACUtil.rotate(xPath, yPath, rPath, tPath);
                 if (rotated) {
-                    Utilities.moveToDirectory(nPath, doneRotatePath, true);
-                    Utilities.moveToDirectory(ePath, doneRotatePath, true);
+                    Utilities.moveToDirectory(xPath, doneRotatePath, true);
+                    Utilities.moveToDirectory(yPath, doneRotatePath, true);
                 } else {
-                    System.err.println("!! rotate failed : " + event.getGlobalCMTID() + " - " + ePath.getFileName());
-                    Utilities.moveToDirectory(ePath, unRotatedPath, true);
-                    Utilities.moveToDirectory(nPath, unRotatedPath, true);
+                    System.err.println("!! rotate failed : " + event.getGlobalCMTID() + " - " + xFile.toString());
+                    Utilities.moveToDirectory(xPath, unRotatedPath, true);
+                    Utilities.moveToDirectory(yPath, unRotatedPath, true);
                 }
             }
         }
-
+/*
         // if the difference in CMPAZ is 90 degrees, (.1, .2) is converted to (.R, .T)  (2021.08.21 kenji)
         try (DirectoryStream<Path> oneStream = Files.newDirectoryStream(OUTPUT_PATH, "*.1")) {
             for (Path onePath : oneStream) {
@@ -661,16 +661,16 @@ class EventProcessor implements Runnable {
                 }
             }
         }
+*/
 
-
-        // If there are files (.N) which had no pairs (.E), move them to trash
-        try (DirectoryStream<Path> nPaths = Files.newDirectoryStream(OUTPUT_PATH, "*.N")) {
-            for (Path nPath : nPaths) {
-                System.err.println("!! pair .E file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + nPath.getFileName());
-                Utilities.moveToDirectory(nPath, unRotatedPath, true);
+        // If there are files (.Y) which had no pairs (.X), move them to trash
+        try (DirectoryStream<Path> yPaths = Files.newDirectoryStream(OUTPUT_PATH, "*.Y")) {
+            for (Path yPath : yPaths) {
+                System.err.println("!! pair .X file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + yPath.getFileName());
+                Utilities.moveToDirectory(yPath, unRotatedPath, true);
             }
         }
-
+/*
         // If there are files (.2) which had no pairs (.1), move them to trash (2021.08.21 kenji)
         try (DirectoryStream<Path> twoPaths = Files.newDirectoryStream(OUTPUT_PATH, "*.2")) {
             for (Path twoPath : twoPaths) {
@@ -678,7 +678,7 @@ class EventProcessor implements Runnable {
                 Utilities.moveToDirectory(twoPath, unRotatedPath, true);
             }
         }
-
+*/
     }
 
 /*
@@ -716,22 +716,22 @@ class EventProcessor implements Runnable {
 //        Path rdseedOutput = eventPath.resolve("rdseedOutputBackup");
 //        Path unmerged = eventPath.resolve("unMerged");
 //        Path unrotated = eventPath.resolve("unRotated");
-        return Files.exists(unMergedPath) || Files.exists(unModifiedPath) || Files.exists(unDeconvolutedPath) || Files.exists(unRotatedPath);
+        return Files.exists(unMergedPath) || Files.exists(unModifiedPath) || Files.exists(unDeconvolvedPath) || Files.exists(unRotatedPath);
     }
 
     private void removeIntermediateFiles() {
         try {
             FileUtils.deleteDirectory(doneModifyPath.toFile());
             FileUtils.deleteDirectory(doneMergePath.toFile());
-            FileUtils.deleteDirectory(doneDeconvolutePath.toFile());
+            FileUtils.deleteDirectory(doneDeconvolvePath.toFile());
             FileUtils.deleteDirectory(doneRotatePath.toFile());
             FileUtils.deleteDirectory(unModifiedPath.toFile());
             FileUtils.deleteDirectory(unMergedPath.toFile());
-            FileUtils.deleteDirectory(unDeconvolutedPath.toFile());
+            FileUtils.deleteDirectory(unDeconvolvedPath.toFile());
             FileUtils.deleteDirectory(unRotatedPath.toFile());
             FileUtils.deleteDirectory(invalidStationPath.toFile());
             FileUtils.deleteDirectory(invalidDistancePath.toFile());
-            FileUtils.deleteDirectory(duplicateChannelPath.toFile());
+            FileUtils.deleteDirectory(duplicateComponentPath.toFile());
         } catch (Exception e) {
             e.printStackTrace();
         }
