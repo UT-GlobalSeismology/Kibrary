@@ -29,68 +29,106 @@ class SACFileName implements Comparable<SACFileName> {
     /**
      * location IDの部分
      */
-    private String locationID;
+    private String location;
     /**
      * station name
      */
     private String station;
 
     SACFileName(String sacFileName) {
+        name = sacFileName;
+
         String[] parts = sacFileName.split("\\.");
         // year = parts[0]; hour = parts[2];
         // min = parts[3]; sec = parts[4];
         // sec/10000 = parts[5]; jday = parts[1];
-        startTime = LocalDateTime
-                .of(Integer.parseInt(parts[0]), 1, 1, Integer.parseInt(parts[2]), Integer.parseInt(parts[3]),
-                        Integer.parseInt(parts[4]), Integer.parseInt(parts[5]) * 100 * 1000)
-                .withDayOfYear(Integer.parseInt(parts[1]));
-        // System.out.println(msec+" "+millisec);
-        network = parts[6];
-        station = parts[7];
-        locationID = parts[8];
-        channel = parts[9];
-        qualityControl = parts[10];
-        name = sacFileName;
+        switch (parts[parts.length - 1]) {
+        case "SAC":
+            network = parts[0];
+            station = parts[1];
+            location = parts[2];
+            channel = parts[3];
+            qualityControl = parts[4];
+            break;
+        case "SET":
+            startTime = LocalDateTime
+                    .of(Integer.parseInt(parts[5]), 1, 1, Integer.parseInt(parts[7]), Integer.parseInt(parts[8]),
+                            Integer.parseInt(parts[9]), Integer.parseInt(parts[10]) * 100 * 1000)
+                    .withDayOfYear(Integer.parseInt(parts[6]));
+            // System.out.println(msec+" "+millisec);
+            network = parts[0];
+            station = parts[1];
+            location = parts[2];
+            channel = parts[3];
+            qualityControl = parts[4];
+            break;
+        case "MRG":
+        case "MOD":
+            network = parts[0];
+            station = parts[1];
+            location = parts[2];
+            channel = parts[3];
+            qualityControl = parts[4];
+            break;
+
+        }
+    }
+
+    /**
+     * Creates a new SAC file name for the resulting file after being set up.
+     * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.year.jday.hour.min.sec.msec.SET"
+     */
+    String getSetFileName(int year, int jday, int hour, int min, int sec, int msec) {
+        return network + "." + station + "." + location + "." + channel + "." + qualityControl + "." +
+                year + "." + jday + "." + hour + "." + min + "." + sec + "." + msec + ".SET";
     }
 
     /**
      * Creates a new SAC file name for the resulting file after being merged.
-     * @return (String) SAC file name of the form "network.station.locationID.channel.qualityControl.SAC"
+     * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.MRG"
      */
-    String getRelationString() {
-        return network + "." + station + "." + locationID + "." + channel + "." + qualityControl + ".SAC";
+    String getMergedFileName() {
+        return network + "." + station + "." + location + "." + channel + "." + qualityControl + ".MRG";
     }
 
     /**
-     * @return (network).station.locationID.BHN.D.SAC
+     * Creates a new SAC file name for the resulting file after being modified.
+     * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.MOD"
+     */
+    String getModifiedFileName() {
+        return network + "." + station + "." + location + "." + channel + "." + qualityControl + ".MOD";
+    }
+
+    /**
+     * @return (network).station.location.BHN.D.SAC
      */
     String getNetwork() {
         return network;
     }
 
     /**
-     * @return network.station.locationID.(BHN).D.SAC
+     * @return network.station.location.(BHN).D.SAC
      */
     String getChannel() {
         return channel;
     }
 
     /**
-     * @return network.station.locationID.BHN.(D).SAC
+     * @return network.station.location.BHN.(D).SAC
      */
     String getQualityControl() {
         return qualityControl;
     }
 
     /**
-     * @return network.station.(locationID).BHN.D.SAC
+     * @return network.station.(location).BHN.D.SAC
      */
-    String getLocationID() {
-        return locationID;
+    String getLocation() {
+        return location;
     }
 
     /**
-     * @return network.(station).locationID.BHN.D.SAC
+     * @return network.(station).location.BHN.D.SAC
      */
     String getStation() {
         return station;
@@ -105,7 +143,7 @@ class SACFileName implements Comparable<SACFileName> {
         int c = network.compareTo(o.network);
         if (c != 0) return c;
         else if ((c = station.compareTo(o.station)) != 0) return c;
-        else if ((c = locationID.compareTo(o.locationID)) != 0) return c;
+        else if ((c = location.compareTo(o.location)) != 0) return c;
         else if ((c = channel.compareTo(o.channel)) != 0) return c;
         else if ((c = qualityControl.compareTo(o.qualityControl)) != 0) return c;
         else return startTime.compareTo(o.startTime);
@@ -120,7 +158,7 @@ class SACFileName implements Comparable<SACFileName> {
     /**
      * Judges whether two SAC files are parts of what is supposed to be in a single SAC file.
      * Judgements will be made based on the SAC filenames; files with the same
-     * network, station, locationID, channel, and qualityControl
+     * network, station, location, channel, and qualityControl
      * will be judged as related.
      *
      * @param sacFileName (SACFileName) The SAC file to be checked.
@@ -129,7 +167,7 @@ class SACFileName implements Comparable<SACFileName> {
      */
     boolean isRelated(SACFileName sacFileName) {
         return sacFileName.channel.equals(channel) && sacFileName.network.equals(network) &&
-                sacFileName.station.equals(station) && sacFileName.locationID.equals(locationID) &&
+                sacFileName.station.equals(station) && sacFileName.location.equals(location) &&
                 sacFileName.qualityControl.equals(qualityControl);
     }
 

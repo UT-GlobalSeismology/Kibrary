@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @author Kensuke Konishi
  * @version 0.0.4.3
  */
-class UnevenSACMerger {
+class SegmentedSacMerger {
 
     /**
      * 作業フォルダ
@@ -36,20 +36,20 @@ class UnevenSACMerger {
      * SacFileNameのリスト
      */
     private SACFileName[] sacFileNameList;
-    private Set<SACGroup> sacGroupSet = new HashSet<>();
+    private Set<SacGroup> sacGroupSet = new HashSet<>();
 
     /**
      * Uneven Sacをmergeする作業フォルダ
      *
      * @param workPath
      */
-    UnevenSACMerger(Path workPath, Path doneMergePath, Path unMergedPath) throws IOException {
+    SegmentedSacMerger(Path workPath, Path doneMergePath, Path unMergedPath) throws IOException {
         this.workPath = workPath;
         unevenBoxPath = doneMergePath;
         notMergedBoxPath = unMergedPath;
         listUpSacFiles();
     }
-    UnevenSACMerger(Path workPath) throws IOException {
+    SegmentedSacMerger(Path workPath) throws IOException { //TODO: should be unneeded
         this(workPath, workPath.resolve("mergedUnevendata"), workPath.resolve("nonMergedUnevendata"));
     }
 
@@ -63,7 +63,7 @@ class UnevenSACMerger {
 
         try (Stream<Path> sacFileStream = Files.list(workPath)) {
             sacFileNameList =
-                    sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SAC"))
+                    sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SET"))
                             .map(SACFileName::new).toArray(SACFileName[]::new);
         }
 
@@ -79,7 +79,7 @@ class UnevenSACMerger {
     private void createGroups(SACFileName[] names) {
         for (SACFileName name : names)
             // 既存のグループに振り分けられなかったら新しいグループを作る
-            if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SACGroup(workPath, name));
+            if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SacGroup(workPath, name));
     }
 
     /**

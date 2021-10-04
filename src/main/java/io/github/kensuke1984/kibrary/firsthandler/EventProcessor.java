@@ -119,7 +119,7 @@ class EventProcessor implements Runnable {
             Files.createDirectories(OUTPUT_PATH);
             setupSacs();
             // merge uneven SAC files
-            mergeUnevenSac(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
+            mergeSacSegments(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Error on pre-processing " + INPUT_DIR.getName(), e);
@@ -177,6 +177,7 @@ class EventProcessor implements Runnable {
      * This method sets up the SAC files to be used by carrying out the following:
      * <ul>
      * <li> check whether the channel is supported by this class; if not, skip the SAC file </li>
+     * <li> check whether the location is acceptable; if not, skip the SAC file </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
      * <li> check whether the unit is velocity (m/s); if not, throw away the new SAC file </li>
@@ -193,40 +194,43 @@ class EventProcessor implements Runnable {
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
             for (Path rawSacPath : sacPaths) {  // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
-                SACFileName newFile = newSacName(rawSacPath); // newFile will be made in the output event directory
+//                SACFileName newFile = newSacName(rawSacPath); // newFile will be made in the output event directory
+
+                SACFileName sacFile = new SACFileName(rawSacPath.getFileName().toString());
 
                 // check channel validity
-                if (!checkChannel(newFile.getChannel())) {
-                    System.err.println("!! unsupported channel : " + event.getGlobalCMTID() + " - " + rawSacPath.getFileName());
+                if (!checkChannel(sacFile.getChannel())) {
+                    System.err.println("!! unsupported channel : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // check location validity  TODO: this may have to be modified or removed
-                if (!checkLocation(newFile.getLocationID())) {
-                    System.err.println("!! bad location : " + event.getGlobalCMTID() + " - " + rawSacPath.getFileName());
+                if (!checkLocation(sacFile.getLocation())) {
+                    System.err.println("!! bad location : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // copy SAC file from the input directory to the output event directory; file name changed here
-                Path newSacPath = OUTPUT_PATH.resolve(newFile.toString());
+                Path newSacPath = OUTPUT_PATH.resolve(newSacName(rawSacPath, sacFile));
                 Files.copy(rawSacPath, newSacPath);
 
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
-                StationInformationIRIS sii = new StationInformationIRIS(newFile); // this probably won't fail, since it is merely substitution of values
+                StationInformationFile sif = new StationInformationFile(sacFile.getNetwork(), sacFile.getStation(),
+                        sacFile.getLocation(), sacFile.getChannel()); // this probably won't fail, since it is merely substitution of values
                 try {
-                    sii.readStationInformation(INPUT_DIR.toPath()); // this will fail if Station file is unfound, etc.
+                    sif.readStationInformation(INPUT_DIR.toPath()); // this will fail if Station file is unfound, etc.
                 } catch (IOException e) {
-                    System.err.println("!! unable to read Station file : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                    System.err.println("!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
 
                 // if the unit used in the Station file is not in velocity (m/s or M/S), throw away the new SAC file
                 // TODO: is this criterion valid?
-                if (!sii.getScaleunits().equals("M/S") && !sii.getScaleunits().equals("m/s")) {
-                    System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                if (!sif.getScaleunits().equals("M/S") && !sif.getScaleunits().equals("m/s")) {
+                    System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
@@ -234,9 +238,9 @@ class EventProcessor implements Runnable {
                 // if the dip of a [vertical|horizontal] channel is not perfectly [vertical|horizontal], throw away the new SAC file
                 // caution: up is dip=-90, down is dip=90
                 // TODO: are there stations with downwards Z ?
-                if ((isVerticalChannel(newFile.getChannel()) && Double.parseDouble(sii.getDip()) != -90)
-                        || (!isVerticalChannel(newFile.getChannel()) && Double.parseDouble(sii.getDip()) != 0)) {
-                    System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + newSacPath.getFileName());
+                if ((isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != -90)
+                        || (!isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != 0)) {
+                    System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
@@ -244,7 +248,7 @@ class EventProcessor implements Runnable {
                 //TODO: check station location here?
 
                 // set sac headers using sii, and interpolate data with DELTA
-                fixHeaderAndDelta(newSacPath, sii, newFile.getLocationID().isEmpty());
+                fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
             }
         }
 
@@ -259,8 +263,8 @@ class EventProcessor implements Runnable {
      * @throws IOException
      * @author kenji
      */
-    private SACFileName newSacName(Path sacPath) throws IOException {
-        String[] oldFile = sacPath.getFileName().toString().split("\\.");
+    private String newSacName(Path sacPath, SACFileName sacFile) throws IOException {
+//        String[] oldFile = sacPath.getFileName().toString().split("\\.");
 
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
         int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
@@ -270,10 +274,13 @@ class EventProcessor implements Runnable {
         int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
         int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
 
-        String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
+        return sacFile.getSetFileName(i1, i2, i3, i4, i5, i6);
+
+/*        String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
                 + "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
                 + "." + oldFile[3] + "." + "M" + ".SAC"; //TODO: the number of digits may be different from SEED style name
         return new SACFileName(newName);
+*/
     }
 
     /**
@@ -323,15 +330,15 @@ class EventProcessor implements Runnable {
      * @throws IOException
      * @author kenji
      */
-    private void fixHeaderAndDelta(Path sacPath, StationInformationIRIS sii, boolean blankLocation) throws IOException {
-        double inclination = Double.parseDouble(sii.getDip()) + 90.0; // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
+    private void fixHeaderAndDelta(Path sacPath, StationInformationFile sif, boolean blankLocation) throws IOException {
+        double inclination = Double.parseDouble(sif.getDip()) + 90.0; // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
             sacD.inputCMD("cd " + cwd);// set current directory
             sacD.inputCMD("r " + sacPath.getFileName());// read
             sacD.inputCMD("ch lovrok true");// overwrite permission
-            sacD.inputCMD("ch cmpaz " + sii.getAzimuth() + " cmpinc " + String.valueOf(inclination));
-            sacD.inputCMD("ch stlo "  + sii.getLongitude() + " stla " + sii.getLatitude());
+            sacD.inputCMD("ch cmpaz " + sif.getAzimuth() + " cmpinc " + String.valueOf(inclination));
+            sacD.inputCMD("ch stlo "  + sif.getLongitude() + " stla " + sif.getLatitude());
             if (blankLocation) {
                 sacD.inputCMD("ch khole ''"); // files with empty locations may have khole '-12345', so it is set to ''
             }
@@ -342,16 +349,16 @@ class EventProcessor implements Runnable {
 
     /**
      * This method merges multiple SAC files that are supposed to be part of the same waveform.
-     * This is done through {@link UnevenSACMerger}.
+     * This is done through {@link SegmentedSacMerger}.
      * Successful files are put in "doneMerge" and the others in "unMerged".
      *
      * @throws IOException
      */
-    private void mergeUnevenSac() throws IOException {
+    private void mergeSacSegments() throws IOException {
         // merge
-        UnevenSACMerger u = new UnevenSACMerger(OUTPUT_PATH, doneMergePath, unMergedPath);
-        u.merge();
-        u.move();
+        SegmentedSacMerger s = new SegmentedSacMerger(OUTPUT_PATH, doneMergePath, unMergedPath);
+        s.merge();
+        s.move();
     }
 
     /**
@@ -375,7 +382,7 @@ class EventProcessor implements Runnable {
 //        Path invalidBoxPath = OUTPUT_PATH.resolve("invalidDistance");
 //        Path mergedBoxPath = OUTPUT_PATH.resolve("doneModify");
 
-        try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(OUTPUT_PATH, "*.SAC")) {
+        try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MRG")) {
             for (Path sacPath : sacPathStream) {
                 SACModifierMSEED sm = new SACModifierMSEED(event, sacPath, byPDE);
 
@@ -674,7 +681,19 @@ class EventProcessor implements Runnable {
 
     }
 
+/*
     // TODO 00 01 "" duplication detect
+    private void duplicationElimination() throws IOException {
+        Set<SacTriplet> sacTripletSet = new HashSet<>();
+
+        try (DirectoryStream<Path> rStream = Files.newDirectoryStream(OUTPUT_PATH, "*.R")) {
+            for (Path rPath : rStream) {
+                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(rPath))) sacTripletSet.add(new SacTriplet(rPath));
+            }
+        }
+
+    }
+*/
 
     /**
      * unused SPECTRA*, RESP* files ->trash

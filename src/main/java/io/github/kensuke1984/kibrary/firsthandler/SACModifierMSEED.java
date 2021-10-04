@@ -50,7 +50,8 @@ class SACModifierMSEED {
     SACModifierMSEED(GlobalCMTData globalCMTData, Path sacPath, boolean byPDE) throws IOException {
         SAC_PATH = sacPath;
         headerMap = SACUtil.readHeader(sacPath);
-        String modifiedFileName = sacPath.getFileName().toString().replace(".SAC", ".MOD");
+        SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
+        String modifiedFileName = sacFile.getModifiedFileName();
         MODIFIED_PATH = sacPath.resolveSibling(modifiedFileName);
         EVENT = globalCMTData;
         BYPDE = byPDE;

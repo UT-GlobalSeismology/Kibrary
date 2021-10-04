@@ -141,10 +141,12 @@ public class MseedDownload {
         String location = sacInfo[2]; //(sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
         String channel = sacInfo[3];
 
-        StationInformationIRIS stationInfo = new StationInformationIRIS(network, station, location, channel, startTime, endTime);
+        StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel);
+        stationInfo.setRequest(startTime, endTime);
         stationInfo.downloadStationInformation(EVENT_DIR.toPath());
 
-        RespDataIRIS respData = new RespDataIRIS(network, station, location, channel, startTime);
+        RespDataFile respData = new RespDataFile(network, station, location, channel);
+        respData.setRequest(startTime);
         respData.downloadRespData(EVENT_DIR.toPath());
 
     }

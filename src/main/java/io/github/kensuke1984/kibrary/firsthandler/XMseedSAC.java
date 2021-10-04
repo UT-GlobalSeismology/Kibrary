@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @author Kenji Kawai
  * @version 0.1.1
  */
-class MseedSAC implements Runnable {
+class XMseedSAC implements Runnable {
 
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
@@ -96,7 +96,7 @@ class MseedSAC implements Runnable {
      * @throws IOException if the outputDirectoryPath already has events which also
      *                     exists in the seed file or an error occurs
      */
-    MseedSAC(Path mseedPath, Path outputDirectoryPath) throws IOException {
+    XMseedSAC(Path mseedPath, Path outputDirectoryPath) throws IOException {
         this(mseedPath, outputDirectoryPath, null);
     }
 
@@ -110,7 +110,7 @@ class MseedSAC implements Runnable {
      * @throws IOException If the folder already has event folders which also exists in
      *                     the seed file.
      */
-    MseedSAC(Path mseedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
+    XMseedSAC(Path mseedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
 
         MSEED_FILE = new MSEEDFile(mseedPath);
         if (id != null && this.id != null) this.id = id; // slighly changed (kenji)
@@ -467,7 +467,7 @@ class MseedSAC implements Runnable {
      */
     private void mergeUnevenSac() throws IOException {
         // merge
-        UnevenSACMerger u = new UnevenSACMerger(EVENT_DIR.toPath());
+        SegmentedSacMerger u = new SegmentedSacMerger(EVENT_DIR.toPath());
         u.merge();
         u.move();
     }
@@ -621,8 +621,8 @@ class MseedSAC implements Runnable {
 
                 // request STATION files via IRIS/WS
 //                System.out.println("Enter: STATIONFILES");
-                StationInformationIRIS sii = new StationInformationIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
-                		loc, sacPath.getFileName().toString().split("\\.")[3], time, time);
+                StationInformationFile sii = new StationInformationFile(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
+                		loc, sacPath.getFileName().toString().split("\\.")[3]);//, time, time);
                 sii.downloadStationInformation(EVENT_DIR.toPath());
                 sii.readStationInformation(EVENT_DIR.toPath());
 
@@ -635,8 +635,8 @@ class MseedSAC implements Runnable {
 
                 // request RESP files via IRIS/WS
   //              System.out.println("Enter: RESPFILES");
-                RespDataIRIS rdi = new RespDataIRIS(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
-                		loc, sacPath.getFileName().toString().split("\\.")[3], time);
+                RespDataFile rdi = new RespDataFile(sacPath.getFileName().toString().split("\\.")[0], sacPath.getFileName().toString().split("\\.")[1],
+                		loc, sacPath.getFileName().toString().split("\\.")[3]);//, time);
                 rdi.downloadRespData(EVENT_DIR.toPath());
 
 //               System.exit(0); // TODO 一旦止める
@@ -654,7 +654,7 @@ class MseedSAC implements Runnable {
      * @throws IOException
      * @author kenji
      */
-    private void fixHeader(Path sacPath, StationInformationIRIS sii) throws IOException {
+    private void fixHeader(Path sacPath, StationInformationFile sii) throws IOException {
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
             sacD.inputCMD("cd " + cwd);// set current directory
@@ -706,7 +706,7 @@ class MseedSAC implements Runnable {
         Path seedPath = Paths.get(args[0]);
         if (!Files.exists(seedPath)) throw new NoSuchFileException(seedPath.toString());
         Path out = seedPath.resolveSibling("seedSAC" + Utilities.getTemporaryString());
-        new MseedSAC(seedPath, out).run();
+        new XMseedSAC(seedPath, out).run();
         System.err.println(seedPath + " is extracted in " + out);
     }
 

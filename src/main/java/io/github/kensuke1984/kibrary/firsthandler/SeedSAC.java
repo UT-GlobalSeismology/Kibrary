@@ -337,7 +337,7 @@ class SeedSAC implements Runnable {
      */
     private void mergeUnevenSac() throws IOException {
         // merge
-        UnevenSACMerger u = new UnevenSACMerger(EVENT_DIR.toPath());
+        SegmentedSacMerger u = new SegmentedSacMerger(EVENT_DIR.toPath());
         u.merge();
         u.move();
     }

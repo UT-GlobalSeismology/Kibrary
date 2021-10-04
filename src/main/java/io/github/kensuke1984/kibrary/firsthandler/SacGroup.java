@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @author Kensuke Konishi
  * @version 0.0.6.2
  */
-class SACGroup {
+class SacGroup {
 
     /**
      * mergeする際のファイルのタイムウインドウのずれの許容範囲 sacfile のDELTA * maxgapNumber
@@ -53,11 +53,11 @@ class SACGroup {
      * @param workPath    work path
      * @param sacFileName sacfile name
      */
-    SACGroup(Path workPath, SACFileName sacFileName) {
+    SacGroup(Path workPath, SACFileName sacFileName) {
         this.workPath = workPath;
         nameSet.add(sacFileName);
         rootSacFileName = sacFileName;
-        mergedSacFileName = sacFileName.getRelationString();
+        mergedSacFileName = sacFileName.getMergedFileName();
     }
 
     /**
@@ -153,13 +153,12 @@ class SACGroup {
 
         if (sacFileNameList.length > 1) {
             System.err.println("++ merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
-            System.err.println(sacFileNameList[0].getStartTime() + "    " + currentStartTime + "  " + timelength); // 4debug
         }
         for (int i = 1; i < sacFileNameList.length; i++) {
             // sacfilename to be joined (file1)
             SACFileName joinSacFileName = sacFileNameList[i];
             Path joinSacPath = workPath.resolve(joinSacFileName.toString());
-            System.err.println("joining " + joinSacFileName + " to " + currentEndTime); // 4debug
+            //System.err.println("joining " + joinSacFileName); // 4debug
 
             // つなげるsacfile(file1)の読み込み
             Map<SACHeaderEnum, String> headerMap1 = SACUtil.readHeader(joinSacPath);

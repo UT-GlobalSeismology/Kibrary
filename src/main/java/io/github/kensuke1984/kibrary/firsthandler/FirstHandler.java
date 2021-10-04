@@ -182,9 +182,9 @@ public class FirstHandler implements Operation {
 
         
         // For mseed files
-        Set<MseedSAC> mseedSacs = mseedPaths.stream().map(mseedPath -> {
+        Set<XMseedSAC> mseedSacs = mseedPaths.stream().map(mseedPath -> {
            try {
-                return new MseedSAC(mseedPath, outPath);
+                return new XMseedSAC(mseedPath, outPath);
             } catch (Exception e) {
                 try {
                     System.err.println(mseedPath + " has problems. " + e);
@@ -222,7 +222,7 @@ public class FirstHandler implements Operation {
                 e.printStackTrace();
             }
         
-        for (MseedSAC mseedSac : mseedSacs)
+        for (XMseedSAC mseedSac : mseedSacs)
             try {
                 if (mseedSac == null) continue;
                 if (!mseedSac.hadRun()) Utilities.createLinkInDirectory(mseedSac.getSeedPath(), ignoredSeedPath, true);

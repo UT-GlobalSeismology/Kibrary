@@ -16,11 +16,17 @@ import java.time.format.DateTimeFormatter;
  * @author Kenji Kawai
  * @version 0.1.3
  */
-public class RespDataIRIS {
+public class RespDataFile {
 
     private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
     private String url;
     private String responseFile;
+    private String spectraFile;
+
+    private String network = "";
+    private String station = "";
+    private String location = "";
+    private String channel = "";
 
     /**
      * Constructor with options for IRIS DMC IRISWS RESP Web Service
@@ -31,18 +37,34 @@ public class RespDataIRIS {
      * @param station  (String) Station code.
      * @param location (String) Location code. Set "" if blank.
      * @param channel  (String) Channel code.
+     */
+    public RespDataFile(String network, String station, String location, String channel) {
+
+        this.network = network;
+        this.station = station;
+        this.location = location;
+        this.channel = channel;
+
+        // file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU..BHE"
+        responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
+        // file name is "SPECTRA.II.PFO.00.BHE" or "SPECTRA.IU.INU..BHE"
+        spectraFile = "SPECTRA." + network + "." + station + "." + location + "." + channel;
+
+    }
+    /**
+     * Set the URL to be used in IRIS DMC IRISWS RESP Web Service
+     *
+     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
+     *      Service Documentation
      * @param time     (LocalDateTime) Find the response for the given time.
      */
-    public RespDataIRIS(String network, String station, String location, String channel, LocalDateTime time) {
+    public void setRequest(LocalDateTime time) {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23).
         url = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
                 + channel + "&" + "loc=" + requestLocation + "&" + "time=" + time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-
-        // file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU..BHE"
-        responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
 
     }
 
@@ -82,19 +104,6 @@ public class RespDataIRIS {
         } catch (IOException e) {
             System.out.println(e);
         }
-    }
-
-
-    /**
-     * This main method is for debug.
-     * @param args
-     * @throws IOException
-     */
-    public static void main(String[] args) throws IOException {
-
-        LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
-        RespDataIRIS rd = new RespDataIRIS("II", "PFO", "00", "BHE", time);
-        rd.downloadRespData();
     }
 
 }

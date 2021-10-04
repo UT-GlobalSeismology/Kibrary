@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter;
  * @author Kenji Kawai
  * @version 0.1.2
  */
-public class StationInformationIRIS {
+public class StationInformationFile {
 
     private static final String STATION_URL = "http://service.iris.edu/fdsnws/station/1/query?";
     private String url;
@@ -55,8 +55,27 @@ public class StationInformationIRIS {
      * @param channel  (String) Channel code.
      * @param time     (LocalDateTime) Find the response for the given time.
      */
-    public StationInformationIRIS(String network, String station, String location, String channel,
-            LocalDateTime startTime, LocalDateTime endTime) {
+    public StationInformationFile(String network, String station, String location, String channel) {
+
+        this.network = network;
+        this.station = station;
+        this.location = location;
+        this.channel = channel;
+
+        // file name is "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
+        stationFile = "STATION." + network + "." + station + "." + location + "." + channel;
+
+    }
+
+    /**
+     * Sets the URL to be used in IRIS DMC FDSNWS STATION Web Service.
+     *
+     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
+     *      Service Documentation
+     * @param startTime   (LocalDateTime) Find the response for the given time.
+     * @param endTime     (LocalDateTime) Find the response for the given time.
+     */
+    public void setRequest(LocalDateTime startTime, LocalDateTime endTime) {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
@@ -68,20 +87,6 @@ public class StationInformationIRIS {
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&level=channel&format=text&includecomments=true&nodata=404";
 
-        // file name is "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
-        stationFile = "STATION." + network + "." + station + "." + location + "." + channel;
-
-    }
-
-    /**
-     * Constructor using name of corresponding SAC file
-     *
-     * @param sacFile (SacFileName) Name of corresponding SAC file.
-     */
-    public StationInformationIRIS(SACFileName sacFile) {
-        this(sacFile.getNetwork(), sacFile.getStation(), sacFile.getLocationID(),
-//                (sacFile.getLocationID().isEmpty() ? "--" : sacFile.getLocationID()),
-                        sacFile.getChannel(), sacFile.getStartTime(), sacFile.getStartTime());
     }
 
     /**
@@ -212,26 +217,6 @@ public class StationInformationIRIS {
             else if(head[i].matches("StartTime")) {startTime = LocalDateTime.parse(data[i]);}
 //          else if(head[i].matches("EndTime")) {endTime = LocalDateTime.parse(data[i]);} // TODO Some station information not including EndTime
         }
-    }
-
-
-    /**
-     * This main method is for debug.
-     * @param args
-     * @throws IOException
-     */
-    public static void main(String[] args) throws IOException {
-
-        LocalDateTime time = LocalDateTime.of(2000,1,1,0,0,0);
-
-
-        StationInformationIRIS rd = new StationInformationIRIS("II", "PFO", "00", "BHE", time, time);
-        rd.readStationInformation();
-        //rd.downloadStationInformation();
-
-
-        LocalDateTime test = LocalDateTime.of(2014,7,21,0,0,0);
-        System.out.println(test.getDayOfYear());
     }
 
 
