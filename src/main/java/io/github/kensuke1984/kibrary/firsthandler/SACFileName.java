@@ -154,6 +154,14 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
+     * Creates a new SAC file name for the resulting file after duplications are eliminated.
+     * @return (String) SAC file name of the form "station_network.event.component"
+     */
+    String getFinalFileName(String event) {
+        return station + "_" + network + "." + event + "." + component;
+    }
+
+    /**
      * @return (network).station.location.BHN.D.SAC
      */
     String getNetwork() {

@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
@@ -72,13 +74,16 @@ class EventProcessor implements Runnable {
     private Path doneMergePath;
     private Path doneDeconvolvePath;
     private Path doneRotatePath;
+    private Path doneEliminatePath;
     private Path unModifiedPath;
     private Path unMergedPath;
     private Path unDeconvolvedPath;
     private Path unRotatedPath;
+    private Path unEliminatedPath;
     private Path invalidStationPath;
     private Path invalidDistancePath;
     private Path duplicateComponentPath;
+    private Path duplicateInstrumentPath;
 
     /**
      * Constructor that specifies the input and output for this class.
@@ -108,6 +113,10 @@ class EventProcessor implements Runnable {
 
         doneRotatePath = OUTPUT_PATH.resolve("doneRotate");
         unRotatedPath = OUTPUT_PATH.resolve("unRotated");
+
+        doneEliminatePath = OUTPUT_PATH.resolve("doneEliminate");
+        unEliminatedPath = OUTPUT_PATH.resolve("unEliminated");
+        duplicateInstrumentPath = OUTPUT_PATH.resolve("duplicateInstrument");
 
     }
 
@@ -157,6 +166,7 @@ class EventProcessor implements Runnable {
         // rotation ((.N,.E) & (.1 & .2) -> (.R,.T))
         try {
             rotate();
+            duplicationElimination();
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Error on rotating " + INPUT_DIR.getName(), e);
@@ -681,19 +691,65 @@ class EventProcessor implements Runnable {
 */
     }
 
-/*
     // TODO 00 01 "" duplication detect
     private void duplicationElimination() throws IOException {
-        Set<SacTriplet> sacTripletSet = new HashSet<>();
 
+        // read R, T, and Z files into SacTriplet set
+        Set<SacTriplet> sacTripletSet = new HashSet<>();
         try (DirectoryStream<Path> rStream = Files.newDirectoryStream(OUTPUT_PATH, "*.R")) {
             for (Path rPath : rStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(rPath))) sacTripletSet.add(new SacTriplet(rPath));
             }
         }
+        try (DirectoryStream<Path> tStream = Files.newDirectoryStream(OUTPUT_PATH, "*.T")) {
+            for (Path tPath : tStream) {
+                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(tPath))) sacTripletSet.add(new SacTriplet(tPath));
+            }
+        }
+        try (DirectoryStream<Path> zStream = Files.newDirectoryStream(OUTPUT_PATH, "*.Z")) {
+            for (Path zPath : zStream) {
+                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(zPath))) sacTripletSet.add(new SacTriplet(zPath));
+            }
+        }
 
+        // throw away triplets that consist of neither {RTZ}, {RT}, nor {Z}
+        for (SacTriplet oneTriplet : sacTripletSet) {
+            if (!oneTriplet.isValid()) {
+                oneTriplet.dismiss();
+                oneTriplet.move(unEliminatedPath);
+            }
+        }
+
+        // eliminate files of same network, station, and component
+        for (SacTriplet oneTriplet : sacTripletSet) {
+            if (oneTriplet.isDismissed()) continue;
+
+            for (SacTriplet otherTriplet : sacTripletSet) {
+                if (otherTriplet.isDismissed()) continue;
+
+                // if the two triplets are of different stations, skip
+                if (!oneTriplet.atSameStation(otherTriplet)) continue;
+                //if one is {RT} and the other is {Z}, leave both
+                if (oneTriplet.complements(otherTriplet)) continue;
+
+                // remove triplet that has less components, worst instruments, or larger location codes
+                if(oneTriplet.isInferiorTo(otherTriplet)) {
+                    oneTriplet.dismiss();
+                    oneTriplet.move(duplicateInstrumentPath);
+                    break; // no need to keep comparing
+                } else {
+                    otherTriplet.dismiss();
+                    otherTriplet.move(duplicateInstrumentPath);
+                }
+            }
+        }
+
+        for (SacTriplet oneTriplet : sacTripletSet) {
+            if (!oneTriplet.isDismissed()) {
+                oneTriplet.rename(event.toString());
+            }
+        }
     }
-*/
 
     /**
      * unused SPECTRA*, RESP* files ->trash
@@ -716,7 +772,8 @@ class EventProcessor implements Runnable {
 //        Path rdseedOutput = eventPath.resolve("rdseedOutputBackup");
 //        Path unmerged = eventPath.resolve("unMerged");
 //        Path unrotated = eventPath.resolve("unRotated");
-        return Files.exists(unMergedPath) || Files.exists(unModifiedPath) || Files.exists(unDeconvolvedPath) || Files.exists(unRotatedPath);
+        return Files.exists(unMergedPath) || Files.exists(unModifiedPath) || Files.exists(unDeconvolvedPath) ||
+                Files.exists(unRotatedPath) || Files.exists(unEliminatedPath);
     }
 
     private void removeIntermediateFiles() {
@@ -725,13 +782,16 @@ class EventProcessor implements Runnable {
             FileUtils.deleteDirectory(doneMergePath.toFile());
             FileUtils.deleteDirectory(doneDeconvolvePath.toFile());
             FileUtils.deleteDirectory(doneRotatePath.toFile());
+            FileUtils.deleteDirectory(doneEliminatePath.toFile());
             FileUtils.deleteDirectory(unModifiedPath.toFile());
             FileUtils.deleteDirectory(unMergedPath.toFile());
             FileUtils.deleteDirectory(unDeconvolvedPath.toFile());
             FileUtils.deleteDirectory(unRotatedPath.toFile());
+            FileUtils.deleteDirectory(unEliminatedPath.toFile());
             FileUtils.deleteDirectory(invalidStationPath.toFile());
             FileUtils.deleteDirectory(invalidDistancePath.toFile());
             FileUtils.deleteDirectory(duplicateComponentPath.toFile());
+            FileUtils.deleteDirectory(duplicateInstrumentPath.toFile());
         } catch (Exception e) {
             e.printStackTrace();
         }
