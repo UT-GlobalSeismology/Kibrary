@@ -3,15 +3,25 @@ package io.github.kensuke1984.kibrary.firsthandler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.SACUtil;
+
 
 public class SacTriplet {
+
+    private final double COORDINATE_GRID = 0.0001;
 
     private String network;
     private String station;
     private String location;
     private String instrument;
+    private double latitude;
+    private double longitude;
+
+    private String name;
 
     private Path rPath;
     private Path tPath;
@@ -20,14 +30,18 @@ public class SacTriplet {
     private int number = 0;
     private boolean dismissed = false;
 
-    public SacTriplet(Path sacPath){
+    public SacTriplet(Path sacPath) throws IOException {
         SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
+        Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
 
         //set variables
+        name = sacFile.getTripletName();
         network = sacFile.getNetwork();
         station = sacFile.getStation();
         location = sacFile.getLocation();
         instrument = sacFile.getInstrument();
+        latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
+        longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
 
         //register
         register(sacPath, sacFile.getComponent());
@@ -61,7 +75,7 @@ public class SacTriplet {
         }
     }
 
-    public boolean isValid() {
+    public boolean checkValidity() {
         if (!rPath.toString().isEmpty() && !tPath.toString().isEmpty() && !zPath.toString().isEmpty()) {
             number = 3;
             return true;
@@ -117,7 +131,10 @@ public class SacTriplet {
     }
 
     public boolean atSameStation (SacTriplet other) {
-        return other.getNetwork().equals(network) && other.getStation().equals(station);
+        if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
+        else if (Math.abs(latitude - other.getLatitude()) < COORDINATE_GRID &&
+                Math.abs(longitude - other.getLongitude()) < COORDINATE_GRID) return true;
+        else return false;
     }
 
     public boolean complements (SacTriplet other) {
@@ -180,10 +197,31 @@ public class SacTriplet {
     }
 
     /**
+     * @return latitude
+     */
+    public double getLatitude() {
+        return latitude;
+    }
+
+    /**
+     * @return longitude
+     */
+    public double getLongitude() {
+        return longitude;
+    }
+
+    /**
      * @return number of registered files
      */
     public int getNumber() {
         return number;
+    }
+
+    /**
+     * @return name of triplet
+     */
+    public String getName() {
+        return name;
     }
 
 }

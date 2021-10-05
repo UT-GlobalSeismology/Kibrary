@@ -154,6 +154,14 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     /**
+     * Returns name of triplet.
+     * @return (String) Name of the form "network.station.location.instrument.qualityControl.*"
+     */
+    String getTripletName() {
+        return network + "." + station + "." + location + "." + instrument + "." + qualityControl + ".*";
+    }
+
+    /**
      * Creates a new SAC file name for the resulting file after duplications are eliminated.
      * @return (String) SAC file name of the form "station_network.event.component"
      */

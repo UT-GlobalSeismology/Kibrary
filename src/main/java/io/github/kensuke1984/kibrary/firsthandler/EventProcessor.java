@@ -714,7 +714,8 @@ class EventProcessor implements Runnable {
 
         // throw away triplets that consist of neither {RTZ}, {RT}, nor {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
-            if (!oneTriplet.isValid()) {
+            if (!oneTriplet.checkValidity()) {
+                System.err.println("!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
                 oneTriplet.dismiss();
                 oneTriplet.move(unEliminatedPath);
             }
@@ -729,17 +730,21 @@ class EventProcessor implements Runnable {
 
                 // if the two refer to the same triplet, skip
                 if (oneTriplet.isItself(otherTriplet)) continue;
-                // if the two triplets are of different stations, skip
+                // if the two triplets are of different stations and coordinates, skip
                 if (!oneTriplet.atSameStation(otherTriplet)) continue;
                 //if one is {RT} and the other is {Z}, leave both
                 if (oneTriplet.complements(otherTriplet)) continue;
 
                 // remove triplet that has less components, worst instruments, or larger location codes
                 if(oneTriplet.isInferiorTo(otherTriplet)) {
+                    System.err.println("!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
+                            oneTriplet.getName() + " ( :: " + otherTriplet.getName() + " )");
                     oneTriplet.dismiss();
                     oneTriplet.move(duplicateInstrumentPath);
                     break; // no need to keep comparing
                 } else {
+                    System.err.println("!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
+                            oneTriplet.getName() + " ( :: " + otherTriplet.getName() + " )");
                     otherTriplet.dismiss();
                     otherTriplet.move(duplicateInstrumentPath);
                 }
