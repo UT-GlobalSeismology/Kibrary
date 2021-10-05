@@ -46,8 +46,6 @@ public class SacTriplet {
         latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
         longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
 
-        if (station.equals("KMBO"))  System.err.println(network + "." + station + " : " + latitude + ", " + longitude); //debug
-
         //register
         register(sacPath, sacFile.getComponent());
     }
@@ -139,9 +137,6 @@ public class SacTriplet {
     }
 
     public boolean atSameStation (SacTriplet other) {
-        if (station.equals("KMBO") && other.getStation().equals("KMBO"))
-            System.err.println(network + " , " + other.getNetwork() + " : " + Math.abs(latitude - other.getLatitude()) + " , " + Math.abs(longitude - other.getLongitude())); //debug
-
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
         else if (Math.abs(latitude - other.getLatitude()) < COORDINATE_GRID &&
                 Math.abs(longitude - other.getLongitude()) < COORDINATE_GRID) return true;
