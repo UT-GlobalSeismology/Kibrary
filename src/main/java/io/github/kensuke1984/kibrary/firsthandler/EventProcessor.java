@@ -725,15 +725,27 @@ class EventProcessor implements Runnable {
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (oneTriplet.isDismissed()) continue;
 
+            if (oneTriplet.getStation().equals("KMBO")) System.err.println("0 " + oneTriplet.getNetwork()); //debug
+
             for (SacTriplet otherTriplet : sacTripletSet) {
                 if (otherTriplet.isDismissed()) continue;
 
+                if (oneTriplet.getStation().equals("KMBO") && otherTriplet.getStation().equals("KMBO")) System.err.println("1"); //debug
+
                 // if the two refer to the same triplet, skip
                 if (oneTriplet.isItself(otherTriplet)) continue;
+
+                if (oneTriplet.getStation().equals("KMBO") && otherTriplet.getStation().equals("KMBO")) System.err.println("2"); //debug
+
                 // if the two triplets are of different stations and coordinates, skip
                 if (!oneTriplet.atSameStation(otherTriplet)) continue;
+
+                if (oneTriplet.getStation().equals("KMBO") && otherTriplet.getStation().equals("KMBO")) System.err.println("3"); //debug
+
                 //if one is {RT} and the other is {Z}, leave both
                 if (oneTriplet.complements(otherTriplet)) continue;
+
+                if (oneTriplet.getStation().equals("KMBO") && otherTriplet.getStation().equals("KMBO")) System.err.println("4"); //debug
 
                 // remove triplet that has less components, worst instruments, or larger location codes
                 if(oneTriplet.isInferiorTo(otherTriplet)) {
