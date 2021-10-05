@@ -24,8 +24,11 @@ public class SacTriplet {
     private String name;
 
     private Path rPath;
+    private boolean rRegistered = false;
     private Path tPath;
+    private boolean tRegistered = false;
     private Path zPath;
+    private boolean zRegistered = false;
 
     private int number = 0;
     private boolean dismissed = false;
@@ -67,24 +70,27 @@ public class SacTriplet {
         switch(component) {
         case "R":
             rPath = sacPath;
+            rRegistered = true;
             break;
         case "T":
             tPath = sacPath;
+            tRegistered = true;
             break;
         case "Z":
             zPath = sacPath;
+            zRegistered = true;
             break;
         }
     }
 
     public boolean checkValidity() {
-        if (!rPath.toString().isEmpty() && !tPath.toString().isEmpty() && !zPath.toString().isEmpty()) {
+        if (rRegistered && tRegistered && zRegistered) {
             number = 3;
             return true;
-        } else if (!rPath.toString().isEmpty() && !tPath.toString().isEmpty()) {
+        } else if (rRegistered && tRegistered) {
             number = 2;
             return true;
-        } else if (!zPath.toString().isEmpty()) {
+        } else if (zRegistered) {
             number = 1;
             return true;
         } else {
@@ -101,27 +107,27 @@ public class SacTriplet {
     }
 
     public void move(Path dir) throws IOException {
-        if (!rPath.toString().isEmpty()) {
+        if (rRegistered) {
             Utilities.moveToDirectory(rPath, dir, true);
         }
-        if (!tPath.toString().isEmpty()) {
+        if (tRegistered) {
             Utilities.moveToDirectory(tPath, dir, true);
         }
-        if (!zPath.toString().isEmpty()) {
+        if (zRegistered) {
             Utilities.moveToDirectory(zPath, dir, true);
         }
     }
 
     public void rename(String event) throws IOException {
-        if (!rPath.toString().isEmpty()) {
+        if (rRegistered) {
             SACFileName rFile = new SACFileName(rPath.getFileName().toString());
             Files.move(rPath, rPath.resolveSibling(rFile.getFinalFileName(event)));
         }
-        if (!tPath.toString().isEmpty()) {
+        if (tRegistered) {
             SACFileName tFile = new SACFileName(tPath.getFileName().toString());
             Files.move(tPath, tPath.resolveSibling(tFile.getFinalFileName(event)));
         }
-        if (!zPath.toString().isEmpty()) {
+        if (zRegistered) {
             SACFileName zFile = new SACFileName(zPath.getFileName().toString());
             Files.move(zPath, zPath.resolveSibling(zFile.getFinalFileName(event)));
         }
