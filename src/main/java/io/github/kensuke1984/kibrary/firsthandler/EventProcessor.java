@@ -692,7 +692,7 @@ class EventProcessor implements Runnable {
     }
 
     // TODO 00 01 "" duplication detect
-    private void duplicationElimination() throws IOException {
+    private void duplicationElimination() {
 
         // read R, T, and Z files into SacTriplet set
         Set<SacTriplet> sacTripletSet = new HashSet<>();
@@ -700,30 +700,46 @@ class EventProcessor implements Runnable {
             for (Path rPath : rStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(rPath))) sacTripletSet.add(new SacTriplet(rPath));
             }
+        } catch  (Exception e) {
+            System.err.println("R failed");
+            e.printStackTrace();
         }
         try (DirectoryStream<Path> tStream = Files.newDirectoryStream(OUTPUT_PATH, "*.T")) {
             for (Path tPath : tStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(tPath))) sacTripletSet.add(new SacTriplet(tPath));
             }
+        } catch  (Exception e) {
+            System.err.println("T failed");
+            e.printStackTrace();
         }
         try (DirectoryStream<Path> zStream = Files.newDirectoryStream(OUTPUT_PATH, "*.Z")) {
             for (Path zPath : zStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(zPath))) sacTripletSet.add(new SacTriplet(zPath));
             }
+        } catch  (Exception e) {
+            System.err.println("Z failed");
+            e.printStackTrace();
         }
 
+        try {
         // throw away triplets that consist of neither {RTZ}, {RT}, nor {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
+            System.err.println("<validity> " + oneTriplet.getStation()); //debug
             if (!oneTriplet.checkValidity()) {
                 System.err.println("!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
                 oneTriplet.dismiss();
                 oneTriplet.move(unEliminatedPath);
             }
         }
+        } catch  (Exception e) {
+            System.err.println("validity check failed");
+            e.printStackTrace();
+        }
 
+        try {
         // eliminate files of same network, station, and component
         for (SacTriplet oneTriplet : sacTripletSet) {
-            System.err.println("<> " + oneTriplet.getStation()); //debug
+            System.err.println("<elimination> " + oneTriplet.getStation()); //debug
 
             if (oneTriplet.isDismissed()) continue;
 
@@ -764,11 +780,20 @@ class EventProcessor implements Runnable {
                 }
             }
         }
+        } catch  (Exception e) {
+            System.err.println("elimination failed");
+            e.printStackTrace();
+        }
 
+        try {
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (!oneTriplet.isDismissed()) {
                 oneTriplet.rename(event.toString());
             }
+        }
+        } catch  (Exception e) {
+            System.err.println("rename failed");
+            e.printStackTrace();
         }
     }
 
