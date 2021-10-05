@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
  * @author Kensuke Konishi
  * @version 0.0.3.3
  */
-class SACDeconvolution {
+class SacDeconvolution {
 
     /**
      * 0: taper なし, 1: sine taper, 2: cosine taper TODO
@@ -47,7 +47,7 @@ class SACDeconvolution {
      */
     private static FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
-    private SACDeconvolution() {
+    private SacDeconvolution() {
     }
 
     /**

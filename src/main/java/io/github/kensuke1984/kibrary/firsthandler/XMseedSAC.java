@@ -14,6 +14,8 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
 
+import io.github.kensuke1984.kibrary.entrance.RespDataFile;
+import io.github.kensuke1984.kibrary.entrance.StationInformationFile;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -301,7 +303,7 @@ class XMseedSAC implements Runnable {
                         Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
                         continue;
                     }
-                    SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                    SacDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
                 } catch (Exception e) {
                     // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
                     Utilities.moveToDirectory(modPath, noSpectraPath, true);
@@ -425,7 +427,7 @@ class XMseedSAC implements Runnable {
                         Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
                         continue;
                     }
-                    SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                    SacDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
                 } catch (Exception e) {
                     // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
                     Utilities.moveToDirectory(modPath, noSpectraPath, true);

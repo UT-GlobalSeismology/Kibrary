@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
+import io.github.kensuke1984.kibrary.entrance.RespDataFile;
+import io.github.kensuke1984.kibrary.entrance.StationInformationFile;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -553,7 +555,7 @@ class EventProcessor implements Runnable {
                         continue;
                     }
 
-                    SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                    SacDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
 
                 } catch (Exception e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
@@ -751,6 +753,7 @@ class EventProcessor implements Runnable {
             }
         }
 
+        //rename files that survived
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (!oneTriplet.isDismissed()) {
                 oneTriplet.rename(event.toString());

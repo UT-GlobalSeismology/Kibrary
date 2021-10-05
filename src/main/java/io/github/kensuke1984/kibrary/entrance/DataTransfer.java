@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
+package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.BufferedOutputStream;
 import java.nio.file.Files;

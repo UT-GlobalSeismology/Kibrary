@@ -295,7 +295,7 @@ class SeedSAC implements Runnable {
                         Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
                         continue;
                     }
-                    SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                    SacDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
                 } catch (Exception e) {
                     // throw *.MOD files which cannot produce SPECTRA to noSpectraPath
                     Utilities.moveToDirectory(modPath, noSpectraPath, true);

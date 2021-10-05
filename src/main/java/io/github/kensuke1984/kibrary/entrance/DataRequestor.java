@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
+package io.github.kensuke1984.kibrary.entrance;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
