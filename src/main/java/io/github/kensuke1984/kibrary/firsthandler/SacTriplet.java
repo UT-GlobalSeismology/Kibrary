@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 public class SacTriplet {
 
-    private final double COORDINATE_GRID = 0.0001;
+    private final double COORDINATE_GRID = 0.01; // = about 1 km
 
     private String network;
     private String station;
