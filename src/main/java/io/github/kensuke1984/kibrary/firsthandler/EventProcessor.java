@@ -723,6 +723,8 @@ class EventProcessor implements Runnable {
 
         // eliminate files of same network, station, and component
         for (SacTriplet oneTriplet : sacTripletSet) {
+            System.err.println("<> " + oneTriplet.getStation()); //debug
+
             if (oneTriplet.isDismissed()) continue;
 
             if (oneTriplet.getStation().equals("KMBO")) System.err.println("0 " + oneTriplet.getNetwork()); //debug
