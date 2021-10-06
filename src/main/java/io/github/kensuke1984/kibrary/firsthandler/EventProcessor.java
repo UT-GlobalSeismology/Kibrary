@@ -159,23 +159,34 @@ class EventProcessor implements Runnable {
     }
 
     @Override
-    public void run() { // TODO: exception handling
+    public void run() {
 
+        // copy, select, and set up SAC files
         try {
             Files.createDirectories(OUTPUT_PATH);
             setupSacs();
-            // merge uneven SAC files
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on setup : " + INPUT_DIR.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on setup : " + INPUT_DIR.getName(), e);
+        }
+
+        // merge segmented SAC files
+        try {
             mergeSacSegments(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
         } catch (IOException e) {
+            System.err.println("!!!!!!! Error on merge : " + INPUT_DIR.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on pre-processing " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on merge : " + INPUT_DIR.getName(), e);
         }
+
+        // remove trend, zero-pad, and cut SAC files
         try {
-//          System.out.println("Enter: modifySACs");
             modifySacs();
         } catch (Exception e) {
+            System.err.println("!!!!!!! Error on modify : " + INPUT_DIR.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on modifying " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on modify : " + INPUT_DIR.getName(), e);
         }
 
 /* this was moved inside setupSacs() (Keisuke Otsuru 2021.09.19)
@@ -190,15 +201,30 @@ class EventProcessor implements Runnable {
 */
 
         // instrumentation function deconvolution
- //     System.out.println("Enter: deconvolute");
-        deconvolveSacs();
+        try {
+            deconvolveSacs();
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on deconvolution : " + INPUT_DIR.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on deconvolution : " + INPUT_DIR.getName(), e);
+        }
+
         // rotation ((.N,.E) & (.1 & .2) -> (.R,.T))
         try {
             rotate();
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on rotation : " + INPUT_DIR.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on rotation : " + INPUT_DIR.getName(), e);
+        }
+
+        // eliminating duplicate instruments and close stations
+        try {
             duplicationElimination();
         } catch (IOException e) {
+            System.err.println("!!!!!!! Error on elimination : " + INPUT_DIR.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on rotating " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on elimination : " + INPUT_DIR.getName(), e);
         }
 
 /* this has become unneeded since STATION and RESP files are in dl* directory (Keisuke Otsuru 2021.09.19)
@@ -444,6 +470,7 @@ class EventProcessor implements Runnable {
      * </ul>
      * Successful files are put in "doneModify", while files that failed to be zero-padded go in "unModified"
      * and those with unwanted epicentral distances end up in "unwantedDistance".
+     * @throws IOException
      */
     private void modifySacs() throws IOException {
         // System.out.println("Modifying sac files in "
@@ -515,8 +542,9 @@ class EventProcessor implements Runnable {
      * If the deconvolution fails, files will be moved to "unDeconvolved".
      * If there are both ["1" and "E"] or ["2" and "N"] files for the same instrument, one will be moved to "duplicateComponent".
      * If everything succeeds, unneeded files will be moved to "doneDeconvolve".
+     * @throws IOException
      */
-    private void deconvolveSacs() {
+    private void deconvolveSacs() throws IOException{
         // System.out.println("Conducting deconvolution");
 //        Path noSpectraPath = OUTPUT_PATH.resolve("noSpectraOrInvalidMOD");
 //        Path duplicateChannelPath = OUTPUT_PATH.resolve("duplicateChannel");
@@ -628,8 +656,6 @@ class EventProcessor implements Runnable {
                 // move processed MOD files to archive
                 Utilities.moveToDirectory(modPath, doneDeconvolvePath, true);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
     }

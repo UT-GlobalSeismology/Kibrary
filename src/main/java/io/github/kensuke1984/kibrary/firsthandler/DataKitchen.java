@@ -191,7 +191,7 @@ public class DataKitchen implements Operation {
         int threadNum = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threadNum);
 
-        processors.forEach(es::submit); //TODO exception handling
+        processors.forEach(es::submit);
 
         es.shutdown();
         try {
