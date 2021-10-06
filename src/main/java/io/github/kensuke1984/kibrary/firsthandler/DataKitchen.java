@@ -200,6 +200,11 @@ public class DataKitchen implements Operation {
             e2.printStackTrace();
         }
 
+        System.err.println("Result:");
+        for (EventProcessor processor : processors) {
+            if (!processor.hasRun()) System.err.println("! " + processor.getEventID() + " failed.");
+            if (processor.hadProblem()) System.err.println("! " + processor.getEventID() + " encountered problems.");
+        }
 /*
         ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         eventDirs.stream().map(this::process).forEach(es::submit);

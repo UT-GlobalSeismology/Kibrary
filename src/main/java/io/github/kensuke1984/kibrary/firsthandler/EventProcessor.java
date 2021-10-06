@@ -56,7 +56,7 @@ class EventProcessor implements Runnable {
      * true: the base time will be PDE time, false: CMT (default)
      */
     private boolean byPDE = false;
-    private boolean hadRun;
+    private boolean hasRun;
     /**
      * true: exception has occurred, false: not
      */
@@ -238,7 +238,7 @@ class EventProcessor implements Runnable {
 */
         problem = check();
 
-        hadRun = true;
+        hasRun = true;
 
         if (removeIntermediateFiles) removeIntermediateFiles();
 
@@ -900,16 +900,22 @@ class EventProcessor implements Runnable {
     /**
      * @return (boolean) true if already run
      */
-    boolean hadRun() {
-        return hadRun;
+    public boolean hasRun() {
+        return hasRun;
     }
 
     /**
      * @return (boolean) true if there have been any problems
      */
-    boolean hasProblem() {
+    public boolean hadProblem() {
         return problem;
     }
 
+    /**
+     * @return (String) GCMT ID of event
+     */
+    public String getEventID() {
+        return event.getGlobalCMTID().toString();
+    }
 
 }
