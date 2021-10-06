@@ -200,10 +200,20 @@ public class DataKitchen implements Operation {
             e2.printStackTrace();
         }
 
+        boolean success = true;
         System.err.println("Result:");
         for (EventProcessor processor : processors) {
-            if (!processor.hasRun()) System.err.println("! " + processor.getEventID() + " failed.");
-            if (processor.hadProblem()) System.err.println("! " + processor.getEventID() + " encountered problems.");
+            if (!processor.hasRun()) {
+                System.err.println("! " + processor.getEventID() + " failed.");
+                success = false;
+            }
+            if (processor.hadProblem()) {
+                System.err.println("! " + processor.getEventID() + " encountered problems.");
+                success = false;
+            }
+        }
+        if (success) {
+            System.err.println(" everything succeeded!");
         }
 /*
         ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
