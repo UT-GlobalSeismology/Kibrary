@@ -12,7 +12,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 public class SacTriplet {
 
-    private final double COORDINATE_GRID = 0.01; // = about 1 km
+    /**
+     * threshold to judge which stations are in the same position [deg]
+     */
+    private double coordinateGrid;
 
     private String network;
     private String station;
@@ -33,7 +36,7 @@ public class SacTriplet {
     private int number = 0;
     private boolean dismissed = false;
 
-    public SacTriplet(Path sacPath) throws IOException {
+    public SacTriplet(Path sacPath, double grid) throws IOException {
         SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
 
@@ -45,6 +48,8 @@ public class SacTriplet {
         instrument = sacFile.getInstrument();
         latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
         longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
+
+        coordinateGrid = grid;
 
         //register
         register(sacPath, sacFile.getComponent());
@@ -138,8 +143,8 @@ public class SacTriplet {
 
     public boolean atSameStation (SacTriplet other) {
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
-        else if (Math.abs(latitude - other.getLatitude()) < COORDINATE_GRID &&
-                Math.abs(longitude - other.getLongitude()) < COORDINATE_GRID) return true;
+        else if (Math.abs(latitude - other.getLatitude()) < coordinateGrid &&
+                Math.abs(longitude - other.getLongitude()) < coordinateGrid) return true;
         else return false;
     }
 

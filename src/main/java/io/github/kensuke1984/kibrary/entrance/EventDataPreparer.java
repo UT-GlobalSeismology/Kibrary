@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * @author Keisuke Otsuru
  * @version 2021/09/14
  */
-public class MseedDownload {
+public class EventDataPreparer {
 
     private static final String DATASELECT_URL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
     private String date = Utilities.getTemporaryString();
@@ -48,7 +48,7 @@ public class MseedDownload {
     private final String MSEED_FILENAME;
     private final Path MSEED_PATH;
 
-    public MseedDownload (GlobalCMTID id, String networks, String channels, int headAdjustment, int footAdjustment, Path outPath) {
+    public EventDataPreparer (GlobalCMTID id, String networks, String channels, int headAdjustment, int footAdjustment, Path outPath) {
         this.id = id;
         this.networks = networks;
         this.channels = channels;
@@ -64,26 +64,10 @@ public class MseedDownload {
     }
 
     /**
-     * A download process for all data needed in one event (Mseed file which is opened to SAC files + Station files + Resp files)
-     * @throws IOException
-     */
-    public void downloadAll() throws IOException {
-
-        downloadMseed();
-        mseed2sac();
-
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
-            for (Path sacPath : sacPaths) {
-                downloadMetadata(sacPath);
-            }
-        }
-    }
-
-    /**
      * Downloads Mseed file using specifications set by the constructor.
      * @throws IOException
      */
-    private void downloadMseed() throws IOException {
+    public void downloadMseed() throws IOException {
         String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
@@ -107,7 +91,7 @@ public class MseedDownload {
      * @return (boolean) true if mseed2sac succeeds
      * @throws IOException
      */
-    private boolean mseed2sac() throws IOException {
+    public boolean mseed2sac() throws IOException {
         String command = "mseed2sac " + MSEED_FILENAME;
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
@@ -134,31 +118,33 @@ public class MseedDownload {
     }
 
     /**
-     * Downloads Station file and Resp file for a given SAC file that already exists.
-     * The download may be skipped if the SAC file name does not take a valid form.
-     * @param sacPath (Path) Path of an existing SAC file
+     * Downloads Station files and Resp files for the event, given a set of SAC files.
+     * The downloads may be skipped if the SAC file name does not take a valid form.
      * @throws IOException
      */
-    private void downloadMetadata(Path sacPath) throws IOException {
-        String[] sacInfo = sacPath.getFileName().toString().split("\\.");
-        if(sacInfo.length != 9) {
-            System.err.println("invalid sac file name; skipping");
-            return;
+    public void downloadMetadata() throws IOException {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
+            for (Path sacPath : sacPaths) {
+                String[] sacInfo = sacPath.getFileName().toString().split("\\.");
+                if(sacInfo.length != 9) {
+                    System.err.println("invalid sac file name; skipping");
+                    return;
+                }
+
+                // set information based on SAC File name created by mseed2sac
+                String network = sacInfo[0];
+                String station = sacInfo[1];
+                String location = sacInfo[2]; //(sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
+                String channel = sacInfo[3];
+
+                StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel);
+                stationInfo.setRequest(startTime, endTime);
+                stationInfo.downloadStationInformation(EVENT_DIR.toPath());
+
+                RespDataFile respData = new RespDataFile(network, station, location, channel);
+                respData.setRequest(startTime);
+                respData.downloadRespData(EVENT_DIR.toPath());
+            }
         }
-
-        // set information based on SAC File name created by mseed2sac
-        String network = sacInfo[0];
-        String station = sacInfo[1];
-        String location = sacInfo[2]; //(sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
-        String channel = sacInfo[3];
-
-        StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel);
-        stationInfo.setRequest(startTime, endTime);
-        stationInfo.downloadStationInformation(EVENT_DIR.toPath());
-
-        RespDataFile respData = new RespDataFile(network, station, location, channel);
-        respData.setRequest(startTime);
-        respData.downloadRespData(EVENT_DIR.toPath());
-
     }
 }

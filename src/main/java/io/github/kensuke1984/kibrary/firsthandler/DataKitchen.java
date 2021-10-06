@@ -43,11 +43,24 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @version 0.3.1
  */
 public class DataKitchen implements Operation {
+
     private double samplingHz;
     /**
      * which catalog to use 0:CMT 1: PDE
      */
     private int catalog;
+
+    private double minDistance;
+    private double maxDistance;
+    private double minLatitude;
+    private double maxLatitude;
+    private double minLongitude;
+    private double maxLongitude;
+    /**
+     * threshold to judge which stations are in the same position [deg]
+     */
+    private double coordinateGrid;
+
     /**
      * if remove intermediate file
      */
@@ -65,14 +78,26 @@ public class DataKitchen implements Operation {
             pw.println("manhattan DataKitchen");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##String a name of catalog to use from [cmt, pde]  (cmt)");
+            pw.println("##(String) a name of catalog to use from [cmt, pde]  (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
-            pw.println("##double Sampling Hz, can not be changed now (20)");
-            pw.println("#samplingHz");
-            pw.println("##epicentral distance range Min(0) Max(180)"); // TODO : not used now
-            pw.println("#epicentralDistanceMin");
-            pw.println("#epicentralDistanceMax");
-            pw.println("##boolean if this is true, remove intermediate files (true)");
+            pw.println("##(double) Sampling Hz, can not be changed now (20)");
+            pw.println("#samplingHz CANT CHANGE NOW");
+            pw.println("##Lower limit of epicentral distance range [deg] [0:maxDistance) (0)");
+            pw.println("#minDistance 70");
+            pw.println("##Upper limit of epicentral distance range [deg] (minDistance:180] (180)");
+            pw.println("#maxDistance 100");
+            pw.println("##Lower limit of station latitude [deg] [-90:maxLatitude) (-90)");
+            pw.println("#minLatitude");
+            pw.println("##Upper limit of station latitude [deg] (minLatitude:90] (90)");
+            pw.println("#maxLatitude");
+            pw.println("##Lower limit of station longitude [deg] [-180:maxLongitude) (-180)");
+            pw.println("#minLongitude");
+            pw.println("##Upper limit of station longitude [deg] (minLongitude:360] (180)");
+            pw.println("#maxLongitude");
+            pw.println("##Threshold to judge which stations are in the same position [deg] (0.01)"); // = about 1 km
+            pw.println("##If two stations are closer to each other than this threshold, one will be eliminated.");
+            pw.println("#coordinateGrid 0.01");
+            pw.println("##(boolean) if this is true, remove intermediate files (true)");
             pw.println("#removeIntermediateFile");
         }
         System.err.println(outPath + " is created.");
@@ -99,6 +124,13 @@ public class DataKitchen implements Operation {
             default:
                 throw new RuntimeException("Invalid catalog name.");
         }
+        minDistance = Double.parseDouble(property.getProperty("minDistance"));
+        maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
+        minLatitude = Double.parseDouble(property.getProperty("minLatitude"));
+        maxLatitude = Double.parseDouble(property.getProperty("maxLatitude"));
+        minLongitude = Double.parseDouble(property.getProperty("minLongitude"));
+        maxLongitude = Double.parseDouble(property.getProperty("maxLongitude"));
+        coordinateGrid = Double.parseDouble(property.getProperty("coordinateGrid"));
         removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
     }
 
@@ -106,6 +138,13 @@ public class DataKitchen implements Operation {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("catalog")) property.setProperty("catalog", "cmt");
         if (!property.containsKey("samplingHz")) property.setProperty("samplingHz", "20"); // TODO
+        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0");
+        if (!property.containsKey("maxDistance")) property.setProperty("maxDistance", "180");
+        if (!property.containsKey("minLatitude")) property.setProperty("minLatitude", "-90");
+        if (!property.containsKey("maxLatitude")) property.setProperty("maxLatitude", "90");
+        if (!property.containsKey("minLongitude")) property.setProperty("minLongitude", "-180");
+        if (!property.containsKey("maxLongitude")) property.setProperty("maxLongitude", "180");
+        if (!property.containsKey("coordinateGrid")) property.setProperty("coordinateGrid", "0.01");
         if (!property.containsKey("removeIntermediateFile")) property.setProperty("removeIntermediateFile", "true");
     }
 
@@ -146,7 +185,8 @@ public class DataKitchen implements Operation {
             }
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
-        processors.forEach(p -> p.setRemoveIntermediateFiles(removeIntermediateFile));
+        processors.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
+                minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
         int threadNum = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threadNum);

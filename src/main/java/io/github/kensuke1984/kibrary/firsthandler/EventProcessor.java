@@ -1,6 +1,8 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,19 +56,28 @@ class EventProcessor implements Runnable {
      * true: the base time will be PDE time, false: CMT (default)
      */
     private boolean byPDE = false;
-    /**
-     * [deg] Minimum epicentral distance of SAC files to be output
-     */
-    private final double MINIMUM_EPICENTRAL_DISTANCE = 0;
-    /**
-     * [deg] Maximum epicentral distance of SAC files to be output
-     */
-    private final double MAXIMUM_EPICENTRAL_DISTANCE = 180;
     private boolean hadRun;
     /**
      * true: exception has occurred, false: not
      */
     private boolean problem;
+
+    /**
+     * [deg] Minimum epicentral distance of SAC files to be output
+     */
+    private double minDistance = 0;
+    /**
+     * [deg] Maximum epicentral distance of SAC files to be output
+     */
+    private double maxDistance = 180;
+    private double minLatitude = -90;
+    private double maxLatitude = 90;
+    private double minLongitude = -180;
+    private double maxLongitude = 180;
+    /**
+     * threshold to judge which stations are in the same position [deg]
+     */
+    private double coordinateGrid = 0.01;
     /**
      * if remove intermediate files
      */
@@ -83,7 +94,8 @@ class EventProcessor implements Runnable {
     private Path unRotatedPath;
     private Path unEliminatedPath;
     private Path invalidStationPath;
-    private Path invalidDistancePath;
+    private Path unwantedCoordinatePath;
+    private Path unwantedDistancePath;
     private Path duplicateComponentPath;
     private Path duplicateInstrumentPath;
 
@@ -101,13 +113,14 @@ class EventProcessor implements Runnable {
         event = eventDir.getGlobalCMTID().getEvent();
 
         invalidStationPath = OUTPUT_PATH.resolve("invalidStation");
+        unwantedCoordinatePath = OUTPUT_PATH.resolve("unwantedCoordinate");
 
         doneMergePath = OUTPUT_PATH.resolve("doneMerge");
         unMergedPath = OUTPUT_PATH.resolve("unMerged");
 
         doneModifyPath = OUTPUT_PATH.resolve("doneModify");
         unModifiedPath = OUTPUT_PATH.resolve("unModified");
-        invalidDistancePath = OUTPUT_PATH.resolve("invalidDistance");
+        unwantedDistancePath = OUTPUT_PATH.resolve("unwantedDistance");
 
         doneDeconvolvePath = OUTPUT_PATH.resolve("doneDeconvolve");
         unDeconvolvedPath = OUTPUT_PATH.resolve("unDeconvolved");
@@ -123,16 +136,30 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * Sets {@link #removeIntermediateFiles}.
+     * Sets parameters.
      *
-     * @param b (boolean) If this is true, then all intermediate files will be removed at the end.
+     * @param minD (double) lower limit of epicentral distance
+     * @param maxD (double) upper limit of epicentral distance
+     * @param minLa (double) lower limit of latitude
+     * @param maxLa (double) upper limit of latitude
+     * @param minLo (double) lower limit of longitude
+     * @param maxLo (double) upper limit of longitude
+     * @param grid (double) threshold to judge which stations are in the same position
+     * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
-    void setRemoveIntermediateFiles(boolean b) {
-        removeIntermediateFiles = b;
+    void setParameters(double minD, double maxD, double minLa, double maxLa, double minLo, double maxLo, double grid, boolean remove) {
+        minDistance = minD;
+        maxDistance = maxD;
+        minLatitude = minLa;
+        maxLatitude = maxLa;
+        minLongitude = minLo;
+        maxLongitude = maxLo;
+        coordinateGrid = grid;
+        removeIntermediateFiles = remove;
     }
 
     @Override
-    public void run() {
+    public void run() { // TODO: exception handling
 
         try {
             Files.createDirectories(OUTPUT_PATH);
@@ -265,7 +292,12 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                //TODO: check station location here?
+                // check station coordinate
+                if (checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
+                    System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    Utilities.moveToDirectory(newSacPath, unwantedCoordinatePath, true);
+                    continue;
+                }
 
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
@@ -340,6 +372,24 @@ class EventProcessor implements Runnable {
     }
 
     /**
+     * Checks whether the station is positioned in the wanted coordinate range.
+     * @param latitude (double) Latitude of the station to check
+     * @param longitude (double) Longitude of the station to check
+     * @return (boolean) true if position is fine
+     */
+    private boolean checkStationCoordinate(double latitude, double longitude) {
+        //latitude
+        if (latitude < minLatitude || maxLatitude < latitude) return false;
+        // longitude [-180, 180]
+        if (maxLongitude <= 180) if (longitude < minLongitude || maxLongitude < longitude) return false;
+        // longitude [0, 360]
+        if (minLongitude <= 180 && 180 < maxLongitude) if (longitude < minLongitude && maxLongitude - 360 < longitude) return false;
+        if (180 < minLongitude && 180 < maxLongitude) if (longitude < minLongitude - 360 || maxLongitude - 360 < longitude) return false;
+        // else
+        return true;
+    }
+
+    /**
      * Sets SAC headers related to stations via StationInformation file,
      * and also interpolates SAC file with DELTA (which is currently 0.05 sec thus 20 Hz).
      * @param sacPath (Path) Path of SAC files whose name will be fixed.
@@ -390,7 +440,7 @@ class EventProcessor implements Runnable {
      * <li> check whether the epicentral distance is in the wanted range; if not, throw the file away </li>
      * </ul>
      * Successful files are put in "doneModify", while files that failed to be zero-padded go in "unModified"
-     * and those with invalid epicentral distances end up in "invalidDistance".
+     * and those with unwanted epicentral distances end up in "unwantedDistance".
      */
     private void modifySacs() throws IOException {
         // System.out.println("Modifying sac files in "
@@ -419,12 +469,11 @@ class EventProcessor implements Runnable {
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
                 sm.rebuild();
 
-                // filter by distance
-                //TODO: this is currently always 0~180
-                if (!sm.checkEpicentralDistance(MINIMUM_EPICENTRAL_DISTANCE, MAXIMUM_EPICENTRAL_DISTANCE)) {
-                    System.err.println("!! invalid epicentral distance : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
-                    Utilities.moveToDirectory(sacPath, invalidDistancePath, true);
-                    Utilities.moveToDirectory(sm.getModifiedPath(), invalidDistancePath, true);
+                // filter stations by epicentral distance
+                if (!sm.checkEpicentralDistance(minDistance, maxDistance)) {
+                    System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    Utilities.moveToDirectory(sacPath, unwantedDistancePath, true);
+                    Utilities.moveToDirectory(sm.getModifiedPath(), unwantedDistancePath, true);
                     continue;
                 }
 
@@ -605,7 +654,18 @@ class EventProcessor implements Runnable {
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(OUTPUT_PATH.toFile());
         try {
+            pb.redirectErrorStream(true); // the standard error stream will be redirected to the standard output stream
             Process p = pb.start();
+
+            // The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
+            // Even if you want to stop printing the output from mseed2sac, just erase the line with println() and nothing else.
+            String str;
+            BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            while((str = brstd.readLine()) != null) { // reading the buffer
+                System.out.println(str); // Comment out only this single line if you don't want the output.
+            }
+            brstd.close();
+
             return p.waitFor() == 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -700,17 +760,17 @@ class EventProcessor implements Runnable {
         Set<SacTriplet> sacTripletSet = new HashSet<>();
         try (DirectoryStream<Path> rStream = Files.newDirectoryStream(OUTPUT_PATH, "*.R")) {
             for (Path rPath : rStream) {
-                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(rPath))) sacTripletSet.add(new SacTriplet(rPath));
+                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(rPath))) sacTripletSet.add(new SacTriplet(rPath, coordinateGrid));
             }
         }
         try (DirectoryStream<Path> tStream = Files.newDirectoryStream(OUTPUT_PATH, "*.T")) {
             for (Path tPath : tStream) {
-                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(tPath))) sacTripletSet.add(new SacTriplet(tPath));
+                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(tPath))) sacTripletSet.add(new SacTriplet(tPath, coordinateGrid));
             }
         }
         try (DirectoryStream<Path> zStream = Files.newDirectoryStream(OUTPUT_PATH, "*.Z")) {
             for (Path zPath : zStream) {
-                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(zPath))) sacTripletSet.add(new SacTriplet(zPath));
+                if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(zPath))) sacTripletSet.add(new SacTriplet(zPath, coordinateGrid));
             }
         }
 
@@ -799,7 +859,8 @@ class EventProcessor implements Runnable {
             FileUtils.deleteDirectory(unRotatedPath.toFile());
             FileUtils.deleteDirectory(unEliminatedPath.toFile());
             FileUtils.deleteDirectory(invalidStationPath.toFile());
-            FileUtils.deleteDirectory(invalidDistancePath.toFile());
+            FileUtils.deleteDirectory(unwantedDistancePath.toFile());
+            FileUtils.deleteDirectory(unwantedCoordinatePath.toFile());
             FileUtils.deleteDirectory(duplicateComponentPath.toFile());
             FileUtils.deleteDirectory(duplicateInstrumentPath.toFile());
         } catch (Exception e) {

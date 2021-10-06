@@ -78,7 +78,7 @@ public class DataLobby implements Operation {
             pw.println("#endDate 2019-12-31");
             pw.println("##Lower limit of Mw (5.5)");
             pw.println("#lowerMw");
-            pw.println("##Upper limit of Mw (6.5)");
+            pw.println("##Upper limit of Mw (7.3)");
             pw.println("#upperMw");
             pw.println("##Shallower limit of DEPTH (100)");
             pw.println("#lowerDepth");
@@ -133,7 +133,7 @@ public class DataLobby implements Operation {
         if (!property.containsKey("startDate")) throw new RuntimeException("No information about the start date");
         if (!property.containsKey("endDate")) throw new RuntimeException("No information about the end date");
         if (!property.containsKey("lowerMw")) property.setProperty("lowerMw", "5.5");
-        if (!property.containsKey("upperMw")) property.setProperty("upperMw", "6.5");
+        if (!property.containsKey("upperMw")) property.setProperty("upperMw", "7.3");
         if (!property.containsKey("lowerDepth")) property.setProperty("lowerDepth", "100");
         if (!property.containsKey("upperDepth")) property.setProperty("upperDepth", "700");
         if (!property.containsKey("lowerLatitude")) property.setProperty("lowerLatitude", "-90");
@@ -169,8 +169,10 @@ public class DataLobby implements Operation {
         requestedIDs.forEach(id -> {
             try {
                 System.err.println("Downloading files for " + id + " ...");
-                MseedDownload mseedDL = new MseedDownload(id, networks, channels, headAdjustment, footAdjustment, outPath);
-                mseedDL.downloadAll();
+                EventDataPreparer edp = new EventDataPreparer(id, networks, channels, headAdjustment, footAdjustment, outPath);
+                edp.downloadMseed();
+                edp.mseed2sac();
+                edp.downloadMetadata();
             } catch (Exception e) {
                 System.err.println("Download for " + id + " failed.");
                 e.printStackTrace();
