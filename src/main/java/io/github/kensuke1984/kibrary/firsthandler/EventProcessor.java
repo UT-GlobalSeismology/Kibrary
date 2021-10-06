@@ -301,6 +301,9 @@ class EventProcessor implements Runnable {
 
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
+
+                throw new IOException("test exception");
+
             }
         }
 
