@@ -293,7 +293,7 @@ class EventProcessor implements Runnable {
                 }
 
                 // check station coordinate
-                if (checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
+                if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
                     System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, unwantedCoordinatePath, true);
                     continue;
