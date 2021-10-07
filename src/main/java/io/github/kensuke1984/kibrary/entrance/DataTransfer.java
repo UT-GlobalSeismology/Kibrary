@@ -34,8 +34,10 @@ final class DataTransfer {
     public static final String IRIS_FTP = "ftp.iris.washington.edu";
 
     private static void get(String date, Path outPath) {
+
         // create an FTPClient
         FTPClient ftpclient = new FTPClient();
+
         try {
             // connect
             ftpclient.connect(IRIS_FTP);
@@ -48,6 +50,8 @@ final class DataTransfer {
             // binary mode
             ftpclient.setFileType(FTP.BINARY_FILE_TYPE);
             // ftpclient.changeWorkingDirectory(userPath);
+
+            // read existing files
             FTPFileFilter fff = file -> date.equals("*") || date.equals("-c") ? file.getName().endsWith("seed") :
                     file.getName().endsWith("seed") && file.getName().contains(date);
             FTPFile[] ffiles = ftpclient.listFiles(IRIS_USER_PATH, fff);
@@ -55,17 +59,30 @@ final class DataTransfer {
             for (FTPFile f : ffiles)
                 System.err.println(f);
             if (date.equals("-c")) return;
+
+            // wait
             System.err.println("Downloading in 10 s");
             Thread.sleep(10 * 1000);
+
+            // download
             Files.createDirectories(outPath);
-            for (FTPFile ffile : ffiles)
+            for (FTPFile ffile : ffiles) {
+
+                // get event ID and create event directory
+                String[] parts = ffile.getName().split("\\.");
+                String eventID = parts[0];
+                Path eventPath = outPath.resolve(eventID);
+                Files.createDirectories(eventPath);
+
+                // download file in event directory
                 try (BufferedOutputStream ostream = new BufferedOutputStream(
-                        Files.newOutputStream(outPath.resolve(ffile.getName()), StandardOpenOption.CREATE_NEW))) {
+                        Files.newOutputStream(eventPath.resolve(ffile.getName()), StandardOpenOption.CREATE_NEW))) {
                     System.err.println("Receiving " + ffile.getName());
                     ftpclient.retrieveFile(IRIS_USER_PATH + "/" + ffile.getName(), ostream);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
