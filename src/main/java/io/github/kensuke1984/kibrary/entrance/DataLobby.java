@@ -13,6 +13,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -169,8 +170,14 @@ public class DataLobby implements Operation {
         requestedIDs.forEach(id -> {
             try {
                 System.err.println("Downloading files for " + id + " ...");
-                EventDataPreparer edp = new EventDataPreparer(id, networks, channels, headAdjustment, footAdjustment, outPath);
-                edp.downloadMseed();
+
+                // create event folder
+                EventFolder ef = new EventFolder(outPath.resolve(id.toString()));
+                if (!ef.mkdirs()) throw new RuntimeException("Can't create " + ef);
+
+                // download by EventDataPreparer
+                EventDataPreparer edp = new EventDataPreparer(ef);
+                edp.downloadMseed(networks, channels, headAdjustment, footAdjustment);
                 edp.mseed2sac();
                 edp.downloadMetadata();
             } catch (Exception e) {

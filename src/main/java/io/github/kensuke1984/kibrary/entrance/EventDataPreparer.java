@@ -7,10 +7,12 @@ import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -38,43 +40,50 @@ public class EventDataPreparer {
     private static final String DATASELECT_URL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
     private String date = Utilities.getTemporaryString();
 
-    private GlobalCMTID id;
-    private String networks;
-    private String channels;
+    private final EventFolder EVENT_DIR;
+    private final GlobalCMTID ID;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    private final EventFolder EVENT_DIR;
-    private final String MSEED_FILENAME;
-    private final Path MSEED_PATH;
+    private String MSEED_FILENAME;
 
-    public EventDataPreparer (GlobalCMTID id, String networks, String channels, int headAdjustment, int footAdjustment, Path outPath) {
-        this.id = id;
-        this.networks = networks;
-        this.channels = channels;
-        LocalDateTime cmtTime = id.getEvent().getCMTTime();
-        startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
-        endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
+    public EventDataPreparer (EventFolder eventFolder) {
 
-        EVENT_DIR = new EventFolder(outPath.resolve(id.toString()));
-        if (!EVENT_DIR.mkdirs()) throw new RuntimeException("Can't create " + EVENT_DIR);
+        EVENT_DIR = eventFolder;
+        ID = eventFolder.getGlobalCMTID();
 
-        MSEED_FILENAME = id + "." + date + ".mseed";
-        MSEED_PATH = EVENT_DIR.toPath().resolve(MSEED_FILENAME); // 出力パスの指定
+    }
+
+    /**
+     * Sets parameters. This method shall be used when the mseed file already exists.
+     * @param mseedFile (String) Name of existing mseed file
+     */
+    public void setParameters (String mseedFile) {
+        startTime = ID.getEvent().getCMTTime();
+        endTime = ID.getEvent().getCMTTime();
+
+        MSEED_FILENAME = mseedFile;
     }
 
     /**
      * Downloads Mseed file using specifications set by the constructor.
      * @throws IOException
      */
-    public void downloadMseed() throws IOException {
+    public void downloadMseed(String networks, String channels, int headAdjustment, int footAdjustment) throws IOException {
+        LocalDateTime cmtTime = ID.getEvent().getCMTTime();
+        startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
+        endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
+
         String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
         long size = 0L;
 
-        size = Files.copy(url.openStream(), MSEED_PATH , StandardCopyOption.REPLACE_EXISTING); // overwriting
-        System.err.println("Downloaded : " + id + " - " + size + " bytes");
+        MSEED_FILENAME = ID + "." + date + ".mseed";
+        Path mseedPath = EVENT_DIR.toPath().resolve(MSEED_FILENAME); // 出力パスの指定
+        size = Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING); // overwriting
+        System.err.println("Downloaded : " + ID + " - " + size + " bytes");
     }
 
     /**
@@ -146,5 +155,43 @@ public class EventDataPreparer {
                 respData.downloadRespData(EVENT_DIR.toPath());
             }
         }
+    }
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws IOException{
+        // working directory is set to current directory
+        Path workPath = Paths.get("");
+
+        // import event directories in working directory
+        Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+        if (eventDirs.isEmpty()) {
+            System.err.println("No events found.");
+            return;
+        }
+        System.err.println(eventDirs.size() + " events are found.");
+
+        // for each event directory
+        for (EventFolder eventDir : eventDirs) {
+            // create new instance for the event
+            EventDataPreparer edp = new EventDataPreparer(eventDir);
+
+            //for each mseed file (though there is probably only one)
+            try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(workPath, "*.mseed")) {
+                for (Path mseedPath : mseedPaths) {
+                    //set (or reset) mseed file name
+                    edp.setParameters(mseedPath.getFileName().toString());
+                    // expand mseed file
+                    edp.mseed2sac();
+                }
+            }
+
+            // download metadata for the expanded SAC files
+            edp.downloadMetadata();
+
+        }
+        System.err.println("Finished!");
+
     }
 }
