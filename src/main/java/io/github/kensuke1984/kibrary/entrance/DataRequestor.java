@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
- * This class makes data requesting mails and sends them.
+ * This class makes breqfast mails to request data and sends them.
  *
  * @author Kensuke Konishi
  * @version 0.1.4

@@ -16,7 +16,8 @@ import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * FTP access to IRIS server. OHP will be prepared
+ * Downloads mseed files prepared after sending breqfast mails. Download is done through FTP access to IRIS server.
+ *  TODO: OHP (Ocean Hemisphere network Project of ERI) will be prepared.
  *
  * @author Kensuke Konishi
  * @version 0.0.2

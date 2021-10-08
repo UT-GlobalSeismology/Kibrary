@@ -20,21 +20,21 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Class for downloading mseed file, opening it, and downloading necessary metadata for a given event.
- * Operations on mseed files that are already downloaded can also be done by using the main method.
+ * Operations on mseed files (or full seed files) that are already downloaded can also be done by using the main method.
  * <p>
- * Note the convention of resulting SAC file names:
+ * Note that the convention of resulting SAC file names will be in <strong>mseed format</strong>.
  * <ul>
  * <li> MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC" </li>
  * <li> SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC" </li>
  * </ul>
  * <p>
- * This class requires that mseed2sac exists in your PATH.
+ * This class requires that mseed2sac (or rdseed in case of full seed files) exists in your PATH.
  * The software
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/mseed2sac/>mseed2sac</a>
  * can be found at IRIS.
  *
  * @author Keisuke Otsuru
- * @version 2021/09/14
+ * @version 2021/10/08
  */
 public class EventDataPreparer {
 
@@ -63,8 +63,8 @@ public class EventDataPreparer {
     }
 
     /**
-     * Sets parameters. This method shall be used when the mseed file already exists.
-     * @param mseedFile (String) Name of existing mseed file
+     * Sets parameters. This method shall be used when the mseed (or full seed) file already exists.
+     * @param mseedFile (String) Name of existing mseed (or full seed) file
      * @param full (boolean) Whether the input file is actually a full seed file
      */
     public void setParameters (String mseedFile, boolean full) {
@@ -149,7 +149,7 @@ public class EventDataPreparer {
     }
 
     /**
-     * Renames seed style SAC file names to mseed style names.
+     * Renames seed-style SAC file names to mseed-style names.
      * <p>
      * Note the difference in convention of SAC file names:
      * <ul>
@@ -176,7 +176,7 @@ public class EventDataPreparer {
     }
     /**
      * Downloads Station files and Resp files for the event, given a set of SAC files.
-     * The downloads may be skipped if the SAC file name does not take a valid form.
+     * The downloads may be skipped if the SAC file name does not take a valid mseed-style form.
      * @throws IOException
      */
     public void downloadMetadata() throws IOException {
@@ -208,7 +208,7 @@ public class EventDataPreparer {
     /**
      * A method to expand existing mseed files and download associated STATION and RESP files.
      * The input mseed files must be in event directories under the current directory.
-     * Output files will be placed in the input event directory.
+     * Output files will be placed in each input event directory.
      * @param args
      * @throws IOException
      */
@@ -239,7 +239,7 @@ public class EventDataPreparer {
                     edp.setParameters(seedPath.getFileName().toString(), true);
                     // expand mseed file
                     edp.openSeed();
-                    // rename seed style SAC file names to mseed style
+                    // rename seed-style SAC file names to mseed-style
                     edp.renameToMseedStyle();
                 }
             }

@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
  * Downloads mseed file and additional metadata for events that satisfy specifications.
- * memo: All download procedures were gathered here because downloading using multiple threads in FirstHandler caused errors.
+ * (memo: All download procedures were gathered here because downloading using multiple threads in FirstHandler caused errors.)
  *
  * @author Keisuke Otsuru
  * @version 2021/09/14

@@ -380,12 +380,13 @@ class EventProcessor implements Runnable {
 
     /**
      * Checks whether the location isn't insane.
-     * Currently, "" "00" "01" "02" are accepted.
+     * Currently, "" and "00"~"10" are accepted.
      * @param location (String) The name of location to check
      * @return (boolean) true if location is fine
      */
     private boolean checkLocation(String location) {
-        return location.isEmpty() || location.equals("00") || location.equals("01") || location.equals("02");
+        return location.isEmpty() || ( location.compareTo("00") >= 0 && location.compareTo("10") <= 0 );
+        //return location.isEmpty() || location.equals("00") || location.equals("01") || location.equals("02");
     }
 
     /**

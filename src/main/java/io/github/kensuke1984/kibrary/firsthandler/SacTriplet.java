@@ -153,10 +153,14 @@ public class SacTriplet {
     }
 
     public boolean isInferiorTo (SacTriplet other) {
+        // a full triplet is prefered over incomplete triplets
         if (number < other.getNumber()) return true;
         else if (number > other.getNumber()) return false;
+        // choose instrument that is prefered
         else if (getInstrumentRank() < other.getInstrumentRank()) return true;
         else if (getInstrumentRank() > other.getInstrumentRank()) return false;
+        // locations younger in dictionary order is prefered
+        // result of compareTo() is positive if [this] is after [other] in dictionary order
         else if (location.compareTo(other.getLocation()) > 0) return true;
         else return false;
     }
