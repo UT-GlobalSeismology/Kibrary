@@ -181,7 +181,7 @@ public class EventDataPreparer {
             System.err.println("edp prepared");
 
             //for each mseed file (though there is probably only one)
-            try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(workPath, "*.mseed")) {
+            try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     System.err.println("operating for " + mseedPath + " ...");
                     //set (or reset) mseed file name
