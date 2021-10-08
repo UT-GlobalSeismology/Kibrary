@@ -178,7 +178,7 @@ public class DataLobby implements Operation {
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 edp.downloadMseed(networks, channels, headAdjustment, footAdjustment);
-                edp.mseed2sac();
+                edp.openSeed();
                 edp.downloadMetadata();
             } catch (Exception e) {
                 System.err.println("Download for " + id + " failed.");

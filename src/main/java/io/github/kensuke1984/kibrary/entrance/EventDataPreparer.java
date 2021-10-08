@@ -19,7 +19,8 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
- * Downloads mseed file, opens it, and downloads necessary metadata for a given event.
+ * Class for downloading mseed file, opening it, and downloading necessary metadata for a given event.
+ * Operations on mseed files that are already downloaded can also be done by using the main method.
  * <p>
  * Note the convention of resulting SAC file names:
  * <ul>
@@ -47,7 +48,13 @@ public class EventDataPreparer {
     private LocalDateTime endTime;
 
     private String MSEED_FILENAME;
+    private boolean IS_FULL_SEED = false;
 
+    /**
+     * The event folder and its GCMT ID is set.
+     * @param eventFolder (EventFolder) The event folder.
+     * Input files must be in this folder if there are any. Output files will also be placed in this folder.
+     */
     public EventDataPreparer (EventFolder eventFolder) {
 
         EVENT_DIR = eventFolder;
@@ -58,16 +65,22 @@ public class EventDataPreparer {
     /**
      * Sets parameters. This method shall be used when the mseed file already exists.
      * @param mseedFile (String) Name of existing mseed file
+     * @param full (boolean) Whether the input file is actually a full seed file
      */
-    public void setParameters (String mseedFile) {
+    public void setParameters (String mseedFile, boolean full) {
         startTime = ID.getEvent().getCMTTime();
         endTime = ID.getEvent().getCMTTime();
 
         MSEED_FILENAME = mseedFile;
+        IS_FULL_SEED = full;
     }
 
     /**
-     * Downloads Mseed file using specifications set by the constructor.
+     * Downloads Mseed file from FDSNWS using specified parameters.
+     * @param networks (String) Network names for request, listed using commas. Wildcards (*, ?) allowed. Virtual networks are unsupported.
+     * @param channels (String) Channels to be requested, listed using commas. Wildcards (*, ?) allowed.
+     * @param headAdjustment (int) [min] The starting time of request with respect to event time.
+     * @param footAdjustment (int) [min] The ending time of request with respect to event time.
      * @throws IOException
      */
     public void downloadMseed(String networks, String channels, int headAdjustment, int footAdjustment) throws IOException {
@@ -96,13 +109,21 @@ public class EventDataPreparer {
     }
 
     /**
-     * Runs mseed2sac.
+     * Runs mseed2sac to extract SAC files: "mseed2sac [mseedfile]".
+     * In case the input is a full seed file, rdseed is run instead: "rdseed -fd [seedfile]" (this does create RESP files).
      * @return (boolean) true if mseed2sac succeeds
      * @throws IOException
      */
-    public boolean mseed2sac() throws IOException {
-        System.err.println("mseed2sac " + MSEED_FILENAME);
-        String command = "mseed2sac " + MSEED_FILENAME;
+    public boolean openSeed() throws IOException {
+        String command;
+        if (!IS_FULL_SEED) {
+            //System.err.println("mseed2sac " + MSEED_FILENAME);
+            command = "mseed2sac " + MSEED_FILENAME;
+        } else {
+            //System.err.println("rdseed -fd " + MSEED_FILENAME);
+            command = "rdseed -fd " + MSEED_FILENAME;
+        }
+
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
         pb.directory(EVENT_DIR.getAbsoluteFile()); // this will be the working directory of the command
@@ -159,9 +180,14 @@ public class EventDataPreparer {
     }
 
     /**
+     * A method to expand existing mseed files and download associated STATION and RESP files.
+     * The input mseed files must be in event directories under the current directory.
+     * Output files will be placed in the input event directory.
      * @param args
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException{
+
         // working directory is set to current directory
         Path workPath = Paths.get("");
 
@@ -178,20 +204,29 @@ public class EventDataPreparer {
             // create new instance for the event
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
-            System.err.println("edp prepared");
-
             //for each mseed file (though there is probably only one)
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     System.err.println("operating for " + mseedPath + " ...");
                     //set (or reset) mseed file name
-                    edp.setParameters(mseedPath.getFileName().toString());
+                    edp.setParameters(mseedPath.getFileName().toString(), false);
                     // expand mseed file
-                    edp.mseed2sac();
+                    edp.openSeed();
                 }
             }
 
-            // download metadata for the expanded SAC files
+            //for each (full) seed file (in case some exist)
+            try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.seed")) {
+                for (Path seedPath : seedPaths) {
+                    System.err.println("operating for " + seedPath + " ...");
+                    //set (or reset) seed file name
+                    edp.setParameters(seedPath.getFileName().toString(), true);
+                    // expand mseed file
+                    edp.openSeed();
+                }
+            }
+
+            // download metadata for all the expanded SAC files in the event directory
             edp.downloadMetadata();
 
         }
