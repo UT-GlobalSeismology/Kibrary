@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 /**
  * Class for creating a dataset, for one event, that can be used in the inversion process.
  * An event directory with SAC files, STATION files, and RESP files must be given as input.
+ * Input SAC file names must be in the mseed-style format (ex. "IU.MAJO.00.BH2.M.2014.202.144400.SAC").
  * <p>
  * This class requires that evalresp and sac exists in your PATH.
  * The software
@@ -173,7 +174,7 @@ class EventProcessor implements Runnable {
 
         // merge segmented SAC files
         try {
-            mergeSacSegments(); // TODO ファイル名をSEED形式に変更したから、動くはず。（要確認）
+            mergeSacSegments();
         } catch (IOException e) {
             System.err.println("!!!!!!! Error on merge : " + INPUT_DIR.getName());
             e.printStackTrace();
@@ -335,13 +336,13 @@ class EventProcessor implements Runnable {
 
     /**
      * This method generates a new SAC file name containing the starting time of the internal data.
+     * The starting time will be read from the SAC header, not the SAC file name.
      * @param sacPath (Path) Path of the SAC file whose name will be fixed.
      * @param sacFile (SACFileName) The SAC file whose name will be fixed.
      * @return (String) The new SAC file name
      * @throws IOException
      */
     private String newSacName(Path sacPath, SACFileName sacFile) throws IOException {
-//        String[] oldFile = sacPath.getFileName().toString().split("\\.");
 
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
         int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
@@ -352,12 +353,6 @@ class EventProcessor implements Runnable {
         int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
 
         return sacFile.getSetFileName(i1, i2, i3, i4, i5, i6);
-
-/*        String newName = i1 + "." + i2 + "." + i3 + "." + i4 + "." + i5 + "." + i6
-                + "." + oldFile[0] + "." + oldFile[1] + "." + oldFile[2]
-                + "." + oldFile[3] + "." + "M" + ".SAC"; //the number of digits may be different from SEED style name
-        return new SACFileName(newName);
-*/
     }
 
     /**

@@ -161,8 +161,14 @@ public class SacTriplet {
         else if (getInstrumentRank() > other.getInstrumentRank()) return false;
         // locations younger in dictionary order is prefered
         // result of compareTo() is positive if [this] is after [other] in dictionary order
-        else if (location.compareTo(other.getLocation()) > 0) return true;
-        else return false;
+        else if (location.compareTo(other.getLocation()) > 0) {
+            System.err.println("A" + location.compareTo(other.getLocation()));
+            return true;
+        }
+        else {
+            System.err.println("B" + location.compareTo(other.getLocation()));
+            return false;
+        }
     }
 
     public int getInstrumentRank() {
