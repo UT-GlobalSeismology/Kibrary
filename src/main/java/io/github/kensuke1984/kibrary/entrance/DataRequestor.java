@@ -94,10 +94,10 @@ public class DataRequestor implements Operation {
             pw.println("##Starting date yyyy-mm-dd, must be defined");
             pw.println("#startDate 1990-01-01");
             pw.println("##End date yyyy-mm-dd, must be defined");
-            pw.println("#endDate 2014-12-31");
+            pw.println("#endDate 2019-12-31");
             pw.println("##Lower limit of Mw (5.5)");
             pw.println("#lowerMw");
-            pw.println("##Upper limit of Mw (6.5)");
+            pw.println("##Upper limit of Mw (7.3)");
             pw.println("#upperMw");
             pw.println("#All geometrical filter is for seismic events. (-90)");
             pw.println("#Lower limit of latitude [deg] [-90:upperLatitude)");
@@ -130,9 +130,9 @@ public class DataRequestor implements Operation {
         if (!property.containsKey("lowerLatitude")) property.setProperty("lowerLatitude", "-90");
         if (!property.containsKey("upperLatitude")) property.setProperty("upperLatitude", "90");
         if (!property.containsKey("lowerLongitude")) property.setProperty("lowerLongitude", "-180");
-        if (!property.containsKey("upperLonitude")) property.setProperty("upperLonitude", "180");
+        if (!property.containsKey("upperLongitude")) property.setProperty("upperLongitude", "180");
         if (!property.containsKey("lowerMw")) property.setProperty("lowerMw", "5.5");
-        if (!property.containsKey("upperMw")) property.setProperty("upperMw", "6.5");
+        if (!property.containsKey("upperMw")) property.setProperty("upperMw", "7.3");
         if (!property.containsKey("startDate")) throw new RuntimeException("No information about the start date");
         if (!property.containsKey("endDate")) throw new RuntimeException("No information about the end date");
         if (!property.containsKey("footAdjustment"))

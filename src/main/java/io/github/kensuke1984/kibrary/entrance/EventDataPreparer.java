@@ -101,6 +101,7 @@ public class EventDataPreparer {
      * @throws IOException
      */
     public boolean mseed2sac() throws IOException {
+        System.err.println("mseed2sac " + MSEED_FILENAME);
         String command = "mseed2sac " + MSEED_FILENAME;
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
@@ -177,9 +178,12 @@ public class EventDataPreparer {
             // create new instance for the event
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
+            System.err.println("edp prepared");
+
             //for each mseed file (though there is probably only one)
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(workPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
+                    System.err.println("operating for " + mseedPath + " ...");
                     //set (or reset) mseed file name
                     edp.setParameters(mseedPath.getFileName().toString());
                     // expand mseed file
