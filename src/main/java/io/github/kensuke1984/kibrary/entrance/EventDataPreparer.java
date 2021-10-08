@@ -149,6 +149,32 @@ public class EventDataPreparer {
     }
 
     /**
+     * Renames seed style SAC file names to mseed style names.
+     * <p>
+     * Note the difference in convention of SAC file names:
+     * <ul>
+     * <li> MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC" </li>
+     * <li> SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC" </li>
+     * </ul>
+     * @throws IOException
+     */
+    public void renameToMseedStyle() throws IOException {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
+            for (Path sacPath : sacPaths) {
+                String[] parts = sacPath.getFileName().toString().split("\\.");
+                if(parts.length != 12) {
+                    System.err.println("invalid sac file name; skipping " + sacPath.getFileName());
+                    continue;
+                }
+
+                String newName = parts[6] + "." + parts[7] + "." + parts[8] + "." + parts[9] + "." + parts[10] + "." +
+                        parts[0] + "." + parts[1] + "." + parts[2] + parts[3] + parts[4] + ".SAC";
+                Files.move(sacPath, sacPath.resolveSibling(newName));
+            }
+        }
+
+    }
+    /**
      * Downloads Station files and Resp files for the event, given a set of SAC files.
      * The downloads may be skipped if the SAC file name does not take a valid form.
      * @throws IOException
@@ -158,8 +184,8 @@ public class EventDataPreparer {
             for (Path sacPath : sacPaths) {
                 String[] sacInfo = sacPath.getFileName().toString().split("\\.");
                 if(sacInfo.length != 9) {
-                    System.err.println("invalid sac file name; skipping");
-                    return;
+                    System.err.println("invalid sac file name; skipping " + sacPath.getFileName());
+                    continue;
                 }
 
                 // set information based on SAC File name created by mseed2sac
@@ -204,23 +230,26 @@ public class EventDataPreparer {
             // create new instance for the event
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
-            //for each mseed file (though there is probably only one)
-            try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
-                for (Path mseedPath : mseedPaths) {
-                    System.err.println("operating for " + mseedPath + " ...");
-                    //set (or reset) mseed file name
-                    edp.setParameters(mseedPath.getFileName().toString(), false);
-                    // expand mseed file
-                    edp.openSeed();
-                }
-            }
-
-            //for each (full) seed file (in case some exist)
+            // for each (full) seed file (in case some exist)
+            // this is done before handling mseed files so that renameToMseedStyle() does not get applied to SAC files from mseed
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.seed")) {
                 for (Path seedPath : seedPaths) {
                     System.err.println("operating for " + seedPath + " ...");
                     //set (or reset) seed file name
                     edp.setParameters(seedPath.getFileName().toString(), true);
+                    // expand mseed file
+                    edp.openSeed();
+                    // rename seed style SAC file names to mseed style
+                    edp.renameToMseedStyle();
+                }
+            }
+
+            // for each mseed file (though there is probably only one)
+            try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
+                for (Path mseedPath : mseedPaths) {
+                    System.err.println("operating for " + mseedPath + " ...");
+                    //set (or reset) mseed file name
+                    edp.setParameters(mseedPath.getFileName().toString(), false);
                     // expand mseed file
                     edp.openSeed();
                 }
