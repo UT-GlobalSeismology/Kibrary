@@ -1,20 +1,13 @@
 package io.github.kensuke1984.kibrary.selection;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
-import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import org.apache.commons.io.FileUtils;
-
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +15,17 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
+
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Filtering for dataset extracted from seed files by {@link FirstHandler}. It
@@ -44,7 +48,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	private Set<String> networks;
 	private Predicate<SACData> predicate;
 	private String trashName;
-	
+
 	public SecondHandler(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
@@ -110,14 +114,14 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
 	}
-	
+
 	private void set() throws IOException {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
 		if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
 		predicate = createPredicate();
 	}
-	
+
 	private Predicate<SACData> createPredicate() {
 
 		double delta = property.containsKey("delta") ? Double.parseDouble(property.getProperty("delta")) : Double.NaN;
@@ -125,7 +129,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
 		double minGCARC = property.containsKey("minGCARC") ? Double.parseDouble(property.getProperty("minGCARC")) : 0;
 		double maxGCARC = property.containsKey("maxGCARC") ? Double.parseDouble(property.getProperty("maxGCARC")) : 180;
-		
+
 		double minStationLatitude = property.containsKey("minStationLatitude")
 				? Double.parseDouble(property.getProperty("minStationLatitude")) : -90;
 		double maxStationLatitude = property.containsKey("maxStationLatitude")
@@ -145,15 +149,15 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 				? Double.parseDouble(property.getProperty("minEventLongitude")) : 0;
 		double maxEventLongitude = property.containsKey("maxEventLongitude")
 				? Double.parseDouble(property.getProperty("maxEventLongitude")) : 360;
-				
+
 		double maxEventDepth = property.containsKey("maxEventDepth") ?
 				Double.parseDouble(property.getProperty("maxEventDepth")) : 800;
 		double minEventDepth = property.containsKey("minEventDepth") ?
 				Double.parseDouble(property.getProperty("minEventDepth")) : 0;
-				
-		Set<String> networks = property.containsKey("networks") ? 
+
+		Set<String> networks = property.containsKey("networks") ?
 				Stream.of(property.getProperty("networks").trim().split("\\s+")).collect(Collectors.toSet()) : null;
-	
+
 		return obsSac -> {
 			// Check the value of B
 			if (obsSac.getValue(SACHeaderEnum.B) != 0) return false;
@@ -194,21 +198,21 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 			double eventLongitude = obsSac.getValue(SACHeaderEnum.EVLO);
 			if (eventLongitude < 0) eventLongitude += 360;
 			if (eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude) return false;
-			
+
 			// Event Depth
 			double eventDepth = obsSac.getValue(SACHeaderEnum.EVDP);
 			if (eventDepth > maxEventDepth || eventDepth < minEventDepth) return false;
-			
+
 			// Network
 			if (networks != null) {
 				String network = obsSac.getSACString(SACHeaderEnum.KNETWK);
 				if (!networks.contains(network)) return false;
 			}
-			
+
 			return true;
 		};
 	}
-	
+
 	@Override
 	public void accept(EventFolder eventDir) {
 		Path trashDir = eventDir.toPath().resolve(trashName);

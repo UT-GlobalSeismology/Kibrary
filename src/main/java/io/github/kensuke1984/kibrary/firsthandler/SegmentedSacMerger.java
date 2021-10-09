@@ -49,12 +49,9 @@ class SegmentedSacMerger {
         notMergedBoxPath = unMergedPath;
         listUpSacFiles();
     }
-    SegmentedSacMerger(Path workPath) throws IOException { //TODO: should be unneeded
-        this(workPath, workPath.resolve("mergedUnevendata"), workPath.resolve("nonMergedUnevendata"));
-    }
 
     /**
-     * Obtains all files with the suffix .SAC under the working directory,
+     * Obtains all files with the suffix .SET under the working directory,
      * and groups up files by {@link #createGroups(SACFileName[])}.
      * @throws IOException
      */

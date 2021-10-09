@@ -74,26 +74,6 @@ class SACModifierMSEED {
                 LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(bInNanos);
     }
 
-    // these were moved to setupSacs in EventProcessor , but this is still used in FirstHandler. TODO:remove
-    /**
-     * Checks of headers CMPINC, khole
-     *
-     * @return (boolean) true if the header is valid
-     */
-    boolean checkHeader() {
-        // System.out.println("Checking header validity in "+sacFile);
-//        String channel = SAC_PATH.getFileName().toString().split("\\.")[3]; // change from 3 to 9 -> changed back to 3
-
-        // check CMPINC this is already checked in downloadViaIRISWS (20210824 kenji)
-//        if (channel.equals("BHN") || channel.equals("BHE") || channel.equals("BH1") || channel.equals("BH2"))
-//            if (Double.parseDouble(headerMap.get(SACHeaderEnum.CMPINC)) != 90) return false;
-
-        // check "khole" value (mseed2sac produces khole of -12345 in SAC header, 20210824 kenji)
-        String khole = headerMap.get(SACHeaderEnum.KHOLE);
-        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02"); // || khole.equals("-12345");
-    }
-
-
     /**
      * if the startTime of sac is after the event time, and the gap is bigger
      * than taperTime, interpolation cannot be done. This method can be valid

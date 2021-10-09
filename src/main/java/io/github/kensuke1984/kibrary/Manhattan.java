@@ -13,7 +13,6 @@ import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
-import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
@@ -42,7 +41,7 @@ public enum Manhattan {
 	DataRequestor(2, DataRequestor.class), //
 	DataSelection(3, DataSelection.class), //
 	FilterDivider(4, FilterDivider.class), //
-	FirstHandler(5, FirstHandler.class), //
+	DataKitchen(5, DataKitchen.class), //
 	FujiStaticCorrection(6, FujiStaticCorrection.class), //
 	InformationFileMaker(7, InformationFileMaker.class), //
 	LetMeInvert(8, LetMeInvert.class), //
@@ -65,7 +64,6 @@ public enum Manhattan {
 	Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
 	ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
     DataLobby(27, DataLobby.class), //
-    DataKitchen(28, DataKitchen.class), //
 	;
 
     private Class<? extends Operation> c;
