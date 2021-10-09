@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @author Kensuke Konishi
  * @version 0.1.8.4
  */
-class SACModifierMSEED {
+class SacModifier {
 
     /**
      * [msec] time window for taper
@@ -47,7 +47,7 @@ class SACModifierMSEED {
      * @param byPDE         true: PDE, false: CMT
      * @throws IOException
      */
-    SACModifierMSEED(GlobalCMTData globalCMTData, Path sacPath, boolean byPDE) throws IOException {
+    SacModifier(GlobalCMTData globalCMTData, Path sacPath, boolean byPDE) throws IOException {
         SAC_PATH = sacPath;
         headerMap = SACUtil.readHeader(sacPath);
         SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());

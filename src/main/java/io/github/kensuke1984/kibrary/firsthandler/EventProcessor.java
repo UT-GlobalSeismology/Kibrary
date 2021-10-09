@@ -432,7 +432,7 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * Modifies merged SAC files by {@link SACModifierMSEED}, as follows:
+     * Modifies merged SAC files by {@link SacModifier}, as follows:
      * <ul>
      * <li> check whether the SAC file can be zero-padded; if not, throw it away </li>
      * <li> remove the trend in the data </li>
@@ -450,7 +450,7 @@ class EventProcessor implements Runnable {
 
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MRG")) {
             for (Path sacPath : sacPathStream) {
-                SACModifierMSEED sm = new SACModifierMSEED(event, sacPath, byPDE);
+                SacModifier sm = new SacModifier(event, sacPath, byPDE);
 
                 // check whether the file can be zero-padded
                 if (!sm.canInterpolate()) {
