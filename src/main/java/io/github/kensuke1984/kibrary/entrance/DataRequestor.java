@@ -19,7 +19,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
- * This class makes breqfast mails to request data and sends them.
+ * This Operation class makes breqfast mails to request data and sends them.
+ * Requests are made for events that satisfy specifications, and for stations included in networks specified by the user.
+ * A gmail account is needed. The address must be set in the .property file in KIBRARY_HOME.
  *
  * @author Kensuke Konishi
  * @version 0.1.4
@@ -88,7 +90,8 @@ public class DataRequestor implements Operation {
             pw.println("manhattan DataRequestor");
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
-            pw.println("##Network names for request, must be defined");
+            pw.println("##Network names for request, listed using spaces, must be defined");
+            pw.println("##Wildcards (*, ?) and virtual networks are allowed.");
             pw.println("##Note that it will make a request for all stations in the networks.");
             pw.println("#networks II IU _US-All");
             pw.println("##Starting date yyyy-mm-dd, must be defined");

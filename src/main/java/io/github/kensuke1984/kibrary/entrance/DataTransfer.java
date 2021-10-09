@@ -17,7 +17,9 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Downloads mseed files prepared after sending breqfast mails. Download is done through FTP access to IRIS server.
- *  TODO: OHP (Ocean Hemisphere network Project of ERI) will be prepared.
+ * Output directory "seedsTransferredAt*" is created under the current path,
+ * and event folders created under this directory will include the downloaded mseed files.
+ * TODO: OHP (Ocean Hemisphere network Project of ERI) will be prepared.
  *
  * @author Kensuke Konishi
  * @version 0.0.2
@@ -28,11 +30,11 @@ final class DataTransfer {
      * user PATH in IRIS
      */
     private static final String IRIS_USER_PATH = "/pub/userdata/" + Environment.getUserName() + "/";
+    public static final String IRIS_FTP = "ftp.iris.washington.edu";
 
     private DataTransfer() {
     }
 
-    public static final String IRIS_FTP = "ftp.iris.washington.edu";
 
     private static void get(String date, Path outPath) {
 

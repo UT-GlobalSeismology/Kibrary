@@ -19,8 +19,15 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
- * Downloads mseed file and additional metadata for events that satisfy specifications.
+ * Operation that downloads mseed files and additional metadata (STATIION and RESP files) for events that satisfy specifications.
+ * Data for stations included in networks specified by the user is downloaded.
+ * TODO: the use of virtual networks is currently not supported.
+ * <p>
+ * Output directory "dl*" is created under the work path,
+ * and event folders created under this directory will include the downloaded files.
  * (memo: All download procedures were gathered here because downloading using multiple threads in FirstHandler caused errors.)
+ * <p>
+ * See also {@link EventDataPreparer}.
  *
  * @author Keisuke Otsuru
  * @version 2021/09/14
@@ -65,6 +72,7 @@ public class DataLobby implements Operation {
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
             pw.println("##Network names for request, listed using commas, must be defined");
+            pw.println("##Wildcards (*, ?) are allowed. Virtual networks are currently not supported.");
             pw.println("##Note that it will make a request for all stations in the networks.");
             pw.println("#networks II,IU");
             pw.println("##Channels to be requested, listed using commas, from [BH?,HH?,BL?,HL?] (BH?)");

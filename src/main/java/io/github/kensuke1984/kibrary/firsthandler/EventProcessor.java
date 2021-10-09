@@ -190,17 +190,6 @@ class EventProcessor implements Runnable {
             throw new RuntimeException("Error on modify : " + INPUT_DIR.getName(), e);
         }
 
-/* this was moved inside setupSacs() (Keisuke Otsuru 2021.09.19)
-        // Use only BH[12ENZ]
-        // remove waveforms of .[~NEZ]
-        try {
-//          System.out.println("Enter: selectChannels");
-           selectChannels();
-        } catch (IOException e) {
-            throw new RuntimeException("Error on selecting channels " + INPUT_DIR.getName(), e);
-        }
-*/
-
         // instrumentation function deconvolution
         try {
             deconvolveSacs();
@@ -228,15 +217,6 @@ class EventProcessor implements Runnable {
             throw new RuntimeException("Error on elimination : " + INPUT_DIR.getName(), e);
         }
 
-/* this has become unneeded since STATION and RESP files are in dl* directory (Keisuke Otsuru 2021.09.19)
-        // trash
-        try {
-            toTrash();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error on moving files to the trash box " + INPUT_DIR.getName(), e);
-        }
-*/
         problem = check();
 
         hasRun = true;
@@ -256,6 +236,7 @@ class EventProcessor implements Runnable {
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
      * <li> check whether the unit is velocity (m/s); if not, throw away the new SAC file </li>
      * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
+     * <li> check whether the station coordinate is within the wanted range; if not, throw away the new SAC file </li>
      * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
      * </ul>
@@ -264,11 +245,9 @@ class EventProcessor implements Runnable {
      * @author Keisuke Otsuru
      */
     private void setupSacs() throws IOException {
-//        Path invalidStationBoxPath = OUTPUT_PATH.resolve("invalidStation");
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
             for (Path rawSacPath : sacPaths) {  // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
-//                SACFileName newFile = newSacName(rawSacPath); // newFile will be made in the output event directory
 
                 SACFileName sacFile = new SACFileName(rawSacPath.getFileName().toString());
 
@@ -370,7 +349,7 @@ class EventProcessor implements Runnable {
                 channel.equals("HH1") || channel.equals("HH2") ||
                 channel.equals("HLZ") || channel.equals("HLN") || channel.equals("HLE") ||
                 channel.equals("HL1") || channel.equals("HL2"));
-        //make sure to change isVerticalChannel() if you start accepting non-3-letter channels
+        // make sure to change isVerticalChannel() if you start accepting non-3-letter channels
     }
 
     /**
@@ -467,11 +446,6 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void modifySacs() throws IOException {
-        // System.out.println("Modifying sac files in "
-        // + eventDir.getAbsolutePath());
-//        Path unableBoxPath = OUTPUT_PATH.resolve("unModified");
-//        Path invalidBoxPath = OUTPUT_PATH.resolve("invalidDistance");
-//        Path mergedBoxPath = OUTPUT_PATH.resolve("doneModify");
 
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MRG")) {
             for (Path sacPath : sacPathStream) {
@@ -508,29 +482,6 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * Remove files with suffixes other than [BH][HL][ENZ12]
-     * @author anselme BH1 BH2 also kept
-     */
-/*    private void selectChannels() throws IOException {
-        // System.out.println("Selecting Channels");
-        Path trashBox = OUTPUT_PATH.resolve("invalidChannel");
-        try (DirectoryStream<Path> modStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
-            for (Path modPath : modStream) {
-                String name = modPath.getFileName().toString();
-                String channel = name.split("\\.")[3]; // changed from 3 to 9 (kenji) -> returned to 3
-                if (channel.equals("BHZ") || channel.equals("BHN") || channel.equals("BHE") ||
-                        channel.equals("BLZ") || channel.equals("BLN") || channel.equals("BLE") ||
-                        channel.equals("HHZ") || channel.equals("HHN") || channel.equals("HHE") ||
-                        channel.equals("HLZ") || channel.equals("HLN") || channel.equals("HLE") ||
-                        channel.equals("BH1") || channel.equals("BH2") ||
-                        channel.equals("HH1") || channel.equals("HH2")) continue;
-                Utilities.moveToDirectory(modPath, trashBox, true);
-            }
-        }
-    }
-*/
-
-    /**
      * Deconvolve instrument function for all the MOD files in the event folder.
      * The resulting SAC file names will have components of either "X", "Y", or "Z".
      * If the deconvolution fails, files will be moved to "unDeconvolved".
@@ -539,72 +490,20 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void deconvolveSacs() throws IOException{
-        // System.out.println("Conducting deconvolution");
-//        Path noSpectraPath = OUTPUT_PATH.resolve("noSpectraOrInvalidMOD");
-//        Path duplicateChannelPath = OUTPUT_PATH.resolve("duplicateChannel");
-//        Path respBoxPath = OUTPUT_PATH.resolve("resp");
-//        Path spectraBoxPath = OUTPUT_PATH.resolve("spectra");
-//        Path modBoxPath = OUTPUT_PATH.resolve("mod");
+
         try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
-//            String resp = "RESP.";
-//            String spectra = "SPECTRA.";
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
 
                 SACFileName modFile = new SACFileName(modPath.getFileName().toString());
-                RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
-/*
-                String channel = headerMap.get(SACHeaderEnum.KCMPNM);
-                String location = headerMap.get(SACHeaderEnum.KHOLE);
-//                if(khole.matches("-12345")) {khole = "--";} // this is for MSEEDSAC
-                String respFileName =
-                        resp + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                location + "." + channel;
-///               if(khole.matches("--")) {khole = "";} // this is for MSEEDSAC
-               String spectraFileName =
-                        spectra + headerMap.get(SACHeaderEnum.KNETWK) + "." + headerMap.get(SACHeaderEnum.KSTNM) + "." +
-                                location + "." + channel;
-*/
-                Path respPath = INPUT_DIR.toPath().resolve(respFile.getRespFile());
-                Path spectraPath = OUTPUT_PATH.resolve(respFile.getSpectraFile());
-/*                switch (componentName) {
-                    case "BHE":
-                    case "BLE":
-                    case "HHE":
-                    case "HLE":
-                        component = "E";
-                        break;
-                    case "BHN":
-                    case "BLN":
-                    case "HHN":
-                    case "HLN":
-                        component = "N";
-                        break;
-                    case "BHZ":
-                    case "BLZ":
-                    case "HHZ":
-                    case "HLZ":
-                        component = "Z";
-                        break;
-                    case "BH1":
-                    case "BL1":
-                    case "HH1":
-                    case "HL1":
-                        component = "1";
-                        break;
-                    case "BH2":
-                    case "BL2":
-                    case "HH2":
-                    case "HL2":
-                        component = "2";
-                        break;
-                    default:
-                        continue;
-                }
-*/
                 String afterName = modFile.getDeconvolvedFileName();
                 Path afterPath = OUTPUT_PATH.resolve(afterName);
-//                System.out.println("deconvolute: "+ afterPath); // 4debug
+
+                RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
+                Path respPath = INPUT_DIR.toPath().resolve(respFile.getRespFile());
+                Path spectraPath = OUTPUT_PATH.resolve(respFile.getSpectraFile());
+
+                //System.out.println("deconvolute: "+ afterPath); // 4debug
 
                 // run evalresp
                 // If it fails, throw MOD files to trash
@@ -619,7 +518,7 @@ class EventProcessor implements Runnable {
                 try {
                     int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
 
-                    // duplication of channel  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
+                    // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
                     if (Files.exists(afterPath)) {
                         System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
                         // throw *.MOD files to duplicateComponentPath
@@ -673,7 +572,7 @@ class EventProcessor implements Runnable {
                         " -n " + headerMap.get(SACHeaderEnum.KNETWK) + " -l " + headerMap.get(SACHeaderEnum.KHOLE) +
                         " -f " + inputPath.toAbsolutePath() +
                         " -s lin -r cs -u vel";
-//        System.out.println("runevalresp: "+ command);// 4debug
+        //System.out.println("runevalresp: "+ command);// 4debug
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(OUTPUT_PATH.toFile());
         try {
@@ -702,12 +601,9 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void rotate() throws IOException {
-//        Path trashBox = OUTPUT_PATH.resolve("unRotated");
-//        Path neDir = OUTPUT_PATH.resolve("doneRotate");
 
         try (DirectoryStream<Path> xStream = Files.newDirectoryStream(OUTPUT_PATH, "*.X")) {
             for (Path xPath : xStream) {
-//                String[] parts = ePath.getFileName().toString().split("\\.");
                 SACFileName xFile = new SACFileName(xPath.getFileName().toString());
                 Path yPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("Y"));
                 Path rPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("R"));
@@ -730,33 +626,6 @@ class EventProcessor implements Runnable {
                 }
             }
         }
-/*
-        // if the difference in CMPAZ is 90 degrees, (.1, .2) is converted to (.R, .T)  (2021.08.21 kenji)
-        try (DirectoryStream<Path> oneStream = Files.newDirectoryStream(OUTPUT_PATH, "*.1")) {
-            for (Path onePath : oneStream) {
-                String[] parts = onePath.getFileName().toString().split("\\.");
-                Path twoPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".2");
-                Path rPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".R");
-                Path tPath = OUTPUT_PATH.resolve(parts[0] + "." + parts[1] + "." + parts[2] + ".T");
-
-                // throw away .1 file if its pair .2 file does not exist
-                if (!Files.exists(twoPath)) {
-                    System.err.println("!! pair .2 file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + onePath.getFileName());
-                    Utilities.moveToDirectory(onePath, unRotatedPath, true);
-                    continue;
-                }
-                boolean rotated = SACUtil.rotate(onePath, twoPath, rPath, tPath);
-                if (rotated) {
-                    Utilities.moveToDirectory(twoPath, doneRotatePath, true);
-                    Utilities.moveToDirectory(onePath, doneRotatePath, true);
-                } else {
-                    System.err.println("!! rotate failed : " + event.getGlobalCMTID() + " - " + onePath.getFileName());
-                    Utilities.moveToDirectory(onePath, unRotatedPath, true);
-                    Utilities.moveToDirectory(twoPath, unRotatedPath, true);
-                }
-            }
-        }
-*/
 
         // If there are files (.Y) which had no pairs (.X), move them to trash
         try (DirectoryStream<Path> yPaths = Files.newDirectoryStream(OUTPUT_PATH, "*.Y")) {
@@ -765,18 +634,16 @@ class EventProcessor implements Runnable {
                 Utilities.moveToDirectory(yPath, unRotatedPath, true);
             }
         }
-/*
-        // If there are files (.2) which had no pairs (.1), move them to trash (2021.08.21 kenji)
-        try (DirectoryStream<Path> twoPaths = Files.newDirectoryStream(OUTPUT_PATH, "*.2")) {
-            for (Path twoPath : twoPaths) {
-                System.err.println("!! pair .1 file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + twoPath.getFileName());
-                Utilities.moveToDirectory(twoPath, unRotatedPath, true);
-            }
-        }
-*/
     }
 
-    // TODO 00 01 "" duplication detect
+    /**
+     * Eliminates duplication in the data.
+     * If there are multiple files with the same network and station for a given component,
+     * or the there are files for several stations that are positioned very close to each other with the same component,
+     * one is selected and the others are discarded.
+     * Successful files are put in "doneRotate" the others in "unRotated".
+     * @throws IOException
+     */
     private void duplicationElimination() throws IOException {
 
         // read R, T, and Z files into SacTriplet set
@@ -816,8 +683,8 @@ class EventProcessor implements Runnable {
                 // if the two refer to the same triplet, skip
                 if (oneTriplet.isItself(otherTriplet)) continue;
                 // if the two triplets are of different stations and coordinates, skip
-                if (!oneTriplet.atSameStation(otherTriplet)) continue;
-                //if one is {RT} and the other is {Z}, leave both
+                if (!oneTriplet.atSamePosition(otherTriplet)) continue;
+                // if one is {RT} and the other is {Z}, leave both
                 if (oneTriplet.complements(otherTriplet)) continue;
 
                 // remove triplet that has less components, worst instruments, or larger location codes
@@ -829,7 +696,7 @@ class EventProcessor implements Runnable {
                     break; // no need to keep comparing
                 } else {
                     System.err.println("!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
-                            oneTriplet.getName() + " ( :: " + otherTriplet.getName() + " )");
+                            otherTriplet.getName() + " ( :: " + oneTriplet.getName() + " )");
                     otherTriplet.dismiss();
                     otherTriplet.move(duplicateInstrumentPath);
                 }
@@ -845,26 +712,9 @@ class EventProcessor implements Runnable {
     }
 
     /**
-     * unused SPECTRA*, RESP* files ->trash
-     */
-/*    private void toTrash() throws IOException {
-        Path trash = OUTPUT_PATH.resolve("trash");
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(OUTPUT_PATH)) {
-            for (Path path : files) {
-                String name = path.getFileName().toString();
-                if (name.contains("SPECTRA.") || name.contains("RESP.")) Utilities.moveToDirectory(path, trash, true);
-            }
-        }
-    }
-*/
-    /**
      * @return (boolean) true if any problem has occured
      */
     private boolean check() {
-//        Path eventPath = OUTPUT_PATH;
-//        Path rdseedOutput = eventPath.resolve("rdseedOutputBackup");
-//        Path unmerged = eventPath.resolve("unMerged");
-//        Path unrotated = eventPath.resolve("unRotated");
         return Files.exists(unMergedPath) || Files.exists(unModifiedPath) || Files.exists(unDeconvolvedPath) ||
                 Files.exists(unRotatedPath) || Files.exists(unEliminatedPath);
     }
