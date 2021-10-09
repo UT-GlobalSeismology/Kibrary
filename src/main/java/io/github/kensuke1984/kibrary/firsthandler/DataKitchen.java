@@ -170,14 +170,13 @@ public class DataKitchen implements Operation {
         Files.createDirectories(outPath);
         System.err.println("Output directory is " + outPath);
 
-        //
+        // create processors for each event
         Set<EventProcessor> processors = eventDirs.stream().map(eventDir -> {
            try {
                 return new EventProcessor(eventDir, outPath);
             } catch (Exception e) {
                 try {
                     System.err.println(eventDir + " has problems. " + e);
-//                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true);
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -185,6 +184,7 @@ public class DataKitchen implements Operation {
             }
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
+        // set parameters
         processors.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
@@ -195,55 +195,29 @@ public class DataKitchen implements Operation {
 
         es.shutdown();
         try {
-            while (!es.isTerminated()) Thread.sleep(1000 * 5);
+            while (!es.isTerminated()) Thread.sleep(1000 * 5); // check if everything is done every 5 seconds
         } catch (Exception e2) {
             e2.printStackTrace();
         }
 
+        // print overall result
         boolean success = true;
-        System.err.println("Result:");
+        System.err.println("Overall result:");
         for (EventProcessor processor : processors) {
             if (!processor.hasRun()) {
                 System.err.println("! " + processor.getEventID() + " failed.");
                 success = false;
             }
             if (processor.hadProblem()) {
-                System.err.println("! " + processor.getEventID() + " encountered problems.");
+                System.err.println("! " + processor.getEventID() + " encountered problems during execution.");
                 success = false;
             }
         }
         if (success) {
-            System.err.println(" everything succeeded!");
+            System.err.println(" Everything succeeded!");
         }
-/*
-        ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        eventDirs.stream().map(this::process).forEach(es::submit);
-        es.shutdown();
-        while (!es.isTerminated()) {
-            System.err.print("\rProcessing " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "%");
-            Thread.sleep(100);
-        }
-        System.err.println("\rProcessing finished.");
-        */
     }
-/*
-    private AtomicInteger processedFolders = new AtomicInteger(); // already processed
 
-    private Runnable process(EventFolder folder) {
-        return () -> {
-            String eventname = folder.getName();
-            try {
-                RawSacSet set = new RawSacSet(folder, outPath);
-                set.processAll();
-            } catch (Exception e) {
-                System.err.println("Error on " + folder);
-                e.printStackTrace();
-            } finally {
-                processedFolders.incrementAndGet();
-            }
-        };
-    }
-*/
     @Override
     public Path getWorkPath() {
         return workPath;

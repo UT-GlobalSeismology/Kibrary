@@ -88,13 +88,13 @@ class EventProcessor implements Runnable {
     private Path doneMergePath;
     private Path doneDeconvolvePath;
     private Path doneRotatePath;
-    private Path doneEliminatePath;
+    private Path unSetPath;
     private Path unModifiedPath;
     private Path unMergedPath;
-    private Path unDeconvolvedPath;
     private Path unRotatedPath;
-    private Path unEliminatedPath;
     private Path invalidStationPath;
+    private Path invalidRespPath;
+    private Path invalidTripletPath;
     private Path unwantedCoordinatePath;
     private Path unwantedDistancePath;
     private Path duplicateComponentPath;
@@ -113,6 +113,7 @@ class EventProcessor implements Runnable {
 
         event = eventDir.getGlobalCMTID().getEvent();
 
+        unSetPath = OUTPUT_PATH.resolve("unSet");
         invalidStationPath = OUTPUT_PATH.resolve("invalidStation");
         unwantedCoordinatePath = OUTPUT_PATH.resolve("unwantedCoordinate");
 
@@ -124,14 +125,13 @@ class EventProcessor implements Runnable {
         unwantedDistancePath = OUTPUT_PATH.resolve("unwantedDistance");
 
         doneDeconvolvePath = OUTPUT_PATH.resolve("doneDeconvolve");
-        unDeconvolvedPath = OUTPUT_PATH.resolve("unDeconvolved");
+        invalidRespPath = OUTPUT_PATH.resolve("invalidResp");
         duplicateComponentPath = OUTPUT_PATH.resolve("duplicateComponent");
 
         doneRotatePath = OUTPUT_PATH.resolve("doneRotate");
         unRotatedPath = OUTPUT_PATH.resolve("unRotated");
 
-        doneEliminatePath = OUTPUT_PATH.resolve("doneEliminate");
-        unEliminatedPath = OUTPUT_PATH.resolve("unEliminated");
+        invalidTripletPath = OUTPUT_PATH.resolve("invalidTriplet");
         duplicateInstrumentPath = OUTPUT_PATH.resolve("duplicateInstrument");
 
     }
@@ -240,7 +240,8 @@ class EventProcessor implements Runnable {
      * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
      * </ul>
-     * Thrown away files are put in "invalidStation".
+     * If STATION files are unreadable, the corresponding SAC files are thrown in "invalidStation".
+     * SAC files that cannot be handled is put in "unSet", and those with unwanted coordinates are put in "unwantedCoordinate".
      * @throws IOException
      * @author Keisuke Otsuru
      */
@@ -284,7 +285,7 @@ class EventProcessor implements Runnable {
                 // TODO: is this criterion valid?
                 if (!sif.getScaleunits().equals("M/S") && !sif.getScaleunits().equals("m/s")) {
                     System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
+                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
                     continue;
                 }
 
@@ -294,7 +295,7 @@ class EventProcessor implements Runnable {
                 if ((isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != -90)
                         || (!isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != 0)) {
                     System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
+                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
                     continue;
                 }
 
@@ -484,7 +485,7 @@ class EventProcessor implements Runnable {
     /**
      * Deconvolve instrument function for all the MOD files in the event folder.
      * The resulting SAC file names will have components of either "X", "Y", or "Z".
-     * If the deconvolution fails, files will be moved to "unDeconvolved".
+     * If the deconvolution fails, files will be moved to "invalidResp".
      * If there are both ["1" and "E"] or ["2" and "N"] files for the same instrument, one will be moved to "duplicateComponent".
      * If everything succeeds, unneeded files will be moved to "doneDeconvolve".
      * @throws IOException
@@ -510,7 +511,7 @@ class EventProcessor implements Runnable {
                 if (!runEvalresp(headerMap, respPath)) {
                     System.err.println("!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw MOD.* files which cannot produce SPECTRA to trash
-                    Utilities.moveToDirectory(modPath, unDeconvolvedPath, true);
+                    Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
                 }
 
@@ -533,12 +534,12 @@ class EventProcessor implements Runnable {
                 } catch (Exception e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw *.MOD files to trash
-                    Utilities.moveToDirectory(modPath, unDeconvolvedPath, true);
+                    Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
                     // In case that outdated RESP file cannot produce any SPECTRA file,
                     // the existence condition is added (2021.08.21 kenji)
                     if(Files.exists(spectraPath)) {
-                        Utilities.moveToDirectory(spectraPath, unDeconvolvedPath, true);
+                        Utilities.moveToDirectory(spectraPath, invalidRespPath, true);
                     }
                     continue;
                 }
@@ -641,7 +642,8 @@ class EventProcessor implements Runnable {
      * If there are multiple files with the same network and station for a given component,
      * or the there are files for several stations that are positioned very close to each other with the same component,
      * one is selected and the others are discarded.
-     * Successful files are put in "doneRotate" the others in "unRotated".
+     * If there are invalid triplets, they will be put in "invalidTriplet".
+     * Eliminated SAC files will be put in "duplicateInstrument".
      * @throws IOException
      */
     private void duplicationElimination() throws IOException {
@@ -669,7 +671,7 @@ class EventProcessor implements Runnable {
             if (!oneTriplet.checkValidity()) {
                 System.err.println("!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
                 oneTriplet.dismiss();
-                oneTriplet.move(unEliminatedPath);
+                oneTriplet.move(invalidTripletPath);
             }
         }
 
@@ -715,8 +717,7 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if any problem has occured
      */
     private boolean check() {
-        return Files.exists(unMergedPath) || Files.exists(unModifiedPath) || Files.exists(unDeconvolvedPath) ||
-                Files.exists(unRotatedPath) || Files.exists(unEliminatedPath);
+        return Files.exists(invalidRespPath) || Files.exists(invalidStationPath) || Files.exists(invalidTripletPath);
     }
 
     private void removeIntermediateFiles() {
@@ -725,13 +726,13 @@ class EventProcessor implements Runnable {
             FileUtils.deleteDirectory(doneMergePath.toFile());
             FileUtils.deleteDirectory(doneDeconvolvePath.toFile());
             FileUtils.deleteDirectory(doneRotatePath.toFile());
-            FileUtils.deleteDirectory(doneEliminatePath.toFile());
+            FileUtils.deleteDirectory(unSetPath.toFile());
             FileUtils.deleteDirectory(unModifiedPath.toFile());
             FileUtils.deleteDirectory(unMergedPath.toFile());
-            FileUtils.deleteDirectory(unDeconvolvedPath.toFile());
             FileUtils.deleteDirectory(unRotatedPath.toFile());
-            FileUtils.deleteDirectory(unEliminatedPath.toFile());
             FileUtils.deleteDirectory(invalidStationPath.toFile());
+            FileUtils.deleteDirectory(invalidRespPath.toFile());
+            FileUtils.deleteDirectory(invalidTripletPath.toFile());
             FileUtils.deleteDirectory(unwantedDistancePath.toFile());
             FileUtils.deleteDirectory(unwantedCoordinatePath.toFile());
             FileUtils.deleteDirectory(duplicateComponentPath.toFile());
