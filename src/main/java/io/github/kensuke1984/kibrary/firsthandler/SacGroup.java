@@ -16,8 +16,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
- * rdseedからできた 1993.052.07.01.12.4000.PS.OGS.(locationID).BHN.D.SAC
- * の様なファイルのうち、同じnetwork, station, locationID, channel, qualityID のもののgroup
+ * A group of SAC files with the same network, station, location, channel, and qualityID.
+ * This means that they are supposed to compose part of the same waveform.
  *
  * @author Kensuke Konishi
  * @version 0.0.6.2

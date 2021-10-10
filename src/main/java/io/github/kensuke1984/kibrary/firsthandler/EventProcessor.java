@@ -26,6 +26,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * An event directory with SAC files, STATION files, and RESP files must be given as input.
  * Input SAC file names must be in the mseed-style format (ex. "IU.MAJO.00.BH2.M.2014.202.144400.SAC").
  * <p>
+ * SAC files will be deconvolved of instrumental response, and rotated to gain radial and transverse components.
+ * Information about the station and event is written into the header.
+ * Selection for the station coordinate and epicentral distance will be done based on the user's specifications.
+ * <p>
  * This class requires that evalresp and sac exists in your PATH.
  * The software
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/>evalresp</a> and
@@ -199,7 +203,7 @@ class EventProcessor implements Runnable {
             throw new RuntimeException("Error on deconvolution : " + INPUT_DIR.getName(), e);
         }
 
-        // rotation ((.N,.E) & (.1 & .2) -> (.R,.T))
+        // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
         try {
             rotate();
         } catch (IOException e) {
@@ -209,6 +213,7 @@ class EventProcessor implements Runnable {
         }
 
         // eliminating duplicate instruments and close stations
+        // this is done after everything else so that we don't lose usable data (ex. if we choose an unrotatable triplet)
         try {
             duplicationElimination();
         } catch (IOException e) {
@@ -234,7 +239,6 @@ class EventProcessor implements Runnable {
      * <li> check whether the location is acceptable; if not, skip the SAC file </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
-     * <li> check whether the unit is velocity (m/s); if not, throw away the new SAC file </li>
      * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
      * <li> check whether the station coordinate is within the wanted range; if not, throw away the new SAC file </li>
      * <li> set SAC headers related to the station </li>
@@ -278,14 +282,6 @@ class EventProcessor implements Runnable {
                 } catch (IOException e) {
                     System.err.println("!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
-                    continue;
-                }
-
-                // if the unit used in the Station file is not in velocity (m/s or M/S), throw away the new SAC file
-                // TODO: is this criterion valid?
-                if (!sif.getScaleunits().equals("M/S") && !sif.getScaleunits().equals("m/s")) {
-                    System.err.println("!! invalid unit - not M/S : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
                     continue;
                 }
 
@@ -556,8 +552,15 @@ class EventProcessor implements Runnable {
 
     /**
      * Run external process "evalresp".
+     * <p>
      * Command: "evalresp station component year julianday minfreq maxfreq npts
      * -n network -l location -f inputpath -s lin -r cs -u vel"
+     * <p>
+     * By setting "-u vel", the output file will give the instrument response from velocity(input) to counts(output),
+     * no matter what the actual physical input of the instrument was.
+     * The output file will have the name "SPECTRA.NET.STA.LOC.CHA"
+     * <p>
+     * See <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/5-0-0/manual/>the evalresp manual</a> for details.
      *
      * @param headerMap (Map<SACHeaderEnum, String>) Header of sac file
      * @param inputPath (Path) Path of RESP file to be used, or the directory containing it.

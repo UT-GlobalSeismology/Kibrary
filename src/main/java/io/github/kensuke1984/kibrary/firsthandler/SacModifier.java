@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
- * Modification of SAC when running {@link SeedSAC}
+ * Modification of SAC when running {@link EventProcessor}
  *
  * @author Kensuke Konishi
  * @version 0.1.8.4
@@ -162,7 +162,9 @@ class SacModifier {
             timeGapInMillis = 0;
             // headerMap.put(SacHeaderEnum.B, Double.toString(0));
         }
-        // TODO: 早く始まってるものは、taperいらない？
+        // 早く始まってるものは、taperいらない？
+        // -> The tapering here is done just for the sake of connecting the zero-value segment and the incomplete waveform.
+        //    Tapering of the whole waveform is done in SacDeconvolution.
 
         Location sourceLocation = BYPDE ? EVENT.getPDELocation() : EVENT.getCmtLocation();
 

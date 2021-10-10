@@ -1,12 +1,5 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.util.sac.SACUtil;
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.DftNormalization;
+import org.apache.commons.math3.transform.FastFourierTransformer;
+import org.apache.commons.math3.transform.TransformType;
+
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.SACUtil;
+
 /**
  * firstHandler 0.22.8 内の seedsac.c の移植
  * <p>
@@ -22,6 +23,8 @@ import java.util.stream.IntStream;
  * <p>
  * <p>
  * とりあえずtaperはsine taperで
+ * <p>
+ * Information about instrument response can be found <a href=http://docs.fdsn.org/projects/stationxml/en/latest/response.html>here</a>.
  *
  * @author Kensuke Konishi
  * @version 0.0.3.3

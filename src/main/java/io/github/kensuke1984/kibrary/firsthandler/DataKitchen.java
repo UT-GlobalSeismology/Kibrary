@@ -20,23 +20,19 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * Java version First handler ported from the perl software.<br>
- * Processes extraction along the information file.
- * This extracts {@link SEEDFile}s under a
- * working golder
+ * Operation to process downloaded SAC (and STATION and RESP) files so that they can be used in the inversion process.
  * <p>
- * 解凍後の.seed ファイルをまとめる rdseed -fRd rtrend seed解凍後 channelが[BH]H[ENZ]のものだけから読み込む
+ * Event directories with SAC files, STATION files, and RESP files must be given as input.
+ * Input SAC file names must be in the mseed-style format (ex. "IU.MAJO.00.BH2.M.2014.202.144400.SAC").
+ * Output directory "processed*" will be created under the work path, and output event directories will be made under it.
+ * In default settings, intermediate files created during this process will be deleted at the end.
+ * If you want to see them, you have to explicitly specify to leave them.
  * <p>
- * <a href=http://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>rdseed</a> and <a
- * href=http://ds.iris.edu/ds/nodes/dmc/manuals/evalresp/>evalresp</a> must be
- * in PATH. </p> If you want to remove intermediate files.
+ * See also {@link EventProcessor}.
+ * <p>
+ * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  * <p>
  * TODO NPTSで合わないものを捨てる？
- * <p>
- * Even if a seed file contains both BH? and HH?, it will not throw errors,
- * however, no one knows which channel is used for extraction until you see the
- * intermediate files. If you want to see them, you have to leave the
- * intermediate files explicitly.
  * <p>
  * mseedに対応した (v0.3.1; 2021-08-24)
  * @author Kensuke Konishi & Kenji Kawai
