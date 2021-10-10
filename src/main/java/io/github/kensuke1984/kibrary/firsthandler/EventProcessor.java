@@ -236,7 +236,7 @@ class EventProcessor implements Runnable {
      * This method sets up the SAC files to be used by carrying out the following:
      * <ul>
      * <li> check whether the channel is supported by this class; if not, skip the SAC file </li>
-     * <li> check whether the location is acceptable; if not, skip the SAC file </li>
+     * <li> check whether the location is acceptable; if not, display warning </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
      * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
@@ -263,11 +263,12 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                // check location validity  TODO: this may have to be modified or removed
+                // check location validity -> just display warning, but process the file nonetheless
+                // TODO: this may have to be modified or removed
                 if (!checkLocation(sacFile.getLocation())) {
-                    System.err.println("!! bad location : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    System.err.println("?? may be untrustworthy location : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
-                    continue;
+                    // continue; <- this file will not be skipped
                 }
 
                 // copy SAC file from the input directory to the output event directory; file name changed here
@@ -351,12 +352,12 @@ class EventProcessor implements Runnable {
 
     /**
      * Checks whether the location isn't insane.
-     * Currently, "" and "00"~"10" are accepted.
+     * Currently, "" and "00"~"99" are accepted.
      * @param location (String) The name of location to check
      * @return (boolean) true if location is fine
      */
     private boolean checkLocation(String location) {
-        return location.isEmpty() || ( location.compareTo("00") >= 0 && location.compareTo("10") <= 0 );
+        return location.isEmpty() || ( location.compareTo("00") >= 0 && location.compareTo("99") <= 0 );
         //return location.isEmpty() || location.equals("00") || location.equals("01") || location.equals("02");
     }
 
