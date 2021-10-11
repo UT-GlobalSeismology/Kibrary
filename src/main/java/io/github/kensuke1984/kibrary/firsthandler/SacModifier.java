@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -100,6 +103,24 @@ class SacModifier {
             sacProcess.inputCMD("rtrend");
             sacProcess.inputCMD("rmean");
             sacProcess.inputCMD("w " + MODIFIED_PATH.getFileName());
+        }
+    }
+
+    /**
+     * Checks whether the waveform data is completely zero or unreadable.
+     * @return (boolean) true if the waveform data is completely zero or unreadable
+     * @throws IOException
+     */
+    boolean isCompleteZero() throws IOException {
+        // read sacdata
+        double[] sacdata = SACUtil.readSACData(MODIFIED_PATH);
+        RealVector obsVec = new ArrayRealVector(sacdata);
+
+        // check
+        if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm())) {
+            return true;
+        } else {
+            return false;
         }
     }
 

@@ -434,6 +434,7 @@ class EventProcessor implements Runnable {
      * <ul>
      * <li> check whether the SAC file can be zero-padded; if not, throw it away </li>
      * <li> remove the trend in the data </li>
+     * <li> check whether the SAC file has non-zero data; if not, throw it away </li>
      * <li> zero-pad SAC files that start after the event time </li>
      * <li> write headers related to the event </li>
      * <li> SAC start time is set to the event time </li>
@@ -459,6 +460,14 @@ class EventProcessor implements Runnable {
 
                 // remove trends in SAC files; output in file with new name .MRG > .MOD
                 sm.removeTrend();
+
+                // check whether the waveform has non-zero data
+                if (sm.isCompleteZero()) {
+                    System.err.println("!! waveform is 0 or NaN : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    Utilities.moveToDirectory(sacPath, unModifiedPath, true);
+                    Utilities.moveToDirectory(sm.getModifiedPath(), unModifiedPath, true);
+                    continue;
+                }
 
                 // zero-pad SAC files that start after the event time
                 sm.zeroPad();
