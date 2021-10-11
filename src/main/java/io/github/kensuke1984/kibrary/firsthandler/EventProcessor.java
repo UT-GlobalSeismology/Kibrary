@@ -298,7 +298,7 @@ class EventProcessor implements Runnable {
 
                 // check station coordinate
                 if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
-                    System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
                     Utilities.moveToDirectory(newSacPath, unwantedCoordinatePath, true);
                     continue;
                 }
@@ -467,7 +467,7 @@ class EventProcessor implements Runnable {
 
                 // filter stations by epicentral distance
                 if (!sm.checkEpicentralDistance(minDistance, maxDistance)) {
-                    System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    //System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacPath.getFileName()); too noisy
                     Utilities.moveToDirectory(sacPath, unwantedDistancePath, true);
                     Utilities.moveToDirectory(sm.getModifiedPath(), unwantedDistancePath, true);
                     continue;
