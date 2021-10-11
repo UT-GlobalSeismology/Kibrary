@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.DirectoryStream;
@@ -88,13 +89,13 @@ class EventProcessor implements Runnable {
      */
     private boolean removeIntermediateFiles = true;
 
-    private Path doneModifyPath;
     private Path doneMergePath;
+    private Path doneModifyPath;
     private Path doneDeconvolvePath;
     private Path doneRotatePath;
     private Path unSetPath;
-    private Path unModifiedPath;
     private Path unMergedPath;
+    private Path unModifiedPath;
     private Path unRotatedPath;
     private Path invalidStationPath;
     private Path invalidRespPath;
@@ -222,13 +223,13 @@ class EventProcessor implements Runnable {
             throw new RuntimeException("Error on elimination : " + INPUT_DIR.getName(), e);
         }
 
+        if (removeIntermediateFiles) removeIntermediateFiles();
+
         problem = check();
 
         hasRun = true;
 
-        if (removeIntermediateFiles) removeIntermediateFiles();
-
-        System.err.println(event.getGlobalCMTID() + " finished");
+        System.err.println("** " + event.getGlobalCMTID() + " finished");
 
     }
 
@@ -281,7 +282,7 @@ class EventProcessor implements Runnable {
                 try {
                     sif.readStationInformation(INPUT_DIR.toPath()); // this will fail if Station file is unfound, etc.
                 } catch (IOException e) {
-                    System.err.println("!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    System.err.println("!!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
@@ -506,7 +507,7 @@ class EventProcessor implements Runnable {
                 // run evalresp
                 // If it fails, throw MOD files to trash
                 if (!runEvalresp(headerMap, respPath)) {
-                    System.err.println("!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw MOD.* files which cannot produce SPECTRA to trash
                     Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
@@ -673,7 +674,7 @@ class EventProcessor implements Runnable {
         // throw away triplets that consist of neither {RTZ}, {RT}, nor {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (!oneTriplet.checkValidity()) {
-                System.err.println("!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+                System.err.println("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
                 oneTriplet.dismiss();
                 oneTriplet.move(invalidTripletPath);
             }
@@ -726,13 +727,29 @@ class EventProcessor implements Runnable {
 
     private void removeIntermediateFiles() {
         try {
-            FileUtils.deleteDirectory(doneModifyPath.toFile());
+            removeDirectory(doneMergePath.toFile());
+            removeDirectory(doneModifyPath.toFile());
+            removeDirectory(doneDeconvolvePath.toFile());
+            removeDirectory(doneRotatePath.toFile());
+            removeDirectory(unSetPath.toFile());
+            removeDirectory(unMergedPath.toFile());
+            removeDirectory(unModifiedPath.toFile());
+            removeDirectory(unRotatedPath.toFile());
+            removeDirectory(invalidStationPath.toFile());
+            removeDirectory(invalidRespPath.toFile());
+            removeDirectory(invalidTripletPath.toFile());
+            removeDirectory(unwantedDistancePath.toFile());
+            removeDirectory(unwantedCoordinatePath.toFile());
+            removeDirectory(duplicateComponentPath.toFile());
+            removeDirectory(duplicateInstrumentPath.toFile());
+            /*
             FileUtils.deleteDirectory(doneMergePath.toFile());
+            FileUtils.deleteDirectory(doneModifyPath.toFile());
             FileUtils.deleteDirectory(doneDeconvolvePath.toFile());
             FileUtils.deleteDirectory(doneRotatePath.toFile());
             FileUtils.deleteDirectory(unSetPath.toFile());
-            FileUtils.deleteDirectory(unModifiedPath.toFile());
             FileUtils.deleteDirectory(unMergedPath.toFile());
+            FileUtils.deleteDirectory(unModifiedPath.toFile());
             FileUtils.deleteDirectory(unRotatedPath.toFile());
             FileUtils.deleteDirectory(invalidStationPath.toFile());
             FileUtils.deleteDirectory(invalidRespPath.toFile());
@@ -741,8 +758,18 @@ class EventProcessor implements Runnable {
             FileUtils.deleteDirectory(unwantedCoordinatePath.toFile());
             FileUtils.deleteDirectory(duplicateComponentPath.toFile());
             FileUtils.deleteDirectory(duplicateInstrumentPath.toFile());
+            */
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void removeDirectory (File dirFile) throws Exception {
+        try {
+            FileUtils.deleteDirectory(dirFile);
+        } catch (Exception e) {
+            Thread.sleep(1000 * 5);
+            FileUtils.deleteDirectory(dirFile);
         }
     }
 
