@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -174,10 +175,14 @@ public class DataLobby implements Operation {
         System.err.println("Output directory is " + outPath);
 
         requestedIDs = listIDs();
-        System.err.println(requestedIDs.size() + " events are found.");
+        int n_total = requestedIDs.size();
+        System.err.println(n_total + " events are found.");
+
+        final AtomicInteger n = new AtomicInteger();
         requestedIDs.forEach(id -> {
             try {
-                System.err.println("Downloading files for " + id + " ...");
+                n.incrementAndGet();
+                System.err.println("Downloading files for " + id + " (# " + n + " of " + n_total + ") ...");
 
                 // create event folder
                 EventFolder ef = new EventFolder(outPath.resolve(id.toString()));
