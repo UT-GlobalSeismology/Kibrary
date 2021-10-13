@@ -241,6 +241,7 @@ class EventProcessor implements Runnable {
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
      * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
+     * <li> if the station coordinate is (0,0), throw away the new SAC file </li>
      * <li> check whether the station coordinate is within the wanted range; if not, throw away the new SAC file </li>
      * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
@@ -293,6 +294,13 @@ class EventProcessor implements Runnable {
                 if ((isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != -90)
                         || (!isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != 0)) {
                     System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
+                    continue;
+                }
+
+                // rejetct stations at (0,0) <- these are most likely stations that do not have correct coordinates written in.
+                if (Double.parseDouble(sif.getLatitude()) == 0.0 && Double.parseDouble(sif.getLongitude()) == 0.0) {
+                    System.err.println("!! rejecting station at coordinate (0,0) : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, unSetPath, true);
                     continue;
                 }
