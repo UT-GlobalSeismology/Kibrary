@@ -212,6 +212,13 @@ public class SacTriplet {
 
     /**
      * Checks whether this triplet is inferior to a given triplet.
+     * The criteria are as follows:
+     * <ol>
+     * <li> A full triplet is prefered over incomplete triplets. </li>
+     * <li> The instrument is ranked as BH > HH > BL > HL. </li>
+     * <li> Locations younger in dictionary order is prefered. </li>
+     * <li> Otherwise (i.e. different stations but different location and instrument), the selection is random. </li>
+     * </ol>
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if this triplet is inferior
      */

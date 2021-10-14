@@ -240,9 +240,9 @@ class EventProcessor implements Runnable {
      * <li> check whether the location is acceptable; if not, display warning </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
      * <li> read Station file; if unreadable, throw away the new SAC file </li>
-     * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
-     * <li> if the station coordinate is (0,0), throw away the new SAC file </li>
      * <li> check whether the station coordinate is within the wanted range; if not, throw away the new SAC file </li>
+     * <li> if the station coordinate is (0,0), throw away the new SAC file </li>
+     * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
      * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
      * </ul>
@@ -288,13 +288,10 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                // if the dip of a [vertical|horizontal] channel is not perfectly [vertical|horizontal], throw away the new SAC file
-                // caution: up is dip=-90, down is dip=90
-                // TODO: are there stations with downwards Z ?
-                if ((isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != -90)
-                        || (!isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != 0)) {
-                    System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
+                // check station coordinate
+                if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
+                    //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
+                    Utilities.moveToDirectory(newSacPath, unwantedCoordinatePath, true);
                     continue;
                 }
 
@@ -305,10 +302,13 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                // check station coordinate
-                if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
-                    //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
-                    Utilities.moveToDirectory(newSacPath, unwantedCoordinatePath, true);
+                // if the dip of a [vertical|horizontal] channel is not perfectly [vertical|horizontal], throw away the new SAC file
+                // caution: up is dip=-90, down is dip=90
+                // TODO: are there stations with downwards Z ?
+                if ((isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != -90)
+                        || (!isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != 0)) {
+                    System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
                     continue;
                 }
 
@@ -548,6 +548,7 @@ class EventProcessor implements Runnable {
 
                 } catch (Exception e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    e.printStackTrace(); //4debug
                     // throw *.MOD files to trash
                     Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
@@ -742,6 +743,9 @@ class EventProcessor implements Runnable {
         return Files.exists(invalidRespPath) || Files.exists(invalidStationPath) || Files.exists(invalidTripletPath);
     }
 
+    /**
+     * Removes directories containing intermediate files.
+     */
     private void removeIntermediateFiles() {
         try {
             removeDirectory(doneMergePath.toFile());
@@ -759,28 +763,19 @@ class EventProcessor implements Runnable {
             removeDirectory(unwantedCoordinatePath.toFile());
             removeDirectory(duplicateComponentPath.toFile());
             removeDirectory(duplicateInstrumentPath.toFile());
-            /*
-            FileUtils.deleteDirectory(doneMergePath.toFile());
-            FileUtils.deleteDirectory(doneModifyPath.toFile());
-            FileUtils.deleteDirectory(doneDeconvolvePath.toFile());
-            FileUtils.deleteDirectory(doneRotatePath.toFile());
-            FileUtils.deleteDirectory(unSetPath.toFile());
-            FileUtils.deleteDirectory(unMergedPath.toFile());
-            FileUtils.deleteDirectory(unModifiedPath.toFile());
-            FileUtils.deleteDirectory(unRotatedPath.toFile());
-            FileUtils.deleteDirectory(invalidStationPath.toFile());
-            FileUtils.deleteDirectory(invalidRespPath.toFile());
-            FileUtils.deleteDirectory(invalidTripletPath.toFile());
-            FileUtils.deleteDirectory(unwantedDistancePath.toFile());
-            FileUtils.deleteDirectory(unwantedCoordinatePath.toFile());
-            FileUtils.deleteDirectory(duplicateComponentPath.toFile());
-            FileUtils.deleteDirectory(duplicateInstrumentPath.toFile());
-            */
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Deletes a given directory.
+     * Attempts to delete the directory is made two times before throwing an Exception.
+     * This method was made because DirectoryNotEmptyException was sometimes thrown
+     * even if the cleaning of the directory seemed to have succeeded and the directory was empty.
+     * @param dirFile (File) Directory to remove
+     * @throws Exception
+     */
     private void removeDirectory (File dirFile) throws Exception {
         try {
             FileUtils.deleteDirectory(dirFile);
