@@ -34,10 +34,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  * <p>
  * TODO NPTSで合わないものを捨てる？
- * <p>
- * mseedに対応した (v0.3.1; 2021-08-24)
- * @author Kensuke Konishi & Kenji Kawai
- * @version 0.3.1
  */
 public class DataKitchen implements Operation {
 

@@ -30,8 +30,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * <p>
  * See also {@link EventDataPreparer}.
  *
- * @author Keisuke Otsuru
- * @version 2021/09/14
  */
 public class DataLobby implements Operation {
 

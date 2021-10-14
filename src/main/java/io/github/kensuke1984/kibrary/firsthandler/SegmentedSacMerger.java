@@ -12,9 +12,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Merging of SAC files
- *
- * @author Kensuke Konishi
- * @version 0.0.4.3
  */
 class SegmentedSacMerger {
 

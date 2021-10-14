@@ -31,11 +31,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Make DSM information files for event folders under a work folder.
- * If there is not data in an input event directory, the corresponding output event directory will not be made.
- *
- * @author Kensuke Konishi
- * @version 0.2.3
+ * Make DSM information files for event folders.
+ * Input event folders must be inside one certain input directory, which may or may not be the workpath.
+ * If there is no data in an input event directory, the corresponding output event directory will not be made.
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 

@@ -35,9 +35,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * The software
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/>evalresp</a> and
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found at IRIS.
- *
- * @author Keisuke Otsuru
- * @version 0.1.1
+ * <p>
+ * TODO: The sac "cut b n" command in SacModifier fails if the sac version is too new (102.0 and later?).
  */
 class EventProcessor implements Runnable {
 
@@ -548,7 +547,6 @@ class EventProcessor implements Runnable {
 
                 } catch (Exception e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
-                    e.printStackTrace(); //4debug
                     // throw *.MOD files to trash
                     Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash

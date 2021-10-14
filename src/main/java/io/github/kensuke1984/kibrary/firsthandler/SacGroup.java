@@ -18,9 +18,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 /**
  * A group of SAC files with the same network, station, location, channel, and qualityID.
  * This means that they are supposed to compose part of the same waveform.
- *
- * @author Kensuke Konishi
- * @version 0.0.6.2
  */
 class SacGroup {
 

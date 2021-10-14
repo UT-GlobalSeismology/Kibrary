@@ -33,8 +33,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/mseed2sac/>mseed2sac</a>
  * can be found at IRIS.
  *
- * @author Keisuke Otsuru
- * @version 2021/10/08
  */
 public class EventDataPreparer {
 
