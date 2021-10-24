@@ -188,7 +188,8 @@ public class DataKitchen implements Operation {
 
         es.shutdown();
         try {
-            while (!es.isTerminated()) Thread.sleep(1000 * 5); // check if everything is done every 5 seconds
+            // check if everything is done every 5 seconds
+            while (!es.isTerminated()) Thread.sleep(1000 * 5);
         } catch (Exception e2) {
             e2.printStackTrace();
         }

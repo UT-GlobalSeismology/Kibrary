@@ -62,7 +62,7 @@ class SacGroup {
      *
      * @return (String) Name of root SAC file of this group.
      */
-    public String getRootSacFileName() {
+    String getRootSacFileName() {
         return rootSacFileName.toString();
     }
 
@@ -99,10 +99,11 @@ class SacGroup {
      * @return うまくつなげられたかどうか
      */
     boolean merge() throws IOException {
-        // System.out.println("merging");
+        //System.out.println("merging");
         SACFileName[] sacFileNameList = nameSet.toArray(new SACFileName[0]);
         // sort the sacFileNameList
-        Arrays.sort(sacFileNameList); // files will be sorted in order of starttime
+        // files will be sorted in order of starttime
+        Arrays.sort(sacFileNameList);
 
 
         // <<<<まず基準となるSac(file0)を読み込む>>>>
@@ -130,12 +131,12 @@ class SacGroup {
         // b value of file0 (msec)
         double currentB = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInMillis = Math.round(currentB * 1000);
-        // System.out.println(currentB*1000+" "+e0);
+        //System.out.println(currentB*1000+" "+e0);
         // e value of file0 (msec)
         double e0 = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
         long eInMillis = Math.round(e0 * 1000);
-        // System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
-        // System.out.println("b, e "+bInMillis+", "+eInMillis);
+        //System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
+        //System.out.println("b, e "+bInMillis+", "+eInMillis);
         // current start time of waveform
         LocalDateTime currentStartTime = sacFileNameList[0].getStartTime().plus(bInMillis, ChronoUnit.MILLIS);
         // current end time of waveform startTime+ timelength0
@@ -182,7 +183,7 @@ class SacGroup {
             if (maxGap < timeGap) return false;
 
             // read data of file1
-            // System.out.println("yes merging");
+            //System.out.println("yes merging");
             double[] data = SACUtil.readSACData(joinSacPath);
 
             // 時間差が直前のファイルの終了時刻からDELTAの半分より後、それ以外で場合分け
@@ -192,7 +193,6 @@ class SacGroup {
                 // joinsacがhalfDeltaより後に始まっている場合 そのままくっつける TODO 0埋めしなくていいの？ 500 msまでなら時間ずれちゃってもいいやってこと？
                 for (int j = 0; j < npts; j++)
                     sacdata.add(data[j]);
-                // currentE += npts * delta;
                 eInMillis += npts * deltaInMillis;
                 currentNpts += npts;
             } else { // timeGap < halfDelta ; 重複あり
@@ -206,14 +206,13 @@ class SacGroup {
                 for (int j = gapI; j < npts; j++)
                     sacdata.add(data[j]);
                 // e0の更新
-                // currentE += delta * (npts - gapI);
                 eInMillis += (npts - gapI) * deltaInMillis;
                 currentNpts += npts - gapI;
             }
             currentEndTime = endTime;
             currentStartTime = startTime;
         }
-        // System.out.println(mergedSacFileName);
+        //System.out.println(mergedSacFileName);
 
         if (sacdata.size() != currentNpts) {
             System.err.print("!! unexpected happened at merge, npts' are different ");
@@ -221,10 +220,10 @@ class SacGroup {
             return false;
         }
 
-        // System.out.println(deltaInMillis+" "+bInMillis+" "+eInMillis);
+        //System.out.println(deltaInMillis+" "+bInMillis+" "+eInMillis);
         long timeDiff = (sacdata.size() - 1) * deltaInMillis + bInMillis - eInMillis;
         if (5 < timeDiff || timeDiff < -5) {
-            // if ((sacdata.size()-1)*deltaInMillis+bInMillis != eInMillis) {
+            //if ((sacdata.size()-1)*deltaInMillis+bInMillis != eInMillis) {
             System.err.print("!! unexpected happened at merge, currentE's are different ");
             System.err.println((sacdata.size() - 1) * deltaInMillis + bInMillis + " " + eInMillis
                     + " : " + workPath.getFileName() + " - " + rootSacFileName.toString());
@@ -232,7 +231,7 @@ class SacGroup {
         }
 
         double e = eInMillis / 1000.0;
-        // System.out.println(e+" "+eInMillis);
+        //System.out.println(e+" "+eInMillis);
         headerMap.put(SACHeaderEnum.NPTS, Integer.toString(sacdata.size()));
         headerMap.put(SACHeaderEnum.E, Double.toString(e));
         double[] sdata = sacdata.stream().mapToDouble(Double::doubleValue).toArray();

@@ -77,7 +77,7 @@ public class RespDataFile {
             URL IRISWSURL = new URL(url);
             long size = 0L;
 
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
         } catch (IOException e) {
@@ -90,13 +90,13 @@ public class RespDataFile {
      * @param outDir (Path) Output directory
      */
     public void downloadRespData (Path outDir) {
-        Path outPath = outDir.resolve(responseFile); // 　出力のディレクトリの指定
+        Path outPath = outDir.resolve(responseFile);
 
         try {
             URL IRISWSURL = new URL(url);
             long size = 0L;
 
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
         } catch (IOException e) {

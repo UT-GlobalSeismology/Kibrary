@@ -27,11 +27,11 @@ class SACFileName implements Comparable<SACFileName> {
      */
     private String channel;
     /**
-     * component E Z R T とか
+     * component E Z R T とか (3rd letter of channel name)
      */
     private String component;
     /**
-     * instrument BH HL とか
+     * instrument BH HL とか (1st&2nd letters of channel name)
      */
     private String instrument;
     /**
@@ -45,9 +45,6 @@ class SACFileName implements Comparable<SACFileName> {
         name = sacFileName;
 
         String[] parts = sacFileName.split("\\.");
-        // year = parts[0]; hour = parts[2];
-        // min = parts[3]; sec = parts[4];
-        // sec/10000 = parts[5]; jday = parts[1];
         switch (parts[parts.length - 1]) {
         case "SAC":
             network = parts[0];
@@ -61,7 +58,6 @@ class SACFileName implements Comparable<SACFileName> {
                     .of(Integer.parseInt(parts[5]), 1, 1, Integer.parseInt(parts[7]), Integer.parseInt(parts[8]),
                             Integer.parseInt(parts[9]), Integer.parseInt(parts[10]) * 100 * 1000)
                     .withDayOfYear(Integer.parseInt(parts[6]));
-            // System.out.println(msec+" "+millisec);
             network = parts[0];
             station = parts[1];
             location = parts[2];
@@ -75,8 +71,10 @@ class SACFileName implements Comparable<SACFileName> {
             location = parts[2];
             channel = parts[3];
             qualityControl = parts[4];
-            component = channel.substring(2); // the 3rd letter of channel name
-            instrument = channel.substring(0, 2); // the 1st&2nd letters of channel name
+            // "component" is the 3rd letter of channel name
+            component = channel.substring(2);
+            // "instrument" is the 1st&2nd letters of channel name
+            instrument = channel.substring(0, 2);
             break;
         case "X":
         case "Y":
@@ -228,7 +226,6 @@ class SACFileName implements Comparable<SACFileName> {
         else if ((c = channel.compareTo(o.channel)) != 0) return c;
         else if ((c = qualityControl.compareTo(o.qualityControl)) != 0) return c;
         else return startTime.compareTo(o.startTime);
-        // return 0;
     }
 
     @Override

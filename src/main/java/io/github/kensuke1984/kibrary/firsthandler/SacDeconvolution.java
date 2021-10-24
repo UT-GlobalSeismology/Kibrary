@@ -66,14 +66,11 @@ class SacDeconvolution {
 
         // 読み込んだwavedataにテーパーをかける
         if (taperAreaRatio != 0) taperInTimeDomain(wavedata);
-        // double[] complexWaveform = new double[npts * 2];
 
         Complex[] complexWave = Arrays.stream(wavedata).mapToObj(Complex::new).toArray(Complex[]::new);
         // フーリエ変換 波形を周波数空間へ
         complexWave = fft.transform(complexWave, TransformType.FORWARD);
 
-        // int[] ip = new int[npts];
-        // double[] w = new double[npts];
         Complex[] resp = new Complex[npts];
         double[] freq = new double[npts];
         readResponseFile(spectraPath, freq, resp);

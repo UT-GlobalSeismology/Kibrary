@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * Class for a set of R, T, and Z component SAC files of the same network, station, location, and instrument.
  *
  */
-public class SacTriplet {
+class SacTriplet {
 
     /**
      * threshold to judge which stations are in the same position [deg]
@@ -47,7 +47,7 @@ public class SacTriplet {
      * @param grid (double) The value of coordinateGrid to be set.
      * @throws IOException
      */
-    public SacTriplet(Path sacPath, double grid) throws IOException {
+    SacTriplet(Path sacPath, double grid) throws IOException {
         SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
 
@@ -73,7 +73,7 @@ public class SacTriplet {
      * @param sacPath (Path) Path of the SAC file to be judged and possibly registered.
      * @return (boolean) true if the given SAC file is registered in this triplet.
      */
-    public boolean add(Path sacPath) {
+    boolean add(Path sacPath) {
         SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
 
         //if variables are same, register
@@ -87,7 +87,6 @@ public class SacTriplet {
     }
 
     private void register(Path sacPath, String component) {
-        //register R or T or Z
         switch(component) {
         case "R":
             rPath = sacPath;
@@ -110,7 +109,7 @@ public class SacTriplet {
      *
      * @return (boolean) true if the triplet is valid
      */
-    public boolean checkValidity() {
+    boolean checkValidity() {
         if (rRegistered && tRegistered && zRegistered) {
             number = 3;
             return true;
@@ -128,7 +127,7 @@ public class SacTriplet {
     /**
      * Marks the triplet as dismissed.
      */
-    public void dismiss() {
+    void dismiss() {
         dismissed = true;
     }
 
@@ -136,7 +135,7 @@ public class SacTriplet {
      * Reports whether the triplet has been dismissed.
      * @return (boolean) true if the triplet has been dismissed.
      */
-    public boolean isDismissed() {
+    boolean isDismissed() {
         return dismissed;
     }
 
@@ -146,7 +145,7 @@ public class SacTriplet {
      * @param dir (Path) Path of the directory where the files shall be moved to.
      * @throws IOException
      */
-    public void move(Path dir) throws IOException {
+    void move(Path dir) throws IOException {
         if (rRegistered) {
             Utilities.moveToDirectory(rPath, dir, true);
         }
@@ -164,7 +163,7 @@ public class SacTriplet {
      * @param event (String) The event ID that this triplet belongs to.
      * @throws IOException
      */
-    public void rename(String event) throws IOException {
+    void rename(String event) throws IOException {
         if (rRegistered) {
             SACFileName rFile = new SACFileName(rPath.getFileName().toString());
             Files.move(rPath, rPath.resolveSibling(rFile.getFinalFileName(event)));
@@ -184,7 +183,7 @@ public class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if it is the same triplet
      */
-    public boolean isItself (SacTriplet other) {
+    boolean isItself (SacTriplet other) {
         return other.getNetwork().equals(network) && other.getStation().equals(station) &&
                 other.getLocation().equals(location) && other.getInstrument().equals(instrument);
     }
@@ -194,7 +193,7 @@ public class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if the statons of the triplets are positioned at or close to each other
      */
-    public boolean atSamePosition (SacTriplet other) {
+    boolean atSamePosition (SacTriplet other) {
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
         else if (Math.abs(latitude - other.getLatitude()) < coordinateGrid &&
                 Math.abs(longitude - other.getLongitude()) < coordinateGrid) return true;
@@ -206,7 +205,7 @@ public class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if the triplets complement each other
      */
-    public boolean complements (SacTriplet other) {
+    boolean complements (SacTriplet other) {
         return other.getNumber() + number == 3;
     }
 
@@ -222,7 +221,7 @@ public class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if this triplet is inferior
      */
-    public boolean isInferiorTo (SacTriplet other) {
+    boolean isInferiorTo (SacTriplet other) {
         // a full triplet is prefered over incomplete triplets
         if (number < other.getNumber()) return true;
         else if (number > other.getNumber()) return false;
@@ -238,7 +237,7 @@ public class SacTriplet {
     /**
      * @return (int) the "rank" of the instrument
      */
-    public int getInstrumentRank() {
+    int getInstrumentRank() {
         int rank = 0;
         switch (instrument) {
         case "BH":
@@ -260,56 +259,56 @@ public class SacTriplet {
     /**
      * @return network
      */
-    public String getNetwork() {
+    String getNetwork() {
         return network;
     }
 
     /**
      * @return station
      */
-    public String getStation() {
+    String getStation() {
         return station;
     }
 
     /**
      * @return location
      */
-    public String getLocation() {
+    String getLocation() {
         return location;
     }
 
     /**
      * @return instrument
      */
-    public String getInstrument() {
+    String getInstrument() {
         return instrument;
     }
 
     /**
      * @return latitude
      */
-    public double getLatitude() {
+    double getLatitude() {
         return latitude;
     }
 
     /**
      * @return longitude
      */
-    public double getLongitude() {
+    double getLongitude() {
         return longitude;
     }
 
     /**
      * @return number of registered files
      */
-    public int getNumber() {
+    int getNumber() {
         return number;
     }
 
     /**
      * @return name of triplet
      */
-    public String getName() {
+    String getName() {
         return name;
     }
 

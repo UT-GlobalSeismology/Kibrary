@@ -45,8 +45,8 @@ public class EventDataPreparer {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    private String MSEED_FILENAME;
-    private boolean IS_FULL_SEED = false;
+    private String mseedFileName;
+    private boolean isFullSeed = false;
 
     /**
      * The event folder and its GCMT ID is set.
@@ -69,8 +69,8 @@ public class EventDataPreparer {
         startTime = ID.getEvent().getCMTTime();
         endTime = ID.getEvent().getCMTTime();
 
-        MSEED_FILENAME = mseedFile;
-        IS_FULL_SEED = full;
+        mseedFileName = mseedFile;
+        isFullSeed = full;
     }
 
     /**
@@ -91,9 +91,9 @@ public class EventDataPreparer {
         URL url = new URL(urlString);
         long size = 0L;
 
-        MSEED_FILENAME = ID + "." + date + ".mseed";
-        Path mseedPath = EVENT_DIR.toPath().resolve(MSEED_FILENAME); // 出力パスの指定
-        size = Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING); // overwriting
+        mseedFileName = ID + "." + date + ".mseed";
+        Path mseedPath = EVENT_DIR.toPath().resolve(mseedFileName);
+        size = Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING);
         System.err.println("Downloaded : " + ID + " - " + size + " bytes");
     }
 
@@ -114,32 +114,37 @@ public class EventDataPreparer {
      */
     public boolean openSeed() throws IOException {
         String command;
-        if (!IS_FULL_SEED) {
+        if (!isFullSeed) {
             //System.err.println("mseed2sac " + MSEED_FILENAME);
-            command = "mseed2sac " + MSEED_FILENAME;
+            command = "mseed2sac " + mseedFileName;
         } else {
             //System.err.println("rdseed -fd " + MSEED_FILENAME);
-            command = "rdseed -fd " + MSEED_FILENAME;
+            command = "rdseed -fd " + mseedFileName;
         }
 
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
-        pb.directory(EVENT_DIR.getAbsoluteFile()); // this will be the working directory of the command
-//        System.out.println("working directory is: " + pb.directory()); //4debug
+        // set be the working directory of the command
+        pb.directory(EVENT_DIR.getAbsoluteFile());
+        //System.out.println("working directory is: " + pb.directory()); //4debug
+
         try {
-            pb.redirectErrorStream(true); // the standard error stream will be redirected to the standard output stream
+            // the standard error stream will be redirected to the standard output stream
+            pb.redirectErrorStream(true);
             Process p = pb.start();
 
             // The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
             // Even if you want to stop printing the output from mseed2sac, just erase the line with println() and nothing else.
             String str;
             BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            while((str = brstd.readLine()) != null) { // reading the buffer
+            // reading the buffer
+            while((str = brstd.readLine()) != null) {
                 System.out.println(str); // Comment out only this single line if you don't want the output.
             }
             brstd.close();
 
-            return p.waitFor() == 0; // wait until the command is finished
+            // wait until the command is finished
+            return p.waitFor() == 0;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -189,7 +194,7 @@ public class EventDataPreparer {
                 // set information based on SAC File name created by mseed2sac
                 String network = sacInfo[0];
                 String station = sacInfo[1];
-                String location = sacInfo[2]; //(sacInfo[2].isEmpty() ? "--" : sacInfo[2]);
+                String location = sacInfo[2];
                 String channel = sacInfo[3];
 
                 StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel);
@@ -246,7 +251,7 @@ public class EventDataPreparer {
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     System.err.println("operating for " + mseedPath + " ...");
-                    //set (or reset) mseed file name
+                    // set (or reset) mseed file name
                     edp.setParameters(mseedPath.getFileName().toString(), false);
                     // expand mseed file
                     edp.openSeed();

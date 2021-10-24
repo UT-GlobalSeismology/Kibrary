@@ -93,13 +93,13 @@ public class StationInformationFile {
      * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
      */
     public void downloadStationInformation() {
-        Path outPath = Paths.get(stationFile); // 出力のディレクトリの指定
+        Path outPath = Paths.get(stationFile);
 
         try {
             URL IRISWSURL = new URL(url);
             long size = 0L;
 
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Downloaded : " + stationFile + " - " + size + " bytes");
 
         } catch (IOException e) {
@@ -113,13 +113,13 @@ public class StationInformationFile {
      * @param outDir (Path) Output directory
      */
     public void downloadStationInformation(Path outDir) {
-        Path outPath = outDir.resolve(stationFile); // 出力のディレクトリの指定
+        Path outPath = outDir.resolve(stationFile);
 
         try {
             URL IRISWSURL = new URL(url);
             long size = 0L;
 
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING); // overwriting
+            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Downloaded : " + stationFile + " - " + size + " bytes");
 
         } catch (IOException e) {

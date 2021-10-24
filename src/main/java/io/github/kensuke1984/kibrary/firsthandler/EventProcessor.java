@@ -48,7 +48,7 @@ class EventProcessor implements Runnable {
     /**
      * [Hz] Sampling Hz in write SAC files
      */
-    private static final double samplingHz = 20;
+    private static final double SAMPLING_HZ = 20;
 
     private final EventFolder INPUT_DIR;
     private final Path OUTPUT_PATH;
@@ -246,14 +246,16 @@ class EventProcessor implements Runnable {
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
      * </ul>
      * If STATION files are unreadable, the corresponding SAC files are thrown in "invalidStation".
-     * SAC files that cannot be handled is put in "unSet", and those with unwanted coordinates are put in "unwantedCoordinate".
+     * SAC files that cannot be handled is put in "unSet",
+     * and those with unwanted coordinates are put in "unwantedCoordinate".
      * @throws IOException
      * @author Keisuke Otsuru
      */
     private void setupSacs() throws IOException {
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
-            for (Path rawSacPath : sacPaths) {  // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
+            for (Path rawSacPath : sacPaths) {
+                // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
 
                 SACFileName sacFile = new SACFileName(rawSacPath.getFileName().toString());
 
@@ -277,10 +279,12 @@ class EventProcessor implements Runnable {
                 Files.copy(rawSacPath, newSacPath);
 
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
+                // creating sif probably won't fail since it is merely substitution of values
                 StationInformationFile sif = new StationInformationFile(sacFile.getNetwork(), sacFile.getStation(),
-                        sacFile.getLocation(), sacFile.getChannel()); // this probably won't fail, since it is merely substitution of values
+                        sacFile.getLocation(), sacFile.getChannel());
                 try {
-                    sif.readStationInformation(INPUT_DIR.toPath()); // this will fail if Station file is unfound, etc.
+                    // this will fail if Station file is unfound, etc.
+                    sif.readStationInformation(INPUT_DIR.toPath());
                 } catch (IOException e) {
                     System.err.println("!!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
@@ -375,7 +379,8 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if channel is vertical
      */
     private boolean isVerticalChannel(String channel) {
-        if (channel.substring(2).equals("Z")) return true; // since checkChannel() is done, input should always be 3 letters
+        // since checkChannel() is done, input should always be 3 letters
+        if (channel.substring(2).equals("Z")) return true;
         else return false;
     }
 
@@ -406,17 +411,26 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void fixHeaderAndDelta(Path sacPath, StationInformationFile sif, boolean blankLocation) throws IOException {
-        double inclination = Double.parseDouble(sif.getDip()) + 90.0; // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
+        // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
+        double inclination = Double.parseDouble(sif.getDip()) + 90.0;
+
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
-            sacD.inputCMD("cd " + cwd);// set current directory
-            sacD.inputCMD("r " + sacPath.getFileName());// read
-            sacD.inputCMD("ch lovrok true");// overwrite permission
+
+            // set current directory
+            sacD.inputCMD("cd " + cwd);
+            // read
+            sacD.inputCMD("r " + sacPath.getFileName());
+            // overwrite permission
+            sacD.inputCMD("ch lovrok true");
+            // write station-related parameters
             sacD.inputCMD("ch cmpaz " + sif.getAzimuth() + " cmpinc " + String.valueOf(inclination));
             sacD.inputCMD("ch stlo "  + sif.getLongitude() + " stla " + sif.getLatitude());
+            // files with empty locations may have khole '-12345', so it is set to ''
             if (blankLocation) {
-                sacD.inputCMD("ch khole ''"); // files with empty locations may have khole '-12345', so it is set to ''
+                sacD.inputCMD("ch khole ''");
             }
+
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
@@ -430,7 +444,6 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void mergeSacSegments() throws IOException {
-        // merge
         SegmentedSacMerger s = new SegmentedSacMerger(OUTPUT_PATH, doneMergePath, unMergedPath);
         s.merge();
         s.move();
@@ -543,7 +556,7 @@ class EventProcessor implements Runnable {
                         continue;
                     }
 
-                    SacDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+                    SacDeconvolution.compute(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
 
                 } catch (Exception e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
@@ -586,11 +599,11 @@ class EventProcessor implements Runnable {
      */
     private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) {
         int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-        double minFreq = samplingHz / npts;
+        double minFreq = SAMPLING_HZ / npts;
         String command =
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
-                        samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) +
+                        SAMPLING_HZ + " " + headerMap.get(SACHeaderEnum.NPTS) +
                         " -n " + headerMap.get(SACHeaderEnum.KNETWK) + " -l " + headerMap.get(SACHeaderEnum.KHOLE) +
                         " -f " + inputPath.toAbsolutePath() +
                         " -s lin -r cs -u vel";
@@ -598,14 +611,16 @@ class EventProcessor implements Runnable {
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(OUTPUT_PATH.toFile());
         try {
-            pb.redirectErrorStream(true); // the standard error stream will be redirected to the standard output stream
+            // the standard error stream will be redirected to the standard output stream
+            pb.redirectErrorStream(true);
             Process p = pb.start();
 
             // The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
             // Even if you want to stop printing the output from mseed2sac, just erase the line with println() and nothing else.
             String str;
             BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            while((str = brstd.readLine()) != null) { // reading the buffer
+            // reading the buffer
+            while((str = brstd.readLine()) != null) {
                 System.out.println(str); // Comment out only this single line if you don't want the output.
             }
             brstd.close();
@@ -716,7 +731,8 @@ class EventProcessor implements Runnable {
                             oneTriplet.getName() + " ( :: " + otherTriplet.getName() + " )");
                     oneTriplet.dismiss();
                     oneTriplet.move(duplicateInstrumentPath);
-                    break; // no need to keep comparing
+                    // there is no need to keep comparing anymore
+                    break;
                 } else {
                     System.err.println("!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
                             otherTriplet.getName() + " ( :: " + oneTriplet.getName() + " )");
@@ -726,7 +742,7 @@ class EventProcessor implements Runnable {
             }
         }
 
-        //rename files that survived
+        // rename files that survived
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (!oneTriplet.isDismissed()) {
                 oneTriplet.rename(event.toString());
@@ -786,21 +802,21 @@ class EventProcessor implements Runnable {
     /**
      * @return (boolean) true if already run
      */
-    public boolean hasRun() {
+    boolean hasRun() {
         return hasRun;
     }
 
     /**
      * @return (boolean) true if there have been any problems
      */
-    public boolean hadProblem() {
+    boolean hadProblem() {
         return problem;
     }
 
     /**
      * @return (String) GCMT ID of event
      */
-    public String getEventID() {
+    String getEventID() {
         return event.getGlobalCMTID().toString();
     }
 

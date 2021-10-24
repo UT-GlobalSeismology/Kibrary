@@ -148,8 +148,8 @@ class SacModifier {
 
         // if the sac startTime is after the event time, then interpolate the gap.
         // if the gap is bigger than tapertime then the SAC file is skipped.
-        // if (sacStartTime.after(eventTime)) {
-        if (taperTime < timeGapInMillis) {  // this shall not happen, because this should be checked in canInterpolate()
+        if (taperTime < timeGapInMillis) {
+            // this shall not happen, because this should be checked in canInterpolate()
             System.err.println("!!!!!!!seismogram starts too late : "
                     + EVENT.getGlobalCMTID() + " - " + MODIFIED_PATH.getFileName());
             return false;
@@ -229,7 +229,7 @@ class SacModifier {
         int npts = (int) (Double.parseDouble(headerMap.get(SACHeaderEnum.E)) /
                 Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)));
         int newNpts = Integer.highestOneBit(npts);
-        // System.out.println("rebuilding "+ sacFile);
+        //System.out.println("rebuilding "+ sacFile);
         String cwd = SAC_PATH.getParent().toString();
         try (SAC sacP1 = SAC.createProcess()) {
             sacP1.inputCMD("cd " + cwd);
@@ -240,6 +240,7 @@ class SacModifier {
         try (SAC sacP2 = SAC.createProcess()) {
             // current directoryをうつす
             sacP2.inputCMD("cd " + cwd);
+            // TODO: "cut b n" does not work in new SAC versions (102.0 and later?)
             sacP2.inputCMD("cut b n " + newNpts);
             sacP2.inputCMD("r " + MODIFIED_PATH.getFileName());
             sacP2.inputCMD("w over");
