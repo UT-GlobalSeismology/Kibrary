@@ -480,7 +480,7 @@ public class SACMaker implements Runnable {
                     : SACExtension.valueOfSynthetic(component);
             try {
                 sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-                        outPath.resolve(station.getName() + "_" + station.getNetwork() + "." + primeSPC.getSourceID() + "." + ext));
+                        outPath.resolve(station.toString() + "." + primeSPC.getSourceID() + "." + ext));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -496,7 +496,7 @@ public class SACMaker implements Runnable {
                         : SACExtension.valueOfTemporalPartial(component);
                 try {
                     sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
-                            outPath.resolve(station.getName() + "_" + station.getNetwork() + "." + globalCMTID + "." + extT));
+                            outPath.resolve(station.toString() + "." + globalCMTID + "." + extT));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

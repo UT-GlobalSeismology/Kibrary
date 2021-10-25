@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class Station implements Comparable<Station> {
 
-    private static final int MAX_LENGTH = 10;
+//    private static final int MAX_LENGTH = 10; TODO
     /**
      * NETWORK name
      */
@@ -57,14 +57,14 @@ public class Station implements Comparable<Station> {
      * @param stationName Name of the station (must be 10 or less letters)
      * @param position    Horizontal POSITION of the station
      */
-    public Station(String stationName, HorizontalPosition position) {
+/*    public Station(String stationName, HorizontalPosition position) {
         if (MAX_LENGTH < stationName.length())
             throw new IllegalArgumentException("Both station and network name must be 8 or less letters.");
         NAME = stationName;
         NETWORK = ""; //TODO erase
         POSITION = position;
     }
-
+*/
     public Station(Station station) {
         NAME = station.NAME;
         NETWORK = station.NETWORK; //TODO erase
