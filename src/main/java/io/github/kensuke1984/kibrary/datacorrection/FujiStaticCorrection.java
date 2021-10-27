@@ -476,7 +476,7 @@ public class FujiStaticCorrection implements Operation {
 						: SACExtension.valueOfSynthetic(component);
 
 				SACFileName synName = new SACFileName(
-						synEventPath.resolve(obsName.getStationName() + "." + obsName.getGlobalCMTID() + "." + synExt));
+						synEventPath.resolve(obsName.getStationCode() + "." + obsName.getGlobalCMTID() + "." + synExt));
 				// System.out.println(obsFile.getName() + " " +
 				// synFile.getName());
 				if (!synName.exists()) {

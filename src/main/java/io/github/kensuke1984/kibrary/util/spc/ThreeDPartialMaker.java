@@ -353,9 +353,9 @@ public class ThreeDPartialMaker {
 			validity = false;
 		}
 		// 摂動点名は同じかどうか
-		if (!(fp.getObserverID().equals(bp.getObserverID()))) {
+		if (!(fp.getStationCode().equals(bp.getStationCode()))) {
 			System.err.println(
-					"Perturbation points are different fp, bp: " + fp.getObserverID() + " ," + bp.getObserverID());
+					"Perturbation points are different fp, bp: " + fp.getStationCode() + " ," + bp.getStationCode());
 			validity = false;
 		}
 		// FP and BP have no observation network, thus we do not check it
@@ -430,9 +430,9 @@ public class ThreeDPartialMaker {
 			validity = false;
 		}
 		// 摂動点名は同じかどうか
-		if (!(fp.getObserverID().equals(bp.getObserverID()))) {
+		if (!(fp.getStationCode().equals(bp.getStationCode()))) {
 			System.err.println(
-					"Perturbation points are different fp, bp: " + fp.getObserverID() + " ," + bp.getObserverID());
+					"Perturbation points are different fp, bp: " + fp.getStationCode() + " ," + bp.getStationCode());
 			validity = false;
 		}
 		// FP and BP have no observation network, thus we do not check it
@@ -464,7 +464,7 @@ public class ThreeDPartialMaker {
 		HorizontalPosition observerPosition = bp.getSourceLocation();
 		String observerID = bp.getSourceID(); //TODO check it
 //		String observerName = bp.getObserverID();
-		String observerNetwork = bp.getObserverNetwork();
+		String observerNetwork = bp.getNetworkCode();
 		Location sourceLocation = fp.getSourceLocation();
 		String sourceID = fp.getSourceID();
 		double[] bodyR = bp.getBodyR();
@@ -534,12 +534,12 @@ public class ThreeDPartialMaker {
 			}
 
 			@Override
-			public String getObserverID() {
+			public String getStationCode() {
 				return observerID;
 			}
 			
 			@Override
-			public String getObserverNetwork() {
+			public String getNetworkCode() {
 				return observerNetwork;
 			}
 

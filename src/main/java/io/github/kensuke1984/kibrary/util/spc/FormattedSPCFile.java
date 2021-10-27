@@ -10,12 +10,13 @@ import java.nio.file.Path;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * <p>
- * Synthetic: station.GlobalCMTID(PSV, SV).spc
- * <p>
- * Partial derivatives: station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV,
- * SH).spc
- * <p>
- * 'PSV', 'SH' must be upper case. 'station' must be 8 or less letters.
+ * The names take the form:
+ * <ul>
+ * <li> Synthetic: "ObserverID.GlobalCMTID_(PSV, SV).spc" </li>
+ * <li> Partial derivatives: "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc" </li>
+ * </ul>
+ * where ObserverID is "station_network".
+ * 'PSV', 'SH' must be upper case. 'station' and 'network' must be 8 or less letters.
  *
  * @author Kensuke Konishi
  * @version 0.0.1.1
@@ -34,8 +35,8 @@ public class FormattedSPCFile extends SPCFile {
      */
     private SPCType fileType;
     private String x, y;
-    private String observerID;
-    private String observerNetwork;
+    private String stationCode;
+    private String networkCode;
     private String sourceID;
 
     /**
@@ -83,7 +84,8 @@ public class FormattedSPCFile extends SPCFile {
     private static String getEventID(String fileName) {
         switch (fileName.split("\\.").length) {
             case 3:
-                return fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
+                return fileName.split("\\.")[1].split("_")[0];
+//                return fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
             case 7:
                 return fileName.split("\\.")[1];
             default:
@@ -116,7 +118,6 @@ public class FormattedSPCFile extends SPCFile {
     /**
      * @param fileName name of SPC file
      * @return PSV or SH
-     * @throws RuntimeException if spc file has no indication of its mode.
      */
     private static SPCMode getMode(String fileName) {
         return fileName.endsWith("PSV.spc") ? SPCMode.PSV : SPCMode.SH;
@@ -142,13 +143,13 @@ public class FormattedSPCFile extends SPCFile {
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
 //        observerID = fileName.split("\\.")[0];
-        observerID = fileName.split("\\.")[0].split("_")[0];
+        stationCode = fileName.split("\\.")[0].split("_")[0];
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+            networkCode = null;
+        else
+            networkCode = fileName.split("\\.")[0].split("_")[1];
         sourceID = getEventID(fileName);
         fileType = getFileType(fileName);
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
-        	observerNetwork = null;
-        else
-        	observerNetwork = fileName.split("\\.")[0].split("_")[1];
         mode = getMode(fileName);
         x = getX(fileName);
         y = getY(fileName);
@@ -170,15 +171,15 @@ public class FormattedSPCFile extends SPCFile {
     }
 
     @Override
-    public String getObserverID() {
-        return observerID;
+    public String getStationCode() {
+        return stationCode;
     }
-    
+
     @Override
-    public String getObserverNetwork() {
-    	if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
-			throw new RuntimeException("PB and PF waveforms have no network");
-    	return observerNetwork;
+    public String getNetworkCode() {
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+            throw new RuntimeException("PB and PF waveforms have no network");
+        return networkCode;
     }
 
     public String getX() {

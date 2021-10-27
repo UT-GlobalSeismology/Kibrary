@@ -8,12 +8,13 @@ import java.nio.file.Path;
 /**
  * A name of a spectrum file made by DSM<br>
  * <p>
- * Synthetic: ObserverID.SourceID(PSV, SV).spc
- * <p>
- * Partial derivatives: ObserverID.SourceID.type(par2, PF, PB .etc).x.y.(PSV,
- * SH).spc
- * <p>
- * 'PSV', 'SH' must be upper case.
+ * The names take the form:
+ * <ul>
+ * <li> Synthetic: "ObserverID.GlobalCMTID_(PSV, SV).spc" </li>
+ * <li> Partial derivatives: "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc" </li>
+ * </ul>
+ * where ObserverID is "station_network".
+ * 'PSV', 'SH' must be upper case. 'station' and 'network' must be 8 or less letters.
  *
  * @author Kensuke Konishi
  * @version 0.2.0
@@ -29,24 +30,24 @@ public abstract class SPCFile extends File {
         }
         String[] parts = name.split("\\.");
         if (parts.length != 3 && parts.length != 7) {
-            System.err.println("SPC file name must be station.GlobalCMTID(PSV, SV).spc or " +
-                    "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
+            System.err.println("SPC file name must be ObserverID.GlobalCMTID(PSV, SV).spc or " +
+                    "ObserverID.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
             return false;
         }
-        
+
         String observerID = name.split("\\.")[0].split("_")[0];
         if (parts.length == 3) {
-        	String observerNetwork = name.split("\\.")[0].split("_")[1];
-			// synthetics files have both station name and network name
-			if (8 < observerID.length()) System.err.println(observerID + "Name of station cannot be over 8 characters");
-			if (8 < observerNetwork.length()) System.err.println(observerNetwork + "Name of network cannot be over 8 characters");
-		}
+            String observerNetwork = name.split("\\.")[0].split("_")[1];
+            // synthetics files have both station name and network name
+            if (8 < observerID.length()) System.err.println(observerID + "Name of station cannot be over 8 characters");
+            if (8 < observerNetwork.length()) System.err.println(observerNetwork + "Name of network cannot be over 8 characters");
+        }
         else {
-        	// bp and fp files have only a station name
-        	if (8 < observerID.length()) {
-	            System.err.println("Name of station cannot be over 8 characters.");
-	            return false;
-        	}
+            // bp and fp files have only a station name
+            if (8 < observerID.length()) {
+                System.err.println("Name of station cannot be over 8 characters.");
+                return false;
+            }
         }
 
         return true;
@@ -96,15 +97,15 @@ public abstract class SPCFile extends File {
     public abstract SPCType getFileType();
 
     /**
-     * @return ID for the observer (station)
+     * @return STATION code of the observer
      */
-    public abstract String getObserverID();
-    
+    public abstract String getStationCode();
+
     /**
-     * @return NETWORK for the observer
+     * @return NETWORK code of the observer
      * @author anselme
      */
-    public abstract String getObserverNetwork();
+    public abstract String getNetworkCode();
 
     /**
      * @return if this is synthetic (not partial)

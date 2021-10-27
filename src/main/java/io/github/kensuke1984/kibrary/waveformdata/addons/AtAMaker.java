@@ -1706,20 +1706,20 @@ public class AtAMaker implements Operation {
 					fpSpc = fpname.read();
 					obsPos = fpSpc.getObserverPosition();
 					bodyR = fpSpc.getBodyR();
-					obsName = fpname.getObserverID();
+					obsName = fpname.getStationCode();
 				}
 				else if (mode.equals("PSV")) {
 					fpSpc_PSV = fpname_PSV.read();
 					obsPos = fpSpc_PSV.getObserverPosition();
 					bodyR = fpSpc_PSV.getBodyR();
-					obsName = fpname_PSV.getObserverID();
+					obsName = fpname_PSV.getStationCode();
 				}
 				else if (mode.equals("BOTH")) {
 					fpSpc = fpname.read();
 					fpSpc_PSV = fpname_PSV.read();
 					obsPos = fpSpc.getObserverPosition();
 					bodyR = fpSpc.getBodyR();
-					obsName = fpname.getObserverID();
+					obsName = fpname.getStationCode();
 				}
 			}
 			

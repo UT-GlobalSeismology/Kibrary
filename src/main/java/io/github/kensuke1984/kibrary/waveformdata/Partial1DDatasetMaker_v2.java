@@ -516,8 +516,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 		private void addPartialSpectrum(SPCFile spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(spcname.getObserverID()) 
-							&& info.getStation().getNetwork().equals(spcname.getObserverNetwork()))
+					.filter(info -> info.getStation().getName().equals(spcname.getStationCode()) 
+							&& info.getStation().getNetwork().equals(spcname.getNetworkCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 //				System.err.println(spcname + " " + "No timewindow found");
@@ -533,8 +533,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				return;
 			}
 			
-			String stationName = spcname.getObserverID();
-			String network = spcname.getObserverNetwork();
+			String stationName = spcname.getStationCode();
+			String network = spcname.getNetworkCode();
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
@@ -602,8 +602,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		private void addPartialSpectrum(SPCFile spcname, SPCFile shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(spcname.getObserverID()) 
-							&& info.getStation().getNetwork().equals(spcname.getObserverNetwork()))
+					.filter(info -> info.getStation().getName().equals(spcname.getStationCode()) 
+							&& info.getStation().getNetwork().equals(spcname.getNetworkCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 //				System.out.println("No timewindow found");	
@@ -632,8 +632,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				return;
 			}
 
-			String stationName = spcname.getObserverID();
-			String network = spcname.getObserverNetwork();
+			String stationName = spcname.getStationCode();
+			String network = spcname.getNetworkCode();
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
@@ -811,7 +811,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(sacname.getStationName()))
+					.filter(info -> info.getStation().getName().equals(sacname.getStationCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;

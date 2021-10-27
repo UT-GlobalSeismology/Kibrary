@@ -148,7 +148,7 @@ public class TakeuchiStaticCorrection implements Operation {
     }
 
     private void compare(SACFileName obsName, SACFileName synName) throws IOException {
-        String stationName = obsName.getStationName();
+        String stationName = obsName.getStationCode();
         GlobalCMTID id = obsName.getGlobalCMTID();
         SACComponent component = obsName.getComponent();
         Set<TimewindowInformation> timeWindowSet =
@@ -185,7 +185,7 @@ public class TakeuchiStaticCorrection implements Operation {
     private SACFileName getPair(SACFileName obsSacFileName) {
         String ext = obsSacFileName.getComponent() + (convolute ? "sc" : "s");
         String id = obsSacFileName.getGlobalCMTID().toString();
-        String name = obsSacFileName.getStationName() + '.' + id + '.' + ext;
+        String name = obsSacFileName.getStationCode() + '.' + id + '.' + ext;
         return new SACFileName(synPath.resolve(id + "/" + name));
     }
 

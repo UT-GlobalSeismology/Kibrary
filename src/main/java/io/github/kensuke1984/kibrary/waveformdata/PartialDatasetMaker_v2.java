@@ -527,7 +527,7 @@ private class WorkerTimePartial implements Runnable {
 		
 		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(sacname.getStationName()))
+					.filter(info -> info.getStation().getName().equals(sacname.getStationCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;
@@ -976,7 +976,7 @@ private class WorkerTimePartial implements Runnable {
 				DSMOutput bp_PSV = null;
 				if (mode.equals("BOTH"))
 					bp_PSV = bpname_PSV.read();
-				String pointName = bp.getObserverID();
+				String pointName = bp.getStationCode();
 
 				// timewindowの存在するfpdirに対して
 				// ｂｐファイルに対する全てのfpファイルを

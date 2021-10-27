@@ -56,8 +56,8 @@ public final class VSConversion {
 		// data part
 		double omegai = spectrum.omegai();
 		HorizontalPosition observerPosition = spectrum.getObserverPosition();
-		String observerID = spectrum.getObserverID();
-		String observerNetwork = spectrum.getObserverNetwork();
+		String observerID = spectrum.getStationCode();
+		String observerNetwork = spectrum.getNetworkCode();
 		Location sourceLocation = spectrum.getSourceLocation();
 		String sourceID = spectrum.getSourceID();
 		double[] bodyR = spectrum.getBodyR();
@@ -125,12 +125,12 @@ public final class VSConversion {
 			}
 
 			@Override
-			public String getObserverID() {
+			public String getStationCode() {
 				return observerID;
 			}
 			
 			@Override
-			public String getObserverNetwork() {
+			public String getNetworkCode() {
 				return observerNetwork;
 			}
 

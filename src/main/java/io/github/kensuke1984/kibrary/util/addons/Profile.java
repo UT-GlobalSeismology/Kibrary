@@ -92,7 +92,7 @@ public class Profile {
 							System.out.println("Warning: found more than one timewindow " + sacname + " : " + timewindow.size());
 						
 						SACData sacdata = sacname.read();
-						String filename = sacname.getStationName() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
+						String filename = sacname.getStationCode() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
 						Path tracePath = profilePhasePath.resolve(filename);
 						
 //						PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));

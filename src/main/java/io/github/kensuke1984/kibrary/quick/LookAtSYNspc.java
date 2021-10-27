@@ -22,8 +22,8 @@ public class LookAtSYNspc {
 	}
 	
 	public static void print(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverID();
-		String netwkName = dsmOutput.getObserverNetwork();
+		String obsName = dsmOutput.getStationCode();
+		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
 		Location sourceLocation = dsmOutput.getSourceLocation();
@@ -49,8 +49,8 @@ public class LookAtSYNspc {
 	
 	//TODO maybe
 	public static void printHeader(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverID();
-		String netwkName = dsmOutput.getObserverNetwork();
+		String obsName = dsmOutput.getStationCode();
+		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
 		Location sourceLocation = dsmOutput.getSourceLocation();

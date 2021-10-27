@@ -694,7 +694,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			for (SACFileName obsFileName : obsFiles) {
 				// データセットに含める成分かどうか
 				if (!components.contains(obsFileName.getComponent())) continue;
-				String stationName = obsFileName.getStationName();
+				String stationName = obsFileName.getStationCode();
 				GlobalCMTID id = obsFileName.getGlobalCMTID();
 				SACComponent component = obsFileName.getComponent();
 				String name = convolute

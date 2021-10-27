@@ -548,7 +548,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 				// データセットに含める成分かどうか
 				if (!components.contains(obsFileName.getComponent()))
 					continue;
-				String stationName = obsFileName.getStationName();
+				String stationName = obsFileName.getStationCode();
 				GlobalCMTID id = obsFileName.getGlobalCMTID();
 				SACComponent component = obsFileName.getComponent();
 				String name = convolute

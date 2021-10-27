@@ -458,7 +458,7 @@ public class DataSelection implements Operation {
 					// check components
 					if (!components.contains(obsName.getComponent()))
 						continue;
-					String stationName = obsName.getStationName();
+					String stationName = obsName.getStationCode();
 					SACComponent component = obsName.getComponent();
 					// double timeshift = 0;
 					SACExtension synExt = convolute ? SACExtension.valueOfConvolutedSynthetic(component)

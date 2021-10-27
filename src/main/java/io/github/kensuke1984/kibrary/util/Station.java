@@ -11,12 +11,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Information of station
  * </p>
  * consisting of <br>
- * Station name, {@link HorizontalPosition}, Station NETWORK <br> TODO remove network
+ * Station name, {@link HorizontalPosition}, Station NETWORK <br>
  * <p>
  * This class is <b>IMMUTABLE</b>
  * </p>
  * <p>
  * Station name and NETWORK name must be 8 or less letters.
+ * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.)
  * <p>
  * If the NETWORK name is 'DSM', comparison of networks between instances is not
  * done, station name and horizontal POSITION is considered.
@@ -27,11 +28,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class Station implements Comparable<Station> {
 
-//    private static final int MAX_LENGTH = 10; TODO
     /**
      * NETWORK name
      */
-    private final String NETWORK; //TODO erase
+    private final String NETWORK;
     /**
      * the {@link HorizontalPosition} of the station
      */
@@ -41,7 +41,7 @@ public class Station implements Comparable<Station> {
      */
     private final String NAME;
 
-    /** TODO erase
+    /**
      * @param stationName Name of the station (must be 8 or less letters)
      * @param network     Name of the network of the station (must be 8 or less letters)
      * @param position    Horizontal POSITION of the station
@@ -53,25 +53,14 @@ public class Station implements Comparable<Station> {
         NETWORK = network;
         POSITION = position;
     }
-    /**
-     * @param stationName Name of the station (must be 10 or less letters)
-     * @param position    Horizontal POSITION of the station
-     */
-/*    public Station(String stationName, HorizontalPosition position) {
-        if (MAX_LENGTH < stationName.length())
-            throw new IllegalArgumentException("Both station and network name must be 8 or less letters.");
-        NAME = stationName;
-        NETWORK = ""; //TODO erase
-        POSITION = position;
-    }
-*/
+
     public Station(Station station) {
         NAME = station.NAME;
-        NETWORK = station.NETWORK; //TODO erase
+        NETWORK = station.NETWORK;
         POSITION = station.POSITION;
     }
 
-    /** TODO modify
+    /**
      * @param sacHeaderData header data
      * @return Station of the input sacHeaderData
      */
@@ -202,7 +191,7 @@ public class Station implements Comparable<Station> {
     }
 
     /**
-     * @return the name of the network ; TODO erase
+     * @return the name of the network
      */
     public String getNetwork() {
         return NETWORK;

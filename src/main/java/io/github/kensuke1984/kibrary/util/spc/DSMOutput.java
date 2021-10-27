@@ -3,10 +3,10 @@
  */
 package io.github.kensuke1984.kibrary.util.spc;
 
+import java.util.List;
+
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-
-import java.util.List;
 
 /**
  * Data of DSM write
@@ -26,8 +26,8 @@ public interface DSMOutput {
      * @return list of spc bodies
      */
     List<SPCBody> getSpcBodyList();
-	
-	void setSpcBody(int i, SPCBody body);
+
+    void setSpcBody(int i, SPCBody body);
 
     /**
      * @return array of body Rs
@@ -47,13 +47,13 @@ public interface DSMOutput {
     /**
      * @return ID of an observer (Station)
      */
-    String getObserverID();
-	
-	/**
-	 * @return Network of an observer
-	 * @author anselme
-	 */
-	String getObserverNetwork();
+    String getStationCode();
+
+    /**
+     * @return Network of an observer
+     * @author anselme
+     */
+    String getNetworkCode();
 
     /**
      * @return HorizontalPosition of an observer.
@@ -80,6 +80,6 @@ public interface DSMOutput {
      */
     SPCType getSpcFileType();
 
-	
-	SPCFile getSpcFileName();
+
+    SPCFile getSpcFileName();
 }
