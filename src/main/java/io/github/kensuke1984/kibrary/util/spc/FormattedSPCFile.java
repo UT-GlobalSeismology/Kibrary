@@ -171,6 +171,11 @@ public class FormattedSPCFile extends SPCFile {
     }
 
     @Override
+    public String getObserverID() {
+        return stationCode + "_" + networkCode;
+    }
+
+    @Override
     public String getStationCode() {
         return stationCode;
     }

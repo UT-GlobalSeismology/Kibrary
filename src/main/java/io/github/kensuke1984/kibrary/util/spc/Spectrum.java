@@ -382,6 +382,11 @@ public class Spectrum implements DSMOutput {
     }
 
     @Override
+    public String getObserverID() {
+        return stationCode + "_" + networkCode;
+    }
+
+    @Override
     public String getStationCode() {
         return stationCode;
     }

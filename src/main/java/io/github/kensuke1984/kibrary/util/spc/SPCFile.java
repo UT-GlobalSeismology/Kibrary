@@ -97,6 +97,11 @@ public abstract class SPCFile extends File {
     public abstract SPCType getFileType();
 
     /**
+     * @return ID of observer (station_network)
+     */
+    public abstract String getObserverID();
+
+    /**
      * @return STATION code of the observer
      */
     public abstract String getStationCode();

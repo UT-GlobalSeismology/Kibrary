@@ -186,12 +186,17 @@ public class SACFileName extends File {
     public static boolean isSacFileName(File file) {
         String fileName = file.getName();
         String[] part = fileName.split("\\.");
+        String[] field = part[0].split("_");
 
         if (part.length != 7 && part.length != 3)
             return false;
 
+        // must include station and network
+        if (field.length != 2)
+            return false;
+
         // station and network must be 8 letters or shorter.
-        if (8 < part[0].split("_")[0].length() || 8 < part[0].split("_")[1].length())
+        if (8 < field[0].length() || 8 < field[1].length())
             return false;
 
         // test if it is a global cmt id
@@ -276,14 +281,16 @@ public class SACFileName extends File {
         return partialType;
     }
 
+    public String getObserverID() {
+        return stationCode + "_" + networkCode;
+    }
+
     public String getStationCode() {
         return stationCode;
     }
+
     public String getNetworkCode() {
         return stationCode;
-    }
-    public String getObserverID() {
-        return stationCode + "_" + networkCode;
     }
 
     public SACComponent getComponent() {

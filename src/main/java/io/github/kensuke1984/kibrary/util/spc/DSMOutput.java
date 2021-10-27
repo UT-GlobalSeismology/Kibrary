@@ -45,12 +45,17 @@ public interface DSMOutput {
     String getSourceID();
 
     /**
-     * @return ID of an observer (Station)
+     * @return ID of observer (station_network)
+     */
+    String getObserverID();
+
+    /**
+     * @return STATION code of the observer
      */
     String getStationCode();
 
     /**
-     * @return Network of an observer
+     * @return NETWORK code of the observer
      * @author anselme
      */
     String getNetworkCode();

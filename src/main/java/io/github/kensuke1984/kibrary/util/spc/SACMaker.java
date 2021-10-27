@@ -272,17 +272,12 @@ public class SACMaker implements Runnable {
         }
 
         if (!spc1.getSourceID().equals(spc2.getSourceID())) {
-            System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
+            System.err.println("Source IDs are different " + spc1.getSourceID() + " " + spc2.getSourceID());
             isOK = false;
         }
 
-        if (!spc1.getStationCode().equals(spc2.getStationCode())) {
-            System.err.println("Station names are different " + spc1.getStationCode() + " " + spc2.getStationCode());
-            isOK = false;
-        }
-
-        if (!spc1.getNetworkCode().equals(spc2.getNetworkCode())) {
-            System.err.println("Network names are different " + spc1.getNetworkCode() + " " + spc2.getNetworkCode());
+        if (!spc1.getObserverID().equals(spc2.getObserverID())) {
+            System.err.println("Observer IDs are different " + spc1.getObserverID() + " " + spc2.getObserverID());
             isOK = false;
         }
 
@@ -416,7 +411,7 @@ public class SACMaker implements Runnable {
     }
 
     private void setInformation() {
-        station = new Station(primeSPC.getStationCode(), primeSPC.getObserverPosition(), primeSPC.getNetworkCode());
+        station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition());
         path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
         if (globalCMTID != null && beginDateTime == null)
             beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();

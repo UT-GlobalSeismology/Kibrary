@@ -54,6 +54,10 @@ public class Station implements Comparable<Station> {
         POSITION = position;
     }
 
+    public Station(String observerID, HorizontalPosition position) {
+        this(observerID.split("_")[0], position, observerID.split("_")[1]);
+    }
+
     public Station(Station station) {
         NAME = station.NAME;
         NETWORK = station.NETWORK;
