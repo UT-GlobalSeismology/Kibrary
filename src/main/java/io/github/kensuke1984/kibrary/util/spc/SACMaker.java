@@ -30,8 +30,8 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -475,7 +475,7 @@ public class SACMaker implements Runnable {
                     : SACExtension.valueOfSynthetic(component);
             try {
                 sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-                        outPath.resolve(SACFileName.generate(station.toString(), globalCMTID.toString(), ext)));
+                        outPath.resolve(SACFileName.generate(station, globalCMTID, ext)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -491,7 +491,7 @@ public class SACMaker implements Runnable {
                         : SACExtension.valueOfTemporalPartial(component);
                 try {
                     sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
-                            outPath.resolve(SACFileName.generate(station.toString(), globalCMTID.toString(), extT)));
+                            outPath.resolve(SACFileName.generate(station, globalCMTID, extT)));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

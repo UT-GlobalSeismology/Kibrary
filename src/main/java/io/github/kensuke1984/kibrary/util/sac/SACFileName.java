@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 
+import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -47,8 +48,8 @@ public class SACFileName extends File {
      * @param extension
      * @return
      */
-    public static String generate(String observerID, String eventID, SACExtension extension) {
-        return observerID + "." + eventID + "." + extension;
+    public static String generate(Station observerID, GlobalCMTID eventID, SACExtension extension) {
+        return observerID.toString() + "." + eventID.toString() + "." + extension;
     }
 
     //-------------------- create instance and read name --------------------//

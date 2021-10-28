@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+
 /**
  * A name of a spectrum file made by DSM<br>
  * <p>
@@ -31,8 +34,8 @@ public abstract class SPCFileName extends File {
      * @param mode
      * @return
      */
-    public static String generate(String observerID, String eventID, String mode) {
-        return observerID + "." + eventID + "_" + mode + ".spc";
+    public static String generate(Station observerID, GlobalCMTID eventID, String mode) {
+        return observerID.toString() + "." + eventID.toString() + "_" + mode + ".spc";
     }
 
     //-------------------- create instance and read name --------------------//
