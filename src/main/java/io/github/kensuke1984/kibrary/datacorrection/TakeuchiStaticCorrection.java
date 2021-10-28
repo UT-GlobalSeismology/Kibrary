@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 import java.io.IOException;
@@ -157,8 +157,8 @@ public class TakeuchiStaticCorrection implements Operation {
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
         if (timeWindowSet.size() != 1) throw new RuntimeException(timewindowInformationPath + " is invalid.");
         TimewindowInformation timeWindow = timeWindowSet.iterator().next();
-        SACData obsSac = obsName.read();
-        SACData synSac = synName.read();
+        SACFileData obsSac = obsName.read();
+        SACFileData synSac = synName.read();
         Station station = obsSac.getStation();
         Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
         Trace synTrace = synSac.createTrace().cutWindow(timeWindow);

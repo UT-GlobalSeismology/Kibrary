@@ -48,7 +48,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
@@ -568,7 +568,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 				if (windows.isEmpty())
 					continue;
 				
-				SACData obsSac;
+				SACFileData obsSac;
 				try {
 					obsSac = obsFileName.read();
 				} catch (IOException e1) {
@@ -577,7 +577,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 					continue;
 				}
 
-				SACData synSac;
+				SACFileData synSac;
 				try {
 					synSac = synFileName.read();
 				} catch (IOException e1) {
@@ -815,7 +815,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		return corrs.get(0);
 	}
 
-	private double[] cutDataSac(SACData sac, double startTime, int npts) {
+	private double[] cutDataSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -823,7 +823,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
 	}
 	
-	private double[] cutEnvelopeSac(SACData sac, double startTime, int npts) {
+	private double[] cutEnvelopeSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -832,7 +832,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
 	}
 	
-	private double[] cutHySac(SACData sac, double startTime, int npts) {
+	private double[] cutHySac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -843,7 +843,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 	
 	private int finalFreqSamplingHz = 8;
 	
-	private Trace cutSpcAmpSac(SACData sac, double startTime, int npts) {
+	private Trace cutSpcAmpSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -880,7 +880,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		return spcAmpCorr;
 	}
 	
-	private Complex[] cutSpcFySac(SACData sac, double startTime, int npts) {
+	private Complex[] cutSpcFySac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -898,7 +898,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 	
 	private final double noisePower = 1.;
 	
-	private double[] cutDataSacAddNoise(SACData sac, double startTime, int npts) {
+	private double[] cutDataSacAddNoise(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);

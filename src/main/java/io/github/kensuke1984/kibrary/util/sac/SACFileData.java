@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
  * @version 0.0.1.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-public interface SACData extends SACHeaderData {
+public interface SACFileData extends SACHeaderData {
 
     /**
      * @param sacFileName name of an write file
@@ -185,23 +185,23 @@ public interface SACData extends SACHeaderData {
     double[] getData();
 
     @Override
-    default SACData setEventLocation(Location eventLocation) {
-        return (SACData) SACHeaderData.super.setEventLocation(eventLocation);
+    default SACFileData setEventLocation(Location eventLocation) {
+        return (SACFileData) SACHeaderData.super.setEventLocation(eventLocation);
     }
 
     @Override
-    default SACData setEventTime(LocalDateTime eventDateTime) {
-        return (SACData) SACHeaderData.super.setEventTime(eventDateTime);
+    default SACFileData setEventTime(LocalDateTime eventDateTime) {
+        return (SACFileData) SACHeaderData.super.setEventTime(eventDateTime);
     }
 
     @Override
-    default SACData setStation(Station station) {
-        return (SACData) SACHeaderData.super.setStation(station);
+    default SACFileData setStation(Station station) {
+        return (SACFileData) SACHeaderData.super.setStation(station);
     }
 
     @Override
-    default SACData setTimeMarker(SACHeaderEnum marker, double time) {
-        return (SACData) SACHeaderData.super.setTimeMarker(marker, time);
+    default SACFileData setTimeMarker(SACHeaderEnum marker, double time) {
+        return (SACFileData) SACHeaderData.super.setTimeMarker(marker, time);
     }
 
     /**
@@ -223,29 +223,29 @@ public interface SACData extends SACHeaderData {
     }
 
     @Override
-    SACData setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+    SACFileData setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
 
-    SACData applyButterworthFilter(ButterworthFilter filter);
-
-    @Override
-    SACData setValue(SACHeaderEnum sacHeaderEnum, double value);
+    SACFileData applyButterworthFilter(ButterworthFilter filter);
 
     @Override
-    SACData setInt(SACHeaderEnum sacHeaderEnum, int value);
+    SACFileData setValue(SACHeaderEnum sacHeaderEnum, double value);
 
     @Override
-    SACData setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
+    SACFileData setInt(SACHeaderEnum sacHeaderEnum, int value);
 
     @Override
-    SACData setSACString(SACHeaderEnum sacHeaderEnum, String string);
+    SACFileData setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
+
+    @Override
+    SACFileData setSACString(SACHeaderEnum sacHeaderEnum, String string);
 
     /**
      * DEEP copy input sacData on the sacData of this.
      *
      * @param waveData must have the same length as NPTS in this SacFile
-     * @return {@link SACData} with the sacData
+     * @return {@link SACFileData} with the sacData
      * @throws IllegalStateException if NPTS is invalid or not set.
      */
-    SACData setSACData(double[] waveData);
+    SACFileData setSACData(double[] waveData);
 
 }

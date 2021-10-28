@@ -165,11 +165,11 @@ public class DataSelection implements Operation {
 	}
 	
 	/**
-	 * @param sac        {@link SACData} to cut
+	 * @param sac        {@link SACFileData} to cut
 	 * @param timeWindow time window
 	 * @return new Trace for the timewindow [tStart:tEnd]
 	 */
-	private static RealVector cutSAC(SACData sac, Timewindow timeWindow) {
+	private static RealVector cutSAC(SACFileData sac, Timewindow timeWindow) {
 		Trace trace = sac.createTrace();
 		double tStart = timeWindow.getStartTime();
 		double tEnd = timeWindow.getEndTime();
@@ -310,7 +310,7 @@ public class DataSelection implements Operation {
 	 * @return
 	 * @author anselme
 	 */
-	private double noisePerSecond(SACData sac, SACComponent component) {
+	private double noisePerSecond(SACFileData sac, SACComponent component) {
 		double len = 50;
 		double distance = sac.getValue(SACHeaderEnum.GCARC);
 		double depth = sac.getValue(SACHeaderEnum.EVDP);
@@ -471,8 +471,8 @@ public class DataSelection implements Operation {
 					}
 
 					// synthetic sac
-					SACData obsSac = obsName.read();
-					SACData synSac = synName.read();
+					SACFileData obsSac = obsName.read();
+					SACFileData synSac = synName.read();
 					
 					stationName = obsSac.getStation().getName() + "_" + obsSac.getStation().getNetwork();
 

@@ -22,7 +22,7 @@ import java.nio.file.Path;
  * @version 0.0.1.1
  * @author anselme add network
  */
-public class FormattedSPCFile extends SPCFile {
+public class FormattedSPCFile extends SPCFileName {
 
     private static final long serialVersionUID = -6340811322023603513L;
 
@@ -38,6 +38,8 @@ public class FormattedSPCFile extends SPCFile {
     private String stationCode;
     private String networkCode;
     private String sourceID;
+
+    //-------------------- create instance and read name --------------------//
 
     /**
      * @param parent {@link File} of a parent folder of the spectrum file
@@ -131,11 +133,6 @@ public class FormattedSPCFile extends SPCFile {
         return isFormatted(path.getFileName().toString());
     }
 
-    @Override
-    public String getSourceID() {
-        return sourceID;
-    }
-
     /**
      * @param fileName
      * @author anselme add network
@@ -155,9 +152,17 @@ public class FormattedSPCFile extends SPCFile {
         y = getY(fileName);
     }
 
+
+    //-------------------- get info of a certain instance --------------------//
+
     @Override
-    public DSMOutput read() throws IOException {
-        return Spectrum.getInstance(this);
+    public boolean isSynthetic() {
+        return isSynthetic(getName());
+    }
+
+    @Override
+    public SPCType getFileType() {
+        return fileType;
     }
 
     @Override
@@ -166,8 +171,8 @@ public class FormattedSPCFile extends SPCFile {
     }
 
     @Override
-    public SPCType getFileType() {
-        return fileType;
+    public String getSourceID() {
+        return sourceID;
     }
 
     @Override
@@ -195,9 +200,12 @@ public class FormattedSPCFile extends SPCFile {
         return y;
     }
 
+
+    //-------------------- read data of this name --------------------//
+
     @Override
-    public boolean isSynthetic() {
-        return isSynthetic(getName());
+    public DSMOutput read() throws IOException {
+        return Spectrum.getInstance(this);
     }
 
 }

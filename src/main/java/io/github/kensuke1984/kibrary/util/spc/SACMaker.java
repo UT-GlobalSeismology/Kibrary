@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -370,12 +370,12 @@ public class SACMaker implements Runnable {
         }
 
         String[] spcfiles = cli.getArgs();
-        SPCFile oneName = new FormattedSPCFile(args[0]);
+        SPCFileName oneName = new FormattedSPCFile(args[0]);
         DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
         DSMOutput pairSPC = null;
         if (1 < args.length) {
-            SPCFile pairName = new FormattedSPCFile(args[1]);
+            SPCFileName pairName = new FormattedSPCFile(args[1]);
             pairSPC = Spectrum.getInstance(pairName);
         }
 
@@ -475,7 +475,7 @@ public class SACMaker implements Runnable {
                     : SACExtension.valueOfSynthetic(component);
             try {
                 sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-                        outPath.resolve(station.toString() + "." + primeSPC.getSourceID() + "." + ext));
+                        outPath.resolve(SACFileName.generate(station.toString(), globalCMTID.toString(), ext)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -491,7 +491,7 @@ public class SACMaker implements Runnable {
                         : SACExtension.valueOfTemporalPartial(component);
                 try {
                     sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
-                            outPath.resolve(station.toString() + "." + globalCMTID + "." + extT));
+                            outPath.resolve(SACFileName.generate(station.toString(), globalCMTID.toString(), extT)));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -553,7 +553,7 @@ public class SACMaker implements Runnable {
         this.outPath = outPath;
     }
 
-    private class SAC implements SACData, Cloneable {
+    private class SAC implements SACFileData, Cloneable {
         private double[] waveData;
 
         @Override

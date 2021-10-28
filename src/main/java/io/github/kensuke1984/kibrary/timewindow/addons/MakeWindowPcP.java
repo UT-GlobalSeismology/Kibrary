@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -123,7 +123,7 @@ public class MakeWindowPcP {
 				if (timesS - timeScS < minPeriod * 1.6)
 					continue;
 				
-				SACData synData = null;
+				SACFileData synData = null;
 				if (!convolved)
 					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("s"))).read();
 				else
@@ -134,7 +134,7 @@ public class MakeWindowPcP {
 				double timeLatePeak = synTrace.getXforMaxValue() > synTrace.getXforMinValue() ? synTrace.getXforMaxValue() : synTrace.getXforMinValue();
 				double timeEndOfS = timeLatePeak + deltaTimeP2P * 0.9;
 				
-				SACData obsData = obsName.read();
+				SACFileData obsData = obsName.read();
 				Trace obsTrace = obsData.createTrace().cutWindow(timeS - 5, timeS + 20);
 				double synSP2P = synTrace.getYVector().getLInfNorm();
 				double obsSP2P = obsTrace.getYVector().getLInfNorm();

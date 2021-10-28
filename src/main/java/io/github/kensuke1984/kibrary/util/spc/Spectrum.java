@@ -27,7 +27,7 @@ public class Spectrum implements DSMOutput {
     private String stationCode;
     private String networkCode;
     private String sourceID;
-    private SPCFile spcFileName;
+    private SPCFileName spcFileName;
     private double tlen;
     private int np;
 
@@ -46,7 +46,7 @@ public class Spectrum implements DSMOutput {
     private double[] bodyR;
     private SPCType spcFileType;
 
-    public Spectrum(SPCFile spcFileName) {
+    public Spectrum(SPCFileName spcFileName) {
         this.spcFileName = spcFileName; // TODO
     }
 
@@ -80,7 +80,7 @@ public class Spectrum implements DSMOutput {
      * @author Kensuke Konishi
      * @author anselme add content for BP/FP catalog
      */
-    final public static Spectrum getInstance(SPCFile spcFileName, double phi, HorizontalPosition observerPosition
+    final public static Spectrum getInstance(SPCFileName spcFileName, double phi, HorizontalPosition observerPosition
             , Location sourceLocation, String observerName) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
             Spectrum specFile = new Spectrum(spcFileName);
@@ -367,7 +367,7 @@ public class Spectrum implements DSMOutput {
      * @throws IOException
      * @author anselme
      */
-    public final static Spectrum getInstance(SPCFile spcFileName, double phi) throws IOException {
+    public final static Spectrum getInstance(SPCFileName spcFileName, double phi) throws IOException {
         return getInstance(spcFileName, phi, null, null, null);
     }
 
@@ -377,7 +377,7 @@ public class Spectrum implements DSMOutput {
      * @throws IOException
      * @author anselme
      */
-    public final static Spectrum getInstance(SPCFile spcFileName) throws IOException {
+    public final static Spectrum getInstance(SPCFileName spcFileName) throws IOException {
         return getInstance(spcFileName, 0., null, null, null);
     }
 
@@ -411,7 +411,7 @@ public class Spectrum implements DSMOutput {
         return observerPosition;
     }
 
-    public SPCFile getSpcFileName() {
+    public SPCFileName getSpcFileName() {
         return spcFileName;
     }
 

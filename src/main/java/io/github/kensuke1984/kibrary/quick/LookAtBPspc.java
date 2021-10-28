@@ -10,14 +10,14 @@ import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
 import io.github.kensuke1984.kibrary.util.spc.Spectrum;
 
 public class LookAtBPspc {
 
 	public static void main(String[] args) throws IOException {
-		SPCFile spcName = new FormattedSPCFile(Paths.get(args[0]));
+		SPCFileName spcName = new FormattedSPCFile(Paths.get(args[0]));
 		
 		DSMOutput dsmOutput = null;
 		if (args.length == 1)

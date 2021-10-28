@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -191,12 +191,12 @@ public class AtAMaker implements Operation {
 	private int progressStep;
 	private int progressStep1D;
 	
-	private final SPCFile[] bpnames;
-	private final SPCFile[] bpnames_PSV;
-	private List<SPCFile> fpnames;
-	private Map<GlobalCMTID, List<SPCFile>> fpnameMap;
-	private List<SPCFile> fpnames_PSV;
-	private Map<GlobalCMTID, List<SPCFile>> fpnameMap_PSV;
+	private final SPCFileName[] bpnames;
+	private final SPCFileName[] bpnames_PSV;
+	private List<SPCFileName> fpnames;
+	private Map<GlobalCMTID, List<SPCFileName>> fpnameMap;
+	private List<SPCFileName> fpnames_PSV;
+	private Map<GlobalCMTID, List<SPCFileName>> fpnameMap_PSV;
 	
 	private double[][][][][] partials;
 	
@@ -1637,8 +1637,8 @@ public class AtAMaker implements Operation {
 	
 	public class FPWorker implements Runnable {
 		
-		SPCFile fpname;
-		SPCFile fpname_PSV;
+		SPCFileName fpname;
+		SPCFileName fpname_PSV;
 		HorizontalPosition voxelPosition;
 		Station station;
 		GlobalCMTID event;
@@ -1646,7 +1646,7 @@ public class AtAMaker implements Operation {
 		private final List<TimewindowInformation> orderedRecordTimewindows;
 		private int windowCounter;
 		
-		public FPWorker(SPCFile fpname, Station station, GlobalCMTID event,
+		public FPWorker(SPCFileName fpname, Station station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			if (mode.equals("SH")) {
 				this.fpname = fpname;
@@ -1663,7 +1663,7 @@ public class AtAMaker implements Operation {
 			this.windowCounter = windowCounter;
 		}
 		
-		public FPWorker(SPCFile fpname, SPCFile fpname_PSV, Station station, GlobalCMTID event,
+		public FPWorker(SPCFileName fpname, SPCFileName fpname_PSV, Station station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = fpname;
 			this.fpname_PSV = fpname_PSV;
@@ -1770,12 +1770,12 @@ public class AtAMaker implements Operation {
 				throw new RuntimeException("Error: cannot interpolate FP at epicentral distance " + distanceFP + "(deg)");
 			int ipointFP = (int) ((distanceFP - thetamin) / dtheta);
 			
-			SPCFile bpname1 = null;
-			SPCFile bpname2 = null;
-			SPCFile bpname3 = null;
-			SPCFile bpname1_PSV = null;
-			SPCFile bpname2_PSV = null;
-			SPCFile bpname3_PSV = null;
+			SPCFileName bpname1 = null;
+			SPCFileName bpname2 = null;
+			SPCFileName bpname3 = null;
+			SPCFileName bpname1_PSV = null;
+			SPCFileName bpname2_PSV = null;
+			SPCFileName bpname3_PSV = null;
 			
 			if (mode.equals("SH") || mode.equals("BOTH"))
 				bpname1 = bpnames[ipointBP];
@@ -1792,12 +1792,12 @@ public class AtAMaker implements Operation {
 				}
 			}
 			
-			SPCFile fpname1 = null;
-			SPCFile fpname2 = null;
-			SPCFile fpname3 = null;
-			SPCFile fpname1_PSV = null;
-			SPCFile fpname2_PSV = null;
-			SPCFile fpname3_PSV = null;
+			SPCFileName fpname1 = null;
+			SPCFileName fpname2 = null;
+			SPCFileName fpname3 = null;
+			SPCFileName fpname1_PSV = null;
+			SPCFileName fpname2_PSV = null;
+			SPCFileName fpname3_PSV = null;
 			if (catalogueFP) {
 				if (mode.equals("SH") || mode.equals("BOTH")) {
 					fpname1 = fpnameMap.get(event).get(ipointFP);

@@ -13,7 +13,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Trace;
 
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -36,7 +36,7 @@ public class Pick {
 
     private static void pickSMaxMin(SACFileName name) throws IOException {
         SACHeaderData synHeader = name.readHeader();
-        SACData data = name.read();
+        SACFileData data = name.read();
         double start = synHeader.getValue(SACHeaderEnum.T0) - 20;
         double end = synHeader.getValue(SACHeaderEnum.T1) + 20;
         Trace trace = data.createTrace().cutWindow(start, end);
@@ -62,7 +62,7 @@ public class Pick {
 
     private static void pickSScS(Path sacPath) throws IOException, TauPException, TauModelException {
         SACFileName name = new SACFileName(sacPath);
-        SACData data = name.read();
+        SACFileData data = name.read();
         Path trash = Paths.get("/home/kensuke/secondDisk/CentralAmerica/premsyn/divide/trash");
         double eventR = 6371 - data.getValue(SACHeaderEnum.EVDP);
         double gcarc = data.getValue(SACHeaderEnum.GCARC);

@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
@@ -421,7 +421,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 				if (windows.isEmpty())
 					continue;
 				
-				SACData obsSac;
+				SACFileData obsSac;
 				try {
 					obsSac = obsFileName.read();
 				} catch (IOException e1) {
@@ -430,7 +430,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 					continue;
 				}
 
-				SACData synSac;
+				SACFileData synSac;
 				try {
 					synSac = synFileName.read();
 				} catch (IOException e1) {
@@ -527,7 +527,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 		return staticCorrectionSet.stream().filter(s -> isPair2.test(s, window)).findAny().get();
 	}
 
-	private double[] cutDataSac(SACData sac, double startTime, int npts) {
+	private double[] cutDataSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);

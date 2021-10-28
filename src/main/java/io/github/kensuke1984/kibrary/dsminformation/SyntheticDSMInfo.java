@@ -15,6 +15,7 @@ import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 /**
  * Information file for TIPSV and TISH
@@ -91,8 +92,7 @@ public class SyntheticDSMInfo extends DSMheader {
 
             // write
             pw.println("c parameter for the write file");
-            STATIONS.stream().sorted().map(s -> s.getName() + "_" + s.getNetwork())
-                    .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "_PSV.spc"));
+            STATIONS.stream().sorted().forEach(s -> pw.println(SPCFileName.generate(s.toString(), EVENT.toString(), "PSV")));
             pw.println("end");
 
         }
@@ -134,8 +134,7 @@ public class SyntheticDSMInfo extends DSMheader {
 
             // write
             pw.println("c parameter for the write file");
-            STATIONS.stream().sorted().map(s -> s.getName() + "_" + s.getNetwork())
-                    .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "_SH.spc"));
+            STATIONS.stream().sorted().forEach(s -> pw.println(SPCFileName.generate(s.toString(), EVENT.toString(), "SH")));
             pw.println("end");
         }
     }

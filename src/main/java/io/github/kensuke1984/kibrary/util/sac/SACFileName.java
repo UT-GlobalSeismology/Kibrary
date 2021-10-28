@@ -38,6 +38,21 @@ public class SACFileName extends File {
     private String x, y, z;
     private WaveformType sacType;
 
+    //-------------------- generate a new name --------------------//
+
+    /**
+     * If the inputs are invalid, the generated name would be invalid, but the name will be returned nonetheless.
+     * @param observerID
+     * @param eventID
+     * @param extension
+     * @return
+     */
+    public static String generate(String observerID, String eventID, SACExtension extension) {
+        return observerID + "." + eventID + "." + extension;
+    }
+
+    //-------------------- create instance and read name --------------------//
+
     /**
      * @param parent {@link File} of a parent folder
      * @param child  name of a file
@@ -211,26 +226,6 @@ public class SACFileName extends File {
         return true;
     }
 
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-    public boolean isConvolved() {
-        return extension.isConvoluted();
-    }
-
-    /**
-     * @return {@link SACExtension} of this sacfile name
-     */
-    public SACExtension getExtension() {
-        return extension;
-    }
-
-    public WaveformType getSacType() {
-        return sacType;
-    }
-
     private void readName(String fileName) {
         if (!isSacFileName(fileName))
             throw new IllegalArgumentException(fileName + " is an invalid sac file name");
@@ -249,6 +244,33 @@ public class SACFileName extends File {
             sacType = isOBS(fileName) ? WaveformType.OBS : WaveformType.SYN;
         else
             sacType = WaveformType.PARTIAL;
+    }
+
+
+    //-------------------- get info of a certain instance --------------------//
+
+    @Override
+    public String toString() {
+        return getName();
+    }
+
+    /**
+     * @return {@link SACExtension} of this sacfile name
+     */
+    public SACExtension getExtension() {
+        return extension;
+    }
+
+    public boolean isConvolved() {
+        return extension.isConvoluted();
+    }
+
+    public SACComponent getComponent() {
+        return getComponent(getName());
+    }
+
+    public WaveformType getSacType() {
+        return sacType;
     }
 
     /**
@@ -273,12 +295,12 @@ public class SACFileName extends File {
         return isTemporalPartial(getName());
     }
 
-    public GlobalCMTID getGlobalCMTID() {
-        return globalCMTID;
-    }
-
     public PartialType getPartialType() {
         return partialType;
+    }
+
+    public GlobalCMTID getGlobalCMTID() {
+        return globalCMTID;
     }
 
     public String getObserverID() {
@@ -290,11 +312,7 @@ public class SACFileName extends File {
     }
 
     public String getNetworkCode() {
-        return stationCode;
-    }
-
-    public SACComponent getComponent() {
-        return getComponent(getName());
+        return networkCode;
     }
 
     public String getX() {
@@ -309,6 +327,9 @@ public class SACFileName extends File {
         return z;
     }
 
+
+    //-------------------- read data of this name --------------------//
+
     /**
      * @return (immutable) SACHeaderData of this file
      * @throws IOException if an I/O error occurs
@@ -321,7 +342,7 @@ public class SACFileName extends File {
      * @return (immutable) SACData of this file
      * @throws IOException if an I/O error occurs
      */
-    public SACData read() throws IOException {
+    public SACFileData read() throws IOException {
         return new SACFile(this);
     }
 

@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -120,8 +120,8 @@ public class ComputeTimediffSScS {
 			);
 			SACFileName[] obsNamesArray = obsNames.toArray(new SACFileName[obsNames.size()]);
 			
-			SACData[] obsSacs = new SACData[obsNames.size()];
-			SACData[] synSacs = new SACData[obsNames.size()];
+			SACFileData[] obsSacs = new SACFileData[obsNames.size()];
+			SACFileData[] synSacs = new SACFileData[obsNames.size()];
 			double[] timeS = new double[obsNames.size()];
 			double[] timeScS = new double[obsNames.size()];
 			double[] pierceDists = new double[obsNames.size()];
@@ -318,7 +318,7 @@ public class ComputeTimediffSScS {
 						.dotProduct(tmpObsScS.getYVector().subtract(templateScS.getYVector()))
 						/ tmpObsScS.getYVector().dotProduct(tmpObsScS.getYVector());
 				
-				SACData tmpsac = obsSacs[i];
+				SACFileData tmpsac = obsSacs[i];
 				double corrShift = 0;
 				if (mantleCorrections != null) {
 					StaticCorrection mantleCorr = thisCorrections.stream().filter(c -> c.getStation().equals(tmpsac.getStation()))

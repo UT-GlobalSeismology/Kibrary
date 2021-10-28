@@ -50,7 +50,7 @@ public final class VSConversion {
         final int np = spectrum.np();
         final double tlen = spectrum.tlen();
         List<SPCBody> spcBodyList = new ArrayList<>(nbody);
-        SPCFile spcFileName = spectrum.getSpcFileName();
+        SPCFileName spcFileName = spectrum.getSpcFileName();
 
         // data part
         double omegai = spectrum.omegai();
@@ -144,7 +144,7 @@ public final class VSConversion {
             }
 
             @Override
-            public SPCFile getSpcFileName() {
+            public SPCFileName getSpcFileName() {
                 return spcFileName;
             }
 

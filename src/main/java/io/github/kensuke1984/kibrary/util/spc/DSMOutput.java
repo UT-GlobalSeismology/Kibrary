@@ -86,5 +86,5 @@ public interface DSMOutput {
     SPCType getSpcFileType();
 
 
-    SPCFile getSpcFileName();
+    SPCFileName getSpcFileName();
 }

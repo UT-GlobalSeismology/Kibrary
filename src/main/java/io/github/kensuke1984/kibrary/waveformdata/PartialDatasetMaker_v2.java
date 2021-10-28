@@ -49,14 +49,14 @@ import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
@@ -198,15 +198,15 @@ public class PartialDatasetMaker_v2 implements Operation {
 
 		private DSMOutput bp;
 		private DSMOutput bp_other;
-		private SPCFile fpname;
-		private SPCFile fpname_other;
+		private SPCFileName fpname;
+		private SPCFileName fpname_other;
 		private DSMOutput fp;
 		private DSMOutput fp_other;
 		private Station station;
 		private GlobalCMTID id;
 		private String mode;
 		
-		private void checkMode(DSMOutput bp, SPCFile fpFile) {
+		private void checkMode(DSMOutput bp, SPCFileName fpFile) {
 			if (bp.getSpcFileName().getMode().equals(SPCMode.SH) 
 					&& fpFile.getMode().equals(SPCMode.SH)) {
 				this.bp = bp;
@@ -231,14 +231,14 @@ public class PartialDatasetMaker_v2 implements Operation {
 		 * @param fp
 		 * @param bpFile
 		 */
-		private PartialComputation(DSMOutput bp, Station station, SPCFile fpFile) {
+		private PartialComputation(DSMOutput bp, Station station, SPCFileName fpFile) {
 			checkMode(bp, fpFile);
 			this.station = station;
 //			fpname = fpFile;
 			id = new GlobalCMTID(fpFile.getSourceID());
 		}
 		
-		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Station station, SPCFile fpFile_SH, SPCFile fpFile_PSV) {
+		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Station station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV) {
 			this.bp = bp_PSV;
 			fpname = fpFile_PSV;
 			bp_other = bp_SH;
@@ -535,7 +535,7 @@ private class WorkerTimePartial implements Runnable {
 			
 			System.out.println(sacname + " (time partials)");
 			
-			SACData sacdata = sacname.read();
+			SACFileData sacdata = sacname.read();
 			Station station = sacdata.getStation();
 			
 			for (SACComponent component : components) {
@@ -935,8 +935,8 @@ private class WorkerTimePartial implements Runnable {
 				continue;
 
 			// bpModelFolder内 spectorfile
-			List<SPCFile> bpFiles = null;
-			List<SPCFile> bpFiles_PSV = null;
+			List<SPCFileName> bpFiles = null;
+			List<SPCFileName> bpFiles_PSV = null;
 			if (mode.equals("SH"))
 				bpFiles = Utilities.collectOrderedSHSpcFileName(bpModelPath);
 			else if (mode.equals("PSV"))
@@ -963,8 +963,8 @@ private class WorkerTimePartial implements Runnable {
 			// create ThreadPool
 			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 			for (int i = 0; i < bpFiles.size(); i++) {
-				SPCFile bpname = bpFiles.get(i);
-				SPCFile bpname_PSV = null;
+				SPCFileName bpname = bpFiles.get(i);
+				SPCFileName bpname_PSV = null;
 				if (mode.equals("BOTH"))
 					bpname_PSV = bpFiles_PSV.get(i);
 				
@@ -984,9 +984,9 @@ private class WorkerTimePartial implements Runnable {
 //				{
 					for (Path fpEventPath : fpEventPaths) {
 						String eventName = fpEventPath.getParent().getFileName().toString();
-						SPCFile fpfile = new FormattedSPCFile(
+						SPCFileName fpfile = new FormattedSPCFile(
 								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-						SPCFile fpfile_PSV = null;
+						SPCFileName fpfile_PSV = null;
 						if (mode.equals("BOTH")) {
 							fpfile_PSV = new FormattedSPCFile(
 									fpEventPath.resolve(pointName + "." + eventName + ".PF..." + "PSV" + ".spc"));

@@ -178,7 +178,7 @@ public class FujiStaticCorrection implements Operation {
 		return peaks;
 	}
 
-	private static double[] cutSac(SACData sacData, double tStart, double tEnd) {
+	private static double[] cutSac(SACFileData sacData, double tStart, double tEnd) {
 		Trace t = sacData.createTrace();
 		t = t.cutWindow(tStart, tEnd);
 		return t.getY();
@@ -238,7 +238,7 @@ public class FujiStaticCorrection implements Operation {
      * @param window time window
      * @return ratio of maximum values
      */
-	private double computeMaxRatio(SACData obsSac, SACData synSac, double shift, Timewindow window) {
+	private double computeMaxRatio(SACFileData obsSac, SACFileData synSac, double shift, Timewindow window) {
 		double delta = 1 / sacSamplingHz;
 
 		double startSec = window.getStartTime();
@@ -258,7 +258,7 @@ public class FujiStaticCorrection implements Operation {
 		return maxObs / maxSyn;
 	}
 	
-	private double computeP2PRatio(SACData obsSac, SACData synSac, double shift, Timewindow window) {
+	private double computeP2PRatio(SACFileData obsSac, SACFileData synSac, double shift, Timewindow window) {
 		double delta = 1 / sacSamplingHz;
 
 		double startSec = window.getStartTime();
@@ -285,7 +285,7 @@ public class FujiStaticCorrection implements Operation {
      * @param window time window
      * @return value for time shift
      */
-	private double computeTimeshiftForBestCorrelation(SACData obsSac, SACData synSac, Timewindow window) {
+	private double computeTimeshiftForBestCorrelation(SACFileData obsSac, SACFileData synSac, Timewindow window) {
 		double delta = 1 / sacSamplingHz;
 
 		double startSec = window.getStartTime();
@@ -320,7 +320,7 @@ public class FujiStaticCorrection implements Operation {
 		return Precision.round(timeshift, 2);
 	}
 	
-	private double computeTimeshiftForBestCorrelation_peak(SACData obsSac, SACData synSac, Timewindow window) {
+	private double computeTimeshiftForBestCorrelation_peak(SACFileData obsSac, SACFileData synSac, Timewindow window) {
 		double delta = 1 / sacSamplingHz;
 
 		double startSec = window.getStartTime();
@@ -483,8 +483,8 @@ public class FujiStaticCorrection implements Operation {
 					System.out.println(synName + " does not exist. ");
 					continue;
 				}
-				SACData obsSac;
-				SACData synSac;
+				SACFileData obsSac;
+				SACFileData synSac;
 				try {
 					obsSac = obsName.read();
 					synSac = synName.read();

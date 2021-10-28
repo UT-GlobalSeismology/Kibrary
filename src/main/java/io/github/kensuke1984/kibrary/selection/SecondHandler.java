@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -46,7 +46,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	private Path workPath;
 	private Properties property;
 	private Set<String> networks;
-	private Predicate<SACData> predicate;
+	private Predicate<SACFileData> predicate;
 	private String trashName;
 
 	public SecondHandler(Properties property) throws IOException {
@@ -122,7 +122,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 		predicate = createPredicate();
 	}
 
-	private Predicate<SACData> createPredicate() {
+	private Predicate<SACFileData> createPredicate() {
 
 		double delta = property.containsKey("delta") ? Double.parseDouble(property.getProperty("delta")) : Double.NaN;
 		int[] npts = property.containsKey("npts") ? Arrays.stream(property.getProperty("npts").trim().split(" ")).mapToInt(Integer::parseInt).toArray() : new int[0];
@@ -238,7 +238,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 					isOK = false;
 				//TODO isok????
 				// SacFileの読み込み
-				SACData obsSac = sacName.read();
+				SACFileData obsSac = sacName.read();
 				isOK = predicate.test(obsSac);
 
 				if (!isOK)

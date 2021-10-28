@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -67,7 +67,7 @@ public class BPVisual {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 		
-		for (SPCFile spcName : Utilities.collectSpcFileName(Paths.get("."))) {
+		for (SPCFileName spcName : Utilities.collectSpcFileName(Paths.get("."))) {
 			DSMOutput bpSpc = spcName.read();
 			
 			HorizontalPosition obsPos = bpSpc.getObserverPosition();

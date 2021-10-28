@@ -20,7 +20,22 @@ import java.nio.file.Path;
  * @version 0.2.0
  * @author anselme add network
  */
-public abstract class SPCFile extends File {
+public abstract class SPCFileName extends File {
+
+    //-------------------- generate a new name --------------------//
+
+    /**
+     * If the inputs are invalid, the generated name would be invalid, but the name will be returned nonetheless.
+     * @param observerID
+     * @param eventID
+     * @param mode
+     * @return
+     */
+    public static String generate(String observerID, String eventID, String mode) {
+        return observerID + "." + eventID + "_" + mode + ".spc";
+    }
+
+    //-------------------- create instance and read name --------------------//
 
     static boolean isFormatted(String name) {
         if (!name.endsWith(".spc")) return false;
@@ -61,30 +76,37 @@ public abstract class SPCFile extends File {
         return fileName.split("\\.").length == 3;
     }
 
-    SPCFile(String pathname) {
+    SPCFileName(String pathname) {
         super(pathname);
     }
 
-    SPCFile(String parent, String child) {
+    SPCFileName(String parent, String child) {
         super(parent, child);
     }
 
-    SPCFile(File parent, String child) {
+    SPCFileName(File parent, String child) {
         super(parent, child);
     }
 
-    SPCFile(URI uri) {
+    SPCFileName(URI uri) {
         super(uri);
     }
 
-    SPCFile(Path path) {
+    SPCFileName(Path path) {
         this(path.toString());
     }
 
+    //-------------------- get info of a certain instance --------------------//
+
     /**
-     * @return ID of source
+     * @return if this is synthetic (not partial)
      */
-    public abstract String getSourceID();
+    public abstract boolean isSynthetic();
+
+    /**
+     * @return type (PAR0, .., PARQ, synthetic) of the file.
+     */
+    public abstract SPCType getFileType();
 
     /**
      * @return psv or sh
@@ -92,9 +114,9 @@ public abstract class SPCFile extends File {
     public abstract SPCMode getMode();
 
     /**
-     * @return type (PAR0, .., PARQ, synthetic) of the file.
+     * @return ID of source
      */
-    public abstract SPCType getFileType();
+    public abstract String getSourceID();
 
     /**
      * @return ID of observer (station_network)
@@ -112,10 +134,7 @@ public abstract class SPCFile extends File {
      */
     public abstract String getNetworkCode();
 
-    /**
-     * @return if this is synthetic (not partial)
-     */
-    public abstract boolean isSynthetic();
+    //-------------------- read data of this name --------------------//
 
     /**
      * @return output of DSM

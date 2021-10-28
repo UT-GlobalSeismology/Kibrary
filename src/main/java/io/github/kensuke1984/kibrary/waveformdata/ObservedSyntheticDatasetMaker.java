@@ -481,7 +481,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		return corrs.get(0);
 	}
 
-	private double[] cutDataSac(SACData sac, double startTime, int npts) {
+	private double[] cutDataSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -495,7 +495,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private double[] cutEnvelopeSac(SACData sac, double startTime, int npts) {
+	private double[] cutEnvelopeSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -510,7 +510,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private double[] cutHySac(SACData sac, double startTime, int npts) {
+	private double[] cutHySac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -525,7 +525,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private Trace cutSpcAmpSac(SACData sac, double startTime, int npts) {
+	private Trace cutSpcAmpSac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -547,7 +547,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private Trace cutSpcAmpSacAddNoise(SACData sac, double startTime, int npts) {
+	private Trace cutSpcAmpSacAddNoise(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -599,7 +599,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private Complex[] cutSpcFySac(SACData sac, double startTime, int npts) {
+	private Complex[] cutSpcFySac(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -621,7 +621,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private double[] cutDataSacAddNoise(SACData sac, double startTime, int npts) {
+	private double[] cutDataSacAddNoise(SACFileData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -712,7 +712,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				// タイムウインドウの情報が入っていなければ次へ
 				if (windows.isEmpty()) continue;
 				
-				SACData obsSac;
+				SACFileData obsSac;
 				try {
 					obsSac = obsFileName.read();
 				} catch (IOException e1) {
@@ -721,7 +721,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					continue;
 				}
 
-				SACData synSac;
+				SACFileData synSac;
 				try {
 					synSac = synFileName.read();
 				} catch (IOException e1) {

@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -201,7 +201,7 @@ public class ProfileWaveform {
 	}
 	
 	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
-		SACData data = sacname.read();
+		SACFileData data = sacname.read();
 		Station station = data.getStation();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();

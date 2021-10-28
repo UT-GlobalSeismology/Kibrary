@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -241,8 +241,8 @@ public class PhaseEnvelope implements Operation {
 							SACFileName synname = new SACFileName(synEventPath.resolve(name));
 							System.out.println(obsname);
 							
-							SACData obssac = null;
-							SACData synsac = null;
+							SACFileData obssac = null;
+							SACFileData synsac = null;
 							
 							double obsDep = 0;
 							double synDep = 0;
@@ -618,7 +618,7 @@ public class PhaseEnvelope implements Operation {
 		}
 	}
 	
-	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACData obsdata, SACData syndata, double threshold) {
+	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACFileData obsdata, SACFileData syndata, double threshold) {
 		Trace obstrace = obsdata.createTrace().cutWindow(0, 4000.);
 		Trace syntrace = syndata.createTrace().cutWindow(0, 4000);
 		double maxobs = obstrace.getMaxValue();
@@ -645,7 +645,7 @@ public class PhaseEnvelope implements Operation {
 	private double[] dominantFrequencySwave(SACFileName sfn, double beforeArrival, double afterArrival) throws IllegalStateException {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
-			SACData sd = sfn.read();
+			SACFileData sd = sfn.read();
 			double distance = sd.getEventLocation().getEpicentralDistance(sd.getStation().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();

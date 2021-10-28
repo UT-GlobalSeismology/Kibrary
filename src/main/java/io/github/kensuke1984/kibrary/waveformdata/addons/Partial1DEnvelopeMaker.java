@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
@@ -48,7 +48,7 @@ import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.util.spc.VSConversion;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -355,7 +355,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 				return;
 			}
 
-			Set<SPCFile> spcFileNames;
+			Set<SPCFileName> spcFileNames;
 			try {
 				if (shPath != null && psvPath == null) {
 					spcFileNames = collectSHSPCs(spcFolder);
@@ -383,7 +383,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 					.collect(Collectors.toSet());
 			
 			// すべてのspcファイルに対しての処理
-			for (SPCFile spcFileName : spcFileNames) {
+			for (SPCFileName spcFileName : spcFileNames) {
 				// 理論波形（非偏微分係数波形）ならスキップ
 				if (spcFileName.isSynthetic())
 					continue;
@@ -410,7 +410,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SPCType.PAR2)))
 					continue;
 				
-				SPCFile shspcname = null;
+				SPCFileName shspcname = null;
 				if (psvPath != null && shPath != null) {
 					if (spcFileType.equals(SPCType.PARN)
 					|| spcFileType.equals(SPCType.PARL)
@@ -528,7 +528,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 						});
 		}
 
-		private void addPartialSpectrum(SPCFile spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+		private void addPartialSpectrum(SPCFileName spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
 					.filter(info -> info.getStation().getName().equals(spcname.getStationCode())
 							&& info.getStation().getNetwork().equals(spcname.getNetworkCode()))
@@ -613,7 +613,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			}
 		}
 		
-		private void addPartialSpectrum(SPCFile spcname, SPCFile shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+		private void addPartialSpectrum(SPCFileName spcname, SPCFileName shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
 					.filter(info -> info.getStation().getName().equals(spcname.getStationCode())
 							&& info.getStation().getNetwork().equals(spcname.getNetworkCode()))
@@ -823,7 +823,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			
 			System.out.println(sacname + " (time partials)");
 			
-			SACData sacdata = sacname.read();
+			SACFileData sacdata = sacname.read();
 			Station station = sacdata.getStation();
 			
 			for (SACComponent component : components) {
@@ -1221,15 +1221,15 @@ public class Partial1DEnvelopeMaker implements Operation {
 		return (Properties) property.clone();
 	}
 	
-	private Set<SPCFile> collectSHSPCs(Path spcFolder) throws IOException {
-		Set<SPCFile> shSet = new HashSet<>();
+	private Set<SPCFileName> collectSHSPCs(Path spcFolder) throws IOException {
+		Set<SPCFileName> shSet = new HashSet<>();
 		Utilities.collectSpcFileName(spcFolder).stream()
 				.filter(f -> f.getName().contains("PAR") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
 		return shSet;
 	}
 
-	private Set<SPCFile> collectPSVSPCs(Path spcFolder) throws IOException {
-		Set<SPCFile> psvSet = new HashSet<>();
+	private Set<SPCFileName> collectPSVSPCs(Path spcFolder) throws IOException {
+		Set<SPCFileName> psvSet = new HashSet<>();
 		Utilities.collectSpcFileName(spcFolder).stream()
 				.filter(f -> f.getName().contains("PAR") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
 		return psvSet;

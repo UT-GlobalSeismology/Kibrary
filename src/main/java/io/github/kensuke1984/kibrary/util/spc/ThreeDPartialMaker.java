@@ -456,7 +456,7 @@ public class ThreeDPartialMaker {
      * @return partial spectrum file
      */
     public DSMOutput toSpectrum(PartialType type) {
-        SPCFile spcFileName = bp.getSpcFileName();
+        SPCFileName spcFileName = bp.getSpcFileName();
         double tlen = bp.tlen();
         int np = bp.np();
         int nbody = bp.nbody();
@@ -554,7 +554,7 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            public SPCFile getSpcFileName() {
+            public SPCFileName getSpcFileName() {
                 return spcFileName;
             }
 

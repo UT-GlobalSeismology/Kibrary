@@ -11,12 +11,12 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * @author Kensuke Konishi
  * @version 0.0.1.2
  */
-class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
+class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]> {
 
 
     private static final int NP = 256;
@@ -99,7 +99,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
     }
 
     @Override
-    public SACData[] generate(PolynomialStructure model) {
+    public SACFileData[] generate(PolynomialStructure model) {
         try {
             Path root = Files.createDirectories(outPath.resolve("DSMComputation_" + sequentialNumber++));
             SyntheticDSMInfo[] infos = createDSMInfo(model);
@@ -115,9 +115,9 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
                 applyFilter(folder);
             }
             Set<SACFileName> nameSet = new TreeSet<>(Utilities.sacFileNameSet(root));
-            List<SACData> dataList = new ArrayList<>(nameSet.size());
+            List<SACFileData> dataList = new ArrayList<>(nameSet.size());
             for (SACFileName sacFileName : nameSet) dataList.add(sacFileName.read());
-            return dataList.toArray(new SACData[nameSet.size()]);
+            return dataList.toArray(new SACFileData[nameSet.size()]);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("unexpected");
@@ -137,7 +137,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         eventDir.sacFileSet().forEach(name -> {
             if (!name.isSYN()) return;
             try {
-                SACData sf = name.read().applyButterworthFilter(filter);
+                SACFileData sf = name.read().applyButterworthFilter(filter);
                 sf.writeSAC(name);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -151,8 +151,8 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
                 eventDir.getGlobalCMTID().getEvent().getHalfDuration());
         try (Stream<Path> stream = Files.list(spcPath)) {
             stream.filter(path -> path.toString().endsWith("SH.spc")).forEach(shPath -> {
-                SPCFile shName = new FormattedSPCFile(shPath);
-                SPCFile psvName = toPSVname(shName);
+                SPCFileName shName = new FormattedSPCFile(shPath);
+                SPCFileName psvName = toPSVname(shName);
                 try {
                     DSMOutput shSPC = shName.read();
                     DSMOutput psvSPC = psvName.read();
@@ -167,7 +167,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         }
     }
 
-    private SPCFile toPSVname(SPCFile shName) {
+    private SPCFileName toPSVname(SPCFileName shName) {
         String psvname = shName.getName().replace("SH.spc", "PSV.spc");
         GlobalCMTID id = new GlobalCMTID(shName.getSourceID());
         return new FormattedSPCFile(PSVPATH.resolve(id + "/" + psvname));

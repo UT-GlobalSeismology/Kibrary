@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
 import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
@@ -427,7 +427,7 @@ public class SourceTimeFunction {
      * @param sacData to convolute with this.
      * @return convoluted SACData
      */
-	public final SACData convolve(SACData sacData) {
+	public final SACFileData convolve(SACFileData sacData) {
 		double[] data = sacData.getData();
 		double[] convolute = convolve(data);
 		return sacData.setSACData(convolute);

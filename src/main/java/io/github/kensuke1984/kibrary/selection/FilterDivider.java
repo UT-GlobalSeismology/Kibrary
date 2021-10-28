@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -190,7 +190,7 @@ public class FilterDivider implements Operation {
      */
     private void filterAndout(SACFileName name) {
         try {
-            SACData sacFile = name.read().applyButterworthFilter(filter);
+            SACFileData sacFile = name.read().applyButterworthFilter(filter);
             Path out = outPath.resolve(name.getGlobalCMTID() + "/" + name.getName());
             sacFile.writeSAC(out);
             if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);

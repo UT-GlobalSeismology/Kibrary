@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
@@ -421,7 +421,7 @@ public class TimewindowMaker implements Operation {
 	 * @author anselme add contents for sS in MTZ
 	 */
 	private void makeTimeWindow(SACFileName sacFileName) throws IOException {
-		SACData sacFile = sacFileName.read();
+		SACFileData sacFile = sacFileName.read();
 		// 震源深さ radius
 		double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
 		// 震源観測点ペアの震央距離
@@ -538,7 +538,7 @@ public class TimewindowMaker implements Operation {
 	 * @author anselme
 	 */
 	private void makeTimeWindowForCorridor(SACFileName sacFileName) throws IOException {
-		SACData sacFile = sacFileName.read();
+		SACFileData sacFile = sacFileName.read();
 		// 震源深さ radius
 		double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
 		// 震源観測点ペアの震央距離

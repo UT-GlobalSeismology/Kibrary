@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.quick;
 
 import java.io.IOException;
 
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -11,7 +11,7 @@ public class LookAtSAC {
 	public static void main(String[] args) {
 		SACFileName sacname = new SACFileName(args[0]);
 		try {
-			SACData sacdata = sacname.read();
+			SACFileData sacdata = sacname.read();
 			double[] data = sacdata.getData();
 			double t0 = sacdata.getValue(SACHeaderEnum.B);
 			double delta = sacdata.getValue(SACHeaderEnum.DELTA);

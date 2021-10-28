@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.TransformType;
@@ -22,8 +22,8 @@ import java.util.Set;
  */
 public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 
-    private SACData[] obsSacs;
-    private SACData[] synSacs;
+    private SACFileData[] obsSacs;
+    private SACFileData[] synSacs;
 
     private double range = 10; // sec
 
@@ -41,8 +41,8 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
      * @param synSacs    same order as obsSacs
      * @param timewindow search region for Peaks
      */
-    public SourceTimeFunctionByStackedPeaks(int np, double tlen, double samplingHz, SACData[] obsSacs,
-                                            SACData[] synSacs, Set<TimewindowInformation> timewindow) {
+    public SourceTimeFunctionByStackedPeaks(int np, double tlen, double samplingHz, SACFileData[] obsSacs,
+                                            SACFileData[] synSacs, Set<TimewindowInformation> timewindow) {
         super(np, tlen, samplingHz);
         if (!pairCheck(obsSacs, synSacs)) throw new RuntimeException("Input sac files are invalid.");
         this.timewindow = timewindow;
@@ -55,7 +55,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
      * @param synSacs Arrays of synthetics
      * @return if the input pair is valid
      */
-    private static boolean pairCheck(SACData[] obsSacs, SACData[] synSacs) {
+    private static boolean pairCheck(SACFileData[] obsSacs, SACFileData[] synSacs) {
         if (obsSacs.length != synSacs.length) {
             System.out.println("The length of observed and synthetics is different.");
             return false;
@@ -75,7 +75,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         return ps.stack(null, null, null, null, trace);
     }
 
-    private Trace createTrace(SACData sacFile) {
+    private Trace createTrace(SACFileData sacFile) {
         Station station = sacFile.getStation();
         GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
         SACComponent component = SACComponent.of(sacFile);

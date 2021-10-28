@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -185,10 +185,10 @@ public class MakeWindowPcPandScS {
 				if (timesS - timeScS < 12)
 					return;
 				
-				SACData synData = null;
-				SACData obsData = null;
-				SACData obsData_T = null;
-				SACData synData_T = null;
+				SACFileData synData = null;
+				SACFileData obsData = null;
+				SACFileData obsData_T = null;
+				SACFileData synData_T = null;
 				try {
 					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("sc"))).read();
 					obsData = obsName.read();

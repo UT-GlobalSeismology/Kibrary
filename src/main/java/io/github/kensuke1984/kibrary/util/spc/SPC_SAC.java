@@ -29,10 +29,10 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 
 /**
- * SPC_SAC Converter from {@link Spectrum} to {@link SACData} file. According
+ * SPC_SAC Converter from {@link Spectrum} to {@link SACFileData} file. According
  * to an information file, it creates SAC files.
  * <p>
  * It converts all the SPC files in event folders/model under the workDir set by
@@ -75,8 +75,8 @@ public final class SPC_SAC implements Operation {
      */
     private boolean computesPartial;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
-    private Set<SPCFile> psvSPCs;
-    private Set<SPCFile> shSPCs;
+    private Set<SPCFileName> psvSPCs;
+    private Set<SPCFileName> shSPCs;
     private Path outPath;
 
     private final List<String> stfcat =
@@ -302,8 +302,8 @@ public final class SPC_SAC implements Operation {
         else throw new RuntimeException("There are some events without model folder " + modelName);
     }
 
-    private Set<SPCFile> collectSHSPCs() throws IOException {
-        Set<SPCFile> shSet = new HashSet<>();
+    private Set<SPCFileName> collectSHSPCs() throws IOException {
+        Set<SPCFileName> shSet = new HashSet<>();
         Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(shPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
@@ -313,8 +313,8 @@ public final class SPC_SAC implements Operation {
         return shSet;
     }
 
-    private Set<SPCFile> collectPSVSPCs() throws IOException {
-        Set<SPCFile> psvSet = new HashSet<>();
+    private Set<SPCFileName> collectPSVSPCs() throws IOException {
+        Set<SPCFileName> psvSet = new HashSet<>();
         Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(psvPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
@@ -324,7 +324,7 @@ public final class SPC_SAC implements Operation {
         return psvSet;
     }
 
-    private FormattedSPCFile pairFile(SPCFile psvFileName) {
+    private FormattedSPCFile pairFile(SPCFileName psvFileName) {
         if (psvFileName.getMode() == SPCMode.SH) return null;
         return new FormattedSPCFile(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
                 psvFileName.getName().replace("PSV.spc", "SH.spc")));
@@ -350,7 +350,7 @@ public final class SPC_SAC implements Operation {
 
         int nSAC = 0;
         // single
-        if (psvPath == null || shPath == null) for (SPCFile spc : psvSPCs != null ? psvSPCs : shSPCs) {
+        if (psvPath == null || shPath == null) for (SPCFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
             Spectrum one = Spectrum.getInstance(spc);
             // create event folder under outPath
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
@@ -361,9 +361,9 @@ public final class SPC_SAC implements Operation {
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
         }
         // both
-        else for (SPCFile spc : psvSPCs) {
+        else for (SPCFileName spc : psvSPCs) {
             Spectrum one = Spectrum.getInstance(spc);
-            SPCFile pair = pairFile(spc);
+            SPCFileName pair = pairFile(spc);
             if (pair == null || !pair.exists()) {
                 System.err.println(pair + " does not exist");
                 continue;

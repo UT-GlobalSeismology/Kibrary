@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
@@ -374,10 +374,10 @@ public final class Utilities {
 
     /**
      * @param path {@link Path} to look for {@link FormattedSPCFile} in
-     * @return set of {@link SPCFile} in the dir
+     * @return set of {@link SPCFileName} in the dir
      * @throws IOException if an I/O error occurs
      */
-	public static Set<SPCFile> collectSpcFileName(Path path) throws IOException {
+	public static Set<SPCFileName> collectSpcFileName(Path path) throws IOException {
 		try (Stream<Path> stream = Files.list(path)) {
 			return stream.filter(FormattedSPCFile::isFormatted).map(FormattedSPCFile::new).collect(Collectors.toSet());
 		}
@@ -389,8 +389,8 @@ public final class Utilities {
 	 * @throws IOException
 	 * @author anselme
 	 */
-	public static List<SPCFile> collectOrderedSpcFileName(Path path) throws IOException {
-		List<SPCFile> list = new ArrayList<>();
+	public static List<SPCFileName> collectOrderedSpcFileName(Path path) throws IOException {
+		List<SPCFileName> list = new ArrayList<>();
 		List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith(".spc")).collect(Collectors.toList());
 		int n = paths.size();
 		int ndigits = 1;
@@ -434,8 +434,8 @@ public final class Utilities {
 	 * @throws IOException
 	 * @author anselme
 	 */
-	public static List<SPCFile> collectOrderedSHSpcFileName(Path path) throws IOException {
-		List<SPCFile> list = new ArrayList<>();
+	public static List<SPCFileName> collectOrderedSHSpcFileName(Path path) throws IOException {
+		List<SPCFileName> list = new ArrayList<>();
 		List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("SH.spc")).collect(Collectors.toList());
 		int n = paths.size();
 		int ndigits = 1;
@@ -480,12 +480,12 @@ public final class Utilities {
 	 * @throws IOException
 	 * @author anselme
 	 */
-	public static Map<GlobalCMTID, List<SPCFile>> collectMapOfOrderedSHFpFileName(Path fpPath, String model) throws IOException {
-		Map<GlobalCMTID, List<SPCFile>> fpfileMap = new HashMap<>();
+	public static Map<GlobalCMTID, List<SPCFileName>> collectMapOfOrderedSHFpFileName(Path fpPath, String model) throws IOException {
+		Map<GlobalCMTID, List<SPCFileName>> fpfileMap = new HashMap<>();
 		Set<EventFolder> events = Utilities.eventFolderSet(fpPath);
 		for (EventFolder event : events) {
 			Path path = fpPath.resolve(event.getGlobalCMTID().toString()).resolve(model);
-			List<SPCFile> list = new ArrayList<>();
+			List<SPCFileName> list = new ArrayList<>();
 			List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("SH.spc")).collect(Collectors.toList());
 			int n = paths.size();
 			
@@ -537,8 +537,8 @@ public final class Utilities {
 	 * @throws IOException
 	 * @author anselme
 	 */
-	public static List<SPCFile> collectOrderedPSVSpcFileName(Path path) throws IOException {
-		List<SPCFile> list = new ArrayList<>();
+	public static List<SPCFileName> collectOrderedPSVSpcFileName(Path path) throws IOException {
+		List<SPCFileName> list = new ArrayList<>();
 		List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("PSV.spc")).collect(Collectors.toList());
 		int n = paths.size();
 		int ndigits = 1;
@@ -583,12 +583,12 @@ public final class Utilities {
 	 * @throws IOException
 	 * @author anselme
 	 */
-	public static Map<GlobalCMTID, List<SPCFile>> collectMapOfOrderedPSVFpFileName(Path fpPath, String model) throws IOException {
-		Map<GlobalCMTID, List<SPCFile>> fpfileMap = new HashMap<>();
+	public static Map<GlobalCMTID, List<SPCFileName>> collectMapOfOrderedPSVFpFileName(Path fpPath, String model) throws IOException {
+		Map<GlobalCMTID, List<SPCFileName>> fpfileMap = new HashMap<>();
 		Set<EventFolder> events = Utilities.eventFolderSet(fpPath);
 		for (EventFolder event : events) {
 			Path path = fpPath.resolve(event.getGlobalCMTID().toString()).resolve(model);
-			List<SPCFile> list = new ArrayList<>();
+			List<SPCFileName> list = new ArrayList<>();
 			List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("PSV.spc")).collect(Collectors.toList());
 			int n = paths.size();
 			

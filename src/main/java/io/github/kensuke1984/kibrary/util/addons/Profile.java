@@ -10,7 +10,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class Profile {
 						if (timewindow.size() != 1)
 							System.out.println("Warning: found more than one timewindow " + sacname + " : " + timewindow.size());
 						
-						SACData sacdata = sacname.read();
+						SACFileData sacdata = sacname.read();
 						String filename = sacname.getStationCode() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
 						Path tracePath = profilePhasePath.resolve(filename);
 						
@@ -100,7 +100,7 @@ public class Profile {
 //						Timewindow largerWindow = new Timewindow(timewindow.get(0).getStartTime() - 100, timewindow.get(0).getEndTime() + 200);
 						
 	//					Trace obstrace = sacname.read().createTrace().cutWindow(700, 1800);
-						SACData obsdata = sacname.read();
+						SACFileData obsdata = sacname.read();
 						Trace obstrace = obsdata.createTrace().cutWindow(timewindow.get(0));
 						
 	//					String synname = sacname.getName().replace(".T", ".Tsc");
@@ -279,7 +279,7 @@ public class Profile {
 	}
 	
 	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
-		SACData data = sacname.read();
+		SACFileData data = sacname.read();
 		Station station = data.getStation();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
