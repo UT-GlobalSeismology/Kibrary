@@ -95,10 +95,6 @@ public class SACFileName extends File {
         this(path.toString());
     }
 
-    private static String getEventID(String fileName) {
-        return fileName.split("\\.")[1];
-    }
-
     /**
      * 観測波形か理論波形（偏微分係数波形含まない）
      *
@@ -148,6 +144,10 @@ public class SACFileName extends File {
         if (parts.length != 7) return null;
         String typeStr = parts[2].replace("par", "PAR");
         return PartialType.valueOf(typeStr);
+    }
+
+    private static String getEventID(String fileName) {
+        return fileName.split("\\.")[1];
     }
 
     private static String getStationCode(String fileName) {

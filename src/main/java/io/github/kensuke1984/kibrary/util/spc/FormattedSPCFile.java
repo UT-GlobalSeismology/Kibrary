@@ -80,6 +80,25 @@ public class FormattedSPCFile extends SPCFileName {
     }
 
     /**
+     * 入力ファイルのSpcFileTypeを返す
+     *
+     * @param fileName name of SPC file
+     * @return which par or syn...なんのスペクトルファイルか
+     */
+    private static SPCType getFileType(String fileName) {
+        if (fileName.split("\\.").length != 7) return SPCType.SYNTHETIC;
+        return SPCType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
+    }
+
+    /**
+     * @param fileName name of SPC file
+     * @return PSV or SH
+     */
+    private static SPCMode getMode(String fileName) {
+        return fileName.endsWith("PSV.spc") ? SPCMode.PSV : SPCMode.SH;
+    }
+
+    /**
      * @param fileName name of spc file
      * @return event ID
      */
@@ -95,18 +114,6 @@ public class FormattedSPCFile extends SPCFileName {
         }
     }
 
-    /**
-     * 入力ファイルのSpcFileTypeを返す
-     *
-     * @param fileName name of SPC file
-     * @return which par or syn...なんのスペクトルファイルか
-     */
-    private static SPCType getFileType(String fileName) {
-        if (fileName.split("\\.").length != 7) return SPCType.SYNTHETIC;
-        return SPCType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
-    }
-
-
     private static String getX(String fileName) {
         String[] parts = fileName.split("\\.");
         return parts.length != 7 ? null : parts[3];
@@ -115,14 +122,6 @@ public class FormattedSPCFile extends SPCFileName {
     private static String getY(String fileName) {
         String[] parts = fileName.split("\\.");
         return parts.length != 7 ? null : parts[4];
-    }
-
-    /**
-     * @param fileName name of SPC file
-     * @return PSV or SH
-     */
-    private static SPCMode getMode(String fileName) {
-        return fileName.endsWith("PSV.spc") ? SPCMode.PSV : SPCMode.SH;
     }
 
     /**
@@ -140,14 +139,14 @@ public class FormattedSPCFile extends SPCFileName {
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
 //        observerID = fileName.split("\\.")[0];
+        fileType = getFileType(fileName);
+        mode = getMode(fileName);
+        sourceID = getEventID(fileName);
         stationCode = fileName.split("\\.")[0].split("_")[0];
         if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
             networkCode = null;
         else
             networkCode = fileName.split("\\.")[0].split("_")[1];
-        sourceID = getEventID(fileName);
-        fileType = getFileType(fileName);
-        mode = getMode(fileName);
         x = getX(fileName);
         y = getY(fileName);
     }
