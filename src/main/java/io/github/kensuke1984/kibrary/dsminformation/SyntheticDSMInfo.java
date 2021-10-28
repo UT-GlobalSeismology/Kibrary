@@ -92,7 +92,8 @@ public class SyntheticDSMInfo extends DSMheader {
 
             // write
             pw.println("c parameter for the write file");
-            STATIONS.stream().sorted().forEach(s -> pw.println(SPCFileName.generate(s, EVENT.getGlobalCMTID(), "PSV")));
+            STATIONS.stream().sorted()
+                    .forEach(s -> pw.println(OUTPUT + "/" + SPCFileName.generate(s, EVENT.getGlobalCMTID(), "PSV")));
             pw.println("end");
 
         }
@@ -134,7 +135,8 @@ public class SyntheticDSMInfo extends DSMheader {
 
             // write
             pw.println("c parameter for the write file");
-            STATIONS.stream().sorted().forEach(s -> pw.println(SPCFileName.generate(s, EVENT.getGlobalCMTID(), "SH")));
+            STATIONS.stream().sorted()
+                    .forEach(s -> pw.println(OUTPUT + "/" + SPCFileName.generate(s, EVENT.getGlobalCMTID(), "SH")));
             pw.println("end");
         }
     }
