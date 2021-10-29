@@ -95,7 +95,7 @@ public class Spectrum implements DSMOutput {
             int nbody = dis.readInt();
 
             int ncomp = dis.readInt();
-            System.out.println(np + " " + nbody + " " + ncomp);
+            //System.out.println(np + " " + nbody + " " + ncomp);
 
             // ncomponents
             switch (ncomp) {
@@ -155,7 +155,7 @@ public class Spectrum implements DSMOutput {
             else
                 specFile.networkCode = spcFileName.getNetworkCode();
 
-//			 System.out.println(nbody);
+            //System.out.println(nbody);
             specFile.nbody = nbody;
             specFile.np = np;
             specFile.tlen = tlen;

@@ -1,14 +1,20 @@
 package io.github.kensuke1984.kibrary;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.lang3.EnumUtils;
-
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+
+import org.apache.commons.lang3.EnumUtils;
+
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Main procedures in Kibrary
@@ -67,6 +73,7 @@ public interface Operation {
                 Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
             } catch (Exception e) {
                 System.err.println("Could not run " + manhattan + " due to " + e.getCause());
+                e.printStackTrace();
             }
         }
     }

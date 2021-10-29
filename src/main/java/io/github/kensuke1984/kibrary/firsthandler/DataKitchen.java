@@ -37,6 +37,16 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public class DataKitchen implements Operation {
 
+    private final Properties property;
+    /**
+     * Path of the work folder
+     */
+    private Path workPath;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
+
     private double samplingHz;
     /**
      * which catalog to use 0:CMT 1: PDE
@@ -58,20 +68,14 @@ public class DataKitchen implements Operation {
      * if remove intermediate file
      */
     private boolean removeIntermediateFile;
-    /**
-     * write directory
-     */
-    private Path outPath;
-    private Path workPath;
-    private Properties property;
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(DataKitchen.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataKitchen");
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
-            pw.println("##(String) a name of catalog to use from [cmt, pde]  (cmt)");
+            pw.println("##(String) The name of catalog to use from [cmt, pde]  (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling Hz, can not be changed now (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
@@ -90,7 +94,7 @@ public class DataKitchen implements Operation {
             pw.println("##Threshold to judge which stations are in the same position [deg] (0.01)"); // = about 1 km
             pw.println("##If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid 0.01");
-            pw.println("##(boolean) if this is true, remove intermediate files (true)");
+            pw.println("##(boolean) If this is true, remove intermediate files (true)");
             pw.println("#removeIntermediateFile");
         }
         System.err.println(outPath + " is created.");
@@ -101,10 +105,25 @@ public class DataKitchen implements Operation {
         set();
     }
 
+    private void checkAndPutDefaults() {
+        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
+        if (!property.containsKey("catalog")) property.setProperty("catalog", "cmt");
+        if (!property.containsKey("samplingHz")) property.setProperty("samplingHz", "20"); // TODO
+        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0");
+        if (!property.containsKey("maxDistance")) property.setProperty("maxDistance", "180");
+        if (!property.containsKey("minLatitude")) property.setProperty("minLatitude", "-90");
+        if (!property.containsKey("maxLatitude")) property.setProperty("maxLatitude", "90");
+        if (!property.containsKey("minLongitude")) property.setProperty("minLongitude", "-180");
+        if (!property.containsKey("maxLongitude")) property.setProperty("maxLongitude", "180");
+        if (!property.containsKey("coordinateGrid")) property.setProperty("coordinateGrid", "0.01");
+        if (!property.containsKey("removeIntermediateFile")) property.setProperty("removeIntermediateFile", "true");
+    }
+
     private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
         switch (property.getProperty("catalog")) {
             case "cmt":
             case "CMT":
@@ -127,41 +146,27 @@ public class DataKitchen implements Operation {
         removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
     }
 
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("catalog")) property.setProperty("catalog", "cmt");
-        if (!property.containsKey("samplingHz")) property.setProperty("samplingHz", "20"); // TODO
-        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0");
-        if (!property.containsKey("maxDistance")) property.setProperty("maxDistance", "180");
-        if (!property.containsKey("minLatitude")) property.setProperty("minLatitude", "-90");
-        if (!property.containsKey("maxLatitude")) property.setProperty("maxLatitude", "90");
-        if (!property.containsKey("minLongitude")) property.setProperty("minLongitude", "-180");
-        if (!property.containsKey("maxLongitude")) property.setProperty("maxLongitude", "180");
-        if (!property.containsKey("coordinateGrid")) property.setProperty("coordinateGrid", "0.01");
-        if (!property.containsKey("removeIntermediateFile")) property.setProperty("removeIntermediateFile", "true");
-    }
-
     /**
      * @param args [parameter file name]
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         DataKitchen dk = new DataKitchen(Property.parse(args));
-        long startT = System.nanoTime();
+        long startTime = System.nanoTime();
         System.err.println(DataKitchen.class.getName() + " is going");
         dk.run();
-        System.err.println(
-                DataKitchen.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+        System.err.println(DataKitchen.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
-        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath.toString());
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
         if (eventDirs.isEmpty()) return;
+
         outPath = workPath.resolve("processed" + Utilities.getTemporaryString());
+        System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
-        System.err.println("Output directory is " + outPath);
 
         // create processors for each event
         Set<EventProcessor> processors = eventDirs.stream().map(eventDir -> {

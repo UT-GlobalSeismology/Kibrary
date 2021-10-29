@@ -1,7 +1,29 @@
 package io.github.kensuke1984.kibrary.selection;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.butterworth.*;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
+import io.github.kensuke1984.kibrary.butterworth.BandStopFilter;
+import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.butterworth.HighPassFilter;
+import io.github.kensuke1984.kibrary.butterworth.LowPassFilter;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -9,15 +31,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
@@ -28,12 +41,14 @@ import java.util.stream.Collectors;
  */
 public class FilterDivider implements Operation {
 
+    private final Properties property;
     /**
-     * Path for the work folder
+     * Path of the work folder
      */
     private Path workPath;
-    private final Properties PROPERTY;
-    private ButterworthFilter filter;
+    /**
+     * Path of the output folder
+     */
     private Path outPath;
     /**
      * The root folder containing event folders which have observed SAC files to
@@ -45,6 +60,8 @@ public class FilterDivider implements Operation {
      * to be filtered
      */
     private Path synPath;
+
+    private ButterworthFilter filter;
     /**
      * The value 'DELTA' in SAC files. The SAC files with another value of
      * 'DELTA' are to be ignored.
@@ -76,11 +93,6 @@ public class FilterDivider implements Operation {
      */
     private int npts;
 
-    public FilterDivider(Properties property) throws IOException {
-        this.PROPERTY = (Properties) property.clone();
-        set();
-    }
-
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(FilterDivider.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -93,7 +105,7 @@ public class FilterDivider implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##DELTA in SAC files. The SAC files with another value of DELTA are to be ignored. (0.05)");
+            pw.println("##DELTA in SAC files. The SAC files with other values of DELTA are to be ignored. (0.05)");
             pw.println("#delta");
             pw.println("##Lower limit of the frequency band [Hz] (0.005)");
             pw.println("#lowFreq");
@@ -102,11 +114,11 @@ public class FilterDivider implements Operation {
             pw.println("##Filter type to be applied (bandpass)");
             pw.println("##The filter can be 'lowpass', 'highpass', 'bandpass', 'bandstop'");
             pw.println("#filter");
-            pw.println("##The value of NP (4)");
+            pw.println("##The value of NP for the filter (4)");
             pw.println("#np");
             pw.println("##If backward computation is performed. true: zero phase, false: causal  (true)");
             pw.println("#backward");
-            pw.println("##If you want to slim SAC files down to the specific number of NPTS (must be a power of 2).");
+            pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2");
             pw.println(
                     "##When this npts is set, SAC files are slimmed. SAC files with a value of NPTS over the set value are not slimmed.");
             pw.println("#npts");
@@ -114,16 +126,49 @@ public class FilterDivider implements Operation {
         System.err.println(outPath + " is created.");
     }
 
+    public FilterDivider(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+    }
+
+    private void checkAndPutDefaults() {
+        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
+        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
+        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
+        if (!property.containsKey("synPath")) property.setProperty("synPath", "");
+        if (!property.containsKey("delta")) property.setProperty("delta", "0.05");
+        if (!property.containsKey("highFreq")) property.setProperty("highFreq", "0.08");
+        if (!property.containsKey("lowFreq")) property.setProperty("lowFreq", "0.005");
+        if (!property.containsKey("backward")) property.setProperty("backward", "true");
+        if (!property.containsKey("np")) property.setProperty("np", "4");
+        if (!property.containsKey("filter")) property.setProperty("filter", "bandpass");
+        if (!property.containsKey("npts")) property.setProperty("npts", String.valueOf(Integer.MAX_VALUE));
+    }
+
+    private void set() throws IOException {
+        checkAndPutDefaults();
+        workPath = Paths.get(property.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
+        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+                .collect(Collectors.toSet());
+
+        obsPath = getPath("obsPath");
+        synPath = getPath("synPath");
+        delta = Double.parseDouble(property.getProperty("delta"));
+        highFreq = Double.parseDouble(property.getProperty("highFreq"));
+        lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
+        backward = Boolean.parseBoolean(property.getProperty("backward"));
+        np = Integer.parseInt(property.getProperty("np"));
+        npts = Integer.parseInt(property.getProperty("npts"));
+    }
+
     /**
      * @param args [a property file name]
      * @throws Exception if any
      */
     public static void main(String[] args) throws Exception {
-        Properties property = new Properties();
-        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
-        else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
-        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-        FilterDivider divider = new FilterDivider(property);
+        FilterDivider divider = new FilterDivider(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(FilterDivider.class.getName() + " is going.");
         divider.run();
@@ -131,37 +176,26 @@ public class FilterDivider implements Operation {
                 Utilities.toTimeString(System.nanoTime() - startTime));
     }
 
-    private void checkAndPutDefaults() {
-        if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
-        if (!PROPERTY.containsKey("components")) PROPERTY.setProperty("components", "Z R T");
-        if (!PROPERTY.containsKey("obsPath")) PROPERTY.setProperty("obsPath", "");
-        if (!PROPERTY.containsKey("synPath")) PROPERTY.setProperty("synPath", "");
-        if (!PROPERTY.containsKey("delta")) PROPERTY.setProperty("delta", "0.05");
-        if (!PROPERTY.containsKey("highFreq")) PROPERTY.setProperty("highFreq", "0.08");
-        if (!PROPERTY.containsKey("lowFreq")) PROPERTY.setProperty("lowFreq", "0.005");
-        if (!PROPERTY.containsKey("backward")) PROPERTY.setProperty("backward", "true");
-        if (!PROPERTY.containsKey("np")) PROPERTY.setProperty("np", "4");
-        if (!PROPERTY.containsKey("filter")) PROPERTY.setProperty("filter", "bandpass");
-        if (!PROPERTY.containsKey("npts")) PROPERTY.setProperty("npts", String.valueOf(Integer.MAX_VALUE));
-    }
+    @Override
+    public void run() throws Exception {
+        setFilter(lowFreq, highFreq, np);
+        Set<EventFolder> events = new HashSet<>();
+        events.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
+        events.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
+        if (events.isEmpty()) return;
 
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(PROPERTY.getProperty("workPath"));
+        outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
+        System.err.println("Output folder is " + outPath);
+        Files.createDirectories(outPath);
 
-        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
-
-        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-
-        obsPath = getPath("obsPath");
-        synPath = getPath("synPath");
-        delta = Double.parseDouble(PROPERTY.getProperty("delta"));
-        highFreq = Double.parseDouble(PROPERTY.getProperty("highFreq"));
-        lowFreq = Double.parseDouble(PROPERTY.getProperty("lowFreq"));
-        backward = Boolean.parseBoolean(PROPERTY.getProperty("backward"));
-        np = Integer.parseInt(PROPERTY.getProperty("np"));
-        npts = Integer.parseInt(PROPERTY.getProperty("npts"));
+        ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        events.stream().map(this::process).forEach(es::submit);
+        es.shutdown();
+        while (!es.isTerminated()) {
+            System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / events.size()) + "%");
+            Thread.sleep(100);
+        }
+        System.err.println("\rFiltering finished.");
     }
 
     private AtomicInteger processedFolders = new AtomicInteger(); // already processed
@@ -207,7 +241,6 @@ public class FilterDivider implements Operation {
         }
     }
 
-
     /**
      * @param fMin [Hz] 透過帯域 最小周波数
      * @param fMax [Hz] 透過帯域 最大周波数
@@ -216,7 +249,7 @@ public class FilterDivider implements Operation {
     private void setFilter(double fMin, double fMax, int n) {
         double omegaH = fMax * 2 * Math.PI * delta;
         double omegaL = fMin * 2 * Math.PI * delta;
-        switch (PROPERTY.getProperty("filter")) {
+        switch (property.getProperty("filter")) {
             case "lowpass":
                 filter = new LowPassFilter(omegaL, n);
                 break;
@@ -237,26 +270,7 @@ public class FilterDivider implements Operation {
 
     @Override
     public Properties getProperties() {
-        return (Properties) PROPERTY.clone();
-    }
-
-    @Override
-    public void run() throws Exception {
-        setFilter(lowFreq, highFreq, np);
-        Set<EventFolder> events = new HashSet<>();
-        events.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
-        events.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
-        if (events.isEmpty()) return;
-        outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
-        Files.createDirectories(outPath);
-        ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        events.stream().map(this::process).forEach(es::submit);
-        es.shutdown();
-        while (!es.isTerminated()) {
-            System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / events.size()) + "%");
-            Thread.sleep(100);
-        }
-        System.err.println("\rFiltering finished.");
+        return (Properties) property.clone();
     }
 
     @Override

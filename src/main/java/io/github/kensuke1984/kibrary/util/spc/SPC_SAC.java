@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -46,11 +47,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileData;
  */
 public final class SPC_SAC implements Operation {
 
-    private Properties property;
+    private final Properties property;
     /**
-     * Path for the work folder
+     * Path of the work folder
      */
     private Path workPath;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
+
     private Path sourceTimeFunctionPath;
     /**
      * components to be computed
@@ -77,29 +83,9 @@ public final class SPC_SAC implements Operation {
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
-    private Path outPath;
 
     private final List<String> stfcat =
             readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
-
-    public SPC_SAC(Properties properties) throws IOException {
-        property = (Properties) properties.clone();
-        set();
-    }
-
-    /**
-     * @param args [parameter file name]
-     * @throws IOException if any
-     */
-    public static void main(String[] args) throws IOException {
-        Properties property = Property.parse(args);
-        SPC_SAC ss = new SPC_SAC(property);
-        long start = System.nanoTime();
-        System.err.println(SPC_SAC.class.getName() + " is going.");
-        ss.run();
-        System.err
-                .println(SPC_SAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
-    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(SPC_SAC.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -114,19 +100,24 @@ public final class SPC_SAC implements Operation {
             pw.println("#psvPath");
             pw.println("##Path of an SH folder (.)");
             pw.println("#shPath");
-            pw.println("##String if 'modelName' is PREM, spectrum files in 'eventDir/PREM' are used.");
+            pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
             pw.println("##If it is unset, then automatically set as the name of the folder in the eventDirs");
-            pw.println("##but the eventDirs can have only one folder inside and they must be same.");
+            pw.println("## but the eventDirs can have only one folder inside and they must be the same.");
             pw.println("#modelName");
-            pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
-            pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
+            pw.println("##Type of source time function; 0:none, 1:boxcar, 2:triangle. (0)");
+            pw.println("## or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
             pw.println("#sourceTimeFunction");
-            pw.println("#SamplingHz (20) !You can not change yet!");
+            pw.println("##SamplingHz (20) !You can not change yet!");
             pw.println("#samplingHz");
-            pw.println("#timePartial If it is true, then temporal partial is computed. (false)");
+            pw.println("##(boolean) If it is true, then temporal partial is computed. (false)");
             pw.println("#timePartial");
         }
         System.err.println(outPath + " is created.");
+    }
+
+    public SPC_SAC(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
     }
 
     private void checkAndPutDefaults() {
@@ -138,6 +129,129 @@ public final class SPC_SAC implements Operation {
         if (!property.containsKey("timePartial")) property.setProperty("timePartial", "false");
         if (!property.containsKey("modelName")) property.setProperty("modelName", "");
     }
+
+    private void set() throws IOException {
+        checkAndPutDefaults();
+        workPath = Paths.get(property.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
+        if (!property.getProperty("psvPath").equals("null")) psvPath = getPath("psvPath");
+        if (psvPath != null && !Files.exists(psvPath))
+            throw new NoSuchFileException("The psvPath " + psvPath + " does not exist");
+
+        if (!property.getProperty("shPath").equals("null")) shPath = getPath("shPath");
+        if (shPath != null && !Files.exists(shPath))
+            throw new NoSuchFileException("The shPath " + shPath + " does not exist");
+
+        modelName = property.getProperty("modelName");
+        if (modelName.isEmpty()) setModelName();
+
+        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+                .collect(Collectors.toSet());
+        setSourceTimeFunction();
+        computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
+        samplingHz = 20; // TODO
+    }
+
+    /**
+     * @param args [parameter file name]
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        SPC_SAC ss = new SPC_SAC(Property.parse(args));
+        long startTime = System.nanoTime();
+        System.err.println(SPC_SAC.class.getName() + " is going.");
+        ss.run();
+        System.err.println(SPC_SAC.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime));
+    }
+
+    @Override
+    public void run() throws IOException {
+        int nThread = Runtime.getRuntime().availableProcessors();
+        System.err.println("Model name is " + modelName);
+        if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
+
+        if (psvPath != null && (psvSPCs = collectPSVSPCs()).isEmpty())
+            throw new RuntimeException("No PSV spector files are found.");
+
+        if (shPath != null && (shSPCs = collectSHSPCs()).isEmpty())
+            throw new RuntimeException("No SH spector files are found.");
+
+        outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
+        System.err.println("Output folder is " + outPath);
+        Files.createDirectories(outPath);
+
+        ExecutorService execs = Executors.newFixedThreadPool(nThread);
+
+        int nSAC = 0;
+        // single
+        if (psvPath == null || shPath == null) for (SPCFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
+            Spectrum one = Spectrum.getInstance(spc);
+            // create event folder under outPath
+            Files.createDirectories(outPath.resolve(spc.getSourceID()));
+            // operate method createSACMaker() -> instance of an anonymous inner class is returned
+            // -> executes the run() of that class defined in createSACMaker()
+            execs.execute(createSACMaker(one, null));
+            nSAC++;
+            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
+        }
+        // both
+        else for (SPCFileName spc : psvSPCs) {
+            Spectrum one = Spectrum.getInstance(spc);
+            SPCFileName pair = pairFile(spc);
+            if (pair == null || !pair.exists()) {
+                System.err.println(pair + " does not exist");
+                continue;
+            }
+            Spectrum two = Spectrum.getInstance(pairFile(spc));
+            // create event folder under outPath
+            Files.createDirectories(outPath.resolve(spc.getSourceID()));
+            // operate method createSACMaker() -> instance of an anonymous inner class is returned
+            // -> executes the run() of that class defined in createSACMaker()
+            execs.execute(createSACMaker(one, two));
+            nSAC++;
+            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
+        }
+        System.err.println("\rReading SPC files finished.");
+
+        execs.shutdown();
+        while (!execs.isTerminated()) try {
+            System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
+            Thread.sleep(100);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.err.println("\rConverting finished.");
+    }
+
+    private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
+
+    /**
+     * creates {@link SACMaker} from two SPC files(sh, psv)
+     *
+     * @param primeSPC     spectrum file for SAC
+     * @param secondarySPC null is ok
+     * @return {@link SACMaker}
+     */
+    private SACMaker createSACMaker(Spectrum primeSPC, Spectrum secondarySPC) {
+        SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
+                new GlobalCMTID(primeSPC.getSourceID()));
+        // create instance of an anonymous inner class extending SACMaker with the following run() function
+        SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {
+            @Override
+            public void run() {
+                // execute run() in SACMaker
+                super.run();
+                numberOfCreatedSAC.incrementAndGet();
+            }
+        };
+        sm.setComponents(components);
+        sm.setTemporalDifferentiation(computesPartial);
+        sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
+        return sm;
+    }
+
 
     private void setSourceTimeFunction() {
         String s = property.getProperty("sourceTimeFunction");
@@ -158,28 +272,6 @@ public final class SPC_SAC implements Operation {
             default:
                 throw new RuntimeException("Integer for source time function is invalid.");
         }
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!property.getProperty("psvPath").equals("null")) psvPath = getPath("psvPath");
-        if (!property.getProperty("shPath").equals("null")) shPath = getPath("shPath");
-
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
-        if (psvPath != null && !Files.exists(psvPath))
-            throw new RuntimeException("The psvPath: " + psvPath + " does not exist");
-        if (shPath != null && !Files.exists(shPath))
-            throw new RuntimeException("The shPath: " + shPath + " does not exist");
-
-        modelName = property.getProperty("modelName");
-        if (modelName.isEmpty()) setModelName();
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        setSourceTimeFunction();
-        computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
-        samplingHz = 20; // TODO
     }
 
     private void readUserSourceTimeFunctions() throws IOException {
@@ -281,7 +373,7 @@ public final class SPC_SAC implements Operation {
     }
 
     private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
-        System.out.println("STF catalogue: " +  STFcatalogue);
+        System.err.println("STF catalogue: " +  STFcatalogue);
         return IOUtils.readLines(SPC_SAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
                     , Charset.defaultCharset());
     }
@@ -328,92 +420,6 @@ public final class SPC_SAC implements Operation {
         if (psvFileName.getMode() == SPCMode.SH) return null;
         return new FormattedSPCFile(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
                 psvFileName.getName().replace("PSV.spc", "SH.spc")));
-    }
-
-    @Override
-    public void run() throws IOException {
-        int nThread = Runtime.getRuntime().availableProcessors();
-        outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
-        System.err.println("Work folder is " + workPath.toAbsolutePath());
-        System.err.println("Converting SPC files in the work folder to SAC files in " + outPath);
-        System.err.println("Model name is " + modelName);
-        if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
-        Files.createDirectories(outPath);
-
-        if (psvPath != null && (psvSPCs = collectPSVSPCs()).isEmpty())
-            throw new RuntimeException("No PSV spector files are found.");
-
-        if (shPath != null && (shSPCs = collectSHSPCs()).isEmpty())
-            throw new RuntimeException("No SH spector files are found.");
-
-        ExecutorService execs = Executors.newFixedThreadPool(nThread);
-
-        int nSAC = 0;
-        // single
-        if (psvPath == null || shPath == null) for (SPCFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
-            Spectrum one = Spectrum.getInstance(spc);
-            // create event folder under outPath
-            Files.createDirectories(outPath.resolve(spc.getSourceID()));
-            // operate method createSACMaker() -> instance of an anonymous inner class is returned
-            // -> executes the run() of that class defined in createSACMaker()
-            execs.execute(createSACMaker(one, null));
-            nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
-        }
-        // both
-        else for (SPCFileName spc : psvSPCs) {
-            Spectrum one = Spectrum.getInstance(spc);
-            SPCFileName pair = pairFile(spc);
-            if (pair == null || !pair.exists()) {
-                System.err.println(pair + " does not exist");
-                continue;
-            }
-            Spectrum two = Spectrum.getInstance(pairFile(spc));
-            // create event folder under outPath
-            Files.createDirectories(outPath.resolve(spc.getSourceID()));
-            // operate method createSACMaker() -> instance of an anonymous inner class is returned
-            // -> executes the run() of that class defined in createSACMaker()
-            execs.execute(createSACMaker(one, two));
-            nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
-        }
-        System.err.println("\rReading SPC files finished.");
-
-        execs.shutdown();
-        while (!execs.isTerminated()) try {
-            System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
-            Thread.sleep(100);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.err.println("\rConverting finished.");
-    }
-
-    private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
-
-    /**
-     * creates {@link SACMaker} from two SPC files(sh, psv)
-     *
-     * @param primeSPC     spectrum file for SAC
-     * @param secondarySPC null is ok
-     * @return {@link SACMaker}
-     */
-    private SACMaker createSACMaker(Spectrum primeSPC, Spectrum secondarySPC) {
-        SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
-                new GlobalCMTID(primeSPC.getSourceID()));
-        // create instance of an anonymous inner class extending SACMaker with the following run() function
-        SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {
-            @Override
-            public void run() {
-                // execute run() in SACMaker
-                super.run();
-                numberOfCreatedSAC.incrementAndGet();
-            }
-        };
-        sm.setComponents(components);
-        sm.setTemporalDifferentiation(computesPartial);
-        sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
-        return sm;
     }
 
     @Override

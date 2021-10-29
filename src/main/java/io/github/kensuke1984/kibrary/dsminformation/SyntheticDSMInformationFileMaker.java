@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -31,21 +32,28 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Make DSM information files for event folders.
+ * Make DSM information files to be used in tish and tipsv.
+ * They will be made either for existing observed dataset in event folders, or for a virtual set of observers.
+ * <p>
  * Input event folders must be inside one certain input directory, which may or may not be the workpath.
- * If there is no data in an input event directory, the corresponding output event directory will not be made.
+ * Only observers that have files of the specified components will be considered.
+ * If there is no valid data in a certain input event directory, the corresponding output event directory will not be made.
+ * <p>
+ * For virtual datasets, virtual observers will be made in 1-degree intervals.
+ * They will have the network name specified in {@link Station#SYN}.
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 
-    private Properties PROPERTY;
+    private final Properties property;
     /**
-     * work folder
+     * Path of the work folder
      */
     private Path workPath;
     /**
      * The root folder containing event folders which have observed SAC files
      */
     private Path obsPath;
+
     /**
      * Number of steps in frequency domain.
      * It must be a power of 2.
@@ -70,35 +78,47 @@ public class SyntheticDSMInformationFileMaker implements Operation {
     private Path structurePath;
     private Path timewindowPath;
     private boolean usewindow;
-    private boolean syntheticDataset;
-    private boolean specfemDataset;
 
-    private SyntheticDSMInformationFileMaker(Properties property) throws IOException {
-        this.PROPERTY = (Properties) property.clone();
-        set();
-    }
+    /**
+     * whether a set of virtual observers are to be created
+     */
+    private boolean syntheticDataset;
+    /**
+     * minimum epicentral distance of virtual observers
+     */
+    private int synMinDistance;
+    /**
+     * maximum epicentral distance of virtual observers
+     */
+    private int synMaxDistance;
+
+    private boolean specfemDataset;
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths
                 .get(SyntheticDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan SyntheticDSMInformationFileMaker");
-            pw.println("##SacComponents to be used (Z R T)");
+            pw.println("##SacComponents that observers must have to be used (Z R T)");
             pw.println("#components");
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath");
-            pw.println("##header for names of information files, header_[psv, sh].inf, (PREM)");
+            pw.println("##Header for names of information files, header_[psv, sh].inf, (PREM)");
             pw.println("#header");
             pw.println("##Path of a structure file you want to use. ()");
             pw.println("#structureFile");
-            pw.println("##tlen must be a power of 2 over 10 (3276.8)");
+            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen");
-            pw.println("##np must be a power of 2 (512)");
+            pw.println("##Number of points to be calculated, must be a power of 2 (512)");
             pw.println("#np");
-            pw.println("##Synthetic Dataset (false)");
+            pw.println("##(boolean) If a virtual set of observers is to be created (false)");
             pw.println("#syntheticDataset");
+            pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
+            pw.println("#synMinDistance");
+            pw.println("##Maximum epicentral distance of virtual observer, must be integer (170)");
+            pw.println("#synMaxDistance");
             pw.println("##SPECFEM3D_GLOBE test dataset (false)");
             pw.println("#specfemDataset");
             pw.println("#timewindowPath");
@@ -106,56 +126,63 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         System.err.println(outPath + " is created.");
     }
 
+    private SyntheticDSMInformationFileMaker(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+    }
+
+    private void checkAndPutDefaults() {
+        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
+        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
+        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
+        if (!property.containsKey("tlen")) property.setProperty("tlen", "3276.8");
+        if (!property.containsKey("np")) property.setProperty("np", "512");
+        if (!property.containsKey("header")) property.setProperty("header", "PREM");
+        if (!property.containsKey("syntheticDataset")) property.setProperty("syntheticDataset", "false");
+        if (!property.containsKey("synMinDistance")) property.setProperty("synMinDistance", "1");
+        if (!property.containsKey("synMaxDistance")) property.setProperty("synMaxDistance", "170");
+        if (!property.containsKey("specfemDataset")) property.setProperty("specfemDataset", "false");
+        if (!property.containsKey("timewindowPath")) property.setProperty("timewindowPath", "");
+        // write additional info
+        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
+    }
+
+    private void set() throws IOException {
+        checkAndPutDefaults();
+        workPath = Paths.get(property.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
+        obsPath = getPath("obsPath");
+        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+                .collect(Collectors.toSet());
+        np = Integer.parseInt(property.getProperty("np").split("\\s+")[0]);
+        tlen = Double.parseDouble(property.getProperty("tlen").split("\\s+")[0]);
+        header = property.getProperty("header").split("\\s+")[0];
+        if (property.containsKey("structureFile"))
+            structurePath = Paths.get(property.getProperty("structureFile").split("\\s+")[0]);
+        else
+            structurePath = Paths.get("PREM");
+
+        syntheticDataset = Boolean.parseBoolean(property.getProperty("syntheticDataset"));
+        synMinDistance = Integer.parseInt(property.getProperty("synMinDistance"));
+        synMaxDistance = Integer.parseInt(property.getProperty("synMaxDistance"));
+        specfemDataset = Boolean.parseBoolean(property.getProperty("specfemDataset"));
+
+        usewindow = property.getProperty("timewindowPath") != "";
+        timewindowPath = Paths.get(property.getProperty("timewindowPath"));
+    }
+
     /**
      * @param args [parameter file name]
      * @throws IOException if any
      */
     public static void main(String[] args) throws Exception {
-        Properties property = new Properties();
-        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
-        else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
-        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-        long start = System.nanoTime();
+        SyntheticDSMInformationFileMaker sdif = new SyntheticDSMInformationFileMaker(Property.parse(args));
+        long startTime = System.nanoTime();
         System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " is going.");
-        SyntheticDSMInformationFileMaker sdif = new SyntheticDSMInformationFileMaker(property);
         sdif.run();
         System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - start));
-    }
-
-    private void checkAndPutDefaults() {
-        if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
-        if (!PROPERTY.containsKey("obsPath")) PROPERTY.setProperty("obsPath", "");
-        if (!PROPERTY.containsKey("components")) PROPERTY.setProperty("components", "Z R T");
-        if (!PROPERTY.containsKey("tlen")) PROPERTY.setProperty("tlen", "3276.8");
-        if (!PROPERTY.containsKey("np")) PROPERTY.setProperty("np", "512");
-        if (!PROPERTY.containsKey("header")) PROPERTY.setProperty("header", "PREM");
-        if (!PROPERTY.containsKey("syntheticDataset")) PROPERTY.setProperty("syntheticDataset", "false");
-        if (!PROPERTY.containsKey("specfemDataset")) PROPERTY.setProperty("specfemDataset", "false");
-        if (!PROPERTY.containsKey("timewindowPath")) PROPERTY.setProperty("timewindowPath", "");
-        // write additional info
-        PROPERTY.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(PROPERTY.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath: " + workPath + " does not exist");
-        obsPath = getPath("obsPath");
-        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        np = Integer.parseInt(PROPERTY.getProperty("np").split("\\s+")[0]);
-        tlen = Double.parseDouble(PROPERTY.getProperty("tlen").split("\\s+")[0]);
-        header = PROPERTY.getProperty("header").split("\\s+")[0];
-        if (PROPERTY.containsKey("structureFile"))
-            structurePath = Paths.get(PROPERTY.getProperty("structureFile").split("\\s+")[0]);
-        else
-            structurePath = Paths.get("PREM");
-        syntheticDataset = Boolean.parseBoolean(PROPERTY.getProperty("syntheticDataset"));
-        specfemDataset = Boolean.parseBoolean(PROPERTY.getProperty("specfemDataset"));
-
-        usewindow = PROPERTY.getProperty("timewindowPath") != "";
-        timewindowPath = Paths.get(PROPERTY.getProperty("timewindowPath"));
+                Utilities.toTimeString(System.nanoTime() - startTime));
     }
 
     /**
@@ -177,7 +204,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 
         // PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
         if (!modelName.contains("/") && modelName.contains("_")) {
-            System.out.println("Using " + modelName + ". Adding perturbations");
+            System.err.println("Using " + modelName + ". Adding perturbations");
             String[] ss = modelName.split("_");
             modelName = ss[0];
             String[] range = ss[1].split("-");
@@ -193,7 +220,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
             if (modelName.equals("MIASP91")) {
                 ps = PolynomialStructure.MIASP91;
                 for (String quantity : quantityPercentMap.keySet()) {
-                    System.out.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
                     if (quantity.equals("RHO"))
                         ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
                     else if (quantity.equals("VS"))
@@ -203,7 +230,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
             else if (modelName.equals("PREM")) {
                 ps = PolynomialStructure.PREM;
                 for (String quantity : quantityPercentMap.keySet()) {
-                    System.out.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
                     if (quantity.equals("RHO"))
                         ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
                     else if (quantity.equals("VS"))
@@ -213,7 +240,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
             else if (modelName.equals("AK135")) {
                 ps = PolynomialStructure.AK135;
                 for (String quantity : quantityPercentMap.keySet()) {
-                    System.out.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
                     if (quantity.equals("RHO"))
                         ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
                     else if (quantity.equals("VS"))
@@ -264,19 +291,20 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         }
 
         Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
+        System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
 
-        if (PROPERTY != null)
+        if (property != null)
             writeProperties(outPath.resolve("dsmifm.properties"));
 
         //synthetic station set
         Set<Station> synStationSet = new HashSet<>();
         if (syntheticDataset) {
-            for (int i = 1; i <= 170; i+=1) {
+            for (int i = synMinDistance; i <= synMaxDistance; i+=1) {
                 double distance = i;
                 String stationName = String.format("%03d", i);
                 Station station = new Station(stationName
-                        , new HorizontalPosition(0, distance), "DSM");
+                        , new HorizontalPosition(0, distance), Station.SYN);
                 synStationSet.add(station);
             }
         }
@@ -325,7 +353,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));
                 }
                 else {
-                    System.out.println(eventDir.getGlobalCMTID() + "is not in the catalog");
+                    System.err.println(eventDir.getGlobalCMTID() + "is not in the catalog");
                 }
             } catch (Exception e) {
                 System.err.println("Error on " + eventDir);
@@ -336,7 +364,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 
     @Override
     public Properties getProperties() {
-        return (Properties) PROPERTY.clone();
+        return (Properties) property.clone();
     }
 
     @Override

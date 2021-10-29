@@ -33,6 +33,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  */
 public class DataLobby implements Operation {
 
+    private final Properties property;
+    /**
+     * Path for the work folder
+     */
     private Path workPath;
 
     private String networks;
@@ -61,7 +65,6 @@ public class DataLobby implements Operation {
     private double upperLongitude;
 
     private Set<GlobalCMTID> requestedIDs;
-    private Properties property;
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -105,29 +108,9 @@ public class DataLobby implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public DataLobby(Properties property) {
+    public DataLobby(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
-    }
-
-    private void set() {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        networks = property.getProperty("networks"); //.split("\\s+");
-        channels = property.getProperty("channels"); //.split("\\s+");
-        headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
-        footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
-
-        startDate = LocalDate.parse(property.getProperty("startDate"));
-        endDate = LocalDate.parse(property.getProperty("endDate"));
-        lowerMw = Double.parseDouble(property.getProperty("lowerMw"));
-        upperMw = Double.parseDouble(property.getProperty("upperMw"));
-        lowerDepth = Double.parseDouble(property.getProperty("lowerDepth"));
-        upperDepth = Double.parseDouble(property.getProperty("upperDepth"));
-        lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
-        upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
-        lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
-        upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
     }
 
     private void checkAndPutDefaults() {
@@ -150,6 +133,27 @@ public class DataLobby implements Operation {
         if (!property.containsKey("upperLongitude")) property.setProperty("upperLongitude", "180");
     }
 
+    private void set() throws IOException {
+        checkAndPutDefaults();
+        workPath = Paths.get(property.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
+        networks = property.getProperty("networks"); //.split("\\s+");
+        channels = property.getProperty("channels"); //.split("\\s+");
+        headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
+        footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
+
+        startDate = LocalDate.parse(property.getProperty("startDate"));
+        endDate = LocalDate.parse(property.getProperty("endDate"));
+        lowerMw = Double.parseDouble(property.getProperty("lowerMw"));
+        upperMw = Double.parseDouble(property.getProperty("upperMw"));
+        lowerDepth = Double.parseDouble(property.getProperty("lowerDepth"));
+        upperDepth = Double.parseDouble(property.getProperty("upperDepth"));
+        lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
+        upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
+        lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
+        upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
+    }
 
     /**
      * @param args Request Mode: [parameter file name]
@@ -157,11 +161,11 @@ public class DataLobby implements Operation {
      */
     public static void main(String[] args) throws Exception {
         DataLobby dl = new DataLobby(Property.parse(args));
-        long startT = System.nanoTime();
+        long startTime = System.nanoTime();
         System.err.println(DataLobby.class.getName() + " is going");
         dl.run();
-        System.err.println(
-                DataLobby.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+        System.err.println(DataLobby.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime));
 
     }
 

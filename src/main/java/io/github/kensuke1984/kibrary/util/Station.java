@@ -29,6 +29,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class Station implements Comparable<Station> {
 
     /**
+     * network name for stations in synthetic datasets
+     */
+    public static final String SYN = "DSM";
+    /**
      * NETWORK name
      */
     private final String NETWORK;
@@ -73,7 +77,7 @@ public class Station implements Comparable<Station> {
                 ? new Station(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
                                 sacHeaderData.getValue(SACHeaderEnum.STLO)),
-                        "DSM")
+                        SYN)
                 : new Station(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
                                 sacHeaderData.getValue(SACHeaderEnum.STLO)),
@@ -153,10 +157,10 @@ public class Station implements Comparable<Station> {
         } else if (!NAME.equals(other.NAME))
             return false;
         if (NETWORK == null)
-            return other.NETWORK == null || other.NETWORK.equals("DSM");
-        else if (NETWORK.equals("DSM"))
+            return other.NETWORK == null || other.NETWORK.equals(SYN);
+        else if (NETWORK.equals(SYN))
             return true;
-        else if (other.NETWORK != null && !other.NETWORK.equals("DSM") && !NETWORK.equals(other.NETWORK))
+        else if (other.NETWORK != null && !other.NETWORK.equals(SYN) && !NETWORK.equals(other.NETWORK))
             return false;
         return true;
     }

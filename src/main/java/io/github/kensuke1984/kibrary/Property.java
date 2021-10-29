@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
+
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * This class will create a default property for a procedure in Kibrary.
@@ -36,7 +36,7 @@ public class Property {
         Properties property = new Properties();
         if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
         else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
-        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
+        else throw new IllegalArgumentException("Too many arguments. There should be 0 or 1 ( = property file name)");
         return property;
     }
 
