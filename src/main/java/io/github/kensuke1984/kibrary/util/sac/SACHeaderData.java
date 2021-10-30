@@ -89,7 +89,7 @@ public interface SACHeaderData {
      * @return {@link SACHeaderData} with the station
      */
     default SACHeaderData setStation(Station station) {
-        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, station.getName());
+        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, station.getStation());
         sd = sd.setSACString(SACHeaderEnum.KNETWK, station.getNetwork());
         return sd.setValue(SACHeaderEnum.STLA, station.getPosition().getLatitude())
                 .setValue(SACHeaderEnum.STLO, station.getPosition().getLongitude());

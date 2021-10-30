@@ -168,8 +168,8 @@ public class CCPartialMaker {
 				Station staJ = stations.get(jsta);
 				List<CCPartial> ccParIJ = ccParI.parallelStream().filter(ccpar -> ccpar.staJ.equals(staJ)).collect(Collectors.toList());
 				
-				Path outpath = dir.resolve("partial_"  + staI.getName()
-				+ "_" + staJ.getName() + ".txt");
+				Path outpath = dir.resolve("partial_"  + staI.getStation()
+				+ "_" + staJ.getStation() + ".txt");
 				PrintWriter pw;
 				try {
 					pw = new PrintWriter(outpath.toFile());

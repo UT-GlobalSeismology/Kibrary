@@ -98,7 +98,7 @@ public class MakeWindowPcP {
 				
 				if (timewindowsForSelection != null) {
 				if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsHeader.getGlobalCMTID())
-						&& tw.getStation().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
+						&& tw.getObserver().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
 						.count() == 0)
 					continue;
 				}

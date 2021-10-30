@@ -3,47 +3,51 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.nio.ByteBuffer;
 
+import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * <p>
- * Information of station
- * </p>
- * consisting of <br>
- * Station name, {@link HorizontalPosition}, Station NETWORK <br>
+ * Information of observer,
+ * consisting of station code, network code, and {@link HorizontalPosition}. <br>
  * <p>
  * This class is <b>IMMUTABLE</b>
  * </p>
  * <p>
- * Station name and NETWORK name must be 8 or less letters.
+ * Station code and network code must be 8 or less letters.
  * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.)
  * <p>
- * If the NETWORK name is 'DSM', comparison of networks between instances is not
- * done, station name and horizontal POSITION is considered.
+ * Observers are considered equal if and only if
+ * [network code is equal && station code is equal && position is within COORDINATE_GRID].
+ * If the network code is 'DSM', comparison of networks between instances is not done;
+ * station code and horizontal position is considered.
  *
- * @author Kensuke Konishi
- * @version 0.0.5.3
- * @author anselme changed toString() to NAME_NETWORK (unique IRIS identifier)
  */
 public class Station implements Comparable<Station> {
 
     /**
-     * network name for stations in synthetic datasets
+     * network code for stations in synthetic datasets
      */
     public static final String SYN = "DSM";
     /**
-     * NETWORK name
+     * Threshold to judge whether observers (with same network and station) are in the same position.
+     * It is OK if it is different from {@link DataKitchen#coordinateGrid}.
      */
-    private final String NETWORK;
+    public static final double COORDINATE_GRID = 0.02;
+
+    /**
+     * network code
+     */
+    private final String network;
+    /**
+     * station code
+     */
+    private final String station;
     /**
      * the {@link HorizontalPosition} of the station
      */
-    private final HorizontalPosition POSITION;
-    /**
-     * name of the station
-     */
-    private final String NAME;
+    private final HorizontalPosition position;
 
     /**
      * @param stationName Name of the station (must be 8 or less letters)
@@ -53,9 +57,9 @@ public class Station implements Comparable<Station> {
     public Station(String stationName, HorizontalPosition position, String network) {
         if (8 < stationName.length() || 8 < network.length())
             throw new IllegalArgumentException("Both station and network name must be 8 or less letters.");
-        NAME = stationName;
-        NETWORK = network;
-        POSITION = position;
+        this.station = stationName;
+        this.network = network;
+        this.position = position;
     }
 
     public Station(String observerID, HorizontalPosition position) {
@@ -63,9 +67,9 @@ public class Station implements Comparable<Station> {
     }
 
     public Station(Station station) {
-        NAME = station.NAME;
-        NETWORK = station.NETWORK;
-        POSITION = station.POSITION;
+        this.station = station.station;
+        this.network = station.network;
+        this.position = station.position;
     }
 
     /**
@@ -117,12 +121,12 @@ public class Station implements Comparable<Station> {
 
     @Override
     public int compareTo(Station o) {
-        int name = NAME.compareTo(o.NAME);
+        int name = station.compareTo(o.station);
         if (name != 0)
             return name;
-        int net = NETWORK.compareTo(o.NETWORK);
+        int net = network.compareTo(o.network);
 //		int pos = comparePosition(o) == true ? 0 : 1;
-        return net != 0 ? net : POSITION.compareTo(o.getPosition());
+        return net != 0 ? net : position.compareTo(o.getPosition());
     }
 
     @Override
@@ -131,10 +135,16 @@ public class Station implements Comparable<Station> {
         int result = 1;
 //		result = prime * result + ((position == null) ? 0 : position.hashCode());
 //		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
-        result = 314159 * prime * NAME.hashCode() * NETWORK.hashCode();
+        result = 314159 * prime * station.hashCode() * network.hashCode();
         return result;
     }
 
+    /**
+     * Observers are considered equal if and only if
+     * [network code is equal && station code is equal && position is within COORDINATE_GRID].
+     * If the network code is 'DSM', comparison of networks between instances is not done;
+     * station code and horizontal position is considered.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -144,65 +154,66 @@ public class Station implements Comparable<Station> {
         if (getClass() != obj.getClass())
             return false;
         Station other = (Station) obj;
-        if (POSITION == null) {
-            if (other.POSITION != null)
+
+        if (position == null) {
+            if (other.position != null)
                 return false;
-//		} else if (!position.equals(other.position))
-//			return false;
-        } else if (!equal(POSITION, other.POSITION))
+        } else if (!equal(position, other.position))
             return false;
-        if (NAME == null) {
-            if (other.NAME != null)
+
+        if (station == null) {
+            if (other.station != null)
                 return false;
-        } else if (!NAME.equals(other.NAME))
+        } else if (!station.equals(other.station))
             return false;
-        if (NETWORK == null)
-            return other.NETWORK == null || other.NETWORK.equals(SYN);
-        else if (NETWORK.equals(SYN))
+
+        if (network == null)
+            return other.network == null || other.network.equals(SYN);
+        else if (network.equals(SYN))
             return true;
-        else if (other.NETWORK != null && !other.NETWORK.equals(SYN) && !NETWORK.equals(other.NETWORK))
+        else if (other.network != null && !other.network.equals(SYN) && !network.equals(other.network))
             return false;
+
         return true;
     }
 
     private boolean equal(HorizontalPosition pos1, HorizontalPosition pos2) {
-        double eps = 0.02;
-        if (!Utilities.equalWithinEpsilon(pos1.getLatitude(), pos2.getLatitude(), eps))
+        if (!Utilities.equalWithinEpsilon(pos1.getLatitude(), pos2.getLatitude(), COORDINATE_GRID))
             return false;
-        else if (!Utilities.equalWithinEpsilon(pos1.getLongitude(), pos2.getLongitude(), eps))
+        else if (!Utilities.equalWithinEpsilon(pos1.getLongitude(), pos2.getLongitude(), COORDINATE_GRID))
             return false;
         else
             return true;
     }
 
     /**
+     * @return the name of the network
+     */
+    public String getNetwork() {
+        return network;
+    }
+
+    /**
      * @return the name of the station
      */
-    public String getName() {
-        return NAME;
+    public String getStation() {
+        return station;
+    }
+
+    /**
+     * @return the position of the observer
+     */
+    public HorizontalPosition getPosition() {
+        return position;
     }
 
     @Override
     public String toString() {
-        return NAME + "_" + NETWORK;
+        return station + "_" + network;
     }
 
     public String getStringID() {
-        return NAME + "_" + NETWORK;
-    }
-
-    /**
-     * @return the position of the station
-     */
-    public HorizontalPosition getPosition() {
-        return POSITION;
-    }
-
-    /**
-     * @return the name of the network
-     */
-    public String getNetwork() {
-        return NETWORK;
+        return station + "_" + network;
     }
 
 }

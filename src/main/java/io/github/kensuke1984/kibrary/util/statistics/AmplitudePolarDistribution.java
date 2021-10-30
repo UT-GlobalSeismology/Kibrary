@@ -56,7 +56,7 @@ public class AmplitudePolarDistribution {
 				SACComponent component = correction.getComponent();
 				double startTime = correction.getSynStartTime();
 				Set<TimewindowInformation> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
-						&& tw.getStation().equals(station)
+						&& tw.getObserver().equals(station)
 						&& tw.getComponent() == component
 						&& tw.getStartTime() == startTime)
 						.collect(Collectors.toSet());

@@ -55,7 +55,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 				new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
 			GlobalCMTID[] ids = infoSet.stream().map(TimewindowInformation::getGlobalCMTID).distinct().sorted()
 					.toArray(GlobalCMTID[]::new);
-			Station[] stations = infoSet.stream().map(TimewindowInformation::getStation).distinct().sorted()
+			Station[] stations = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
 					.toArray(Station[]::new);
 			Map<GlobalCMTID, Integer> idMap = new HashMap<>();
 			Map<Station, Integer> stationMap = new HashMap<>();
@@ -63,7 +63,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			dos.writeShort(ids.length);
 			for (int i = 0; i < stations.length; i++) {
 				stationMap.put(stations[i], i);
-				dos.writeBytes(StringUtils.rightPad(stations[i].getName(), 8));
+				dos.writeBytes(StringUtils.rightPad(stations[i].getStation(), 8));
 				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
 				HorizontalPosition pos = stations[i].getPosition();
 				dos.writeFloat((float) pos.getLatitude());
@@ -74,7 +74,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 				dos.writeBytes(StringUtils.rightPad(ids[i].toString(), 15));
 			}
 			for (TimewindowInformation info : infoSet) {
-				dos.writeShort(stationMap.get(info.getStation()));
+				dos.writeShort(stationMap.get(info.getObserver()));
 				dos.writeShort(idMap.get(info.getGlobalCMTID()));
 				dos.writeByte(info.getComponent().valueOf());
 				float startTime = (float) Precision.round(info.getStartTime(), 3);

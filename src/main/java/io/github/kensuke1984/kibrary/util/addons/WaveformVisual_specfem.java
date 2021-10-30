@@ -186,7 +186,7 @@ public class WaveformVisual_specfem {
 					double bornCorr = specfemVector.dotProduct(obsVector) / (specfemVector.getNorm() * obsVector.getNorm());
 					double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
 					double bornRatio = specfemVector.getLInfNorm() / obsVector.getLInfNorm();
-					eachMisfitString += id.getStation().getName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+					eachMisfitString += id.getStation().getStation() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
 							+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 							+ tmpSyn + " " + tmpSpecfem + " " + synCorr + " " + bornCorr + "\n";
 				}

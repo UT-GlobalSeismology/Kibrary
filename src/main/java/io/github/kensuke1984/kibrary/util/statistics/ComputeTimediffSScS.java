@@ -74,7 +74,7 @@ public class ComputeTimediffSScS {
 		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath).stream()
 			.filter(tw -> {
 					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation()
-							.getEpicentralDistance(tw.getStation().getPosition()));
+							.getEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance || distance > maxDistance)
 						return false;
 					return true;
@@ -114,7 +114,7 @@ public class ComputeTimediffSScS {
 			obsNames.removeIf(sfn -> !sfn.isOBS());
 			obsNames.removeIf(obsName -> 
 				thisWindows.stream().filter(tw -> tw.getGlobalCMTID().equals(obsName.getGlobalCMTID())
-						&& tw.getStation().getName().equals(obsName.getStationCode())
+						&& tw.getObserver().getStation().equals(obsName.getStationCode())
 						&& tw.getComponent().equals(obsName.getComponent()))
 				.count() != 1
 			);

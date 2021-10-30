@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
@@ -423,7 +423,7 @@ public class Partial1DSpcMaker implements Operation {
 					|| spcFileType.equals(SPCType.PARL)
 					|| spcFileType.equals(SPCType.PAR0)
 					|| spcFileType.equals(SPCType.PAR2))
-						shspcname = new FormattedSPCFile(spcFileName.getPath().replace("PSV.spc", "SH.spc"));
+						shspcname = new FormattedSPCFileName(spcFileName.getPath().replace("PSV.spc", "SH.spc"));
 				}
 				
 				try {
@@ -572,7 +572,7 @@ public class Partial1DSpcMaker implements Operation {
 		
 		private BasicID findImFyID(TimewindowInformation t) {
 			try {
-				return Arrays.stream(imFyIDs).filter(id -> id.getStation().equals(t.getStation())
+				return Arrays.stream(imFyIDs).filter(id -> id.getStation().equals(t.getObserver())
 						&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
 						&& t.getComponent().equals(id.getSacComponent()))
 					.findAny().get();
@@ -584,7 +584,7 @@ public class Partial1DSpcMaker implements Operation {
 		}
 		
 		private BasicID findReFyID(TimewindowInformation t) {
-			return Arrays.stream(reFyIDs).filter(id -> id.getStation().equals(t.getStation())
+			return Arrays.stream(reFyIDs).filter(id -> id.getStation().equals(t.getObserver())
 					&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
 					&& t.getComponent().equals(id.getSacComponent()))
 				.findAny().get();
@@ -604,8 +604,8 @@ public class Partial1DSpcMaker implements Operation {
 
 		private void addPartialSpectrum(SPCFileName spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(spcname.getStationCode())
-							&& info.getStation().getNetwork().equals(spcname.getNetworkCode()))
+					.filter(info -> info.getObserver().getStation().equals(spcname.getStationCode())
+							&& info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 //				System.out.println("No timewindow found");	
@@ -634,14 +634,14 @@ public class Partial1DSpcMaker implements Operation {
 
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
-						.filter(info -> info.getStation().equals(station))
+						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
 				if (tw.isEmpty()) {
 					tmpTws.forEach(window -> {
 						System.out.println(window);
-						System.out.println(window.getStation().getPosition());
+						System.out.println(window.getObserver().getPosition());
 					});
 					System.err.println(station.getPosition());
 					System.err.println("Ignoring empty timewindow " + spcname + " " + station);
@@ -690,8 +690,8 @@ public class Partial1DSpcMaker implements Operation {
 		
 		private void addPartialSpectrum(SPCFileName spcname, SPCFileName shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(spcname.getStationCode())
-							&& info.getStation().getNetwork().equals(spcname.getNetworkCode()))
+					.filter(info -> info.getObserver().getStation().equals(spcname.getStationCode())
+							&& info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 //				System.out.println("No timewindow found");	
@@ -734,14 +734,14 @@ public class Partial1DSpcMaker implements Operation {
 
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
-						.filter(info -> info.getStation().equals(station))
+						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
 				if (tw.isEmpty()) {
 					tmpTws.forEach(window -> {
 						System.out.println(window);
-						System.out.println(window.getStation().getPosition());
+						System.out.println(window.getObserver().getPosition());
 					});
 					System.err.println(station.getPosition());
 					System.err.println("Ignoring empty timewindow " + spcname + " " + station);
@@ -902,7 +902,7 @@ public class Partial1DSpcMaker implements Operation {
 		
 		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(sacname.getStationCode()))
+					.filter(info -> info.getObserver().getStation().equals(sacname.getStationCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;
@@ -915,14 +915,14 @@ public class Partial1DSpcMaker implements Operation {
 			
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
-						.filter(info -> info.getStation().equals(station))
+						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
 				if (tw.isEmpty()) {
 					tmpTws.forEach(window -> {
 						System.out.println(window);
-						System.out.println(window.getStation().getPosition());
+						System.out.println(window.getObserver().getPosition());
 					});
 					System.err.println(station.getPosition());
 					System.err.println("Ignoring empty timewindow " + sacname + " " + station);
@@ -1143,7 +1143,7 @@ public class Partial1DSpcMaker implements Operation {
 		System.err.println("Designing filter.");
 		setBandPassFilter();
 //		writeLog(filter.toString());
-		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
+		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getObserver)
 				.collect(Collectors.toSet());
 		idSet = Utilities.globalCMTIDSet(workPath);
 		setPerturbationLocation();

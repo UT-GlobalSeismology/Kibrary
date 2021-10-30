@@ -48,9 +48,9 @@ public final class StationInformationFile {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
 			stationSet.forEach(s -> {
 				try {
-					pw.println(s.getName() + " " + s.getNetwork() + " " + s.getPosition());
+					pw.println(s.getStation() + " " + s.getNetwork() + " " + s.getPosition());
 				} catch (Exception e) {
-					pw.println(s.getName() + " " + s.getPosition());
+					pw.println(s.getStation() + " " + s.getPosition());
 				}
 			});
 		}

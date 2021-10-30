@@ -186,7 +186,7 @@ public class DividePerAzimuth {
 		if (averageEventPosition == null)
 			setAverageEventPosition();
 		
-		Set<Station> stations = info.stream().map(tw -> tw.getStation())
+		Set<Station> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		
 		double[] minMax = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
@@ -224,7 +224,7 @@ public class DividePerAzimuth {
 	private void setAzimuthRange() {
 		azimuthRange = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
 		
-		Set<Station> stations = info.stream().map(tw -> tw.getStation())
+		Set<Station> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		stations.stream().forEach(station -> {
 			double azimuth = averageEventPosition.getAzimuth(station.getPosition());
@@ -269,7 +269,7 @@ public class DividePerAzimuth {
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
-			double azimuth = averageEventPosition.getAzimuth(tw.getStation().getPosition());
+			double azimuth = averageEventPosition.getAzimuth(tw.getObserver().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			double ratio = (azimuth - azimuthRange[0]) / (azimuthRange[1] - azimuthRange[0]);
@@ -296,7 +296,7 @@ public class DividePerAzimuth {
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
-			double azimuth = averageEventPosition.getAzimuth(tw.getStation().getPosition());
+			double azimuth = averageEventPosition.getAzimuth(tw.getObserver().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			azimuth *= 180. / Math.PI;
@@ -335,8 +335,8 @@ public class DividePerAzimuth {
 			
 			for (TimewindowInformation tw : info) {
 				HorizontalPosition evtLoc = tw.getGlobalCMTID().getEvent().getCmtLocation();
-				double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getStation().getPosition());
-				double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition());
+				double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getObserver().getPosition());
+				double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition());
 				
 				//
 				timetool.setSourceDepth(6371. - tw.getGlobalCMTID().getEvent().getCmtLocation().getR());

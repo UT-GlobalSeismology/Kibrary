@@ -84,7 +84,7 @@ public class BPVisual {
 					double[] bpserie = spcComponents[j].getTimeseries();
 					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
 					for (TimewindowInformation info : timewindows) {
-						Station station = info.getStation();
+						Station station = info.getObserver();
 						GlobalCMTID event = info.getGlobalCMTID();
 						
 						Complex[] u = cutPartial(bpserie, info);
@@ -92,7 +92,7 @@ public class BPVisual {
 						double[] cutU = sampleOutput(u, info);
 						
 						Phases phases = new Phases(info.getPhases());
-						Path outpath = workingDir.resolve(station.getName() + "." 
+						Path outpath = workingDir.resolve(station.getStation() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".txt");
 //						Files.deleteIfExists(outpath);
@@ -102,7 +102,7 @@ public class BPVisual {
 								pw.println(String.format("%.16e", y));
 						}
 						
-						Path outpath2 = workingDir.resolve(station.getName() + "." 
+						Path outpath2 = workingDir.resolve(station.getStation() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".spectrum.txt");
 						try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath2, StandardOpenOption.CREATE_NEW))) {

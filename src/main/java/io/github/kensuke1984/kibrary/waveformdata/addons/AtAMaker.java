@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
@@ -291,9 +291,9 @@ public class AtAMaker implements Operation {
 		
 		//bpnames
 		bpPath = getPath("bpPath");
-		bpnames = Utilities.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFile[0]);
+		bpnames = Utilities.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
 		if (mode.equals("PSV") || mode.equals("BOTH"))
-			bpnames_PSV = Utilities.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFile[0]);
+			bpnames_PSV = Utilities.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
 		else
 			bpnames_PSV = null;
 		
@@ -827,7 +827,7 @@ public class AtAMaker implements Operation {
 				.collect(Collectors.toSet());
 		
 		Set<Station> usedStations = timewindowInformation.stream()
-				.map(tw -> tw.getStation())
+				.map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		
 		List<GlobalCMTID> usedEventList = usedEvents.stream().collect(Collectors.toList());
@@ -913,7 +913,7 @@ public class AtAMaker implements Operation {
 					.collect(Collectors.toSet());
 			
 			Set<Station> eventStations = eventTimewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(event))
-				.map(tw -> tw.getStation()).collect(Collectors.toSet());
+				.map(tw -> tw.getObserver()).collect(Collectors.toSet());
 			
 			List<List<Integer>> IndicesEventBasicID = new ArrayList<>();
 			if (computationFlag == 1 || computationFlag == 2) {
@@ -935,7 +935,7 @@ public class AtAMaker implements Operation {
 			for (Station station : eventStations) {
 				System.out.println("Working for " + event + " " + station);
 				
-				Set<TimewindowInformation> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getStation().equals(station))
+				Set<TimewindowInformation> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getObserver().equals(station))
 						.collect(Collectors.toSet());
 				
 				List<List<Integer>> IndicesRecordBasicID = new ArrayList<>();
@@ -1205,11 +1205,11 @@ public class AtAMaker implements Operation {
 				Path dir1 = dir0.resolve(frequencyRanges[ifreq].toString());
 				Files.createDirectory(dir1);
 				for (int ista = 0; ista < nsta; ista++) {
-					Station stationI = timewindowOrder[ista].getStation();
+					Station stationI = timewindowOrder[ista].getObserver();
 					for (int jsta = 0; jsta < nsta; jsta++) {
-						Station stationJ = timewindowOrder[jsta].getStation();
-						Path outpath = dir1.resolve("partial_"  + stationI.getName() 
-							+ "_" + stationJ.getName() + ".txt");
+						Station stationJ = timewindowOrder[jsta].getObserver();
+						Path outpath = dir1.resolve("partial_"  + stationI.getStation() 
+							+ "_" + stationJ.getStation() + ".txt");
 						PrintWriter pw = new PrintWriter(outpath.toFile());
 						for (int i = 0; i < nOriginalUnknown; i++) {
 							double[] partialCorr = partialCorrs[i][iweight][ifreq][ista][jsta];
@@ -1265,7 +1265,7 @@ public class AtAMaker implements Operation {
 									if (!threeD)
 										type = to1D(type);
 									
-									PartialID partialID = new PartialID(window.getStation(), window.getGlobalCMTID(), window.getComponent()
+									PartialID partialID = new PartialID(window.getObserver(), window.getGlobalCMTID(), window.getComponent()
 											, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
 											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getLocation()
 											, type, partiali);
@@ -1305,7 +1305,7 @@ public class AtAMaker implements Operation {
 								if (it > 0) {
 									double[] partiali = partials[iunknown][iweight][ifreq][iwin];
 									
-									PartialID partialID = new PartialID(window.getStation(), window.getGlobalCMTID(), window.getComponent()
+									PartialID partialID = new PartialID(window.getObserver(), window.getGlobalCMTID(), window.getComponent()
 											, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
 											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getLocation()
 											, newUnknownParameters[iunknown].getPartialType(), partiali);
@@ -1937,7 +1937,7 @@ public class AtAMaker implements Operation {
 										 1./frequencyRanges[ifreq].getMaxFreq());
 								
 								Phases phases = new Phases(info.getPhases());
-								Path outpath = dirBP.resolve(station.getName() + "." 
+								Path outpath = dirBP.resolve(station.getStation() + "." 
 										+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".txt");
@@ -1948,7 +1948,7 @@ public class AtAMaker implements Operation {
 										pw.println(String.format("%.16e", y));
 								}
 								
-								Path outpath2 = dirBP.resolve(station.getName() + "." 
+								Path outpath2 = dirBP.resolve(station.getStation() + "." 
 										+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".spectrum.txt");
@@ -2000,7 +2000,7 @@ public class AtAMaker implements Operation {
 										 1./frequencyRanges[ifreq].getMaxFreq());
 								
 								Phases phases = new Phases(info.getPhases());
-								Path outpath = dirFP.resolve(station.getName() + "." 
+								Path outpath = dirFP.resolve(station.getStation() + "." 
 										+ event + "." + "FP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".txt");
@@ -2011,7 +2011,7 @@ public class AtAMaker implements Operation {
 										pw.println(String.format("%.16e", y));
 								}
 								
-								Path outpath2 = dirFP.resolve(station.getName() + "." 
+								Path outpath2 = dirFP.resolve(station.getStation() + "." 
 										+ event + "." + "FP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".spectrum.txt");
@@ -2167,7 +2167,7 @@ public class AtAMaker implements Operation {
 										if (outPartial) {
 											String freqString = String.format("%.0f-%.0f", 1./frequencyRanges[ifreq].getMinFreq(),
 													 1./frequencyRanges[ifreq].getMaxFreq());
-											Path outpath = outpartialDir.resolve(station.getName() + "." 
+											Path outpath = outpartialDir.resolve(station.getStation() + "." 
 													+ event + "." + info.getComponent() + "." + (int) obsPos.getLatitude()
 													+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[ibody] + "." + type + "."
 													+ weightingTypes[iweight] + "." + freqString + "."

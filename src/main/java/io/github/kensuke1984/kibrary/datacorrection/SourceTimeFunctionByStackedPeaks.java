@@ -81,7 +81,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         SACComponent component = SACComponent.of(sacFile);
 
         TimewindowInformation window = timewindow.stream()
-                .filter(info -> info.getStation().equals(station) && info.getGlobalCMTID().equals(id) &&
+                .filter(info -> info.getObserver().equals(station) && info.getGlobalCMTID().equals(id) &&
                         info.getComponent() == component).findAny().get();
 
         return sacFile.createTrace().cutWindow(window);

@@ -49,7 +49,7 @@ public class StationAverageTimeshift {
 				continue;
 			
 			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getStation())
+					&& corr.getStation().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
 					.collect(Collectors.toList());
@@ -98,7 +98,7 @@ public class StationAverageTimeshift {
 				continue;
 			
 			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getStation())
+					&& corr.getStation().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
 					.collect(Collectors.toList());
@@ -133,9 +133,9 @@ public class StationAverageTimeshift {
 		for (Station sta : stationCount.keySet()) {
 			double shift = stationAverages.get(sta) / stationCount.get(sta);
 			if (shift >= 0)
-				Files.write(outpathP, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathP, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
 			else
-				Files.write(outpathM, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathM, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 		
 		Path outpathHistogramAverage = Paths.get("histogramStationAverageShift.inf");

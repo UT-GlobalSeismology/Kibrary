@@ -125,7 +125,7 @@ public class RaypathDistribution implements Operation {
 		}
 		Path stationPath = getPath("stationInformationPath");
 		if (timeWindowInformationFile == null) stationSet = StationInformationFile.read(stationPath);
-		else stationSet = timeWindowInformationFile.stream().map(tw -> tw.getStation())
+		else stationSet = timeWindowInformationFile.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		pierceDepth = Double.parseDouble(property.getProperty("pierceDepth"));
 		model = property.getProperty("model");
@@ -229,7 +229,7 @@ public class RaypathDistribution implements Operation {
 				: timeWindowInformationFile.stream()
 						.anyMatch(tw -> tw.getComponent() == name.getComponent()
 								&& tw.getGlobalCMTID().equals(name.getGlobalCMTID())
-								&& tw.getStation().getName().equals(name.getStationCode()));
+								&& tw.getObserver().getStation().equals(name.getStationCode()));
 	}
 
 	private void outputRaypath() throws IOException {

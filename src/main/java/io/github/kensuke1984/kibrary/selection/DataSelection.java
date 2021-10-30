@@ -107,14 +107,14 @@ public class DataSelection implements Operation {
      * name, global CMT id, component, start time.
      */
     private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-            t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+            t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
     private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
-            t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+            t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent())
                     && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
     private BiPredicate<StaticCorrection, TimewindowInformation> isPairRecord = (s,
-            t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+            t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent();
     private Path workPath;
     private Properties property;
@@ -420,7 +420,7 @@ public class DataSelection implements Operation {
 
         private Set<TimewindowInformation> imposeSn_ScSnPair(Set<TimewindowInformation> info) {
             Set<TimewindowInformation> infoNew = new HashSet<>();
-            if (info.stream().map(tw -> tw.getStation()).distinct().count() > 1)
+            if (info.stream().map(tw -> tw.getObserver()).distinct().count() > 1)
                 throw new RuntimeException("Info should contain time windows for a unique record");
             if (info.stream().map(tw -> tw.getGlobalCMTID()).distinct().count() > 1)
                 throw new RuntimeException("Info should contain time windows for a unique record");
@@ -491,7 +491,7 @@ public class DataSelection implements Operation {
                     SACFileData obsSac = obsName.read();
                     SACFileData synSac = synName.read();
 
-                    stationName = obsSac.getStation().getName() + "_" + obsSac.getStation().getNetwork();
+                    stationName = obsSac.getStation().getStation() + "_" + obsSac.getStation().getNetwork();
 
                     Station station = obsSac.getStation();
                     //
@@ -506,7 +506,7 @@ public class DataSelection implements Operation {
 
                     // Pickup a time window of obsName
                     Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
-                            .stream().filter(info -> info.getStation().equals(station)
+                            .stream().filter(info -> info.getObserver().equals(station)
                                     && info.getGlobalCMTID().equals(id) && info.getComponent() == component)
                             .collect(Collectors.toSet());
 
@@ -547,13 +547,13 @@ public class DataSelection implements Operation {
                                     startTime = surfacewaveWindow.getEndTime();
 
                                 window = new TimewindowInformation(startTime
-                                        , endTime, window.getStation(), window.getGlobalCMTID()
+                                        , endTime, window.getObserver(), window.getGlobalCMTID()
                                         , window.getComponent(), window.getPhases());
                             }
                         }
 
                         TimewindowInformation shiftedWindow = new TimewindowInformation(window.getStartTime() - shift
-                                , window.getEndTime() - shift, window.getStation()
+                                , window.getEndTime() - shift, window.getObserver()
                                 , window.getGlobalCMTID(), window.getComponent(), window.getPhases());
 
                         RealVector synU = cutSAC(synSac, window);

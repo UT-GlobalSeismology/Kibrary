@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util;
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -373,13 +373,13 @@ public final class Utilities {
 	}
 
     /**
-     * @param path {@link Path} to look for {@link FormattedSPCFile} in
+     * @param path {@link Path} to look for {@link FormattedSPCFileName} in
      * @return set of {@link SPCFileName} in the dir
      * @throws IOException if an I/O error occurs
      */
 	public static Set<SPCFileName> collectSpcFileName(Path path) throws IOException {
 		try (Stream<Path> stream = Files.list(path)) {
-			return stream.filter(FormattedSPCFile::isFormatted).map(FormattedSPCFile::new).collect(Collectors.toSet());
+			return stream.filter(FormattedSPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toSet());
 		}
 	}
 	
@@ -423,7 +423,7 @@ public final class Utilities {
 		
 		for (int i = 1; i <= n; i++) {
 			String filename = String.format(formatter + template, i);
-			list.add(new FormattedSPCFile(root.resolve(filename)));
+			list.add(new FormattedSPCFileName(root.resolve(filename)));
 		}
 		return list;
 	}
@@ -468,7 +468,7 @@ public final class Utilities {
 		
 		for (int i = 1; i <= n; i++) {
 			String filename = String.format(formatter + template, i);
-			list.add(new FormattedSPCFile(root.resolve(filename)));
+			list.add(new FormattedSPCFileName(root.resolve(filename)));
 		}
 		return list;
 	}
@@ -522,7 +522,7 @@ public final class Utilities {
 			
 			for (int i = 1; i <= n; i++) {
 				String filename = String.format(formatter + template, i);
-				list.add(new FormattedSPCFile(root.resolve(filename)));
+				list.add(new FormattedSPCFileName(root.resolve(filename)));
 			}
 			
 			fpfileMap.put(event.getGlobalCMTID(), list);
@@ -571,7 +571,7 @@ public final class Utilities {
 		
 		for (int i = 1; i <= n; i++) {
 			String filename = String.format(formatter + template, i);
-			list.add(new FormattedSPCFile(root.resolve(filename)));
+			list.add(new FormattedSPCFileName(root.resolve(filename)));
 		}
 		return list;
 	}
@@ -625,7 +625,7 @@ public final class Utilities {
 			
 			for (int i = 1; i <= n; i++) {
 				String filename = String.format(formatter + template, i);
-				list.add(new FormattedSPCFile(root.resolve(filename)));
+				list.add(new FormattedSPCFileName(root.resolve(filename)));
 			}
 			
 			fpfileMap.put(event.getGlobalCMTID(), list);

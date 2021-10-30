@@ -92,7 +92,7 @@ public class ProfileWaveform {
 						double[] synData = synID.getData();
 						RealVector obsDataVector = new ArrayRealVector(obsData);
 						RealVector synDataVector = new ArrayRealVector(synData);
-						String filename = obsID.getStation().getName() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+						String filename = obsID.getStation().getStation() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
 						Path tracePath = eventProfilePath.resolve(filename);
 						
 						PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
@@ -206,7 +206,7 @@ public class ProfileWaveform {
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
 		return timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(id)
-				&& tw.getStation().equals(station)
+				&& tw.getObserver().equals(station)
 				&& tw.getComponent().equals(component))
 				.collect(Collectors.toList());
 	}

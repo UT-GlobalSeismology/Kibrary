@@ -28,6 +28,9 @@ class SacTriplet {
     private double latitude;
     private double longitude;
 
+    /**
+     * name of the triplet
+     */
     private String name;
 
     private Path rPath;

@@ -25,7 +25,7 @@ public class selectSameWindow {
 		
 		for (TimewindowInformation window : targetwindows) {
 			List<TimewindowInformation> tmplist = otherwindows.stream().parallel().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
-					&& tw.getStation().equals(window.getStation())).collect(Collectors.toList());
+					&& tw.getObserver().equals(window.getObserver())).collect(Collectors.toList());
 			if (tmplist.size() == 1)
 				selectedwindow.add(tmplist.get(0));
 		}

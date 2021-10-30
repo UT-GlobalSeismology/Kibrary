@@ -50,8 +50,14 @@ class EventProcessor implements Runnable {
      */
     private static final double SAMPLING_HZ = 20;
 
-    private final EventFolder INPUT_DIR;
-    private final Path OUTPUT_PATH;
+    /**
+     * The input event folder
+     */
+    private final EventFolder inputDir;
+    /**
+     * Path of the output event folder
+     */
+    private final Path outputPath;
 
     /**
      * GlobalCMTData for the event in the seedfile
@@ -112,31 +118,31 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     EventProcessor(EventFolder eventDir, Path outPath) throws IOException {
-        INPUT_DIR = eventDir;
-        OUTPUT_PATH = outPath.resolve(eventDir.getName());
+        inputDir = eventDir;
+        outputPath = outPath.resolve(eventDir.getName());
 
         event = eventDir.getGlobalCMTID().getEvent();
 
-        unSetPath = OUTPUT_PATH.resolve("unSet");
-        invalidStationPath = OUTPUT_PATH.resolve("invalidStation");
-        unwantedCoordinatePath = OUTPUT_PATH.resolve("unwantedCoordinate");
+        unSetPath = outputPath.resolve("unSet");
+        invalidStationPath = outputPath.resolve("invalidStation");
+        unwantedCoordinatePath = outputPath.resolve("unwantedCoordinate");
 
-        doneMergePath = OUTPUT_PATH.resolve("doneMerge");
-        unMergedPath = OUTPUT_PATH.resolve("unMerged");
+        doneMergePath = outputPath.resolve("doneMerge");
+        unMergedPath = outputPath.resolve("unMerged");
 
-        doneModifyPath = OUTPUT_PATH.resolve("doneModify");
-        unModifiedPath = OUTPUT_PATH.resolve("unModified");
-        unwantedDistancePath = OUTPUT_PATH.resolve("unwantedDistance");
+        doneModifyPath = outputPath.resolve("doneModify");
+        unModifiedPath = outputPath.resolve("unModified");
+        unwantedDistancePath = outputPath.resolve("unwantedDistance");
 
-        doneDeconvolvePath = OUTPUT_PATH.resolve("doneDeconvolve");
-        invalidRespPath = OUTPUT_PATH.resolve("invalidResp");
-        duplicateComponentPath = OUTPUT_PATH.resolve("duplicateComponent");
+        doneDeconvolvePath = outputPath.resolve("doneDeconvolve");
+        invalidRespPath = outputPath.resolve("invalidResp");
+        duplicateComponentPath = outputPath.resolve("duplicateComponent");
 
-        doneRotatePath = OUTPUT_PATH.resolve("doneRotate");
-        unRotatedPath = OUTPUT_PATH.resolve("unRotated");
+        doneRotatePath = outputPath.resolve("doneRotate");
+        unRotatedPath = outputPath.resolve("unRotated");
 
-        invalidTripletPath = OUTPUT_PATH.resolve("invalidTriplet");
-        duplicateInstrumentPath = OUTPUT_PATH.resolve("duplicateInstrument");
+        invalidTripletPath = outputPath.resolve("invalidTriplet");
+        duplicateInstrumentPath = outputPath.resolve("duplicateInstrument");
 
     }
 
@@ -168,48 +174,48 @@ class EventProcessor implements Runnable {
 
         // copy, select, and set up SAC files
         try {
-            Files.createDirectories(OUTPUT_PATH);
+            Files.createDirectories(outputPath);
             setupSacs();
         } catch (IOException e) {
-            System.err.println("!!!!!!! Error on setup : " + INPUT_DIR.getName());
+            System.err.println("!!!!!!! Error on setup : " + inputDir.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on setup : " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on setup : " + inputDir.getName(), e);
         }
 
         // merge segmented SAC files
         try {
             mergeSacSegments();
         } catch (IOException e) {
-            System.err.println("!!!!!!! Error on merge : " + INPUT_DIR.getName());
+            System.err.println("!!!!!!! Error on merge : " + inputDir.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on merge : " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on merge : " + inputDir.getName(), e);
         }
 
         // remove trend, zero-pad, and cut SAC files
         try {
             modifySacs();
         } catch (Exception e) {
-            System.err.println("!!!!!!! Error on modify : " + INPUT_DIR.getName());
+            System.err.println("!!!!!!! Error on modify : " + inputDir.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on modify : " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on modify : " + inputDir.getName(), e);
         }
 
         // instrumentation function deconvolution
         try {
             deconvolveSacs();
         } catch (IOException e) {
-            System.err.println("!!!!!!! Error on deconvolution : " + INPUT_DIR.getName());
+            System.err.println("!!!!!!! Error on deconvolution : " + inputDir.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on deconvolution : " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on deconvolution : " + inputDir.getName(), e);
         }
 
         // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
         try {
             rotate();
         } catch (IOException e) {
-            System.err.println("!!!!!!! Error on rotation : " + INPUT_DIR.getName());
+            System.err.println("!!!!!!! Error on rotation : " + inputDir.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on rotation : " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on rotation : " + inputDir.getName(), e);
         }
 
         // eliminating duplicate instruments and close stations
@@ -217,9 +223,9 @@ class EventProcessor implements Runnable {
         try {
             duplicationElimination();
         } catch (IOException e) {
-            System.err.println("!!!!!!! Error on elimination : " + INPUT_DIR.getName());
+            System.err.println("!!!!!!! Error on elimination : " + inputDir.getName());
             e.printStackTrace();
-            throw new RuntimeException("Error on elimination : " + INPUT_DIR.getName(), e);
+            throw new RuntimeException("Error on elimination : " + inputDir.getName(), e);
         }
 
         if (removeIntermediateFiles) removeIntermediateFiles();
@@ -253,7 +259,7 @@ class EventProcessor implements Runnable {
      */
     private void setupSacs() throws IOException {
 
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(INPUT_DIR.toPath(), "*.SAC")) {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(inputDir.toPath(), "*.SAC")) {
             for (Path rawSacPath : sacPaths) {
                 // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
 
@@ -275,7 +281,7 @@ class EventProcessor implements Runnable {
                 }
 
                 // copy SAC file from the input directory to the output event directory; file name changed here
-                Path newSacPath = OUTPUT_PATH.resolve(newSacName(rawSacPath, sacFile));
+                Path newSacPath = outputPath.resolve(newSacName(rawSacPath, sacFile));
                 Files.copy(rawSacPath, newSacPath);
 
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
@@ -284,7 +290,7 @@ class EventProcessor implements Runnable {
                         sacFile.getLocation(), sacFile.getChannel());
                 try {
                     // this will fail if Station file is unfound, etc.
-                    sif.readStationInformation(INPUT_DIR.toPath());
+                    sif.readStationInformation(inputDir.toPath());
                 } catch (IOException e) {
                     System.err.println("!!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
@@ -444,7 +450,7 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void mergeSacSegments() throws IOException {
-        SegmentedSacMerger s = new SegmentedSacMerger(OUTPUT_PATH, doneMergePath, unMergedPath);
+        SegmentedSacMerger s = new SegmentedSacMerger(outputPath, doneMergePath, unMergedPath);
         s.merge();
         s.move();
     }
@@ -467,7 +473,7 @@ class EventProcessor implements Runnable {
      */
     private void modifySacs() throws IOException {
 
-        try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MRG")) {
+        try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(outputPath, "*.MRG")) {
             for (Path sacPath : sacPathStream) {
                 SacModifier sm = new SacModifier(event, sacPath, byPDE);
 
@@ -519,17 +525,17 @@ class EventProcessor implements Runnable {
      */
     private void deconvolveSacs() throws IOException{
 
-        try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(OUTPUT_PATH, "*.MOD")) {
+        try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(outputPath, "*.MOD")) {
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
 
                 SACFileName modFile = new SACFileName(modPath.getFileName().toString());
                 String afterName = modFile.getDeconvolvedFileName();
-                Path afterPath = OUTPUT_PATH.resolve(afterName);
+                Path afterPath = outputPath.resolve(afterName);
 
                 RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
-                Path respPath = INPUT_DIR.toPath().resolve(respFile.getRespFile());
-                Path spectraPath = OUTPUT_PATH.resolve(respFile.getSpectraFile());
+                Path respPath = inputDir.toPath().resolve(respFile.getRespFile());
+                Path spectraPath = outputPath.resolve(respFile.getSpectraFile());
 
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
 
@@ -609,7 +615,7 @@ class EventProcessor implements Runnable {
                         " -s lin -r cs -u vel";
         //System.out.println("runevalresp: "+ command);// 4debug
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
-        pb.directory(OUTPUT_PATH.toFile());
+        pb.directory(outputPath.toFile());
         try {
             // the standard error stream will be redirected to the standard output stream
             pb.redirectErrorStream(true);
@@ -639,12 +645,12 @@ class EventProcessor implements Runnable {
      */
     private void rotate() throws IOException {
 
-        try (DirectoryStream<Path> xStream = Files.newDirectoryStream(OUTPUT_PATH, "*.X")) {
+        try (DirectoryStream<Path> xStream = Files.newDirectoryStream(outputPath, "*.X")) {
             for (Path xPath : xStream) {
                 SACFileName xFile = new SACFileName(xPath.getFileName().toString());
-                Path yPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("Y"));
-                Path rPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("R"));
-                Path tPath = OUTPUT_PATH.resolve(xFile.getNameWithComponent("T"));
+                Path yPath = outputPath.resolve(xFile.getNameWithComponent("Y"));
+                Path rPath = outputPath.resolve(xFile.getNameWithComponent("R"));
+                Path tPath = outputPath.resolve(xFile.getNameWithComponent("T"));
 
                 // throw away .X file if its pair .Y file does not exist
                 if (!Files.exists(yPath)) {
@@ -665,7 +671,7 @@ class EventProcessor implements Runnable {
         }
 
         // If there are files (.Y) which had no pairs (.X), move them to trash
-        try (DirectoryStream<Path> yPaths = Files.newDirectoryStream(OUTPUT_PATH, "*.Y")) {
+        try (DirectoryStream<Path> yPaths = Files.newDirectoryStream(outputPath, "*.Y")) {
             for (Path yPath : yPaths) {
                 System.err.println("!! pair .X file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + yPath.getFileName());
                 Utilities.moveToDirectory(yPath, unRotatedPath, true);
@@ -686,17 +692,17 @@ class EventProcessor implements Runnable {
 
         // read R, T, and Z files into SacTriplet set
         Set<SacTriplet> sacTripletSet = new HashSet<>();
-        try (DirectoryStream<Path> rStream = Files.newDirectoryStream(OUTPUT_PATH, "*.R")) {
+        try (DirectoryStream<Path> rStream = Files.newDirectoryStream(outputPath, "*.R")) {
             for (Path rPath : rStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(rPath))) sacTripletSet.add(new SacTriplet(rPath, coordinateGrid));
             }
         }
-        try (DirectoryStream<Path> tStream = Files.newDirectoryStream(OUTPUT_PATH, "*.T")) {
+        try (DirectoryStream<Path> tStream = Files.newDirectoryStream(outputPath, "*.T")) {
             for (Path tPath : tStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(tPath))) sacTripletSet.add(new SacTriplet(tPath, coordinateGrid));
             }
         }
-        try (DirectoryStream<Path> zStream = Files.newDirectoryStream(OUTPUT_PATH, "*.Z")) {
+        try (DirectoryStream<Path> zStream = Files.newDirectoryStream(outputPath, "*.Z")) {
             for (Path zPath : zStream) {
                 if (sacTripletSet.stream().noneMatch(triplet -> triplet.add(zPath))) sacTripletSet.add(new SacTriplet(zPath, coordinateGrid));
             }

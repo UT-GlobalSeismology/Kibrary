@@ -518,7 +518,7 @@ public class FujiStaticCorrection implements Operation {
                 }
                 // Pickup time windows of obsName
                 Set<TimewindowInformation> windows = timewindowInformation.stream()
-                        .filter(info -> info.getStation().equals(station))
+                        .filter(info -> info.getObserver().equals(station))
                         .filter(info -> info.getGlobalCMTID().equals(eventID))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 

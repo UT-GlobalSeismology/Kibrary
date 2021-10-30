@@ -46,7 +46,7 @@ public class PartialVisual {
 			Phases phases = new Phases(partial.getPhases());
 			
 			Path dir = Paths.get(String.format("%.1f-%.1f", partial.getMinPeriod(), partial.getMaxPeriod()));
-			Path outpath =  dir.resolve(partial.getStation().getName() + "." 
+			Path outpath =  dir.resolve(partial.getStation().getStation() + "." 
 					+ partial.getGlobalCMTID() + "." + partial.getSacComponent() + "."
 					+ (int) (loc.getLatitude()*100) + "."
 					+ (int) (loc.getLongitude()*100) + "." + (int) (loc.getR()*100) + "." + partial.getPartialType() + "."

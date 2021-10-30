@@ -108,7 +108,7 @@ public class ExcludeTimewindow {
 				Set<Station> stations = StationInformationFile.read(Paths.get(args[1]));
 				
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
-						.filter(tw -> stations.contains(tw.getStation()))
+						.filter(tw -> stations.contains(tw.getObserver()))
 //						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI <= 35.)
 						.collect(Collectors.toSet());
 				
@@ -117,8 +117,8 @@ public class ExcludeTimewindow {
 			else {
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
 						.filter(tw ->  {
-							System.out.println(cluster.getAzimuthIndex(tw.getStation().getPosition()));
-							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+							System.out.println(cluster.getAzimuthIndex(tw.getObserver().getPosition()));
+							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
 //							if (distance > 30. || distance < 17.)
 //								return false;
 //							if (distance < 30. || distance > 90.)
@@ -143,7 +143,7 @@ public class ExcludeTimewindow {
 //								return false;
 							if (!clusterIDs.contains(tw.getGlobalCMTID()))
 								return false;
-							if (cluster.getAzimuthIndex(tw.getStation().getPosition()) != 3) return false;
+							if (cluster.getAzimuthIndex(tw.getObserver().getPosition()) != 3) return false;
 							else 
 								return true;
 						})
@@ -373,7 +373,7 @@ public class ExcludeTimewindow {
 		}
 		
 		public boolean isPair(TimewindowInformation tw) {
-			if (!tw.getStation().getName().equals(stationName))
+			if (!tw.getObserver().getStation().equals(stationName))
 				return false;
 			else if (!tw.getGlobalCMTID().equals(id))
 				return false;

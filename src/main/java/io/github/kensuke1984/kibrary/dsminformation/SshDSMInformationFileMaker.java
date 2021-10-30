@@ -175,14 +175,14 @@ public class SshDSMInformationFileMaker implements Operation {
 			
 			//select stations in timewindows
 			if (timewindowInformationPath != null) {
-				stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getStation().equals(sta) 
+				stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getObserver().equals(sta) 
 						&& tw.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
 						&& useComponents.contains(tw.getComponent())).count() == 0);
 			}
 			
 			if (stations.isEmpty())
 				continue;
-			int numberOfStation = (int) stations.stream().map(Station::getName).count();
+			int numberOfStation = (int) stations.stream().map(Station::getStation).count();
 			if (numberOfStation != stations.size())
 				System.err.println("!Caution there are stations with the same name and different positions in "
 						+ eventDir.getGlobalCMTID());

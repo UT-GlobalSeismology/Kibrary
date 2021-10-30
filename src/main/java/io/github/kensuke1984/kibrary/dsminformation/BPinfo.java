@@ -104,7 +104,7 @@ public class BPinfo extends DSMheader {
             // write info
             pw.println("c write directory");
             pw.println(OUTPUT + "/");
-            pw.println(STATION.getName());
+            pw.println(STATION.getStation());
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
@@ -182,7 +182,7 @@ public class BPinfo extends DSMheader {
             // write info
             pw.println("c write directory");
             pw.println(OUTPUT + "/");
-            pw.println(STATION.getName());
+            pw.println(STATION.getStation());
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points

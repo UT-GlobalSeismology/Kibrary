@@ -53,7 +53,7 @@ public class WriteMisfitFromWaveform {
 				if (region == null)
 					continue;
 				
-				pw.println(ids[i].getStation().getName() + " " + ids[i].getStation().getNetwork() + " " + ids[i].getStation().getPosition()
+				pw.println(ids[i].getStation().getStation() + " " + ids[i].getStation().getNetwork() + " " + ids[i].getStation().getPosition()
 						+ " " + ids[i].getGlobalCMTID() + " " + ids[i].getSacComponent() + " " + new Phases(ids[i].getPhases()) + " " + region
 						+ " " + ratio + " " + var + " " + cc);
 			}

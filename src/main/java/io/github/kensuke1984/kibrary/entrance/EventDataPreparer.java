@@ -39,8 +39,11 @@ public class EventDataPreparer {
     private static final String DATASELECT_URL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
     private String date = Utilities.getTemporaryString();
 
-    private final EventFolder EVENT_DIR;
-    private final GlobalCMTID ID;
+    /**
+     * The event folder to download in
+     */
+    private final EventFolder eventDir;
+    private final GlobalCMTID id;
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -55,8 +58,8 @@ public class EventDataPreparer {
      */
     public EventDataPreparer (EventFolder eventFolder) {
 
-        EVENT_DIR = eventFolder;
-        ID = eventFolder.getGlobalCMTID();
+        eventDir = eventFolder;
+        id = eventFolder.getGlobalCMTID();
 
     }
 
@@ -66,8 +69,8 @@ public class EventDataPreparer {
      * @param full (boolean) Whether the input file is actually a full seed file
      */
     public void setParameters (String mseedFile, boolean full) {
-        startTime = ID.getEvent().getCMTTime();
-        endTime = ID.getEvent().getCMTTime();
+        startTime = id.getEvent().getCMTTime();
+        endTime = id.getEvent().getCMTTime();
 
         mseedFileName = mseedFile;
         isFullSeed = full;
@@ -82,7 +85,7 @@ public class EventDataPreparer {
      * @throws IOException
      */
     public void downloadMseed(String networks, String channels, int headAdjustment, int footAdjustment) throws IOException {
-        LocalDateTime cmtTime = ID.getEvent().getCMTTime();
+        LocalDateTime cmtTime = id.getEvent().getCMTTime();
         startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
 
@@ -91,10 +94,10 @@ public class EventDataPreparer {
         URL url = new URL(urlString);
         long size = 0L;
 
-        mseedFileName = ID + "." + date + ".mseed";
-        Path mseedPath = EVENT_DIR.toPath().resolve(mseedFileName);
+        mseedFileName = id + "." + date + ".mseed";
+        Path mseedPath = eventDir.toPath().resolve(mseedFileName);
         size = Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING);
-        System.err.println("Downloaded : " + ID + " - " + size + " bytes");
+        System.err.println("Downloaded : " + id + " - " + size + " bytes");
     }
 
     /**
@@ -125,7 +128,7 @@ public class EventDataPreparer {
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
         // set be the working directory of the command
-        pb.directory(EVENT_DIR.getAbsoluteFile());
+        pb.directory(eventDir.getAbsoluteFile());
         //System.out.println("working directory is: " + pb.directory()); //4debug
 
         try {
@@ -162,7 +165,7 @@ public class EventDataPreparer {
      * @throws IOException
      */
     public void renameToMseedStyle() throws IOException {
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
                 String[] parts = sacPath.getFileName().toString().split("\\.");
                 if(parts.length != 12) {
@@ -183,7 +186,7 @@ public class EventDataPreparer {
      * @throws IOException
      */
     public void downloadMetadata() throws IOException {
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(EVENT_DIR.toPath(), "*.SAC")) {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
                 String[] sacInfo = sacPath.getFileName().toString().split("\\.");
                 if(sacInfo.length != 9) {
@@ -199,11 +202,11 @@ public class EventDataPreparer {
 
                 StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel);
                 stationInfo.setRequest(startTime, endTime);
-                stationInfo.downloadStationInformation(EVENT_DIR.toPath());
+                stationInfo.downloadStationInformation(eventDir.toPath());
 
                 RespDataFile respData = new RespDataFile(network, station, location, channel);
                 respData.setRequest(startTime);
-                respData.downloadRespData(EVENT_DIR.toPath());
+                respData.downloadRespData(eventDir.toPath());
             }
         }
     }

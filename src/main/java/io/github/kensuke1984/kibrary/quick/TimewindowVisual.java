@@ -267,13 +267,13 @@ public class TimewindowVisual {
 				Map<DistanceAzimuth, Integer> usedBinsCount = new HashMap<>();
 				Set<Path> outpathList = new HashSet<>();
 				for (TimewindowInformation timewindow : timewindows) {
-					if (usedStations.contains(timewindow.getStation()))
+					if (usedStations.contains(timewindow.getObserver()))
 						continue;
 					
 					List<Double> timeShiftList = new ArrayList();
 					for (Set<StaticCorrection> corrections : correctionListThisID) {
 						Phases phases = new Phases(timewindow.getPhases());
-						timeShiftList.add(corrections.stream().filter(corr -> corr.getStation().equals(timewindow.getStation())
+						timeShiftList.add(corrections.stream().filter(corr -> corr.getStation().equals(timewindow.getObserver())
 								&& new Phases(corr.getPhases()).equals(phases) ).findFirst().get().getTimeshift());
 					}
 //								&& Math.abs(corr.getSynStartTime() - timewindow.getStartTime()) < 2. ).findFirst().get().getTimeshift());
@@ -294,11 +294,11 @@ public class TimewindowVisual {
 					}
 					if (usedBinsCount.get(distance_azimuth) == 1)
 					{
-						usedStations.add(timewindow.getStation());
+						usedStations.add(timewindow.getObserver());
 						
-						Path synPath = root.resolve(id.toString() + "/" + timewindow.getStation().getName() + "." + id.toString() + "." + "Tsc");
+						Path synPath = root.resolve(id.toString() + "/" + timewindow.getObserver().getStation() + "." + id.toString() + "." + "Tsc");
 						SACFileName synName = new SACFileName(synPath);
-						Path obsPath = root.resolve(id.toString() + "/" + timewindow.getStation().getName() + "." + id.toString() + "." + "T");
+						Path obsPath = root.resolve(id.toString() + "/" + timewindow.getObserver().getStation() + "." + id.toString() + "." + "T");
 						
 						boolean isObs = true;
 						if (!Files.exists(obsPath))
@@ -308,7 +308,7 @@ public class TimewindowVisual {
 						if (isObs)
 							obsName = new SACFileName(obsPath);
 						
-						double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())
+						double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())
 								* 180 / Math.PI;
 		//				double azimuth = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(timewindow.getStation().getPosition())
 		//						* 180 / Math.PI;
@@ -400,7 +400,7 @@ public class TimewindowVisual {
 					}
 				}
 				for (TimewindowInformation timewindow : timewindows) {
-					if (!usedStations.contains(timewindow.getStation()))
+					if (!usedStations.contains(timewindow.getObserver()))
 						continue;
 //					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())
 //							* 180 / Math.PI;

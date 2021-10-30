@@ -174,20 +174,20 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * name, global CMT id, component.
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 	
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 			
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 				&& (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent()) 
 				&& t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_record = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 	
 	public ObservedSyntheticDatasetMaker(Properties property) throws IOException {
@@ -348,7 +348,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		
 		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath)
 				.stream().filter(tw -> {
-					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance)
 						return false;
 					return true;
@@ -385,13 +385,13 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		if (timewindowRefPath != null)
 			timewindowRefInformationSet = TimewindowInformationFile.read(timewindowRefPath)
 				.stream().filter(tw -> {
-					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance)
 						return false;
 					return true;
 				}).collect(Collectors.toSet());
 		
-		stationSet = timewindowInformationSet.stream().map(TimewindowInformation::getStation)
+		stationSet = timewindowInformationSet.stream().map(TimewindowInformation::getObserver)
 				.collect(Collectors.toSet());
 		idSet = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
 				.collect(Collectors.toSet());
@@ -705,7 +705,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				if (!synFileName.exists()) continue;
 
 				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
-						.filter(info -> info.getStation().getName().equals(stationName))
+						.filter(info -> info.getObserver().getStation().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
@@ -784,7 +784,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					int nptsRef = 0;
 					if (timewindowRefInformationSet != null) {
 						List<TimewindowInformation> tmpwindows = timewindowRefInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
-								&& tw.getStation().equals(window.getStation())
+								&& tw.getObserver().equals(window.getObserver())
 								&& tw.getComponent().equals(window.getComponent())).collect(Collectors.toList());
 						if (tmpwindows.size() != 1) {
 							System.err.println("Reference timewindow does not exist " + window);

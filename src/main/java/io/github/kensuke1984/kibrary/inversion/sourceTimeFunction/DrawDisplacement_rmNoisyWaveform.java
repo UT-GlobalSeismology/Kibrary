@@ -102,14 +102,14 @@ class DrawDisplacement_rmNoisyWaveform{
 				Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
 				for(TimewindowInformation timewindow : timewindows){
 					if(timewindow.getGlobalCMTID().equals(eventID) && timewindow.getComponent().equals(component)){
-        			if(timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())*180./Math.PI > 30. &&
-        					timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())*180./Math.PI < 90.){
+        			if(timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
+        					timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
 						TimewindowInformation correctionTw = ReadStaticCorrection.getcorrection(eventID, timewindow, corrections);
-						Station station = timewindow.getStation();
+						Station station = timewindow.getObserver();
 						double sttime = correctionTw.getStartTime() - 5.;
 						double entime = sttime + windowLength;
-						String path = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getName() + "." + eventID + "." + component;
-						String synpath = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getName() + "." + eventID + "." + component + "s";
+						String path = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getStation() + "." + eventID + "." + component;
+						String synpath = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getStation() + "." + eventID + "." + component + "s";
 						double[] tmpDisp = getDisplacementAmplitude2Average(eventID, path, synpath, pwfile, sttime, entime);
 						System.out.println("FIRST" + tmpDisp[0]);
 					if(tmpDisp[0] < 999999.){

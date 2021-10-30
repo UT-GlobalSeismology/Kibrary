@@ -50,7 +50,7 @@ public class KernelVisual {
 				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
-				Path dir2 = dir1.resolve(partial.getStation().getName());
+				Path dir2 = dir1.resolve(partial.getStation().getStation());
 				if (!Files.exists(dir2))
 					Files.createDirectories(dir2);
 				Path dir3 = dir2.resolve(new Phases(partial.getPhases()).toString());

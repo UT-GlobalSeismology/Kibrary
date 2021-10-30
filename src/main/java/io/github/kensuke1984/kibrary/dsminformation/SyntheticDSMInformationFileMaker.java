@@ -340,10 +340,13 @@ public class SyntheticDSMInformationFileMaker implements Operation {
                     stations = synStationSet;
                 if (stations.isEmpty())
                     continue;
+
+                // in the same event folder, observers with the same name should have same position
                 int numberOfStation = (int) stations.stream().map(Station::toString).count();
                 if (numberOfStation != stations.size())
                     System.err.println("!Caution there are stations with the same name and different positions in "
                             + eventDir);
+
                 Path eventOut = outPath.resolve(eventDir.toString());
 
                 if (eventDir.getGlobalCMTID().getEvent() != null) {

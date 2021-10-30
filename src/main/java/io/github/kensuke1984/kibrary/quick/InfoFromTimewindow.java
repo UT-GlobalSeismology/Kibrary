@@ -42,14 +42,14 @@ public class InfoFromTimewindow {
 			}
 			nTransverseMap.put(event, itmp);
 			
-			Station sta = timewindow.getStation();
+			Station sta = timewindow.getObserver();
 			usedStation.add(sta);
 			
 			System.out.println((6371. - event.getEvent().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(sta.getPosition())));
 		}
 		
 		for (Station sta : usedStation)
-			Files.write(stationFile, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition()+"\n").getBytes(), StandardOpenOption.APPEND);
+			Files.write(stationFile, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition()+"\n").getBytes(), StandardOpenOption.APPEND);
 		
 		for (GlobalCMTID id : nTransverseMap.keySet()) {
 			System.out.println(id + " " + nTransverseMap.get(id));

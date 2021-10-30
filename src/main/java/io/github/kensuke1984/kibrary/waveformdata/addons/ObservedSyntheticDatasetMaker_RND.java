@@ -311,7 +311,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
 		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
-		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
+		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getObserver)
 				.collect(Collectors.toSet());
 		idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)
 				.collect(Collectors.toSet());
@@ -331,7 +331,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 					GlobalCMTID thisID = events.get(isample);
 					idSet = idSet.stream().filter(id -> id.equals(thisID)).collect(Collectors.toSet());
 					stationSet = timewindowInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(thisID))
-							.map(TimewindowInformation::getStation).collect(Collectors.toSet());
+							.map(TimewindowInformation::getObserver).collect(Collectors.toSet());
 					System.err.println("Event sample " + thisID);
 					Path waveIDPath = workPath.resolve("waveformID_" + thisID + ".dat");
 					Path waveformPath = workPath.resolve("waveform_" + thisID + ".dat");
@@ -413,7 +413,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 					continue;
 
 				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
-						.filter(info -> info.getStation().getName().equals(stationName))
+						.filter(info -> info.getObserver().getStation().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
@@ -516,11 +516,11 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	 * name, global CMT id, component.
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 	
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {

@@ -682,7 +682,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		double bornRatio = bornVector.getLInfNorm() / obsVector.getLInfNorm();
 
 		
-		outputString.eachMisfitString += id.getStation().getName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+		outputString.eachMisfitString += id.getStation().getStation() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
 				+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 				+ tmpSyn + " " + tmpBorn + " " + synCorr + " " + bornCorr + "\n";
 		

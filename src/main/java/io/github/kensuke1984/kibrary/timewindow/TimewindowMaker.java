@@ -42,9 +42,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * in event folders under the working directory. For all the waveforms,
  * timewindows are computed by TauP.
  * <p>
- * It creates a window for each given phase and exphase with front and rear
- * parts. Overlapped part between those are abandoned. Start and end time of the
- * window is set to integer multiple of DELTA in SAC files.
+ * It creates a window for each specified phase,
+ * starting from (arrival time - frontShift) and ending at (arrival time + rearShift).
+ * It also creates a window for each exphase,
+ * starting from (arrival time - exFrontShift) and ending at (arrival time + rearShift).
+ * Overlapped parts between these are abandoned.
+ * <p>
+ * Start and end times of the windows are set to integer multiples of DELTA in SAC files.
  *
  * @author Kensuke Konishi
  * @version 0.2.4
@@ -115,9 +119,9 @@ public class TimewindowMaker implements Operation {
             pw.println("#exPhases");
             pw.println("##TauPPhases to be included in timewindow (S)");
             pw.println("#usePhases");
-            pw.println("##(double) Time before first phase. If it is 10, then 10 s before arrival (0)");
+            pw.println("##(double) Time before first phase [sec]. If it is 10, then 10 s before arrival (0)");
             pw.println("#frontShift");
-            pw.println("##(double) Time after last phase. If it is 60, then 60 s after arrival (0)");
+            pw.println("##(double) Time after last phase [sec]. If it is 60, then 60 s after arrival (0)");
             pw.println("#rearShift");
             pw.println("##(boolean) Corridor (false)");
             pw.println("#corridor ");

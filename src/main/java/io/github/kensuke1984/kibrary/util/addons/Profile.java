@@ -284,7 +284,7 @@ public class Profile {
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
 		return timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
-				&& tw.getStation().equals(station)
+				&& tw.getObserver().equals(station)
 				&& tw.getComponent().equals(component))
 				.collect(Collectors.toList());
 	}

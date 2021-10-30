@@ -25,7 +25,7 @@ public class Bins2D {
 		this.dDistance = dDistance;
 		
 		for (TimewindowInformation timewindow : timewindows) {
-			Station station = timewindow.getStation();
+			Station station = timewindow.getObserver();
 			Location eventLocation = event.getEvent().getCmtLocation();
 			double distance = station.getPosition().getEpicentralDistance(eventLocation)
 					* 180. / Math.PI;
@@ -60,7 +60,7 @@ public class Bins2D {
 	}
 	
 	public DistanceAzimuth getBinPosition(TimewindowInformation timewindow) {
-		Station station = timewindow.getStation();
+		Station station = timewindow.getObserver();
 		Location eventLocation = event.getEvent().getCmtLocation();
 		double distance = station.getPosition().getEpicentralDistance(eventLocation)
 				* 180. / Math.PI;

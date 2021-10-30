@@ -364,7 +364,7 @@ public class Weighting {
 		
 		if (station.getPosition().getLatitude() < 25.)
 			weight = 2.;
-		if (station.getName().equals("BBSR"))
+		if (station.getStation().equals("BBSR"))
 			weight = 2.;
 		
 		return weight;

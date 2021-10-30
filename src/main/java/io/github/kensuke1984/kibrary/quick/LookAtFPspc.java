@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
 import io.github.kensuke1984.kibrary.util.spc.Spectrum;
@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.spc.Spectrum;
 public class LookAtFPspc {
 
 	public static void main(String[] args) throws IOException {
-		SPCFileName spcName = new FormattedSPCFile(Paths.get(args[0]));
+		SPCFileName spcName = new FormattedSPCFileName(Paths.get(args[0]));
 		
 		DSMOutput dsmOutput = null;
 		if (args.length == 1)

@@ -48,7 +48,7 @@ public class StationAverageRatio {
 				continue;
 			
 			StaticCorrection correction = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getStation())
+					&& corr.getStation().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent())
 					&& corr.getSynStartTime() == tw.getStartTime())
 					.findAny().get();
@@ -75,9 +75,9 @@ public class StationAverageRatio {
 		for (Station sta : stationCount.keySet()) {
 			double ratio = stationAverages.get(sta) / stationCount.get(sta);
 			if (ratio >= 1)
-				Files.write(outpathP, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathP, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
 			else
-				Files.write(outpathM, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathM, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}
 

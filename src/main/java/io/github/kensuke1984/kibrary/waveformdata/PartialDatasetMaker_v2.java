@@ -52,7 +52,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
@@ -326,7 +326,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 			
 			// Pickup timewindows
 			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
-					.filter(info -> info.getStation().getStringID().equals(stationName))
+					.filter(info -> info.getObserver().getStringID().equals(stationName))
 					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
 
 			System.out.println(id + " " + timewindowList.size() + " " + stationName);
@@ -527,7 +527,7 @@ private class WorkerTimePartial implements Runnable {
 		
 		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getName().equals(sacname.getStationCode()))
+					.filter(info -> info.getObserver().getStation().equals(sacname.getStationCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;
@@ -540,14 +540,14 @@ private class WorkerTimePartial implements Runnable {
 			
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
-						.filter(info -> info.getStation().equals(station))
+						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
 				if (tw.isEmpty()) {
 					tmpTws.forEach(window -> {
 						System.out.println(window);
-						System.out.println(window.getStation().getPosition());
+						System.out.println(window.getObserver().getPosition());
 					});
 					System.err.println(station.getPosition());
 					System.err.println("Ignoring empty timewindow " + sacname + " " + station);
@@ -863,7 +863,7 @@ private class WorkerTimePartial implements Runnable {
 		Comparator<TimewindowInformation> comparator = new Comparator<TimewindowInformation>() {
 			@Override
 			public int compare(TimewindowInformation o1, TimewindowInformation o2) {
-				int res = o1.getStation().compareTo(o2.getStation());
+				int res = o1.getObserver().compareTo(o2.getObserver());
 				if (res != 0)
 					return res;
 				else {
@@ -928,7 +928,7 @@ private class WorkerTimePartial implements Runnable {
 			// Set of global cmt IDs for the station in the timewindow.
 			Set<GlobalCMTID> idSet = timewindowInformation.stream()
 					.filter(info -> components.contains(info.getComponent()))
-					.filter(info -> info.getStation().equals(station)).map(TimewindowInformation::getGlobalCMTID)
+					.filter(info -> info.getObserver().equals(station)).map(TimewindowInformation::getGlobalCMTID)
 					.collect(Collectors.toSet());
 
 			if (idSet.isEmpty())
@@ -984,11 +984,11 @@ private class WorkerTimePartial implements Runnable {
 //				{
 					for (Path fpEventPath : fpEventPaths) {
 						String eventName = fpEventPath.getParent().getFileName().toString();
-						SPCFileName fpfile = new FormattedSPCFile(
+						SPCFileName fpfile = new FormattedSPCFileName(
 								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
 						SPCFileName fpfile_PSV = null;
 						if (mode.equals("BOTH")) {
-							fpfile_PSV = new FormattedSPCFile(
+							fpfile_PSV = new FormattedSPCFileName(
 									fpEventPath.resolve(pointName + "." + eventName + ".PF..." + "PSV" + ".spc"));
 							if (!fpfile_PSV.exists()) {
 								System.err.println("Fp file not found " + fpfile_PSV);
@@ -1210,7 +1210,7 @@ private class WorkerTimePartial implements Runnable {
 		stationSet = new HashSet<>();
 		timewindowInformation.forEach(t -> {
 			idSet.add(t.getGlobalCMTID());
-			stationSet.add(t.getStation());
+			stationSet.add(t.getObserver());
 		});
 		phases = timewindowInformation.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);

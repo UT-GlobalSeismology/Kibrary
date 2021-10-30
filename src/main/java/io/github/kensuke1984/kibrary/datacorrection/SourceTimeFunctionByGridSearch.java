@@ -756,10 +756,10 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			try {
 				for (TimewindowInformation timewindow : timewindows) {
 					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(
-							timewindow.getStation().getPosition()) * 180. / Math.PI;
+							timewindow.getObserver().getPosition()) * 180. / Math.PI;
 					if (distance < minDistance || distance > maxDistance)
 						continue;
-					Path sacObsPath = eventFolder.toPath().resolve(timewindow.getStation().getName() + "." +
+					Path sacObsPath = eventFolder.toPath().resolve(timewindow.getObserver().getStation() + "." +
 							timewindow.getGlobalCMTID().toString() + "." +
 							timewindow.getComponent());
 					SACFileName obsfile = new SACFileName(sacObsPath);
@@ -944,7 +944,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	}
 	
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 	
 }

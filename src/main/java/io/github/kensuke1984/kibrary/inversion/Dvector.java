@@ -990,7 +990,7 @@ public class Dvector {
 				System.out.println(obsIDs[i]);
 				info = selectionInfo.stream().filter(selec -> {
 					TimewindowInformation tw = selec.getTimewindow();
-					return tw.getStation().equals(station) 
+					return tw.getObserver().equals(station) 
 							&& tw.getGlobalCMTID().equals(id)
 							&& tw.getComponent().equals(component)
 							&& Math.abs(tw.getStartTime() - startTime) < 0.1;

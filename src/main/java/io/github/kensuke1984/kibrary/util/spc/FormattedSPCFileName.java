@@ -22,7 +22,7 @@ import java.nio.file.Path;
  * @version 0.0.1.1
  * @author anselme add network
  */
-public class FormattedSPCFile extends SPCFileName {
+public class FormattedSPCFileName extends SPCFileName {
 
     private static final long serialVersionUID = -6340811322023603513L;
 
@@ -45,7 +45,7 @@ public class FormattedSPCFile extends SPCFileName {
      * @param parent {@link File} of a parent folder of the spectrum file
      * @param child  a name of spectrum file
      */
-    public FormattedSPCFile(File parent, String child) {
+    public FormattedSPCFileName(File parent, String child) {
         super(parent, child);
         readName(getName());
     }
@@ -54,7 +54,7 @@ public class FormattedSPCFile extends SPCFileName {
      * @param parent of a parent folder of the spectrum file
      * @param child  a name of spectrum file
      */
-    public FormattedSPCFile(String parent, String child) {
+    public FormattedSPCFileName(String parent, String child) {
         super(parent, child);
         readName(getName());
     }
@@ -62,7 +62,7 @@ public class FormattedSPCFile extends SPCFileName {
     /**
      * @param pathname path of a spectrum file
      */
-    public FormattedSPCFile(String pathname) {
+    public FormattedSPCFileName(String pathname) {
         super(pathname);
         readName(getName());
     }
@@ -70,11 +70,11 @@ public class FormattedSPCFile extends SPCFileName {
     /**
      * @param path {@link Path} of a spectrum file
      */
-    public FormattedSPCFile(Path path) {
+    public FormattedSPCFileName(Path path) {
         this(path.toString());
     }
 
-    public FormattedSPCFile(URI uri) {
+    public FormattedSPCFileName(URI uri) {
         super(uri);
         readName(getName());
     }

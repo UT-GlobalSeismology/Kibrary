@@ -51,7 +51,7 @@ public class SeisTomoPy {
 			if (id.getSacComponent().equals(SACComponent.Z))
 				phaseString = "P";
 			br.write(id.getGlobalCMTID() + " " + evtloc.getLatitude() + " " + evtloc.getLongitude() + " " + (Earth.EARTH_RADIUS - evtloc.getR())
-					+ " " + station.getName() + " " + station.getNetwork() + " " 
+					+ " " + station.getStation() + " " + station.getNetwork() + " " 
 					+ station.getPosition().getLatitude() + " " + station.getPosition().getLongitude()
 					+ " " + id.getSacComponent() + " " + id.getStartTime() + " " + phaseString + "\n");
 		}

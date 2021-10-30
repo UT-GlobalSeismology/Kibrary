@@ -194,7 +194,7 @@ public final class SPC_SAC implements Operation {
             // -> executes the run() of that class defined in createSACMaker()
             execs.execute(createSACMaker(one, null));
             nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
+            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " files");
         }
         // both
         else for (SPCFileName spc : psvSPCs) {
@@ -211,7 +211,7 @@ public final class SPC_SAC implements Operation {
             // -> executes the run() of that class defined in createSACMaker()
             execs.execute(createSACMaker(one, two));
             nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
+            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
         System.err.println("\rReading SPC files finished.");
 
@@ -416,9 +416,9 @@ public final class SPC_SAC implements Operation {
         return psvSet;
     }
 
-    private FormattedSPCFile pairFile(SPCFileName psvFileName) {
+    private FormattedSPCFileName pairFile(SPCFileName psvFileName) {
         if (psvFileName.getMode() == SPCMode.SH) return null;
-        return new FormattedSPCFile(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
+        return new FormattedSPCFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
                 psvFileName.getName().replace("PSV.spc", "SH.spc")));
     }
 

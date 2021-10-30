@@ -65,8 +65,8 @@ public class DataSelectionInformation {
 	@Override
 	public String toString() {
 		List<String> phaseStrings = Stream.of(timewindow.getPhases()).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
-		String twString = timewindow.getStartTime() + " " + timewindow.getEndTime() + " " + timewindow.getStation().getName() + " " +
-				timewindow.getStation().getPosition() + " " + timewindow.getStation().getNetwork() + " " + timewindow.getGlobalCMTID() + " " + timewindow.getComponent() + " " +
+		String twString = timewindow.getStartTime() + " " + timewindow.getEndTime() + " " + timewindow.getObserver().getStation() + " " +
+				timewindow.getObserver().getPosition() + " " + timewindow.getObserver().getNetwork() + " " + timewindow.getGlobalCMTID() + " " + timewindow.getComponent() + " " +
 				String.join(",", phaseStrings);
 		return twString + " " + maxRatio + " " + minRatio + " " + absRatio + " " +
 				variance + " " + cc + " " + SNratio;

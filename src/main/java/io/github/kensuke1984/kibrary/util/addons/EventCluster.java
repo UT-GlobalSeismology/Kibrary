@@ -81,7 +81,7 @@ public class EventCluster {
 			String istring = "";
 			for (int i : stationClusterMap.get(sta))
 				istring += i + " ";
-			pw.println(sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
+			pw.println(sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
 		}
 		pw.close();
 	}
