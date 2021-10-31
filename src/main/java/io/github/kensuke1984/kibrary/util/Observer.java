@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -19,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.)
  * <p>
  * Observers are considered equal if and only if
- * [network code is equal && station code is equal && position is within COORDINATE_GRID].
+ * [network code is equal && station code is equal && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
  * If the network code is 'DSM', comparison of networks between instances is not done;
  * station code and horizontal position is considered.
  *
@@ -31,10 +33,11 @@ public class Observer implements Comparable<Observer> {
      */
     public static final String SYN = "DSM";
     /**
-     * Threshold to judge whether observers (with same network and station) are in the same position.
-     * It is OK if it is different from {@link DataKitchen#coordinateGrid}.
+     * The number of decimal places to round off coordinates
+     * when judging whether observers (with same network and station) are in the same position.
+     * It is OK if the value is different from {@link DataKitchen#coordinateGrid}.
      */
-    public static final double COORDINATE_GRID = 0.02;
+    public static final int COORDINATE_SCALE = 2;
 
     /**
      * network code
@@ -141,7 +144,8 @@ public class Observer implements Comparable<Observer> {
 
     /**
      * Observers are considered equal if and only if
-     * [network code is equal && station code is equal && position is within COORDINATE_GRID].
+     * [network code is equal && station code is equal
+     * && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
      * If the network code is 'DSM', comparison of networks between instances is not done;
      * station code and horizontal position is considered.
      */
@@ -177,13 +181,31 @@ public class Observer implements Comparable<Observer> {
         return true;
     }
 
+    /**
+     * Judges whether 2 observers are at the same position.
+     * @param pos1
+     * @param pos2
+     * @return
+     */
     private boolean equal(HorizontalPosition pos1, HorizontalPosition pos2) {
+        if (Precision.round(pos1.getLatitude(), COORDINATE_SCALE)
+                != Precision.round(pos2.getLatitude(), COORDINATE_SCALE))
+            return false;
+        else if (Precision.round(pos1.getLongitude(), COORDINATE_SCALE)
+                != Precision.round(pos2.getLongitude(), COORDINATE_SCALE))
+            return false;
+        else
+            return true;
+        // this way, it is transitive (i.e. if (x==y && y==z) then x==z)
+
+/*      //this is not transitive:
         if (!Utilities.equalWithinEpsilon(pos1.getLatitude(), pos2.getLatitude(), COORDINATE_GRID))
             return false;
         else if (!Utilities.equalWithinEpsilon(pos1.getLongitude(), pos2.getLongitude(), COORDINATE_GRID))
             return false;
         else
             return true;
+*/
     }
 
     /**

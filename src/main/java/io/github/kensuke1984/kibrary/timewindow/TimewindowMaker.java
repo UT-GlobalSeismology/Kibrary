@@ -56,6 +56,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class TimewindowMaker implements Operation {
 
+    private static final double EX_FRONT_SHIFT = 5.;
+
     private final Properties property;
     /**
      * Path of the work folder
@@ -65,6 +67,10 @@ public class TimewindowMaker implements Operation {
      * Path of the output file
      */
     private Path outputPath;
+    /**
+     * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの
+     */
+    private Path invalidList;
 
     /**
      * set of {@link SACComponent}
@@ -91,10 +97,6 @@ public class TimewindowMaker implements Operation {
     private Set<Phase> usePhases;
     private Set<TimewindowInformation> timewindowSet;
     /**
-     * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの
-     */
-    private Path invalidList;
-    /**
      * @author anselme
      */
     private boolean corridor;
@@ -103,7 +105,6 @@ public class TimewindowMaker implements Operation {
     private String model;
     private double[][] catalogue_sS;
     private double[][] catalogue_pP;
-    final private static double exRearShift = 5.;
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(TimewindowMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -160,6 +161,7 @@ public class TimewindowMaker implements Operation {
         outputPath = workPath.resolve("timewindow" + date + ".dat");
         invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
         timewindowSet = Collections.synchronizedSet(new HashSet<>());
+
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
         usePhases = phaseSet(property.getProperty("usePhases"));
@@ -203,7 +205,7 @@ public class TimewindowMaker implements Operation {
 
     @Override
     public void run() throws Exception {
-        System.out.println("Using exRearShift = " + exRearShift);
+        System.out.println("Using exFrontShift = " + EX_FRONT_SHIFT);
         System.err.println("Invalid files will be listed in " + invalidList);
         Utilities.runEventProcess(workPath, eventDir -> {
             try {
@@ -322,7 +324,7 @@ public class TimewindowMaker implements Operation {
                 }
             }
 
-            Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);
+            Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, EX_FRONT_SHIFT);
 
             if (windows == null) {
                 writeInvalid(sacFileName);

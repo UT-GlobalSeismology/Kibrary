@@ -65,6 +65,25 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class FujiStaticCorrection implements Operation {
 
+    private Properties property;
+    private Path timewindowInformationPath;
+    /**
+     * the directory of observed data
+     */
+    private Path obsPath;
+    /**
+     * the directory of synthetic data
+     */
+    private Path synPath;
+    /**
+     * Path of the work folder
+     */
+    private Path workPath;
+    /**
+     * Path of the output file
+     */
+    private Path outputPath;
+
     /**
      * components for computation
      */
@@ -72,49 +91,23 @@ public class FujiStaticCorrection implements Operation {
     /**
      * コンボリューションされている波形かそうでないか （両方は無理）
      */
-    private boolean convolute;
+    private boolean convolved;
     /**
      * range for search [s] ±searchRange
      */
     private double searchRange;
     /**
-     * the directory for observed data
-     */
-    private Path obsPath;
-    /**
-     * the directory for synthetic data
-     */
-    private Path synPath;
-    /**
      * sampling Hz [Hz] in sac files
      */
     private double sacSamplingHz;
-    private Properties property;
 
     private boolean mediantime;
     /**
      * シグナルとみなすかどうかの最大振幅から見ての比率
      */
     private double threshold;
-    private Path timewindowInformationPath;
-    private Path workPath;
     private Set<StaticCorrection> staticCorrectionSet;
-    private Path outPath;
     private Set<TimewindowInformation> timewindowInformation;
-
-    public FujiStaticCorrection(double sacSamplingHz, double threshold, double searchRange) {
-        this.sacSamplingHz = sacSamplingHz;
-        this.threshold = threshold;
-        this.searchRange = searchRange;
-    }
-
-    private FujiStaticCorrection(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        String date = Utilities.getTemporaryString();
-        staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
-        set();
-        outPath = workPath.resolve("staticCorrection" + date + ".dat");
-    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -130,18 +123,63 @@ public class FujiStaticCorrection implements Operation {
             pw.println("#synPath");
             pw.println("##Path of a timeWindowInformation file, must be set");
             pw.println("#timewindowInformationPath timewindow.dat");
-            pw.println("##boolean convolute (false)");
-            pw.println("#convolute");
-            pw.println("##double sacSamplingHz(20)");
+            pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
+            pw.println("#convolved");
+            pw.println("##(double) sacSamplingHz(20)");
             pw.println("#sacSamplingHz cant change now");
-            pw.println("##double threshold for peak finder (0.2)");
+            pw.println("##(double) Threshold for peak finder (0.2)");
             pw.println("#threshold");
-            pw.println("##double searchRange [s] (10)");
+            pw.println("##(double) searchRange [s] (10)");
             pw.println("#searchRange");
-            pw.println("##Use median time (false)");
+            pw.println("##(boolean) Use median time (false)");
             pw.println("#mediantime");
         }
         System.out.println(outPath + " is created.");
+    }
+
+    public FujiStaticCorrection(double sacSamplingHz, double threshold, double searchRange) {
+        this.sacSamplingHz = sacSamplingHz;
+        this.threshold = threshold;
+        this.searchRange = searchRange;
+    }
+
+    private FujiStaticCorrection(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+    }
+
+    private void checkAndPutDefaults() {
+        if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
+        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
+        if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
+        if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
+        if (!property.containsKey("convolved")) property.setProperty("convolved", "false");
+        if (!property.containsKey("threshold")) property.setProperty("threshold", "0.2");
+        if (!property.containsKey("searchRange")) property.setProperty("searchRange", "10");
+        if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
+        if (!property.containsKey("mediantime")) property.setProperty("mediantime", "false");
+    }
+
+    private void set() throws IOException {
+        checkAndPutDefaults();
+        workPath = Paths.get(property.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
+        String date = Utilities.getTemporaryString();
+        outputPath = workPath.resolve("staticCorrection" + date + ".dat");
+        staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
+
+        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+                .collect(Collectors.toSet());
+        synPath = getPath("synPath");
+        obsPath = getPath("obsPath");
+        timewindowInformationPath = getPath("timewindowInformationPath");
+
+        convolved = Boolean.parseBoolean(property.getProperty("convolved"));
+        sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
+        searchRange = Double.parseDouble(property.getProperty("searchRange"));
+        threshold = Double.parseDouble(property.getProperty("threshold"));
+        mediantime = Boolean.parseBoolean(property.getProperty("mediantime"));
     }
 
     /**
@@ -155,6 +193,30 @@ public class FujiStaticCorrection implements Operation {
         fsc.run();
         System.err.println(FujiStaticCorrection.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));
+    }
+
+    @Override
+    public void run() throws Exception {
+        Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
+        int n = Runtime.getRuntime().availableProcessors();
+        ExecutorService es = Executors.newFixedThreadPool(n);
+        timewindowInformation = TimewindowInformationFile.read(timewindowInformationPath);
+        eventDirs.stream().map(Worker::new).forEach(es::execute);
+        es.shutdown();
+
+        while (!es.isTerminated()) {
+            try {
+                // System.out.println("waiting");
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        output();
+    }
+
+    private void output() throws IOException {
+        StaticCorrectionFile.write(staticCorrectionSet, outputPath);
     }
 
     /**
@@ -197,49 +259,6 @@ public class FujiStaticCorrection implements Operation {
         Trace t = sacData.createTrace();
         t = t.cutWindow(tStart, tEnd);
         return t.getY();
-    }
-
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath"))
-            property.setProperty("workPath", ".");
-        if (!property.containsKey("components"))
-            property.setProperty("components", "Z R T");
-        if (!property.containsKey("obsPath"))
-            property.setProperty("obsPath", ".");
-        if (!property.containsKey("synPath"))
-            property.setProperty("synPath", ".");
-        if (!property.containsKey("convolute"))
-            property.setProperty("convolute", "false");
-        if (!property.containsKey("threshold"))
-            property.setProperty("threshold", "0.2");
-        if (!property.containsKey("searchRange"))
-            property.setProperty("searchRange", "10");
-        if (!property.containsKey("sacSamplingHz"))
-            property.setProperty("sacSamplingHz", "20");
-        if (!property.containsKey("mediantime"))
-            property.setProperty("mediantime", "false");
-    }
-
-    private void set() {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath))
-            throw new RuntimeException("The workPath: " + workPath + " does not exist");
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        synPath = getPath("synPath");
-        obsPath = getPath("obsPath");
-        timewindowInformationPath = getPath("timewindowInformationPath");
-
-        convolute = Boolean.parseBoolean(property.getProperty("convolute"));
-        sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
-        searchRange = Double.parseDouble(property.getProperty("searchRange"));
-        threshold = Double.parseDouble(property.getProperty("threshold"));
-        mediantime = Boolean.parseBoolean(property.getProperty("mediantime"));
-    }
-
-    private void output() throws IOException {
-        StaticCorrectionFile.write(staticCorrectionSet, outPath);
     }
 
     /**
@@ -433,26 +452,6 @@ public class FujiStaticCorrection implements Operation {
         return (Properties) property.clone();
     }
 
-    @Override
-    public void run() throws Exception {
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
-        int n = Runtime.getRuntime().availableProcessors();
-        ExecutorService es = Executors.newFixedThreadPool(n);
-        timewindowInformation = TimewindowInformationFile.read(timewindowInformationPath);
-        eventDirs.stream().map(Worker::new).forEach(es::execute);
-        es.shutdown();
-
-        while (!es.isTerminated()) {
-            try {
-                // System.out.println("waiting");
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        output();
-    }
-
     private class Worker implements Runnable {
         private EventFolder obsEventDir;
 
@@ -487,7 +486,7 @@ public class FujiStaticCorrection implements Operation {
                 // check a component
                 if (!components.contains(component))
                     continue;
-                SACExtension synExt = convolute ? SACExtension.valueOfConvolutedSynthetic(component)
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
                         : SACExtension.valueOfSynthetic(component);
 
                 SACFileName synName = new SACFileName(
