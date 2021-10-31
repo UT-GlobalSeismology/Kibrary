@@ -141,7 +141,7 @@ public class DataSelection implements Operation {
             pw.println("manhattan DataSelection");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##Sac components to be used (Z R T)");
+            pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath");

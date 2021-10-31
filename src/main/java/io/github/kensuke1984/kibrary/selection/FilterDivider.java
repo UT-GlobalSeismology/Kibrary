@@ -99,7 +99,7 @@ public class FilterDivider implements Operation {
             pw.println("manhattan FilterDivider");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##SacComponents to be applied the filter (Z R T)");
+            pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath");

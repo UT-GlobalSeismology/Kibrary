@@ -115,7 +115,7 @@ public class FujiStaticCorrection implements Operation {
             pw.println("manhattan FujiStaticCorrection");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##SacComponents to be used (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##Path of a root directory containing observed dataset (.)");
             pw.println("#obsPath");

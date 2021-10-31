@@ -112,14 +112,14 @@ public class TimewindowMaker implements Operation {
             pw.println("manhattan TimewindowMaker");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##SacComponents to be used (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##(boolean) Whether or not to use major arc phases (false).");
             pw.println("#majorArc");
-            pw.println("##TauPPhases not to be included in timewindow ()");
-            pw.println("#exPhases");
-            pw.println("##TauPPhases to be included in timewindow (S)");
+            pw.println("##TauPPhases to be included in timewindow, listed using spaces (S)");
             pw.println("#usePhases");
+            pw.println("##TauPPhases not to be included in timewindow, listed using spaces ()");
+            pw.println("#exPhases");
             pw.println("##(double) Time before first phase [sec]. If it is 10, then 10 s before arrival (0)");
             pw.println("#frontShift");
             pw.println("##(double) Time after last phase [sec]. If it is 60, then 60 s after arrival (0)");
