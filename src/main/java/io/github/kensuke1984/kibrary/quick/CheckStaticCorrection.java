@@ -30,7 +30,7 @@ public class CheckStaticCorrection {
 			StaticCorrection semCorr = null;
 			try {
 				semCorr = semCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
-					&& corr.getStation().equals(c.getStation())
+					&& corr.getObserver().equals(c.getObserver())
 					&& corr.getComponent().equals(c.getComponent())
 					&& new Phases(corr.getPhases()).equals(new Phases(c.getPhases()))).findFirst().get();
 //					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
@@ -40,11 +40,11 @@ public class CheckStaticCorrection {
 			double ratio = Math.abs(semCorr.getTimeshift() - corr.getTimeshift()) / Math.abs(corr.getTimeshift());
 			double difference = corr.getTimeshift() - semCorr.getTimeshift();
 //			ratio = Math.log(ratio);
-			StaticCorrection tmpCorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrection tmpCorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), ratio, corr.getAmplitudeRatio(), corr.getPhases());
-			StaticCorrection tmpCorr2 = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrection tmpCorr2 = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), difference, corr.getAmplitudeRatio(), corr.getPhases());
-			StaticCorrection zeroCorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrection zeroCorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), 0., corr.getAmplitudeRatio(), corr.getPhases());
 			StaticCorrection mix = Math.abs(difference) <= Math.abs(corr.getTimeshift()) ? semCorr : zeroCorr;
 			ratios.add(tmpCorr);
@@ -86,7 +86,7 @@ public class CheckStaticCorrection {
 		Path outpath4 = Paths.get("correctionDifferenceStation.txt");
 		PrintWriter pw4 = new PrintWriter(outpath4.toFile());
 		for (StaticCorrection corr : differences) {
-			pw4.println(corr.getStation() + " " + corr.getStation().getPosition() + " " + corr.getTimeshift());
+			pw4.println(corr.getObserver() + " " + corr.getObserver().getPosition() + " " + corr.getTimeshift());
 		}
 		pw4.close();
 	}
@@ -95,10 +95,10 @@ public class CheckStaticCorrection {
 		double[][] map = new double[360][180];
 		int[][] count = new int[360][180];
 		for (StaticCorrection corr : ratios) {
-			double lon = corr.getStation().getPosition().getLongitude();
+			double lon = corr.getObserver().getPosition().getLongitude();
 			if (lon < 0)
 				lon += 360;
-			double lat = corr.getStation().getPosition().getLatitude() + 90;
+			double lat = corr.getObserver().getPosition().getLatitude() + 90;
 			int ilon = (int) lon;
 			int ilat = (int) lat;
 			if (ilon == 360)

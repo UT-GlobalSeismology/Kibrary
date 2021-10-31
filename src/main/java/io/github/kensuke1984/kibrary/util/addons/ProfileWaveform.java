@@ -202,7 +202,7 @@ public class ProfileWaveform {
 	
 	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
 		SACFileData data = sacname.read();
-		Observer station = data.getStation();
+		Observer station = data.getObserver();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
 		return timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(id)

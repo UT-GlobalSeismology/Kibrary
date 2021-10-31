@@ -911,7 +911,7 @@ public class Partial1DSpcMaker implements Operation {
 			System.out.println(sacname + " (time partials)");
 			
 			SACFileData sacdata = sacname.read();
-			Observer station = sacdata.getStation();
+			Observer station = sacdata.getObserver();
 			
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()

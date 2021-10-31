@@ -280,7 +280,7 @@ public class PhaseEnvelope implements Operation {
 			//							for (int i = 0; i < timewindows.length; i++)
 			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
 										
-										double distance = obssac.getEventLocation().getEpicentralDistance(obssac.getStation().getPosition())
+										double distance = obssac.getEventLocation().getEpicentralDistance(obssac.getObserver().getPosition())
 											* 180 / Math.PI;
 										double eventR = obssac.getEventLocation().getR();
 										
@@ -292,7 +292,7 @@ public class PhaseEnvelope implements Operation {
 										if (show) {
 											try {
 												System.out.println("plotting...");
-												String title = obssac.getStation() + " " + obsEventDir.getGlobalCMTID();
+												String title = obssac.getObserver() + " " + obsEventDir.getGlobalCMTID();
 												showSeriesAndSpectra(obssac.createTrace(), synname.read().createTrace(), freqIntPE, timewindows, phases, title);
 				//								showTimeSeries(obsname.read().createTrace(), synname.read().createTrace(), timewindows);
 												System.in.read();
@@ -310,7 +310,7 @@ public class PhaseEnvelope implements Operation {
 												for (int i = 0; i < timewindows.length; i++) {
 													Phase[] phasenames = new Phase[phases[i].length];
 													phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
-													TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getStation()
+													TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getObserver()
 															, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
 													infoset.add(info);
 												}
@@ -646,7 +646,7 @@ public class PhaseEnvelope implements Operation {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
 			SACFileData sd = sfn.read();
-			double distance = sd.getEventLocation().getEpicentralDistance(sd.getStation().getPosition())
+			double distance = sd.getEventLocation().getEpicentralDistance(sd.getObserver().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();
 			Phase[] phases = null;

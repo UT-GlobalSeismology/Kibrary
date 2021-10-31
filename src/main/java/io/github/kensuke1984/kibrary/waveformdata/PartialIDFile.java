@@ -139,7 +139,7 @@ public final class PartialIDFile {
 			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
-				stations[i] = Observer.createStation(stationBytes);
+				stations[i] = Observer.createObserver(stationBytes);
 			}
 			byte[] cmtIDBytes = new byte[15];
 			for (int i = 0; i < cmtIDs.length; i++) {

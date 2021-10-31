@@ -41,7 +41,7 @@ class SACVarianceComparator implements DataComparator<SACFileData[]> {
     }
 
     private boolean same(SACFileData data1, SACFileData data2) {
-        return data1.getGlobalCMTID().equals(data2.getGlobalCMTID()) && data1.getStation().equals(data2.getStation()) &&
+        return data1.getGlobalCMTID().equals(data2.getGlobalCMTID()) && data1.getObserver().equals(data2.getObserver()) &&
                 data1.getComponent() == data2.getComponent();
     }
 

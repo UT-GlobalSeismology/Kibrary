@@ -198,7 +198,7 @@ public class MakeWindowScS {
 				}
 				
 				TimewindowInformation timewindow_S = new TimewindowInformation(startTimeS, endTimeS,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.S});
 				infoSetS.add(timewindow_S);
 				
@@ -226,21 +226,21 @@ public class MakeWindowScS {
 				}
 				
 				TimewindowInformation timewindow = new TimewindowInformation(startTime, endTime,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.ScS});
 				if (addScS)
 					infoSet.add(timewindow);
 				
 				if (startTime < endTimeScd) {
 					TimewindowInformation timewindowScd = new TimewindowInformation(startTime, endTimeScd,
-							obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+							obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 							obsName.getComponent(), new Phase[] {Phase.ScS});
 					if (addScS)
 						infoSetScd.add(timewindowScd);
 				}
 				
 				TimewindowInformation timewindowTight = new TimewindowInformation(startTimeTight, endTime,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.ScS});
 				if (addScS)
 					infoSetScStight.add(timewindowTight);

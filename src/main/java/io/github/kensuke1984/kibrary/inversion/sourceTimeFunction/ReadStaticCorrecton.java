@@ -29,7 +29,7 @@ class ReadStaticCorrection{
        	Observer station = timewindow.getObserver();
        	SACComponent component = timewindow.getComponent();
     	for(StaticCorrection correction : corrections){
-       		if(correction.getStation().equals(station) && correction.getComponent().equals(component) && correction.getGlobalCMTID().equals(eventID)){
+       		if(correction.getObserver().equals(station) && correction.getComponent().equals(component) && correction.getGlobalCMTID().equals(eventID)){
        			if( Math.abs(correction.getSynStartTime() - timewindow.getStartTime()) < 0.50){
        			double shift = correction.getTimeshift();
        			double startTime = correction.getSynStartTime() - shift ;

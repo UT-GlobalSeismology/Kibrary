@@ -279,7 +279,7 @@ public class RaypathDistribution implements Operation {
 				}).filter(Objects::nonNull)
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
-					HorizontalPosition stationPosition = headerData.getStation().getPosition();
+					HorizontalPosition stationPosition = headerData.getObserver().getPosition();
 					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, phase)
 						.get(0);
 					Location turningPoint = info.getTurningPoint();
@@ -317,7 +317,7 @@ public class RaypathDistribution implements Operation {
 				}).filter(Objects::nonNull)
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
-					HorizontalPosition stationPosition = headerData.getStation().getPosition();
+					HorizontalPosition stationPosition = headerData.getObserver().getPosition();
 					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, phase);
 					Info info = null;
 					if (infoList.size() > 0) {
@@ -368,7 +368,7 @@ public class RaypathDistribution implements Operation {
 				}).filter(Objects::nonNull)
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
-					HorizontalPosition stationPosition = headerData.getStation().getPosition();
+					HorizontalPosition stationPosition = headerData.getObserver().getPosition();
 					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS);
 					Info info = null;
 					if (infoList.size() > 0) {

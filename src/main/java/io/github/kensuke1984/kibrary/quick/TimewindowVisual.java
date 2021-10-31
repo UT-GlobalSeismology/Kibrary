@@ -273,7 +273,7 @@ public class TimewindowVisual {
 					List<Double> timeShiftList = new ArrayList();
 					for (Set<StaticCorrection> corrections : correctionListThisID) {
 						Phases phases = new Phases(timewindow.getPhases());
-						timeShiftList.add(corrections.stream().filter(corr -> corr.getStation().equals(timewindow.getObserver())
+						timeShiftList.add(corrections.stream().filter(corr -> corr.getObserver().equals(timewindow.getObserver())
 								&& new Phases(corr.getPhases()).equals(phases) ).findFirst().get().getTimeshift());
 					}
 //								&& Math.abs(corr.getSynStartTime() - timewindow.getStartTime()) < 2. ).findFirst().get().getTimeshift());

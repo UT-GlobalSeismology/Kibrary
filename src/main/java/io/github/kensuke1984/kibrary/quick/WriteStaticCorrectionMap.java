@@ -30,7 +30,7 @@ public class WriteStaticCorrectionMap {
 		Path outpath4 = Paths.get("correctionAtStation.txt");
 		PrintWriter pw4 = new PrintWriter(outpath4.toFile());
 		for (StaticCorrection corr : fujiCorrections) {
-			pw4.println(corr.getStation() + " " + corr.getStation().getPosition() + " " + corr.getTimeshift());
+			pw4.println(corr.getObserver() + " " + corr.getObserver().getPosition() + " " + corr.getTimeshift());
 		}
 		pw4.close();
 	}
@@ -39,10 +39,10 @@ public class WriteStaticCorrectionMap {
 		double[][] map = new double[360][180];
 		int[][] count = new int[360][180];
 		for (StaticCorrection corr : ratios) {
-			double lon = corr.getStation().getPosition().getLongitude();
+			double lon = corr.getObserver().getPosition().getLongitude();
 			if (lon < 0)
 				lon += 360;
-			double lat = corr.getStation().getPosition().getLatitude() + 90;
+			double lat = corr.getObserver().getPosition().getLatitude() + 90;
 			int ilon = (int) lon;
 			int ilat = (int) lat;
 			if (ilon == 360)

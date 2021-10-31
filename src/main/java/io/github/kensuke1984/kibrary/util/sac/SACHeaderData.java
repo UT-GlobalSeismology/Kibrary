@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Observer;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Interface of SAC header data<br>
@@ -76,23 +76,23 @@ public interface SACHeaderData {
     }
 
     /**
-     * @return Station of this header.
+     * @return Observer of this header.
      */
-    default Observer getStation() {
+    default Observer getObserver() {
         return Observer.of(this);
     }
 
     /**
      * Changes KSTNM, KNETWK, STLA, STLO
      *
-     * @param station to be set
+     * @param observer to be set
      * @return {@link SACHeaderData} with the station
      */
-    default SACHeaderData setStation(Observer station) {
-        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, station.getStation());
-        sd = sd.setSACString(SACHeaderEnum.KNETWK, station.getNetwork());
-        return sd.setValue(SACHeaderEnum.STLA, station.getPosition().getLatitude())
-                .setValue(SACHeaderEnum.STLO, station.getPosition().getLongitude());
+    default SACHeaderData setObserver(Observer observer) {
+        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, observer.getStation());
+        sd = sd.setSACString(SACHeaderEnum.KNETWK, observer.getNetwork());
+        return sd.setValue(SACHeaderEnum.STLA, observer.getPosition().getLatitude())
+                .setValue(SACHeaderEnum.STLO, observer.getPosition().getLongitude());
     }
 
     /**

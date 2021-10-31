@@ -75,7 +75,7 @@ public class MakeRunFolder {
 					Set<Observer> stationSet = new HashSet<>();
 					eventFolder.sacFileSet().parallelStream().forEach(sac -> {
 						try {
-							stationSet.add(sac.read().getStation());
+							stationSet.add(sac.read().getObserver());
 						} catch (IOException e) {
 							System.err.format("IOException: %s%n", e);
 						}

@@ -45,7 +45,7 @@ public class CentroidTimeCorrection {
 		Set<StaticCorrection> centroidCorrections = new HashSet<>();
 		for (StaticCorrection corr : corrections) {
 			double shift = centroidShiftMap.get(corr.getGlobalCMTID());
-			StaticCorrection tmpcorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID()
+			StaticCorrection tmpcorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID()
 					, corr.getComponent(), corr.getSynStartTime(), shift, corr.getAmplitudeRatio(), corr.getPhases());
 			centroidCorrections.add(corr);
 		}
@@ -63,7 +63,7 @@ public class CentroidTimeCorrection {
 		
 		Set<GlobalCMTID> events = corrections.stream().map(corr -> corr.getGlobalCMTID())
 				.collect(Collectors.toSet());
-		Set<Observer> stations = corrections.stream().map(corr -> corr.getStation()).collect(Collectors.toSet());
+		Set<Observer> stations = corrections.stream().map(corr -> corr.getObserver()).collect(Collectors.toSet());
 		
 		Map<GlobalCMTID, Integer> centroidCounter = new HashMap<>();
 		for (GlobalCMTID event : events) {
@@ -112,7 +112,7 @@ public class CentroidTimeCorrection {
 			GlobalCMTID id = corr.getGlobalCMTID();
 			double centroidShift = centroidShiftMap.get(id);
 			double shift = corr.getTimeshift() + centroidShift;
-			StaticCorrection newcorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID()
+			StaticCorrection newcorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID()
 					, corr.getComponent(), corr.getSynStartTime(), shift, corr.getAmplitudeRatio(), corr.getPhases());
 			newCorrections.add(newcorr);
 		}

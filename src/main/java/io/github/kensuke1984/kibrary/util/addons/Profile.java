@@ -110,7 +110,7 @@ public class Profile {
 	//					List<Trace> windowSyntraces = timewindow.stream().map(tw -> syndata.createTrace().cutWindow(tw)).collect(Collectors.toList());
 						
 						double maxObs = obsdata.createTrace().cutWindow(timewindow.get(0)).getYVector().getLInfNorm();
-						double distance = sacdata.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(sacdata.getStation().getPosition())
+						double distance = sacdata.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(sacdata.getObserver().getPosition())
 								* 180. / Math.PI;
 						
 	//					double t0 = timewindow.get(0).getStartTime();
@@ -280,7 +280,7 @@ public class Profile {
 	
 	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
 		SACFileData data = sacname.read();
-		Observer station = data.getStation();
+		Observer station = data.getObserver();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
 		return timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)

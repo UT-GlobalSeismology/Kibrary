@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * This class computes values of Static correction after Fuji <i>et al</i>.,
  * (2010)
- * This procedure is after DataSelection
+ * {@link TimewindowInformationFile} is necessary.
  * <p>
  * The time shift value <i>t</i> for the ray path is for the observed
  * timewindow.<br>
@@ -134,7 +134,7 @@ public class FujiStaticCorrection implements Operation {
             pw.println("##(boolean) Use median time (false)");
             pw.println("#mediantime");
         }
-        System.out.println(outPath + " is created.");
+        System.err.println(outPath + " is created.");
     }
 
     public FujiStaticCorrection(double sacSamplingHz, double threshold, double searchRange) {
@@ -212,6 +212,7 @@ public class FujiStaticCorrection implements Operation {
                 e.printStackTrace();
             }
         }
+        System.err.println("Outputting in " + outputPath);
         output();
     }
 
@@ -489,12 +490,10 @@ public class FujiStaticCorrection implements Operation {
                 SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
                         : SACExtension.valueOfSynthetic(component);
 
-                SACFileName synName = new SACFileName(
-                        synEventPath.resolve(obsName.getStationCode() + "." + obsName.getGlobalCMTID() + "." + synExt));
-                // System.out.println(obsFile.getName() + " " +
-                // synFile.getName());
+                SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(obsName, synExt)));
+
                 if (!synName.exists()) {
-                    System.out.println(synName + " does not exist. ");
+                    System.err.println(synName + " does not exist. ");
                     continue;
                 }
                 SACFileData obsSac;
@@ -507,34 +506,37 @@ public class FujiStaticCorrection implements Operation {
                     continue;
                 }
 
-                Observer station = obsSac.getStation();
+                Observer observer = obsSac.getObserver();
                 double delta = 1 / sacSamplingHz;
                 if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
                     System.err.println(
-                            "Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA) + " " +
-                                    synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " must be " + delta);
+                            "Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA) + " , " +
+                                    synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                     continue;
                 }
                 // Pickup time windows of obsName
                 Set<TimewindowInformation> windows = timewindowInformation.stream()
-                        .filter(info -> info.getObserver().equals(station))
+                        .filter(info -> info.getObserver().equals(observer))
                         .filter(info -> info.getGlobalCMTID().equals(eventID))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
-                if (windows != null && !windows.isEmpty()) for (TimewindowInformation window : windows)
+                if (windows != null && !windows.isEmpty()) {
+                    for (TimewindowInformation window : windows) {
                         try {
                             double shift = 0;
                             if (!mediantime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
                             else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
 //							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
                             double ratio = computeP2PRatio(obsSac, synSac, 0., window);
-                            StaticCorrection t = new StaticCorrection(station, eventID, component,
+                            StaticCorrection t = new StaticCorrection(observer, eventID, component,
                                     window.getStartTime(), shift, ratio, window.getPhases());
                             staticCorrectionSet.add(t);
                         } catch (Exception e) {
                             System.err.println(window + " is ignored because an error occurs");
                             e.printStackTrace();
                         }
+                    }
+                }
             }
         }
     }

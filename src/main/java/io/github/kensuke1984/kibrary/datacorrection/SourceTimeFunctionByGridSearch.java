@@ -944,7 +944,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	}
 	
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 	
 }

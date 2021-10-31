@@ -26,15 +26,15 @@ public class MixStaticCorrection {
 		
 		for (StaticCorrection corr : fujiCorrections) {
 			StaticCorrection semCorr = semCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
-					&& corr.getStation().equals(c.getStation())
+					&& corr.getObserver().equals(c.getObserver())
 					&& corr.getComponent().equals(c.getComponent())
 					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
 			StaticCorrection semTruncCorr = semTruncCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
-					&& corr.getStation().equals(c.getStation())
+					&& corr.getObserver().equals(c.getObserver())
 					&& corr.getComponent().equals(c.getComponent())
 					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
 			double difference = corr.getTimeshift() - semCorr.getTimeshift();
-			StaticCorrection zeroCorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrection zeroCorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), 0., corr.getAmplitudeRatio(), corr.getPhases());
 			StaticCorrection mix = Math.abs(difference) <= Math.abs(corr.getTimeshift()) ? semTruncCorr : zeroCorr;
 			mixed.add(mix);

@@ -51,6 +51,9 @@ public class SACFileName extends File {
     public static String generate(Observer observerID, GlobalCMTID eventID, SACExtension extension) {
         return observerID.toString() + "." + eventID.toString() + "." + extension;
     }
+    public static String generate(SACFileName sacName, SACExtension extension) {
+        return sacName.getObserverID() + "." + sacName.getGlobalCMTID().toString() + "." + extension;
+    }
 
     //-------------------- create instance and read name --------------------//
 

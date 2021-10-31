@@ -48,11 +48,11 @@ public class AmplitudePolarDistribution {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			pw.println("#azimuth amplitude_ratio upper_mantle_ratio lower_mantle_ratio");
 			for (StaticCorrection correction : takeuchiCorrections) {
-				double azimuth = correction.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(correction.getStation().getPosition())
+				double azimuth = correction.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(correction.getObserver().getPosition())
 						* 180. / Math.PI;
 				
 				GlobalCMTID id = correction.getGlobalCMTID();
-				Observer station = correction.getStation();
+				Observer station = correction.getObserver();
 				SACComponent component = correction.getComponent();
 				double startTime = correction.getSynStartTime();
 				Set<TimewindowInformation> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)

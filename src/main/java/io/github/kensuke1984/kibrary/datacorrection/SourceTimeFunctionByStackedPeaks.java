@@ -76,7 +76,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
     }
 
     private Trace createTrace(SACFileData sacFile) {
-        Observer station = sacFile.getStation();
+        Observer station = sacFile.getObserver();
         GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
         SACComponent component = SACComponent.of(sacFile);
 

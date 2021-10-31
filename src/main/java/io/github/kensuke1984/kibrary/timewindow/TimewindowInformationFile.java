@@ -46,12 +46,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - phase </li>
  * <li>Each timewindow information, composed of {@value #ONE_WINDOW_BYTE} bytes:
  * <ul>
- * <li>Station index(2)</li>
- * <li>GlobalCMTID index(2)</li>
- * <li>existing phases(20)</li>
- * <li>component(1)</li>
- * <li>Float starting time (4) (Round off to the third decimal place.) </li>
- * <li>Float end time (4) (Round off to the third decimal place.) </li>
+ * <li>Station index (2)</li>
+ * <li>GlobalCMTID index (2)</li>
+ * <li>existing phases (20)</li>
+ * <li>component (1)</li>
+ * <li>Float starting time (4) (round off to the third decimal place) </li>
+ * <li>Float end time (4) (round off to the third decimal place) </li>
  * </ul>
  * </ol>
  *
@@ -64,7 +64,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * the input binary-format file is output in ascii format, as follows:
  * <ol>
  * <li> In the standard output, information of each timewindow is written.</li>
- * <li> In 'timewindow.station', information of each observer is written.</li>
+ * <li> In 'timewindow.observer', information of each observer is written.</li>
  * </ol>
  *
  * @author Kensuke Konishi
@@ -82,52 +82,6 @@ public final class TimewindowInformationFile {
     private TimewindowInformationFile() {
     }
 
-    /**
-     * @param args [information file name]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        Set<TimewindowInformation> set;
-        if (args.length == 1)
-            set = TimewindowInformationFile.read(Paths.get(args[0]));
-        else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
-            String timewindowname;
-            if (args[0] == "--debug")
-                timewindowname = args[1];
-            else
-                timewindowname = args[0];
-            set = TimewindowInformationFile.read(Paths.get(timewindowname));
-
-            Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_observer.inf");
-            Path outpathEvent = Paths.get(timewindowname.split(".inf")[0] + "_event.inf");
-
-        }
-        else {
-            String s = "";
-            Path f;
-            do {
-                s = JOptionPane.showInputDialog("file?", s);
-                if (s == null || s.isEmpty())
-                    return;
-                f = Paths.get(s);
-            } while (!Files.exists(f) || Files.isDirectory(f));
-            set = TimewindowInformationFile.read(f);
-        }
-
-        set.stream().sorted().forEach(tw -> {System.out.println(tw + " " + tw.getObserver().getPosition());});
-
-        Set<Observer> observers = set.stream().map(tw -> tw.getObserver()).collect(Collectors.toSet());
-        Path observerFile = Paths.get("timewindow.observer");
-        Files.deleteIfExists(observerFile);
-        Files.createFile(observerFile);
-        try {
-            for (Observer s : observers)
-                Files.write(observerFile, (s.getStation() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
-                        , StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     /**
      * Output TimeWindowInformation in binary format
@@ -221,7 +175,7 @@ public final class TimewindowInformationFile {
             byte[] observerBytes = new byte[32];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
-                observers[i] = Observer.createStation(observerBytes);
+                observers[i] = Observer.createObserver(observerBytes);
             }
             byte[] cmtIDBytes = new byte[15];
             for (int i = 0; i < cmtIDs.length; i++) {
@@ -274,4 +228,50 @@ public final class TimewindowInformationFile {
         return new TimewindowInformation(startTime, endTime, observer, id, component, usablephases);
     }
 
+    /**
+     * @param args [information file name]
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        Set<TimewindowInformation> set;
+        if (args.length == 1)
+            set = TimewindowInformationFile.read(Paths.get(args[0]));
+        else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
+            String timewindowname;
+            if (args[0] == "--debug")
+                timewindowname = args[1];
+            else
+                timewindowname = args[0];
+            set = TimewindowInformationFile.read(Paths.get(timewindowname));
+
+            Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_observer.inf");
+            Path outpathEvent = Paths.get(timewindowname.split(".inf")[0] + "_event.inf");
+
+        }
+        else {
+            String s = "";
+            Path f;
+            do {
+                s = JOptionPane.showInputDialog("file?", s);
+                if (s == null || s.isEmpty())
+                    return;
+                f = Paths.get(s);
+            } while (!Files.exists(f) || Files.isDirectory(f));
+            set = TimewindowInformationFile.read(f);
+        }
+
+        set.stream().sorted().forEach(tw -> {System.out.println(tw + " " + tw.getObserver().getPosition());});
+
+        Set<Observer> observers = set.stream().map(tw -> tw.getObserver()).collect(Collectors.toSet());
+        Path observerFile = Paths.get("timewindow.observer");
+        Files.deleteIfExists(observerFile);
+        Files.createFile(observerFile);
+        try {
+            for (Observer s : observers)
+                Files.write(observerFile, (s.getStation() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
+                        , StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -321,14 +321,14 @@ public class ComputeTimediffSScS {
 				SACFileData tmpsac = obsSacs[i];
 				double corrShift = 0;
 				if (mantleCorrections != null) {
-					StaticCorrection mantleCorr = thisCorrections.stream().filter(c -> c.getStation().equals(tmpsac.getStation()))
+					StaticCorrection mantleCorr = thisCorrections.stream().filter(c -> c.getObserver().equals(tmpsac.getObserver()))
 						.findFirst().get();
 					corrShift = mantleCorr.getTimeshift();
 				}
 				double deltaTSScSCorr = deltaTSScS - corrShift;
 				
 				if (correlation > minCorrScS && var < maxVarScS)
-					pw.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getStation() + " " + 
+					pw.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getObserver() + " " + 
 						midPoint.getLatitude() + " " + midPoint.getLongitude() + " " + deltaTSScS + " " 
 							+ deltaTSScSCorr + " " + ratioSScS + " " + widthSratio + " " 
 							+ "index_" + index + " " + "az_" + az_cluster_index[i] + " " + obsSacs[i].getValue(SACHeaderEnum.GCARC));

@@ -195,8 +195,8 @@ public interface SACFileData extends SACHeaderData {
     }
 
     @Override
-    default SACFileData setStation(Observer station) {
-        return (SACFileData) SACHeaderData.super.setStation(station);
+    default SACFileData setObserver(Observer observer) {
+        return (SACFileData) SACHeaderData.super.setObserver(observer);
     }
 
     @Override

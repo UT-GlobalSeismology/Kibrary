@@ -249,12 +249,12 @@ public class MakeWindowPcPandScS {
 				}
 				
 				TimewindowInformation timewindow_S = new TimewindowInformation(timeS - 15, timeS + 40,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.T, new Phase[] {Phase.S});
 				infoSetS.add(timewindow_S);
 				
 				TimewindowInformation timewindow_P = new TimewindowInformation(timeP - 5, timeP + 20,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.Z, new Phase[] {Phase.P});
 				infoSetP.add(timewindow_P);
 				
@@ -314,11 +314,11 @@ public class MakeWindowPcPandScS {
 				}
 				
 				TimewindowInformation timewindow_ScS = new TimewindowInformation(startTime_ScS, endTime_ScS,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.T, new Phase[] {Phase.ScS});
 				
 				TimewindowInformation timewindow_PcP = new TimewindowInformation(startTime_PcP, endTime_PcP,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.Z, new Phase[] {Phase.PcP});
 				
 				if (addPcP)

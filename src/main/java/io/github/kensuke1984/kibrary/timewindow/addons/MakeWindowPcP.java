@@ -98,7 +98,7 @@ public class MakeWindowPcP {
 				
 				if (timewindowsForSelection != null) {
 				if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsHeader.getGlobalCMTID())
-						&& tw.getObserver().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
+						&& tw.getObserver().equals(obsHeader.getObserver()) && tw.getComponent().equals(obsName.getComponent()))
 						.count() == 0)
 					continue;
 				}
@@ -178,7 +178,7 @@ public class MakeWindowPcP {
 				}
 				
 				TimewindowInformation timewindow_S = new TimewindowInformation(timeS - 10, timeS + 20,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.P});
 				infoSetS.add(timewindow_S);
 				
@@ -206,14 +206,14 @@ public class MakeWindowPcP {
 				}
 				
 				TimewindowInformation timewindow = new TimewindowInformation(startTime, endTime,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.PcP});
 				if (addScS)
 					infoSet.add(timewindow);
 				
 				if (startTime < endTimeScd) {
 					TimewindowInformation timewindowScd = new TimewindowInformation(startTime, endTimeScd,
-							obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+							obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 							obsName.getComponent(), new Phase[] {Phase.PcP});
 					if (addScS)
 						infoSetScd.add(timewindowScd);

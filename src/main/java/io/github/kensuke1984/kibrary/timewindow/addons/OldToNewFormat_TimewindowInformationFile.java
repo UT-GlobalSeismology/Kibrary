@@ -107,7 +107,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			byte[] stationBytes = new byte[24];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
-				stations[i] = Observer.createStation(stationBytes);
+				stations[i] = Observer.createObserver(stationBytes);
 			}
 			byte[] cmtIDBytes = new byte[15];
 			for (int i = 0; i < cmtIDs.length; i++) {

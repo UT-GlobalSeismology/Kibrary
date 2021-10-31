@@ -508,7 +508,7 @@ public class SACMaker implements Runnable {
         if (beginDateTime != null) sac.setEventTime(beginDateTime);
         sac.setValue(SACHeaderEnum.B, 0);
 
-        sac.setStation(station);
+        sac.setObserver(station);
         sac.setEventLocation(primeSPC.getSourceLocation());
         sac.setSACString(SACHeaderEnum.KEVNM, primeSPC.getSourceID());
 

@@ -49,7 +49,7 @@ public class StationAverageTimeshift {
 				continue;
 			
 			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getObserver())
+					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
 					.collect(Collectors.toList());
@@ -59,7 +59,7 @@ public class StationAverageTimeshift {
 			}
 			StaticCorrection correction = correctionList.get(0);
 			
-			Observer sta = correction.getStation();
+			Observer sta = correction.getObserver();
 			Double shift = correction.getTimeshift();
 			if (stationAverages.containsKey(sta)) {
 				shift = shift + stationAverages.get(sta);
@@ -98,7 +98,7 @@ public class StationAverageTimeshift {
 				continue;
 			
 			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getObserver())
+					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
 					.collect(Collectors.toList());
@@ -108,7 +108,7 @@ public class StationAverageTimeshift {
 			}
 			StaticCorrection correction = correctionList.get(0);
 			
-			Observer sta = correction.getStation();
+			Observer sta = correction.getObserver();
 			Double shift = correction.getTimeshift();
 			
 			HorizontalPosition pos = getBin(sta.getPosition(), 1., 1.);

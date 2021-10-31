@@ -125,14 +125,14 @@ public class DataSelection implements Operation {
      * name, global CMT id, component, start time.
      */
     private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-            t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
     private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
-            t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent())
                     && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
     private BiPredicate<StaticCorrection, TimewindowInformation> isPairRecord = (s,
-            t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent();
 
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -314,7 +314,7 @@ public class DataSelection implements Operation {
         StaticCorrection foundShift = getStaticCorrection(timewindow);
         double value = foundShift.getTimeshift();
         return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
-                foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
+                foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
     private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
@@ -384,7 +384,7 @@ public class DataSelection implements Operation {
                 timeTool.setSourceDepth(depth);
                 timeTool.calculate(distance);
                 if (timeTool.getNumArrivals() == 0)
-                    throw new IllegalArgumentException("No arrivals for " + sac.getStation() + " " + sac.getGlobalCMTID()
+                    throw new IllegalArgumentException("No arrivals for " + sac.getObserver() + " " + sac.getGlobalCMTID()
                             + " " + String.format("(%.2f deg, %.2f km)", distance, depth));
                 firstArrivalTime = timeTool.getArrival(0).getTime();
                 break;
@@ -394,7 +394,7 @@ public class DataSelection implements Operation {
                 timeTool.setSourceDepth(depth);
                 timeTool.calculate(distance);
                 if (timeTool.getNumArrivals() == 0)
-                    throw new IllegalArgumentException("No arrivals for " + sac.getStation() + " " + sac.getGlobalCMTID()
+                    throw new IllegalArgumentException("No arrivals for " + sac.getObserver() + " " + sac.getGlobalCMTID()
                             + " " + String.format("(%.2f deg, %.2f km)", distance, depth));
                 firstArrivalTime = timeTool.getArrival(0).getTime();
                 break;
@@ -508,9 +508,9 @@ public class DataSelection implements Operation {
                     SACFileData obsSac = obsName.read();
                     SACFileData synSac = synName.read();
 
-                    stationName = obsSac.getStation().getStation() + "_" + obsSac.getStation().getNetwork();
+                    stationName = obsSac.getObserver().getStation() + "_" + obsSac.getObserver().getNetwork();
 
-                    Observer station = obsSac.getStation();
+                    Observer station = obsSac.getObserver();
                     //
                     if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) {
                         System.err.println("Ignoring differing DELTA " + obsName);

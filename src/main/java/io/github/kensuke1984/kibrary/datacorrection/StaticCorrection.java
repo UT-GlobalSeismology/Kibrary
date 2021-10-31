@@ -1,15 +1,15 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
-import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.addons.Phases;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import org.apache.commons.math3.util.Precision;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.Observer;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * Static correction data for a raypath.<br>
@@ -36,28 +36,28 @@ import java.util.stream.Stream;
  */
 public class StaticCorrection implements Comparable<StaticCorrection> {
 
-	private final Observer STATION;
-	private final GlobalCMTID ID;
-	private final SACComponent COMPONENT;
-	/**
-	 * time shift [s]<br>
-	 * Synthetic [t1, t2], Observed [t1 - TIME, t2 - TIME]
-	 */
-	private final double TIME;
-	/**
-	 * amplitude correction: obs / syn<br>
-	 * Observed should be divided by this value.
-	 */
-	private final double AMPLITUDE;
-	/**
-	 * start time of synthetic waveform
-	 */
-	private final double SYNTHETIC_TIME;
-	
-	/**
-	 * phases in windows
-	 */
-	private final Phase[] PHASES;
+    private final Observer observer;
+    private final GlobalCMTID eventID;
+    private final SACComponent component;
+    /**
+     * time shift [s]<br>
+     * Synthetic [t1, t2], Observed [t1 - TIME, t2 - TIME]
+     */
+    private final double timeShift;
+    /**
+     * amplitude correction: obs / syn<br>
+     * Observed should be divided by this value.
+     */
+    private final double amplitude;
+    /**
+     * start time of synthetic waveform
+     */
+    private final double synStartTime;
+
+    /**
+     * phases in windows
+     */
+    private final Phase[] phases;
 
     /**
      * When a time window for a synthetic is [start, end], then
@@ -69,7 +69,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
      * <p>
      * synStartTime may be used only for identification when your dataset contain multiple time windows in one waveform.
      *
-     * @param station        for shift
+     * @param observer        for shift
      * @param eventID        for shift
      * @param component      for shift
      * @param synStartTime   for identification
@@ -77,75 +77,75 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
      *                       t2-timeShift]
      * @param amplitudeRatio Observed / Synthetic, an observed waveform will be divided by this value.
      */
-	public StaticCorrection(Observer station, GlobalCMTID eventID, SACComponent component, double synStartTime,
-			double timeShift, double amplitudeRatio, Phase[] phases) {
-		STATION = station;
-        ID = eventID;
-        COMPONENT = component;
-        SYNTHETIC_TIME = Precision.round(synStartTime, 2);
-        TIME = Precision.round(timeShift, 2);
-        AMPLITUDE = Precision.round(amplitudeRatio, 2);
-		PHASES = phases;
-	}
-	
-    @Override
-    public int compareTo(StaticCorrection o) {
-        int sta = STATION.compareTo(o.STATION);
-        if (sta != 0) return sta;
-        int id = ID.compareTo(o.ID);
-        if (id != 0) return id;
-        int comp = COMPONENT.compareTo(o.COMPONENT);
-        if (comp != 0) return comp;
-        int start = Double.compare(SYNTHETIC_TIME, o.SYNTHETIC_TIME);
-        if (start != 0) return start;
-        int shift = Double.compare(TIME, o.TIME);
-        if (shift != 0) return shift;
-        return Double.compare(AMPLITUDE, o.AMPLITUDE);
+    public StaticCorrection(Observer observer, GlobalCMTID eventID, SACComponent component, double synStartTime,
+            double timeShift, double amplitudeRatio, Phase[] phases) {
+        this.observer = observer;
+        this.eventID = eventID;
+        this.component = component;
+        this.synStartTime = Precision.round(synStartTime, 2);
+        this.timeShift = Precision.round(timeShift, 2);
+        this.amplitude = Precision.round(amplitudeRatio, 2);
+        this.phases = phases;
     }
 
-	public Observer getStation() {
-		return STATION;
-	}
+    @Override
+    public int compareTo(StaticCorrection o) {
+        int obs = observer.compareTo(o.observer);
+        if (obs != 0) return obs;
+        int id = eventID.compareTo(o.eventID);
+        if (id != 0) return id;
+        int comp = component.compareTo(o.component);
+        if (comp != 0) return comp;
+        int start = Double.compare(synStartTime, o.synStartTime);
+        if (start != 0) return start;
+        int shift = Double.compare(timeShift, o.timeShift);
+        if (shift != 0) return shift;
+        return Double.compare(amplitude, o.amplitude);
+    }
 
-	public GlobalCMTID getGlobalCMTID() {
-		return ID;
-	}
+    public Observer getObserver() {
+        return observer;
+    }
 
-	public SACComponent getComponent() {
-		return COMPONENT;
-	}
+    public GlobalCMTID getGlobalCMTID() {
+        return eventID;
+    }
 
-	/**
-	 * @return value of time shift (syn-obs)
-	 */
-	public double getTimeshift() {
-		return TIME;
-	}
+    public SACComponent getComponent() {
+        return component;
+    }
 
-	/**
-	 * @return value of ratio (obs / syn)
-	 */
-	public double getAmplitudeRatio() {
-		return AMPLITUDE;
-	}
+    /**
+     * @return value of time shift (syn-obs)
+     */
+    public double getTimeshift() {
+        return timeShift;
+    }
+
+    /**
+     * @return value of ratio (obs / syn)
+     */
+    public double getAmplitudeRatio() {
+        return amplitude;
+    }
 
     /**
      * @return value of synthetic start time for the identification when you use multiple time windows.
      */
-	public double getSynStartTime() {
-		return SYNTHETIC_TIME;
-	}
-	
-	public Phase[] getPhases() {
-		return PHASES;
-	}
+    public double getSynStartTime() {
+        return synStartTime;
+    }
 
-	@Override
-	public String toString() {
-		List<String> phaseStrings = 
-				Stream.of(PHASES).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
-		return STATION.getStation() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID 
-				+ " " + COMPONENT + " " + SYNTHETIC_TIME + " " + TIME + " " + AMPLITUDE + " " + String.join(",", phaseStrings);
-	}
+    public Phase[] getPhases() {
+        return phases;
+    }
+
+    @Override
+    public String toString() {
+        List<String> phaseStrings =
+                Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+        return observer.getStation() + " " + observer.getNetwork() + " " + observer.getPosition() + " " + eventID
+                + " " + component + " " + synStartTime + " " + timeShift + " " + amplitude + " " + String.join(",", phaseStrings);
+    }
 
 }

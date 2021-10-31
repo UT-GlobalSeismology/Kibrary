@@ -461,7 +461,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 				minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
 				maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-				Observer station = obsSac.getStation();
+				Observer station = obsSac.getObserver();
 
 				for (TimewindowInformation window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
@@ -516,11 +516,11 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	 * name, global CMT id, component.
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 	
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
-			t) -> s.getStation().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {

@@ -57,7 +57,7 @@ public class Raypath {
      * @param sacHeaderData of a raypath to create
      */
     public Raypath(SACHeaderData sacHeaderData) {
-        this(sacHeaderData.getEventLocation(), sacHeaderData.getStation().getPosition());
+        this(sacHeaderData.getEventLocation(), sacHeaderData.getObserver().getPosition());
     }
 
     /**

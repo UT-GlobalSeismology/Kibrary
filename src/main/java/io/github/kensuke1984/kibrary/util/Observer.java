@@ -102,7 +102,7 @@ public class Observer implements Comparable<Observer> {
      * @param bytes for one station
      * @return Station created from the input bytes
      */
-    public static Observer createStation(byte[] bytes) {
+    public static Observer createObserver(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         byte[] str = new byte[8];
         bb.get(str);
@@ -112,7 +112,7 @@ public class Observer implements Comparable<Observer> {
         return new Observer(name, new HorizontalPosition(bb.getDouble(), bb.getDouble()), network);
     }
 
-    public static Observer createStation(String stationLine) {
+    public static Observer createObserver(String stationLine) {
         String[] ss = stationLine.trim().split("\\s+");
         String stationName = ss[0];
         String network = ss[1];

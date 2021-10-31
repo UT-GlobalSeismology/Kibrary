@@ -313,7 +313,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         if (specfemDataset) {
             Set<Observer> specfemStationSet = IOUtils.readLines(SyntheticDSMInformationFileMaker.class.getClassLoader()
                     .getResourceAsStream("specfem_stations.inf"), Charset.defaultCharset())
-                .stream().map(s -> Observer.createStation(s)).collect(Collectors.toSet());
+                .stream().map(s -> Observer.createObserver(s)).collect(Collectors.toSet());
             try {
                 GlobalCMTData id = new GlobalCMTID("060994A").getEvent();
                 Path eventOut = outPath.resolve(id.toString());

@@ -48,12 +48,12 @@ public class StationAverageRatio {
 				continue;
 			
 			StaticCorrection correction = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getObserver())
+					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent())
 					&& corr.getSynStartTime() == tw.getStartTime())
 					.findAny().get();
 			
-			Observer sta = correction.getStation();
+			Observer sta = correction.getObserver();
 			Double ratio = correction.getAmplitudeRatio();
 			if (stationAverages.containsKey(sta)) {
 				ratio = ratio + stationAverages.get(sta);

@@ -906,7 +906,7 @@ public class LetMeInvertCV implements Operation {
 				if (signalNoiseRatioFile != null) {
 					double snRatio = signalNoiseRatios.parallelStream().filter(s ->
 							s.getGlobalCMTID().equals(id.getGlobalCMTID())
-							&& s.getStation().equals(id.getStation())
+							&& s.getObserver().equals(id.getStation())
 							&& s.getComponent().equals(id.getSacComponent()))
 						.findFirst().get().getAmplitudeRatio();
 					if (snRatio < minSNRatio) return false;

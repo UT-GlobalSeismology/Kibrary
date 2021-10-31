@@ -336,7 +336,7 @@ public class TimewindowMaker implements Operation {
             double delta = sacFile.getValue(SACHeaderEnum.DELTA);
             double e = sacFile.getValue(SACHeaderEnum.E);
             // station of SacFile
-            Observer station = sacFile.getStation();
+            Observer station = sacFile.getObserver();
             // global cmt id of SacFile
             GlobalCMTID id = sacFileName.getGlobalCMTID();
             // component of SacFile
@@ -583,7 +583,7 @@ public class TimewindowMaker implements Operation {
             double delta = sacFile.getValue(SACHeaderEnum.DELTA);
             double e = sacFile.getValue(SACHeaderEnum.E);
             // station of SacFile
-            Observer station = sacFile.getStation();
+            Observer station = sacFile.getObserver();
             // global cmt id of SacFile
             GlobalCMTID id = sacFileName.getGlobalCMTID();
             // component of SacFile

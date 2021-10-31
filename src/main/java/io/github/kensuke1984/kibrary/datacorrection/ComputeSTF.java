@@ -143,7 +143,7 @@ public class ComputeSTF {
 //				}
 				//-------
 				
-				thisWindows.add(new TimewindowInformation(tS0, tS1, obsSac.getStation()
+				thisWindows.add(new TimewindowInformation(tS0, tS1, obsSac.getObserver()
 						, obsSac.getGlobalCMTID(), obsName.getComponent(), new Phase[] {Phase.S}));
 			}
 			

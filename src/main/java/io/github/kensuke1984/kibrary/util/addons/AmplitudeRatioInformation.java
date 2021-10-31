@@ -34,7 +34,7 @@ public class AmplitudeRatioInformation {
 									return false;
 								if (c.getAmplitudeRatio() > 3.5 || c.getAmplitudeRatio() < 1./3.5)
 									return false;
-								double aztmp = Math.toDegrees(c.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(c.getStation().getPosition()));
+								double aztmp = Math.toDegrees(c.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(c.getObserver().getPosition()));
 								if (aztmp < az || aztmp >= az + daz)
 									return false;
 								return true;
@@ -51,8 +51,8 @@ public class AmplitudeRatioInformation {
 					int[] countDistance = new int[120];
 					
 					for (StaticCorrection corr : corrSet) {
-						double azimuth = Math.toDegrees(id.getEvent().getCmtLocation().getAzimuth(corr.getStation().getPosition()));
-						double distance = Math.toDegrees(id.getEvent().getCmtLocation().getEpicentralDistance(corr.getStation().getPosition()));
+						double azimuth = Math.toDegrees(id.getEvent().getCmtLocation().getAzimuth(corr.getObserver().getPosition()));
+						double distance = Math.toDegrees(id.getEvent().getCmtLocation().getEpicentralDistance(corr.getObserver().getPosition()));
 						int k = (int) (distance);
 						averageOverDistance[k] += corr.getAmplitudeRatio();
 						countDistance[k] += 1;

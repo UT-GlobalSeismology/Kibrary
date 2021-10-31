@@ -159,7 +159,7 @@ public class TakeuchiStaticCorrection implements Operation {
         TimewindowInformation timeWindow = timeWindowSet.iterator().next();
         SACFileData obsSac = obsName.read();
         SACFileData synSac = synName.read();
-        Observer station = obsSac.getStation();
+        Observer station = obsSac.getObserver();
         Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
         Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
         double obsT = (obsTrace.getXforMaxValue() + obsTrace.getXforMinValue()) / 2;
