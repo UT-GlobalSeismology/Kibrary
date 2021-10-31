@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.waveformdata;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +50,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     /**
      * index map for stations
      */
-    private Map<Station, Integer> stationMap;
+    private Map<Observer, Integer> stationMap;
     /**
      * index map for global CMT IDs
      */
@@ -85,7 +85,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 * @param phases		 Array of phase names
 	 * @throws IOException if an error occurs
 	 */
-	public WaveformDataWriter(Path idPath, Path dataPath, Set<Station> stationSet, Set<GlobalCMTID> globalCMTIDSet,
+	public WaveformDataWriter(Path idPath, Path dataPath, Set<Observer> stationSet, Set<GlobalCMTID> globalCMTIDSet,
 			double[][] periodRanges, Phase[] phases) throws IOException {
 		this(idPath, dataPath, stationSet, globalCMTIDSet, periodRanges, phases, null);
 	}
@@ -105,7 +105,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 * @param perturbationPoints must contain all information of the IDs to write
 	 * @throws IOException if an error occurs
 	 */
-	public WaveformDataWriter(Path idPath, Path dataPath, Set<Station> stationSet, Set<GlobalCMTID> globalCMTIDSet,
+	public WaveformDataWriter(Path idPath, Path dataPath, Set<Observer> stationSet, Set<GlobalCMTID> globalCMTIDSet,
 			double[][] periodRanges, Phase[] phases, Set<Location> perturbationPoints) throws IOException {
 		IDPATH = idPath;
 		DATAPATH = dataPath;
@@ -186,10 +186,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		}
 	}
 
-    private void makeStationMap(Set<Station> stationSet) throws IOException {
+    private void makeStationMap(Set<Observer> stationSet) throws IOException {
         int i = 0;
         stationMap = new HashMap<>();
-        for (Station station : stationSet) {
+        for (Observer station : stationSet) {
             stationMap.put(station, i++);
             idStream.writeBytes(StringUtils.rightPad(station.getStation(), 8));
             idStream.writeBytes(StringUtils.rightPad(station.getNetwork(), 8));

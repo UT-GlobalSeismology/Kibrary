@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -32,7 +32,7 @@ public class InfoFromTimewindow {
 		Files.deleteIfExists(eventFile);
 		Files.createFile(eventFile);
 		
-		Set<Station> usedStation = new HashSet<>();
+		Set<Observer> usedStation = new HashSet<>();
 		Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
 		for (TimewindowInformation timewindow : timewindows) {
 			GlobalCMTID event = timewindow.getGlobalCMTID();
@@ -42,13 +42,13 @@ public class InfoFromTimewindow {
 			}
 			nTransverseMap.put(event, itmp);
 			
-			Station sta = timewindow.getObserver();
+			Observer sta = timewindow.getObserver();
 			usedStation.add(sta);
 			
 			System.out.println((6371. - event.getEvent().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(sta.getPosition())));
 		}
 		
-		for (Station sta : usedStation)
+		for (Observer sta : usedStation)
 			Files.write(stationFile, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition()+"\n").getBytes(), StandardOpenOption.APPEND);
 		
 		for (GlobalCMTID id : nTransverseMap.keySet()) {

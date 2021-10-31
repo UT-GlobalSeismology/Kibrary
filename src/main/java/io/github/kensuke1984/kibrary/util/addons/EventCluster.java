@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import edu.sc.seis.TauP.SphericalCoords;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
@@ -67,7 +67,7 @@ public class EventCluster {
 		
 		Path waveformIDPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/waveformID_ScS_ext_70deg_semucbCorr_ampCorr_4hz.dat");
 		BasicID[] waveformIDs = BasicIDFile.read(waveformIDPath);
-		Map<Station, Set<Integer>> stationClusterMap = new HashMap<>();
+		Map<Observer, Set<Integer>> stationClusterMap = new HashMap<>();
 		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getStation(), new HashSet<>()));
 		Arrays.stream(waveformIDs).forEach(id -> {
 			int index = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get().getIndex();
@@ -77,7 +77,7 @@ public class EventCluster {
 		});
 		outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/stationCluster.inf");
 		PrintWriter pw = new PrintWriter(outpath.toFile());
-		for (Station sta : stationClusterMap.keySet()) {
+		for (Observer sta : stationClusterMap.keySet()) {
 			String istring = "";
 			for (int i : stationClusterMap.get(sta))
 				istring += i + " ";

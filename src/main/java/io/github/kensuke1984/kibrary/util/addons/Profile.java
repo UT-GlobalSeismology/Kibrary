@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -280,7 +280,7 @@ public class Profile {
 	
 	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
 		SACFileData data = sacname.read();
-		Station station = data.getStation();
+		Observer station = data.getStation();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
 		return timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)

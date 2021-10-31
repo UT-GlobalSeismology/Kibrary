@@ -4,7 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -45,7 +45,7 @@ public class SeisTomoPy {
 		for (BasicID id : ids) {
 			if (!id.getWaveformType().equals(WaveformType.SYN))
 				continue;
-			Station station = id.getStation();
+			Observer station = id.getStation();
 			Location evtloc = id.getGlobalCMTID().getEvent().getCmtLocation();
 			String phaseString = "S";
 			if (id.getSacComponent().equals(SACComponent.Z))
@@ -64,7 +64,7 @@ public class SeisTomoPy {
 		String line = "";
 		while ((line = br.readLine()) != null) {
 			String[] ss = line.split("\\s+");
-			Station station = new Station(ss[4], new HorizontalPosition(Double.parseDouble(ss[6]), Double.parseDouble(ss[7])), ss[5]);
+			Observer station = new Observer(ss[4], new HorizontalPosition(Double.parseDouble(ss[6]), Double.parseDouble(ss[7])), ss[5]);
 			SACComponent component = ss[9].trim().equals("S") ? SACComponent.T : SACComponent.Z;
 			
 			double shift = -Double.parseDouble(ss[10]);

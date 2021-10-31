@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.timewindow.addons;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -55,10 +55,10 @@ public class OldToNewFormat_TimewindowInformationFile {
 				new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
 			GlobalCMTID[] ids = infoSet.stream().map(TimewindowInformation::getGlobalCMTID).distinct().sorted()
 					.toArray(GlobalCMTID[]::new);
-			Station[] stations = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
-					.toArray(Station[]::new);
+			Observer[] stations = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
+					.toArray(Observer[]::new);
 			Map<GlobalCMTID, Integer> idMap = new HashMap<>();
-			Map<Station, Integer> stationMap = new HashMap<>();
+			Map<Observer, Integer> stationMap = new HashMap<>();
 			dos.writeShort(stations.length);
 			dos.writeShort(ids.length);
 			for (int i = 0; i < stations.length; i++) {
@@ -97,7 +97,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			long t = System.nanoTime();
 			long fileSize = Files.size(infoPath);
 			// Read header
-			Station[] stations = new Station[dis.readShort()];
+			Observer[] stations = new Observer[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			int headerBytes = 2 * 2 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length;
 			long windowParts = fileSize - headerBytes;
@@ -107,7 +107,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			byte[] stationBytes = new byte[24];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
-				stations[i] = Station.createStation(stationBytes);
+				stations[i] = Observer.createStation(stationBytes);
 			}
 			byte[] cmtIDBytes = new byte[15];
 			for (int i = 0; i < cmtIDs.length; i++) {
@@ -127,7 +127,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 	}
 
 	/**
-	 * 1 time window {@value #oneWindowByte} byte
+	 * 1 time window {@value #ONE_WINDOW_BYTE} byte
 	 * 
 	 * Station index(2)<br>
 	 * GlobalCMTID index(2)<br>
@@ -140,9 +140,9 @@ public class OldToNewFormat_TimewindowInformationFile {
 	 * @param ids
 	 * @return
 	 */
-	private static TimewindowInformation create_old(byte[] bytes, Station[] stations, GlobalCMTID[] ids) {
+	private static TimewindowInformation create_old(byte[] bytes, Observer[] stations, GlobalCMTID[] ids) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
-		Station station = stations[bb.getShort()];
+		Observer station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double startTime = bb.getFloat();

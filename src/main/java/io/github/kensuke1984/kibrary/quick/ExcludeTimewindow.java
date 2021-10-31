@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.inversion.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -105,7 +105,7 @@ public class ExcludeTimewindow {
 			Set<String> excludedStations = Stream.of(tmpStations).collect(Collectors.toSet());
 			
 			if (args.length == 3) { //2
-				Set<Station> stations = StationInformationFile.read(Paths.get(args[1]));
+				Set<Observer> stations = ObserverInformationFile.read(Paths.get(args[1]));
 				
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
 						.filter(tw -> stations.contains(tw.getObserver()))

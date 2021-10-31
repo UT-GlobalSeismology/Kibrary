@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.dsminformation;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
@@ -163,7 +163,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		Files.createDirectories(output);
 		Set<SACComponent> useComponents = components;
 		for (EventFolder eventDir : eventDirs) {
-			Set<Station> stations = eventDir.sacFileSet().stream()
+			Set<Observer> stations = eventDir.sacFileSet().stream()
 					.filter(name -> name.isOBS() && useComponents.contains(name.getComponent())).map(name -> {
 						try {
 							return name.readHeader();
@@ -171,7 +171,7 @@ public class SshDSMInformationFileMaker implements Operation {
 							e2.printStackTrace();
 							return null;
 						}
-					}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
+					}).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
 			
 			//select stations in timewindows
 			if (timewindowInformationPath != null) {
@@ -182,7 +182,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			
 			if (stations.isEmpty())
 				continue;
-			int numberOfStation = (int) stations.stream().map(Station::getStation).count();
+			int numberOfStation = (int) stations.stream().map(Observer::getStation).count();
 			if (numberOfStation != stations.size())
 				System.err.println("!Caution there are stations with the same name and different positions in "
 						+ eventDir.getGlobalCMTID());

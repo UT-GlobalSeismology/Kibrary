@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -84,7 +84,7 @@ public class BPVisual {
 					double[] bpserie = spcComponents[j].getTimeseries();
 					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
 					for (TimewindowInformation info : timewindows) {
-						Station station = info.getObserver();
+						Observer station = info.getObserver();
 						GlobalCMTID event = info.getGlobalCMTID();
 						
 						Complex[] u = cutPartial(bpserie, info);

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -34,7 +34,7 @@ public abstract class SPCFileName extends File {
      * @param mode
      * @return
      */
-    public static String generate(Station observerID, GlobalCMTID eventID, String mode) {
+    public static String generate(Observer observerID, GlobalCMTID eventID, String mode) {
         return observerID.toString() + "." + eventID.toString() + "_" + mode + ".spc";
     }
 

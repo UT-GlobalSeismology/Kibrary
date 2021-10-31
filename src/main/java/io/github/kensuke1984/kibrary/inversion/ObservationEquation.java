@@ -12,7 +12,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.MatrixComputation;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
@@ -751,7 +751,7 @@ public class ObservationEquation {
      * @param location to look for
      * @return i, m<sub>i</sub> = type, parameterが何番目にあるか なければ-1
      */
-	private int whatNumber(PartialType type, Location location, Station station, GlobalCMTID id, Phase[] phases) {
+	private int whatNumber(PartialType type, Location location, Observer station, GlobalCMTID id, Phase[] phases) {
 		for (int i = 0; i < PARAMETER_LIST.size(); i++) {
 			if (PARAMETER_LIST.get(i).getPartialType() != type)
 				continue;
@@ -1090,9 +1090,9 @@ public class ObservationEquation {
     
     private class id_station {
 		private GlobalCMTID id;
-		private Station station;
+		private Observer station;
 		
-		public id_station(GlobalCMTID id, Station station) {
+		public id_station(GlobalCMTID id, Observer station) {
 			this.id = id;
 			this.station = station;
 		}

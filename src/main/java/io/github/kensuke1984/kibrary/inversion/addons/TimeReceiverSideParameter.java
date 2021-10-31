@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -19,7 +19,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	private final PartialType partialType = PartialType.TIME_RECEIVER;
 	private final double weighting = 1.;
 
-	public TimeReceiverSideParameter(Station station, int bouncingOrder) {
+	public TimeReceiverSideParameter(Observer station, int bouncingOrder) {
 		this.station = station;
 		this.pointLocation = new Location(station.getPosition().getLatitude(), 
 				station.getPosition().getLongitude(), 0.);
@@ -72,11 +72,11 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	 */
 	private final Location pointLocation;
 	
-	private final Station station;
+	private final Observer station;
 	
 	private final int bouncingOrder;
 	
-	public Station getStation() {
+	public Observer getStation() {
 		return station;
 	}
 	

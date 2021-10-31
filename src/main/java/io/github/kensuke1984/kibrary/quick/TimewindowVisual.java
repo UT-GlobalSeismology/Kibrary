@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.DistanceAzimuth;
@@ -115,7 +115,7 @@ public class TimewindowVisual {
 				
 				AtomicInteger iatom = new AtomicInteger();
 				
-				Set<Station> usedStations = new HashSet<>();
+				Set<Observer> usedStations = new HashSet<>();
 				
 				// MTZ
 				double slowness = 15.;

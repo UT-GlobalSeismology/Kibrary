@@ -27,7 +27,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - GlobalCMTID </li>
  * <li>Each phase <br>
  * - phase </li>
- * <li>Each timewindow information, composed of {@value #oneWindowByte} bytes:
+ * <li>Each timewindow information, composed of {@value #ONE_WINDOW_BYTE} bytes:
  * <ul>
  * <li>Station index(2)</li>
  * <li>GlobalCMTID index(2)</li>
@@ -56,7 +56,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * </ol>
  *
  * <p>
- * Observers that satisfy {@link Station#equals(Object)} are considered to be same observers,
+ * Observers that satisfy {@link Observer#equals(Object)} are considered to be same observers,
  * and one position (latitude, longitude) is chosen to be output in the timewindow file.
  *
  * <p>
@@ -77,7 +77,7 @@ public final class TimewindowInformationFile {
      * bytes for one time window information
      * @author anselme increased the byte size of a time window to add phase information
      */
-    public static final int oneWindowByte = 33;
+    public static final int ONE_WINDOW_BYTE = 33;
 
     private TimewindowInformationFile() {
     }
@@ -98,7 +98,7 @@ public final class TimewindowInformationFile {
                 timewindowname = args[0];
             set = TimewindowInformationFile.read(Paths.get(timewindowname));
 
-            Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_station.inf");
+            Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_observer.inf");
             Path outpathEvent = Paths.get(timewindowname.split(".inf")[0] + "_event.inf");
 
         }
@@ -116,13 +116,13 @@ public final class TimewindowInformationFile {
 
         set.stream().sorted().forEach(tw -> {System.out.println(tw + " " + tw.getObserver().getPosition());});
 
-        Set<Station> stations = set.stream().map(tw -> tw.getObserver()).collect(Collectors.toSet());
-        Path stationFile = Paths.get("timewindow.station");
-        Files.deleteIfExists(stationFile);
-        Files.createFile(stationFile);
+        Set<Observer> observers = set.stream().map(tw -> tw.getObserver()).collect(Collectors.toSet());
+        Path observerFile = Paths.get("timewindow.observer");
+        Files.deleteIfExists(observerFile);
+        Files.createFile(observerFile);
         try {
-            for (Station s : stations)
-                Files.write(stationFile, (s.getStation() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
+            for (Observer s : observers)
+                Files.write(observerFile, (s.getStation() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
                         , StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
@@ -147,13 +147,13 @@ public final class TimewindowInformationFile {
                 new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
             GlobalCMTID[] ids = infoSet.stream().map(TimewindowInformation::getGlobalCMTID).distinct().sorted()
                     .toArray(GlobalCMTID[]::new);
-            Station[] observers = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
-                    .toArray(Station[]::new);
+            Observer[] observers = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
+                    .toArray(Observer[]::new);
             Phase[] phases = infoSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
                 .distinct().toArray(Phase[]::new);
 
             Map<GlobalCMTID, Integer> idMap = new HashMap<>();
-            Map<Station, Integer> observerMap = new HashMap<>();
+            Map<Observer, Integer> observerMap = new HashMap<>();
             Map<Phase, Integer> phaseMap = new HashMap<>();
             dos.writeShort(observers.length);
             dos.writeShort(ids.length);
@@ -210,18 +210,18 @@ public final class TimewindowInformationFile {
             long t = System.nanoTime();
             long fileSize = Files.size(infoPath);
             // Read header
-            Station[] observers = new Station[dis.readShort()];
+            Observer[] observers = new Observer[dis.readShort()];
             GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
             Phase[] phases = new Phase[dis.readShort()];
             int headerBytes = 3 * 2 + (8 + 8 + 8 * 2) * observers.length + 15 * cmtIDs.length + 16 * phases.length;
             long windowParts = fileSize - headerBytes;
-            if (windowParts % oneWindowByte != 0)
+            if (windowParts % ONE_WINDOW_BYTE != 0)
                 throw new RuntimeException(infoPath + " has some problems.");
             // station(8),network(8),position(8*2)
             byte[] observerBytes = new byte[32];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
-                observers[i] = Station.createStation(observerBytes);
+                observers[i] = Observer.createStation(observerBytes);
             }
             byte[] cmtIDBytes = new byte[15];
             for (int i = 0; i < cmtIDs.length; i++) {
@@ -233,8 +233,8 @@ public final class TimewindowInformationFile {
                 dis.read(phaseBytes);
                 phases[i] = Phase.create(new String(phaseBytes).trim());
             }
-            int nwindow = (int) (windowParts / oneWindowByte);
-            byte[][] bytes = new byte[nwindow][oneWindowByte];
+            int nwindow = (int) (windowParts / ONE_WINDOW_BYTE);
+            byte[][] bytes = new byte[nwindow][ONE_WINDOW_BYTE];
             for (int i = 0; i < nwindow; i++)
                 dis.read(bytes[i]);
 //			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs, phases))
@@ -256,9 +256,9 @@ public final class TimewindowInformationFile {
      * @return TimewindowInformation
      * @author anselme add phase information
      */
-    private static TimewindowInformation create(byte[] bytes, Station[] observers, GlobalCMTID[] ids, Phase[] phases) {
+    private static TimewindowInformation create(byte[] bytes, Observer[] observers, GlobalCMTID[] ids, Phase[] phases) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
-        Station observer = observers[bb.getShort()];
+        Observer observer = observers[bb.getShort()];
         GlobalCMTID id = ids[bb.getShort()];
         Set<Phase> tmpset = new HashSet<>();
         for (int i = 0; i < 10; i++) {

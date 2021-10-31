@@ -48,7 +48,7 @@ import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -1097,7 +1097,7 @@ public class LetMeInvert_fromAtA implements Operation {
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-				Station station = id.getStation();
+				Observer station = id.getStation();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
@@ -1109,7 +1109,7 @@ public class LetMeInvert_fromAtA implements Operation {
 		}
 	}
 
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 
 	@Override
 	public Path getWorkPath() {

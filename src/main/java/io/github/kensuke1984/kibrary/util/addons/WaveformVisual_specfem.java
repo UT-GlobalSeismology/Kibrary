@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -83,7 +83,7 @@ public class WaveformVisual_specfem {
 				double[][][] obsAzimuthStack = new double[nAz][120][0];
 				double[][][] synAzimuthStack = new double[nAz][120][0];
 				double[][][] synSpecfemAzimuthStack = new double[nAz][120][0];
-				List<List<Station>> stationAzimuthList = new ArrayList<>();
+				List<List<Observer>> stationAzimuthList = new ArrayList<>();
 				for (int i = 0; i < nAz; i++)
 					stationAzimuthList.add(new ArrayList<>());
 				
@@ -132,7 +132,7 @@ public class WaveformVisual_specfem {
 					obsStack[k] = add(obsStack[k], obsData);
 					obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], obsData);
 					
-					List<Station> tmpList = stationAzimuthList.get(kaz);
+					List<Observer> tmpList = stationAzimuthList.get(kaz);
 					tmpList.add(id.getStation());
 					stationAzimuthList.set(kaz, tmpList);
 					
@@ -292,7 +292,7 @@ public class WaveformVisual_specfem {
 		}
 	}
 	
-	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, double azimuth) throws IOException {
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Observer> stations, double azimuth) throws IOException {
 		Path outpath = rootpath.resolve("plot_map_" + event + "_az" + (int) (azimuth) + ".gmt");
 		String outpathps = "map_" + event + "_az" + (int) (azimuth) + ".ps";
 		PrintWriter pw = new PrintWriter(outpath.toFile());
@@ -311,12 +311,12 @@ public class WaveformVisual_specfem {
 		ss += "gmt psxy -Rg -JW4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
 		double evLat = event.getEvent().getCmtLocation().getLatitude();
 		double evLon = event.getEvent().getCmtLocation().getLongitude();
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		
 		ss += "gmt psxy -R -J -Si0.11 -P -Groyalblue -Wthinnest,black -K -O >> $outputps <<END\n";
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format("%.2f %.2f\n", station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		

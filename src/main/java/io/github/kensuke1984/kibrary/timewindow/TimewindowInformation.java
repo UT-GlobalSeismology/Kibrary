@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -29,7 +29,7 @@ public class TimewindowInformation extends Timewindow {
     /**
      * station
      */
-    private final Station observer;
+    private final Observer observer;
     /**
      * event ID
      */
@@ -43,7 +43,7 @@ public class TimewindowInformation extends Timewindow {
      */
     private final Phase[] phases;
 
-    public TimewindowInformation(double startTime, double endTime, Station observer, GlobalCMTID id,
+    public TimewindowInformation(double startTime, double endTime, Observer observer, GlobalCMTID id,
             SACComponent component, Phase[] phases) {
         super(startTime, endTime);
         this.id = id;
@@ -91,7 +91,7 @@ public class TimewindowInformation extends Timewindow {
         return true;
     }
 
-    public Station getObserver() {
+    public Observer getObserver() {
         return observer;
     }
 

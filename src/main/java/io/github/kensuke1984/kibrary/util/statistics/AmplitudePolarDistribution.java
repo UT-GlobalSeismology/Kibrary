@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -52,7 +52,7 @@ public class AmplitudePolarDistribution {
 						* 180. / Math.PI;
 				
 				GlobalCMTID id = correction.getGlobalCMTID();
-				Station station = correction.getStation();
+				Observer station = correction.getStation();
 				SACComponent component = correction.getComponent();
 				double startTime = correction.getSynStartTime();
 				Set<TimewindowInformation> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)

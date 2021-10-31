@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.statistics;
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -25,7 +25,7 @@ import java.util.List;
 
 public class Histogram {
 	
-	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered, double minED, double maxED) {
+	public Histogram(BasicID[] basicIDs, Set<Observer> stationSet, double interval, boolean centered, double minED, double maxED) {
 		this.interval = interval;
 		this.numberOfRecords = new int[(int) (360 / interval)];
 		
@@ -51,7 +51,7 @@ public class Histogram {
 		try (Stream<BasicID> idStream = Stream.of(basicIDs);) {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 			.forEach(id -> {
-				Station station = stationSet.stream().filter(s->s.equals(id.getStation())).findAny().get();
+				Observer station = stationSet.stream().filter(s->s.equals(id.getStation())).findAny().get();
 				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
 				
 				// do not consider the following ids
@@ -86,7 +86,7 @@ public class Histogram {
 		this.medianValue = basicIDs.length/2.;
 	}
 	
-	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered) {
+	public Histogram(BasicID[] basicIDs, Set<Observer> stationSet, double interval, boolean centered) {
 		this(basicIDs, stationSet, interval, centered, 0, 360);
 	}
 	
@@ -105,7 +105,7 @@ public class Histogram {
 		Path outPath = dir.resolve("epicentralDistanceHistogram.txt");
 		Path scriptPath = dir.resolve("epicentralDistanceHistogram.plt");
 		
-		Set<Station> stationSet = new HashSet<>();
+		Set<Observer> stationSet = new HashSet<>();
 		
 		for (int i=0; i < basicIDs.length; i++) {
 				stationSet.add(basicIDs[i].getStation());

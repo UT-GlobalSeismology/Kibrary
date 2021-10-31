@@ -4,7 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -26,7 +26,7 @@ import edu.sc.seis.TauP.TauP_Time;
 
 class ReadStaticCorrection{	
 	public static TimewindowInformation getcorrection(GlobalCMTID eventID, TimewindowInformation timewindow, Set<StaticCorrection> corrections){		
-       	Station station = timewindow.getObserver();
+       	Observer station = timewindow.getObserver();
        	SACComponent component = timewindow.getComponent();
     	for(StaticCorrection correction : corrections){
        		if(correction.getStation().equals(station) && correction.getComponent().equals(component) && correction.getGlobalCMTID().equals(eventID)){
@@ -45,7 +45,7 @@ class ReadStaticCorrection{
 	}
 
 	public static TimewindowInformation gettimeshift(GlobalCMTID eventID, TimewindowInformation timewindow, double shift){		
-       	Station station = timewindow.getObserver();
+       	Observer station = timewindow.getObserver();
        	SACComponent component = timewindow.getComponent();
 	    double startTime = timewindow.getStartTime() - shift;
 	   	double endTime = timewindow.getEndTime() - shift;

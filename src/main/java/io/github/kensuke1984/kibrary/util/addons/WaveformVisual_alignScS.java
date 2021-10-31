@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.kibrary.stacking.BaseTimeStack;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -78,11 +78,11 @@ public class WaveformVisual_alignScS {
 				double[][][] obsAzimuthSectionStack = new double[nEd][360][0];
 				double[][][] synAzimuthSectionStack = new double[nEd][360][0];
 				
-				List<List<Station>> stationAzimuthList = new ArrayList<>();
+				List<List<Observer>> stationAzimuthList = new ArrayList<>();
 				for (int i = 0; i < nAz; i++)
 					stationAzimuthList.add(new ArrayList<>());
 				
-				List<List<Station>> stationDistanceList = new ArrayList<>();
+				List<List<Observer>> stationDistanceList = new ArrayList<>();
 				for (int i = 0; i < nEd; i++)
 					stationDistanceList.add(new ArrayList<>());
 				
@@ -146,7 +146,7 @@ public class WaveformVisual_alignScS {
 					obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], id.getData());
 					obsAzimuthSectionStack[ked][kazsec] = add(obsAzimuthSectionStack[ked][kazsec], id.getData());
 					
-					List<Station> tmpList = stationAzimuthList.get(kaz);
+					List<Observer> tmpList = stationAzimuthList.get(kaz);
 					tmpList.add(id.getStation());
 					stationAzimuthList.set(kaz, tmpList);
 					
@@ -314,7 +314,7 @@ public class WaveformVisual_alignScS {
 		}
 	}
 	
-	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, String name, int id) throws IOException {
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Observer> stations, String name, int id) throws IOException {
 		Path outpath = rootpath.resolve("plot_map_" + event + "_" + name + id + ".gmt");
 		String outpathps = "map_" + event + "_az" + name + id + ".ps";
 		PrintWriter pw = new PrintWriter(outpath.toFile());
@@ -333,12 +333,12 @@ public class WaveformVisual_alignScS {
 		ss += "gmt psxy -Rg -JW4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
 		double evLat = event.getEvent().getCmtLocation().getLatitude();
 		double evLon = event.getEvent().getCmtLocation().getLongitude();
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		
 		ss += "gmt psxy -R -J -Si0.11 -P -Groyalblue -Wthinnest,black -K -O >> $outputps <<END\n";
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format("%.2f %.2f\n", station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		

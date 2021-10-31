@@ -60,7 +60,7 @@ import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -565,7 +565,7 @@ public class LetMeInvertCV implements Operation {
 			throw new RuntimeException();
 	}
 
-	public LetMeInvertCV(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
+	public LetMeInvertCV(Path workPath, Set<Observer> stationSet, ObservationEquation equation) throws IOException {
 		eq = equation;
 		this.stationSet = stationSet;
 		workPath.resolve("lmi" + Utilities.getTemporaryString());
@@ -1834,7 +1834,7 @@ public class LetMeInvertCV implements Operation {
 		// // ステーションの情報の読み込み
 		System.err.print("reading station Information");
 		if (stationSet == null)
-			stationSet = StationInformationFile.read(stationInformationPath);
+			stationSet = ObserverInformationFile.read(stationInformationPath);
 		System.err.println(" done");
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {
@@ -2843,7 +2843,7 @@ public class LetMeInvertCV implements Operation {
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-				Station station = id.getStation();
+				Observer station = id.getStation();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
@@ -2859,7 +2859,7 @@ public class LetMeInvertCV implements Operation {
 		return new ArrayRealVector(Files.readAllLines(checkerboardPerturbationPath).stream().mapToDouble(s -> Double.parseDouble(s.trim())).toArray());
 	}
 	
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 
 	@Override
 	public Path getWorkPath() {

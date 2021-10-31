@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,7 +26,7 @@ public class BPinfo extends DSMheader {
     private final double[] RADII;
     private final HorizontalPosition[] POSITIONS;
     // private double sourceR;
-    private final Station STATION;
+    private final Observer STATION;
     private final PolynomialStructure STRUCTURE;
 
     /**
@@ -38,7 +38,7 @@ public class BPinfo extends DSMheader {
      * @param perturbationPointR   will be copied
      * @param perturbationPosition will be copied
      */
-    public BPinfo(Station station, String outputDir, PolynomialStructure structure, double tlen, int np,
+    public BPinfo(Observer station, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
         super(tlen, np);
         STATION = station;

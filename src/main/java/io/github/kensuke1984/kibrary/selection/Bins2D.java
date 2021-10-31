@@ -8,12 +8,12 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.DistanceAzimuth;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 public class Bins2D {
-	private Map<DistanceAzimuth, List<Station>> bins;
+	private Map<DistanceAzimuth, List<Observer>> bins;
 	private GlobalCMTID event;
 	private double dAzimuth;
 	private double dDistance;
@@ -25,7 +25,7 @@ public class Bins2D {
 		this.dDistance = dDistance;
 		
 		for (TimewindowInformation timewindow : timewindows) {
-			Station station = timewindow.getObserver();
+			Observer station = timewindow.getObserver();
 			Location eventLocation = event.getEvent().getCmtLocation();
 			double distance = station.getPosition().getEpicentralDistance(eventLocation)
 					* 180. / Math.PI;
@@ -33,19 +33,19 @@ public class Bins2D {
 			DistanceAzimuth distance_azimuth = getBinPosition(distance, azimuth);
 			
 			if (bins.containsKey(distance_azimuth)) {
-				List<Station> stations = bins.get(distance_azimuth);
+				List<Observer> stations = bins.get(distance_azimuth);
 				stations.add(station);
 				bins.replace(distance_azimuth, stations);
 			}
 			else {
-				List<Station> stations = new ArrayList<>();
+				List<Observer> stations = new ArrayList<>();
 				stations.add(station);
 				bins.put(distance_azimuth, stations);
 			}
 		}
 	}
 	
-	public Map<DistanceAzimuth, List<Station>> getBins() {
+	public Map<DistanceAzimuth, List<Observer>> getBins() {
 		return bins;
 	}
 	
@@ -60,7 +60,7 @@ public class Bins2D {
 	}
 	
 	public DistanceAzimuth getBinPosition(TimewindowInformation timewindow) {
-		Station station = timewindow.getObserver();
+		Observer station = timewindow.getObserver();
 		Location eventLocation = event.getEvent().getCmtLocation();
 		double distance = station.getPosition().getEpicentralDistance(eventLocation)
 				* 180. / Math.PI;

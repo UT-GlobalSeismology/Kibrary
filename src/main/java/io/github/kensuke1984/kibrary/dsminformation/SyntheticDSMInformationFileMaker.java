@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * If there is no valid data in a certain input event directory, the corresponding output event directory will not be made.
  * <p>
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
- * They will have the network name specified in {@link Station#SYN}.
+ * They will have the network name specified in {@link Observer#SYN}.
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 
@@ -298,22 +298,22 @@ public class SyntheticDSMInformationFileMaker implements Operation {
             writeProperties(outPath.resolve("dsmifm.properties"));
 
         //synthetic station set
-        Set<Station> synStationSet = new HashSet<>();
+        Set<Observer> synStationSet = new HashSet<>();
         if (syntheticDataset) {
             for (int i = synMinDistance; i <= synMaxDistance; i+=1) {
                 double distance = i;
                 String stationName = String.format("%03d", i);
-                Station station = new Station(stationName
-                        , new HorizontalPosition(0, distance), Station.SYN);
+                Observer station = new Observer(stationName
+                        , new HorizontalPosition(0, distance), Observer.SYN);
                 synStationSet.add(station);
             }
         }
 
         //specfem test dataset
         if (specfemDataset) {
-            Set<Station> specfemStationSet = IOUtils.readLines(SyntheticDSMInformationFileMaker.class.getClassLoader()
+            Set<Observer> specfemStationSet = IOUtils.readLines(SyntheticDSMInformationFileMaker.class.getClassLoader()
                     .getResourceAsStream("specfem_stations.inf"), Charset.defaultCharset())
-                .stream().map(s -> Station.createStation(s)).collect(Collectors.toSet());
+                .stream().map(s -> Observer.createStation(s)).collect(Collectors.toSet());
             try {
                 GlobalCMTData id = new GlobalCMTID("060994A").getEvent();
                 Path eventOut = outPath.resolve(id.toString());
@@ -328,21 +328,21 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 
         for (EventFolder eventDir : eventDirs) {
             try {
-                Set<Station> stations = eventDir.sacFileSet().stream()
+                Set<Observer> stations = eventDir.sacFileSet().stream()
                         .filter(name -> name.isOBS() && components.contains(name.getComponent())).map(name -> {
                             try {
                                 return name.readHeader();
                             } catch (Exception e2) {
                                 return null;
                             }
-                        }).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
+                        }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
                 if (syntheticDataset)
                     stations = synStationSet;
                 if (stations.isEmpty())
                     continue;
 
                 // in the same event folder, observers with the same name should have same position
-                int numberOfStation = (int) stations.stream().map(Station::toString).count();
+                int numberOfStation = (int) stations.stream().map(Observer::toString).count();
                 if (numberOfStation != stations.size())
                     System.err.println("!Caution there are stations with the same name and different positions in "
                             + eventDir);

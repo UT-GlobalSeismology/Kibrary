@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.IOException;
@@ -186,7 +186,7 @@ public class DividePerAzimuth {
 		if (averageEventPosition == null)
 			setAverageEventPosition();
 		
-		Set<Station> stations = info.stream().map(tw -> tw.getObserver())
+		Set<Observer> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		
 		double[] minMax = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
@@ -224,7 +224,7 @@ public class DividePerAzimuth {
 	private void setAzimuthRange() {
 		azimuthRange = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
 		
-		Set<Station> stations = info.stream().map(tw -> tw.getObserver())
+		Set<Observer> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		stations.stream().forEach(station -> {
 			double azimuth = averageEventPosition.getAzimuth(station.getPosition());

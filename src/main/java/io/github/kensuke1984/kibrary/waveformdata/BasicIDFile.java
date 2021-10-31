@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -150,7 +150,7 @@ public final class BasicIDFile {
 			long t = System.nanoTime();
 			long fileSize = Files.size(idPath);
 			// Read header
-			Station[] stations = new Station[dis.readShort()];
+			Observer[] stations = new Observer[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
 			Phase[] phases = new Phase[dis.readShort()];
@@ -163,7 +163,7 @@ public final class BasicIDFile {
 			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
-				stations[i] = Station.createStation(stationBytes);
+				stations[i] = Observer.createStation(stationBytes);
 			}
 			byte[] cmtIDBytes = new byte[15];
 			for (int i = 0; i < cmtIDs.length; i++) {
@@ -212,10 +212,10 @@ public final class BasicIDFile {
 	 *            for one ID
 	 * @return an ID written in the bytes
 	 */
-	private static BasicID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges, Phase[] phases) {
+	private static BasicID createID(byte[] bytes, Observer[] stations, GlobalCMTID[] ids, double[][] periodRanges, Phase[] phases) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		WaveformType type = 0 < bb.get() ? WaveformType.OBS : WaveformType.SYN;
-		Station station = stations[bb.getShort()];
+		Observer station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double[] period = periodRanges[bb.get()];

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -97,7 +97,7 @@ public class Dvector {
 	/**
 	 * Map of variance of the dataset for a station
 	 */
-	private Map<Station, Double> stationVariance;
+	private Map<Observer, Double> stationVariance;
 	private boolean atLeastThreeRecordsPerStation;
 	List<DataSelectionInformation> selectionInfo;
     /**
@@ -115,7 +115,7 @@ public class Dvector {
 	/**
 	 * Set of stations read in vector.
 	 */
-	private Set<Station> usedStationSet;
+	private Set<Observer> usedStationSet;
 	/**
 	 * weighting for i th timewindow.
 	 */
@@ -861,7 +861,7 @@ public class Dvector {
 	/**
 	 * @return set of stations in vector
 	 */
-	public Set<Station> getUsedStationSet() {
+	public Set<Observer> getUsedStationSet() {
 		return Collections.unmodifiableSet(usedStationSet);
 	}
 
@@ -927,8 +927,8 @@ public class Dvector {
      */
 	public void outputVarianceOf(Path outPath, RealVector[] vectors) throws IOException {
 		Files.createDirectories(outPath);
-		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
-		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
@@ -938,7 +938,7 @@ public class Dvector {
 		Path eachVariancePath = outPath.resolve("eachVariance.txt");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
 			for (int i = 0; i < nTimeWindow; i++) {
-				Station station = obsIDs[i].getStation();
+				Observer station = obsIDs[i].getStation();
 				GlobalCMTID id = obsIDs[i].getGlobalCMTID();
 				double obs2 = obsVec[i].dotProduct(obsVec[i]);
 				RealVector del = vectors[i].subtract(obsVec[i]);
@@ -967,8 +967,8 @@ public class Dvector {
 	private void read() {
 		this.npts = 0;
 		int start = 0;
-		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
-		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
@@ -984,7 +984,7 @@ public class Dvector {
 			DataSelectionInformation info = null;
 			if (selectionInfo != null) {
 				GlobalCMTID id = obsIDs[i].getGlobalCMTID();
-				Station station = obsIDs[i].getStation();
+				Observer station = obsIDs[i].getStation();
 				double startTime = obsIDs[i].getStartTime();
 				SACComponent component = obsIDs[i].getSacComponent();
 				System.out.println(obsIDs[i]);
@@ -1116,7 +1116,7 @@ public class Dvector {
 	/**
 	 * @return map of variance of waveforms for each station
 	 */
-	public Map<Station, Double> getStationVariance() {
+	public Map<Observer, Double> getStationVariance() {
 		return Collections.unmodifiableMap(stationVariance);
 	}
 	
@@ -1176,8 +1176,8 @@ public class Dvector {
 	 */
 	private List<BasicID> moreThanThreeEventsPerStation(List<BasicID> ids) {
 		List<BasicID> filteredIds = new ArrayList<>();
-		Set<Station> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());
-		for (Station station : stations) {
+		Set<Observer> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());
+		for (Observer station : stations) {
 			List<BasicID> tmps = ids.stream().filter(id -> id.getStation().equals(station)).collect(Collectors.toList());
 			int numberOfGCMTId = (int) tmps.stream().map(id -> id.getGlobalCMTID()).distinct().count();
 			if (numberOfGCMTId >= 2)

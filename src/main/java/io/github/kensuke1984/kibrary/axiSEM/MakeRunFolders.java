@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -109,7 +109,7 @@ public class MakeRunFolders {
 						);
 					Files.write(eventFile, s.getBytes());
 					
-					Set<Station> stationSet = new HashSet<>();
+					Set<Observer> stationSet = new HashSet<>();
 					eventFolder.sacFileSet().parallelStream().forEach(sac -> {
 						try {
 							stationSet.add(sac.read().getStation());
@@ -121,7 +121,7 @@ public class MakeRunFolders {
 					RealVector axis = getRotationAxisToNorthPole(idData.getCmtLocation());
 					double angle = idData.getCmtLocation().getTheta();
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
-						for (Station sta : stationSet) {
+						for (Observer sta : stationSet) {
 							Location rotatedStation 
 								= rotateLocation(sta.getPosition().toLocation(Earth.EARTH_RADIUS), axis, angle);
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"

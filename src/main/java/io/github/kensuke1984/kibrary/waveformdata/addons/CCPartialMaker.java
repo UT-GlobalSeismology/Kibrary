@@ -23,7 +23,7 @@ import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -95,18 +95,18 @@ public class CCPartialMaker {
 		
 		for (GlobalCMTID event : events) {
 			List<BasicID> eventWaveforms = Arrays.stream(waveforms).filter(bid -> bid.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-			List<Station> eventStations = Arrays.stream(waveforms).filter(bid -> bid.getGlobalCMTID().equals(event)).map(bid -> bid.getStation()).collect(Collectors.toList());
+			List<Observer> eventStations = Arrays.stream(waveforms).filter(bid -> bid.getGlobalCMTID().equals(event)).map(bid -> bid.getStation()).collect(Collectors.toList());
 			
 			List<PartialID> eventPartials = Arrays.stream(partials).filter(pid -> pid.getGlobalCMTID().equals(event)).collect(Collectors.toList());
 			
 			for (int ista = 0; ista < eventStations.size(); ista++) {
-				Station staI = eventStations.get(ista);
+				Observer staI = eventStations.get(ista);
 				uI = eventWaveforms.stream().filter(bid -> bid.getStation().equals(staI)).findFirst().get().getData();
 				
 				partialsI = eventPartials.stream().filter(pid -> pid.getStation().equals(staI)).collect(Collectors.toList());
 				
 				for (int jsta = ista; jsta < eventStations.size(); jsta++) {
-					Station staJ = eventStations.get(jsta);
+					Observer staJ = eventStations.get(jsta);
 					uJ = eventWaveforms.stream().filter(bid -> bid.getStation().equals(staJ)).findFirst().get().getData();
 					
 					partialsJ = eventPartials.stream().filter(pid -> pid.getStation().equals(staJ)).collect(Collectors.toList());
@@ -160,12 +160,12 @@ public class CCPartialMaker {
 			e1.printStackTrace();
 		}
 		
-		List<Station> stations = Arrays.stream(waveforms).map(bid -> bid.getStation()).collect(Collectors.toList());
+		List<Observer> stations = Arrays.stream(waveforms).map(bid -> bid.getStation()).collect(Collectors.toList());
 		for (int ista = 0; ista < stations.size(); ista++) {
-			Station staI = stations.get(ista);
+			Observer staI = stations.get(ista);
 			List<CCPartial> ccParI = ccPartials.parallelStream().filter(ccpar -> ccpar.staI.equals(staI)).collect(Collectors.toList());
 			for (int jsta = ista; jsta < stations.size(); jsta++) {
-				Station staJ = stations.get(jsta);
+				Observer staJ = stations.get(jsta);
 				List<CCPartial> ccParIJ = ccParI.parallelStream().filter(ccpar -> ccpar.staJ.equals(staJ)).collect(Collectors.toList());
 				
 				Path outpath = dir.resolve("partial_"  + staI.getStation()
@@ -196,15 +196,15 @@ public class CCPartialMaker {
 	
 	
 	public class CCPartial {
-		Station staI;
+		Observer staI;
 		
-		Station staJ;
+		Observer staJ;
 		
 		Physical3DParameter unknownParameter;
 		
 		Trace trace;
 		
-		public CCPartial(Station staI, Station staJ, Physical3DParameter unknownParameter, Trace trace) {
+		public CCPartial(Observer staI, Observer staJ, Physical3DParameter unknownParameter, Trace trace) {
 			this.staI = staI;
 			this.staJ = staJ;
 			this.unknownParameter = unknownParameter;
@@ -224,13 +224,13 @@ public class CCPartialMaker {
 		
 		int n;
 		
-		Station staI;
+		Observer staI;
 		
-		Station staJ;
+		Observer staJ;
 		
 		int iUnknown;
 		
-		public Worker(Station staI, Station staJ, int iUnknown) {
+		public Worker(Observer staI, Observer staJ, int iUnknown) {
 			this.staI = staI;
 			this.staJ = staJ;
 			this.iUnknown = iUnknown;

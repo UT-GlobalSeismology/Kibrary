@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -466,7 +466,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			}
 		}
 
-		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t, double bodyR,
+		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowInformation t, double bodyR,
 				PartialType partialType, double[] periodRange) {
 			
 			HilbertTransform hilbert = new HilbertTransform(filteredUt);
@@ -548,7 +548,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			
 			String stationName = spcname.getStationCode();
 			String network = spcname.getNetworkCode();
-			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
+			Observer station = new Observer(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
 			if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
@@ -646,7 +646,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 
 			String stationName = spcname.getStationCode();
 			String network = spcname.getNetworkCode();
-			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
+			Observer station = new Observer(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
 			if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
@@ -824,7 +824,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			System.out.println(sacname + " (time partials)");
 			
 			SACFileData sacdata = sacname.read();
-			Station station = sacdata.getStation();
+			Observer station = sacdata.getStation();
 			
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
@@ -870,7 +870,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			return sampleU;
 		}
 		
-		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t, double[] periodRange) {
+		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowInformation t, double[] periodRange) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
 			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
@@ -963,7 +963,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 	}
 
 	private Set<GlobalCMTID> idSet;
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 	private Set<Location> perturbationLocationSet;
 	private Phase[] phases;
 

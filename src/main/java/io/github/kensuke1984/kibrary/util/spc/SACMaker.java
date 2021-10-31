@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SCARDEC;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.Raypath;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -220,7 +220,7 @@ public class SACMaker implements Runnable {
      */
     private boolean pde;
     private LocalDateTime beginDateTime;
-    private Station station;
+    private Observer station;
     private Raypath path;
     private int lsmooth;
     private double delta;
@@ -411,7 +411,7 @@ public class SACMaker implements Runnable {
     }
 
     private void setInformation() {
-        station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition());
+        station = new Observer(primeSPC.getObserverID(), primeSPC.getObserverPosition());
         path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
         if (globalCMTID != null && beginDateTime == null)
             beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();

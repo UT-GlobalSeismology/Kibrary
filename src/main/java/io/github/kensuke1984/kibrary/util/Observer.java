@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * station code and horizontal position is considered.
  *
  */
-public class Station implements Comparable<Station> {
+public class Observer implements Comparable<Observer> {
 
     /**
      * network code for stations in synthetic datasets
@@ -54,7 +54,7 @@ public class Station implements Comparable<Station> {
      * @param network     Name of the network of the station (must be 8 or less letters)
      * @param position    Horizontal POSITION of the station
      */
-    public Station(String stationName, HorizontalPosition position, String network) {
+    public Observer(String stationName, HorizontalPosition position, String network) {
         if (8 < stationName.length() || 8 < network.length())
             throw new IllegalArgumentException("Both station and network name must be 8 or less letters.");
         this.station = stationName;
@@ -62,11 +62,11 @@ public class Station implements Comparable<Station> {
         this.position = position;
     }
 
-    public Station(String observerID, HorizontalPosition position) {
+    public Observer(String observerID, HorizontalPosition position) {
         this(observerID.split("_")[0], position, observerID.split("_")[1]);
     }
 
-    public Station(Station station) {
+    public Observer(Observer station) {
         this.station = station.station;
         this.network = station.network;
         this.position = station.position;
@@ -76,13 +76,13 @@ public class Station implements Comparable<Station> {
      * @param sacHeaderData header data
      * @return Station of the input sacHeaderData
      */
-    public static Station of(SACHeaderData sacHeaderData) {
+    public static Observer of(SACHeaderData sacHeaderData) {
         return sacHeaderData.getSACString(SACHeaderEnum.KNETWK) == "-12345"
-                ? new Station(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
+                ? new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
                                 sacHeaderData.getValue(SACHeaderEnum.STLO)),
                         SYN)
-                : new Station(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
+                : new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
                                 sacHeaderData.getValue(SACHeaderEnum.STLO)),
                         sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim());
@@ -99,28 +99,28 @@ public class Station implements Comparable<Station> {
      * @param bytes for one station
      * @return Station created from the input bytes
      */
-    public static Station createStation(byte[] bytes) {
+    public static Observer createStation(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         byte[] str = new byte[8];
         bb.get(str);
         String name = new String(str).trim();
         bb.get(str);
         String network = new String(str).trim();
-        return new Station(name, new HorizontalPosition(bb.getDouble(), bb.getDouble()), network);
+        return new Observer(name, new HorizontalPosition(bb.getDouble(), bb.getDouble()), network);
     }
 
-    public static Station createStation(String stationLine) {
+    public static Observer createStation(String stationLine) {
         String[] ss = stationLine.trim().split("\\s+");
         String stationName = ss[0];
         String network = ss[1];
         double latitude = Double.parseDouble(ss[2]);
         double longitude = Double.parseDouble(ss[3]);
         HorizontalPosition position = new HorizontalPosition(latitude, longitude);
-        return new Station(stationName, position, network);
+        return new Observer(stationName, position, network);
     }
 
     @Override
-    public int compareTo(Station o) {
+    public int compareTo(Observer o) {
         int name = station.compareTo(o.station);
         if (name != 0)
             return name;
@@ -153,7 +153,7 @@ public class Station implements Comparable<Station> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Station other = (Station) obj;
+        Observer other = (Observer) obj;
 
         if (position == null) {
             if (other.position != null)

@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.specfem;
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -72,7 +72,7 @@ public class MakeRunFolder {
 					String s = cmtSolutionString(id);
 					Files.write(eventFile, s.getBytes());
 					
-					Set<Station> stationSet = new HashSet<>();
+					Set<Observer> stationSet = new HashSet<>();
 					eventFolder.sacFileSet().parallelStream().forEach(sac -> {
 						try {
 							stationSet.add(sac.read().getStation());
@@ -84,7 +84,7 @@ public class MakeRunFolder {
 					// write STATIONS file
 					Path stationFile = dataFolderPath.resolve("STATIONS");
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
-						for (Station sta : stationSet) {
+						for (Observer sta : stationSet) {
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
 								, sta.getStation()
 								, sta.getNetwork()

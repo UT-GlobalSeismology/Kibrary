@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.waveformdata.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -30,7 +30,7 @@ class BasicIDMerge {
 		Path idPath = workingDir.resolve("waveformID" + tmpstr + ".dat");
 		Path dataPath = workingDir.resolve("waveform" + tmpstr + ".dat");
 		
-		Set<Station> stationSet = new HashSet<>();
+		Set<Observer> stationSet = new HashSet<>();
 		Set<GlobalCMTID> globalCMTIDSet = new HashSet<>();
 		Set<double[]> periodSet = new HashSet<>();
 		Set<Phase> phaseSet = new HashSet<>();

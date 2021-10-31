@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -159,7 +159,7 @@ public class TakeuchiStaticCorrection implements Operation {
         TimewindowInformation timeWindow = timeWindowSet.iterator().next();
         SACFileData obsSac = obsName.read();
         SACFileData synSac = synName.read();
-        Station station = obsSac.getStation();
+        Observer station = obsSac.getStation();
         Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
         Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
         double obsT = (obsTrace.getXforMaxValue() + obsTrace.getXforMinValue()) / 2;

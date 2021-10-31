@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -44,7 +44,7 @@ public class BasicID {
     protected final double SAMPLINGHZ;
     protected final double START_TIME;
     protected final int NPTS;
-    protected final Station STATION;
+    protected final Observer STATION;
     protected final GlobalCMTID ID;
     protected final SACComponent COMPONENT;
 	protected final Phase[] PHASES;
@@ -81,7 +81,7 @@ public class BasicID {
      * @param convolute    If the data is convolute.
      * @param waveformData the waveform data for this ID.
      */
-	public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Station station,
+	public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Observer station,
 			GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases, long startByte,
 			boolean convolute, double... waveformData) {
 		TYPE = waveFormType;
@@ -216,7 +216,7 @@ public class BasicID {
 		return NPTS;
 	}
 
-	public Station getStation() {
+	public Observer getStation() {
 		return STATION;
 	}
 

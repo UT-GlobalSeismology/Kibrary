@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -406,7 +406,7 @@ public final class AtdFile {
 	}
 
 	/**
-	 * 1 time window {@value #oneWindowByte} byte
+	 * 1 time window {@value #ONE_WINDOW_BYTE} byte
 	 * 
 	 * Station index(2)<br>
 	 * GlobalCMTID index(2)<br>

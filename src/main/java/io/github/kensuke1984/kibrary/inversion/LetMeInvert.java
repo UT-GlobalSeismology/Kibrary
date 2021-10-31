@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
@@ -104,7 +104,7 @@ public class LetMeInvert implements Operation {
 	private Properties PROPERTY;
 	private Path workPath;
 	private Path outPath;
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 	
 	private ObservationEquation eqA, eqB;
 	Path spcAmpPath;
@@ -502,7 +502,7 @@ public class LetMeInvert implements Operation {
 		setEquation();
 	}
 
-	public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
+	public LetMeInvert(Path workPath, Set<Observer> stationSet, ObservationEquation equation) throws IOException {
 		eq = equation;
 		this.stationSet = stationSet;
 		workPath.resolve("lmi" + Utilities.getTemporaryString());
@@ -1560,7 +1560,7 @@ public class LetMeInvert implements Operation {
 		// // ステーションの情報の読み込み
 		System.err.print("reading station Information");
 		if (stationSet == null)
-			stationSet = StationInformationFile.read(stationInformationPath);
+			stationSet = ObserverInformationFile.read(stationInformationPath);
 		System.err.println(" done");
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {
@@ -2273,7 +2273,7 @@ public class LetMeInvert implements Operation {
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-				Station station = id.getStation();
+				Observer station = id.getStation();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));

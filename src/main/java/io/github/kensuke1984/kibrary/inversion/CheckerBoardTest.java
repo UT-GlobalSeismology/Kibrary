@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveformdata.*;
@@ -61,7 +61,7 @@ public class CheckerBoardTest implements Operation {
 	private ObservationEquation eq;
 	private Properties property;
 	private Path workPath;
-	private Set<Station> stationSet = new HashSet<>();
+	private Set<Observer> stationSet = new HashSet<>();
 	private double[][] ranges;
 	private Phase[] phases;
 	private Set<GlobalCMTID> idSet = new HashSet<>();

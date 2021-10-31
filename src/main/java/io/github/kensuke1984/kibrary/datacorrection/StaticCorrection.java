@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -36,7 +36,7 @@ import java.util.stream.Stream;
  */
 public class StaticCorrection implements Comparable<StaticCorrection> {
 
-	private final Station STATION;
+	private final Observer STATION;
 	private final GlobalCMTID ID;
 	private final SACComponent COMPONENT;
 	/**
@@ -77,7 +77,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
      *                       t2-timeShift]
      * @param amplitudeRatio Observed / Synthetic, an observed waveform will be divided by this value.
      */
-	public StaticCorrection(Station station, GlobalCMTID eventID, SACComponent component, double synStartTime,
+	public StaticCorrection(Observer station, GlobalCMTID eventID, SACComponent component, double synStartTime,
 			double timeShift, double amplitudeRatio, Phase[] phases) {
 		STATION = station;
         ID = eventID;
@@ -103,7 +103,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
         return Double.compare(AMPLITUDE, o.AMPLITUDE);
     }
 
-	public Station getStation() {
+	public Observer getStation() {
 		return STATION;
 	}
 

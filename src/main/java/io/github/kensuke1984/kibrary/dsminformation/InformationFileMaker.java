@@ -3,10 +3,10 @@ package io.github.kensuke1984.kibrary.dsminformation;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.inversion.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -272,7 +272,7 @@ public class InformationFileMaker implements Operation {
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 
 		// reading station information
-		Set<Station> stationSet = StationInformationFile.read(stationInformationPath);
+		Set<Observer> stationSet = ObserverInformationFile.read(stationInformationPath);
 
 		// System.exit(0);
 		// //////////////////////////////////////
@@ -321,7 +321,7 @@ public class InformationFileMaker implements Operation {
 		}
 
 		System.out.println("making information files for the stations(bp)");
-		for (Station station : stationSet) {
+		for (Observer station : stationSet) {
 			// System.out.println(str);
 			BPinfo bp = new BPinfo(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 			Path infPath = bpPath.resolve("0000" + station);

@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util.sac;
 
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import org.apache.commons.math3.util.Precision;
 
@@ -195,7 +195,7 @@ public interface SACFileData extends SACHeaderData {
     }
 
     @Override
-    default SACFileData setStation(Station station) {
+    default SACFileData setStation(Observer station) {
         return (SACFileData) SACHeaderData.super.setStation(station);
     }
 

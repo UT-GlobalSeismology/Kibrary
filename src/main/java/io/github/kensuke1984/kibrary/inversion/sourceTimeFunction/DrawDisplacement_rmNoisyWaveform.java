@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -105,7 +105,7 @@ class DrawDisplacement_rmNoisyWaveform{
         			if(timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
         					timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
 						TimewindowInformation correctionTw = ReadStaticCorrection.getcorrection(eventID, timewindow, corrections);
-						Station station = timewindow.getObserver();
+						Observer station = timewindow.getObserver();
 						double sttime = correctionTw.getStartTime() - 5.;
 						double entime = sttime + windowLength;
 						String path = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getStation() + "." + eventID + "." + component;

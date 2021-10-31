@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
@@ -33,7 +33,7 @@ public class SyntheticDSMInfo extends DSMheader {
     /**
      * <b>unmodifiable</b>
      */
-    protected final Set<Station> STATIONS;
+    protected final Set<Observer> STATIONS;
 
     protected final GlobalCMTData EVENT;
 
@@ -45,7 +45,7 @@ public class SyntheticDSMInfo extends DSMheader {
      * @param tlen      TLEN[s]
      * @param np        NP
      */
-    public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTData event, Set<Station> stations, String outputDir,
+    public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTData event, Set<Observer> stations, String outputDir,
                             double tlen, int np) {
         super(tlen, np);
         STRUCTURE = structure;
@@ -87,7 +87,7 @@ public class SyntheticDSMInfo extends DSMheader {
             pw.println(STATIONS.size() + " nsta");
             pw.println("c latitude longitude (deg)");
 
-            STATIONS.stream().sorted().map(Station::getPosition)
+            STATIONS.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
             // write
@@ -130,7 +130,7 @@ public class SyntheticDSMInfo extends DSMheader {
             pw.println("c the number of stations");
             pw.println(STATIONS.size() + " nsta");
             pw.println("c latitude longitude (deg)");
-            STATIONS.stream().sorted().map(Station::getPosition)
+            STATIONS.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
             // write

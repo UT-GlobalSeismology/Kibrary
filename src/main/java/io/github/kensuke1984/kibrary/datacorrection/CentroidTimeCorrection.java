@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.IOException;
@@ -63,7 +63,7 @@ public class CentroidTimeCorrection {
 		
 		Set<GlobalCMTID> events = corrections.stream().map(corr -> corr.getGlobalCMTID())
 				.collect(Collectors.toSet());
-		Set<Station> stations = corrections.stream().map(corr -> corr.getStation()).collect(Collectors.toSet());
+		Set<Observer> stations = corrections.stream().map(corr -> corr.getStation()).collect(Collectors.toSet());
 		
 		Map<GlobalCMTID, Integer> centroidCounter = new HashMap<>();
 		for (GlobalCMTID event : events) {

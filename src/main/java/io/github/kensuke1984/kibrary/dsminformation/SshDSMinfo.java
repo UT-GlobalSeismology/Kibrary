@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     private final double[] RADII;
     private boolean[] commentPerturbationR;
 
-    public SshDSMinfo(PolynomialStructure structure, GlobalCMTData event, Set<Station> stations, String outputDir,
+    public SshDSMinfo(PolynomialStructure structure, GlobalCMTData event, Set<Observer> stations, String outputDir,
                       double[] perturbationR, double tlen, int np) {
         super(structure, event, stations, outputDir, tlen, np);
         RADII = perturbationR.clone();
@@ -71,7 +71,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(OUTPUT + "/");
 			pw.println("PSV.spc");
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStringID).forEach(n -> {
+			STATIONS.stream().sorted().map(Observer::getStringID).forEach(n -> {
 				pw.println(n + "." + EVENT + ".PAR0");
 				pw.println(n + "." + EVENT + ".PARA");
 				pw.println(n + "." + EVENT + ".PARC");
@@ -80,7 +80,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 				pw.println(n + "." + EVENT + ".PARN");
 			});
 
-			STATIONS.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Observer::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 			
 			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
@@ -124,12 +124,12 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println("PSV.spc");
 
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStringID).forEach(n -> {
+			STATIONS.stream().sorted().map(Observer::getStringID).forEach(n -> {
 				pw.println(n + "." + EVENT + ".PAR0");
 				pw.println(n + "." + EVENT + ".PAR1");
 				pw.println(n + "." + EVENT + ".PAR2");
 			});
-			STATIONS.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Observer::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
 			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
@@ -173,13 +173,13 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println("SH.spc");
 
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStringID).forEach(n -> {
+			STATIONS.stream().sorted().map(Observer::getStringID).forEach(n -> {
 				pw.println(n + "." + EVENT + ".PAR0");
 				pw.println(n + "." + EVENT + ".PARL");
 				pw.println(n + "." + EVENT + ".PARN");
 			});
 
-			STATIONS.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Observer::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
 					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
@@ -220,11 +220,11 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(OUTPUT + "/");
 			pw.println("SH.spc");
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStringID).forEach(n -> {
+			STATIONS.stream().sorted().map(Observer::getStringID).forEach(n -> {
 				pw.println(n + "." + EVENT + ".PAR0");
 				pw.println(n + "." + EVENT + ".PAR2");
 			});
-			STATIONS.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Observer::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
 			int nComment = (int) IntStream.range(0, commentPerturbationR.length)

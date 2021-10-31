@@ -4,7 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -126,15 +126,15 @@ public class Profile_v2 {
 			
 			double dt = 1. / obsList.get(0).getSamplingHz();
 			
-			Map<Station, Double> stationSynVariance = new HashMap<>();
-			Map<Station, Double> stationBornVariance = new HashMap<>();
-			Map<Station, Double> stationObsNorm = new HashMap<>();
+			Map<Observer, Double> stationSynVariance = new HashMap<>();
+			Map<Observer, Double> stationBornVariance = new HashMap<>();
+			Map<Observer, Double> stationObsNorm = new HashMap<>();
 //			obsList.stream().map(id -> id.getStation()).distinct().forEach(station -> {
 //				stationSynVariance.put(station, 0.);
 //				stationBornVariance.put(station, 0.);
 //				stationObsNorm.put(station, 0.);
 //			});
-			for (Station station : ir.stationSet()) {
+			for (Observer station : ir.stationSet()) {
 				stationSynVariance.put(station, 0.);
 				stationBornVariance.put(station, 0.);
 				stationObsNorm.put(station, 0.);
@@ -238,7 +238,7 @@ public class Profile_v2 {
 							totalBornVariance[0] += tmpBornVariance;
 							totalObsNorm[0] += tmpObsNorm;
 							
-							Station sta = id.getStation();
+							Observer sta = id.getStation();
 							try {
 								stationSynVariance.put(sta, stationSynVariance.get(sta) + tmpSynVariance);
 								stationBornVariance.put(sta, stationBornVariance.get(sta) + tmpBornVariance);
@@ -462,7 +462,7 @@ public class Profile_v2 {
 			pw1 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("stationVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 			pw1.println("# Station synVariance bornVariance varianceReduction;(syn - born)");
 			
-			for (Station sta : stationObsNorm.keySet()) {
+			for (Observer sta : stationObsNorm.keySet()) {
 				try {
 				double bornVariance = stationBornVariance.get(sta) / stationObsNorm.get(sta);
 				double synVariance = stationSynVariance.get(sta) / stationObsNorm.get(sta);

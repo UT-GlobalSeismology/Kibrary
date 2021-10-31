@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -177,7 +177,7 @@ public class Result implements Operation {
 				
 				// get stations
 				Path stationFile = solverFolder.resolve("station.inf");
-				Set<Station> stationSet = new HashSet<>();
+				Set<Observer> stationSet = new HashSet<>();
 				BufferedReader readerStation = Files.newBufferedReader(stationFile);
 				String line = null;
 				while ((line = readerStation.readLine()) != null) {
@@ -186,7 +186,7 @@ public class Result implements Operation {
 					String network = s[1];
 					double latitude = Double.parseDouble(s[2]);
 					double longitude = Double.parseDouble(s[3]);
-					Station station = new Station(stationName
+					Observer station = new Observer(stationName
 							, new HorizontalPosition(latitude, longitude), network);
 					stationSet.add(station);
 				}
@@ -263,11 +263,11 @@ public class Result implements Operation {
 					// get this file's station
 					String thisStationName = file.getName().split("_")[0];
 					String thisNetwork = file.getName().split("_")[1];
-					Station station = null;
-					for (Station sta : stationSet) {
+					Observer station = null;
+					for (Observer sta : stationSet) {
 						if (sta.getStation().equals(thisStationName) 
 								&& sta.getNetwork().equals(thisNetwork)) {
-							station = new Station(sta);
+							station = new Observer(sta);
 							break;
 						}
 					}

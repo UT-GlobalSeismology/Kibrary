@@ -5,12 +5,12 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.inversion.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -56,7 +56,7 @@ public class RaypathDistribution implements Operation {
 	 */
 	// protected boolean drawsPoint;
 
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 	private Set<TimewindowInformation> timeWindowInformationFile;
 	private Path stationPath;
 	private Path eventPath;
@@ -124,7 +124,7 @@ public class RaypathDistribution implements Operation {
 			timeWindowInformationFile = TimewindowInformationFile.read(timewindowPath);
 		}
 		Path stationPath = getPath("stationInformationPath");
-		if (timeWindowInformationFile == null) stationSet = StationInformationFile.read(stationPath);
+		if (timeWindowInformationFile == null) stationSet = ObserverInformationFile.read(stationPath);
 		else stationSet = timeWindowInformationFile.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		pierceDepth = Double.parseDouble(property.getProperty("pierceDepth"));
@@ -249,7 +249,7 @@ public class RaypathDistribution implements Operation {
 					}
 				}).filter(Objects::nonNull)
 				.map(header -> header.getSACString(SACHeaderEnum.KSTNM) + " " + header.getSACString(SACHeaderEnum.KEVNM)
-						+ " " + header.getEventLocation() + " " + Station.of(header).getPosition())
+						+ " " + header.getEventLocation() + " " + Observer.of(header).getPosition())
 				.collect(Collectors.toList());
 
 		Files.write(raypathPath, lines);

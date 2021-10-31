@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -31,7 +31,7 @@ public class testTimewindowSet {
 	
 	private static Set<TimewindowInformation> getTestwindows() {
 		GlobalCMTID id = new GlobalCMTID("200503070717A");
-		Station station = new Station("340A", new HorizontalPosition(31.41670036315918, -93.88960266113281), "TA");
+		Observer station = new Observer("340A", new HorizontalPosition(31.41670036315918, -93.88960266113281), "TA");
 		
 		Location loc = id.getEvent().getCmtLocation();
 		double distance = loc.getEpicentralDistance(station.getPosition()) * 180. / Math.PI ;

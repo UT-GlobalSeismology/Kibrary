@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,8 +31,8 @@ public class StationAverageTimeshift {
 		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
 		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
 
-		Map<Station, Double> stationAverages = new HashMap<Station, Double>();
-		Map<Station, Integer> stationCount = new HashMap<Station, Integer>();
+		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
+		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
 		
 		Map<HorizontalPosition, Double> histogramAverage = new HashMap<>();
 		Map<HorizontalPosition, Double> histogramVariance = new HashMap<>();
@@ -59,7 +59,7 @@ public class StationAverageTimeshift {
 			}
 			StaticCorrection correction = correctionList.get(0);
 			
-			Station sta = correction.getStation();
+			Observer sta = correction.getStation();
 			Double shift = correction.getTimeshift();
 			if (stationAverages.containsKey(sta)) {
 				shift = shift + stationAverages.get(sta);
@@ -108,7 +108,7 @@ public class StationAverageTimeshift {
 			}
 			StaticCorrection correction = correctionList.get(0);
 			
-			Station sta = correction.getStation();
+			Observer sta = correction.getStation();
 			Double shift = correction.getTimeshift();
 			
 			HorizontalPosition pos = getBin(sta.getPosition(), 1., 1.);
@@ -130,7 +130,7 @@ public class StationAverageTimeshift {
 		Files.createFile(outpathP);
 		Files.deleteIfExists(outpathM);
 		Files.createFile(outpathM);
-		for (Station sta : stationCount.keySet()) {
+		for (Observer sta : stationCount.keySet()) {
 			double shift = stationAverages.get(sta) / stationCount.get(sta);
 			if (shift >= 0)
 				Files.write(outpathP, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);

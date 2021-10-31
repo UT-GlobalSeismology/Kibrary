@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -826,12 +826,12 @@ public class AtAMaker implements Operation {
 				.map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
 		
-		Set<Station> usedStations = timewindowInformation.stream()
+		Set<Observer> usedStations = timewindowInformation.stream()
 				.map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		
 		List<GlobalCMTID> usedEventList = usedEvents.stream().collect(Collectors.toList());
-		List<Station> usedStationList = usedStations.stream().collect(Collectors.toList());
+		List<Observer> usedStationList = usedStations.stream().collect(Collectors.toList());
 		
 		//--- initialize partials writer
 		Set<Phase> tmpPhases = new HashSet<>();
@@ -912,7 +912,7 @@ public class AtAMaker implements Operation {
 					.filter(tw -> tw.getGlobalCMTID().equals(event))
 					.collect(Collectors.toSet());
 			
-			Set<Station> eventStations = eventTimewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(event))
+			Set<Observer> eventStations = eventTimewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(event))
 				.map(tw -> tw.getObserver()).collect(Collectors.toSet());
 			
 			List<List<Integer>> IndicesEventBasicID = new ArrayList<>();
@@ -932,7 +932,7 @@ public class AtAMaker implements Operation {
 				fpnames_PSV = Utilities.collectOrderedPSVSpcFileName(fpEventPath);
 			}
 			
-			for (Station station : eventStations) {
+			for (Observer station : eventStations) {
 				System.out.println("Working for " + event + " " + station);
 				
 				Set<TimewindowInformation> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getObserver().equals(station))
@@ -1205,9 +1205,9 @@ public class AtAMaker implements Operation {
 				Path dir1 = dir0.resolve(frequencyRanges[ifreq].toString());
 				Files.createDirectory(dir1);
 				for (int ista = 0; ista < nsta; ista++) {
-					Station stationI = timewindowOrder[ista].getObserver();
+					Observer stationI = timewindowOrder[ista].getObserver();
 					for (int jsta = 0; jsta < nsta; jsta++) {
-						Station stationJ = timewindowOrder[jsta].getObserver();
+						Observer stationJ = timewindowOrder[jsta].getObserver();
 						Path outpath = dir1.resolve("partial_"  + stationI.getStation() 
 							+ "_" + stationJ.getStation() + ".txt");
 						PrintWriter pw = new PrintWriter(outpath.toFile());
@@ -1640,13 +1640,13 @@ public class AtAMaker implements Operation {
 		SPCFileName fpname;
 		SPCFileName fpname_PSV;
 		HorizontalPosition voxelPosition;
-		Station station;
+		Observer station;
 		GlobalCMTID event;
 		List<List<Integer>> IndicesRecordBasicID;
 		private final List<TimewindowInformation> orderedRecordTimewindows;
 		private int windowCounter;
 		
-		public FPWorker(SPCFileName fpname, Station station, GlobalCMTID event,
+		public FPWorker(SPCFileName fpname, Observer station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			if (mode.equals("SH")) {
 				this.fpname = fpname;
@@ -1663,7 +1663,7 @@ public class AtAMaker implements Operation {
 			this.windowCounter = windowCounter;
 		}
 		
-		public FPWorker(SPCFileName fpname, SPCFileName fpname_PSV, Station station, GlobalCMTID event,
+		public FPWorker(SPCFileName fpname, SPCFileName fpname_PSV, Observer station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = fpname;
 			this.fpname_PSV = fpname_PSV;
@@ -1674,7 +1674,7 @@ public class AtAMaker implements Operation {
 			this.windowCounter = windowCounter;
 		}
 		
-		public FPWorker(HorizontalPosition voxelPosition, Station station, GlobalCMTID event,
+		public FPWorker(HorizontalPosition voxelPosition, Observer station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = null;
 			this.fpname_PSV = null;

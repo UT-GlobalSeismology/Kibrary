@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
@@ -202,7 +202,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 		private SPCFileName fpname_other;
 		private DSMOutput fp;
 		private DSMOutput fp_other;
-		private Station station;
+		private Observer station;
 		private GlobalCMTID id;
 		private String mode;
 		
@@ -231,14 +231,14 @@ public class PartialDatasetMaker_v2 implements Operation {
 		 * @param fp
 		 * @param bpFile
 		 */
-		private PartialComputation(DSMOutput bp, Station station, SPCFileName fpFile) {
+		private PartialComputation(DSMOutput bp, Observer station, SPCFileName fpFile) {
 			checkMode(bp, fpFile);
 			this.station = station;
 //			fpname = fpFile;
 			id = new GlobalCMTID(fpFile.getSourceID());
 		}
 		
-		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Station station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV) {
+		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Observer station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV) {
 			this.bp = bp_PSV;
 			fpname = fpFile_PSV;
 			bp_other = bp_SH;
@@ -536,7 +536,7 @@ private class WorkerTimePartial implements Runnable {
 			System.out.println(sacname + " (time partials)");
 			
 			SACFileData sacdata = sacname.read();
-			Station station = sacdata.getStation();
+			Observer station = sacdata.getStation();
 			
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
@@ -580,7 +580,7 @@ private class WorkerTimePartial implements Runnable {
 			return sampleU;
 		}
 		
-		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t) {
+		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowInformation t) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
 			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
@@ -821,7 +821,7 @@ private class WorkerTimePartial implements Runnable {
 	}
 
 	// TODO
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 	private Set<GlobalCMTID> idSet;
 	private double[][] periodRanges;
 	private Phase[] phases;
@@ -921,7 +921,7 @@ private class WorkerTimePartial implements Runnable {
 			System.out.println();
 		}
 		
-		for (Station station : stationSet) {
+		for (Observer station : stationSet) {
 			Path bp0000Path = bpPath.resolve("0000" + station.toString());
 			Path bpModelPath = bp0000Path.resolve(modelName);
 
@@ -1216,17 +1216,17 @@ private class WorkerTimePartial implements Runnable {
 				.distinct().toArray(Phase[]::new);
 
 		// TODO
-		if (stationSet.size() != stationSet.stream().map(Station::toString).distinct().count()) {
+		if (stationSet.size() != stationSet.stream().map(Observer::toString).distinct().count()) {
 			System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
-			Map<String, List<Station>> nameToStation = new HashMap<>();
+			Map<String, List<Observer>> nameToStation = new HashMap<>();
 			stationSet.forEach(sta -> {
 				if (nameToStation.containsKey(sta.toString())) {
-					List<Station> tmp = nameToStation.get(sta.toString());
+					List<Observer> tmp = nameToStation.get(sta.toString());
 					tmp.add(sta);
 					nameToStation.put(sta.toString(), tmp);
 				}
 				else {
-					List<Station> tmp = new ArrayList<>();
+					List<Observer> tmp = new ArrayList<>();
 					tmp.add(sta);
 					nameToStation.put(sta.toString(), tmp);
 				}

@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.datacorrection;
 
 import io.github.kensuke1984.kibrary.stacking.PeakStack;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -63,7 +63,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         for (int i = 0; i < obsSacs.length; i++) {
             if (!obsSacs[i].getSACString(SACHeaderEnum.KEVNM).equals(synSacs[i].getSACString(SACHeaderEnum.KEVNM)))
                 return false;
-            if (!Station.of(obsSacs[i]).equals(Station.of(synSacs[i]))) return false;
+            if (!Observer.of(obsSacs[i]).equals(Observer.of(synSacs[i]))) return false;
             if (obsSacs[i].getValue(SACHeaderEnum.USER1) != synSacs[i].getValue(SACHeaderEnum.USER1) ||
                     obsSacs[i].getValue(SACHeaderEnum.USER2) != synSacs[i].getValue(SACHeaderEnum.USER2)) return false;
         }
@@ -76,7 +76,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
     }
 
     private Trace createTrace(SACFileData sacFile) {
-        Station station = sacFile.getStation();
+        Observer station = sacFile.getStation();
         GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
         SACComponent component = SACComponent.of(sacFile);
 

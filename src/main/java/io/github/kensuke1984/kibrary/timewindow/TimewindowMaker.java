@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -334,7 +334,7 @@ public class TimewindowMaker implements Operation {
             double delta = sacFile.getValue(SACHeaderEnum.DELTA);
             double e = sacFile.getValue(SACHeaderEnum.E);
             // station of SacFile
-            Station station = sacFile.getStation();
+            Observer station = sacFile.getStation();
             // global cmt id of SacFile
             GlobalCMTID id = sacFileName.getGlobalCMTID();
             // component of SacFile
@@ -581,7 +581,7 @@ public class TimewindowMaker implements Operation {
             double delta = sacFile.getValue(SACHeaderEnum.DELTA);
             double e = sacFile.getValue(SACHeaderEnum.E);
             // station of SacFile
-            Station station = sacFile.getStation();
+            Observer station = sacFile.getStation();
             // global cmt id of SacFile
             GlobalCMTID id = sacFileName.getGlobalCMTID();
             // component of SacFile

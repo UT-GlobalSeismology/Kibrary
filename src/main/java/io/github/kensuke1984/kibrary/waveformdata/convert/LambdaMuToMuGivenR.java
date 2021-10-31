@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.waveformdata.convert;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -99,7 +99,7 @@ public class LambdaMuToMuGivenR {
 		Path outID4 = Paths.get("partialID_KK01ahae.dat");
 		Path out4 = Paths.get("partial_KK01ahae.dat");
 		
-		Set<Station> stationSet = partialsMU.stream().map(p -> p.getStation()).collect(Collectors.toSet());
+		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getStation()).collect(Collectors.toSet());
 		Set<GlobalCMTID> globalCMTIDSet = partialsMU.stream().map(p -> p.getGlobalCMTID()).collect(Collectors.toSet());
 		
 		Set<Phase> phaseSet = new HashSet<>();

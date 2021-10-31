@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.selection;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -34,7 +34,7 @@ public class DataSelectionInformationFile {
 		
 		Files.readAllLines(infoPath).stream().forEach(line -> {
 			String[] s = line.split("\\s+");
-			Station station = new Station(s[2], new HorizontalPosition(Double.parseDouble(s[3]), Double.parseDouble(s[4])), s[5]);
+			Observer station = new Observer(s[2], new HorizontalPosition(Double.parseDouble(s[3]), Double.parseDouble(s[4])), s[5]);
 			Phase[] phases = Stream.of(s[8].split(",")).map(string -> Phase.create(string)).toArray(Phase[]::new);
 			
 			TimewindowInformation timewindow = new TimewindowInformation(Double.parseDouble(s[0]), Double.parseDouble(s[1]), station,

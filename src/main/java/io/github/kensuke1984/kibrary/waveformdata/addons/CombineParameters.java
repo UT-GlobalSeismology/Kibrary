@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.addons.HorizontalParameterMapping;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -50,7 +50,7 @@ public class CombineParameters {
 			
 			int nNew = mapping.getNnew();
 			
-			Set<Station> stationSet = Stream.of(partials).parallel().map(par -> par.getStation()).collect(Collectors.toSet());
+			Set<Observer> stationSet = Stream.of(partials).parallel().map(par -> par.getStation()).collect(Collectors.toSet());
 			Set<GlobalCMTID> globalCMTIDSet = Stream.of(partials).parallel().map(par -> par.getGlobalCMTID()).collect(Collectors.toSet());
 			
 			double[][] periodRanges = new double[][] {{partials[0].getMinPeriod(), partials[0].getMaxPeriod()}};

@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 
@@ -42,7 +42,7 @@ public class KeyHoleMarkupLanguage {
         return lines;
     }
 
-    public static String[] outPlaceMark(Station station) {
+    public static String[] outPlaceMark(Observer station) {
         String[] lines = new String[17];
         double lat = station.getPosition().getLatitude();
         double lon = station.getPosition().getLongitude();

@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -360,7 +360,7 @@ public class Weighting {
 	
 	public static double weightingStationTZCA(BasicID obs) {
 		double weight = 1.;
-		Station station = obs.getStation();
+		Observer station = obs.getStation();
 		
 		if (station.getPosition().getLatitude() < 25.)
 			weight = 2.;

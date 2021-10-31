@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.waveformdata;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -66,7 +66,7 @@ public class PartialID extends BasicID {
         return POINT_LOCATION;
     }
 	
-	public PartialID(Station station, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
+	public PartialID(Observer station, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
 			double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
 			Location perturbationLocation, PartialType partialType, double... waveformData) {
 		super(WaveformType.PARTIAL, samplingHz, startTime, npts, station, eventID, sacComponent, minPeriod, maxPeriod,

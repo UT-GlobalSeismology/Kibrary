@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.anisotime.Phase;
@@ -60,7 +60,7 @@ public final class StaticCorrectionFile {
 	public static Set<StaticCorrection> read(Path infoPath) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)))) {
 			long fileSize = Files.size(infoPath);
-			Station[] stations = new Station[dis.readShort()];
+			Observer[] stations = new Observer[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			Phase[] phases = new Phase[dis.readShort()];
 			int headerBytes = 3 * 2 + (8 + 8 + 8 * 2) * stations.length + 15 * cmtIDs.length + 16 * phases.length;;
@@ -71,7 +71,7 @@ public final class StaticCorrectionFile {
 			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
-				stations[i] = Station.createStation(stationBytes);
+				stations[i] = Observer.createStation(stationBytes);
 			}
 			byte[] cmtIDBytes = new byte[15];
 			for (int i = 0; i < cmtIDs.length; i++) {
@@ -107,9 +107,9 @@ public final class StaticCorrectionFile {
      * @param bytes containing infomation above.
      * @return created static correction
      */
-	private static StaticCorrection createCorrection(byte[] bytes, Station[] stations, GlobalCMTID[] ids, Phase[] phases) {
+	private static StaticCorrection createCorrection(byte[] bytes, Observer[] stations, GlobalCMTID[] ids, Phase[] phases) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
-		Station station = stations[bb.getShort()];
+		Observer station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
 		Set<Phase> tmpset = new HashSet<>();
 		for (int i = 0; i < 10; i++) {
@@ -134,14 +134,14 @@ public final class StaticCorrectionFile {
      */
 	public static void write(Set<StaticCorrection> correctionSet, Path outPath, OpenOption... options)
 			throws IOException {
-		Station[] stations = correctionSet.stream().map(StaticCorrection::getStation).distinct().sorted()
-				.toArray(Station[]::new);
+		Observer[] stations = correctionSet.stream().map(StaticCorrection::getStation).distinct().sorted()
+				.toArray(Observer[]::new);
 		GlobalCMTID[] ids = correctionSet.stream().map(StaticCorrection::getGlobalCMTID).distinct().sorted()
 				.toArray(GlobalCMTID[]::new);
 		Phase[] phases = correctionSet.stream().map(StaticCorrection::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 
-		Map<Station, Integer> stationMap = IntStream.range(0, stations.length).boxed()
+		Map<Observer, Integer> stationMap = IntStream.range(0, stations.length).boxed()
 				.collect(Collectors.toMap(i -> stations[i], i -> i));
 		Map<GlobalCMTID, Integer> idMap = IntStream.range(0, ids.length).boxed()
 				.collect(Collectors.toMap(i -> ids[i], i -> i));

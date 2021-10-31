@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.IOException;
@@ -28,8 +28,8 @@ public class StationAverageRatio {
 		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
 		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
 
-		Map<Station, Double> stationAverages = new HashMap<Station, Double>();
-		Map<Station, Integer> stationCount = new HashMap<Station, Integer>();
+		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
+		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
 		
 		for (TimewindowInformation tw : timewindows) {
 //			if (!tw.getGlobalCMTID().equals(new GlobalCMTID("200608250044A")))
@@ -53,7 +53,7 @@ public class StationAverageRatio {
 					&& corr.getSynStartTime() == tw.getStartTime())
 					.findAny().get();
 			
-			Station sta = correction.getStation();
+			Observer sta = correction.getStation();
 			Double ratio = correction.getAmplitudeRatio();
 			if (stationAverages.containsKey(sta)) {
 				ratio = ratio + stationAverages.get(sta);
@@ -72,7 +72,7 @@ public class StationAverageRatio {
 		Files.createFile(outpathP);
 		Files.deleteIfExists(outpathM);
 		Files.createFile(outpathM);
-		for (Station sta : stationCount.keySet()) {
+		for (Observer sta : stationCount.keySet()) {
 			double ratio = stationAverages.get(sta) / stationCount.get(sta);
 			if (ratio >= 1)
 				Files.write(outpathP, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);

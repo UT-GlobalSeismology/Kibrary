@@ -15,7 +15,7 @@ import java.util.List;
 import io.github.kensuke1984.kibrary.inversion.addons.TimeReceiverSideParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.TimeSourceSideParameter;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -61,7 +61,7 @@ public class UnknownParameterFile {
 					pars.add(unknown);
 					break;
 				case TIME_RECEIVER:
-					unknown = new TimeReceiverSideParameter(new Station(parts[1],
+					unknown = new TimeReceiverSideParameter(new Observer(parts[1],
 							new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])),
 							parts[2]), Integer.parseInt(parts[5]));
 					pars.add(unknown);

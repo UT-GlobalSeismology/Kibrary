@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -130,7 +130,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private Set<TimewindowInformation> timewindowInformationSet;
 	private Set<TimewindowInformation> timewindowRefInformationSet;
 	private Set<EventFolder> eventDirs;
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 	private Set<GlobalCMTID> idSet;
 	private Phase[] phases;
 	private double[][] periodRanges;
@@ -752,7 +752,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
 				maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-				Station station = obsSac.getStation();
+				Observer station = obsSac.getStation();
 
 				for (TimewindowInformation window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);

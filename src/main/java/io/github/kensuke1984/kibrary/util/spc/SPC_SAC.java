@@ -213,7 +213,7 @@ public final class SPC_SAC implements Operation {
             nSAC++;
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
-        System.err.println("\rReading SPC files finished.");
+        System.err.println("\rReading SPC files finished. " + nSAC + " total.");
 
         execs.shutdown();
         while (!execs.isTerminated()) try {

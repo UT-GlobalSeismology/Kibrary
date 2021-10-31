@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.waveformdata;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -122,7 +122,7 @@ public final class PartialIDFile {
 	public static PartialID[] read(Path idPath) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
 			long fileSize = Files.size(idPath);
-			Station[] stations = new Station[dis.readShort()];
+			Observer[] stations = new Observer[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
 			Phase[] phases = new Phase[dis.readShort()];
@@ -139,7 +139,7 @@ public final class PartialIDFile {
 			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
-				stations[i] = Station.createStation(stationBytes);
+				stations[i] = Observer.createStation(stationBytes);
 			}
 			byte[] cmtIDBytes = new byte[15];
 			for (int i = 0; i < cmtIDs.length; i++) {
@@ -254,10 +254,10 @@ public final class PartialIDFile {
 	 *            for one ID
 	 * @return an ID written in the bytes
 	 */
-	private static PartialID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges,
+	private static PartialID createID(byte[] bytes, Observer[] stations, GlobalCMTID[] ids, double[][] periodRanges,
 			 Phase[] phases, Location[] perturbationLocations) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
-		Station station = stations[bb.getShort()];
+		Observer station = stations[bb.getShort()];
 		GlobalCMTID eventID = ids[bb.getShort()];
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double[] period = periodRanges[bb.get()];
@@ -298,10 +298,10 @@ public final class PartialIDFile {
 	 * Static class for debug informations
 	 */
 	public static class StationEvent implements Comparable<StationEvent> {
-		public Station station;
+		public Observer station;
 		public GlobalCMTID event;
 		public double startTime;
-		public StationEvent(Station station, GlobalCMTID event, double startTime) {
+		public StationEvent(Observer station, GlobalCMTID event, double startTime) {
 			this.station = station;
 			this.event = event;
 			this.startTime = startTime;

@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInfo;
 import io.github.kensuke1984.kibrary.external.DSMMPI;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -51,7 +51,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
     private ExecutorService pool = Executors.newSingleThreadExecutor();
     private int sequentialNumber;
     private Path obsDir;
-    private Set<Station> stationSet;
+    private Set<Observer> stationSet;
 
     /**
      * @param obsDir     path of observed waveforms
@@ -60,7 +60,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
      * @param stationSet station information
      * @throws IOException if any
      */
-    DSMComputation(Path obsDir, Path outDir, Path psvPath, Set<Station> stationSet) throws IOException {
+    DSMComputation(Path obsDir, Path outDir, Path psvPath, Set<Observer> stationSet) throws IOException {
         this.obsDir = obsDir;
         PSVPATH = psvPath;
         outPath = outDir;
@@ -71,10 +71,10 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
         setFilter(0.005, 0.08, 4);
     }
 
-    private SyntheticDSMInfo[] init(Path obsDir, Set<Station> stationSet) throws IOException {
+    private SyntheticDSMInfo[] init(Path obsDir, Set<Observer> stationSet) throws IOException {
         return Utilities.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
             try {
-                Set<Station> stations =
+                Set<Observer> stations =
                         eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getStationCode)
                                 .distinct().map(this::pickup).collect(Collectors.toSet());
                 GlobalCMTID id = eventDir.getGlobalCMTID();
@@ -124,7 +124,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
         }
     }
 
-    private Station pickup(String stationName) {
+    private Observer pickup(String stationName) {
         return stationSet.stream().filter(station -> station.getStation().equals(stationName)).findAny()
                 .orElseThrow(() -> new RuntimeException("No information about " + stationName));
     }
