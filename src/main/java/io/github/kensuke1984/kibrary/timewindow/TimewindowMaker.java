@@ -36,17 +36,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * workingDirectory/イベントフォルダ内の波形に対して タイムウインドウをつけていく
+ * Operation that creates an information file of timewindows.
  * <p>
- * Create an information file about timewindows. It looks for observed waveforms
- * in event folders under the working directory. For all the waveforms,
- * timewindows are computed by TauP.
+ * Timewindows are created for observed waveforms in event folders under the working directory.
+ * For all the waveforms, timewindows are computed by TauP.
  * <p>
- * It creates a window for each specified phase,
+ * This class creates a window for each specified phase,
  * starting from (arrival time - frontShift) and ending at (arrival time + rearShift).
  * It also creates a window for each exphase,
- * starting from (arrival time - exFrontShift) and ending at (arrival time + rearShift).
- * Overlapped parts between these are abandoned.
+ * starting from (arrival time - exFrontShift) and ending at (arrival time + rearShift),
+ * and abandons overlapped parts between these.
  * <p>
  * Start and end times of the windows are set to integer multiples of DELTA in SAC files.
  * <p>
@@ -340,15 +339,15 @@ public class TimewindowMaker implements Operation {
             double delta = sacFile.getValue(SACHeaderEnum.DELTA);
             double e = sacFile.getValue(SACHeaderEnum.E);
             // station of SacFile
-            Observer station = sacFile.getObserver();
+            Observer observer = sacFile.getObserver();
             // global cmt id of SacFile
-            GlobalCMTID id = sacFileName.getGlobalCMTID();
+            GlobalCMTID event = sacFileName.getGlobalCMTID();
             // component of SacFile
             SACComponent component = sacFileName.getComponent();
 
             // window fix
             Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
-                    window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
+                    window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases)))
                     .filter(tw ->  tw.getLength() > minLength)
                     .forEach(timewindowSet::add);
         } catch (RuntimeException e) {

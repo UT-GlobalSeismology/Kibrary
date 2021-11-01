@@ -229,14 +229,20 @@ public final class TimewindowInformationFile {
     }
 
     /**
+     * The binary-format timewindow information file is output in ascii format, as follows:
+     * <ol>
+     * <li> In the standard output, information of each timewindow is written.</li>
+     * <li> In 'timewindow.observer', information of each observer is written.</li>
+     * </ol>
      * @param args [information file name]
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
         Set<TimewindowInformation> set;
-        if (args.length == 1)
+        if (args.length == 1) {
             set = TimewindowInformationFile.read(Paths.get(args[0]));
-        else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
+        }
+/*        else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
             String timewindowname;
             if (args[0] == "--debug")
                 timewindowname = args[1];
@@ -246,8 +252,8 @@ public final class TimewindowInformationFile {
 
             Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_observer.inf");
             Path outpathEvent = Paths.get(timewindowname.split(".inf")[0] + "_event.inf");
-
         }
+*/
         else {
             String s = "";
             Path f;
@@ -260,7 +266,7 @@ public final class TimewindowInformationFile {
             set = TimewindowInformationFile.read(f);
         }
 
-        set.stream().sorted().forEach(tw -> {System.out.println(tw);});
+        set.stream().sorted().forEach(tw -> {System.out.println(tw.toString());});
 
         Set<Observer> observers = set.stream().map(tw -> tw.getObserver()).collect(Collectors.toSet());
         Path observerFile = Paths.get("timewindow.observer");

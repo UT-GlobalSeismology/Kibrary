@@ -1,12 +1,14 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Identifier of an event listed in Global CMT project.
@@ -22,13 +24,19 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     /**
      * recent Harvard ID yyyymmddhhmm[A-Za-z] 2004-
      */
-    public final static Pattern RECENT_GLOBALCMTID_PATTERN =
+    public static final Pattern RECENT_GLOBALCMTID_PATTERN =
             Pattern.compile("20[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])([01][0-9]|2[0-3])[0-5][0-9][A-Za-z]");
     /**
      * previous Harvard ID mmddyy[A-Za-z] 1976-2004
      */
-    public final static Pattern PREVIOUS_GLOBALCMTID_PATTERN =
+    public static final Pattern PREVIOUS_GLOBALCMTID_PATTERN =
             Pattern.compile("(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])[0789][0-9][A-Za-z]");
+
+    /**
+     * maximum length of ID
+     */
+    private static final int LENGTH = 13;
+
     private final String id;
     /**
      * if once {@link #getEvent()} is invoked, this holds it.
@@ -127,6 +135,10 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     @Override
     public String toString() {
         return id;
+    }
+
+    public String getPaddedString() {
+        return StringUtils.rightPad(id, LENGTH);
     }
 
     /**

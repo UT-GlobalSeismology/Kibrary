@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
@@ -18,7 +19,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * </p>
  * <p>
  * Station code and network code must be 8 or less letters.
- * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.)
+ * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.
+ * The actual maximum number of letters are 5 and 2;
+ * see <a href=https://ds.iris.edu/ds/nodes/dmc/data/formats/seed/>SEED reference</a>.
+ * However, network may be set 'DSM' as stated below, so the maximum length should be though of as 3.)
  * <p>
  * Observers are considered equal if and only if
  * [network code is equal && station code is equal && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
@@ -38,6 +42,14 @@ public class Observer implements Comparable<Observer> {
      * It is OK if the value is different from {@link DataKitchen#coordinateGrid}.
      */
     public static final int COORDINATE_SCALE = 2;
+    /**
+     * maximum number of letters of station
+     */
+    private static final int STA_LENGTH = 5;
+    /**
+     * maximum number of letters of network (in case of 'DSM')
+     */
+    private static final int NET_LENGTH = 3;
 
     /**
      * network code
@@ -234,8 +246,13 @@ public class Observer implements Comparable<Observer> {
         return station + "_" + network;
     }
 
-    public String getStringID() {
+    public String getStringID() { // TODO erase
         return station + "_" + network;
     }
 
+    public String getPaddedInfoString() {
+        return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH) + " "
+            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 10) + " "
+            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 10);
+    }
 }
