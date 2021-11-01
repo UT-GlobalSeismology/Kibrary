@@ -95,7 +95,7 @@ public final class SPC_SAC implements Operation {
             pw.println("#workPath");
             pw.println("##SACComponents for write (Z R T)");
             pw.println("#components");
-            pw.println("###If you do NOT want to use PSV or SH, you set the one 'null'.");
+            pw.println("##In the following, if you do NOT want to use PSV or SH, set the one 'null'.");
             pw.println("##Path of a PSV folder (.)");
             pw.println("#psvPath");
             pw.println("##Path of an SH folder (.)");

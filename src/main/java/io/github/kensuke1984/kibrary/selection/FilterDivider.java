@@ -152,9 +152,11 @@ public class FilterDivider implements Operation {
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-
         obsPath = getPath("obsPath");
+        if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
         synPath = getPath("synPath");
+        if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
+
         delta = Double.parseDouble(property.getProperty("delta"));
         highFreq = Double.parseDouble(property.getProperty("highFreq"));
         lowFreq = Double.parseDouble(property.getProperty("lowFreq"));

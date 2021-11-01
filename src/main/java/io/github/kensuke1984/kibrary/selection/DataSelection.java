@@ -57,6 +57,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * {@link TimewindowInformationFile} necessary.
  *
+ * <p>
+ * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
+ * See {@link TimewindowInformationFile}.
+ *
  * @author Kensuke Konishi
  * @version 0.1.2.1
  * @author anselme add additional selection critera
@@ -111,9 +115,12 @@ public class DataSelection implements Operation {
      * amplitude のしきい値
      */
     private double ratio;
+    /**
+     * Maximum of static correction shift
+     */
     private double maxStaticShift;
     private double minSNratio;
-    private double minDistance;
+    //private double minDistance;
     private boolean SnScSnPair;
     private Set<TimewindowInformation> sourceTimewindowInformationSet;
     private Set<TimewindowInformation> goodTimewindowInformationSet;
@@ -147,13 +154,13 @@ public class DataSelection implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved");
             pw.println("##Path of a time window information file, must be defined");
             pw.println("#timewindowInformationFilePath timewindow.dat");
             pw.println("##Path of a static correction file");
             pw.println("##If you do not want to consider static correction, then comment out the next line.");
             pw.println("#staticCorrectionInformationFilePath staticCorrection.dat");
+            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("#convolved");
             pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
             pw.println("#maxStaticShift");
             pw.println("##(double) sacSamplingHz (20)");
@@ -189,17 +196,19 @@ public class DataSelection implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
         if (!property.containsKey("synPath")) property.setProperty("synPath", "");
+        if (!property.containsKey("timewindowInformationFilePath"))
+            throw new RuntimeException("No timewindow specified");
+        if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
+        if (!property.containsKey("maxStaticShift")) property.setProperty("maxStaticShift", "10.");
         if (!property.containsKey("minCorrelation")) property.setProperty("minCorrelation", "0");
         if (!property.containsKey("maxCorrelation")) property.setProperty("maxCorrelation", "1");
         if (!property.containsKey("minVariance")) property.setProperty("minVariance", "0");
         if (!property.containsKey("maxVariance")) property.setProperty("maxVariance", "2");
         if (!property.containsKey("ratio")) property.setProperty("ratio", "2");
         if (!property.containsKey("minSNratio")) property.setProperty("minSNratio", "0");
-        if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
         if (!property.containsKey("SnScSnPair")) property.setProperty("SnScSnPair", "false");
         if (!property.containsKey("excludeSurfaceWave")) property.setProperty("excludeSurfaceWave", "false");
-        if (!property.containsKey("maxStaticShift")) property.setProperty("maxStaticShift", "10.");
-        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0.");
+        //if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0.");
     }
 
     private void set() throws IOException {
@@ -207,36 +216,46 @@ public class DataSelection implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        obsPath = getPath("obsPath");
-        synPath = getPath("synPath");
+        dateStr = Utilities.getTemporaryString();
+        outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
+        obsPath = getPath("obsPath");
+        if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
+        synPath = getPath("synPath");
+        if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
+        timewindowInformationFilePath = getPath("timewindowInformationFilePath");
+        if (!Files.exists(timewindowInformationFilePath))
+            throw new NoSuchFileException("The timewindow information " + timewindowInformationFilePath + " does not exist");
+        if (property.containsKey("staticCorrectionInformationFilePath")) {
+            staticCorrectionInformationFilePath = getPath("staticCorrectionInformationFilePath");
+            if (!Files.exists(staticCorrectionInformationFilePath))
+                throw new NoSuchFileException("The static correction" + staticCorrectionInformationFilePath + " does not exist");
+        }
 
         convolved = Boolean.parseBoolean(property.getProperty("convolved"));
+        maxStaticShift = Double.parseDouble(property.getProperty("maxStaticShift"));
         minCorrelation = Double.parseDouble(property.getProperty("minCorrelation"));
         maxCorrelation = Double.parseDouble(property.getProperty("maxCorrelation"));
         minVariance = Double.parseDouble(property.getProperty("minVariance"));
         maxVariance = Double.parseDouble(property.getProperty("maxVariance"));
         ratio = Double.parseDouble(property.getProperty("ratio"));
-        timewindowInformationFilePath = getPath("timewindowInformationFilePath");
-        if (property.containsKey("staticCorrectionInformationFilePath"))
-            staticCorrectionInformationFilePath = getPath("staticCorrectionInformationFilePath");
+        minSNratio = Double.parseDouble(property.getProperty("minSNratio"));
+        SnScSnPair = Boolean.parseBoolean(property.getProperty("SnScSnPair"));
+        excludeSurfaceWave = Boolean.parseBoolean(property.getProperty("excludeSurfaceWave"));
+        //minDistance = Double.parseDouble(property.getProperty("minDistance"));
         // sacSamplingHz
         // =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
         // sacSamplingHz = 20;
-        staticCorrectionSet = staticCorrectionInformationFilePath == null ? Collections.emptySet()
-                : StaticCorrectionFile.read(staticCorrectionInformationFilePath);
+
         eventDirs = Utilities.eventFolderSet(obsPath);
         sourceTimewindowInformationSet = TimewindowInformationFile.read(timewindowInformationFilePath);
-        dateStr = Utilities.getTemporaryString();
-        outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+        staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
+                : StaticCorrectionFile.read(staticCorrectionInformationFilePath));
         goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
-        SnScSnPair = Boolean.parseBoolean(property.getProperty("SnScSnPair"));
-        minSNratio = Double.parseDouble(property.getProperty("minSNratio"));
-        excludeSurfaceWave = Boolean.parseBoolean(property.getProperty("excludeSurfaceWave"));
         dataSelectionInfo = new ArrayList<>();
-        maxStaticShift = Double.parseDouble(property.getProperty("maxStaticShift"));
-        minDistance = Double.parseDouble(property.getProperty("minDistance"));
+
     }
 
     /**
@@ -270,13 +289,14 @@ public class DataSelection implements Operation {
         }
 
         Path infoOutpath = workPath.resolve("dataSelection" + Utilities.getTemporaryString() + ".inf");
+        System.err.println("Outputting in " + infoOutpath);
         try {
             DataSelectionInformationFile.write(infoOutpath, dataSelectionInfo);
         } catch (IOException e) {
             System.err.println("IOException: " + e.getMessage());
         }
 
-        System.err.println();
+        System.err.println("Outputting in " + outputGoodWindowPath);
         output();
     }
 
@@ -317,7 +337,7 @@ public class DataSelection implements Operation {
                 foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
-    private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
+    private boolean check(PrintWriter writer, Observer observer, GlobalCMTID id, SACComponent component,
             TimewindowInformation window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
         if (obsU.getDimension() < synU.getDimension())
             synU = synU.getSubVector(0, obsU.getDimension() - 1);
@@ -356,7 +376,7 @@ public class DataSelection implements Operation {
             System.out.println(window);
         }
         else {
-            writer.println(stationName + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
+            writer.println(observer + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
                 + minRatio + " " + var + " " + cor + " " + SNratio);
 
             dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
@@ -490,40 +510,39 @@ public class DataSelection implements Operation {
 
                 for (SACFileName obsName : obsFiles) {
                     // check components
-                    if (!components.contains(obsName.getComponent()))
-                        continue;
-                    String stationName = obsName.getStationCode();
                     SACComponent component = obsName.getComponent();
-                    // double timeshift = 0;
+                    if (!components.contains(component))
+                        continue;
+
+                    // get observed
+                    SACFileData obsSac = obsName.read();
+                    Observer observer = obsSac.getObserver();
+
+                    // get synthetic
                     SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
                             : SACExtension.valueOfSynthetic(component);
-
-                    SACFileName synName = new SACFileName(synEventDirectory, stationName + "." + id + "." + synExt);
+                    SACFileName synName = new SACFileName(synEventDirectory.toPath().resolve(
+                            SACFileName.generate(observer, id, synExt)));
                     if (!synName.exists()) {
                         System.err.println("Ignoring non-existing synthetics " + synName);
                         continue;
                     }
-
-                    // synthetic sac
-                    SACFileData obsSac = obsName.read();
                     SACFileData synSac = synName.read();
 
-                    stationName = obsSac.getObserver().getStation() + "_" + obsSac.getObserver().getNetwork();
-
-                    Observer station = obsSac.getObserver();
-                    //
                     if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) {
                         System.err.println("Ignoring differing DELTA " + obsName);
                         continue;
                     }
 
-                    double distance = Math.toDegrees(obsSac.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(station.getPosition()));
+                    /*
+                    double distance = Math.toDegrees(obsSac.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(observer.getPosition()));
                     if (distance < minDistance)
                         continue;
+                    */
 
-                    // Pickup a time window of obsName
+                    // Pickup timewindows of obsName
                     Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
-                            .stream().filter(info -> info.getObserver().equals(station)
+                            .stream().filter(info -> info.getObserver().equals(observer)
                                     && info.getGlobalCMTID().equals(id) && info.getComponent() == component)
                             .collect(Collectors.toSet());
 
@@ -580,7 +599,7 @@ public class DataSelection implements Operation {
                         double signal = obsU.getNorm() / (window.getEndTime() - window.getStartTime());
                         double SNratio = signal / noise;
 
-                        if (check(lpw, stationName, id, component, window, obsU, synU, SNratio)) {
+                        if (check(lpw, observer, id, component, window, obsU, synU, SNratio)) {
                             if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
                                 System.out.println(window);
                             }

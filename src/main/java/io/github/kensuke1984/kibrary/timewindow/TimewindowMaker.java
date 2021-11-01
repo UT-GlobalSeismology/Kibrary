@@ -49,6 +49,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Overlapped parts between these are abandoned.
  * <p>
  * Start and end times of the windows are set to integer multiples of DELTA in SAC files.
+ * <p>
+ * Timewindow information is written in binary format in "timewindow*.dat".
+ * Files that could not produce timewindows are written in "invalidTimewindow*.txt".
+ * See {@link TimewindowInformationFile}.
  *
  * @author Kensuke Konishi
  * @version 0.2.4
@@ -206,7 +210,7 @@ public class TimewindowMaker implements Operation {
     @Override
     public void run() throws Exception {
         System.out.println("Using exFrontShift = " + EX_FRONT_SHIFT);
-        System.err.println("Invalid files will be listed in " + invalidList);
+        System.err.println("Invalid files, if any, will be listed in " + invalidList);
         Utilities.runEventProcess(workPath, eventDir -> {
             try {
                 eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))

@@ -55,9 +55,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * そこまでのタイムウインドウのコリレーションをあわせる <br>
  * </blockquote>
  * <p>
- * If something happens, move the sac file to Trash
- * <p>
- * unified timeshift files
+ * Static correction information is written in binary format in "staticCorrection*.dat".
+ * See {@link StaticCorrectionFile}.
  *
  * @author Kensuke Konishi
  * @version 0.2.2
@@ -121,7 +120,7 @@ public class FujiStaticCorrection implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root directory containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##Path of a timeWindowInformation file, must be set");
+            pw.println("##Path of a timewindow information file, must be set");
             pw.println("#timewindowInformationPath timewindow.dat");
             pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
             pw.println("#convolved");
@@ -153,6 +152,8 @@ public class FujiStaticCorrection implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
         if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
+        if (!property.containsKey("timewindowInformationPath"))
+            throw new RuntimeException("No timewindow specified");
         if (!property.containsKey("convolved")) property.setProperty("convolved", "false");
         if (!property.containsKey("threshold")) property.setProperty("threshold", "0.2");
         if (!property.containsKey("searchRange")) property.setProperty("searchRange", "10");
@@ -171,9 +172,13 @@ public class FujiStaticCorrection implements Operation {
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-        synPath = getPath("synPath");
         obsPath = getPath("obsPath");
+        if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
+        synPath = getPath("synPath");
+        if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
         timewindowInformationPath = getPath("timewindowInformationPath");
+        if (!Files.exists(timewindowInformationPath))
+            throw new NoSuchFileException("The timewindow information " + timewindowInformationPath + " does not exist");
 
         convolved = Boolean.parseBoolean(property.getProperty("convolved"));
         sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
@@ -483,30 +488,38 @@ public class FujiStaticCorrection implements Operation {
             }
             // TreeMap<String, Double> timeshiftMap = new TreeMap<>();
             for (SACFileName obsName : obsFiles) {
+                // check components
                 SACComponent component = obsName.getComponent();
-                // check a component
                 if (!components.contains(component))
                     continue;
+
+                // get observed
+                SACFileData obsSac;
+                try {
+                    obsSac = obsName.read();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
+                }
+                Observer observer = obsSac.getObserver();
+
+                // get synthetic
                 SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
                         : SACExtension.valueOfSynthetic(component);
-
-                SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(obsName, synExt)));
-
+                SACFileName synName = new SACFileName(synEventPath.resolve(
+                        SACFileName.generate(observer, eventID, synExt)));
                 if (!synName.exists()) {
                     System.err.println(synName + " does not exist. ");
                     continue;
                 }
-                SACFileData obsSac;
                 SACFileData synSac;
                 try {
-                    obsSac = obsName.read();
                     synSac = synName.read();
                 } catch (Exception e) {
                     e.printStackTrace();
                     continue;
                 }
 
-                Observer observer = obsSac.getObserver();
                 double delta = 1 / sacSamplingHz;
                 if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
                     System.err.println(
@@ -514,6 +527,7 @@ public class FujiStaticCorrection implements Operation {
                                     synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                     continue;
                 }
+
                 // Pickup time windows of obsName
                 Set<TimewindowInformation> windows = timewindowInformation.stream()
                         .filter(info -> info.getObserver().equals(observer))
