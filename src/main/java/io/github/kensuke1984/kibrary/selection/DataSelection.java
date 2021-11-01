@@ -83,7 +83,11 @@ public class DataSelection implements Operation {
      */
     private Path workPath;
     /**
-     * Path of the output file
+     * Path of the information output file
+     */
+    private Path infoOutputpath;
+    /**
+     * Path of the timewindow output file
      */
     private Path outputGoodWindowPath;
 
@@ -217,6 +221,7 @@ public class DataSelection implements Operation {
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
         dateStr = Utilities.getTemporaryString();
+        infoOutputpath = workPath.resolve("dataSelection" + dateStr + ".inf");
         outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
@@ -287,20 +292,12 @@ public class DataSelection implements Operation {
                 e.printStackTrace();
             }
         }
+        System.err.println();
 
-        Path infoOutpath = workPath.resolve("dataSelection" + Utilities.getTemporaryString() + ".inf");
-        System.err.println("Outputting in " + infoOutpath);
-        try {
-            DataSelectionInformationFile.write(infoOutpath, dataSelectionInfo);
-        } catch (IOException e) {
-            System.err.println("IOException: " + e.getMessage());
-        }
+        System.err.println("Outputting in " + infoOutputpath);
+        DataSelectionInformationFile.write(dataSelectionInfo, infoOutputpath);
 
         System.err.println("Outputting in " + outputGoodWindowPath);
-        output();
-    }
-
-    private void output() throws IOException {
         TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
     }
 
@@ -354,10 +351,10 @@ public class DataSelection implements Operation {
         double cor = obsU.dotProduct(synU);
         cor /= Math.sqrt(obs2 * syn2);
         double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
+        var /= obs2;
         double maxRatio = Precision.round(synMax / obsMax, 2);
         double minRatio = Precision.round(synMin / obsMin, 2);
         double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
-        var /= obs2;
 
         absRatio = Precision.round(absRatio, 2);
         var = Precision.round(var, 2);

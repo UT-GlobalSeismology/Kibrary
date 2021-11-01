@@ -33,7 +33,7 @@ public class TimewindowInformation extends Timewindow {
     /**
      * event ID
      */
-    private final GlobalCMTID id;
+    private final GlobalCMTID eventID;
     /**
      * component
      */
@@ -46,7 +46,7 @@ public class TimewindowInformation extends Timewindow {
     public TimewindowInformation(double startTime, double endTime, Observer observer, GlobalCMTID id,
             SACComponent component, Phase[] phases) {
         super(startTime, endTime);
-        this.id = id;
+        this.eventID = id;
         this.component = component;
         this.observer = observer;
         this.phases = phases;
@@ -70,7 +70,7 @@ public class TimewindowInformation extends Timewindow {
         int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((component == null) ? 0 : component.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + ((eventID == null) ? 0 : eventID.hashCode());
         result = prime * result + ((observer == null) ? 0 : observer.hashCode());
         return result;
     }
@@ -82,9 +82,9 @@ public class TimewindowInformation extends Timewindow {
         if (getClass() != obj.getClass()) return false;
         TimewindowInformation other = (TimewindowInformation) obj;
         if (component != other.component) return false;
-        if (id == null) {
-            if (other.id != null) return false;
-        } else if (!id.equals(other.id)) return false;
+        if (eventID == null) {
+            if (other.eventID != null) return false;
+        } else if (!eventID.equals(other.eventID)) return false;
         if (observer == null) {
             if (other.observer != null) return false;
         } else if (!observer.equals(other.observer)) return false;
@@ -96,7 +96,7 @@ public class TimewindowInformation extends Timewindow {
     }
 
     public GlobalCMTID getGlobalCMTID() {
-        return id;
+        return eventID;
     }
 
     public SACComponent getComponent() {
@@ -116,7 +116,7 @@ public class TimewindowInformation extends Timewindow {
      * @author anselme
      */
     public double getAzimuthDegree() {
-        return Math.toDegrees(id.getEvent().getCmtLocation().getAzimuth(observer.getPosition()));
+        return Math.toDegrees(eventID.getEvent().getCmtLocation().getAzimuth(observer.getPosition()));
     }
 
     /**
@@ -124,13 +124,14 @@ public class TimewindowInformation extends Timewindow {
      * @author anselme
      */
     public double getDistanceDegree() {
-        return Math.toDegrees(id.getEvent().getCmtLocation().getEpicentralDistance(observer.getPosition()));
+        return Math.toDegrees(eventID.getEvent().getCmtLocation().getEpicentralDistance(observer.getPosition()));
     }
 
     @Override
     public String toString() {
         List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
-        return observer + " " + id + " " + component + " " + startTime + " " + endTime + " " + String.join(",", phaseStrings);
+        return observer.getStation() + " " + observer.getNetwork() + " " + observer.getPosition() + " " + eventID
+                + " " + component + " " + startTime + " " + endTime + " " + String.join(",", phaseStrings);
     }
 
 }

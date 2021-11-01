@@ -217,11 +217,8 @@ public class FujiStaticCorrection implements Operation {
                 e.printStackTrace();
             }
         }
-        System.err.println("Outputting in " + outputPath);
-        output();
-    }
 
-    private void output() throws IOException {
+        System.err.println("Outputting in " + outputPath);
         StaticCorrectionFile.write(staticCorrectionSet, outputPath);
     }
 
