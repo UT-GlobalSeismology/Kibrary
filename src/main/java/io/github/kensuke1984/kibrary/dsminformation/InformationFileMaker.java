@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
@@ -278,7 +278,7 @@ public class InformationFileMaker implements Operation {
 		// //////////////////////////////////////
 		System.out.println("making information files for the events(fp)");
 		for (EventFolder ed : eventDirs) {
-			GlobalCMTData ev;
+			GlobalCMTAccess ev;
 			try {
 				ev = ed.getGlobalCMTID().getEvent();
 				

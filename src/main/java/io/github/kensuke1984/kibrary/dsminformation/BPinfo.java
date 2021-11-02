@@ -19,7 +19,7 @@ import java.util.Arrays;
  * @version 0.0.6
  * @author anselme add information files for psv/sh bpcat (catalog)
  */
-public class BPinfo extends DSMheader {
+public class BPinfo extends DSMInputHeader {
 
     private final String OUTPUT;
 

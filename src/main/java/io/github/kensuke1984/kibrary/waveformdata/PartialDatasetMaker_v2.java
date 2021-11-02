@@ -38,8 +38,8 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -49,7 +49,7 @@ import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
@@ -266,7 +266,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 		 * @param property
 		 * @return
 		 */
-		private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation) {
+		private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
 			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
 			// cutstartが振り切れた場合0 からにする
 			if (cutstart < 0)
@@ -278,7 +278,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 			return cut;
 		}
 		
-		private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation, double shift) {
+		private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation, double shift) {
 			int cutstart = (int) ((timewindowInformation.getStartTime() - shift) * partialSamplingHz) - ext;
 			// cutstartが振り切れた場合0 からにする
 			if (cutstart < 0)
@@ -290,7 +290,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 			return cut;
 		}
 
-		private double[] sampleOutput(Complex[] u, TimewindowInformation timewindowInformation) {
+		private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation) {
 			// 書きだすための波形
 			int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
 					* finalSamplingHz);
@@ -325,7 +325,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 			touchedSet.add(id);
 			
 			// Pickup timewindows
-			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
+			Set<TimewindowData> timewindowList = timewindowInformation.stream()
 					.filter(info -> info.getObserver().getStringID().equals(stationName))
 					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
 
@@ -497,7 +497,7 @@ private class WorkerTimePartial implements Runnable {
 //			System.out.println(sacnameSet.size());
 //			sacnameSet.forEach(name -> System.out.println(name));
 			
-			Set<TimewindowInformation> timewindowCurrentEvent = timewindowInformation
+			Set<TimewindowData> timewindowCurrentEvent = timewindowInformation
 					.stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(id))
 					.collect(Collectors.toSet());
@@ -525,8 +525,8 @@ private class WorkerTimePartial implements Runnable {
 //			
 		}
 		
-		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
-			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+		private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+			Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
 					.filter(info -> info.getObserver().getStation().equals(sacname.getStationCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
@@ -535,11 +535,11 @@ private class WorkerTimePartial implements Runnable {
 			
 			System.out.println(sacname + " (time partials)");
 			
-			SACFileData sacdata = sacname.read();
+			SACFileAccess sacdata = sacname.read();
 			Observer station = sacdata.getObserver();
 			
 			for (SACComponent component : components) {
-				Set<TimewindowInformation> tw = tmpTws.stream()
+				Set<TimewindowData> tw = tmpTws.stream()
 						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
@@ -554,7 +554,7 @@ private class WorkerTimePartial implements Runnable {
 					continue;
 				}
 				
-				for (TimewindowInformation t : tw) {
+				for (TimewindowData t : tw) {
 					double[] filteredUt = sacdata.createTrace().getY();
 					cutAndWrite(station, filteredUt, t);
 				}
@@ -568,7 +568,7 @@ private class WorkerTimePartial implements Runnable {
 		 *            cut information
 		 * @return u cut by considering sampling Hz
 		 */
-		private double[] sampleOutput(double[] u, TimewindowInformation timewindowInformation) {
+		private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {
 			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
 			// 書きだすための波形
 			int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
@@ -580,7 +580,7 @@ private class WorkerTimePartial implements Runnable {
 			return sampleU;
 		}
 		
-		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowInformation t) {
+		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
 			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
@@ -623,7 +623,7 @@ private class WorkerTimePartial implements Runnable {
 	 */
 	private int step;
 
-	private Set<TimewindowInformation> timewindowInformation;
+	private Set<TimewindowData> timewindowInformation;
 
 	private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
@@ -857,12 +857,12 @@ private class WorkerTimePartial implements Runnable {
 	/*
 	 * sort timewindows comparing stations
 	 */
-	private List<TimewindowInformation> sortTimewindows() {
-		List<TimewindowInformation> timewindows = timewindowInformation.stream().collect(Collectors.toList());
+	private List<TimewindowData> sortTimewindows() {
+		List<TimewindowData> timewindows = timewindowInformation.stream().collect(Collectors.toList());
 		
-		Comparator<TimewindowInformation> comparator = new Comparator<TimewindowInformation>() {
+		Comparator<TimewindowData> comparator = new Comparator<TimewindowData>() {
 			@Override
-			public int compare(TimewindowInformation o1, TimewindowInformation o2) {
+			public int compare(TimewindowData o1, TimewindowData o2) {
 				int res = o1.getObserver().compareTo(o2.getObserver());
 				if (res != 0)
 					return res;
@@ -928,7 +928,7 @@ private class WorkerTimePartial implements Runnable {
 			// Set of global cmt IDs for the station in the timewindow.
 			Set<GlobalCMTID> idSet = timewindowInformation.stream()
 					.filter(info -> components.contains(info.getComponent()))
-					.filter(info -> info.getObserver().equals(station)).map(TimewindowInformation::getGlobalCMTID)
+					.filter(info -> info.getObserver().equals(station)).map(TimewindowData::getGlobalCMTID)
 					.collect(Collectors.toSet());
 
 			if (idSet.isEmpty())
@@ -1205,14 +1205,14 @@ private class WorkerTimePartial implements Runnable {
 	private void setTimeWindow() throws IOException {
 		// タイムウインドウの情報を読み取る。
 		System.err.println("Reading timewindow information");
-		timewindowInformation = TimewindowInformationFile.read(timewindowPath);
+		timewindowInformation = TimewindowDataFile.read(timewindowPath);
 		idSet = new HashSet<>();
 		stationSet = new HashSet<>();
 		timewindowInformation.forEach(t -> {
 			idSet.add(t.getGlobalCMTID());
 			stationSet.add(t.getObserver());
 		});
-		phases = timewindowInformation.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+		phases = timewindowInformation.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 
 		// TODO

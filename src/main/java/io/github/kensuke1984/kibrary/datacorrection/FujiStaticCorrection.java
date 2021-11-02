@@ -23,8 +23,8 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -32,14 +32,15 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * This class computes values of Static correction after Fuji <i>et al</i>.,
- * (2010)
- * {@link TimewindowInformationFile} is necessary.
+ * Operation that computes values of Static correction after Fuji <i>et al</i>., (2010).
+ * <p>
+ * Both observed and synthetic data must be in event folders under workDir.
+ * {@link TimewindowDataFile} is necessary.
  * <p>
  * The time shift value <i>t</i> for the ray path is for the observed
  * timewindow.<br>
@@ -56,7 +57,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * </blockquote>
  * <p>
  * Static correction information is written in binary format in "staticCorrection*.dat".
- * See {@link StaticCorrectionFile}.
+ * See {@link StaticCorrectionDataFile}.
  *
  * @author Kensuke Konishi
  * @version 0.2.2
@@ -105,8 +106,8 @@ public class FujiStaticCorrection implements Operation {
      * シグナルとみなすかどうかの最大振幅から見ての比率
      */
     private double threshold;
-    private Set<StaticCorrection> staticCorrectionSet;
-    private Set<TimewindowInformation> timewindowInformation;
+    private Set<StaticCorrectionData> staticCorrectionSet;
+    private Set<TimewindowData> timewindowInformation;
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -205,7 +206,7 @@ public class FujiStaticCorrection implements Operation {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
         int n = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(n);
-        timewindowInformation = TimewindowInformationFile.read(timewindowInformationPath);
+        timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
 
@@ -219,7 +220,7 @@ public class FujiStaticCorrection implements Operation {
         }
 
         System.err.println("Outputting in " + outputPath);
-        StaticCorrectionFile.write(staticCorrectionSet, outputPath);
+        StaticCorrectionDataFile.write(staticCorrectionSet, outputPath);
     }
 
     /**
@@ -258,7 +259,7 @@ public class FujiStaticCorrection implements Operation {
         return peaks;
     }
 
-    private static double[] cutSac(SACFileData sacData, double tStart, double tEnd) {
+    private static double[] cutSac(SACFileAccess sacData, double tStart, double tEnd) {
         Trace t = sacData.createTrace();
         t = t.cutWindow(tStart, tEnd);
         return t.getY();
@@ -275,7 +276,7 @@ public class FujiStaticCorrection implements Operation {
      * @param window time window
      * @return ratio of maximum values
      */
-    private double computeMaxRatio(SACFileData obsSac, SACFileData synSac, double shift, Timewindow window) {
+    private double computeMaxRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, Timewindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -295,7 +296,7 @@ public class FujiStaticCorrection implements Operation {
         return maxObs / maxSyn;
     }
 
-    private double computeP2PRatio(SACFileData obsSac, SACFileData synSac, double shift, Timewindow window) {
+    private double computeP2PRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, Timewindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -322,7 +323,7 @@ public class FujiStaticCorrection implements Operation {
      * @param window time window
      * @return value for time shift
      */
-    private double computeTimeshiftForBestCorrelation(SACFileData obsSac, SACFileData synSac, Timewindow window) {
+    private double computeTimeshiftForBestCorrelation(SACFileAccess obsSac, SACFileAccess synSac, Timewindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -357,7 +358,7 @@ public class FujiStaticCorrection implements Operation {
         return Precision.round(timeshift, 2);
     }
 
-    private double computeTimeshiftForBestCorrelation_peak(SACFileData obsSac, SACFileData synSac, Timewindow window) {
+    private double computeTimeshiftForBestCorrelation_peak(SACFileAccess obsSac, SACFileAccess synSac, Timewindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -491,7 +492,7 @@ public class FujiStaticCorrection implements Operation {
                     continue;
 
                 // get observed
-                SACFileData obsSac;
+                SACFileAccess obsSac;
                 try {
                     obsSac = obsName.read();
                 } catch (Exception e) {
@@ -509,7 +510,7 @@ public class FujiStaticCorrection implements Operation {
                     System.err.println(synName + " does not exist. ");
                     continue;
                 }
-                SACFileData synSac;
+                SACFileAccess synSac;
                 try {
                     synSac = synName.read();
                 } catch (Exception e) {
@@ -526,20 +527,20 @@ public class FujiStaticCorrection implements Operation {
                 }
 
                 // Pickup time windows of obsName
-                Set<TimewindowInformation> windows = timewindowInformation.stream()
+                Set<TimewindowData> windows = timewindowInformation.stream()
                         .filter(info -> info.getObserver().equals(observer))
                         .filter(info -> info.getGlobalCMTID().equals(eventID))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
                 if (windows != null && !windows.isEmpty()) {
-                    for (TimewindowInformation window : windows) {
+                    for (TimewindowData window : windows) {
                         try {
                             double shift = 0;
                             if (!mediantime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
                             else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
 //							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
                             double ratio = computeP2PRatio(obsSac, synSac, 0., window);
-                            StaticCorrection t = new StaticCorrection(observer, eventID, component,
+                            StaticCorrectionData t = new StaticCorrectionData(observer, eventID, component,
                                     window.getStartTime(), shift, ratio, window.getPhases());
                             staticCorrectionSet.add(t);
                         } catch (Exception e) {

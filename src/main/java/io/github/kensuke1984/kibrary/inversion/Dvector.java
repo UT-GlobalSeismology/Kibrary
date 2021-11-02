@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.quick.taupModelMaker;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -989,7 +989,7 @@ public class Dvector {
 				SACComponent component = obsIDs[i].getSacComponent();
 				System.out.println(obsIDs[i]);
 				info = selectionInfo.stream().filter(selec -> {
-					TimewindowInformation tw = selec.getTimewindow();
+					TimewindowData tw = selec.getTimewindow();
 					return tw.getObserver().equals(station) 
 							&& tw.getGlobalCMTID().equals(id)
 							&& tw.getComponent().equals(component)

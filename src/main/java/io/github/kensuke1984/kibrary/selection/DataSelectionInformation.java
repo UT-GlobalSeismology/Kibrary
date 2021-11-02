@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.selection;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 
 public class DataSelectionInformation {
 
@@ -16,10 +16,10 @@ public class DataSelectionInformation {
 
     private double SNratio;
 
-    private TimewindowInformation timewindow;
+    private TimewindowData timewindow;
 
 
-    public DataSelectionInformation(TimewindowInformation timewindow, double variance, double cc, double maxRatio, double minRatio, double absRatio, double SNratio) {
+    public DataSelectionInformation(TimewindowData timewindow, double variance, double cc, double maxRatio, double minRatio, double absRatio, double SNratio) {
         this.timewindow = timewindow;
         this.variance = variance;
         this.cc = cc;
@@ -53,7 +53,7 @@ public class DataSelectionInformation {
         return SNratio;
     }
 
-    public TimewindowInformation getTimewindow() {
+    public TimewindowData getTimewindow() {
         return timewindow;
     }
 

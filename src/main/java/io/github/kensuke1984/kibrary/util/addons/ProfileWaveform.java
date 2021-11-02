@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -200,8 +200,8 @@ public class ProfileWaveform {
 		return res;
 	}
 	
-	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
-		SACFileData data = sacname.read();
+	private static List<TimewindowData> findWindow(Set<TimewindowData> timewindows, SACFileName sacname) throws IOException {
+		SACFileAccess data = sacname.read();
 		Observer station = data.getObserver();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();

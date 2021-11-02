@@ -11,7 +11,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -25,7 +25,7 @@ class SacModifier {
      */
     private static final int taperTime = 60 * 1000;
 
-    private final GlobalCMTData event;
+    private final GlobalCMTAccess event;
     private final Path sacPath;
     private final Path modifiedPath;
     private Map<SACHeaderEnum, String> headerMap;
@@ -47,7 +47,7 @@ class SacModifier {
      * @param byPDE         true: PDE, false: CMT
      * @throws IOException
      */
-    SacModifier(GlobalCMTData globalCMTData, Path sacPath, boolean byPDE) throws IOException {
+    SacModifier(GlobalCMTAccess globalCMTData, Path sacPath, boolean byPDE) throws IOException {
         this.sacPath = sacPath;
         this.headerMap = SACUtil.readHeader(sacPath);
         SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());

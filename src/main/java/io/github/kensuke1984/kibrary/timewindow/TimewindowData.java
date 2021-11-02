@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author Anselme
  *
  */
-public class TimewindowInformation extends Timewindow {
+public class TimewindowData extends Timewindow {
 
     /**
      * station
@@ -43,7 +43,7 @@ public class TimewindowInformation extends Timewindow {
      */
     private final Phase[] phases;
 
-    public TimewindowInformation(double startTime, double endTime, Observer observer, GlobalCMTID id,
+    public TimewindowData(double startTime, double endTime, Observer observer, GlobalCMTID id,
             SACComponent component, Phase[] phases) {
         super(startTime, endTime);
         this.eventID = id;
@@ -54,8 +54,8 @@ public class TimewindowInformation extends Timewindow {
 
     @Override
     public int compareTo(Timewindow o) {
-        if (!(o instanceof TimewindowInformation)) return super.compareTo(o);
-        TimewindowInformation ot = (TimewindowInformation) o;
+        if (!(o instanceof TimewindowData)) return super.compareTo(o);
+        TimewindowData ot = (TimewindowData) o;
         int sta = getObserver().compareTo(ot.getObserver());
         if (sta != 0) return sta;
         int id = getGlobalCMTID().compareTo(ot.getGlobalCMTID());
@@ -80,7 +80,7 @@ public class TimewindowInformation extends Timewindow {
         if (this == obj) return true;
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
-        TimewindowInformation other = (TimewindowInformation) obj;
+        TimewindowData other = (TimewindowData) obj;
         if (component != other.component) return false;
         if (eventID == null) {
             if (other.eventID != null) return false;

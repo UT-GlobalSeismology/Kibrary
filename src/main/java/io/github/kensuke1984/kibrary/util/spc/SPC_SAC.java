@@ -30,16 +30,15 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 
 /**
- * SPC_SAC Converter from {@link Spectrum} to {@link SACFileData} file. According
- * to an information file, it creates SAC files.
+ * Operation that converts from {@link Spectrum} to {@link SACFileAccess} file.
+ * Source time function can be convolved during this process.
  * <p>
- * It converts all the SPC files in event folders/model under the workDir set by
- * the information file. If you leave 'model name' blank and each event folder
- * has only one folder, then model name will be set automatically the name of
- * the folder.
+ * It converts all the SPC files in eventFolders/model under the specified PSVFolder and SHFolder.
+ * If you leave 'model name' blank and each event folder has only one folder,
+ * the model name will be set automatically as the name of that folder.
  *
  * @author Kensuke Konishi
  * @version 0.2.4.5.1

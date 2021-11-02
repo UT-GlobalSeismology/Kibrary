@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.BufferedWriter;
@@ -106,7 +106,7 @@ public class MakeRunFolder {
 	}
 
 	public static String cmtSolutionString(GlobalCMTID id) {
-		GlobalCMTData idData = id.getEvent();
+		GlobalCMTAccess idData = id.getEvent();
 		LocalDateTime pdeTime = idData.getPDETime();
 		MomentTensor mt = idData.getCmt();
 		double pow = Math.pow(10, mt.getMtExp());

@@ -22,9 +22,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
@@ -46,7 +46,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	private Path workPath;
 	private Properties property;
 	private Set<String> networks;
-	private Predicate<SACFileData> predicate;
+	private Predicate<SACFileAccess> predicate;
 	private String trashName;
 
 	public SecondHandler(Properties property) throws IOException {
@@ -99,10 +99,10 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	}
 
     /**
-     * @param obsSac {@link SACHeaderData} to check
+     * @param obsSac {@link SACHeaderAccess} to check
      * @return false if depmen depmax depmin has NaN.
      */
-	private static boolean checkDEP(SACHeaderData obsSac) {
+	private static boolean checkDEP(SACHeaderAccess obsSac) {
 		double depmen = obsSac.getValue(SACHeaderEnum.DEPMEN);
 		double depmax = obsSac.getValue(SACHeaderEnum.DEPMAX);
 		double depmin = obsSac.getValue(SACHeaderEnum.DEPMIN);
@@ -122,7 +122,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 		predicate = createPredicate();
 	}
 
-	private Predicate<SACFileData> createPredicate() {
+	private Predicate<SACFileAccess> createPredicate() {
 
 		double delta = property.containsKey("delta") ? Double.parseDouble(property.getProperty("delta")) : Double.NaN;
 		int[] npts = property.containsKey("npts") ? Arrays.stream(property.getProperty("npts").trim().split(" ")).mapToInt(Integer::parseInt).toArray() : new int[0];
@@ -238,7 +238,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 					isOK = false;
 				//TODO isok????
 				// SacFileの読み込み
-				SACFileData obsSac = sacName.read();
+				SACFileAccess obsSac = sacName.read();
 				isOK = predicate.test(obsSac);
 
 				if (!isOK)

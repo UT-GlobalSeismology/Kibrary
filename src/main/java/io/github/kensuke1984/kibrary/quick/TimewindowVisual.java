@@ -2,14 +2,14 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.butterworth.LowPassFilter;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.selection.Bins2D;
 import io.github.kensuke1984.kibrary.selection.SurfaceWaveDetector;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
@@ -58,16 +58,16 @@ public class TimewindowVisual {
 			ids = Utilities.eventFolderSet(root).stream()
 				.map(event -> event.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		List<Set<StaticCorrection>> correctionList = new ArrayList();
+		List<Set<StaticCorrectionData>> correctionList = new ArrayList();
 		for (Path path : staticCorrectionPaths)
-			correctionList.add(StaticCorrectionFile.read(path));
+			correctionList.add(StaticCorrectionDataFile.read(path));
 //		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
 		
 		for (GlobalCMTID id : ids) {
 			final GlobalCMTID id_ = id;
 			
-			List<Set<StaticCorrection>> correctionListThisID = new ArrayList();
-			for (Set<StaticCorrection> corrections : correctionList)
+			List<Set<StaticCorrectionData>> correctionListThisID = new ArrayList();
+			for (Set<StaticCorrectionData> corrections : correctionList)
 				correctionListThisID.add(corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(id_))
 					.collect(Collectors.toSet()));
 //			Set<StaticCorrection> correctionThisID = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(id_))
@@ -83,7 +83,7 @@ public class TimewindowVisual {
 			Path outpathProfile = dir1.resolve("twprofile_" + id.toString() + ".gmt");
 			Path outpathStack = dir1.resolve("twstack_" + id.toString() + ".gmt");
 			
-			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath).stream()
+			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath).stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(id_)).collect(Collectors.toSet());
 			
 			try {
@@ -266,12 +266,12 @@ public class TimewindowVisual {
 				Bins2D bins = new Bins2D(id, 5., .33, timewindows);
 				Map<DistanceAzimuth, Integer> usedBinsCount = new HashMap<>();
 				Set<Path> outpathList = new HashSet<>();
-				for (TimewindowInformation timewindow : timewindows) {
+				for (TimewindowData timewindow : timewindows) {
 					if (usedStations.contains(timewindow.getObserver()))
 						continue;
 					
 					List<Double> timeShiftList = new ArrayList();
-					for (Set<StaticCorrection> corrections : correctionListThisID) {
+					for (Set<StaticCorrectionData> corrections : correctionListThisID) {
 						Phases phases = new Phases(timewindow.getPhases());
 						timeShiftList.add(corrections.stream().filter(corr -> corr.getObserver().equals(timewindow.getObserver())
 								&& new Phases(corr.getPhases()).equals(phases) ).findFirst().get().getTimeshift());
@@ -399,7 +399,7 @@ public class TimewindowVisual {
 						}
 					}
 				}
-				for (TimewindowInformation timewindow : timewindows) {
+				for (TimewindowData timewindow : timewindows) {
 					if (!usedStations.contains(timewindow.getObserver()))
 						continue;
 //					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())

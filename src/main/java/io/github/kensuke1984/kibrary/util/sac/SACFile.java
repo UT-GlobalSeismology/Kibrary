@@ -13,7 +13,7 @@ import java.io.IOException;
  * @version 1.0.0.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-class SACFile extends SACHeader implements SACFileData {
+class SACFile extends SACHeader implements SACFileAccess {
 
     /**
      * waveform data in the sacfile
@@ -36,8 +36,8 @@ class SACFile extends SACHeader implements SACFileData {
      * @param filter to apply on this
      */
     @Override
-    public SACFileData applyButterworthFilter(ButterworthFilter filter) {
-        SACFileData sd = clone();
+    public SACFileAccess applyButterworthFilter(ButterworthFilter filter) {
+        SACFileAccess sd = clone();
         if (filter instanceof BandPassFilter) {
             BandPassFilter bp = (BandPassFilter) filter;
             double periodMax = 2.0 * Math.PI * sd.getValue(SACHeaderEnum.DELTA) / bp.getOmegaL();

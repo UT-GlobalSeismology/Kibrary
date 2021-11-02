@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * @version 0.0.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-public interface SACHeaderData {
+public interface SACHeaderAccess {
 
     /**
      * 論理値を返す。 数値が整数、文字列のときはエラー
@@ -43,9 +43,9 @@ public interface SACHeaderData {
      *
      * @param eventLocation {@link Location} to be set to EVLA, EVLO and EVDP. Earth
      *                      radius is considered as 6371.
-     * @return {@link SACHeaderData} with the location
+     * @return {@link SACHeaderAccess} with the location
      */
-    default SACHeaderData setEventLocation(Location eventLocation) {
+    default SACHeaderAccess setEventLocation(Location eventLocation) {
         return setValue(SACHeaderEnum.EVLA, eventLocation.getLatitude())
                 .setValue(SACHeaderEnum.EVLO, eventLocation.getLongitude())
                 .setValue(SACHeaderEnum.EVDP, 6371 - eventLocation.getR());
@@ -64,9 +64,9 @@ public interface SACHeaderData {
      * Set(Change) event time and date
      *
      * @param eventDateTime to set in SacHeader
-     * @return {@link SACHeaderData} with the time
+     * @return {@link SACHeaderAccess} with the time
      */
-    default SACHeaderData setEventTime(LocalDateTime eventDateTime) {
+    default SACHeaderAccess setEventTime(LocalDateTime eventDateTime) {
         return setInt(SACHeaderEnum.NZYEAR, eventDateTime.getYear())
                 .setInt(SACHeaderEnum.NZJDAY, eventDateTime.getDayOfYear())
                 .setInt(SACHeaderEnum.NZHOUR, eventDateTime.getHour())
@@ -86,10 +86,10 @@ public interface SACHeaderData {
      * Changes KSTNM, KNETWK, STLA, STLO
      *
      * @param observer to be set
-     * @return {@link SACHeaderData} with the station
+     * @return {@link SACHeaderAccess} with the station
      */
-    default SACHeaderData setObserver(Observer observer) {
-        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, observer.getStation());
+    default SACHeaderAccess setObserver(Observer observer) {
+        SACHeaderAccess sd = setSACString(SACHeaderEnum.KSTNM, observer.getStation());
         sd = sd.setSACString(SACHeaderEnum.KNETWK, observer.getNetwork());
         return sd.setValue(SACHeaderEnum.STLA, observer.getPosition().getLatitude())
                 .setValue(SACHeaderEnum.STLO, observer.getPosition().getLongitude());
@@ -152,11 +152,11 @@ public interface SACHeaderData {
      *
      * @param sacHeaderEnum a key to a boolean value
      * @param bool          to be set
-     * @return {@link SACHeaderData} with the bool
+     * @return {@link SACHeaderAccess} with the bool
      * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a boolean value
      *                                  of is a special boolean.
      */
-    SACHeaderData setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+    SACHeaderAccess setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
 
     /**
      * If the value KEVNM is not valid for GlobalCMTID, then it will throw RuntimeException.
@@ -172,31 +172,31 @@ public interface SACHeaderData {
      *
      * @param sacHeaderEnum a key to an integer value
      * @param value         an integer value to be set
-     * @return {@link SACHeaderData} with the value
+     * @return {@link SACHeaderAccess} with the value
      */
-    SACHeaderData setInt(SACHeaderEnum sacHeaderEnum, int value);
+    SACHeaderAccess setInt(SACHeaderEnum sacHeaderEnum, int value);
 
     /**
      * Enumeratedフィールドの代入 今は整数値で受け取る
      *
      * @param sacHeaderEnum a key to an Enumerated field
      * @param value         a integer value to input
-     * @return {@link SACHeaderData} with the value
+     * @return {@link SACHeaderAccess} with the value
      * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an enumarated
      *                                  value
      */
-    SACHeaderData setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
+    SACHeaderAccess setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
 
     /**
      * Set a String value
      *
      * @param sacHeaderEnum a key to a String value
      * @param string        to be set
-     * @return {@link SACHeaderData} with the string
+     * @return {@link SACHeaderAccess} with the string
      * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a String value,
      *                                  if the input string has a invalid length.
      */
-    SACHeaderData setSACString(SACHeaderEnum sacHeaderEnum, String string);
+    SACHeaderAccess setSACString(SACHeaderEnum sacHeaderEnum, String string);
 
     /**
      * マーカーに時間を設定する ぴっちりdelta * n の時刻に少し修正する round(time/delta)*delta Set a time
@@ -207,10 +207,10 @@ public interface SACHeaderData {
      *
      * @param marker must be Tn n=[0-9], A
      * @param time   to set in this
-     * @return {@link SACHeaderData} with a time marker.
+     * @return {@link SACHeaderAccess} with a time marker.
      * @throws IllegalArgumentException if marker is not Tn
      */
-    default SACHeaderData setTimeMarker(SACHeaderEnum marker, double time) {
+    default SACHeaderAccess setTimeMarker(SACHeaderEnum marker, double time) {
         if (marker != SACHeaderEnum.T0 && marker != SACHeaderEnum.T1 && marker != SACHeaderEnum.T2 &&
                 marker != SACHeaderEnum.T3 && marker != SACHeaderEnum.T4 && marker != SACHeaderEnum.T5 &&
                 marker != SACHeaderEnum.T6 && marker != SACHeaderEnum.T7 && marker != SACHeaderEnum.T8 &&
@@ -231,9 +231,9 @@ public interface SACHeaderData {
      *
      * @param sacHeaderEnum a key to a float value
      * @param value         a double value to be set
-     * @return {@link SACHeaderData} with the value
+     * @return {@link SACHeaderAccess} with the value
      */
-    SACHeaderData setValue(SACHeaderEnum sacHeaderEnum, double value);
+    SACHeaderAccess setValue(SACHeaderEnum sacHeaderEnum, double value);
 
 
     /**

@@ -15,8 +15,8 @@ import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
@@ -24,9 +24,9 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 public class MakeWindowScS {
@@ -53,7 +53,7 @@ public class MakeWindowScS {
 //		Path timewindowPath = workdir.resolve("timewindow_S_60deg.dat");
 		Path timewindowPath = workdir.resolve("timewindow_ScS_longer.dat");
 		
-		Set<TimewindowInformation> timewindowsForSelection = TimewindowInformationFile.read(timewindowPath); 
+		Set<TimewindowData> timewindowsForSelection = TimewindowDataFile.read(timewindowPath); 
 //		timewindowsForSelection = null;
 		
 		boolean convolved = true;
@@ -78,19 +78,19 @@ public class MakeWindowScS {
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("S, ScS, sS");
 		
-		Set<TimewindowInformation> infoSet = new HashSet<>();
+		Set<TimewindowData> infoSet = new HashSet<>();
 		Path outpath = workdir.resolve("selectedTimewindow_ScS" + Utilities.getTemporaryString() + ".dat");
 		
-		Set<TimewindowInformation> infoSetScStight = new HashSet<>();
+		Set<TimewindowData> infoSetScStight = new HashSet<>();
 		Path outpathTight = workdir.resolve("selectedTimewindow_ScStight" + Utilities.getTemporaryString() + ".dat");
 		
-		Set<TimewindowInformation> infoSetScd = new HashSet<>();
+		Set<TimewindowData> infoSetScd = new HashSet<>();
 		Path outpathScd = workdir.resolve("selectedTimewindow_Scd" + Utilities.getTemporaryString() + ".dat");
 		
-		Set<TimewindowInformation> infoSet_noSelection = new HashSet<>();
+		Set<TimewindowData> infoSet_noSelection = new HashSet<>();
 		Path outpath_noSelection = workdir.resolve("timewindow_ScS" + Utilities.getTemporaryString() + ".dat");
 		
-		Set<TimewindowInformation> infoSetS = new HashSet<>();
+		Set<TimewindowData> infoSetS = new HashSet<>();
 		Path outpathS = workdir.resolve("timewindow_S.dat");
 
 		int countIncludeS = 0;
@@ -111,7 +111,7 @@ public class MakeWindowScS {
 						continue;
 				}
 				
-				SACHeaderData obsHeader = obsName.readHeader();
+				SACHeaderAccess obsHeader = obsName.readHeader();
 				
 				double distance = obsHeader.getValue(SACHeaderEnum.GCARC);
 				timetool.calculate(distance);
@@ -133,7 +133,7 @@ public class MakeWindowScS {
 				if (timesS - timeScS < minPeriod * 1.6)
 					continue;
 				
-				SACFileData synData = null;
+				SACFileAccess synData = null;
 				if (!convolved)
 					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("s"))).read();
 				else
@@ -144,7 +144,7 @@ public class MakeWindowScS {
 				double timeLatePeak = synTrace.getXforMaxValue() > synTrace.getXforMinValue() ? synTrace.getXforMaxValue() : synTrace.getXforMinValue();
 				double timeEndOfS = timeLatePeak + deltaTimeP2P * 0.9;
 				
-				SACFileData obsData = obsName.read();
+				SACFileAccess obsData = obsName.read();
 				Trace obsTrace = obsData.createTrace().cutWindow(timeS - 15, timeS + 40);
 				double synSP2P = synTrace.getYVector().getLInfNorm();
 				double obsSP2P = obsTrace.getYVector().getLInfNorm();
@@ -197,7 +197,7 @@ public class MakeWindowScS {
 					startTimeS -= tmpTime;
 				}
 				
-				TimewindowInformation timewindow_S = new TimewindowInformation(startTimeS, endTimeS,
+				TimewindowData timewindow_S = new TimewindowData(startTimeS, endTimeS,
 						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.S});
 				infoSetS.add(timewindow_S);
@@ -225,21 +225,21 @@ public class MakeWindowScS {
 					addScS = keep;
 				}
 				
-				TimewindowInformation timewindow = new TimewindowInformation(startTime, endTime,
+				TimewindowData timewindow = new TimewindowData(startTime, endTime,
 						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.ScS});
 				if (addScS)
 					infoSet.add(timewindow);
 				
 				if (startTime < endTimeScd) {
-					TimewindowInformation timewindowScd = new TimewindowInformation(startTime, endTimeScd,
+					TimewindowData timewindowScd = new TimewindowData(startTime, endTimeScd,
 							obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 							obsName.getComponent(), new Phase[] {Phase.ScS});
 					if (addScS)
 						infoSetScd.add(timewindowScd);
 				}
 				
-				TimewindowInformation timewindowTight = new TimewindowInformation(startTimeTight, endTime,
+				TimewindowData timewindowTight = new TimewindowData(startTimeTight, endTime,
 						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.ScS});
 				if (addScS)
@@ -251,11 +251,11 @@ public class MakeWindowScS {
 		
 		System.out.println("Excluded " + countIncludeS + " timewindows that include S phase");
 		
-		TimewindowInformationFile.write(infoSet, outpath);
-		TimewindowInformationFile.write(infoSetS, outpathS);
-		TimewindowInformationFile.write(infoSet_noSelection, outpath_noSelection);
-		TimewindowInformationFile.write(infoSetScd, outpathScd);
-		TimewindowInformationFile.write(infoSetScStight, outpathTight);
+		TimewindowDataFile.write(infoSet, outpath);
+		TimewindowDataFile.write(infoSetS, outpathS);
+		TimewindowDataFile.write(infoSet_noSelection, outpath_noSelection);
+		TimewindowDataFile.write(infoSetScd, outpathScd);
+		TimewindowDataFile.write(infoSetScStight, outpathTight);
 	}
 
 }

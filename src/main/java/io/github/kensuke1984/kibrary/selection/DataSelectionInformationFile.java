@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -20,6 +20,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 //import javax.rmi.CORBA.Util;
 
+/**
+ * File containing information of data selection. Ascii-format.
+ *
+ *
+ *
+ */
 public class DataSelectionInformationFile {
 
     public static void write(List<DataSelectionInformation> infoList, Path outpath) throws IOException {
@@ -38,14 +44,15 @@ public class DataSelectionInformationFile {
 
         Files.readAllLines(infoPath).stream().forEach(line -> {
             String[] s = line.split("\\s+");
-            Observer station = new Observer(s[2], new HorizontalPosition(Double.parseDouble(s[3]), Double.parseDouble(s[4])), s[5]);
+            Observer observer = new Observer(s[0], new HorizontalPosition(Double.parseDouble(s[2]), Double.parseDouble(s[3])), s[1]);
             Phase[] phases = Stream.of(s[8].split(",")).map(string -> Phase.create(string)).toArray(Phase[]::new);
 
-            TimewindowInformation timewindow = new TimewindowInformation(Double.parseDouble(s[0]), Double.parseDouble(s[1]), station,
-                    new GlobalCMTID(s[6]), SACComponent.valueOf(s[7]), phases);
+            TimewindowData timewindow = new TimewindowData(Double.parseDouble(s[6]), Double.parseDouble(s[7]), observer,
+                    new GlobalCMTID(s[4]), SACComponent.valueOf(s[5]), phases);
 
-            DataSelectionInformation info = new DataSelectionInformation(timewindow, Double.parseDouble(s[9]),
-                    Double.parseDouble(s[10]), Double.parseDouble(s[11]), Double.parseDouble(s[12]), Double.parseDouble(s[13]), Double.parseDouble(s[14]));
+            DataSelectionInformation info = new DataSelectionInformation(timewindow, Double.parseDouble(s[12]),
+                    Double.parseDouble(s[13]), Double.parseDouble(s[9]), Double.parseDouble(s[10]),
+                    Double.parseDouble(s[11]), Double.parseDouble(s[14]));
 
             infoList.add(info);
         });

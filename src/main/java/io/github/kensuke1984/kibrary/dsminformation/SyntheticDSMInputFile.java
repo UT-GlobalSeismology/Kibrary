@@ -13,18 +13,18 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 /**
- * Information file for TIPSV and TISH
+ * Class for creating input files for TIPSV and TISH
  *
  * @author Kensuke Konishi
  * @version 0.1.8.1
  * @author anselme change station string to NAME_NETWORK
  */
-public class SyntheticDSMInfo extends DSMheader {
+public class SyntheticDSMInputFile extends DSMInputHeader {
 
     protected final PolynomialStructure STRUCTURE;
 
@@ -35,7 +35,7 @@ public class SyntheticDSMInfo extends DSMheader {
      */
     protected final Set<Observer> STATIONS;
 
-    protected final GlobalCMTData EVENT;
+    protected final GlobalCMTAccess EVENT;
 
     /**
      * @param structure of velocity
@@ -45,7 +45,7 @@ public class SyntheticDSMInfo extends DSMheader {
      * @param tlen      TLEN[s]
      * @param np        NP
      */
-    public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTData event, Set<Observer> stations, String outputDir,
+    public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> stations, String outputDir,
                             double tlen, int np) {
         super(tlen, np);
         STRUCTURE = structure;
@@ -141,11 +141,11 @@ public class SyntheticDSMInfo extends DSMheader {
         }
     }
 
-    public SyntheticDSMInfo replaceStructure(PolynomialStructure structure) {
-        return new SyntheticDSMInfo(structure, EVENT, STATIONS, OUTPUT, getTlen(), getNp());
+    public SyntheticDSMInputFile replaceStructure(PolynomialStructure structure) {
+        return new SyntheticDSMInputFile(structure, EVENT, STATIONS, OUTPUT, getTlen(), getNp());
     }
 
-    public GlobalCMTData getGlobalCMTData() {
+    public GlobalCMTAccess getGlobalCMTData() {
         return EVENT;
     }
 

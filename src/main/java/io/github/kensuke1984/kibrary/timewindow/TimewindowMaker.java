@@ -31,12 +31,12 @@ import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * Operation that creates an information file of timewindows.
+ * Operation that creates a data file of timewindows.
  * <p>
  * Timewindows are created for observed waveforms in event folders under the working directory.
  * For all the waveforms, timewindows are computed by TauP.
@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * Timewindow information is written in binary format in "timewindow*.dat".
  * Files that could not produce timewindows are written in "invalidTimewindow*.txt".
- * See {@link TimewindowInformationFile}.
+ * See {@link TimewindowDataFile}.
  *
  * @author Kensuke Konishi
  * @version 0.2.4
@@ -98,7 +98,7 @@ public class TimewindowMaker implements Operation {
      * 使いたいフェーズ
      */
     private Set<Phase> usePhases;
-    private Set<TimewindowInformation> timewindowSet;
+    private Set<TimewindowData> timewindowSet;
     /**
      * @author anselme
      */
@@ -233,7 +233,7 @@ public class TimewindowMaker implements Operation {
         }
         else {
             System.err.println("Outputting in " + outputPath);
-            TimewindowInformationFile.write(timewindowSet, outputPath);
+            TimewindowDataFile.write(timewindowSet, outputPath);
         }
     }
 
@@ -244,7 +244,7 @@ public class TimewindowMaker implements Operation {
      * @author anselme add contents for sS in MTZ
      */
     private void makeTimeWindow(SACFileName sacFileName) throws IOException {
-        SACFileData sacFile = sacFileName.read();
+        SACFileAccess sacFile = sacFileName.read();
         // 震源深さ radius
         double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
         // 震源観測点ペアの震央距離
@@ -347,7 +347,7 @@ public class TimewindowMaker implements Operation {
 
             // window fix
             Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
-                    window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases)))
+                    window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases)))
                     .filter(tw ->  tw.getLength() > minLength)
                     .forEach(timewindowSet::add);
         } catch (RuntimeException e) {
@@ -361,7 +361,7 @@ public class TimewindowMaker implements Operation {
      * @author anselme
      */
     private void makeTimeWindowForCorridor(SACFileName sacFileName) throws IOException {
-        SACFileData sacFile = sacFileName.read();
+        SACFileAccess sacFile = sacFileName.read();
         // 震源深さ radius
         double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
         // 震源観測点ペアの震央距離
@@ -597,7 +597,7 @@ public class TimewindowMaker implements Operation {
                 .map(Phase::create).collect(Collectors.toSet());
             Set<TauPPhase> usePhases_ = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, tmpUsePhases, model);
             Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
-                    window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases_)))
+                    window -> new TimewindowData(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases_)))
                     .filter(tw -> tw.getPhases().length > 0)
                     .forEach(tw -> {
                         if (tw.endTime - tw.startTime >= 30.) {

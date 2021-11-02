@@ -6,8 +6,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.inversion.ObserverInformationFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Observer;
@@ -57,7 +57,7 @@ public class RaypathDistribution implements Operation {
 	// protected boolean drawsPoint;
 
 	private Set<Observer> stationSet;
-	private Set<TimewindowInformation> timeWindowInformationFile;
+	private Set<TimewindowData> timeWindowInformationFile;
 	private Path stationPath;
 	private Path eventPath;
 	private Path eventCSVPath;
@@ -121,7 +121,7 @@ public class RaypathDistribution implements Operation {
 		drawsPathMode = Integer.parseInt(property.getProperty("drawsPathMode"));
 		if (property.containsKey("timeWindowInformationPath")) {
 			Path timewindowPath = getPath("timeWindowInformationPath");
-			timeWindowInformationFile = TimewindowInformationFile.read(timewindowPath);
+			timeWindowInformationFile = TimewindowDataFile.read(timewindowPath);
 		}
 		Path stationPath = getPath("stationInformationPath");
 		if (timeWindowInformationFile == null) stationSet = ObserverInformationFile.read(stationPath);

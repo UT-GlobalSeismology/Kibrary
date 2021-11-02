@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @version 0.1.1.2
  * @author anselme add phase information
  */
-public class StaticCorrection implements Comparable<StaticCorrection> {
+public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 
     private final Observer observer;
     private final GlobalCMTID eventID;
@@ -77,7 +77,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
      *                       t2-timeShift]
      * @param amplitudeRatio Observed / Synthetic, an observed waveform will be divided by this value.
      */
-    public StaticCorrection(Observer observer, GlobalCMTID eventID, SACComponent component, double synStartTime,
+    public StaticCorrectionData(Observer observer, GlobalCMTID eventID, SACComponent component, double synStartTime,
             double timeShift, double amplitudeRatio, Phase[] phases) {
         this.observer = observer;
         this.eventID = eventID;
@@ -89,7 +89,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
     }
 
     @Override
-    public int compareTo(StaticCorrection o) {
+    public int compareTo(StaticCorrectionData o) {
         int obs = observer.compareTo(o.observer);
         if (obs != 0) return obs;
         int id = eventID.compareTo(o.eventID);

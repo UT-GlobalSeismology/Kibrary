@@ -49,7 +49,7 @@ class GlobalCMTSearchTest {
 
     private static GlobalCMTID findGlobalCMTID(LocalDateTime time, Location eventLoc) {
         GlobalCMTSearch globalCMTSearch = new GlobalCMTSearch(time.toLocalDate());
-        Predicate<GlobalCMTData> predicate = d -> {
+        Predicate<GlobalCMTAccess> predicate = d -> {
             if (d.getCMTTime().toLocalDate().getDayOfYear() != time.getDayOfYear() ||
                     d.getCMTTime().getYear() != time.getYear()) {
                 return false;

@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -96,13 +96,13 @@ public class StaticCorrectionMap {
 //			pw_distance.println(line[i].getLongitude() + " " + line[i].getLatitude());
 //		pw_distance.close();
 		
-		Set<StaticCorrection> fujiCorrections = new HashSet<>();
+		Set<StaticCorrectionData> fujiCorrections = new HashSet<>();
 		
 		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == cluster_index).findFirst().get();
 		
 		if (from1D) {
-			Set<StaticCorrection> fujiCorrections_low = StaticCorrectionFile.read(fujiStaticPath_low);
-			Set<StaticCorrection> fujiCorrections_high = StaticCorrectionFile.read(fujiStaticPath_high);
+			Set<StaticCorrectionData> fujiCorrections_low = StaticCorrectionDataFile.read(fujiStaticPath_low);
+			Set<StaticCorrectionData> fujiCorrections_high = StaticCorrectionDataFile.read(fujiStaticPath_high);
 			
 			double[] azSepLow = new double[2];
 			if (cluster_index == 4)
@@ -110,35 +110,35 @@ public class StaticCorrectionMap {
 			else if (cluster_index  == 5)
 				azSepLow = cluster.getAzimuthBound(4);
 				
-			for (StaticCorrection corr : fujiCorrections_low) {
+			for (StaticCorrectionData corr : fujiCorrections_low) {
 				double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(corr.getObserver().getPosition()));
 				if (azimuth < 180) azimuth += 360;
 				if (azimuth >= azSepLow[0] && azimuth <= azSepLow[1])
 					fujiCorrections.add(corr);
 			}
-			for (StaticCorrection corr : fujiCorrections_high) {
+			for (StaticCorrectionData corr : fujiCorrections_high) {
 				double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(corr.getObserver().getPosition()));
 				if (azimuth < 180) azimuth += 360;
 				if (azimuth < azSepLow[0] || azimuth > azSepLow[1])
 					fujiCorrections.add(corr);
 			}
 		}
-		else fujiCorrections = StaticCorrectionFile.read(fujiStaticPath);
+		else fujiCorrections = StaticCorrectionDataFile.read(fujiStaticPath);
 		
 		fujiCorrections = fujiCorrections.stream().filter(c -> c.getAmplitudeRatio() < 5 && c.getAmplitudeRatio() > 0.2)
 				.collect(Collectors.toSet());
 		
-		Set<StaticCorrection> corrSet = new HashSet<>();
+		Set<StaticCorrectionData> corrSet = new HashSet<>();
 		
 		if (fujiStaticPath2 != null) {
-			Set<StaticCorrection> fujiCorrections2 = StaticCorrectionFile.read(fujiStaticPath2);
+			Set<StaticCorrectionData> fujiCorrections2 = StaticCorrectionDataFile.read(fujiStaticPath2);
 			fujiCorrections.stream().forEach(corr -> {
-				StaticCorrection corr2 = fujiCorrections2.stream().parallel().filter(c -> c.getGlobalCMTID().equals(corr.getGlobalCMTID())
+				StaticCorrectionData corr2 = fujiCorrections2.stream().parallel().filter(c -> c.getGlobalCMTID().equals(corr.getGlobalCMTID())
 						&& c.getObserver().equals(corr.getObserver())
 						&& c.getSynStartTime() == corr.getSynStartTime()
 						&& c.getComponent().equals(corr.getComponent()))
 					.findFirst().get();
-				corrSet.add(new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID()
+				corrSet.add(new StaticCorrectionData(corr.getObserver(), corr.getGlobalCMTID()
 					, corr.getComponent(), corr.getSynStartTime(), corr.getTimeshift() - corr2.getTimeshift()
 					, corr.getAmplitudeRatio() / corr2.getAmplitudeRatio(), corr.getPhases()));
 			});
@@ -182,12 +182,12 @@ public class StaticCorrectionMap {
 	}
 	
 	
-	public static double[][][] averageMap(Set<StaticCorrection> ratios, double dl) {
+	public static double[][][] averageMap(Set<StaticCorrectionData> ratios, double dl) {
 		int nlat = (int) (180 / dl);
 		int nlon = (int) (360 / dl);
 		double[][][] map = new double[nlon][nlat][2];
 		int[][] count = new int[nlon][nlat];
-		for (StaticCorrection corr : ratios) {
+		for (StaticCorrectionData corr : ratios) {
 //			double lon = corr.getStation().getPosition().getLongitude();
 //			if (lon < 0)
 //				lon += 360;
@@ -231,12 +231,12 @@ public class StaticCorrectionMap {
 		return map;
 	}
 	
-	public static double[][][] averageMap(Set<StaticCorrection> ratios, double dl, EventCluster cluster) {
+	public static double[][][] averageMap(Set<StaticCorrectionData> ratios, double dl, EventCluster cluster) {
 		int nlat = (int) (180 / dl);
 		int nlon = (int) (360 / dl);
 		double[][][] map = new double[nlon][nlat][2];
 		int[][] count = new int[nlon][nlat];
-		for (StaticCorrection corr : ratios) {
+		for (StaticCorrectionData corr : ratios) {
 //			double lon = corr.getStation().getPosition().getLongitude();
 //			if (lon < 0)
 //				lon += 360;
@@ -279,10 +279,10 @@ public class StaticCorrectionMap {
 		return map;
 	}
 	
-	public static double[][] averageInCorridor(Set<StaticCorrection> ratios, List<Double> azimuthSeparations, HorizontalPosition center) {
+	public static double[][] averageInCorridor(Set<StaticCorrectionData> ratios, List<Double> azimuthSeparations, HorizontalPosition center) {
 		double[][] averages = new double[azimuthSeparations.size() + 1][2];
 		int[] counts = new int[azimuthSeparations.size() + 1];
-		for (StaticCorrection corr : ratios) {
+		for (StaticCorrectionData corr : ratios) {
 			double distance = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(corr.getObserver().getPosition()));
 			if (distance < 65) continue;
 			if (distance > 70) continue;
@@ -305,10 +305,10 @@ public class StaticCorrectionMap {
 		return averages;
 	}
 	
-	public static double[][][] averageMapAtStation(Set<StaticCorrection> ratios) {
+	public static double[][][] averageMapAtStation(Set<StaticCorrectionData> ratios) {
 		double[][][] map = new double[360][180][2];
 		int[][] count = new int[360][180];
-		for (StaticCorrection corr : ratios) {
+		for (StaticCorrectionData corr : ratios) {
 			if (corr.getAmplitudeRatio() > 4. || corr.getAmplitudeRatio() < 1./4. || Double.isNaN(corr.getAmplitudeRatio()))
 				continue;
 			

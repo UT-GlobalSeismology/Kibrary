@@ -32,8 +32,8 @@ public class SeisTomoPy {
 		try {
 //			writeRaypathFile(outpath, waveformIDPath);
 			
-			Set<StaticCorrection> correctionSet = readCorrections(correctionFile);
-			StaticCorrectionFile.write(correctionSet, outpath);
+			Set<StaticCorrectionData> correctionSet = readCorrections(correctionFile);
+			StaticCorrectionDataFile.write(correctionSet, outpath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -58,8 +58,8 @@ public class SeisTomoPy {
 		br.close();
 	}
 	
-	private static Set<StaticCorrection> readCorrections(Path correctionFile) throws IOException {
-		Set<StaticCorrection> corrections = new HashSet<>();
+	private static Set<StaticCorrectionData> readCorrections(Path correctionFile) throws IOException {
+		Set<StaticCorrectionData> corrections = new HashSet<>();
 		BufferedReader br = Files.newBufferedReader(correctionFile);
 		String line = "";
 		while ((line = br.readLine()) != null) {
@@ -74,7 +74,7 @@ public class SeisTomoPy {
 //				Double.parseDouble(ss[10]) +  Double.parseDouble(ss[12]); //bad
 //				Double.parseDouble(ss[10]) - Double.parseDouble(ss[12]); //bad
 			
-			StaticCorrection correction = new StaticCorrection(station, new GlobalCMTID(ss[0].trim())
+			StaticCorrectionData correction = new StaticCorrectionData(station, new GlobalCMTID(ss[0].trim())
 			, component, Double.parseDouble(ss[8]), shift, 1., new Phase[] { Phase.create(ss[9].trim())});
 			
 			corrections.add(correction);

@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * The file containing timewindow information.
+ * File containing {@link TimewindowData}. Binary-format.
  * <p>
  * The file consists of 5 sections:
  * <ol>
@@ -71,7 +71,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @version 0.3.1
  * @author anselme add phase information
  */
-public final class TimewindowInformationFile {
+public final class TimewindowDataFile {
 
     /**
      * bytes for one time window information
@@ -79,7 +79,7 @@ public final class TimewindowInformationFile {
      */
     public static final int ONE_WINDOW_BYTE = 33;
 
-    private TimewindowInformationFile() {
+    private TimewindowDataFile() {
     }
 
 
@@ -93,17 +93,17 @@ public final class TimewindowInformationFile {
      * @author Kensuke Konishi
      * @author anselme add phase information
      */
-    public static void write(Set<TimewindowInformation> infoSet, Path outputPath, OpenOption... options)
+    public static void write(Set<TimewindowData> infoSet, Path outputPath, OpenOption... options)
             throws IOException {
         if (infoSet.isEmpty())
             throw new RuntimeException("Input information is empty..");
         try (DataOutputStream dos = new DataOutputStream(
                 new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
-            GlobalCMTID[] events = infoSet.stream().map(TimewindowInformation::getGlobalCMTID).distinct().sorted()
+            GlobalCMTID[] events = infoSet.stream().map(TimewindowData::getGlobalCMTID).distinct().sorted()
                     .toArray(GlobalCMTID[]::new);
-            Observer[] observers = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
+            Observer[] observers = infoSet.stream().map(TimewindowData::getObserver).distinct().sorted()
                     .toArray(Observer[]::new);
-            Phase[] phases = infoSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+            Phase[] phases = infoSet.stream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
                 .distinct().toArray(Phase[]::new);
 
             Map<GlobalCMTID, Integer> eventMap = new HashMap<>();
@@ -130,7 +130,7 @@ public final class TimewindowInformationFile {
                     throw new NullPointerException(i + " " + "phase is null");
                 dos.writeBytes(StringUtils.rightPad(phases[i].toString(), 16));
             }
-            for (TimewindowInformation info : infoSet) {
+            for (TimewindowData info : infoSet) {
                 dos.writeShort(observerMap.get(info.getObserver()));
                 dos.writeShort(eventMap.get(info.getGlobalCMTID()));
                 Phase[] infophases = info.getPhases();
@@ -159,7 +159,7 @@ public final class TimewindowInformationFile {
      * @author Kensuke Konishi
      * @author anselme add phase information
      */
-    public static Set<TimewindowInformation> read(Path infoPath) throws IOException {
+    public static Set<TimewindowData> read(Path infoPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)));) {
             long t = System.nanoTime();
             long fileSize = Files.size(infoPath);
@@ -193,7 +193,7 @@ public final class TimewindowInformationFile {
                 dis.read(bytes[i]);
 //			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs, phases))
 //					.collect(Collectors.toSet());
-            Set<TimewindowInformation> infoSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
+            Set<TimewindowData> infoSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
             System.err.println(
                     infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -210,7 +210,7 @@ public final class TimewindowInformationFile {
      * @return TimewindowInformation
      * @author anselme add phase information
      */
-    private static TimewindowInformation create(byte[] bytes, Observer[] observers, GlobalCMTID[] events, Phase[] phases) {
+    private static TimewindowData create(byte[] bytes, Observer[] observers, GlobalCMTID[] events, Phase[] phases) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         Observer observer = observers[bb.getShort()];
         GlobalCMTID event = events[bb.getShort()];
@@ -225,7 +225,7 @@ public final class TimewindowInformationFile {
         SACComponent component = SACComponent.getComponent(bb.get());
         double startTime = bb.getFloat();
         double endTime = bb.getFloat();
-        return new TimewindowInformation(startTime, endTime, observer, event, component, usablephases);
+        return new TimewindowData(startTime, endTime, observer, event, component, usablephases);
     }
 
     /**
@@ -238,9 +238,9 @@ public final class TimewindowInformationFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
-        Set<TimewindowInformation> set;
+        Set<TimewindowData> set;
         if (args.length == 1) {
-            set = TimewindowInformationFile.read(Paths.get(args[0]));
+            set = TimewindowDataFile.read(Paths.get(args[0]));
         }
 /*        else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
             String timewindowname;
@@ -263,7 +263,7 @@ public final class TimewindowInformationFile {
                     return;
                 f = Paths.get(s);
             } while (!Files.exists(f) || Files.isDirectory(f));
-            set = TimewindowInformationFile.read(f);
+            set = TimewindowDataFile.read(f);
         }
 
         set.stream().sorted().forEach(tw -> {System.out.println(tw.toString());});

@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 
@@ -28,8 +28,8 @@ public class StationAverageTimeshift {
 		Path staticCorrectionPath = Paths.get(args[0]);
 		Path timewindowPath = Paths.get(args[1]);
 
-		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+		Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(staticCorrectionPath);
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
 		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
 		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
@@ -39,7 +39,7 @@ public class StationAverageTimeshift {
 		Map<HorizontalPosition, Integer> histogramCount = new HashMap<>();
 		Map<HorizontalPosition, Double> histogramRatio = new HashMap<>();
 		
-		for (TimewindowInformation tw : timewindows) {
+		for (TimewindowData tw : timewindows) {
 			boolean contin = true;
 			for (Phase p : tw.getPhases()) {
 				if (p.equals(Phase.S) || p.equals(Phase.s))
@@ -48,7 +48,7 @@ public class StationAverageTimeshift {
 			if (contin)
 				continue;
 			
-			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
+			List<StaticCorrectionData> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
 					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
@@ -57,7 +57,7 @@ public class StationAverageTimeshift {
 				System.out.println("No correction found for " + tw);
 				continue;
 			}
-			StaticCorrection correction = correctionList.get(0);
+			StaticCorrectionData correction = correctionList.get(0);
 			
 			Observer sta = correction.getObserver();
 			Double shift = correction.getTimeshift();
@@ -88,7 +88,7 @@ public class StationAverageTimeshift {
 			}
 		}
 		
-		for (TimewindowInformation tw : timewindows) {
+		for (TimewindowData tw : timewindows) {
 			boolean contin = true;
 			for (Phase p : tw.getPhases()) {
 				if (p.equals(Phase.S) || p.equals(Phase.s))
@@ -97,7 +97,7 @@ public class StationAverageTimeshift {
 			if (contin)
 				continue;
 			
-			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
+			List<StaticCorrectionData> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
 					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
@@ -106,7 +106,7 @@ public class StationAverageTimeshift {
 				System.out.println("No correction found for " + tw);
 				continue;
 			}
-			StaticCorrection correction = correctionList.get(0);
+			StaticCorrectionData correction = correctionList.get(0);
 			
 			Observer sta = correction.getObserver();
 			Double shift = correction.getTimeshift();

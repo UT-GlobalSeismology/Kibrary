@@ -31,8 +31,8 @@ import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
@@ -346,7 +346,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			// compute source time function
 			sourceTimeFunction = computeSourceTimeFunction();
 			
-			Set<TimewindowInformation> timewindowCurrentEvent = null;
+			Set<TimewindowData> timewindowCurrentEvent = null;
 			synchronized (this) {
 				timewindowCurrentEvent = timewindowInformationSet
 					.stream()
@@ -485,7 +485,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			}
 		}
 
-		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowInformation t, double bodyR,
+		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t, double bodyR,
 				PartialType partialType, double[] periodRange) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
@@ -514,8 +514,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 						});
 		}
 
-		private void addPartialSpectrum(SPCFileName spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
-			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+		private void addPartialSpectrum(SPCFileName spcname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+			Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
 					.filter(info -> info.getObserver().getStation().equals(spcname.getStationCode()) 
 							&& info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
 					.collect(Collectors.toSet());
@@ -545,7 +545,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			process(spectrum);
 
 			for (SACComponent component : components) {
-				Set<TimewindowInformation> tw = tmpTws.stream()
+				Set<TimewindowData> tw = tmpTws.stream()
 						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
@@ -574,7 +574,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 					for (int i = 0; i < periodRanges.length; i++) {
 						ButterworthFilter tmpfilter = filter.get(i);
 						double[] filteredUt = tmpfilter.applyFilter(ut);
-						for (TimewindowInformation t : tw)
+						for (TimewindowData t : tw)
 							cutAndWrite(station, filteredUt, t, bodyR, partialType, periodRanges[i]);
 					}
 				}
@@ -593,15 +593,15 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 						for (int i = 0; i < periodRanges.length; i++) {
 							ButterworthFilter tmpfilter = filter.get(i);
 							double[] filteredUt = tmpfilter.applyFilter(ut);
-							for (TimewindowInformation t : tw)
+							for (TimewindowData t : tw)
 								cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ, periodRanges[i]);
 						}
 					}
 			}
 		}
 		
-		private void addPartialSpectrum(SPCFileName spcname, SPCFileName shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
-			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+		private void addPartialSpectrum(SPCFileName spcname, SPCFileName shspcname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+			Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
 					.filter(info -> info.getObserver().getStation().equals(spcname.getStationCode()) 
 							&& info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
 					.collect(Collectors.toSet());
@@ -646,7 +646,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			process(shspectrum);
 
 			for (SACComponent component : components) {
-				Set<TimewindowInformation> tw = tmpTws.stream()
+				Set<TimewindowData> tw = tmpTws.stream()
 						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
@@ -693,7 +693,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 						double[] filteredSHUt = tmpfilter.applyFilter(shut);
 						for (int it = 0; it < filteredUt.length; it++)
 							filteredUt[it] += filteredSHUt[it];
-						for (TimewindowInformation t : tw)
+						for (TimewindowData t : tw)
 							cutAndWrite(station, filteredUt, t, bodyR[k], partialType, periodRanges[i]);
 					}
 				}
@@ -713,7 +713,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 						for (int i = 0; i < periodRanges.length; i++) {
 							ButterworthFilter tmpfilter = filter.get(i);
 							double[] filteredUt = tmpfilter.applyFilter(ut);
-							for (TimewindowInformation t : tw)
+							for (TimewindowData t : tw)
 								cutAndWrite(station, filteredUt, t, bodyR[k], PartialType.PARQ, periodRanges[i]);
 						}
 					}
@@ -728,7 +728,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		 *            cut information
 		 * @return u cut by considering sampling Hz
 		 */
-		private double[] sampleOutput(double[] u, TimewindowInformation timewindowInformation) {
+		private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {
 			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
 			// 書きだすための波形
 			int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
@@ -781,7 +781,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 //			System.out.println(sacnameSet.size());
 //			sacnameSet.forEach(name -> System.out.println(name));
 			
-			Set<TimewindowInformation> timewindowCurrentEvent = timewindowInformationSet
+			Set<TimewindowData> timewindowCurrentEvent = timewindowInformationSet
 					.stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(id))
 					.collect(Collectors.toSet());
@@ -809,8 +809,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 //			
 		}
 		
-		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
-			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+		private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+			Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
 					.filter(info -> info.getObserver().getStation().equals(sacname.getStationCode()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
@@ -819,11 +819,11 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			
 			System.out.println(sacname + " (time partials)");
 			
-			SACFileData sacdata = sacname.read();
+			SACFileAccess sacdata = sacname.read();
 			Observer station = sacdata.getObserver();
 			
 			for (SACComponent component : components) {
-				Set<TimewindowInformation> tw = tmpTws.stream()
+				Set<TimewindowData> tw = tmpTws.stream()
 						.filter(info -> info.getObserver().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
@@ -841,7 +841,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				for (int i = 0; i < periodRanges.length; i++) {
 					ButterworthFilter tmpfilter = filter.get(i); // TO DO
 					double[] filteredUt = sacdata.createTrace().getY();
-					for (TimewindowInformation t : tw)
+					for (TimewindowData t : tw)
 						cutAndWrite(station, filteredUt, t, periodRanges[i]);
 				}
 			}
@@ -854,7 +854,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		 *            cut information
 		 * @return u cut by considering sampling Hz
 		 */
-		private double[] sampleOutput(double[] u, TimewindowInformation timewindowInformation) {
+		private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {
 			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
 			// 書きだすための波形
 			int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
@@ -866,7 +866,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			return sampleU;
 		}
 		
-		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowInformation t, double[] periodRange) {
+		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t, double[] periodRange) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
 			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
@@ -918,7 +918,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 	/**
 	 * タイムウインドウの情報
 	 */
-	private Set<TimewindowInformation> timewindowInformationSet;
+	private Set<TimewindowData> timewindowInformationSet;
 
 	//
 	private WaveformDataWriter partialDataWriter;
@@ -1029,7 +1029,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 		// タイムウインドウの情報を読み取る。
 		System.err.print("Reading timewindow information ");
-		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
+		timewindowInformationSet = TimewindowDataFile.read(timewindowPath);
 		System.err.println("done");
 
 		if (sourceTimeFunction == -1)
@@ -1039,11 +1039,11 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		System.err.println("Designing filter.");
 		setBandPassFilter();
 //		writeLog(filter.toString());
-		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getObserver)
+		stationSet = timewindowInformationSet.parallelStream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());
 		idSet = Utilities.globalCMTIDSet(workPath);
 		setPerturbationLocation();
-		phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+		phases = timewindowInformationSet.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 		// information about output partial types
 		writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.butterworth;
 
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import org.apache.commons.math3.complex.Complex;
@@ -35,7 +35,7 @@ public class BandPassFilter extends ButterworthFilter {
             throw new IllegalArgumentException("Usage:[NP] [lower limit (Hz)] [higher limit (Hz)] [SAC file]");
         int n = Integer.parseInt(args[0]);
         Path path = Paths.get(args[3]);
-        SACFileData sac = new SACFileName(path).read();
+        SACFileAccess sac = new SACFileName(path).read();
         if (sac.isFiltered()) throw new RuntimeException(args[3] + " is already filtered.");
         double delta = sac.getValue(SACHeaderEnum.DELTA);
 

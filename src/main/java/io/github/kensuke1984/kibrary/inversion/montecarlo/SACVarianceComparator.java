@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 import java.io.File;
@@ -18,34 +18,34 @@ import java.util.Comparator;
  * @author Kensuke Konishi
  * @version 0.0.1
  */
-class SACVarianceComparator implements DataComparator<SACFileData[]> {
+class SACVarianceComparator implements DataComparator<SACFileAccess[]> {
 
     private final double OBS2;
-    private final SACFileData[] OBSERVED_DATASET;
+    private final SACFileAccess[] OBSERVED_DATASET;
     private final double SIGMA = 0.5;
 
 
     SACVarianceComparator(Path obsDir) throws IOException {
         OBSERVED_DATASET = readObserved(obsDir);
-        OBS2 = Arrays.stream(OBSERVED_DATASET).map(SACFileData::getData).flatMapToDouble(Arrays::stream)
+        OBS2 = Arrays.stream(OBSERVED_DATASET).map(SACFileAccess::getData).flatMapToDouble(Arrays::stream)
                 .reduce(0, (i, j) -> i + j * j);
     }
 
-    private SACFileData[] readObserved(Path obsDir) throws IOException {
+    private SACFileAccess[] readObserved(Path obsDir) throws IOException {
         SACFileName[] names = Utilities.sacFileNameSet(obsDir).stream().filter(SACFileName::isOBS)
                 .sorted(Comparator.comparing(File::getName)).toArray(SACFileName[]::new);
-        SACFileData[] dataset = new SACFileData[names.length];
+        SACFileAccess[] dataset = new SACFileAccess[names.length];
         for (int i = 0; i < names.length; i++)
             dataset[i] = names[i].read();
         return dataset;
     }
 
-    private boolean same(SACFileData data1, SACFileData data2) {
+    private boolean same(SACFileAccess data1, SACFileAccess data2) {
         return data1.getGlobalCMTID().equals(data2.getGlobalCMTID()) && data1.getObserver().equals(data2.getObserver()) &&
                 data1.getComponent() == data2.getComponent();
     }
 
-    private double computeVariance(SACFileData[] synSAC) {
+    private double computeVariance(SACFileAccess[] synSAC) {
         double numerator = 0;
         for (int j = 0; j < synSAC.length; j++) {
 
@@ -61,7 +61,7 @@ class SACVarianceComparator implements DataComparator<SACFileData[]> {
      * @param dataset to compute likelihood with
      * @return if there are problems for computing likelihood of the dataset
      */
-    private boolean hasProblems(SACFileData[] dataset) {
+    private boolean hasProblems(SACFileAccess[] dataset) {
         if (dataset.length != OBSERVED_DATASET.length) return true;
         for (int i = 0; i < dataset.length; i++)
             if (!same(OBSERVED_DATASET[i], dataset[i])) return true;
@@ -69,7 +69,7 @@ class SACVarianceComparator implements DataComparator<SACFileData[]> {
     }
 
     @Override
-    public double likelihood(SACFileData[] data) {
+    public double likelihood(SACFileAccess[] data) {
         if (!hasProblems(data)) throw new RuntimeException("Invalid dataset");
         return Math.exp(-2 * computeVariance(data) / SIGMA);
     }

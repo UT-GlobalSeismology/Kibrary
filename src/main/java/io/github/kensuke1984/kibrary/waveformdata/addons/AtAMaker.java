@@ -16,8 +16,8 @@ import io.github.kensuke1984.kibrary.inversion.addons.ResampleGrid;
 import io.github.kensuke1984.kibrary.inversion.addons.ThreeDParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.Weighting;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -90,7 +90,7 @@ public class AtAMaker implements Operation {
 	
 	private final StaticCorrectionType[] correctionTypes;
 	
-	private Set<TimewindowInformation> timewindowInformation;
+	private Set<TimewindowData> timewindowInformation;
 	private final PartialType[] partialTypes;
 	private final SACComponent[] components;
 	
@@ -708,7 +708,7 @@ public class AtAMaker implements Operation {
 	
 	private Path logfile;
 	
-	private TimewindowInformation[] timewindowOrder;
+	private TimewindowData[] timewindowOrder;
 	
 	private final int bufferMargin = 10;
 	
@@ -765,7 +765,7 @@ public class AtAMaker implements Operation {
 		
 		int iterationCount = 0;
 		
-		timewindowOrder = new TimewindowInformation[nwindowBuffer];
+		timewindowOrder = new TimewindowData[nwindowBuffer];
 		
 		usedPhases = timewindowInformation.stream().map(tw -> new Phases(tw.getPhases()))
 			.collect(Collectors.toSet()).toArray(new Phases[0]);
@@ -908,7 +908,7 @@ public class AtAMaker implements Operation {
 		}
 		
 		for (GlobalCMTID event : usedEventList) {
-			Set<TimewindowInformation> eventTimewindows = timewindowInformation.stream()
+			Set<TimewindowData> eventTimewindows = timewindowInformation.stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(event))
 					.collect(Collectors.toSet());
 			
@@ -935,7 +935,7 @@ public class AtAMaker implements Operation {
 			for (Observer station : eventStations) {
 				System.out.println("Working for " + event + " " + station);
 				
-				Set<TimewindowInformation> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getObserver().equals(station))
+				Set<TimewindowData> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getObserver().equals(station))
 						.collect(Collectors.toSet());
 				
 				List<List<Integer>> IndicesRecordBasicID = new ArrayList<>();
@@ -948,9 +948,9 @@ public class AtAMaker implements Operation {
 					}
 				}
 				
-				List<TimewindowInformation> orderedRecordTimewindows = new ArrayList<>();
+				List<TimewindowData> orderedRecordTimewindows = new ArrayList<>();
 				for (SACComponent component : components) {
-					for (TimewindowInformation timewindow : recordTimewindows) {
+					for (TimewindowData timewindow : recordTimewindows) {
 						if (timewindow.getComponent().equals(component))
 							orderedRecordTimewindows.add(timewindow);
 					}
@@ -1228,7 +1228,7 @@ public class AtAMaker implements Operation {
 		}
 	}
 	
-	private void fillA(TimewindowInformation[] timewindows) {
+	private void fillA(TimewindowData[] timewindows) {
 		try {
 			for (int iunknown = 0; iunknown < nNewUnknown; iunknown++) {
 				int[] iOriginalUnknowns; 
@@ -1246,7 +1246,7 @@ public class AtAMaker implements Operation {
 								if (partials[0][iweight][ifreq][iwin].length == 0)
 									continue;
 								
-								TimewindowInformation window = timewindows[iwin];
+								TimewindowData window = timewindows[iwin];
 								Phases phases = new Phases(window.getPhases());
 								Phase[] phaseArray = phases.toSet().toArray(new Phase[0]);
 								
@@ -1288,7 +1288,7 @@ public class AtAMaker implements Operation {
 	
 	
 	@Deprecated
-	private void fillA1D(TimewindowInformation[] timewindows) {
+	private void fillA1D(TimewindowData[] timewindows) {
 		try {
 			for (int iunknown = 0; iunknown < nNewUnknown; iunknown++) {
 				for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
@@ -1297,7 +1297,7 @@ public class AtAMaker implements Operation {
 								if (partials[0][iweight][ifreq][iwin].length == 0)
 									continue;
 								
-								TimewindowInformation window = timewindows[iwin];
+								TimewindowData window = timewindows[iwin];
 								Phases phases = new Phases(window.getPhases());
 								Phase[] phaseArray = phases.toSet().toArray(new Phase[0]);
 								
@@ -1417,7 +1417,7 @@ public class AtAMaker implements Operation {
 	 * @throws IOException
 	 */
 	private void setTimewindows() throws IOException {
-		timewindowInformation = TimewindowInformationFile.read(timewindowPath);
+		timewindowInformation = TimewindowDataFile.read(timewindowPath);
 	}
 	
 	/**
@@ -1428,7 +1428,7 @@ public class AtAMaker implements Operation {
 	 * @param property
 	 * @return
 	 */
-	private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation, int ifreq) {
+	private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation, int ifreq) {
 		int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext[ifreq];
 		// cutstartが振り切れた場合0 からにする
 		if (cutstart < 0)
@@ -1441,7 +1441,7 @@ public class AtAMaker implements Operation {
 		return cut;
 	}
 
-	private double[] sampleOutput(Complex[] u, TimewindowInformation timewindowInformation, int ifreq) {
+	private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation, int ifreq) {
 		// 書きだすための波形
 		int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
 				* finalSamplingHz);
@@ -1643,11 +1643,11 @@ public class AtAMaker implements Operation {
 		Observer station;
 		GlobalCMTID event;
 		List<List<Integer>> IndicesRecordBasicID;
-		private final List<TimewindowInformation> orderedRecordTimewindows;
+		private final List<TimewindowData> orderedRecordTimewindows;
 		private int windowCounter;
 		
 		public FPWorker(SPCFileName fpname, Observer station, GlobalCMTID event,
-				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
+				List<List<Integer>> IndicesRecordBasicID, List<TimewindowData> orderedRecordTimewindows,  int windowCounter) {
 			if (mode.equals("SH")) {
 				this.fpname = fpname;
 				this.fpname_PSV = null;
@@ -1664,7 +1664,7 @@ public class AtAMaker implements Operation {
 		}
 		
 		public FPWorker(SPCFileName fpname, SPCFileName fpname_PSV, Observer station, GlobalCMTID event,
-				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
+				List<List<Integer>> IndicesRecordBasicID, List<TimewindowData> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = fpname;
 			this.fpname_PSV = fpname_PSV;
 			this.station = station;
@@ -1675,7 +1675,7 @@ public class AtAMaker implements Operation {
 		}
 		
 		public FPWorker(HorizontalPosition voxelPosition, Observer station, GlobalCMTID event,
-				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
+				List<List<Integer>> IndicesRecordBasicID, List<TimewindowData> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = null;
 			this.fpname_PSV = null;
 			this.voxelPosition = voxelPosition;
@@ -1927,7 +1927,7 @@ public class AtAMaker implements Operation {
 					for (int j = 0; j < spcComponents.length; j++) {
 						double[] bpserie = spcComponents[j].getTimeseries();
 						Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
-						for (TimewindowInformation info : orderedRecordTimewindows) {
+						for (TimewindowData info : orderedRecordTimewindows) {
 							for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
 								Complex[] u = cutPartial(bpserie, info, ifreq);
 								u = filter[ifreq].applyFilter(u);
@@ -1990,7 +1990,7 @@ public class AtAMaker implements Operation {
 					for (int j = 0; j < spcComponents.length; j++) {
 						double[] fpserie = spcComponents[j].getTimeseries();
 						Complex[] fpspectrum = spcComponents[j].getValueInFrequencyDomain();
-						for (TimewindowInformation info : orderedRecordTimewindows) {
+						for (TimewindowData info : orderedRecordTimewindows) {
 							for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
 								Complex[] u = cutPartial(fpserie, info, ifreq);
 								u = filter[ifreq].applyFilter(u);
@@ -2106,7 +2106,7 @@ public class AtAMaker implements Operation {
 							double minFreq = frequencyRanges[ifreq].getMinFreq();
 							double maxFreq = frequencyRanges[ifreq].getMaxFreq();
 							
-								for (TimewindowInformation info : orderedRecordTimewindows) {
+								for (TimewindowData info : orderedRecordTimewindows) {
 									double[] partial = partialmap.get(info.getComponent());
 									
 									Phases phases = new Phases(info.getPhases());

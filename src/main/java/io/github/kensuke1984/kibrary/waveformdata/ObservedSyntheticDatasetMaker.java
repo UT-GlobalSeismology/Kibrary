@@ -10,14 +10,14 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.inversion.addons.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -125,10 +125,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * [bool] time-shift data to correct for 3-D mantle
 	 */
 	private boolean correctMantle;
-	private Set<StaticCorrection> staticCorrectionSet;
-	private Set<StaticCorrection> mantleCorrectionSet;
-	private Set<TimewindowInformation> timewindowInformationSet;
-	private Set<TimewindowInformation> timewindowRefInformationSet;
+	private Set<StaticCorrectionData> staticCorrectionSet;
+	private Set<StaticCorrectionData> mantleCorrectionSet;
+	private Set<TimewindowData> timewindowInformationSet;
+	private Set<TimewindowData> timewindowRefInformationSet;
 	private Set<EventFolder> eventDirs;
 	private Set<Observer> stationSet;
 	private Set<GlobalCMTID> idSet;
@@ -173,20 +173,20 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * ID for static correction and time window information Default is station
 	 * name, global CMT id, component.
 	 */
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 	
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair2 = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 			
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair_isotropic = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 				&& (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent()) 
 				&& t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_record = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair_record = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 	
@@ -326,7 +326,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			Set<SACFileName> sacfilenames = Utilities.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
 			for (SACFileName name : sacfilenames) {
 				if (!name.isOBS()) continue;
-				SACHeaderData header = name.readHeader();
+				SACHeaderAccess header = name.readHeader();
 				double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
 						header.getValue(SACHeaderEnum.USER1) };
 				boolean exists = false;
@@ -346,7 +346,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		if (20 % finalSamplingHz != 0)
 			throw new RuntimeException("Must choose a finalSamplingHz that divides 20");
 		
-		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath)
+		timewindowInformationSet = TimewindowDataFile.read(timewindowPath)
 				.stream().filter(tw -> {
 					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance)
@@ -355,7 +355,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				}).collect(Collectors.toSet());
 		
 		if (timeCorrection || amplitudeCorrection) {
-			Set<StaticCorrection> tmpset = StaticCorrectionFile.read(staticCorrectionPath);
+			Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
 			staticCorrectionSet = tmpset.stream()
 					.filter(c -> timewindowInformationSet.parallelStream()
 							.map(t -> isPair_record.test(c, t)).distinct().collect(Collectors.toSet()).contains(true))
@@ -365,9 +365,9 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			amplitudeCorrEventMap = new HashMap<>();
 			for (GlobalCMTID event : staticCorrectionSet.stream().map(s -> s.getGlobalCMTID()).collect(Collectors.toSet())) {
 				double avgCorr = 0;
-				Set<StaticCorrection> eventCorrs = staticCorrectionSet.stream()
+				Set<StaticCorrectionData> eventCorrs = staticCorrectionSet.stream()
 						.filter(s -> s.getGlobalCMTID().equals(event)).collect(Collectors.toSet());
-				for (StaticCorrection corr : eventCorrs)
+				for (StaticCorrectionData corr : eventCorrs)
 					avgCorr += corr.getAmplitudeRatio();
 				avgCorr /= eventCorrs.size();
 				amplitudeCorrEventMap.put(event, avgCorr);
@@ -376,14 +376,14 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		
 		if (correctMantle) {
 			System.out.println("Using mantle corrections");
-			mantleCorrectionSet = StaticCorrectionFile.read(mantleCorrectionPath);
+			mantleCorrectionSet = StaticCorrectionDataFile.read(mantleCorrectionPath);
 		}
 
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
 		
 		if (timewindowRefPath != null)
-			timewindowRefInformationSet = TimewindowInformationFile.read(timewindowRefPath)
+			timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)
 				.stream().filter(tw -> {
 					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance)
@@ -391,11 +391,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					return true;
 				}).collect(Collectors.toSet());
 		
-		stationSet = timewindowInformationSet.stream().map(TimewindowInformation::getObserver)
+		stationSet = timewindowInformationSet.stream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());
-		idSet = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
+		idSet = timewindowInformationSet.stream().map(TimewindowData::getGlobalCMTID)
 				.collect(Collectors.toSet());
-		phases = timewindowInformationSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Arrays.stream(p))
+		phases = timewindowInformationSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
 				.distinct().toArray(Phase[]::new);
 		
 		readPeriodRanges();
@@ -459,8 +459,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		}
 	}
 	
-	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-		List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
+	private StaticCorrectionData getStaticCorrection(TimewindowData window) {
+		List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
 		if (corrs.size() > 1)
 			throw new RuntimeException("Found more than 1 static correction for window " + window);
 		if (corrs.size() == 0)
@@ -472,8 +472,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private StaticCorrection getMantleCorrection(TimewindowInformation window) {
-		List<StaticCorrection> corrs = mantleCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
+	private StaticCorrectionData getMantleCorrection(TimewindowData window) {
+		List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
 		if (corrs.size() > 1)
 			throw new RuntimeException("Found more than 1 mantle correction for window " + window);
 		if (corrs.size() == 0)
@@ -481,7 +481,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		return corrs.get(0);
 	}
 
-	private double[] cutDataSac(SACFileData sac, double startTime, int npts) {
+	private double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -495,7 +495,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private double[] cutEnvelopeSac(SACFileData sac, double startTime, int npts) {
+	private double[] cutEnvelopeSac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -510,7 +510,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private double[] cutHySac(SACFileData sac, double startTime, int npts) {
+	private double[] cutHySac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -525,7 +525,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private Trace cutSpcAmpSac(SACFileData sac, double startTime, int npts) {
+	private Trace cutSpcAmpSac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -547,7 +547,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private Trace cutSpcAmpSacAddNoise(SACFileData sac, double startTime, int npts) {
+	private Trace cutSpcAmpSacAddNoise(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -599,7 +599,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private Complex[] cutSpcFySac(SACFileData sac, double startTime, int npts) {
+	private Complex[] cutSpcFySac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -621,7 +621,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @author anselme
 	 * @return
 	 */
-	private double[] cutDataSacAddNoise(SACFileData sac, double startTime, int npts) {
+	private double[] cutDataSacAddNoise(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
@@ -704,7 +704,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 				if (!synFileName.exists()) continue;
 
-				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
+				Set<TimewindowData> windows = timewindowInformationSet.stream()
 						.filter(info -> info.getObserver().getStation().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
@@ -712,7 +712,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				// タイムウインドウの情報が入っていなければ次へ
 				if (windows.isEmpty()) continue;
 				
-				SACFileData obsSac;
+				SACFileAccess obsSac;
 				try {
 					obsSac = obsFileName.read();
 				} catch (IOException e1) {
@@ -721,7 +721,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					continue;
 				}
 
-				SACFileData synSac;
+				SACFileAccess synSac;
 				try {
 					synSac = synFileName.read();
 				} catch (IOException e1) {
@@ -754,7 +754,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 				Observer station = obsSac.getObserver();
 
-				for (TimewindowInformation window : windows) {
+				for (TimewindowData window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
 					if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) continue;
 					double startTime = window.getStartTime();
@@ -762,7 +762,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double ratio = 1;
 					if (timeCorrection || amplitudeCorrection)
 						try {
-							StaticCorrection sc = getStaticCorrection(window);
+							StaticCorrectionData sc = getStaticCorrection(window);
 							shift = timeCorrection ? sc.getTimeshift() : 0;
 //							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
 							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : amplitudeCorrEventMap.get(window.getGlobalCMTID());
@@ -773,17 +773,17 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					
 					if (correctMantle)
 						try {
-							StaticCorrection sc = getMantleCorrection(window);
+							StaticCorrectionData sc = getMantleCorrection(window);
 							shift += sc.getTimeshift();
 						} catch (NoSuchElementException e) {
 							System.err.println("There is no mantle correction information for\\n " + window);
 							continue;
 						}
 					
-					TimewindowInformation windowRef = null;
+					TimewindowData windowRef = null;
 					int nptsRef = 0;
 					if (timewindowRefInformationSet != null) {
-						List<TimewindowInformation> tmpwindows = timewindowRefInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
+						List<TimewindowData> tmpwindows = timewindowRefInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
 								&& tw.getObserver().equals(window.getObserver())
 								&& tw.getComponent().equals(window.getComponent())).collect(Collectors.toList());
 						if (tmpwindows.size() != 1) {

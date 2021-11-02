@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -25,13 +25,13 @@ public class StationAverageRatio {
 		Path staticCorrectionPath = Paths.get(args[0]);
 		Path timewindowPath = Paths.get(args[1]);
 		
-		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+		Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(staticCorrectionPath);
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
 		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
 		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
 		
-		for (TimewindowInformation tw : timewindows) {
+		for (TimewindowData tw : timewindows) {
 //			if (!tw.getGlobalCMTID().equals(new GlobalCMTID("200608250044A")))
 //				continue;
 			
@@ -47,7 +47,7 @@ public class StationAverageRatio {
 			if (contin)
 				continue;
 			
-			StaticCorrection correction = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
+			StaticCorrectionData correction = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
 					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent())
 					&& corr.getSynStartTime() == tw.getStartTime())

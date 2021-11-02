@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * @author Kensuke Konishi
  * @version 0.0.1.0.1
  */
-public interface GlobalCMTData {
+public interface GlobalCMTAccess {
 
     double getMb();
 

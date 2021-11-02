@@ -33,11 +33,11 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -46,20 +46,21 @@ import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * 理論波形と観測波形の比較から使えるものを選択する。<br>
- * workDir以下にあるイベントディレクトリの中から選ぶ<br>
- * 振幅比、correlation、variance<br>
+ * Operation that selects satisfactory observed and synthetic data
+ * based on amplitude ratio, correlation, and/or variance.
+ *
  * <p>
- * {@link TimewindowInformationFile} necessary.
+ * Both observed and synthetic data must be in event folders under workDir.
+ * {@link TimewindowDataFile} is necessary.
  *
  * <p>
  * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
- * See {@link TimewindowInformationFile}.
+ * See {@link TimewindowDataFile}.
  *
  * @author Kensuke Konishi
  * @version 0.1.2.1
@@ -126,23 +127,23 @@ public class DataSelection implements Operation {
     private double minSNratio;
     //private double minDistance;
     private boolean SnScSnPair;
-    private Set<TimewindowInformation> sourceTimewindowInformationSet;
-    private Set<TimewindowInformation> goodTimewindowInformationSet;
+    private Set<TimewindowData> sourceTimewindowInformationSet;
+    private Set<TimewindowData> goodTimewindowInformationSet;
     private List<DataSelectionInformation> dataSelectionInfo;
-    private Set<StaticCorrection> staticCorrectionSet;
+    private Set<StaticCorrectionData> staticCorrectionSet;
 
     /**
      * ID for static correction and time window information Default is station
      * name, global CMT id, component, start time.
      */
-    private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
+    private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
-    private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
+    private BiPredicate<StaticCorrectionData, TimewindowData> isPair_isotropic = (s,
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent())
                     && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
-    private BiPredicate<StaticCorrection, TimewindowInformation> isPairRecord = (s,
+    private BiPredicate<StaticCorrectionData, TimewindowData> isPairRecord = (s,
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent();
 
@@ -255,9 +256,9 @@ public class DataSelection implements Operation {
         // sacSamplingHz = 20;
 
         eventDirs = Utilities.eventFolderSet(obsPath);
-        sourceTimewindowInformationSet = TimewindowInformationFile.read(timewindowInformationFilePath);
+        sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
         staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
-                : StaticCorrectionFile.read(staticCorrectionInformationFilePath));
+                : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
         goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
         dataSelectionInfo = new ArrayList<>();
 
@@ -294,27 +295,28 @@ public class DataSelection implements Operation {
         }
         System.err.println();
 
-        System.err.println("Outputting in " + infoOutputpath);
+        System.err.println("Outputting values of criteria in " + infoOutputpath);
+        System.err.println("They are also written in stationList" + dateStr + ".txt inside each event folder.");
         DataSelectionInformationFile.write(dataSelectionInfo, infoOutputpath);
 
-        System.err.println("Outputting in " + outputGoodWindowPath);
-        TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
+        System.err.println("Outputting selected timewindows in " + outputGoodWindowPath);
+        TimewindowDataFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
     }
 
     /**
-     * @param sac        {@link SACFileData} to cut
+     * @param sac        {@link SACFileAccess} to cut
      * @param timeWindow time window
      * @return new Trace for the timewindow [tStart:tEnd]
      */
-    private static RealVector cutSAC(SACFileData sac, Timewindow timeWindow) {
+    private static RealVector cutSAC(SACFileAccess sac, Timewindow timeWindow) {
         Trace trace = sac.createTrace();
         double tStart = timeWindow.getStartTime();
         double tEnd = timeWindow.getEndTime();
         return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
     }
 
-    private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-        List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPairRecord.test(s, window)).collect(Collectors.toList());
+    private StaticCorrectionData getStaticCorrection(TimewindowData window) {
+        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> isPairRecord.test(s, window)).collect(Collectors.toList());
         if (corrs.size() != 1) throw new RuntimeException("Found no, or more than 1 static correction for window " + window);
         return corrs.get(0);
     }
@@ -325,17 +327,17 @@ public class DataSelection implements Operation {
      * creates new timewindow and returns it, otherwise, just returns
      * the input one.
      */
-    private TimewindowInformation shift(TimewindowInformation timewindow) {
+    private TimewindowData shift(TimewindowData timewindow) {
         if (staticCorrectionSet.isEmpty())
             return timewindow;
-        StaticCorrection foundShift = getStaticCorrection(timewindow);
+        StaticCorrectionData foundShift = getStaticCorrection(timewindow);
         double value = foundShift.getTimeshift();
-        return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
+        return new TimewindowData(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
                 foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
     private boolean check(PrintWriter writer, Observer observer, GlobalCMTID id, SACComponent component,
-            TimewindowInformation window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
+            TimewindowData window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
         if (obsU.getDimension() < synU.getDimension())
             synU = synU.getSubVector(0, obsU.getDimension() - 1);
         else if (synU.getDimension() < obsU.getDimension())
@@ -388,7 +390,7 @@ public class DataSelection implements Operation {
      * @return
      * @author anselme
      */
-    private double noisePerSecond(SACFileData sac, SACComponent component) {
+    private double noisePerSecond(SACFileAccess sac, SACComponent component) {
         double len = 50;
         double distance = sac.getValue(SACHeaderEnum.GCARC);
         double depth = sac.getValue(SACHeaderEnum.EVDP);
@@ -452,13 +454,13 @@ public class DataSelection implements Operation {
                 return;
         }
 
-        private Set<TimewindowInformation> imposeSn_ScSnPair(Set<TimewindowInformation> info) {
-            Set<TimewindowInformation> infoNew = new HashSet<>();
+        private Set<TimewindowData> imposeSn_ScSnPair(Set<TimewindowData> info) {
+            Set<TimewindowData> infoNew = new HashSet<>();
             if (info.stream().map(tw -> tw.getObserver()).distinct().count() > 1)
                 throw new RuntimeException("Info should contain time windows for a unique record");
             if (info.stream().map(tw -> tw.getGlobalCMTID()).distinct().count() > 1)
                 throw new RuntimeException("Info should contain time windows for a unique record");
-            Map<Phases, TimewindowInformation> map = new HashMap<>();
+            Map<Phases, TimewindowData> map = new HashMap<>();
             info.stream().forEach(tw -> map.put(new Phases(tw.getPhases()), tw));
             for (int i = 1; i <= 4; i++) {
                 Phases phase = new Phases(new Phase[] {Phase.create(new String(new char[i]).replace("\0", "S"))});
@@ -512,7 +514,7 @@ public class DataSelection implements Operation {
                         continue;
 
                     // get observed
-                    SACFileData obsSac = obsName.read();
+                    SACFileAccess obsSac = obsName.read();
                     Observer observer = obsSac.getObserver();
 
                     // get synthetic
@@ -524,7 +526,7 @@ public class DataSelection implements Operation {
                         System.err.println("Ignoring non-existing synthetics " + synName);
                         continue;
                     }
-                    SACFileData synSac = synName.read();
+                    SACFileAccess synSac = synName.read();
 
                     if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) {
                         System.err.println("Ignoring differing DELTA " + obsName);
@@ -538,7 +540,7 @@ public class DataSelection implements Operation {
                     */
 
                     // Pickup timewindows of obsName
-                    Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
+                    Set<TimewindowData> windowInformations = sourceTimewindowInformationSet
                             .stream().filter(info -> info.getObserver().equals(observer)
                                     && info.getGlobalCMTID().equals(id) && info.getComponent() == component)
                             .collect(Collectors.toSet());
@@ -552,13 +554,13 @@ public class DataSelection implements Operation {
                     // Traces
                     Trace synTrace = synSac.createTrace();
 
-                    Set<TimewindowInformation> tmpGoodWindows = new HashSet<>();
-                    for (TimewindowInformation window : windowInformations) {
+                    Set<TimewindowData> tmpGoodWindows = new HashSet<>();
+                    for (TimewindowData window : windowInformations) {
                         if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10)
                             continue;
                         double shift = 0.;
                         if (!staticCorrectionSet.isEmpty()) {
-                            StaticCorrection foundShift = getStaticCorrection(window);
+                            StaticCorrectionData foundShift = getStaticCorrection(window);
                             shift = foundShift.getTimeshift();
                             //remove static shift of 10 s (maximum range of the static correction)
                         }
@@ -579,13 +581,13 @@ public class DataSelection implements Operation {
                                 if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
                                     startTime = surfacewaveWindow.getEndTime();
 
-                                window = new TimewindowInformation(startTime
+                                window = new TimewindowData(startTime
                                         , endTime, window.getObserver(), window.getGlobalCMTID()
                                         , window.getComponent(), window.getPhases());
                             }
                         }
 
-                        TimewindowInformation shiftedWindow = new TimewindowInformation(window.getStartTime() - shift
+                        TimewindowData shiftedWindow = new TimewindowData(window.getStartTime() - shift
                                 , window.getEndTime() - shift, window.getObserver()
                                 , window.getGlobalCMTID(), window.getComponent(), window.getPhases());
 
@@ -605,7 +607,7 @@ public class DataSelection implements Operation {
                     }
                     if (SnScSnPair)
                         tmpGoodWindows = imposeSn_ScSnPair(tmpGoodWindows);
-                    for (TimewindowInformation window : tmpGoodWindows)
+                    for (TimewindowData window : tmpGoodWindows)
                         goodTimewindowInformationSet.add(window);
 
                 }

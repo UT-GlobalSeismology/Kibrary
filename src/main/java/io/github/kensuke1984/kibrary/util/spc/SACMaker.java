@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -553,7 +553,7 @@ public class SACMaker implements Runnable {
         this.outPath = outPath;
     }
 
-    private class SAC implements SACFileData, Cloneable {
+    private class SAC implements SACFileAccess, Cloneable {
         private double[] waveData;
 
         @Override

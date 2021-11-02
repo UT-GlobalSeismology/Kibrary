@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.stacking;
 
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -36,7 +36,7 @@ public class CorrelationStack implements Stack {
     /**
      * ここに書かれたタイムウインドウで比較する
      */
-    private Set<TimewindowInformation> timewindowInformationSet;
+    private Set<TimewindowData> timewindowInformationSet;
     /**
      * 既に計算したシフト。TODO 並列化に耐えられるようにしたい
      */
@@ -54,7 +54,7 @@ public class CorrelationStack implements Stack {
      * @param timeWindowInformationSet Set of time window information
      */
     public CorrelationStack(String stationName, GlobalCMTID id, SACComponent component, WaveformType type, Trace trace,
-                            Timewindow window, Set<TimewindowInformation> timeWindowInformationSet) {
+                            Timewindow window, Set<TimewindowData> timeWindowInformationSet) {
         timewindowInformationSet = timeWindowInformationSet;
         double start = window.getStartTime();
         double end = window.getEndTime();

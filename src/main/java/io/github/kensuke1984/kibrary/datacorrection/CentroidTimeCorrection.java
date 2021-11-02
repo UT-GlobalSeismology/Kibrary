@@ -20,11 +20,11 @@ public class CentroidTimeCorrection {
 	
 	private Map<GlobalCMTID, Double> centroidShiftMap;
 	private Map<GlobalCMTID, Double> centroidMedianShiftMap;
-	Set<StaticCorrection> corrections;
+	Set<StaticCorrectionData> corrections;
 	
 	public static void main(String[] args) throws IOException {
 		Path staticCorrectionPath = Paths.get(args[0]);
-		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
+		Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(staticCorrectionPath);
 		
 //		Path staticCorrectionPath2 = Paths.get(args[1]);
 //		Set<StaticCorrection> corrections2 = StaticCorrectionFile.read(staticCorrectionPath2);
@@ -42,18 +42,18 @@ public class CentroidTimeCorrection {
 		pw.close();
 		
 //		Set<StaticCorrection> newCorrections = corrector.addCentroidShift(corrections2);
-		Set<StaticCorrection> centroidCorrections = new HashSet<>();
-		for (StaticCorrection corr : corrections) {
+		Set<StaticCorrectionData> centroidCorrections = new HashSet<>();
+		for (StaticCorrectionData corr : corrections) {
 			double shift = centroidShiftMap.get(corr.getGlobalCMTID());
-			StaticCorrection tmpcorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID()
+			StaticCorrectionData tmpcorr = new StaticCorrectionData(corr.getObserver(), corr.getGlobalCMTID()
 					, corr.getComponent(), corr.getSynStartTime(), shift, corr.getAmplitudeRatio(), corr.getPhases());
 			centroidCorrections.add(corr);
 		}
 		Path outpath2 = Paths.get("centroidTimeCorrection.dat");
-		StaticCorrectionFile.write(centroidCorrections, outpath2);
+		StaticCorrectionDataFile.write(centroidCorrections, outpath2);
 	}
 	
-	public CentroidTimeCorrection(Set<StaticCorrection> corrections) {
+	public CentroidTimeCorrection(Set<StaticCorrectionData> corrections) {
 		centroidShiftMap = new HashMap<>();
 		centroidMedianShiftMap = new HashMap<>();
 		this.corrections = corrections;
@@ -71,7 +71,7 @@ public class CentroidTimeCorrection {
 			centroidCounter.put(event, 0);
 			
 			List<Double> eventShifts = new ArrayList<>();
-			for (StaticCorrection corr : corrections) {
+			for (StaticCorrectionData corr : corrections) {
 				if (!corr.getGlobalCMTID().equals(event))
 					continue;
 				if (Math.abs(corr.getTimeshift()) < 10)
@@ -89,7 +89,7 @@ public class CentroidTimeCorrection {
 			centroidMedianShiftMap.put(event, medianShift);
 		}
 		
-		for (StaticCorrection corr : corrections) {
+		for (StaticCorrectionData corr : corrections) {
 			double tmpshift = centroidShiftMap.get(corr.getGlobalCMTID());
 			tmpshift += corr.getTimeshift();
 			centroidShiftMap.put(corr.getGlobalCMTID(), tmpshift);
@@ -105,14 +105,14 @@ public class CentroidTimeCorrection {
 		}
 	}
 	
-	public Set<StaticCorrection> addCentroidShift(Set<StaticCorrection> corrections) {
-		Set<StaticCorrection> newCorrections = new HashSet<>();
+	public Set<StaticCorrectionData> addCentroidShift(Set<StaticCorrectionData> corrections) {
+		Set<StaticCorrectionData> newCorrections = new HashSet<>();
 		
-		for (StaticCorrection corr : corrections) {
+		for (StaticCorrectionData corr : corrections) {
 			GlobalCMTID id = corr.getGlobalCMTID();
 			double centroidShift = centroidShiftMap.get(id);
 			double shift = corr.getTimeshift() + centroidShift;
-			StaticCorrection newcorr = new StaticCorrection(corr.getObserver(), corr.getGlobalCMTID()
+			StaticCorrectionData newcorr = new StaticCorrectionData(corr.getObserver(), corr.getGlobalCMTID()
 					, corr.getComponent(), corr.getSynStartTime(), shift, corr.getAmplitudeRatio(), corr.getPhases());
 			newCorrections.add(newcorr);
 		}

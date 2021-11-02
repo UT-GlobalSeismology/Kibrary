@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -24,7 +24,7 @@ public class InfoFromTimewindow {
 		Path stationFile = Paths.get("station" + tmpString + ".inf");
 		Path eventFile = Paths.get("event" + tmpString + ".inf");
 		
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowpath);
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowpath);
 		
 		Files.deleteIfExists(stationFile);
 		Files.createFile(stationFile);
@@ -34,7 +34,7 @@ public class InfoFromTimewindow {
 		
 		Set<Observer> usedStation = new HashSet<>();
 		Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
-		for (TimewindowInformation timewindow : timewindows) {
+		for (TimewindowData timewindow : timewindows) {
 			GlobalCMTID event = timewindow.getGlobalCMTID();
 			Integer itmp = new Integer(1);
 			if (nTransverseMap.containsKey(event)) {

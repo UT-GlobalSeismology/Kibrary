@@ -21,19 +21,20 @@ import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Make DSM information files to be used in tish and tipsv.
- * They will be made either for existing observed dataset in event folders, or for a virtual set of observers.
+ * Operation that makes DSM input files to be used in tish and tipsv,
+ * and prepares the environment to run these programs.
+ * Input files can be made either for existing observed dataset in event folders, or for a virtual set of observers.
  * <p>
  * Input event folders must be inside one certain input directory, which may or may not be the workpath.
  * Only observers that have files of the specified components will be considered.
@@ -42,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.
  */
-public class SyntheticDSMInformationFileMaker implements Operation {
+public class SyntheticDSMSetup implements Operation {
 
     private final Properties property;
     /**
@@ -96,7 +97,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths
-                .get(SyntheticDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+                .get(SyntheticDSMSetup.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan SyntheticDSMInformationFileMaker");
             pw.println("##SacComponents that observers must have to be used (Z R T)");
@@ -126,7 +127,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    private SyntheticDSMInformationFileMaker(Properties property) throws IOException {
+    private SyntheticDSMSetup(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
     }
@@ -177,11 +178,11 @@ public class SyntheticDSMInformationFileMaker implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws Exception {
-        SyntheticDSMInformationFileMaker sdif = new SyntheticDSMInformationFileMaker(Property.parse(args));
+        SyntheticDSMSetup sdif = new SyntheticDSMSetup(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " is going.");
+        System.err.println(SyntheticDSMSetup.class.getName() + " is going.");
         sdif.run();
-        System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " finished in " +
+        System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));
     }
 
@@ -198,7 +199,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         //use only events in timewindow file
         if (usewindow) {
             Set<GlobalCMTID> idInWindow =
-                    TimewindowInformationFile.read(timewindowPath).stream()
+                    TimewindowDataFile.read(timewindowPath).stream()
                     .map(tw -> tw.getGlobalCMTID()).collect(Collectors.toSet());
         }
 
@@ -311,13 +312,13 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 
         //specfem test dataset
         if (specfemDataset) {
-            Set<Observer> specfemStationSet = IOUtils.readLines(SyntheticDSMInformationFileMaker.class.getClassLoader()
+            Set<Observer> specfemStationSet = IOUtils.readLines(SyntheticDSMSetup.class.getClassLoader()
                     .getResourceAsStream("specfem_stations.inf"), Charset.defaultCharset())
                 .stream().map(s -> Observer.createObserver(s)).collect(Collectors.toSet());
             try {
-                GlobalCMTData id = new GlobalCMTID("060994A").getEvent();
+                GlobalCMTAccess id = new GlobalCMTID("060994A").getEvent();
                 Path eventOut = outPath.resolve(id.toString());
-                SyntheticDSMInfo info = new SyntheticDSMInfo(ps, id, specfemStationSet, header, tlen, np);
+                SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, id, specfemStationSet, header, tlen, np);
                 Files.createDirectories(eventOut.resolve(header));
                 info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                 info.writeSH(eventOut.resolve(header + "_SH.inf"));
@@ -350,7 +351,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
                 Path eventOut = outPath.resolve(eventDir.toString());
 
                 if (eventDir.getGlobalCMTID().getEvent() != null) {
-                    SyntheticDSMInfo info = new SyntheticDSMInfo(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, tlen, np);
+                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, tlen, np);
                     Files.createDirectories(eventOut.resolve(header));
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));

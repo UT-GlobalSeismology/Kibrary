@@ -14,21 +14,21 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 
 public class Phases {
 		public static void main(String[] args) {
-			Set<TimewindowInformation> timewindows = null;
+			Set<TimewindowData> timewindows = null;
 			if (args.length == 1) {
 				try {
-					timewindows = TimewindowInformationFile.read(Paths.get(args[0]));
+					timewindows = TimewindowDataFile.read(Paths.get(args[0]));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 				
 				Map<Phases, Integer> phaseNumberMap = new HashMap<>();
-				for (TimewindowInformation timewindow : timewindows) {
+				for (TimewindowData timewindow : timewindows) {
 					Phases tmpPhase = new Phases(timewindow.getPhases());
 					if (phaseNumberMap.containsKey(tmpPhase)) {
 						Integer i = phaseNumberMap.get(tmpPhase) + 1;

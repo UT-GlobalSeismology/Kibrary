@@ -28,11 +28,13 @@ import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
+ * Operation that filters observed and synthetic SAC files in eventFolders under obsDir and synDir.
+ *
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  *
@@ -226,7 +228,7 @@ public class FilterDivider implements Operation {
      */
     private void filterAndout(SACFileName name) {
         try {
-            SACFileData sacFile = name.read().applyButterworthFilter(filter);
+            SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
             Path out = outPath.resolve(name.getGlobalCMTID() + "/" + name.getName());
             sacFile.writeSAC(out);
             if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);

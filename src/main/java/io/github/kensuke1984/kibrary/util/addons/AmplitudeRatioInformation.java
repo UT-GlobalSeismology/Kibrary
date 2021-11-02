@@ -4,8 +4,8 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.IOException;
@@ -23,12 +23,12 @@ public class AmplitudeRatioInformation {
 		int naz = (int) ((azmax - azmin) / daz);
 		
 		try {
-			Set<StaticCorrection> corrections = StaticCorrectionFile.read(correctionPath);
+			Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(correctionPath);
 			for (GlobalCMTID id : corrections.stream().map(c -> c.getGlobalCMTID()).collect(Collectors.toSet())) {
 				for (int iaz = 0; iaz < naz; iaz++) {
 					double az = azmin + iaz * daz;
 					
-					Set<StaticCorrection> corrSet = corrections.stream()
+					Set<StaticCorrectionData> corrSet = corrections.stream()
 							.filter(c -> {
 								if (!c.getGlobalCMTID().equals(id))
 									return false;
@@ -50,7 +50,7 @@ public class AmplitudeRatioInformation {
 					double[] averageOverDistance = new double[120];
 					int[] countDistance = new int[120];
 					
-					for (StaticCorrection corr : corrSet) {
+					for (StaticCorrectionData corr : corrSet) {
 						double azimuth = Math.toDegrees(id.getEvent().getCmtLocation().getAzimuth(corr.getObserver().getPosition()));
 						double distance = Math.toDegrees(id.getEvent().getCmtLocation().getEpicentralDistance(corr.getObserver().getPosition()));
 						int k = (int) (distance);

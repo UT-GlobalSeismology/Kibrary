@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.entrance.StationInformationFile;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -62,7 +62,7 @@ class EventProcessor implements Runnable {
     /**
      * GlobalCMTData for the event in the seedfile
      */
-    private GlobalCMTData event;
+    private GlobalCMTAccess event;
     /**
      * true: the base time will be PDE time, false: CMT (default)
      */

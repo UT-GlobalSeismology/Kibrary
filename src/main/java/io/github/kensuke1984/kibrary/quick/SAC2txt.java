@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.quick;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -60,7 +60,7 @@ public class SAC2txt {
 			timetool.parsePhaseList("P,p,Pdiff,S,s,Sdiff");
 			
 			for (SACFileName sacname : sacnames) {
-				SACFileData sacdata = sacname.read();
+				SACFileAccess sacdata = sacname.read();
 				
 				double distance = sacdata.getValue(SACHeaderEnum.GCARC);
 				double depth = sacdata.getValue(SACHeaderEnum.EVDP);

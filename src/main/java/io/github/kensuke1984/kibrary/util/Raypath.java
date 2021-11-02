@@ -6,7 +6,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.anisotime.RaypathCatalog;
 import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
 /**
@@ -56,7 +56,7 @@ public class Raypath {
      *
      * @param sacHeaderData of a raypath to create
      */
-    public Raypath(SACHeaderData sacHeaderData) {
+    public Raypath(SACHeaderAccess sacHeaderData) {
         this(sacHeaderData.getEventLocation(), sacHeaderData.getObserver().getPosition());
     }
 

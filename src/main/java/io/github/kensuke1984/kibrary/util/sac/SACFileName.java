@@ -338,7 +338,7 @@ public class SACFileName extends File {
      * @return (immutable) SACHeaderData of this file
      * @throws IOException if an I/O error occurs
      */
-    public SACHeaderData readHeader() throws IOException {
+    public SACHeaderAccess readHeader() throws IOException {
         return new SACHeader(this);
     }
 
@@ -346,7 +346,7 @@ public class SACFileName extends File {
      * @return (immutable) SACData of this file
      * @throws IOException if an I/O error occurs
      */
-    public SACFileData read() throws IOException {
+    public SACFileAccess read() throws IOException {
         return new SACFile(this);
     }
 

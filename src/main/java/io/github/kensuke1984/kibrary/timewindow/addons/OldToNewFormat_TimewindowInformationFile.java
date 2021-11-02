@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.timewindow.addons;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -40,22 +40,22 @@ public class OldToNewFormat_TimewindowInformationFile {
 		Path timewindowOldFormatPath = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
 		
 		try {
-			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 			OldToNewFormat_TimewindowInformationFile.write_old(timewindows, timewindowOldFormatPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void write_old(Set<TimewindowInformation> infoSet, Path outputPath, OpenOption... options)
+	public static void write_old(Set<TimewindowData> infoSet, Path outputPath, OpenOption... options)
 			throws IOException {
 		if (infoSet.isEmpty())
 			throw new RuntimeException("Input information is empty..");
 		try (DataOutputStream dos = new DataOutputStream(
 				new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
-			GlobalCMTID[] ids = infoSet.stream().map(TimewindowInformation::getGlobalCMTID).distinct().sorted()
+			GlobalCMTID[] ids = infoSet.stream().map(TimewindowData::getGlobalCMTID).distinct().sorted()
 					.toArray(GlobalCMTID[]::new);
-			Observer[] stations = infoSet.stream().map(TimewindowInformation::getObserver).distinct().sorted()
+			Observer[] stations = infoSet.stream().map(TimewindowData::getObserver).distinct().sorted()
 					.toArray(Observer[]::new);
 			Map<GlobalCMTID, Integer> idMap = new HashMap<>();
 			Map<Observer, Integer> stationMap = new HashMap<>();
@@ -73,7 +73,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 				idMap.put(ids[i], i);
 				dos.writeBytes(StringUtils.rightPad(ids[i].toString(), 15));
 			}
-			for (TimewindowInformation info : infoSet) {
+			for (TimewindowData info : infoSet) {
 				dos.writeShort(stationMap.get(info.getObserver()));
 				dos.writeShort(idMap.get(info.getGlobalCMTID()));
 				dos.writeByte(info.getComponent().valueOf());
@@ -92,7 +92,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public static Set<TimewindowInformation> read_old(Path infoPath) throws IOException {
+	public static Set<TimewindowData> read_old(Path infoPath) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)));) {
 			long t = System.nanoTime();
 			long fileSize = Files.size(infoPath);
@@ -118,7 +118,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			byte[][] bytes = new byte[nwindow][oneWindowByte_old];
 			for (int i = 0; i < nwindow; i++)
 				dis.read(bytes[i]);
-			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create_old(b, stations, cmtIDs))
+			Set<TimewindowData> infoSet = Arrays.stream(bytes).parallel().map(b -> create_old(b, stations, cmtIDs))
 					.collect(Collectors.toSet());
 			System.err.println(
 					infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -140,13 +140,13 @@ public class OldToNewFormat_TimewindowInformationFile {
 	 * @param ids
 	 * @return
 	 */
-	private static TimewindowInformation create_old(byte[] bytes, Observer[] stations, GlobalCMTID[] ids) {
+	private static TimewindowData create_old(byte[] bytes, Observer[] stations, GlobalCMTID[] ids) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		Observer station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double startTime = bb.getFloat();
 		double endTime = bb.getFloat();
-		return new TimewindowInformation(startTime, endTime, station, id, component, null);
+		return new TimewindowData(startTime, endTime, station, id, component, null);
 	}
 }

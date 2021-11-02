@@ -17,11 +17,11 @@ import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -75,7 +75,7 @@ public class ComputeSTF {
 //					.filter(tw -> tw.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))
 //					.collect(Collectors.toSet());
 			
-			Set<TimewindowInformation> thisWindows = new HashSet<>();
+			Set<TimewindowData> thisWindows = new HashSet<>();
 			
 			Set<SACFileName> obsNames = eventFolder.sacFileSet();
 			obsNames.removeIf(sfn -> !sfn.isOBS());
@@ -83,14 +83,14 @@ public class ComputeSTF {
 //			obsNames.removeIf(sfn -> timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(sfn.getGlobalCMTID()) 
 //					&& tw.getStation().getStationName().equals(sfn.getStationName())).count() == 0);
 			
-			List<SACFileData> obsSacs = new ArrayList<>();
-			List<SACFileData> synSacs = new ArrayList<>();
+			List<SACFileAccess> obsSacs = new ArrayList<>();
+			List<SACFileAccess> synSacs = new ArrayList<>();
 			
 			for (SACFileName obsName : obsNames) {
 //				SACFileName synName = new SACFileName(obsName.getAbsolutePath().concat("sc"));
 				SACFileName synName = new SACFileName(obsName.getAbsolutePath());
-				SACFileData obsSac = obsName.read();
-				SACFileData synSac = synName.read();
+				SACFileAccess obsSac = obsName.read();
+				SACFileAccess synSac = synName.read();
 				
 				if (obsSac.getValue(SACHeaderEnum.DELTA) != 0.05)
 					continue;
@@ -143,7 +143,7 @@ public class ComputeSTF {
 //				}
 				//-------
 				
-				thisWindows.add(new TimewindowInformation(tS0, tS1, obsSac.getObserver()
+				thisWindows.add(new TimewindowData(tS0, tS1, obsSac.getObserver()
 						, obsSac.getGlobalCMTID(), obsName.getComponent(), new Phase[] {Phase.S}));
 			}
 			
@@ -152,7 +152,7 @@ public class ComputeSTF {
 				continue;
 			SourceTimeFunctionByStackedPeaks stfsp = 
 					new SourceTimeFunctionByStackedPeaks(np, tlen, samplingHz, 
-							obsSacs.toArray(new SACFileData[obsSacs.size()]), synSacs.toArray(new SACFileData[synSacs.size()]), thisWindows);
+							obsSacs.toArray(new SACFileAccess[obsSacs.size()]), synSacs.toArray(new SACFileAccess[synSacs.size()]), thisWindows);
 			
 			Trace stf = stfsp.getSourceTimeFunctionInTimeDomain();
 			

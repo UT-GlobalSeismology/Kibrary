@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.datacorrection;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -55,7 +55,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	private double tlen;
 	private double samplingHz;
 	private Path timewindowInformationFilePath;
-	private Set<TimewindowInformation> timewindows;
+	private Set<TimewindowData> timewindows;
 	private Set<SACComponent> components;
 	double[] amplitudeCorrections;
 	double[][] misfitNumerator;
@@ -161,7 +161,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		Path timewindowInformationFilePath = 
 				Paths.get(property.getProperty("timewindowInformationFilePath"));
 		try {
-			timewindows = TimewindowInformationFile.read(timewindowInformationFilePath)
+			timewindows = TimewindowDataFile.read(timewindowInformationFilePath)
 					.parallelStream()
 					.filter(tw -> components.contains(tw.getComponent()))
 					.collect(Collectors.toSet());
@@ -217,7 +217,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		this.tlen = tlen;
 		this.samplingHz = samplingHz;
 		try {
-			this.timewindows = TimewindowInformationFile.read(timewindowFile);
+			this.timewindows = TimewindowDataFile.read(timewindowFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -247,9 +247,9 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			Set<EventFolder> eventFolders 
 				= Utilities.eventFolderSet(workPath);
 			
-			Set<StaticCorrection> staticCorrections = new HashSet<>();
+			Set<StaticCorrectionData> staticCorrections = new HashSet<>();
 			if (staticCorrectionFile != null)
-				staticCorrections = StaticCorrectionFile.read(staticCorrectionFile);
+				staticCorrections = StaticCorrectionDataFile.read(staticCorrectionFile);
 			
 			Map<GlobalCMTID, double[]> outputMap = new HashMap<>();
 			Map<GlobalCMTID, Integer> nTraceMap = new HashMap<>();
@@ -297,7 +297,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 				
 				List<Trace> obsTraces = reader.getObsTraces();
 				List<Trace> synTraces = reader.getSynTraces();
-				List<TimewindowInformation> orderedTimewindows 
+				List<TimewindowData> orderedTimewindows 
 					= reader.getOrderedTimewindows();
 				int excludedObsLength = reader.getExcludedObsLength();
 				
@@ -311,12 +311,12 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 				
 				double[] weights = compute_weight(orderedTimewindows);
 				
-				List<StaticCorrection> orderedStaticCorrection = null;
+				List<StaticCorrectionData> orderedStaticCorrection = null;
 				if (staticCorrectionFile != null) {
 					orderedStaticCorrection = new ArrayList<>();
-					for (TimewindowInformation window : orderedTimewindows) {
+					for (TimewindowData window : orderedTimewindows) {
 						boolean found = false;
-						for (StaticCorrection corr : staticCorrections) {
+						for (StaticCorrectionData corr : staticCorrections) {
 							if (isPair.test(corr, window)) {
 								orderedStaticCorrection.add(corr);
 								found = true;
@@ -526,12 +526,12 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		}
 	}
 	
-	private double[] compute_weight(List<TimewindowInformation> orderedTimewindows) {
+	private double[] compute_weight(List<TimewindowData> orderedTimewindows) {
 		double[] weights = new double[orderedTimewindows.size()];
 		int bin_width = 5;
-		Map<Integer, Long> azimuth_freqs = orderedTimewindows.stream().mapToDouble(TimewindowInformation::getAzimuthDegree).boxed()
+		Map<Integer, Long> azimuth_freqs = orderedTimewindows.stream().mapToDouble(TimewindowData::getAzimuthDegree).boxed()
 			.collect(Collectors.groupingBy(d -> (int) (d / bin_width) * bin_width, Collectors.counting()));
-		Map<Integer, Long> distance_freqs = orderedTimewindows.stream().mapToDouble(TimewindowInformation::getDistanceDegree).boxed()
+		Map<Integer, Long> distance_freqs = orderedTimewindows.stream().mapToDouble(TimewindowData::getDistanceDegree).boxed()
 				.collect(Collectors.groupingBy(d -> (int) (d / bin_width) * bin_width, Collectors.counting()));
 		
 //		for (int key : azimuth_freqs.keySet())
@@ -540,7 +540,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 //			System.out.println(key + " " + distance_freqs.get(key));
 			
 		for (int i = 0; i < orderedTimewindows.size(); i++) {
-			TimewindowInformation timewindow = orderedTimewindows.get(i);
+			TimewindowData timewindow = orderedTimewindows.get(i);
 			int az_key = (int) (timewindow.getAzimuthDegree() / bin_width) * bin_width;
 			double az_freq = azimuth_freqs.get(az_key);
 			int dist_key = (int) (timewindow.getDistanceDegree() / bin_width) * bin_width;
@@ -556,15 +556,15 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	private class Worker implements Runnable {
 	private double halfDuration;
 	private double gcmtHalfDuration;
-	private List<TimewindowInformation> orderedTimewindows;
+	private List<TimewindowData> orderedTimewindows;
 	private int i;
 	private List<Trace> obsTraceList;
 	private List<Trace> synTraceList;
-	private List<StaticCorrection> staticCorrections;
+	private List<StaticCorrectionData> staticCorrections;
 	private double[] weights;
 	
-	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowInformation> orderedTimewindows, int i
-			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrection> staticCorrections, double gcmtHalfDuration) {
+	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowData> orderedTimewindows, int i
+			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrectionData> staticCorrections, double gcmtHalfDuration) {
 		this.halfDuration = halfDuration;
 		this.orderedTimewindows = orderedTimewindows;
 		this.i = i;
@@ -574,8 +574,8 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		this.gcmtHalfDuration = gcmtHalfDuration;
 	}
 	
-	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowInformation> orderedTimewindows, int i
-			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrection> staticCorrections, double gcmtHalfDuration
+	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowData> orderedTimewindows, int i
+			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrectionData> staticCorrections, double gcmtHalfDuration
 			, double[] weights) {
 		this.halfDuration = halfDuration;
 		this.orderedTimewindows = orderedTimewindows;
@@ -597,7 +597,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			for (int j = 0; j < orderedTimewindows.size(); j++) {
 				double[] synConvolved = stf.convolve(synTraceList.get(j).getY());
 				
-				TimewindowInformation timewindow = orderedTimewindows.get(j);
+				TimewindowData timewindow = orderedTimewindows.get(j);
 				
 				Trace obsTrace = obsTraceList.get(j);
 				Trace synTraceConvolved = new Trace(synTraceList.get(j).getX()
@@ -618,7 +618,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	//				obsTrace = obsTrace.cutWindow(timewindow);
 				}
 				else {
-					StaticCorrection correction = staticCorrections.get(j);
+					StaticCorrectionData correction = staticCorrections.get(j);
 					double shiftStatic = correction.getTimeshift(); //to add to obs
 					double shiftConvolution = gcmtHalfDuration - halfDuration; //to add to obs
 					shift = shiftConvolution + shiftStatic;
@@ -726,17 +726,17 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	
 	private class Reader implements Runnable {
 		EventFolder eventFolder;
-		Set<TimewindowInformation> timewindows;
+		Set<TimewindowData> timewindows;
 		List<Trace> obsTraceList;
 		List<Trace> synTraceList;
-		List<TimewindowInformation> orderedTimewindows;
+		List<TimewindowData> orderedTimewindows;
 		private double minSNratio;
 		private double ratio;
 		private List<Trace> excludedObsTrace;
 		private double minDistance;
 		private double maxDistance;
 		
-		public Reader(Set<TimewindowInformation> timewindows, EventFolder eventFolder,
+		public Reader(Set<TimewindowData> timewindows, EventFolder eventFolder,
 				double minSNratio, double ratio, double minDistance, double maxDistance) {
 			this.timewindows = timewindows.parallelStream().filter(tw -> 
 					tw.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))
@@ -754,7 +754,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		
 		public void run() {
 			try {
-				for (TimewindowInformation timewindow : timewindows) {
+				for (TimewindowData timewindow : timewindows) {
 					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(
 							timewindow.getObserver().getPosition()) * 180. / Math.PI;
 					if (distance < minDistance || distance > maxDistance)
@@ -822,7 +822,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			return excludedObsTrace.size();
 		}
 		
-		public List<TimewindowInformation> getOrderedTimewindows() {
+		public List<TimewindowData> getOrderedTimewindows() {
 			return orderedTimewindows;
 		}
 	}
@@ -840,8 +840,8 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		pw.close();
 	}
 	
-	private Map<SACComponent, RealVector[]> stack(SourceTimeFunction stf, List<TimewindowInformation> orderedTimewindows
-			, List<Trace> synTraces, List<Trace> obsTraces, List<StaticCorrection> staticCorrections, double halfDuration, double gcmtHalfDuration, double ampCorr) {
+	private Map<SACComponent, RealVector[]> stack(SourceTimeFunction stf, List<TimewindowData> orderedTimewindows
+			, List<Trace> synTraces, List<Trace> obsTraces, List<StaticCorrectionData> staticCorrections, double halfDuration, double gcmtHalfDuration, double ampCorr) {
 		Map<SACComponent, RealVector[]> obsSynStacksMap = new HashMap<>();
 		Map<SACComponent, RealVector> obsStackMap = new HashMap<>();
 		Map<SACComponent, RealVector> synStackMap = new HashMap<>();
@@ -861,7 +861,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		for (int i = 0; i < orderedTimewindows.size(); i++) {
 			double[] synConvolved = stf.convolve(synTraces.get(i).getY());
 			
-			TimewindowInformation timewindow = orderedTimewindows.get(i);
+			TimewindowData timewindow = orderedTimewindows.get(i);
 			SACComponent component = timewindow.getComponent();
 			
 			Trace obsTrace = obsTraces.get(i);
@@ -883,7 +883,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 //				obsTrace = obsTrace.cutWindow(timewindow);
 			}
 			else {
-				StaticCorrection correction = staticCorrections.get(i);
+				StaticCorrectionData correction = staticCorrections.get(i);
 				double shiftStatic = correction.getTimeshift(); //to add to obs
 				double shiftConvolution = gcmtHalfDuration - halfDuration; //to add to obs
 				shift = shiftConvolution + shiftStatic;
@@ -943,7 +943,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		return obsSynStacksMap;
 	}
 	
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 	

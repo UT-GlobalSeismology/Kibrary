@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -30,7 +30,7 @@ public class BPVisual {
 	final int samplingHz = 20;
 	
 	private Path timewindowPath;
-	private Set<TimewindowInformation> timewindows;
+	private Set<TimewindowData> timewindows;
 	private Path workingDir;
 	
 	private int ext;
@@ -47,7 +47,7 @@ public class BPVisual {
 	public BPVisual(Path timewindowPath, Path workingDir, double partialSamplingHz, double finalSamplingHz
 			, double minFreq, double maxFreq, int filterNp) throws IOException {
 		this.timewindowPath = timewindowPath;
-		this.timewindows = TimewindowInformationFile.read(timewindowPath);
+		this.timewindows = TimewindowDataFile.read(timewindowPath);
 		this.workingDir = workingDir;
 		
 		this.partialSamplingHz = partialSamplingHz;
@@ -83,7 +83,7 @@ public class BPVisual {
 				for (int j = 0; j < spcComponents.length; j++) {
 					double[] bpserie = spcComponents[j].getTimeseries();
 					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
-					for (TimewindowInformation info : timewindows) {
+					for (TimewindowData info : timewindows) {
 						Observer station = info.getObserver();
 						GlobalCMTID event = info.getGlobalCMTID();
 						
@@ -138,7 +138,7 @@ public class BPVisual {
 	 * @param property
 	 * @return
 	 */
-	private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation) {
+	private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
 		int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
 		// cutstartが振り切れた場合0 からにする
 		if (cutstart < 0)
@@ -150,7 +150,7 @@ public class BPVisual {
 		return cut;
 	}
 
-	private double[] sampleOutput(Complex[] u, TimewindowInformation timewindowInformation) {
+	private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation) {
 		// 書きだすための波形
 		int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
 				* finalSamplingHz);

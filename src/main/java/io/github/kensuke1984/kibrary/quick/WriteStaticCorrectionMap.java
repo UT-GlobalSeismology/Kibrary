@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,7 +14,7 @@ public class WriteStaticCorrectionMap {
 	public static void main(String[] args) throws IOException {
 		Path fujiStaticPath = Paths.get(args[0]);
 		
-		Set<StaticCorrection> fujiCorrections = StaticCorrectionFile.read(fujiStaticPath);
+		Set<StaticCorrectionData> fujiCorrections = StaticCorrectionDataFile.read(fujiStaticPath);
 		
 		double[][] mapCorr = averageMap(fujiCorrections);
 		
@@ -29,16 +29,16 @@ public class WriteStaticCorrectionMap {
 		
 		Path outpath4 = Paths.get("correctionAtStation.txt");
 		PrintWriter pw4 = new PrintWriter(outpath4.toFile());
-		for (StaticCorrection corr : fujiCorrections) {
+		for (StaticCorrectionData corr : fujiCorrections) {
 			pw4.println(corr.getObserver() + " " + corr.getObserver().getPosition() + " " + corr.getTimeshift());
 		}
 		pw4.close();
 	}
 	
-	public static double[][] averageMap(Set<StaticCorrection> ratios) {
+	public static double[][] averageMap(Set<StaticCorrectionData> ratios) {
 		double[][] map = new double[360][180];
 		int[][] count = new int[360][180];
-		for (StaticCorrection corr : ratios) {
+		for (StaticCorrectionData corr : ratios) {
 			double lon = corr.getObserver().getPosition().getLongitude();
 			if (lon < 0)
 				lon += 360;

@@ -42,7 +42,7 @@ public enum SACComponent {
      * @param sacHeaderData must contain KCMPNM (vertical, radial or trnsvers)
      * @return SACComponent of the input sacHeaderData
      */
-    public static SACComponent of(SACHeaderData sacHeaderData) {
+    public static SACComponent of(SACHeaderAccess sacHeaderData) {
         return sacHeaderData.getComponent();
     }
 

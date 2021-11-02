@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunctionByGridSear
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
@@ -55,7 +55,7 @@ public enum Manhattan {
 	SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
 	SPC_SAC(17, SPC_SAC.class), //
 	SshDSMInformationFileMaker(18, SshDSMInformationFileMaker.class), //
-	SyntheticDSMInformationFileMaker(19, SyntheticDSMInformationFileMaker.class), //
+	SyntheticDSMInformationFileMaker(19, SyntheticDSMSetup.class), //
 	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
 	TimewindowMaker(21, TimewindowMaker.class),//
 	AtAMaker(22, AtAMaker.class),//

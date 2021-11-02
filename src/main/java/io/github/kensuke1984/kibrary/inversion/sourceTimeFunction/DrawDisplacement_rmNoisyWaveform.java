@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion.sourceTimeFunction;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -69,9 +69,9 @@ class DrawDisplacement_rmNoisyWaveform{
     	Path CorrectionPath = Paths.get("/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/fujiStaticCorrection.dat");
     	String alloutpath = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/Displacement/all_" + eventID + "_" + component + "_rmNW2_sn8_arv.gmt";
     	
-    	Set<StaticCorrection> corrections = null;
+    	Set<StaticCorrectionData> corrections = null;
     	try {
-    		corrections = StaticCorrectionFile.read(CorrectionPath).stream()
+    		corrections = StaticCorrectionDataFile.read(CorrectionPath).stream()
     			.filter(corr -> corr.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
     	} catch (IOException e) {
     		e.printStackTrace();
@@ -99,12 +99,12 @@ class DrawDisplacement_rmNoisyWaveform{
 						
 			double windowLength = 30.;
 			try {
-				Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
-				for(TimewindowInformation timewindow : timewindows){
+				Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+				for(TimewindowData timewindow : timewindows){
 					if(timewindow.getGlobalCMTID().equals(eventID) && timewindow.getComponent().equals(component)){
         			if(timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
         					timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
-						TimewindowInformation correctionTw = ReadStaticCorrection.getcorrection(eventID, timewindow, corrections);
+						TimewindowData correctionTw = ReadStaticCorrection.getcorrection(eventID, timewindow, corrections);
 						Observer station = timewindow.getObserver();
 						double sttime = correctionTw.getStartTime() - 5.;
 						double entime = sttime + windowLength;

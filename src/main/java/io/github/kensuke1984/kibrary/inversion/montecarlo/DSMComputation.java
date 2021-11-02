@@ -4,14 +4,14 @@ import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInfo;
+import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInputFile;
 import io.github.kensuke1984.kibrary.external.DSMMPI;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
@@ -35,14 +35,14 @@ import java.util.stream.Stream;
  * @author Kensuke Konishi
  * @version 0.0.1.2
  */
-class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]> {
+class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess[]> {
 
 
     private static final int NP = 256;
     private static final double SAMPLING_HZ = 20;
     private static final double TLEN = 1638.4;
     private final static Set<SACComponent> components = new HashSet<>(Collections.singletonList(SACComponent.T));
-    private final SyntheticDSMInfo[] DSM_INFOS;
+    private final SyntheticDSMInputFile[] DSM_INFOS;
     private final Path outPath;
     private final Path PSVPATH;
     private ButterworthFilter filter;
@@ -71,19 +71,19 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
         setFilter(0.005, 0.08, 4);
     }
 
-    private SyntheticDSMInfo[] init(Path obsDir, Set<Observer> stationSet) throws IOException {
+    private SyntheticDSMInputFile[] init(Path obsDir, Set<Observer> stationSet) throws IOException {
         return Utilities.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
             try {
                 Set<Observer> stations =
                         eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getStationCode)
                                 .distinct().map(this::pickup).collect(Collectors.toSet());
                 GlobalCMTID id = eventDir.getGlobalCMTID();
-                return new SyntheticDSMInfo(PolynomialStructure.PREM, id.getEvent(), stations, id.toString(), TLEN, NP);
+                return new SyntheticDSMInputFile(PolynomialStructure.PREM, id.getEvent(), stations, id.toString(), TLEN, NP);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
-        }).toArray(SyntheticDSMInfo[]::new);
+        }).toArray(SyntheticDSMInputFile[]::new);
     }
 
     /**
@@ -99,11 +99,11 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
     }
 
     @Override
-    public SACFileData[] generate(PolynomialStructure model) {
+    public SACFileAccess[] generate(PolynomialStructure model) {
         try {
             Path root = Files.createDirectories(outPath.resolve("DSMComputation_" + sequentialNumber++));
-            SyntheticDSMInfo[] infos = createDSMInfo(model);
-            for (SyntheticDSMInfo info : infos) {
+            SyntheticDSMInputFile[] infos = createDSMInfo(model);
+            for (SyntheticDSMInputFile info : infos) {
                 Path infoPath = root.resolve(info.getGlobalCMTData() + ".inf");
                 info.writeSH(infoPath);
                 Path idPath = root.resolve(info.getGlobalCMTData().toString());
@@ -115,9 +115,9 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
                 applyFilter(folder);
             }
             Set<SACFileName> nameSet = new TreeSet<>(Utilities.sacFileNameSet(root));
-            List<SACFileData> dataList = new ArrayList<>(nameSet.size());
+            List<SACFileAccess> dataList = new ArrayList<>(nameSet.size());
             for (SACFileName sacFileName : nameSet) dataList.add(sacFileName.read());
-            return dataList.toArray(new SACFileData[nameSet.size()]);
+            return dataList.toArray(new SACFileAccess[nameSet.size()]);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("unexpected");
@@ -129,15 +129,15 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileData[]
                 .orElseThrow(() -> new RuntimeException("No information about " + stationName));
     }
 
-    private SyntheticDSMInfo[] createDSMInfo(PolynomialStructure model) {
-        return Arrays.stream(DSM_INFOS).map(info -> info.replaceStructure(model)).toArray(SyntheticDSMInfo[]::new);
+    private SyntheticDSMInputFile[] createDSMInfo(PolynomialStructure model) {
+        return Arrays.stream(DSM_INFOS).map(info -> info.replaceStructure(model)).toArray(SyntheticDSMInputFile[]::new);
     }
 
     private void applyFilter(EventFolder eventDir) throws IOException {
         eventDir.sacFileSet().forEach(name -> {
             if (!name.isSYN()) return;
             try {
-                SACFileData sf = name.read().applyButterworthFilter(filter);
+                SACFileAccess sf = name.read().applyButterworthFilter(filter);
                 sf.writeSAC(name);
             } catch (Exception e) {
                 e.printStackTrace();

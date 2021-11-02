@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
@@ -58,7 +58,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
      * @param sacHeaderData must contain a valid ID in KEVNM
      * @return GlobalCMTID of the input sacHeaderData
      */
-    public static GlobalCMTID of(SACHeaderData sacHeaderData) {
+    public static GlobalCMTID of(SACHeaderAccess sacHeaderData) {
         return new GlobalCMTID(sacHeaderData.getSACString(SACHeaderEnum.KEVNM));
     }
 
@@ -84,7 +84,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
             }
 
             GlobalCMTID id = new GlobalCMTID(idString);
-            GlobalCMTData event = id.getEvent();
+            GlobalCMTAccess event = id.getEvent();
 
             System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
             System.out.println("Centroid Time: " + event.getCMTTime());
@@ -97,9 +97,9 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
      * can make it by yourself and use this.
      *
      * @param catalogFile arbitrary file containing cmt catalog
-     * @return {@link GlobalCMTData} written in catalogFile
+     * @return {@link GlobalCMTAccess} written in catalogFile
      */
-    public static Set<GlobalCMTData> readCatalog(Path catalogFile) {
+    public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
         return new HashSet<>(GlobalCMTCatalog.read(catalogFile));
     }
 
@@ -142,12 +142,12 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     }
 
     /**
-     * if there is a certain existing ID, then returns the {@link GlobalCMTData}
+     * if there is a certain existing ID, then returns the {@link GlobalCMTAccess}
      * for the ID if not null will be returned.
      *
      * @return GlobalCMTData for this
      */
-    public GlobalCMTData getEvent() {
+    public GlobalCMTAccess getEvent() {
         if (ndk == null) synchronized (this) {
             if (ndk == null) ndk = GlobalCMTCatalog.getNDK(this);
         }

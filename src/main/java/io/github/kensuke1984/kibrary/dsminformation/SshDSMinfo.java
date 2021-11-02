@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -24,12 +24,12 @@ import java.util.stream.IntStream;
  * @author anselme add system to comment out perturbations that are too close to the source and takes too long to compute
  * add PAR0 (partial for density)
  */
-public class SshDSMinfo extends SyntheticDSMInfo {
+public class SshDSMinfo extends SyntheticDSMInputFile {
 
     private final double[] RADII;
     private boolean[] commentPerturbationR;
 
-    public SshDSMinfo(PolynomialStructure structure, GlobalCMTData event, Set<Observer> stations, String outputDir,
+    public SshDSMinfo(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> stations, String outputDir,
                       double[] perturbationR, double tlen, int np) {
         super(structure, event, stations, outputDir, tlen, np);
         RADII = perturbationR.clone();

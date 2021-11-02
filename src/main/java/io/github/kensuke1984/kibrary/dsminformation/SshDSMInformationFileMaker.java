@@ -6,8 +6,8 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -140,10 +140,10 @@ public class SshDSMInformationFileMaker implements Operation {
 
 	@Override
 	public void run() throws Exception {
-		Set<TimewindowInformation> tmpwindows = null;
+		Set<TimewindowData> tmpwindows = null;
 		if (timewindowInformationPath != null)
-			tmpwindows = TimewindowInformationFile.read(timewindowInformationPath);
-		final Set<TimewindowInformation> timewindows = tmpwindows;
+			tmpwindows = TimewindowDataFile.read(timewindowInformationPath);
+		final Set<TimewindowData> timewindows = tmpwindows;
 		
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 		PolynomialStructure ps = PolynomialStructure.PREM;

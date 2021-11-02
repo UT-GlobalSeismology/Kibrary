@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -2272,7 +2272,7 @@ public class LetMeInvert implements Operation {
 			BasicID[] obsIDs = eq.getDVector().getObsIDs();
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
-				GlobalCMTData event = id.getGlobalCMTID().getEvent();
+				GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
 				Observer station = id.getStation();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));

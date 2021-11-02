@@ -13,7 +13,7 @@ import java.util.List;
  * @author Kensuke Konishi
  * @version 0.0.5.2
  */
-class DSMheader {
+class DSMInputHeader {
 
     /**
      * Time length [s] (default:3276.8)
@@ -64,11 +64,11 @@ class DSMheader {
      * @param tlen must be 2<sup>n</sup>/10 where n is an integer
      * @param np   must be 2<sup>n</sup> where n is an integer
      */
-    DSMheader(double tlen, int np) {
+    DSMInputHeader(double tlen, int np) {
         this(tlen, np, 0, np, 1.e-2, 1.e-10, 1.e-5, 1.e-2);
     }
 
-    DSMheader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,
+    DSMInputHeader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,
               double artificialDampl) {
         if (!ArithmeticUtils.isPowerOfTwo(np) || !validTlen(tlen))
             throw new IllegalArgumentException("Input TLEN:" + tlen + " or NP:" + np + " is invalid");

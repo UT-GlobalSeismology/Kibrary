@@ -25,20 +25,20 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -54,7 +54,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * {@link parameter.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used. Both
  * folders must have event folders inside which have waveforms.
  * 
- * The static correction is applied as described in {@link StaticCorrection}
+ * The static correction is applied as described in {@link StaticCorrectionData}
  * 
  * 
  * The sample rates of the data is
@@ -242,9 +242,9 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	 */
 	private boolean amplitudeCorrection;
 
-	private Set<StaticCorrection> staticCorrectionSet;
+	private Set<StaticCorrectionData> staticCorrectionSet;
 
-	private Set<TimewindowInformation> timewindowInformationSet;
+	private Set<TimewindowData> timewindowInformationSet;
 
 	private WaveformDataWriter[] dataWriter;
 
@@ -260,7 +260,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
 				if (!name.isOBS())
 					continue;
-				SACHeaderData header = name.readHeader();
+				SACHeaderAccess header = name.readHeader();
 				double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
 						header.getValue(SACHeaderEnum.USER1) };
 				boolean exists = false;
@@ -306,16 +306,16 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	@Override
 	public void run() throws Exception {
 		if (timeCorrection || amplitudeCorrection)
-			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionPath);
+			staticCorrectionSet = StaticCorrectionDataFile.read(staticCorrectionPath);
 
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
-		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
-		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getObserver)
+		timewindowInformationSet = TimewindowDataFile.read(timewindowPath);
+		stationSet = timewindowInformationSet.parallelStream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());
-		idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)
+		idSet = timewindowInformationSet.parallelStream().map(TimewindowData::getGlobalCMTID)
 				.collect(Collectors.toSet());
-		phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+		phases = timewindowInformationSet.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 		readPeriodRanges();
 		
@@ -331,7 +331,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 					GlobalCMTID thisID = events.get(isample);
 					idSet = idSet.stream().filter(id -> id.equals(thisID)).collect(Collectors.toSet());
 					stationSet = timewindowInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(thisID))
-							.map(TimewindowInformation::getObserver).collect(Collectors.toSet());
+							.map(TimewindowData::getObserver).collect(Collectors.toSet());
 					System.err.println("Event sample " + thisID);
 					Path waveIDPath = workPath.resolve("waveformID_" + thisID + ".dat");
 					Path waveformPath = workPath.resolve("waveform_" + thisID + ".dat");
@@ -412,7 +412,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 				if (!synFileName.exists())
 					continue;
 
-				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
+				Set<TimewindowData> windows = timewindowInformationSet.stream()
 						.filter(info -> info.getObserver().getStation().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
@@ -421,7 +421,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 				if (windows.isEmpty())
 					continue;
 				
-				SACFileData obsSac;
+				SACFileAccess obsSac;
 				try {
 					obsSac = obsFileName.read();
 				} catch (IOException e1) {
@@ -430,7 +430,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 					continue;
 				}
 
-				SACFileData synSac;
+				SACFileAccess synSac;
 				try {
 					synSac = synFileName.read();
 				} catch (IOException e1) {
@@ -463,14 +463,14 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 
 				Observer station = obsSac.getObserver();
 
-				for (TimewindowInformation window : windows) {
+				for (TimewindowData window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
 					double startTime = window.getStartTime();
 					double shift = 0;
 					double ratio = 1;
 					if (timeCorrection || amplitudeCorrection)
 						try {
-							StaticCorrection sc = getStaticCorrection(window);
+							StaticCorrectionData sc = getStaticCorrection(window);
 							shift = timeCorrection ? sc.getTimeshift() : 0;
 							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
 						} catch (NoSuchElementException e) {
@@ -515,19 +515,19 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	 * ID for static correction and time window information Default is station
 	 * name, global CMT id, component.
 	 */
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 	
-	private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
+	private BiPredicate<StaticCorrectionData, TimewindowData> isPair2 = (s,
 			t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 			
-	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
+	private StaticCorrectionData getStaticCorrection(TimewindowData window) {
 		return staticCorrectionSet.stream().filter(s -> isPair2.test(s, window)).findAny().get();
 	}
 
-	private double[] cutDataSac(SACFileData sac, double startTime, int npts) {
+	private double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);

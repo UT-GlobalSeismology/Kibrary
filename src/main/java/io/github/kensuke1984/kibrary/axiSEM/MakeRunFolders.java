@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
@@ -86,7 +86,7 @@ public class MakeRunFolders {
 					
 					Path eventFile = localDirPath.resolve("CMTSOLUTION");
 					GlobalCMTID id = eventFolder.getGlobalCMTID();
-					GlobalCMTData idData = id.getEvent();
+					GlobalCMTAccess idData = id.getEvent();
 					MomentTensor mt = idData.getCmt();
 					double pow = Math.pow(10, mt.getMtExp());
 					String s = String.format("PDE...%nevent name: %s%ntime shift: %.4f%nhalf duration: "

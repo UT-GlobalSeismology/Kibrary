@@ -13,8 +13,8 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -26,7 +26,7 @@ public class BouncingPointInformation {
 		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_6-200s");
 		Path timewindowPath = workdir.resolve("selectedTimewindow_PcP_60deg.dat");
 		
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 		
 //		Path clusterfilePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster.inf");
 		Path clusterfilePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_6-200s/map/cluster_pcp.inf");
@@ -42,7 +42,7 @@ public class BouncingPointInformation {
 		Path outpath = workdir.resolve("bouncingPointInformation.dat");
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		
-		for (TimewindowInformation timewindow : timewindows) {
+		for (TimewindowData timewindow : timewindows) {
 			GlobalCMTID event = timewindow.getGlobalCMTID();
 			double evtLat = event.getEvent().getCmtLocation().getLatitude();
 			double evtLon = event.getEvent().getCmtLocation().getLongitude();

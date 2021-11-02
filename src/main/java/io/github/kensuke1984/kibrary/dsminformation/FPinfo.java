@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,9 +21,9 @@ import java.util.stream.IntStream;
  * @version 0.0.6.2
  * @author anselme add information files for psv/sh fpcat (catalog)
  */
-public class FPinfo extends DSMheader {
+public class FPinfo extends DSMInputHeader {
 
-    private final GlobalCMTData EVENT;
+    private final GlobalCMTAccess EVENT;
     private final HorizontalPosition[] POSITIONS;
     private final double[] RADII;
     private final PolynomialStructure STRUCTURE;
@@ -38,7 +38,7 @@ public class FPinfo extends DSMheader {
      * @param perturbationPointR will be copied
      * @param perturbationPoint  will be copied
      */
-    public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure structure, double tlen, int np,
+    public FPinfo(GlobalCMTAccess event, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationPointR, HorizontalPosition[] perturbationPoint) {
         super(tlen, np);
         EVENT = event;

@@ -27,7 +27,7 @@ public class GlobalCMTSearch {
     /**
      * Added predicate set.
      */
-    private Set<Predicate<GlobalCMTData>> predicateSet = new HashSet<>();
+    private Set<Predicate<GlobalCMTAccess>> predicateSet = new HashSet<>();
     /**
      * end date and time for CMT
      */
@@ -154,7 +154,7 @@ public class GlobalCMTSearch {
      * @param id Global CMT id
      */
     private static void printIDinformation(GlobalCMTID id) {
-        GlobalCMTData event = id.getEvent();
+        GlobalCMTAccess event = id.getEvent();
         Location location = event.getCmtLocation();
         double lat = location.getLatitude();
         double lon = location.getLongitude();
@@ -168,7 +168,7 @@ public class GlobalCMTSearch {
      * @param predicate {@link Predicate} for Event data of global CMT IDs
      * @return all global CMT IDs satisfying the input predicate
      */
-    public static Set<GlobalCMTID> search(Predicate<GlobalCMTData> predicate) {
+    public static Set<GlobalCMTID> search(Predicate<GlobalCMTAccess> predicate) {
         return GlobalCMTCatalog.allNDK().stream().filter(predicate).map(NDK::getGlobalCMTID)
                 .collect(Collectors.toSet());
     }
@@ -180,9 +180,9 @@ public class GlobalCMTSearch {
     /**
      * Adds the predicate for another condition.
      *
-     * @param predicate {@link Predicate} for {@link GlobalCMTData}
+     * @param predicate {@link Predicate} for {@link GlobalCMTAccess}
      */
-    public GlobalCMTSearch addPredicate(Predicate<GlobalCMTData> predicate) {
+    public GlobalCMTSearch addPredicate(Predicate<GlobalCMTAccess> predicate) {
         predicateSet.add(predicate);
         return this;
     }
@@ -190,7 +190,7 @@ public class GlobalCMTSearch {
     /**
      * @return copy of predicate set
      */
-    public Set<Predicate<GlobalCMTData>> getPredicateSet() {
+    public Set<Predicate<GlobalCMTAccess>> getPredicateSet() {
         return new HashSet<>(predicateSet);
     }
 

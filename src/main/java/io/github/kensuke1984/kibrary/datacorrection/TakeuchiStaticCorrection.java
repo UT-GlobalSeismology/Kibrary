@@ -2,14 +2,14 @@ package io.github.kensuke1984.kibrary.datacorrection;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 import java.io.IOException;
@@ -20,20 +20,20 @@ import java.util.stream.Collectors;
 
 /**
  * Maker of static correction suggested by Nozomu Takeuchi. It seeks up-and-down
- * two peaks in given {@link TimewindowInformation} for each path.
+ * two peaks in given {@link TimewindowData} for each path.
  * <p>
  * Values of the correction is by the average time of arrivals and amplitudes of
  * those peaks.
  * <p>
  * Start time for identification is a start time in the given
- * {@link TimewindowInformationFile}.
+ * {@link TimewindowDataFile}.
  * <p>
  * <b>Assume that there are no stations with the same name but different
  * networks in an event</b>
  *
  * @author Kensuke Konishi
  * @version 0.1.1.4
- * @see StaticCorrection
+ * @see StaticCorrectionData
  */
 public class TakeuchiStaticCorrection implements Operation {
     /**
@@ -59,15 +59,15 @@ public class TakeuchiStaticCorrection implements Operation {
     protected Path timewindowInformationPath;
     private Properties property;
     private Path workPath;
-    private Set<StaticCorrection> outStaticCorrectionSet;
+    private Set<StaticCorrectionData> outStaticCorrectionSet;
     private Path outStaticCorrectionPath;
-    private Set<TimewindowInformation> timewindow;
+    private Set<TimewindowData> timewindow;
 
     public TakeuchiStaticCorrection(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         String date = Utilities.getTemporaryString();
         set();
-        timewindow = TimewindowInformationFile.read(timewindowInformationPath);
+        timewindow = TimewindowDataFile.read(timewindowInformationPath);
         outStaticCorrectionPath = workPath.resolve("takeuchiCorrection" + date + ".dat");
         outStaticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
@@ -144,21 +144,21 @@ public class TakeuchiStaticCorrection implements Operation {
             throw new RuntimeException(obsPath + " may have problems");
         }
         nameSet.parallelStream().filter(name -> components.contains(name.getComponent())).forEach(this::compare);
-        StaticCorrectionFile.write(outStaticCorrectionSet, outStaticCorrectionPath);
+        StaticCorrectionDataFile.write(outStaticCorrectionSet, outStaticCorrectionPath);
     }
 
     private void compare(SACFileName obsName, SACFileName synName) throws IOException {
         String stationName = obsName.getStationCode();
         GlobalCMTID id = obsName.getGlobalCMTID();
         SACComponent component = obsName.getComponent();
-        Set<TimewindowInformation> timeWindowSet =
+        Set<TimewindowData> timeWindowSet =
                 timewindow.stream().filter(info -> info.getObserver().getStation().equals(stationName))
                         .filter(info -> info.getGlobalCMTID().equals(id))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
         if (timeWindowSet.size() != 1) throw new RuntimeException(timewindowInformationPath + " is invalid.");
-        TimewindowInformation timeWindow = timeWindowSet.iterator().next();
-        SACFileData obsSac = obsName.read();
-        SACFileData synSac = synName.read();
+        TimewindowData timeWindow = timeWindowSet.iterator().next();
+        SACFileAccess obsSac = obsName.read();
+        SACFileAccess synSac = synName.read();
         Observer station = obsSac.getObserver();
         Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
         Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
@@ -168,8 +168,8 @@ public class TakeuchiStaticCorrection implements Operation {
         double obsAmp = (obsTrace.getMaxValue() - obsTrace.getMinValue()) / 2;
         double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
         double amplitudeRatio = obsAmp / synAmp;
-        StaticCorrection sc =
-                new StaticCorrection(station, id, component, timeWindow.getStartTime(),
+        StaticCorrectionData sc =
+                new StaticCorrectionData(station, id, component, timeWindow.getStartTime(),
                 		timeShift, amplitudeRatio, timeWindow.getPhases());
         outStaticCorrectionSet.add(sc);
     }

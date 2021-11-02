@@ -34,13 +34,13 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -221,7 +221,7 @@ public class PhaseEnvelope implements Operation {
 	
 	@Override
 	public void run() throws Exception {
-		Set<TimewindowInformation> infoset = new HashSet<>();
+		Set<TimewindowData> infoset = new HashSet<>();
 		Utilities.runEventProcess(obsPath, obsEventDir -> {
 			try {
 				obsEventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
@@ -241,8 +241,8 @@ public class PhaseEnvelope implements Operation {
 							SACFileName synname = new SACFileName(synEventPath.resolve(name));
 							System.out.println(obsname);
 							
-							SACFileData obssac = null;
-							SACFileData synsac = null;
+							SACFileAccess obssac = null;
+							SACFileAccess synsac = null;
 							
 							double obsDep = 0;
 							double synDep = 0;
@@ -310,7 +310,7 @@ public class PhaseEnvelope implements Operation {
 												for (int i = 0; i < timewindows.length; i++) {
 													Phase[] phasenames = new Phase[phases[i].length];
 													phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
-													TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getObserver()
+													TimewindowData info = new TimewindowData(timewindows[i][0], timewindows[i][1], obsname.read().getObserver()
 															, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
 													infoset.add(info);
 												}
@@ -326,7 +326,7 @@ public class PhaseEnvelope implements Operation {
 				e.printStackTrace();
 			}
 		}, 10, TimeUnit.HOURS);
-		TimewindowInformationFile.write(infoset, outputPath);
+		TimewindowDataFile.write(infoset, outputPath);
 	}
 	
 	private double[][][] computePhaseEnvelope(SACFileName obsname, SACFileName synname) {
@@ -618,7 +618,7 @@ public class PhaseEnvelope implements Operation {
 		}
 	}
 	
-	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACFileData obsdata, SACFileData syndata, double threshold) {
+	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACFileAccess obsdata, SACFileAccess syndata, double threshold) {
 		Trace obstrace = obsdata.createTrace().cutWindow(0, 4000.);
 		Trace syntrace = syndata.createTrace().cutWindow(0, 4000);
 		double maxobs = obstrace.getMaxValue();
@@ -645,7 +645,7 @@ public class PhaseEnvelope implements Operation {
 	private double[] dominantFrequencySwave(SACFileName sfn, double beforeArrival, double afterArrival) throws IllegalStateException {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
-			SACFileData sd = sfn.read();
+			SACFileAccess sd = sfn.read();
 			double distance = sd.getEventLocation().getEpicentralDistance(sd.getObserver().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();
@@ -1049,7 +1049,7 @@ public class PhaseEnvelope implements Operation {
 	
 	private boolean show; 
 	
-	private Set<TimewindowInformation> timewindowSet;
+	private Set<TimewindowData> timewindowSet;
 	
 	protected final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 	

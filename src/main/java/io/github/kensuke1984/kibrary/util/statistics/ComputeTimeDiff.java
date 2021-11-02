@@ -12,8 +12,8 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 
 public class ComputeTimeDiff {
@@ -24,15 +24,15 @@ public class ComputeTimeDiff {
 		
 		Path outpath = Paths.get("differential_SScS.txt");
 		
-		Set<StaticCorrection> correctionsS = StaticCorrectionFile.read(correctionsSPath);
-		Set<StaticCorrection> correctionsScS = StaticCorrectionFile.read(correctionsScSPath);
+		Set<StaticCorrectionData> correctionsS = StaticCorrectionDataFile.read(correctionsSPath);
+		Set<StaticCorrectionData> correctionsScS = StaticCorrectionDataFile.read(correctionsScSPath);
 
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("Scs");
 		
 		PrintWriter pw = new PrintWriter(outpath.toFile());
-		for (StaticCorrection correctionScS : correctionsScS) {
-			List<StaticCorrection> tmpList = correctionsS.stream().parallel().filter(c -> c.getGlobalCMTID().equals(correctionScS.getGlobalCMTID())
+		for (StaticCorrectionData correctionScS : correctionsScS) {
+			List<StaticCorrectionData> tmpList = correctionsS.stream().parallel().filter(c -> c.getGlobalCMTID().equals(correctionScS.getGlobalCMTID())
 					&& c.getObserver().equals(correctionScS.getObserver())
 					&& c.getComponent().equals(correctionScS.getComponent()))
 					.collect(Collectors.toList());
@@ -40,7 +40,7 @@ public class ComputeTimeDiff {
 				System.err.println("found more than one correction");
 				continue;
 			}
-			StaticCorrection corrS = tmpList.get(0);
+			StaticCorrectionData corrS = tmpList.get(0);
 			
 			double dT = correctionScS.getTimeshift() - corrS.getTimeshift();
 			double dA = correctionScS.getAmplitudeRatio() / corrS.getAmplitudeRatio();
