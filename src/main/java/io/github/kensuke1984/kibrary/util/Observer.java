@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.
  * The actual maximum number of letters are 5 and 2;
  * see <a href=https://ds.iris.edu/ds/nodes/dmc/data/formats/seed/>SEED reference</a>.
- * However, network may be set 'DSM' as stated below, so the maximum length should be though of as 3.)
+ * However, network may be set 'DSM' as stated below, so the maximum length should be thought of as 3.)
  * <p>
  * Observers are considered equal if and only if
  * [network code is equal && station code is equal && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
@@ -47,9 +47,10 @@ public class Observer implements Comparable<Observer> {
      */
     private static final int STA_LENGTH = 5;
     /**
-     * maximum number of letters of network (in case of 'DSM')
+     * maximum number of letters of network
+     * (length it may be 3 in case of 'DSM', but rightPad() won't cut it so it is OK.)
      */
-    private static final int NET_LENGTH = 3;
+    private static final int NET_LENGTH = 2;
 
     /**
      * network code
@@ -252,7 +253,7 @@ public class Observer implements Comparable<Observer> {
 
     public String getPaddedInfoString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH) + " "
-            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 10) + " "
-            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 10);
+            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 9) + " "
+            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 9);
     }
 }

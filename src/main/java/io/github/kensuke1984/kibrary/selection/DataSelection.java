@@ -92,7 +92,6 @@ public class DataSelection implements Operation {
      */
     private Path outputGoodWindowPath;
 
-    private Set<EventFolder> eventDirs;
     private String dateStr;
     private Set<SACComponent> components;
     /**
@@ -138,7 +137,7 @@ public class DataSelection implements Operation {
      */
     private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
+                    && s.getComponent() == t.getComponent() && Math.abs(t.getStartTime() - s.getSynStartTime()) < 1.01;
     private BiPredicate<StaticCorrectionData, TimewindowData> isPair_isotropic = (s,
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent())
@@ -224,6 +223,8 @@ public class DataSelection implements Operation {
         dateStr = Utilities.getTemporaryString();
         infoOutputpath = workPath.resolve("dataSelection" + dateStr + ".inf");
         outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+        dataSelectionInfo = new ArrayList<>();
+        goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
@@ -255,13 +256,6 @@ public class DataSelection implements Operation {
         // =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
         // sacSamplingHz = 20;
 
-        eventDirs = Utilities.eventFolderSet(obsPath);
-        sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
-        staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
-                : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
-        goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
-        dataSelectionInfo = new ArrayList<>();
-
     }
 
     /**
@@ -279,20 +273,26 @@ public class DataSelection implements Operation {
 
     @Override
     public void run() throws Exception {
-        int N_THREADS = Runtime.getRuntime().availableProcessors();
-        ExecutorService exec = Executors.newFixedThreadPool(N_THREADS);
+        Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
+        sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
+        staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
+                : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
 
-        for (EventFolder eventDirectory : eventDirs)
-            exec.execute(new Worker(eventDirectory));
+        int nThreads = Runtime.getRuntime().availableProcessors();
+        ExecutorService es = Executors.newFixedThreadPool(nThreads);
 
-        exec.shutdown();
-        while (!exec.isTerminated()) {
+        // for each event, execute run() of class Worker, which is defined at the bottom of this java file
+        eventDirs.stream().map(Worker::new).forEach(es::execute);
+        es.shutdown();
+
+        while (!es.isTerminated()) {
             try {
                 Thread.sleep(1000);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        // this println() is for starting new line after writing "."s
         System.err.println();
 
         System.err.println("Outputting values of criteria in " + infoOutputpath);
@@ -316,7 +316,7 @@ public class DataSelection implements Operation {
     }
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> isPairRecord.test(s, window)).collect(Collectors.toList());
+        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).collect(Collectors.toList());
         if (corrs.size() != 1) throw new RuntimeException("Found no, or more than 1 static correction for window " + window);
         return corrs.get(0);
     }
@@ -439,19 +439,15 @@ public class DataSelection implements Operation {
 
     private class Worker implements Runnable {
 
-        private Set<SACFileName> obsFiles;
         private EventFolder obsEventDirectory;
         private EventFolder synEventDirectory;
 
-        private GlobalCMTID id;
+        private GlobalCMTID event;
 
-        private Worker(EventFolder ed) throws IOException {
+        private Worker(EventFolder ed) {
             this.obsEventDirectory = ed;
-            (obsFiles = ed.sacFileSet()).removeIf(n -> !n.isOBS());
-            id = ed.getGlobalCMTID();
+            event = ed.getGlobalCMTID();
             synEventDirectory = new EventFolder(synPath.resolve(ed.getName()));
-            if (!synEventDirectory.exists())
-                return;
         }
 
         private Set<TimewindowData> imposeSn_ScSnPair(Set<TimewindowData> info) {
@@ -497,6 +493,16 @@ public class DataSelection implements Operation {
                 }
                 return;
             }
+
+            // collect observed files
+            Set<SACFileName> obsFiles;
+            try {
+                (obsFiles = obsEventDirectory.sacFileSet()).removeIf(s -> !s.isOBS());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                return;
+            }
+
             try (PrintWriter lpw = new PrintWriter(
                     Files.newBufferedWriter(obsEventDirectory.toPath().resolve("stationList" + dateStr + ".txt"),
                             StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
@@ -521,7 +527,7 @@ public class DataSelection implements Operation {
                     SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
                             : SACExtension.valueOfSynthetic(component);
                     SACFileName synName = new SACFileName(synEventDirectory.toPath().resolve(
-                            SACFileName.generate(observer, id, synExt)));
+                            SACFileName.generate(observer, event, synExt)));
                     if (!synName.exists()) {
                         System.err.println("Ignoring non-existing synthetics " + synName);
                         continue;
@@ -542,7 +548,7 @@ public class DataSelection implements Operation {
                     // Pickup timewindows of obsName
                     Set<TimewindowData> windowInformations = sourceTimewindowInformationSet
                             .stream().filter(info -> info.getObserver().equals(observer)
-                                    && info.getGlobalCMTID().equals(id) && info.getComponent() == component)
+                                    && info.getGlobalCMTID().equals(event) && info.getComponent() == component)
                             .collect(Collectors.toSet());
 
                     if (windowInformations.isEmpty())
@@ -556,16 +562,16 @@ public class DataSelection implements Operation {
 
                     Set<TimewindowData> tmpGoodWindows = new HashSet<>();
                     for (TimewindowData window : windowInformations) {
-                        if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10)
+                        if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) // should 10 be maxStaticShift ?
                             continue;
                         double shift = 0.;
                         if (!staticCorrectionSet.isEmpty()) {
                             StaticCorrectionData foundShift = getStaticCorrection(window);
                             shift = foundShift.getTimeshift();
-                            //remove static shift of 10 s (maximum range of the static correction)
                         }
                         if (Math.abs(shift) > maxStaticShift)
                             continue;
+
                         // remove surface wave from window
                         if (excludeSurfaceWave) {
                             SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);
@@ -598,7 +604,7 @@ public class DataSelection implements Operation {
                         double signal = obsU.getNorm() / (window.getEndTime() - window.getStartTime());
                         double SNratio = signal / noise;
 
-                        if (check(lpw, observer, id, component, window, obsU, synU, SNratio)) {
+                        if (check(lpw, observer, event, component, window, obsU, synU, SNratio)) {
                             if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
                                 System.out.println(window);
                             }

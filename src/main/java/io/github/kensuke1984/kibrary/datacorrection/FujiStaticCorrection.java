@@ -204,15 +204,17 @@ public class FujiStaticCorrection implements Operation {
     @Override
     public void run() throws Exception {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
-        int n = Runtime.getRuntime().availableProcessors();
-        ExecutorService es = Executors.newFixedThreadPool(n);
         timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
+
+        int nThreads = Runtime.getRuntime().availableProcessors();
+        ExecutorService es = Executors.newFixedThreadPool(nThreads);
+
+        // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
 
         while (!es.isTerminated()) {
             try {
-                // System.out.println("waiting");
                 Thread.sleep(1000);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -484,6 +486,7 @@ public class FujiStaticCorrection implements Operation {
                 e1.printStackTrace();
                 return;
             }
+
             // TreeMap<String, Double> timeshiftMap = new TreeMap<>();
             for (SACFileName obsName : obsFiles) {
                 // check components
