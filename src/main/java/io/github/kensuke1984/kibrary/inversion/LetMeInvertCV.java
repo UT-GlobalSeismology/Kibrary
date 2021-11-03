@@ -716,7 +716,7 @@ public class LetMeInvertCV implements Operation {
 				if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
 					return false;
 				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+						.getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
@@ -759,7 +759,7 @@ public class LetMeInvertCV implements Operation {
 			chooser = id -> {
 				boolean clusterKeep = false;
 				for (int i = 0; i < clusterIndex.length; i++) {
-					double azimuth = centerPosition[i].getAzimuth(id.getStation().getPosition())
+					double azimuth = centerPosition[i].getAzimuth(id.getObserver().getPosition())
 							* 180. / Math.PI;
 					if (thisClusterIDs.get(i).contains(id.getGlobalCMTID()) && azimuth >= azimuthRange[i][0] && azimuth <= azimuthRange[i][1])
 						clusterKeep = true;
@@ -767,7 +767,7 @@ public class LetMeInvertCV implements Operation {
 				if (!clusterKeep)
 					return false;
 				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+						.getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
@@ -779,72 +779,72 @@ public class LetMeInvertCV implements Operation {
 				}
 				
 				//TODO
-				if (id.getStation().getStation().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-					|| id.getStation().getStation().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
+				if (id.getObserver().getStation().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getObserver().getStation().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
 					|| id.getGlobalCMTID().equals(new GlobalCMTID("201608041415A"))
 					|| id.getGlobalCMTID().equals(new GlobalCMTID("201702181210A"))
-					|| id.getStation().getStation().equals("MONP2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("RRX") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("BC3") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("TPNV") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("VOG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("TPFO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("E39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStation().equals("F43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStation().equals("E47A") && id.getGlobalCMTID().equals(new GlobalCMTID("201404180746A"))
-					|| id.getStation().getStation().equals("G42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStation().equals("E45A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStation().equals("COWI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("SFIN") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStation().equals("P43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStation().equals("SUSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("KSCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("ECSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("LBNH") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("PKME") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("GLMI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("LONY") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("M50A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStation().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStation().equals("Q44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStation().equals("K35A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-					|| id.getStation().getStation().equals("SS67") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStation().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getObserver().getStation().equals("MONP2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("RRX") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("BC3") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("TPNV") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("VOG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("TPFO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("E39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getObserver().getStation().equals("F43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getObserver().getStation().equals("E47A") && id.getGlobalCMTID().equals(new GlobalCMTID("201404180746A"))
+					|| id.getObserver().getStation().equals("G42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getObserver().getStation().equals("E45A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getObserver().getStation().equals("COWI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("SFIN") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getObserver().getStation().equals("P43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getObserver().getStation().equals("SUSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("KSCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("ECSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("LBNH") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("PKME") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("GLMI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("LONY") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("M50A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getObserver().getStation().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getObserver().getStation().equals("Q44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getObserver().getStation().equals("K35A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+					|| id.getObserver().getStation().equals("SS67") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getObserver().getStation().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
 					
-					|| id.getStation().getStation().equals("SM28") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getObserver().getStation().equals("SM28") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
 					
-					|| id.getStation().getStation().equals("RSSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("MDND") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("BOZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("BW06") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("K22A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
-					|| id.getStation().getStation().equals("WUAZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("SRU") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("R11A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("DUG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("CMB") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("NEE2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("GSC") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStation().equals("GMR") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("RSSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("MDND") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("BOZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("BW06") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("K22A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
+					|| id.getObserver().getStation().equals("WUAZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("SRU") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("R11A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("DUG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("CMB") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("NEE2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("GSC") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getObserver().getStation().equals("GMR") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
 					
-					|| id.getStation().getStation().equals("SS77") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStation().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStation().equals("J38A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
-					|| id.getStation().getStation().equals("K36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+					|| id.getObserver().getStation().equals("SS77") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getObserver().getStation().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getObserver().getStation().equals("J38A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+					|| id.getObserver().getStation().equals("K36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
 					
-					|| id.getStation().getStation().equals("V03C") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
-					|| id.getStation().getStation().equals("H17A") && id.getGlobalCMTID().equals(new GlobalCMTID("201405140338A"))
+					|| id.getObserver().getStation().equals("V03C") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
+					|| id.getObserver().getStation().equals("H17A") && id.getGlobalCMTID().equals(new GlobalCMTID("201405140338A"))
 					
-					|| id.getStation().getStation().equals("EYMN") && id.getGlobalCMTID().equals(new GlobalCMTID("200503211243A"))
+					|| id.getObserver().getStation().equals("EYMN") && id.getGlobalCMTID().equals(new GlobalCMTID("200503211243A"))
 					
-					|| id.getStation().getStation().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-					|| id.getStation().getStation().equals("T19A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-					|| id.getStation().getStation().equals("S21A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getObserver().getStation().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getObserver().getStation().equals("T19A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getObserver().getStation().equals("S21A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
 //					
 //					|| id.getStation().getName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
 //					|| id.getStation().getName().equals("SM17") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
@@ -906,7 +906,7 @@ public class LetMeInvertCV implements Operation {
 				if (signalNoiseRatioFile != null) {
 					double snRatio = signalNoiseRatios.parallelStream().filter(s ->
 							s.getGlobalCMTID().equals(id.getGlobalCMTID())
-							&& s.getObserver().equals(id.getStation())
+							&& s.getObserver().equals(id.getObserver())
 							&& s.getComponent().equals(id.getSacComponent()))
 						.findFirst().get().getAmplitudeRatio();
 					if (snRatio < minSNRatio) return false;
@@ -919,7 +919,7 @@ public class LetMeInvertCV implements Operation {
 			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
 			chooser = id -> {
 				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+						.getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
@@ -987,7 +987,7 @@ public class LetMeInvertCV implements Operation {
 					EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get();
 					int icluster = cluster.getIndex();
 					
-					double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(id.getObserver().getPosition()));
 					if (azimuth < 180) azimuth += 360;
 					double tmpw = 1.;
 					
@@ -1061,7 +1061,7 @@ public class LetMeInvertCV implements Operation {
 						EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get();
 						int icluster = cluster.getIndex();
 						
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(id.getStation().getPosition()));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(id.getObserver().getPosition()));
 						if (azimuth < 180) azimuth += 360;
 						double tmpw = 1.;
 						
@@ -1822,7 +1822,7 @@ public class LetMeInvertCV implements Operation {
 	
 	public boolean isPair(BasicID basicID, PartialID partialID) {
 		return basicID.getGlobalCMTID().equals(partialID.getGlobalCMTID()) 
-				&& basicID.getStation().equals(partialID.getStation()) 
+				&& basicID.getObserver().equals(partialID.getObserver()) 
 				&& basicID.getSacComponent().equals(partialID.getSacComponent())
 				&& Math.abs(basicID.getStartTime() - partialID.getStartTime()) < 1.;
 	}
@@ -2248,16 +2248,16 @@ public class LetMeInvertCV implements Operation {
 			for (int i = 0; i < d.getNTimeWindow(); i++) {
 				double variance = delVec[i].dotProduct(delVec[i]) / obsVec[i].dotProduct(obsVec[i]);
 				double correlation = obsVec[i].dotProduct(synVec[i]) / obsVec[i].getNorm() / synVec[i].getNorm();
-				pw1.println(i + " " + obsIDs[i].getStation() + " " + obsIDs[i].getStation().getNetwork() + " "
+				pw1.println(i + " " + obsIDs[i].getObserver() + " " + obsIDs[i].getObserver().getNetwork() + " "
 						+ obsIDs[i].getGlobalCMTID() + " " + variance + " " + correlation);
 			}
 		}
 		for (int i = 0; i < d.getNTimeWindow(); i++) {
-			String name = obsIDs[i].getStation() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
+			String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
 					+ "." + i + ".txt";
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
-			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
+			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
@@ -2278,20 +2278,20 @@ public class LetMeInvertCV implements Operation {
 							Files.newBufferedWriter(plotPath4, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
 				if (i < (d.getNTimeWindow() - 1)) {
-					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
-					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
+					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\", \\");
+					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\", \\");
 					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\", \\");
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\", \\");
 				} else {
 
-					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
-					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
+					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\"");
+					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\"");
 					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\"");
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\"");
 				}
 //				double maxObs = obsVec[i].getLInfNorm();
 				double obsStart = obsIDs[i].getStartTime();
@@ -2347,12 +2347,12 @@ public class LetMeInvertCV implements Operation {
 		BasicID[] obsIDs = eq.getDVector().getObsIDs();
 		BasicID[] synIDs = eq.getDVector().getSynIDs();
 		for (int i = 0; i < nTimeWindow; i++) {
-			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getStation() + "."
+			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getObserver() + "."
 					+ obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
 			Path plotFile = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/record.plt");
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
-			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
+			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
@@ -2361,9 +2361,9 @@ public class LetMeInvertCV implements Operation {
 					PrintWriter plotWa = new PrintWriter(
 							Files.newBufferedWriter(plotFilea, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
-				plotW.println("\"" + out.getFileName() + "\" u 2:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation()
+				plotW.println("\"" + out.getFileName() + "\" u 2:($3+" + gcarc + ") ti\"" + obsIDs[i].getObserver()
 						+ "\", \\");
-				plotWa.println("\"" + out.getFileName() + "\" u 2:($3+" + azimuth + ") ti\"" + obsIDs[i].getStation()
+				plotWa.println("\"" + out.getFileName() + "\" u 2:($3+" + azimuth + ") ti\"" + obsIDs[i].getObserver()
 						+ "\", \\");
 				pw.println("#syntime synthetic+");
 				for (int j = 0; j < vectors[i].getDimension(); j++) {
@@ -2843,7 +2843,7 @@ public class LetMeInvertCV implements Operation {
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
-				Observer station = id.getStation();
+				Observer station = id.getObserver();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));

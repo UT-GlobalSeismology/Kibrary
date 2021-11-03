@@ -301,7 +301,7 @@ public class Weighting {
 	public static double weightingAzimuthTZCA(BasicID obs) {
 		double weight = 1.;
 		Location loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
-		double azimuth = Math.toDegrees(loc.getAzimuth(obs.getStation().getPosition()));
+		double azimuth = Math.toDegrees(loc.getAzimuth(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
 		
@@ -331,7 +331,7 @@ public class Weighting {
 	public static double weightingDistanceTZCA(BasicID obs) {
 		double weight = 1.;
 		Location loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
-		double distance = Math.toDegrees(loc.getEpicentralDistance(obs.getStation().getPosition()));
+		double distance = Math.toDegrees(loc.getEpicentralDistance(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
 		
@@ -360,7 +360,7 @@ public class Weighting {
 	
 	public static double weightingStationTZCA(BasicID obs) {
 		double weight = 1.;
-		Observer station = obs.getStation();
+		Observer station = obs.getObserver();
 		
 		if (station.getPosition().getLatitude() < 25.)
 			weight = 2.;

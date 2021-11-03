@@ -50,7 +50,7 @@ public class CombineParameters {
 			
 			int nNew = mapping.getNnew();
 			
-			Set<Observer> stationSet = Stream.of(partials).parallel().map(par -> par.getStation()).collect(Collectors.toSet());
+			Set<Observer> stationSet = Stream.of(partials).parallel().map(par -> par.getObserver()).collect(Collectors.toSet());
 			Set<GlobalCMTID> globalCMTIDSet = Stream.of(partials).parallel().map(par -> par.getGlobalCMTID()).collect(Collectors.toSet());
 			
 			double[][] periodRanges = new double[][] {{partials[0].getMinPeriod(), partials[0].getMaxPeriod()}};
@@ -75,7 +75,7 @@ public class CombineParameters {
 			globalCMTIDSet.stream().forEach(event -> {
 				List<PartialID> eventPartials = Stream.of(partials).filter(par -> par.getGlobalCMTID().equals(event)).collect(Collectors.toList());
 				stationSet.stream().forEach(station -> {
-					List<PartialID> stationPartials = eventPartials.stream().filter(par -> par.getStation().equals(station)).collect(Collectors.toList());
+					List<PartialID> stationPartials = eventPartials.stream().filter(par -> par.getObserver().equals(station)).collect(Collectors.toList());
 					if (stationPartials.size() > 0) {
 						IntStream.range(0, nNew).forEach(inew -> {
 							int[] iOriginals = mapping.getiNewToOriginal(inew);
@@ -103,7 +103,7 @@ public class CombineParameters {
 //								System.out.println(unknown.getWeighting() + " "  + dataVector.getNorm());
 							}
 							
-							PartialID tmpPartial = new PartialID(refID.getStation(), refID.getGlobalCMTID(), refID.getSacComponent(), refID.getSamplingHz()
+							PartialID tmpPartial = new PartialID(refID.getObserver(), refID.getGlobalCMTID(), refID.getSacComponent(), refID.getSamplingHz()
 									, refID.getStartTime(), refID.getNpts(), refID.getMinPeriod(), refID.getMaxPeriod(), refID.getPhases(), refID.getStartByte()
 									, refID.isConvolute(), newUnknowns[inew].getLocation(), newUnknowns[inew].getPartialType(), dataVector.toArray());
 							try {

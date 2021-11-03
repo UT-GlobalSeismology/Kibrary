@@ -46,7 +46,7 @@ public class RotationWaveformVisual {
 		List<BasicID> tmp_R = Stream.of(ids).filter(id -> id.getSacComponent().equals(SACComponent.R)).collect(Collectors.toList());
 		List<BasicID> ids_R = new ArrayList<>();
 		for (BasicID idZ : ids_Z) {
-			BasicID idR = tmp_R.stream().filter(id -> id.getGlobalCMTID().equals(idZ.getGlobalCMTID()) && id.getStation().equals(idZ.getStation())
+			BasicID idR = tmp_R.stream().filter(id -> id.getGlobalCMTID().equals(idZ.getGlobalCMTID()) && id.getObserver().equals(idZ.getObserver())
 					&& id.getWaveformType().equals(idZ.getWaveformType()) && Utilities.equalWithinEpsilon(id.getStartTime(), idZ.getStartTime(), 0.1))
 					.findFirst().get();
 			ids_R.add(idR);
@@ -72,7 +72,7 @@ public class RotationWaveformVisual {
 				BasicID idZ = ids_Z_event.get(i);
 				BasicID idR = ids_R_event.get(i);
 				
-				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(idZ.getStation().getPosition()));
+				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(idZ.getObserver().getPosition()));
 				int k = (int) (distance * 2);
 				
 				timeTool.calcTime(distance);

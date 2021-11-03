@@ -44,7 +44,7 @@ public class MuToVs {
 			double r = p.getPerturbationLocation().getR();
 			double[] vsData = new ArrayRealVector(p.getData()).mapMultiply(2 * structure.getRhoAt(r) * structure.getVshAt(r)).toArray();
 			
-			PartialID parVs = new PartialID(p.getStation(), p.getGlobalCMTID(), p.getSacComponent(), p.getSamplingHz(),
+			PartialID parVs = new PartialID(p.getObserver(), p.getGlobalCMTID(), p.getSacComponent(), p.getSamplingHz(),
 					p.getStartTime(), p.getNpts(), p.getMinPeriod(), p.getMaxPeriod(),
 					p.getPhases(), p.getStartByte(), p.isConvolute(), p.getPerturbationLocation()
 					, PartialType.Vs, vsData);
@@ -56,7 +56,7 @@ public class MuToVs {
 		Path outID = Paths.get("partialID" + tmpString +".dat");
 		Path out = Paths.get("partial" + tmpString + ".dat");
 		
-		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getStation()).collect(Collectors.toSet());
+		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getObserver()).collect(Collectors.toSet());
 		Set<GlobalCMTID> globalCMTIDSet = partialsMU.stream().map(p -> p.getGlobalCMTID()).collect(Collectors.toSet());
 		
 		Set<Phase> phaseSet = new HashSet<>();
@@ -83,7 +83,7 @@ public class MuToVs {
 		for (int i = 0; i < partialsOrder.length; i++) {
 			PartialID par = partialsOrder[i];
 			if (partial.getGlobalCMTID().equals(par.getGlobalCMTID())
-					&& partial.getStation().equals(par.getStation())
+					&& partial.getObserver().equals(par.getObserver())
 					&& partial.getSacComponent().equals(par.getSacComponent())
 					&& new Phases(partial.getPhases()).equals(new Phases(par.getPhases()))
 					&& Math.abs(partial.getStartTime() - par.getStartTime()) < 1.01) {

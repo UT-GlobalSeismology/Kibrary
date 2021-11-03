@@ -41,13 +41,13 @@ public class Kernel1DVisual {
 				
 				double[] data = partial.getData();
 				double samplingHz = partial.getSamplingHz();
-				double distance = partial.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(partial.getStation().getPosition())
+				double distance = partial.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(partial.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (samplingHz != 1.)
 					throw new RuntimeException("SamplingHz != 1 not yet supported");
 				double t0 = partial.getStartTime();
 				
-				Path filePath2 = dir11.resolve(partial.getStation()
+				Path filePath2 = dir11.resolve(partial.getObserver()
 						+ "_" + new Phases(partial.getPhases()).toString()
 						+ "_" + (int) partial.getPerturbationLocation().getR()
 						+ "_" + partial.getPartialType()

@@ -186,12 +186,13 @@ public class DataKitchen implements Operation {
         processors.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
-        int threadNum = Runtime.getRuntime().availableProcessors();
-        ExecutorService es = Executors.newFixedThreadPool(threadNum);
+        int nThreads = Runtime.getRuntime().availableProcessors();
+        System.err.println("Running on " + nThreads + " processors");
+        ExecutorService es = Executors.newFixedThreadPool(nThreads);
 
         processors.forEach(es::submit);
-
         es.shutdown();
+
         try {
             // check if everything is done every 5 seconds
             while (!es.isTerminated()) Thread.sleep(1000 * 5);

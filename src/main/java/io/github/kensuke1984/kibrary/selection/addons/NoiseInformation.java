@@ -41,13 +41,13 @@ public class NoiseInformation {
 			if (waveform.getWaveformType().equals(WaveformType.OBS)) {
 				BasicID noise = noises.parallelStream().filter(n ->
 					n.getGlobalCMTID().equals(waveform.getGlobalCMTID())
-					&& n.getStation().equals(waveform.getStation())
+					&& n.getObserver().equals(waveform.getObserver())
 					&& n.getSacComponent().equals(waveform.getSacComponent()))
 				.findFirst().get();
 				
 				double snratio = signalNoiseRatio(noise, waveform);
 				StaticCorrectionData ratiodata = new StaticCorrectionData(
-						waveform.getStation(), waveform.getGlobalCMTID(),
+						waveform.getObserver(), waveform.getGlobalCMTID(),
 						waveform.getSacComponent(), 0, 0, snratio, waveform.getPhases());
 				snratios.add(ratiodata);
 			}

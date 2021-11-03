@@ -132,7 +132,7 @@ public class Profile_alignPcP {
 			Map<Observer, Double> stationSynVariance = new HashMap<>();
 			Map<Observer, Double> stationBornVariance = new HashMap<>();
 			Map<Observer, Double> stationObsNorm = new HashMap<>();
-			obsList.parallelStream().map(id -> id.getStation()).distinct().forEach(station -> {
+			obsList.parallelStream().map(id -> id.getObserver()).distinct().forEach(station -> {
 				stationSynVariance.put(station, new Double(0));
 				stationBornVariance.put(station, new Double(0));
 				stationObsNorm.put(station, new Double(0));
@@ -159,8 +159,8 @@ public class Profile_alignPcP {
 			String[] eachMisfitString = new String[] {""};
 			
 			Comparator<BasicID> compareByDistance = (BasicID o1, BasicID o2) -> {
-				double d1 = o1.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o1.getStation().getPosition());
-				double d2 = o2.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o2.getStation().getPosition());
+				double d1 = o1.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o1.getObserver().getPosition());
+				double d2 = o2.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o2.getObserver().getPosition());
             	return Double.compare(d1, d2);
 				};
 			
@@ -209,7 +209,7 @@ public class Profile_alignPcP {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							double ypos = counter.getAndIncrement() * 6.;
 							double norm = maxObs /= 3.;
@@ -248,7 +248,7 @@ public class Profile_alignPcP {
 							double bornCorr = bornVector.dotProduct(obsVector) / (bornVector.getNorm() * obsVector.getNorm());
 							double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
 							double bornRatio = bornVector.getLInfNorm() / obsVector.getLInfNorm();
-							eachMisfitString[0] += id.getStation().getStation() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+							eachMisfitString[0] += id.getObserver().getStation() + " " + id.getObserver().getNetwork() + " " + id.getObserver().getPosition() + " "
 									+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 									+ tmpSyn + " " + tmpBorn + " " + synCorr + " " + bornCorr + "\n";
 							
@@ -260,7 +260,7 @@ public class Profile_alignPcP {
 							totalBornVariance[0] += tmpBornVariance;
 							totalObsNorm[0] += tmpObsNorm;
 							
-							Observer sta = id.getStation();
+							Observer sta = id.getObserver();
 							try {
 //								tmpSynVariance += stationSynVariance.get(sta);
 //								tmpBornVariance += stationBornVariance.get(sta);
@@ -341,9 +341,9 @@ public class Profile_alignPcP {
 					RealVector synVector = synTrace.getYVector();
 					RealVector bornVector = bornTrace.getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -377,7 +377,7 @@ public class Profile_alignPcP {
 					obsNorm += tmpObsNorm;
 					
 					List<Observer> tmpList = azimuthStationList.get(j);
-					tmpList.add(id.getStation());
+					tmpList.add(id.getObserver());
 					azimuthStationList.set(j, tmpList);
 				}
 					double tmpSyn = synVariance / obsNorm;

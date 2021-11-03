@@ -99,7 +99,7 @@ public class LambdaMuToMuGivenR {
 		Path outID4 = Paths.get("partialID_KK01ahae.dat");
 		Path out4 = Paths.get("partial_KK01ahae.dat");
 		
-		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getStation()).collect(Collectors.toSet());
+		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getObserver()).collect(Collectors.toSet());
 		Set<GlobalCMTID> globalCMTIDSet = partialsMU.stream().map(p -> p.getGlobalCMTID()).collect(Collectors.toSet());
 		
 		Set<Phase> phaseSet = new HashSet<>();
@@ -124,7 +124,7 @@ public class LambdaMuToMuGivenR {
 			PartialID partialMU = partialsMU.get(indexOrderedMU[i]);
 			PartialID partialLambda = partialsLambda.get(indexOrderedLambda[i]);
 			if (!(partialLambda.getGlobalCMTID().equals(partialMU.getGlobalCMTID())
-					&& partialLambda.getStation().equals(partialMU.getStation())
+					&& partialLambda.getObserver().equals(partialMU.getObserver())
 					&& partialLambda.getPerturbationLocation().equals(partialMU.getPerturbationLocation())
 					&& partialLambda.getSacComponent().equals(partialMU.getSacComponent())
 					&& new Phases(partialLambda.getPhases()).equals(new Phases(partialMU.getPhases())))) {
@@ -160,19 +160,19 @@ public class LambdaMuToMuGivenR {
 				muPrimeData4[j] = (muData[j] - 2 * lambdaData[j]) + 1./Rsp4*vp*vp/vs/vs * lambdaData[j];
 			}
 			
-			PartialID parMuPrime1 = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parMuPrime1 = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
 					, PartialType.MU, muPrimeData1);
-			PartialID parMuPrime2 = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parMuPrime2 = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
 					, PartialType.MU, muPrimeData2);
-			PartialID parMuPrime3 = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parMuPrime3 = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
 					, PartialType.MU, muPrimeData3);
-			PartialID parMuPrime4 = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parMuPrime4 = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
 					, PartialType.MU, muPrimeData4);
@@ -193,7 +193,7 @@ public class LambdaMuToMuGivenR {
 		for (int i = 0; i < partialsOrder.length; i++) {
 			PartialID par = partialsOrder[i];
 			if (partial.getGlobalCMTID().equals(par.getGlobalCMTID())
-					&& partial.getStation().equals(par.getStation())
+					&& partial.getObserver().equals(par.getObserver())
 					&& partial.getSacComponent().equals(par.getSacComponent())
 					&& new Phases(partial.getPhases()).equals(new Phases(par.getPhases()))
 					&& Math.abs(partial.getStartTime() - par.getStartTime()) < 1.01) {

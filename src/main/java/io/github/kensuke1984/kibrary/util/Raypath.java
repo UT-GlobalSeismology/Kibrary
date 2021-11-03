@@ -66,7 +66,7 @@ public class Raypath {
      * @param basicID of a raypath to create
      */
     public Raypath(BasicID basicID) {
-        this(basicID.getGlobalCMTID().getEvent().getCmtLocation(), basicID.getStation().getPosition());
+        this(basicID.getGlobalCMTID().getEvent().getCmtLocation(), basicID.getObserver().getPosition());
     }
 
     /**

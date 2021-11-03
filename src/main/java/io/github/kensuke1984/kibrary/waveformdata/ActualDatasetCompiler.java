@@ -131,28 +131,18 @@ public class ActualDatasetCompiler implements Operation {
      */
     private boolean convolved;
     /**
-     * If it corrects time
+     * Whether to correct time
      */
-    private boolean timeCorrection;
+    private boolean correctTime;
     /**
-     * if it corrects amplitude ratio
+     * Whether to correct amplitude ratio
      */
-    private boolean amplitudeCorrection;
+    private boolean correctAmplitude;
     /**
      * [bool] time-shift data to correct for 3-D mantle
      */
     private boolean correctMantle;
-    private Set<StaticCorrectionData> staticCorrectionSet;
-    private Set<StaticCorrectionData> mantleCorrectionSet;
-    private Set<TimewindowData> timewindowInformationSet;
-    private Set<TimewindowData> timewindowRefInformationSet;
-    private Set<EventFolder> eventDirs;
-    private Set<Observer> stationSet;
-    private Set<GlobalCMTID> idSet;
-    private Phase[] phases;
-    private double[][] periodRanges;
-    private double noisePower;
-    private int finalFreqSamplingHz;
+
     /**
      * low frequency cut-off for spectrum data
      */
@@ -169,6 +159,18 @@ public class ActualDatasetCompiler implements Operation {
      * [bool] add white noise to synthetics data (for synthetic tests)
      */
     private boolean addNoise;
+    private double noisePower;
+
+    private Set<TimewindowData> timewindowInformationSet;
+    private Set<TimewindowData> timewindowRefInformationSet;
+    private Set<StaticCorrectionData> staticCorrectionSet;
+    private Set<StaticCorrectionData> mantleCorrectionSet;
+    private Set<EventFolder> eventDirs;
+    private Set<Observer> observerSet;
+    private Set<GlobalCMTID> eventSet;
+    private Phase[] phases;
+    private double[][] periodRanges;
+    private int finalFreqSamplingHz;
     /**
      * event-averaged amplitude corrections, used if amplitudeCorrection is False
      */
@@ -220,31 +222,34 @@ public class ActualDatasetCompiler implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved");
-            pw.println("##boolean timeCorrection (false)");
-            pw.println("#timeCorrection");
-            pw.println("##boolean amplitudeCorrection (false)");
-            pw.println("#amplitudeCorrection");
             pw.println("##Path of a timewindow information file, must be defined");
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a timewindow information file for a reference phase use to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
-            pw.println("##Path of a static correction file, ");
-            pw.println("##if any of the corrections are true, the path must be defined");
+            pw.println("##Path of a static correction file");
+            pw.println("##If correctTime or correctAmplitude is true, the path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##double value of sac sampling Hz (20) can't be changed now");
-            pw.println("#sacSamplingHz the value will be ignored");
-            pw.println("##double value of sampling Hz in output files (1)");
-            pw.println("#finalSamplingHz");
-            pw.println("#minDistance");
-            pw.println("#addNoise false");
-            pw.println("#correctMantle false");
+            pw.println("##Path of a mantle correction file");
+            pw.println("##If correctMantle is true, the path must be defined.");
             pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
+            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("#convolved");
+            pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
+            pw.println("#sacSamplingHz the value will be ignored");
+            pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
+            pw.println("#finalSamplingHz");
+            pw.println("##(boolean) Whether time should be corrected (false)");
+            pw.println("#correctTime");
+            pw.println("##(boolean) Whether amplitude should be corrected (false)");
+            pw.println("#correctAmplitude");
+            pw.println("##(boolean) Whether mantle should be corrected for (false)");
+            pw.println("#correctMantle false");
+            pw.println("#minDistance");
             pw.println("#lowFreq");
             pw.println("#highFreq");
-            pw.println("##Add noise for synthetic test");
+            pw.println("##(boolean) Whether to add noise for synthetic test (false)");
             pw.println("#addNoise");
+            pw.println("##(boolean) Whether to add noise for synthetic test (false)");
             pw.println("#noisePower");
         }
         System.err.println(outPath + " is created.");
@@ -260,43 +265,60 @@ public class ActualDatasetCompiler implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
         if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
-        if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
-        if (!property.containsKey("amplitudeCorrection")) property.setProperty("amplitudeCorrection", "false");
-        if (!property.containsKey("timeCorrection")) property.setProperty("timeCorrection", "false");
         if (!property.containsKey("timewindowPath"))
-            throw new IllegalArgumentException("There is no information about timewindowPath.");
+            throw new RuntimeException("There is no information about timewindowPath.");
+        if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
         if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
         if (!property.containsKey("finalSamplingHz")) property.setProperty("finalSamplingHz", "1");
-        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0.");
-        if (!property.containsKey("addNoise")) property.setProperty("addNoise", "false");
+        if (!property.containsKey("correctAmplitude")) property.setProperty("correctAmplitude", "false");
+        if (!property.containsKey("correctTime")) property.setProperty("correctTime", "false");
         if (!property.containsKey("correctMantle")) property.setProperty("correctMantle", "false");
+        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0.");
         if (!property.containsKey("lowFreq")) property.setProperty("lowFreq", "0.01");
         if (!property.containsKey("highFreq")) property.setProperty("highFreq", "0.08");
+        if (!property.containsKey("addNoise")) property.setProperty("addNoise", "false");
         if (!property.containsKey("noisePower")) property.setProperty("noisePower", "1");
     }
 
     private void set() throws NoSuchFileException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
-        obsPath = getPath("obsPath");
-        synPath = getPath("synPath");
+        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
+        obsPath = getPath("obsPath");
+        if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
+        synPath = getPath("synPath");
+        if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
         timewindowPath = getPath("timewindowPath");
-        timeCorrection = Boolean.parseBoolean(property.getProperty("timeCorrection"));
-        amplitudeCorrection = Boolean.parseBoolean(property.getProperty("amplitudeCorrection"));
+        if (!Files.exists(timewindowPath))
+            throw new NoSuchFileException("The timewindow file " + timewindowPath + " does not exist");
 
-        if (timeCorrection || amplitudeCorrection) {
+        if (property.containsKey("timewindowRefPath")) {
+            timewindowRefPath = getPath("timewindowRefPath");
+            if (!Files.exists(timewindowRefPath))
+                throw new NoSuchFileException("The timewindow ref file" + timewindowRefPath + " does not exist");
+        }
+
+        correctTime = Boolean.parseBoolean(property.getProperty("correctTime"));
+        correctAmplitude = Boolean.parseBoolean(property.getProperty("correctAmplitude"));
+        if (correctTime || correctAmplitude) {
             if (!property.containsKey("staticCorrectionPath"))
                 throw new RuntimeException("staticCorrectionPath is blank");
             staticCorrectionPath = getPath("staticCorrectionPath");
             if (!Files.exists(staticCorrectionPath))
-                throw new NoSuchFileException(staticCorrectionPath.toString());
+                throw new NoSuchFileException("The static correction file " + staticCorrectionPath + " does not exist");
         }
 
         correctMantle = Boolean.parseBoolean(property.getProperty("correctMantle"));
-        if (correctMantle) mantleCorrectionPath = getPath("mantleCorrectionPath");
+        if (correctMantle) {
+            if (!property.containsKey("mantleCorrectionPath"))
+                throw new RuntimeException("mantleCorrectionPath is blank");
+            mantleCorrectionPath = getPath("mantleCorrectionPath");
+            if (!Files.exists(mantleCorrectionPath))
+                throw new NoSuchFileException("The mantle correction file " + mantleCorrectionPath + " does not exist");
+        }
 
         convolved = Boolean.parseBoolean(property.getProperty("convolved"));
 
@@ -306,16 +328,16 @@ public class ActualDatasetCompiler implements Operation {
         finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
 
         minDistance = Double.parseDouble(property.getProperty("minDistance"));
-
-        addNoise = Boolean.parseBoolean(property.getProperty("addNoise"));
-        if (addNoise) System.out.println("Adding noise");
-
-        if (property.containsKey("timewindowRefPath")) timewindowRefPath = getPath("timewindowRefPath");
         lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
         highFreq = Double.parseDouble(property.getProperty("highFreq"));
 
+        addNoise = Boolean.parseBoolean(property.getProperty("addNoise"));
         noisePower = Double.parseDouble(property.getProperty("noisePower"));
-        System.out.println("Noise power: " + noisePower);
+        if (addNoise) {
+            System.err.println("Adding noise.");
+            System.err.println("Noise power: " + noisePower);
+        }
+
         finalFreqSamplingHz = 8;
     }
 
@@ -325,18 +347,18 @@ public class ActualDatasetCompiler implements Operation {
     * @throws Exception if any
     */
    public static void main(String[] args) throws Exception {
-       ActualDatasetCompiler osdm = new ActualDatasetCompiler(Property.parse(args));
+       ActualDatasetCompiler adc = new ActualDatasetCompiler(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(ActualDatasetCompiler.class.getName() + " is going.");
-       osdm.run();
+       adc.run();
        System.err.println(ActualDatasetCompiler.class.getName() + " finished in "
                + Utilities.toTimeString(System.nanoTime() - startTime));
    }
 
    @Override
    public void run() throws Exception {
-       if (20 % finalSamplingHz != 0)
-           throw new RuntimeException("Must choose a finalSamplingHz that divides 20");
+       if (sacSamplingHz % finalSamplingHz != 0)
+           throw new RuntimeException("Must choose a finalSamplingHz that divides " + sacSamplingHz);
 
        timewindowInformationSet = TimewindowDataFile.read(timewindowPath)
                .stream().filter(tw -> {
@@ -347,7 +369,7 @@ public class ActualDatasetCompiler implements Operation {
                    return true;
                }).collect(Collectors.toSet());
 
-       if (timeCorrection || amplitudeCorrection) {
+       if (correctTime || correctAmplitude) {
            Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
            staticCorrectionSet = tmpset.stream()
                    .filter(c -> timewindowInformationSet.parallelStream()
@@ -368,7 +390,7 @@ public class ActualDatasetCompiler implements Operation {
        }
 
        if (correctMantle) {
-           System.out.println("Using mantle corrections");
+           System.err.println("Using mantle corrections");
            mantleCorrectionSet = StaticCorrectionDataFile.read(mantleCorrectionPath);
        }
 
@@ -384,18 +406,19 @@ public class ActualDatasetCompiler implements Operation {
                    return true;
                }).collect(Collectors.toSet());
 
-       stationSet = timewindowInformationSet.stream().map(TimewindowData::getObserver)
+       observerSet = timewindowInformationSet.stream().map(TimewindowData::getObserver)
                .collect(Collectors.toSet());
-       idSet = timewindowInformationSet.stream().map(TimewindowData::getGlobalCMTID)
+       eventSet = timewindowInformationSet.stream().map(TimewindowData::getGlobalCMTID)
                .collect(Collectors.toSet());
        phases = timewindowInformationSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
                .distinct().toArray(Phase[]::new);
 
        readPeriodRanges();
 
-       int n = Runtime.getRuntime().availableProcessors();
-       System.out.println("Running on " + n + " processors");
-       ExecutorService execs = Executors.newFixedThreadPool(n);
+       int nThreads = Runtime.getRuntime().availableProcessors();
+       System.err.println("Running on " + nThreads + " processors");
+       ExecutorService execs = Executors.newFixedThreadPool(nThreads);
+
        String dateStr = Utilities.getTemporaryString();
        Path waveIDPath = null;
        Path waveformPath = null;
@@ -423,22 +446,24 @@ public class ActualDatasetCompiler implements Operation {
        spcImIDPath = workPath.resolve("spcImID" + dateStr + ".dat");
        spcImPath = workPath.resolve("spcIm" + dateStr + ".dat");
 
-       try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
+       try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, observerSet, eventSet,
                periodRanges, phases)) {
-           envelopeWriter = new WaveformDataWriter(envelopeIDPath, envelopePath, stationSet, idSet,
+           envelopeWriter = new WaveformDataWriter(envelopeIDPath, envelopePath, observerSet, eventSet,
                    periodRanges, phases);
-           hyWriter = new WaveformDataWriter(hyIDPath, hyPath, stationSet, idSet,
+           hyWriter = new WaveformDataWriter(hyIDPath, hyPath, observerSet, eventSet,
                    periodRanges, phases);
            spcAmpWriter = new WaveformDataWriter(spcAmpIDPath, spcAmpPath,
-                   stationSet, idSet, periodRanges, phases);
+                   observerSet, eventSet, periodRanges, phases);
            spcReWriter = new WaveformDataWriter(spcReIDPath, spcRePath,
-                   stationSet, idSet, periodRanges, phases);
+                   observerSet, eventSet, periodRanges, phases);
            spcImWriter = new WaveformDataWriter(spcImIDPath, spcImPath,
-                   stationSet, idSet, periodRanges, phases);
+                   observerSet, eventSet, periodRanges, phases);
            dataWriter = bdw;
+
            for (EventFolder eventDir : eventDirs)
                execs.execute(new Worker(eventDir));
            execs.shutdown();
+
            while (!execs.isTerminated())
                Thread.sleep(1000);
            envelopeWriter.close();
@@ -649,7 +674,7 @@ public class ActualDatasetCompiler implements Operation {
         double signal = trace.getYVector().getNorm() / trace.getLength();
         double noise = noiseTrace.getYVector().getNorm() / noiseTrace.getLength();
         double snratio = signal / noise;
-        System.out.println("snratio " + snratio + " noise " + noise);
+        System.err.println("snratio " + snratio + " noise " + noise);
 
         double[] waveDataNoise = trace.getY();
         return IntStream.range(0, npts).parallel().mapToDouble(i -> waveDataNoise[i * step + startPoint]).toArray();
@@ -686,47 +711,36 @@ public class ActualDatasetCompiler implements Operation {
      */
     private class Worker implements Runnable {
 
-        private EventFolder OBS_EVENT_DIR;
+        private EventFolder obsEventDir;
+        GlobalCMTID event;
 
         private Worker(EventFolder eventDir) {
-            OBS_EVENT_DIR = eventDir;
+            obsEventDir = eventDir;
+            event = obsEventDir.getGlobalCMTID();
         }
 
         @Override
         public void run() {
-            Path synEventPath = synPath.resolve(OBS_EVENT_DIR.getGlobalCMTID().toString());
+            Path synEventPath = synPath.resolve(obsEventDir.getGlobalCMTID().toString());
             if (!Files.exists(synEventPath))
                 throw new RuntimeException(synEventPath + " does not exist.");
 
+
             Set<SACFileName> obsFiles;
             try {
-                (obsFiles = OBS_EVENT_DIR.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
+                (obsFiles = obsEventDir.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
             } catch (IOException e2) {
                 e2.printStackTrace();
                 return;
             }
 
             for (SACFileName obsFileName : obsFiles) {
-                // データセットに含める成分かどうか
-                if (!components.contains(obsFileName.getComponent())) continue;
-                String stationName = obsFileName.getStationCode();
-                GlobalCMTID id = obsFileName.getGlobalCMTID();
+                // check components
                 SACComponent component = obsFileName.getComponent();
-                String name = convolved
-                        ? stationName + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
-                        : stationName + "." + id + "." + SACExtension.valueOfSynthetic(component);
-                SACFileName synFileName = new SACFileName(synEventPath.resolve(name));
+                if (!components.contains(component))
+                    continue;
 
-                if (!synFileName.exists()) continue;
-
-                Set<TimewindowData> windows = timewindowInformationSet.stream()
-                        .filter(info -> info.getObserver().getStation().equals(stationName))
-                        .filter(info -> info.getGlobalCMTID().equals(id))
-                        .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
-
-                // タイムウインドウの情報が入っていなければ次へ
-                if (windows.isEmpty()) continue;
-
+                // get observed
                 SACFileAccess obsSac;
                 try {
                     obsSac = obsFileName.read();
@@ -735,7 +749,17 @@ public class ActualDatasetCompiler implements Operation {
                     e1.printStackTrace();
                     continue;
                 }
+                Observer observer = obsSac.getObserver();
 
+                // get synthetic
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
+                        : SACExtension.valueOfSynthetic(component);
+                SACFileName synFileName = new SACFileName(synEventPath.resolve(
+                        SACFileName.generate(observer, event, synExt)));
+                if (!synFileName.exists()) {
+                    System.err.println(synFileName + " does not exist. ");
+                    continue;
+                }
                 SACFileAccess synSac;
                 try {
                     synSac = synFileName.read();
@@ -744,6 +768,14 @@ public class ActualDatasetCompiler implements Operation {
                     e1.printStackTrace();
                     continue;
                 }
+
+                // get timewindows
+                Set<TimewindowData> windows = timewindowInformationSet.stream()
+                        .filter(info -> info.getObserver().equals(observer))
+                        .filter(info -> info.getGlobalCMTID().equals(event))
+                        .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
+                // タイムウインドウの情報が入っていなければ次へ
+                if (windows.isEmpty()) continue;
 
                 // Sampling Hz of observed and synthetic must be same as the
                 // value declared in the input file
@@ -767,26 +799,25 @@ public class ActualDatasetCompiler implements Operation {
                 minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
                 maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-                Observer station = obsSac.getObserver();
-
                 for (TimewindowData window : windows) {
                     int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
                     if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) continue;
                     double startTime = window.getStartTime();
                     double shift = 0;
                     double ratio = 1;
-                    if (timeCorrection || amplitudeCorrection)
+                    if (correctTime || correctAmplitude) {
                         try {
                             StaticCorrectionData sc = getStaticCorrection(window);
-                            shift = timeCorrection ? sc.getTimeshift() : 0;
+                            shift = correctTime ? sc.getTimeshift() : 0;
 //							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
-                            ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : amplitudeCorrEventMap.get(window.getGlobalCMTID());
+                            ratio = correctAmplitude ? sc.getAmplitudeRatio() : amplitudeCorrEventMap.get(window.getGlobalCMTID());
                         } catch (NoSuchElementException e) {
                             System.err.println("There is no static correction information for\\n " + window);
                             continue;
                         }
+                    }
 
-                    if (correctMantle)
+                    if (correctMantle) {
                         try {
                             StaticCorrectionData sc = getMantleCorrection(window);
                             shift += sc.getTimeshift();
@@ -794,19 +825,22 @@ public class ActualDatasetCompiler implements Operation {
                             System.err.println("There is no mantle correction information for\\n " + window);
                             continue;
                         }
+                    }
 
                     TimewindowData windowRef = null;
                     int nptsRef = 0;
                     if (timewindowRefInformationSet != null) {
-                        List<TimewindowData> tmpwindows = timewindowRefInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
+                        List<TimewindowData> tmpwindows = timewindowRefInformationSet.stream().filter(tw ->
+                                tw.getGlobalCMTID().equals(window.getGlobalCMTID())
                                 && tw.getObserver().equals(window.getObserver())
                                 && tw.getComponent().equals(window.getComponent())).collect(Collectors.toList());
                         if (tmpwindows.size() != 1) {
                             System.err.println("Reference timewindow does not exist " + window);
                             continue;
                         }
-                        else
+                        else {
                             windowRef = tmpwindows.get(0);
+                        }
 
                         nptsRef = (int) ((windowRef.getEndTime() - windowRef.getStartTime()) * finalSamplingHz);
                     }
@@ -860,7 +894,7 @@ public class ActualDatasetCompiler implements Operation {
                             refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
                         }
 
-                        if (amplitudeCorrection) {
+                        if (correctAmplitude) {
                             obsSpcAmp = correctSpcAmp(obsSpcAmpTrace, refObsSpcAmpTrace);
                             synSpcAmp = correctSpcAmp(synSpcAmpTrace, refSynSpcAmpTrace);
                         }
@@ -881,38 +915,38 @@ public class ActualDatasetCompiler implements Operation {
                     Phase[] includePhases = window.getPhases();
 
                     obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
-                    BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
+                    BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, synData);
-                    BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
+                    BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, obsData);
 
                     obsEnvelope = Arrays.stream(obsEnvelope).map(d -> d / correctionRatio).toArray();
-                    BasicID synEnvelopeID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
+                    BasicID synEnvelopeID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, synEnvelope);
-                    BasicID obsEnvelopeID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
+                    BasicID obsEnvelopeID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, obsEnvelope);
 
                     obsHy = Arrays.stream(obsHy).map(d -> d / correctionRatio).toArray();
-                    BasicID synHyID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
+                    BasicID synHyID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, synHy);
-                    BasicID obsHyID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
+                    BasicID obsHyID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, obsHy);
 
                     int fnpts = synSpcAmp.length;
 
-                    BasicID synSpcAmpID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, station, id,
+                    BasicID synSpcAmpID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, synSpcAmp);
-                    BasicID obsSpcAmpID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, station, id,
+                    BasicID obsSpcAmpID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, obsSpcAmp);
 
-                    BasicID synSpcReID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, station, id,
+                    BasicID synSpcReID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, synSpcRe);
-                    BasicID obsSpcReID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, station, id,
+                    BasicID obsSpcReID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, obsSpcRe);
 
-                    BasicID synSpcImID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, station, id,
+                    BasicID synSpcImID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, synSpcIm);
-                    BasicID obsSpcImID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, station, id,
+                    BasicID obsSpcImID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, observer, event,
                             component, minPeriod, maxPeriod, includePhases, 0, convolved, obsSpcIm);
 
                     try {

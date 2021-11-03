@@ -51,7 +51,7 @@ public class Histogram {
 		try (Stream<BasicID> idStream = Stream.of(basicIDs);) {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 			.forEach(id -> {
-				Observer station = stationSet.stream().filter(s->s.equals(id.getStation())).findAny().get();
+				Observer station = stationSet.stream().filter(s->s.equals(id.getObserver())).findAny().get();
 				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
 				
 				// do not consider the following ids
@@ -108,7 +108,7 @@ public class Histogram {
 		Set<Observer> stationSet = new HashSet<>();
 		
 		for (int i=0; i < basicIDs.length; i++) {
-				stationSet.add(basicIDs[i].getStation());
+				stationSet.add(basicIDs[i].getObserver());
 		}
 		
 		List<BasicID> idList = new ArrayList<>();

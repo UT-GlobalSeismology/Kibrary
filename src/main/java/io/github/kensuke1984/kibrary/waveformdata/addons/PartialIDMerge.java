@@ -49,7 +49,7 @@ class PartialIDMerge {
 		
 		Stream.concat(Stream.of(src0), Stream.of(src1)).forEach(id -> {
 			globalCMTIDSet.add(id.getGlobalCMTID());
-			stationSet.add(id.getStation());
+			stationSet.add(id.getObserver());
 			perturbationPoints.add(id.getPerturbationLocation());
 			boolean add = true;
 			for (double[] periods : periodSet) {

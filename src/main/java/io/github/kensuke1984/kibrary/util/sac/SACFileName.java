@@ -311,11 +311,11 @@ public class SACFileName extends File {
         return stationCode + "_" + networkCode;
     }
 
-    public String getStationCode() {
+    public String getStationCode() { // TODO: delete
         return stationCode;
     }
 
-    public String getNetworkCode() {
+    public String getNetworkCode() { // TODO: delete
         return networkCode;
     }
 

@@ -45,7 +45,7 @@ public class WaveformVisual_specfem {
 		List<BasicID> initSynList = new ArrayList<>();
 		for (BasicID id : obsList) {
 			BasicID idtmp = initSynListtmp.parallelStream().filter(id2 -> id2.getGlobalCMTID().equals(id.getGlobalCMTID())
-					&& id2.getStation().equals(id.getStation())).findFirst().get();
+					&& id2.getObserver().equals(id.getObserver())).findFirst().get();
 			initSynList.add(idtmp);
 		}
 		
@@ -118,10 +118,10 @@ public class WaveformVisual_specfem {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
-					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
 					int k = (int) distance;
 					
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int kaz = (int) (azimuth / dAz);
 					
 					double maxObs = new ArrayRealVector(id.getData()).getLInfNorm();
@@ -133,7 +133,7 @@ public class WaveformVisual_specfem {
 					obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], obsData);
 					
 					List<Observer> tmpList = stationAzimuthList.get(kaz);
-					tmpList.add(id.getStation());
+					tmpList.add(id.getObserver());
 					stationAzimuthList.set(kaz, tmpList);
 					
 					synStack[k] = add(synStack[k], synData);
@@ -142,7 +142,7 @@ public class WaveformVisual_specfem {
 					synSpecfemStack[k] = add(synSpecfemStack[k], specfemData);
 					synSpecfemAzimuthStack[kaz][k] = add(synSpecfemAzimuthStack[kaz][k], specfemData);
 					
-					String filename = id.getStation() + "." + event.toString() + "." + component + ".obs.txt";
+					String filename = id.getObserver() + "." + event.toString() + "." + component + ".obs.txt";
 					Path outpath = profileEventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
 					Trace trace = id.getTrace();
@@ -150,7 +150,7 @@ public class WaveformVisual_specfem {
 						pw.println(trace.getXAt(j) + " " + trace.getYAt(j));
 					pw.close();
 					
-					String filenameInit = initID.getStation() + "." + event.toString() + "." + component + ".initSyn.txt";
+					String filenameInit = initID.getObserver() + "." + event.toString() + "." + component + ".initSyn.txt";
 					Path outpathInit = profileEventDir.resolve(filenameInit);
 					pw = new PrintWriter(outpathInit.toFile());
 					trace = initID.getTrace();
@@ -158,7 +158,7 @@ public class WaveformVisual_specfem {
 						pw.println(trace.getXAt(j) + " " + trace.getYAt(j));
 					pw.close();
 					
-					String filenameSpecfem = specfemID.getStation() + "." + event.toString() + "." + component + ".specfemSyn.txt";
+					String filenameSpecfem = specfemID.getObserver() + "." + event.toString() + "." + component + ".specfemSyn.txt";
 					Path outpathSpecfem = profileEventDir.resolve(filenameSpecfem);
 					pw = new PrintWriter(outpathSpecfem.toFile());
 					trace = specfemID.getTrace();
@@ -186,7 +186,7 @@ public class WaveformVisual_specfem {
 					double bornCorr = specfemVector.dotProduct(obsVector) / (specfemVector.getNorm() * obsVector.getNorm());
 					double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
 					double bornRatio = specfemVector.getLInfNorm() / obsVector.getLInfNorm();
-					eachMisfitString += id.getStation().getStation() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+					eachMisfitString += id.getObserver().getStation() + " " + id.getObserver().getNetwork() + " " + id.getObserver().getPosition() + " "
 							+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 							+ tmpSyn + " " + tmpSpecfem + " " + synCorr + " " + bornCorr + "\n";
 				}

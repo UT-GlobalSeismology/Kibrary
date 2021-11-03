@@ -23,7 +23,7 @@ public class PlotStaticCorrection {
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 			double dt = dVector.getObsIDs()[i].getStartTime() - dVector.getSynIDs()[i].getStartTime();
-			pw.write(dVector.getObsIDs()[i].getStation() + " " + dVector.getObsIDs()[i].getGlobalCMTID() + " " + dt + "\n");
+			pw.write(dVector.getObsIDs()[i].getObserver() + " " + dVector.getObsIDs()[i].getGlobalCMTID() + " " + dt + "\n");
 		}
 		
 		pw.close();

@@ -68,12 +68,12 @@ public class EventCluster {
 		Path waveformIDPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/waveformID_ScS_ext_70deg_semucbCorr_ampCorr_4hz.dat");
 		BasicID[] waveformIDs = BasicIDFile.read(waveformIDPath);
 		Map<Observer, Set<Integer>> stationClusterMap = new HashMap<>();
-		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getStation(), new HashSet<>()));
+		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getObserver(), new HashSet<>()));
 		Arrays.stream(waveformIDs).forEach(id -> {
 			int index = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get().getIndex();
-			Set<Integer> tmpset = stationClusterMap.get(id.getStation());
+			Set<Integer> tmpset = stationClusterMap.get(id.getObserver());
 			tmpset.add(index);
-			stationClusterMap.replace(id.getStation(), tmpset);
+			stationClusterMap.replace(id.getObserver(), tmpset);
 		});
 		outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/stationCluster.inf");
 		PrintWriter pw = new PrintWriter(outpath.toFile());

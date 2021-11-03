@@ -129,13 +129,13 @@ public abstract class SPCFileName extends File {
     /**
      * @return STATION code of the observer
      */
-    public abstract String getStationCode();
+    public abstract String getStationCode(); // TODO: delete
 
     /**
      * @return NETWORK code of the observer
      * @author anselme
      */
-    public abstract String getNetworkCode();
+    public abstract String getNetworkCode(); // TODO: delete
 
     //-------------------- read data of this name --------------------//
 

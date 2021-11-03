@@ -121,11 +121,11 @@ public class WaveformVisual_alignScS {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
-					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
 					int k = (int) distance;
 					int ked = (int) (distance / dEd);
 					
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int kaz = (int) (azimuth / dAz);
 					int kazsec = (int) (azimuth);
 					
@@ -135,7 +135,7 @@ public class WaveformVisual_alignScS {
 					double timeScS = timetool.getArrival(0).getTime();
 					
 					BasicID synID = thisSynIDs.stream().filter(syn -> syn.getGlobalCMTID().equals(id.getGlobalCMTID()) 
-							&& syn.getStation().equals(id.getStation()) && id.getSacComponent().equals(syn.getSacComponent()))
+							&& syn.getObserver().equals(id.getObserver()) && id.getSacComponent().equals(syn.getSacComponent()))
 							.findFirst().get();
 					
 					Trace synTrace = synID.getTrace().shiftX(-timeScS);
@@ -147,25 +147,25 @@ public class WaveformVisual_alignScS {
 					obsAzimuthSectionStack[ked][kazsec] = add(obsAzimuthSectionStack[ked][kazsec], id.getData());
 					
 					List<Observer> tmpList = stationAzimuthList.get(kaz);
-					tmpList.add(id.getStation());
+					tmpList.add(id.getObserver());
 					stationAzimuthList.set(kaz, tmpList);
 					
 					tmpList = stationDistanceList.get(ked);
-					tmpList.add(id.getStation());
+					tmpList.add(id.getObserver());
 					stationDistanceList.set(ked, tmpList);
 						
 					synStack[k] = add(synStack[k], synID.getData());
 					synAzimuthStack[kaz][k] = add(synAzimuthStack[kaz][k], synID.getData());
 					synAzimuthSectionStack[ked][kazsec] = add(synAzimuthSectionStack[ked][kazsec], synID.getData());
 					
-					String filename = id.getStation() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
+					String filename = id.getObserver() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
 					Path outpath = profileEventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
 					for (int i = 0; i < trace.getLength(); i++)
 						pw.println(trace.getXAt(i) + " " + trace.getYAt(i));
 					pw.close();
 					
-					String filenameSyn = synID.getStation() + "." + event.toString() + "." + component + "." + synID.getWaveformType() + ".txt";
+					String filenameSyn = synID.getObserver() + "." + event.toString() + "." + component + "." + synID.getWaveformType() + ".txt";
 					Path outpathSyn = profileEventDir.resolve(filenameSyn);
 					PrintWriter pwSyn = new PrintWriter(outpathSyn.toFile());
 					for (int i = 0; i < synTrace.getLength(); i++)

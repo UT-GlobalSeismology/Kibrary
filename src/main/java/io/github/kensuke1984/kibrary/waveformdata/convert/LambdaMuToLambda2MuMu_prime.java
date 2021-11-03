@@ -85,7 +85,7 @@ public class LambdaMuToLambda2MuMu_prime {
 			PartialID partialMU = partialsMU.get(indexOrderedMU[i]);
 			PartialID partialLambda = partialsLambda.get(indexOrderedLambda[i]);
 			if (!(partialLambda.getGlobalCMTID().equals(partialMU.getGlobalCMTID())
-					&& partialLambda.getStation().equals(partialMU.getStation())
+					&& partialLambda.getObserver().equals(partialMU.getObserver())
 					&& partialLambda.getPerturbationLocation().equals(partialMU.getPerturbationLocation())
 					&& partialLambda.getSacComponent().equals(partialMU.getSacComponent())
 					&& new Phases(partialLambda.getPhases()).equals(new Phases(partialMU.getPhases())))) {
@@ -106,12 +106,12 @@ public class LambdaMuToLambda2MuMu_prime {
 				Arrays.fill(lambdaData, 0.);
 			}
 			
-			PartialID parMuPrime = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parMuPrime = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
 					, PartialType.MU, muPrimeData);
 			
-			PartialID parLambda2mu = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parLambda2mu = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
 					, PartialType.LAMBDA2MU, lambdaData);
@@ -124,7 +124,7 @@ public class LambdaMuToLambda2MuMu_prime {
 		Path outID = Paths.get("partialID" + tmpString +".dat");
 		Path out = Paths.get("partial" + tmpString + ".dat");
 		
-		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getStation()).collect(Collectors.toSet());
+		Set<Observer> stationSet = partialsMU.stream().map(p -> p.getObserver()).collect(Collectors.toSet());
 		Set<GlobalCMTID> globalCMTIDSet = partialsMU.stream().map(p -> p.getGlobalCMTID()).collect(Collectors.toSet());
 		
 //		double[][] periodRanges = new double[][] {{1./0.136, 100.}};
@@ -160,7 +160,7 @@ public class LambdaMuToLambda2MuMu_prime {
 		for (int i = 0; i < partialsOrder.length; i++) {
 			PartialID par = partialsOrder[i];
 			if (partial.getGlobalCMTID().equals(par.getGlobalCMTID())
-					&& partial.getStation().equals(par.getStation())
+					&& partial.getObserver().equals(par.getObserver())
 					&& partial.getSacComponent().equals(par.getSacComponent())
 					&& new Phases(partial.getPhases()).equals(new Phases(par.getPhases()))
 					&& Math.abs(partial.getStartTime() - par.getStartTime()) < 1.01) {

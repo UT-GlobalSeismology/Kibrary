@@ -572,7 +572,7 @@ public class Partial1DSpcMaker implements Operation {
 		
 		private BasicID findImFyID(TimewindowData t) {
 			try {
-				return Arrays.stream(imFyIDs).filter(id -> id.getStation().equals(t.getObserver())
+				return Arrays.stream(imFyIDs).filter(id -> id.getObserver().equals(t.getObserver())
 						&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
 						&& t.getComponent().equals(id.getSacComponent()))
 					.findAny().get();
@@ -584,7 +584,7 @@ public class Partial1DSpcMaker implements Operation {
 		}
 		
 		private BasicID findReFyID(TimewindowData t) {
-			return Arrays.stream(reFyIDs).filter(id -> id.getStation().equals(t.getObserver())
+			return Arrays.stream(reFyIDs).filter(id -> id.getObserver().equals(t.getObserver())
 					&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
 					&& t.getComponent().equals(id.getSacComponent()))
 				.findAny().get();
@@ -1202,7 +1202,7 @@ public class Partial1DSpcMaker implements Operation {
 					
 					try {
 						par2 = par2list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
-							&& par.getStation().equals(par0.getStation())
+							&& par.getObserver().equals(par0.getObserver())
 							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
 							&& par.getMinPeriod() == par0.getMinPeriod()
 							&& par.getMaxPeriod() == par0.getMaxPeriod()
@@ -1210,7 +1210,7 @@ public class Partial1DSpcMaker implements Operation {
 							&& par.getSacComponent().equals(par0.getSacComponent()))
 							.findFirst().get();
 						parQ = parQlist.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
-								&& par.getStation().equals(par0.getStation())
+								&& par.getObserver().equals(par0.getObserver())
 								&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
 								&& par.getMinPeriod() == par0.getMinPeriod()
 								&& par.getMaxPeriod() == par0.getMaxPeriod()
@@ -1230,7 +1230,7 @@ public class Partial1DSpcMaker implements Operation {
 					
 					if (!par0.getSacComponent().equals(SACComponent.T)) {
 						PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
-								&& par.getStation().equals(par0.getStation())
+								&& par.getObserver().equals(par0.getObserver())
 								&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
 								&& par.getMinPeriod() == par0.getMinPeriod()
 								&& par.getMaxPeriod() == par0.getMaxPeriod()
@@ -1262,27 +1262,27 @@ public class Partial1DSpcMaker implements Operation {
 						dataRho[i] = dataG[i] + dataM[i] + rho * data[i];
 					}
 					
-					PartialID partialRho = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partialRho = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
 							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, dataRho);
 					
-					PartialID partialVp = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partialVp = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
 							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVP, dataVp);
 					
-					PartialID partialVs = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partialVs = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
 							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVS, dataVs);
 					
-					PartialID partialM = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partialM = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
 							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARM, dataM);
 					
-					PartialID partialG = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partialG = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
 							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARG, dataG);
 					
-					PartialID partialQ = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partialQ = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
 							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARQ, dataQ);
 					

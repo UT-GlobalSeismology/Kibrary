@@ -368,7 +368,7 @@ public class InversionResult {
         try (Stream<Path> stream = Files.list(rootPath.resolve("partial/" + id.getGlobalCMTID()))) {
             tmplist = stream.filter(p -> {
                 String name = p.getFileName().toString();
-                return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+                return name.startsWith(id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
             }).collect(Collectors.toList());
         }
         if (tmplist.size() != 1) {
@@ -425,7 +425,7 @@ public class InversionResult {
         try (Stream<Path> stream = Files.list(rootPath.resolve("partial_spc/" + id.getGlobalCMTID()))) {
             tmplist = stream.filter(p -> {
                 String name = p.getFileName().toString();
-                return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+                return name.startsWith(id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
             }).collect(Collectors.toList());
         }
         if (tmplist.size() != 1) {
@@ -645,7 +645,7 @@ public class InversionResult {
         try (Stream<Path> stream = Files.list(rootPath.resolve("trace_spc/" + id.getGlobalCMTID()))) {
             tmplist = stream.filter(p -> {
                 String name = p.getFileName().toString();
-                return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+                return name.startsWith(id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
             }).collect(Collectors.toList());
         }
         if (tmplist.size() != 1) {
@@ -674,7 +674,7 @@ public class InversionResult {
      * its partial "partial/(txt file name)" is fine.
      */
     public String getTxtName(BasicID id) {
-        return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
+        return id.getGlobalCMTID() + "/" + id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
                 + "." + basicIDList.indexOf(id) + ".txt";
     }
 
@@ -725,7 +725,7 @@ public class InversionResult {
         try (Stream<Path> stream = Files.list(rootPath.resolve("trace/" + id.getGlobalCMTID()))) {
             tmplist = stream.filter(p -> {
                 String name = p.getFileName().toString();
-                return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+                return name.startsWith(id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
             }).collect(Collectors.toList());
         }
         if (tmplist.size() != 1) {
@@ -757,7 +757,7 @@ public class InversionResult {
         try (Stream<Path> stream = Files.list(rootPath.resolve("trace_spc/" + id.getGlobalCMTID()))) {
             tmplist = stream.filter(p -> {
                 String name = p.getFileName().toString();
-                return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+                return name.startsWith(id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
             }).collect(Collectors.toList());
         }
         if (tmplist.size() != 1) {
@@ -976,10 +976,10 @@ public class InversionResult {
             Map<Observer, RealVector> obsMap = new HashMap<>(idSet().size());
             Map<Observer, RealVector> bornMap = new HashMap<>(idSet().size());
             for (BasicID bid : basicIDList) {
-                RealVector obs = obsMap.getOrDefault(bid.getStation(), new ArrayRealVector());
-                RealVector born = bornMap.getOrDefault(bid.getStation(), new ArrayRealVector());
-                obsMap.put(bid.getStation(), obs.append(observedOf(bid).getYVector()));
-                bornMap.put(bid.getStation(), born.append(bornOf(bid, method, n).getYVector()));
+                RealVector obs = obsMap.getOrDefault(bid.getObserver(), new ArrayRealVector());
+                RealVector born = bornMap.getOrDefault(bid.getObserver(), new ArrayRealVector());
+                obsMap.put(bid.getObserver(), obs.append(observedOf(bid).getYVector()));
+                bornMap.put(bid.getObserver(), born.append(bornOf(bid, method, n).getYVector()));
             }
             for (Observer s : stationSet()) {
                 RealVector obs = obsMap.get(s);

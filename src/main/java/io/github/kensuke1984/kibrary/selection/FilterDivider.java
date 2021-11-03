@@ -192,9 +192,13 @@ public class FilterDivider implements Operation {
         System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
 
-        ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        int nThreads = Runtime.getRuntime().availableProcessors();
+        System.err.println("Running on " + nThreads + " processors");
+        ExecutorService es = Executors.newFixedThreadPool(nThreads);
+
         events.stream().map(this::process).forEach(es::submit);
         es.shutdown();
+
         while (!es.isTerminated()) {
             System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / events.size()) + "%");
             Thread.sleep(100);

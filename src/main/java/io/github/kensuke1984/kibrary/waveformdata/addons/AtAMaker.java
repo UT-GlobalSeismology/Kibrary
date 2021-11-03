@@ -942,7 +942,7 @@ public class AtAMaker implements Operation {
 				if (computationFlag == 1 || computationFlag == 2) {
 					for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
 						final int finalIcorr = icorr;
-						List<Integer> tmplist = IndicesEventBasicID.get(icorr).stream().filter(i -> basicIDArray[finalIcorr][i].getStation().equals(station))
+						List<Integer> tmplist = IndicesEventBasicID.get(icorr).stream().filter(i -> basicIDArray[finalIcorr][i].getObserver().equals(station))
 								.collect(Collectors.toList());
 						IndicesRecordBasicID.add(tmplist);
 					}
@@ -1375,7 +1375,7 @@ public class AtAMaker implements Operation {
 			for (BasicID obsid : obsIDs) {
 				Phases phases = new Phases(obsid.getPhases());
 				BasicID synid = tmpSyns.stream().filter(id -> id.getGlobalCMTID().equals(obsid.getGlobalCMTID())
-						&& id.getStation().equals(obsid.getStation())
+						&& id.getObserver().equals(obsid.getObserver())
 						&& id.getSacComponent().equals(obsid.getSacComponent())
 						&& id.getMinPeriod() == obsid.getMinPeriod()
 						&& id.getMaxPeriod() == obsid.getMaxPeriod()

@@ -32,7 +32,7 @@ public class SelectSpcAmp {
 			List<BasicID> ids = Arrays.stream(BasicIDFile.read(spcAmpIDPath, spcAmpPath)).collect(Collectors.toList());
 			Dvector dVector = new Dvector(ids.toArray(new BasicID[ids.size()]));
 			Set<GlobalCMTID> events = ids.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
-			Set<Observer> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());
+			Set<Observer> stations = ids.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
 			double[][] periodRanges = new double[][] {{8, 200}};
 			Phase[] phases = new Phase[] {Phase.ScS};
 			WaveformDataWriter writer = new WaveformDataWriter(outIDPath, outPath, stations, events, periodRanges, phases);

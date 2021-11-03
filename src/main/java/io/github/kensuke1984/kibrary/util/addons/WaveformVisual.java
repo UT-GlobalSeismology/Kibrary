@@ -113,11 +113,11 @@ public class WaveformVisual {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
-					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
 					int k = (int) distance;
 					int ked = (int) (distance / dEd);
 					
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int kaz = (int) (azimuth / dAz);
 					int kazsec = (int) (azimuth);
 					
@@ -127,11 +127,11 @@ public class WaveformVisual {
 						obsAzimuthSectionStack[ked][kazsec] = add(obsAzimuthSectionStack[ked][kazsec], id.getData());
 						
 						List<Observer> tmpList = stationAzimuthList.get(kaz);
-						tmpList.add(id.getStation());
+						tmpList.add(id.getObserver());
 						stationAzimuthList.set(kaz, tmpList);
 						
 						tmpList = stationDistanceList.get(ked);
-						tmpList.add(id.getStation());
+						tmpList.add(id.getObserver());
 						stationDistanceList.set(ked, tmpList);
 					}
 					if (id.getWaveformType().equals(WaveformType.SYN)) {
@@ -140,7 +140,7 @@ public class WaveformVisual {
 						synAzimuthSectionStack[ked][kazsec] = add(synAzimuthSectionStack[ked][kazsec], id.getData());
 					}
 					
-					String filename = id.getStation() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
+					String filename = id.getObserver() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
 					Path outpath = profileEventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
 					Trace trace = id.getTrace();

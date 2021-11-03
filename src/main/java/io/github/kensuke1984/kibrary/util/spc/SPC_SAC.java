@@ -167,7 +167,6 @@ public final class SPC_SAC implements Operation {
 
     @Override
     public void run() throws IOException {
-        int nThread = Runtime.getRuntime().availableProcessors();
         System.err.println("Model name is " + modelName);
         if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
 
@@ -181,7 +180,9 @@ public final class SPC_SAC implements Operation {
         System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
 
-        ExecutorService execs = Executors.newFixedThreadPool(nThread);
+        int nThreads = Runtime.getRuntime().availableProcessors();
+        System.err.println("Running on " + nThreads + " processors");
+        ExecutorService execs = Executors.newFixedThreadPool(nThreads);
 
         int nSAC = 0;
         // single

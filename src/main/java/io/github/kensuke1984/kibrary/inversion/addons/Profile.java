@@ -122,7 +122,7 @@ public class Profile {
 			Map<Observer, Double> stationSynVariance = new HashMap<>();
 			Map<Observer, Double> stationBornVariance = new HashMap<>();
 			Map<Observer, Double> stationObsNorm = new HashMap<>();
-			obsList.parallelStream().map(id -> id.getStation()).distinct().forEach(station -> {
+			obsList.parallelStream().map(id -> id.getObserver()).distinct().forEach(station -> {
 				stationSynVariance.put(station, new Double(0));
 				stationBornVariance.put(station, new Double(0));
 				stationObsNorm.put(station, new Double(0));
@@ -191,7 +191,7 @@ public class Profile {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
 								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
@@ -228,7 +228,7 @@ public class Profile {
 							double bornCorr = bornVector.dotProduct(obsVector) / (bornVector.getNorm() * obsVector.getNorm());
 							double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
 							double bornRatio = bornVector.getLInfNorm() / obsVector.getLInfNorm();
-							eachMisfitString[0] += id.getStation().getStation() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+							eachMisfitString[0] += id.getObserver().getStation() + " " + id.getObserver().getNetwork() + " " + id.getObserver().getPosition() + " "
 									+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 									+ tmpSyn + " " + tmpBorn + " " + synCorr + " " + bornCorr + "\n";
 							
@@ -240,7 +240,7 @@ public class Profile {
 							totalBornVariance[0] += tmpBornVariance;
 							totalObsNorm[0] += tmpObsNorm;
 							
-							Observer sta = id.getStation();
+							Observer sta = id.getObserver();
 							try {
 //								tmpSynVariance += stationSynVariance.get(sta);
 //								tmpBornVariance += stationBornVariance.get(sta);
@@ -315,9 +315,9 @@ public class Profile {
 					RealVector synVector = ir.syntheticOf(id).getYVector();
 					RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -338,7 +338,7 @@ public class Profile {
 					obsNorm += tmpObsNorm;
 					
 					List<Observer> tmpList = azimuthStationList.get(j);
-					tmpList.add(id.getStation());
+					tmpList.add(id.getObserver());
 					azimuthStationList.set(j, tmpList);
 				}
 					double tmpSyn = synVariance / obsNorm;

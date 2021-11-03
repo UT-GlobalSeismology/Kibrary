@@ -201,7 +201,7 @@ public final class PartialIDFile {
 				types.add(id.getPartialType());
 			for (PartialType type : types) {
 				List<StationEvent> tmpList = Arrays.stream(ids).parallel().filter(id -> id.getPartialType().equals(type))
-						.map(id -> new StationEvent(id.getStation(), id.getGlobalCMTID(), id.getStartTime()))
+						.map(id -> new StationEvent(id.getObserver(), id.getGlobalCMTID(), id.getStartTime()))
 						.distinct().collect(Collectors.toList());
 				Collections.sort(tmpList);
 				Path outPath = Paths.get(type + ".inf");
@@ -229,7 +229,7 @@ public final class PartialIDFile {
     private static void outputStations(String header, PartialID[] ids) throws IOException {
         Path outPath = Paths.get(header + ".station");
         if (Files.exists(outPath)) return;
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct()
+        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct()
                 .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
         Files.write(outPath, lines);
         System.err.println(outPath + " is created as a list of stations.");
@@ -287,7 +287,7 @@ public final class PartialIDFile {
     private static void outputGlobalCMTID(String header, PartialID[] ids) throws IOException {
         Path outPath = Paths.get(header + ".globalCMTID");
         if (Files.exists(outPath)) return;
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.ID.toString()).distinct().sorted()
+        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.event.toString()).distinct().sorted()
                 .collect(Collectors.toList());
         Files.write(outPath, lines);
         System.err.println(outPath + " is created as a list of global CMT IDs.");

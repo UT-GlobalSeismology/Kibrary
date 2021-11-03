@@ -55,7 +55,7 @@ public class ProfileWaveform {
 					if (!tmpid.getWaveformType().equals(WaveformType.SYN))
 						continue;
 					if (tmpid.getGlobalCMTID().equals(id.getGlobalCMTID())
-							&& tmpid.getStation().equals(id.getStation())
+							&& tmpid.getObserver().equals(id.getObserver())
 							&& tmpid.getSacComponent().equals(id.getSacComponent())) {
 						synIDs[i] = tmpid;
 						break;
@@ -92,13 +92,13 @@ public class ProfileWaveform {
 						double[] synData = synID.getData();
 						RealVector obsDataVector = new ArrayRealVector(obsData);
 						RealVector synDataVector = new ArrayRealVector(synData);
-						String filename = obsID.getStation().getStation() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+						String filename = obsID.getObserver().getStation() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
 						Path tracePath = eventProfilePath.resolve(filename);
 						
 						PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						
 						double maxObs = obsDataVector.getLInfNorm();
-						double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsID.getStation().getPosition())
+						double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsID.getObserver().getPosition())
 								* 180. / Math.PI;
 						pw.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lw 1 lc \"black\",\\");
 						pw.println("\"" + filename + "\" " + String.format("u 1:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lw 1 lc \"red\",\\");

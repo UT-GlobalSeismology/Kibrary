@@ -37,7 +37,7 @@ public class DuplicateDataset {
 			Set<Phase> phaseSet = new HashSet<>();
 			
 			Stream.of(ids1).forEach(id -> {
-				stationSet.add(id.getStation());
+				stationSet.add(id.getObserver());
 				globalCMTIDSet.add(id.getGlobalCMTID());
 				for (Phase p : id.getPhases()) {
 					phaseSet.add(p);
@@ -50,7 +50,7 @@ public class DuplicateDataset {
 			
 			List<BasicID> outList = new ArrayList<>();
 			Stream.of(ids0).forEach(id0 -> {
-				List<BasicID> ids = Stream.of(ids1).filter(id1 -> id1.getStation().equals(id0.getStation())
+				List<BasicID> ids = Stream.of(ids1).filter(id1 -> id1.getObserver().equals(id0.getObserver())
 						&& id1.getGlobalCMTID().equals(id0.getGlobalCMTID())
 						&& id1.getSacComponent().equals(id0.getSacComponent())
 						&& id1.getMinPeriod() == id0.getMinPeriod()

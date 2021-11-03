@@ -499,7 +499,7 @@ public class ObservationEquation {
 			if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == DVECTOR.getNTimeWindow() * nn)
 				return;
 			int column = whatNumber(id.getPartialType(), id.getPerturbationLocation(),
-					id.getStation(), id.getGlobalCMTID(), id.getPhases());
+					id.getObserver(), id.getGlobalCMTID(), id.getPhases());
 			if (column < 0) {
 //				System.out.println("Unknown not found in file for " + id.getPerturbationLocation());
 				return;
@@ -548,10 +548,10 @@ public class ObservationEquation {
 		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != DVECTOR.getNTimeWindow() * nn ) {
 			System.out.println("Printing BasicIDs that are not in the partialID set...");
 			Set<id_station> idStationSet 
-				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getStation()))
+				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getObserver()))
 					.distinct().collect(Collectors.toSet());
 			Stream.of(DVECTOR.getObsIDs()).forEach(id -> {
-				id_station idStation = new id_station(id.getGlobalCMTID(), id.getStation());
+				id_station idStation = new id_station(id.getGlobalCMTID(), id.getObserver());
 				if (!idStationSet.contains(idStation)) {
 					System.out.println(id);
 				}
@@ -895,7 +895,7 @@ public class ObservationEquation {
 			int start = DVECTOR.getStartPoints(i);
 			double synStartTime = id.getStartTime();
 			Path outPath = eventPath.resolve(
-					id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
+					id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
 				pw.println("#syntime par0 par1, .. parN");
 				for (int k = 0; k < id.getNpts(); k++) {

@@ -95,21 +95,21 @@ public class CCPartialMaker {
 		
 		for (GlobalCMTID event : events) {
 			List<BasicID> eventWaveforms = Arrays.stream(waveforms).filter(bid -> bid.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-			List<Observer> eventStations = Arrays.stream(waveforms).filter(bid -> bid.getGlobalCMTID().equals(event)).map(bid -> bid.getStation()).collect(Collectors.toList());
+			List<Observer> eventStations = Arrays.stream(waveforms).filter(bid -> bid.getGlobalCMTID().equals(event)).map(bid -> bid.getObserver()).collect(Collectors.toList());
 			
 			List<PartialID> eventPartials = Arrays.stream(partials).filter(pid -> pid.getGlobalCMTID().equals(event)).collect(Collectors.toList());
 			
 			for (int ista = 0; ista < eventStations.size(); ista++) {
 				Observer staI = eventStations.get(ista);
-				uI = eventWaveforms.stream().filter(bid -> bid.getStation().equals(staI)).findFirst().get().getData();
+				uI = eventWaveforms.stream().filter(bid -> bid.getObserver().equals(staI)).findFirst().get().getData();
 				
-				partialsI = eventPartials.stream().filter(pid -> pid.getStation().equals(staI)).collect(Collectors.toList());
+				partialsI = eventPartials.stream().filter(pid -> pid.getObserver().equals(staI)).collect(Collectors.toList());
 				
 				for (int jsta = ista; jsta < eventStations.size(); jsta++) {
 					Observer staJ = eventStations.get(jsta);
-					uJ = eventWaveforms.stream().filter(bid -> bid.getStation().equals(staJ)).findFirst().get().getData();
+					uJ = eventWaveforms.stream().filter(bid -> bid.getObserver().equals(staJ)).findFirst().get().getData();
 					
-					partialsJ = eventPartials.stream().filter(pid -> pid.getStation().equals(staJ)).collect(Collectors.toList());
+					partialsJ = eventPartials.stream().filter(pid -> pid.getObserver().equals(staJ)).collect(Collectors.toList());
 					
 					// run in parallel
 					System.err.println("Working for " + event + " " + staI + " " + staJ + "...");
@@ -160,7 +160,7 @@ public class CCPartialMaker {
 			e1.printStackTrace();
 		}
 		
-		List<Observer> stations = Arrays.stream(waveforms).map(bid -> bid.getStation()).collect(Collectors.toList());
+		List<Observer> stations = Arrays.stream(waveforms).map(bid -> bid.getObserver()).collect(Collectors.toList());
 		for (int ista = 0; ista < stations.size(); ista++) {
 			Observer staI = stations.get(ista);
 			List<CCPartial> ccParI = ccPartials.parallelStream().filter(ccpar -> ccpar.staI.equals(staI)).collect(Collectors.toList());

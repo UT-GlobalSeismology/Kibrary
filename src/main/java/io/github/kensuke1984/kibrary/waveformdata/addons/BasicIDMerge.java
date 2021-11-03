@@ -37,7 +37,7 @@ class BasicIDMerge {
 		
 		Stream.concat(Stream.of(src0), Stream.of(src1)).forEach(id -> {
 			globalCMTIDSet.add(id.getGlobalCMTID());
-			stationSet.add(id.getStation());
+			stationSet.add(id.getObserver());
 			boolean add = true;
 			for (double[] periods : periodSet) {
 				if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])

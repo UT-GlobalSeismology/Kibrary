@@ -197,7 +197,7 @@ public class Profile_v2 {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
 								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"black\",\\\n"
@@ -238,7 +238,7 @@ public class Profile_v2 {
 							totalBornVariance[0] += tmpBornVariance;
 							totalObsNorm[0] += tmpObsNorm;
 							
-							Observer sta = id.getStation();
+							Observer sta = id.getObserver();
 							try {
 								stationSynVariance.put(sta, stationSynVariance.get(sta) + tmpSynVariance);
 								stationBornVariance.put(sta, stationBornVariance.get(sta) + tmpBornVariance);
@@ -314,9 +314,9 @@ public class Profile_v2 {
 					RealVector synVector = ir.syntheticOf(id).getYVector();
 					RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int i = (int) distance;
 					int j = (int) (azimuth / 10);
 					

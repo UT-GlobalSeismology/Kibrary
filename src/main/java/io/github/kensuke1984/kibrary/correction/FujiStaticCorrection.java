@@ -207,6 +207,7 @@ public class FujiStaticCorrection implements Operation {
         timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
 
         int nThreads = Runtime.getRuntime().availableProcessors();
+        System.err.println("Running on " + nThreads + " processors");
         ExecutorService es = Executors.newFixedThreadPool(nThreads);
 
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file

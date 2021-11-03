@@ -80,7 +80,7 @@ public class SpectrumProfile {
 			
 			int idtime = (int) id.getStartTime();
 			String component = id.getWaveformType().equals(WaveformType.SYN) ? id.getSacComponent().toString() + "sc" : id.getSacComponent().toString();
-			String name = id.getStation() + "." + id.getGlobalCMTID() + "." + idtime + "." + component + ".spc.txt";
+			String name = id.getObserver() + "." + id.getGlobalCMTID() + "." + idtime + "." + component + ".spc.txt";
 			Path outpath = eventPath.resolve(name);
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 				for (int i = 0; i < spc.length; i++)
@@ -96,7 +96,7 @@ public class SpectrumProfile {
 			
 			idtime = (int) id.getStartTime();
 			component = id.getWaveformType().equals(WaveformType.SYN) ? id.getSacComponent().toString() + "sc" : id.getSacComponent().toString();
-			name = id.getStation() + "." + id.getGlobalCMTID() + "." + idtime + "." + component + ".txt";
+			name = id.getObserver() + "." + id.getGlobalCMTID() + "." + idtime + "." + component + ".txt";
 			Path outpath2 = eventPath2.resolve(name);
 			try (PrintWriter pw2 = new PrintWriter(Files.newBufferedWriter(outpath2, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 				for (int i = 0; i < dataprime.length; i++)
@@ -105,7 +105,7 @@ public class SpectrumProfile {
 			
 			idtime = (int) id.getStartTime();
 			component = id.getWaveformType().equals(WaveformType.SYN) ? id.getSacComponent().toString() + "sc" : id.getSacComponent().toString();
-			name = id.getStation() + "." + id.getGlobalCMTID() + "." + idtime + "." + component + "original.txt";
+			name = id.getObserver() + "." + id.getGlobalCMTID() + "." + idtime + "." + component + "original.txt";
 			outpath2 = eventPath2.resolve(name);
 			try (PrintWriter pw2 = new PrintWriter(Files.newBufferedWriter(outpath2, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 				for (int i = 0; i < npts; i++)

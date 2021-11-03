@@ -150,7 +150,7 @@ public class CheckerBoardTest implements Operation {
 		List<double[]> ranges = new ArrayList<>();
 		Set<Phase> tmpPhases = new HashSet<>();
 		for (BasicID id : eq.getDVector().getObsIDs()) {
-			stationSet.add(id.getStation());
+			stationSet.add(id.getObserver());
 			idSet.add(id.getGlobalCMTID());
 			for (Phase phase : id.getPhases())
 				tmpPhases.add(phase);
