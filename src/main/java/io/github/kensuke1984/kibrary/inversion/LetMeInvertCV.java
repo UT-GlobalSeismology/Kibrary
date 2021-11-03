@@ -43,10 +43,10 @@ import org.jfree.util.ArrayUtilities;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
-import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
+import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
 import io.github.kensuke1984.kibrary.inversion.addons.RadialSecondOrderDifferentialOperator;

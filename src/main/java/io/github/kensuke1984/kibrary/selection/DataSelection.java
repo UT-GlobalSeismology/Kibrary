@@ -33,8 +33,8 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
@@ -61,6 +61,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
  * See {@link TimewindowDataFile}.
+ * <p>
+ * Information of parameters used in data selection will be written in ascii format in "dataSelection*.inf".
+ * See {@link DataSelectionInformationFile}.
+ * <p>
+ * Timewindows with no phases will be written in standard output, and will not be used.
  *
  * @author Kensuke Konishi
  * @version 0.1.2.1
@@ -68,7 +73,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class DataSelection implements Operation {
 
-    private Properties property;
+    private final Properties property;
     private Path timewindowInformationFilePath;
     private Path staticCorrectionInformationFilePath;
     /**
@@ -265,7 +270,7 @@ public class DataSelection implements Operation {
     public static void main(String[] args) throws Exception {
         DataSelection ds = new DataSelection(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(DataSelection.class.getName() + " is going");
+        System.err.println(DataSelection.class.getName() + " is going.");
         ds.run();
         System.err.println(DataSelection.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));
@@ -372,7 +377,7 @@ public class DataSelection implements Operation {
         Phases phases = new Phases(window.getPhases());
 
         if (window.getPhases().length == 0) {
-            System.out.println(window);
+            System.out.println("No phase: " + window);
         }
         else {
             writer.println(observer + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
@@ -606,7 +611,7 @@ public class DataSelection implements Operation {
 
                         if (check(lpw, observer, event, component, window, obsU, synU, SNratio)) {
                             if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
-                                System.out.println(window);
+                                System.out.println("!! No phase: " + window);
                             }
                             tmpGoodWindows.add(window);
                         }

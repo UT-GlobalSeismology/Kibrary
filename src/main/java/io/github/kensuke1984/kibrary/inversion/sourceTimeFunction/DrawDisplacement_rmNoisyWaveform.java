@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.sourceTimeFunction;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Observer;

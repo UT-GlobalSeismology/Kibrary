@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.Observer;

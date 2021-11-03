@@ -37,8 +37,8 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
-import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
+import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.DampingType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
 import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D_deprec;

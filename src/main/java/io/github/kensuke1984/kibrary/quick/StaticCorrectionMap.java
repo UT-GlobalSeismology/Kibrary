@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;

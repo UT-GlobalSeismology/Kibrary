@@ -25,7 +25,7 @@ import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;

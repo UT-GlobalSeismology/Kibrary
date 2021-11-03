@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Location;
 
 import java.time.LocalDateTime;

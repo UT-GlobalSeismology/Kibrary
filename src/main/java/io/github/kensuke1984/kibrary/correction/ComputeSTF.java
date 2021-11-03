@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datacorrection;
+package io.github.kensuke1984.kibrary.correction;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata.addons;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;

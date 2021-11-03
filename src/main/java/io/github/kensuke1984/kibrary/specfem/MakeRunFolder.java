@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.specfem;
 
-import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Observer;

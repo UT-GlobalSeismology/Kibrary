@@ -1,13 +1,13 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
+
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 
 public class WriteStaticCorrectionMap {
 

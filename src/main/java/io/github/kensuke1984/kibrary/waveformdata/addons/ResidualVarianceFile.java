@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;

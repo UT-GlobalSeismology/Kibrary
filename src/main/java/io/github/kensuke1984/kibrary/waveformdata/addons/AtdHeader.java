@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata.addons;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;

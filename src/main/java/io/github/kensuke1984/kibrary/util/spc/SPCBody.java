@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import org.apache.commons.math3.complex.Complex;
 

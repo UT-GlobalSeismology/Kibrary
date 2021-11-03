@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datacorrection;
+package io.github.kensuke1984.kibrary.correction;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -65,7 +65,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class FujiStaticCorrection implements Operation {
 
-    private Properties property;
+    private final Properties property;
     private Path timewindowInformationPath;
     /**
      * the directory of observed data
@@ -136,13 +136,13 @@ public class FujiStaticCorrection implements Operation {
         }
         System.err.println(outPath + " is created.");
     }
-
+/*
     public FujiStaticCorrection(double sacSamplingHz, double threshold, double searchRange) {
         this.sacSamplingHz = sacSamplingHz;
         this.threshold = threshold;
         this.searchRange = searchRange;
     }
-
+*/
     private FujiStaticCorrection(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();

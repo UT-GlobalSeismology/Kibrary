@@ -4,8 +4,8 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.IOException;

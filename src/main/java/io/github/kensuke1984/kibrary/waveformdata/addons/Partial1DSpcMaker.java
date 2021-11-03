@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;

@@ -14,7 +14,7 @@ import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;

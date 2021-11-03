@@ -12,8 +12,8 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 
 public class ComputeTimeDiff {

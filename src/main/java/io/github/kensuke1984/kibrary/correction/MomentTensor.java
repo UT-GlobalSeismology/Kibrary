@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datacorrection;
+package io.github.kensuke1984.kibrary.correction;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;

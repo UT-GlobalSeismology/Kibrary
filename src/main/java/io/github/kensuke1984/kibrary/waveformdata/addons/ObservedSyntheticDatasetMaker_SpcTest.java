@@ -33,9 +33,9 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.inversion.addons.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
@@ -65,16 +65,16 @@ import ucar.nc2.stream.NcStreamProto.Range;
  * 
  * Observed and synthetic waveforms in SAC files are collected from the obsDir
  * and synDir, respectively. Only SAC files, which sample rates are
- * {@link parameter.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used. Both
+ * {@link ActualDatasetCompiler.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used. Both
  * folders must have event folders inside which have waveforms.
  * 
  * The static correction is applied as described in {@link StaticCorrectionData}
  * 
  * 
  * The sample rates of the data is
- * {@link parameter.ObservedSyntheticDatasetMaker#finalSamplingHz}.<br>
+ * {@link ActualDatasetCompiler.ObservedSyntheticDatasetMaker#finalSamplingHz}.<br>
  * Timewindow information in
- * {@link parameter.ObservedSyntheticDatasetMaker#timewindowInformationPath} is
+ * {@link ActualDatasetCompiler.ObservedSyntheticDatasetMaker#timewindowInformationPath} is
  * used for cutting windows.
  * 
  * Only pairs of a seismic source and a receiver with both an observed and

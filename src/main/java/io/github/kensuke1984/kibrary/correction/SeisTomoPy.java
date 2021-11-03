@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datacorrection;
+package io.github.kensuke1984.kibrary.correction;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Earth;

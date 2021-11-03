@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datacorrection;
+package io.github.kensuke1984.kibrary.correction;
 
 import java.util.List;
 import java.util.stream.Collectors;

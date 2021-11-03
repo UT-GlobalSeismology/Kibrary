@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.inversion.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;

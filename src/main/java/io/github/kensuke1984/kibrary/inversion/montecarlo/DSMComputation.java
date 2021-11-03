@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInputFile;
 import io.github.kensuke1984.kibrary.external.DSMMPI;

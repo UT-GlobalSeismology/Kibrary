@@ -3,9 +3,9 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.axiSEM.Result;
-import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunctionByGridSearch;
-import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
+import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMSetup;
@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
-import io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker;
+import io.github.kensuke1984.kibrary.waveformdata.ActualDatasetCompiler;
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker_v2;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker_v2;
 import io.github.kensuke1984.kibrary.waveformdata.addons.AtAMaker;
@@ -45,7 +45,7 @@ public enum Manhattan {
 	FujiStaticCorrection(6, FujiStaticCorrection.class), //
 	InformationFileMaker(7, InformationFileMaker.class), //
 	LetMeInvert(8, LetMeInvert.class), //
-	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
+	ObservedSyntheticDatasetMaker(9, ActualDatasetCompiler.class), //
 	Partial1DDatasetMaker(10, Partial1DDatasetMaker_v2.class), //
 	PartialDatasetMaker(11, PartialDatasetMaker_v2.class), //
 	PhaseEnvelope(12, PhaseEnvelope.class), //
