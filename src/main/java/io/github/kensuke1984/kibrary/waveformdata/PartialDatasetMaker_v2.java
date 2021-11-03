@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
@@ -196,17 +196,17 @@ public class PartialDatasetMaker_v2 implements Operation {
 	 */
 	private class PartialComputation implements Runnable {
 
-		private DSMOutput bp;
-		private DSMOutput bp_other;
+		private SPCFileAccess bp;
+		private SPCFileAccess bp_other;
 		private SPCFileName fpname;
 		private SPCFileName fpname_other;
-		private DSMOutput fp;
-		private DSMOutput fp_other;
+		private SPCFileAccess fp;
+		private SPCFileAccess fp_other;
 		private Observer station;
 		private GlobalCMTID id;
 		private String mode;
 		
-		private void checkMode(DSMOutput bp, SPCFileName fpFile) {
+		private void checkMode(SPCFileAccess bp, SPCFileName fpFile) {
 			if (bp.getSpcFileName().getMode().equals(SPCMode.SH) 
 					&& fpFile.getMode().equals(SPCMode.SH)) {
 				this.bp = bp;
@@ -231,14 +231,14 @@ public class PartialDatasetMaker_v2 implements Operation {
 		 * @param fp
 		 * @param bpFile
 		 */
-		private PartialComputation(DSMOutput bp, Observer station, SPCFileName fpFile) {
+		private PartialComputation(SPCFileAccess bp, Observer station, SPCFileName fpFile) {
 			checkMode(bp, fpFile);
 			this.station = station;
 //			fpname = fpFile;
 			id = new GlobalCMTID(fpFile.getSourceID());
 		}
 		
-		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Observer station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV) {
+		private PartialComputation(SPCFileAccess bp_SH, SPCFileAccess bp_PSV, Observer station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV) {
 			this.bp = bp_PSV;
 			fpname = fpFile_PSV;
 			bp_other = bp_SH;
@@ -251,7 +251,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 				throw new RuntimeException("SH and PSV bp files are not a pair" + bp + " " + bp_other);
 		}
 		
-		private boolean checkPair(DSMOutput bp1, DSMOutput bp2) {
+		private boolean checkPair(SPCFileAccess bp1, SPCFileAccess bp2) {
 			boolean res = true;
 			if (!bp1.getObserverPosition().equals(bp2.getObserverPosition()))
 				res = false;
@@ -972,8 +972,8 @@ private class WorkerTimePartial implements Runnable {
 				
 				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
 				// 摂動点の名前
-				DSMOutput bp = bpname.read();
-				DSMOutput bp_PSV = null;
+				SPCFileAccess bp = bpname.read();
+				SPCFileAccess bp_PSV = null;
 				if (mode.equals("BOTH"))
 					bp_PSV = bpname_PSV.read();
 				String pointName = bp.getStationCode();

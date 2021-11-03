@@ -8,7 +8,7 @@ import org.apache.commons.math3.complex.Complex;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
@@ -17,11 +17,11 @@ public class LookAt1DPartialspc {
 
 	public static void main(String[] args) throws IOException {
 		SPCFileName spcName = new FormattedSPCFileName(Paths.get(args[0]));
-		DSMOutput dsmOutput = spcName.read();
+		SPCFileAccess dsmOutput = spcName.read();
 		print(dsmOutput);
 	}
 	
-	public static void print(DSMOutput dsmOutput) {
+	public static void print(SPCFileAccess dsmOutput) {
 		String obsName = dsmOutput.getStationCode();
 		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
@@ -48,7 +48,7 @@ public class LookAt1DPartialspc {
 	}
 	
 	//TODO maybe
-	public static void printHeader(DSMOutput dsmOutput) {
+	public static void printHeader(SPCFileAccess dsmOutput) {
 		String obsName = dsmOutput.getStationCode();
 		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();

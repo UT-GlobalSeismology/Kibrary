@@ -33,15 +33,15 @@ public class ThreeDPartialMaker {
     /**
      * forward propagation
      */
-    private DSMOutput fp;
-    private DSMOutput fp2;
-    private DSMOutput fp3;
+    private SPCFileAccess fp;
+    private SPCFileAccess fp2;
+    private SPCFileAccess fp3;
     /**
      * back propagation
      */
-    private DSMOutput bp;
-    private DSMOutput bp2;
-    private DSMOutput bp3;
+    private SPCFileAccess bp;
+    private SPCFileAccess bp2;
+    private SPCFileAccess bp3;
     /**
      * distances for interpolation
      */
@@ -72,7 +72,7 @@ public class ThreeDPartialMaker {
      * @param fp a spc file for forward propagation
      * @param bp a spc file for back propagation
      */
-    public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp) {
+    public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp, bp))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -97,7 +97,7 @@ public class ThreeDPartialMaker {
      * @param dh
      * @author anselme
      */
-    public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp1, DSMOutput bp2, DSMOutput bp3, double[] dh) {
+    public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dh) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPairPermissive(fp, bp1)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -130,8 +130,8 @@ public class ThreeDPartialMaker {
      * @param dh
      * @author anselme
      */
-    public ThreeDPartialMaker(DSMOutput fpSH, DSMOutput fpPSV, DSMOutput bp1SH,
-            DSMOutput bp1PSV, DSMOutput bp2SH, DSMOutput bp2PSV, DSMOutput bp3SH, DSMOutput bp3PSV, double[] dh) {
+    public ThreeDPartialMaker(SPCFileAccess fpSH, SPCFileAccess fpPSV, SPCFileAccess bp1SH,
+            SPCFileAccess bp1PSV, SPCFileAccess bp2SH, SPCFileAccess bp2PSV, SPCFileAccess bp3SH, SPCFileAccess bp3PSV, double[] dh) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPairPermissive(fpSH, bp1SH)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -184,7 +184,7 @@ public class ThreeDPartialMaker {
      * @param dhFP
      * @author anselme
      */
-    public ThreeDPartialMaker(DSMOutput fp1, DSMOutput fp2, DSMOutput fp3, DSMOutput bp1, DSMOutput bp2, DSMOutput bp3, double[] dhBP, double[] dhFP) {
+    public ThreeDPartialMaker(SPCFileAccess fp1, SPCFileAccess fp2, SPCFileAccess fp3, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dhBP, double[] dhFP) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPairPermissive(fp1, bp1)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -224,8 +224,8 @@ public class ThreeDPartialMaker {
      * @param dhFP
      * @author anselme
      */
-    public ThreeDPartialMaker(DSMOutput fp1PSV, DSMOutput fp1SH, DSMOutput fp2PSV,  DSMOutput fp2SH, DSMOutput fp3PSV, DSMOutput fp3SH,
-            DSMOutput bp1PSV, DSMOutput bp1SH, DSMOutput bp2PSV, DSMOutput bp2SH, DSMOutput bp3PSV, DSMOutput bp3SH, double[] dhBP, double[] dhFP) {
+    public ThreeDPartialMaker(SPCFileAccess fp1PSV, SPCFileAccess fp1SH, SPCFileAccess fp2PSV,  SPCFileAccess fp2SH, SPCFileAccess fp3PSV, SPCFileAccess fp3SH,
+            SPCFileAccess bp1PSV, SPCFileAccess bp1SH, SPCFileAccess bp2PSV, SPCFileAccess bp2SH, SPCFileAccess bp3PSV, SPCFileAccess bp3SH, double[] dhBP, double[] dhFP) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp1SH, bp1SH)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -279,7 +279,7 @@ public class ThreeDPartialMaker {
      * @param bpPSV
      * @author anselme
      */
-    public ThreeDPartialMaker(DSMOutput fpSH, DSMOutput fpPSV, DSMOutput bpSH, DSMOutput bpPSV) {
+    public ThreeDPartialMaker(SPCFileAccess fpSH, SPCFileAccess fpPSV, SPCFileAccess bpSH, SPCFileAccess bpPSV) {
         ignoreBodyR = new HashSet<>();
 
         this.fp = fpPSV;
@@ -322,7 +322,7 @@ public class ThreeDPartialMaker {
      * @param bp backward propagation
      * @return if the pair of fp and bp is valid for making partials.
      */
-    private static boolean isGoodPair(DSMOutput fp, DSMOutput bp) {
+    private static boolean isGoodPair(SPCFileAccess fp, SPCFileAccess bp) {
         boolean validity = true;
         if (fp.nbody() != bp.nbody()) {
             System.err.println("nbodies are different. fp, bp: " + fp.nbody() + " ," + bp.nbody());
@@ -377,7 +377,7 @@ public class ThreeDPartialMaker {
      * @return
      * @author anselme
      */
-    private boolean isGoodPairPermissive(DSMOutput fp, DSMOutput bp) {
+    private boolean isGoodPairPermissive(SPCFileAccess fp, SPCFileAccess bp) {
         boolean validity = true;
         if (Math.abs(fp.nbody() - bp.nbody()) > 2) {
             System.err.println("nbodies are different by more than 2. fp, bp: " + fp.nbody() + " ," + bp.nbody());
@@ -449,13 +449,13 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * Create a {@link DSMOutput} from a forward propagation and a
+     * Create a {@link SPCFileAccess} from a forward propagation and a
      * backward propagation.
      *
      * @param type {@link PartialType}
      * @return partial spectrum file
      */
-    public DSMOutput toSpectrum(PartialType type) {
+    public SPCFileAccess toSpectrum(PartialType type) {
         SPCFileName spcFileName = bp.getSpcFileName();
         double tlen = bp.tlen();
         int np = bp.np();
@@ -486,7 +486,7 @@ public class ThreeDPartialMaker {
                 body.add(ip, partialZ[ip], partialR[ip], partialT[ip]);
             spcBodyList.add(body);
         }
-        return new DSMOutput() {
+        return new SPCFileAccess() {
 
             @Override
             public double tlen() {
@@ -681,7 +681,7 @@ public class ThreeDPartialMaker {
     private Complex[] computeQpartial(SACComponent component, int iBody) {
         if (fujiConversion == null)
             fujiConversion = new FujiConversion(PolynomialStructure.PREM);
-        DSMOutput qspec = fujiConversion.convert(toSpectrum(PartialType.MU));
+        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU));
         return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
 
     }

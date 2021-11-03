@@ -433,8 +433,8 @@ public class ActualDatasetCompiler implements Operation {
        Path spcImIDPath = null;
        Path spcImPath = null;
 
-       waveIDPath = workPath.resolve("waveformID" + dateStr + ".dat");
-       waveformPath = workPath.resolve("waveform" + dateStr + ".dat");
+       waveIDPath = workPath.resolve("actualID" + dateStr + ".dat");
+       waveformPath = workPath.resolve("actual" + dateStr + ".dat");
        envelopeIDPath = workPath.resolve("envelopeID" + dateStr + ".dat");
        envelopePath = workPath.resolve("envelope" + dateStr + ".dat");
        hyIDPath = workPath.resolve("hyID" + dateStr + ".dat");

@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
-import io.github.kensuke1984.kibrary.util.spc.Spectrum;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -695,7 +695,7 @@ public class AtAMaker implements Operation {
 	
 	Phases[] usedPhases;
 	
-	Map<HorizontalPosition, DSMOutput> bpMap;
+	Map<HorizontalPosition, SPCFileAccess> bpMap;
 	
 	private final String stfcatName = "LSTF1.stfcat"; //LSTF1 ASTF1 ASTF2
 	private final List<String> stfcat = readSTFCatalogue(stfcatName);
@@ -1693,8 +1693,8 @@ public class AtAMaker implements Operation {
 			try {
 			t1i = System.currentTimeMillis();
 			
-			DSMOutput fpSpc = null;
-			DSMOutput fpSpc_PSV = null;
+			SPCFileAccess fpSpc = null;
+			SPCFileAccess fpSpc_PSV = null;
 			HorizontalPosition obsPos = null;
 			double[] bodyR = null;
 			String obsName = "";
@@ -1837,46 +1837,46 @@ public class AtAMaker implements Operation {
 				dhFP[2] = (distanceFP - theta3) / dtheta;
 			}
 			
-			DSMOutput bpSpc1 = null;
-			DSMOutput bpSpc2 = null; 
-			DSMOutput bpSpc3 = null;
-			DSMOutput fpSpc1 = null;
-			DSMOutput fpSpc2 = null;
-			DSMOutput fpSpc3 = null;
-			DSMOutput bpSpc1_PSV = null;
-			DSMOutput bpSpc2_PSV = null; 
-			DSMOutput bpSpc3_PSV = null;
-			DSMOutput fpSpc1_PSV = null;
-			DSMOutput fpSpc2_PSV = null;
-			DSMOutput fpSpc3_PSV = null;
+			SPCFileAccess bpSpc1 = null;
+			SPCFileAccess bpSpc2 = null; 
+			SPCFileAccess bpSpc3 = null;
+			SPCFileAccess fpSpc1 = null;
+			SPCFileAccess fpSpc2 = null;
+			SPCFileAccess fpSpc3 = null;
+			SPCFileAccess bpSpc1_PSV = null;
+			SPCFileAccess bpSpc2_PSV = null; 
+			SPCFileAccess bpSpc3_PSV = null;
+			SPCFileAccess fpSpc1_PSV = null;
+			SPCFileAccess fpSpc2_PSV = null;
+			SPCFileAccess fpSpc3_PSV = null;
 			if (catalogueFP) {
 				if (mode.equals("SH") || mode.equals("BOTH"))
-					bpSpc1 = Spectrum.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, "null");
+					bpSpc1 = SPCFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, "null");
 				if (mode.equals("PSV") || mode.equals("BOTH"))
-					bpSpc1_PSV = Spectrum.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, "null");
+					bpSpc1_PSV = SPCFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, "null");
 				if (!quickAndDirty) {
 					if (mode.equals("SH") || mode.equals("BOTH")) {
-						bpSpc2 = Spectrum.getInstance(bpname2, phiBP, obsPos, bpSourceLoc, "null");
-						bpSpc3 = Spectrum.getInstance(bpname3, phiBP, obsPos, bpSourceLoc, "null");
+						bpSpc2 = SPCFile.getInstance(bpname2, phiBP, obsPos, bpSourceLoc, "null");
+						bpSpc3 = SPCFile.getInstance(bpname3, phiBP, obsPos, bpSourceLoc, "null");
 					}
 					if (mode.equals("PSV") || mode.equals("BOTH")) {
-						bpSpc2_PSV = Spectrum.getInstance(bpname2_PSV, phiBP, obsPos, bpSourceLoc, "null");
-						bpSpc3_PSV = Spectrum.getInstance(bpname3_PSV, phiBP, obsPos, bpSourceLoc, "null");
+						bpSpc2_PSV = SPCFile.getInstance(bpname2_PSV, phiBP, obsPos, bpSourceLoc, "null");
+						bpSpc3_PSV = SPCFile.getInstance(bpname3_PSV, phiBP, obsPos, bpSourceLoc, "null");
 					}
 				}
 				
 				if (mode.equals("SH") || mode.equals("BOTH"))
-					fpSpc1 = Spectrum.getInstance(fpname1, phiFP, obsPos, fpSourceLoc, "null");
+					fpSpc1 = SPCFile.getInstance(fpname1, phiFP, obsPos, fpSourceLoc, "null");
 				if (mode.equals("PSV") || mode.equals("BOTH"))
-					fpSpc1_PSV = Spectrum.getInstance(fpname1_PSV, phiFP, obsPos, fpSourceLoc, "null");
+					fpSpc1_PSV = SPCFile.getInstance(fpname1_PSV, phiFP, obsPos, fpSourceLoc, "null");
 				if (!quickAndDirty) {
 					if (mode.equals("SH") || mode.equals("BOTH")) {
-						fpSpc2 = Spectrum.getInstance(fpname2, phiFP, obsPos, fpSourceLoc, "null");
-						fpSpc3 = Spectrum.getInstance(fpname3, phiFP, obsPos, fpSourceLoc, "null");
+						fpSpc2 = SPCFile.getInstance(fpname2, phiFP, obsPos, fpSourceLoc, "null");
+						fpSpc3 = SPCFile.getInstance(fpname3, phiFP, obsPos, fpSourceLoc, "null");
 					}
 					if (mode.equals("PSV") || mode.equals("BOTH")) {
-						fpSpc2_PSV = Spectrum.getInstance(fpname2_PSV, phiFP, obsPos, fpSourceLoc, "null");
-						fpSpc3_PSV = Spectrum.getInstance(fpname3_PSV, phiFP, obsPos, fpSourceLoc, "null");
+						fpSpc2_PSV = SPCFile.getInstance(fpname2_PSV, phiFP, obsPos, fpSourceLoc, "null");
+						fpSpc3_PSV = SPCFile.getInstance(fpname3_PSV, phiFP, obsPos, fpSourceLoc, "null");
 					}
 				}
 				
@@ -1884,17 +1884,17 @@ public class AtAMaker implements Operation {
 			}
 			else {
 				if (mode.equals("SH") || mode.equals("BOTH"))
-					bpSpc1 = Spectrum.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, obsName);
+					bpSpc1 = SPCFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, obsName);
 				if (mode.equals("PSV") || mode.equals("BOTH"))
-					bpSpc1_PSV = Spectrum.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, obsName);
+					bpSpc1_PSV = SPCFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, obsName);
 				if (!quickAndDirty) {
 					if (mode.equals("SH") || mode.equals("BOTH")) {
-						bpSpc2 = Spectrum.getInstance(bpname2, phiBP, obsPos, bpSourceLoc, obsName);
-						bpSpc3 = Spectrum.getInstance(bpname3, phiBP, obsPos, bpSourceLoc, obsName);
+						bpSpc2 = SPCFile.getInstance(bpname2, phiBP, obsPos, bpSourceLoc, obsName);
+						bpSpc3 = SPCFile.getInstance(bpname3, phiBP, obsPos, bpSourceLoc, obsName);
 					}
 					if (mode.equals("PSV") || mode.equals("BOTH")) {
-						bpSpc2_PSV = Spectrum.getInstance(bpname2_PSV, phiBP, obsPos, bpSourceLoc, obsName);
-						bpSpc3_PSV = Spectrum.getInstance(bpname3_PSV, phiBP, obsPos, bpSourceLoc, obsName);
+						bpSpc2_PSV = SPCFile.getInstance(bpname2_PSV, phiBP, obsPos, bpSourceLoc, obsName);
+						bpSpc3_PSV = SPCFile.getInstance(bpname3_PSV, phiBP, obsPos, bpSourceLoc, obsName);
 					}
 				}
 			}

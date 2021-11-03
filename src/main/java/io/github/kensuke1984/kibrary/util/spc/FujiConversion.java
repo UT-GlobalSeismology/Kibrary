@@ -30,7 +30,7 @@ public final class FujiConversion {
         STRUCTURE = structure;
     }
 
-    public DSMOutput convert(DSMOutput spectrum) {
+    public SPCFileAccess convert(SPCFileAccess spectrum) {
         if (spectrum.getSpcFileType() != SPCType.PAR2) throw new RuntimeException();
 
         int nbody = spectrum.nbody();
@@ -88,7 +88,7 @@ public final class FujiConversion {
             }
             spcBodyList.add(newBody);
         }
-        DSMOutput dsmoutput = new DSMOutput() {
+        SPCFileAccess dsmoutput = new SPCFileAccess() {
 
             @Override
             public double tlen() {

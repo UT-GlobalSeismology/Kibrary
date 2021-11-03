@@ -42,7 +42,7 @@ public final class VSConversion {
         this(null);
     }
 
-    public DSMOutput convert(DSMOutput spectrum) {
+    public SPCFileAccess convert(SPCFileAccess spectrum) {
         if (spectrum.getSpcFileType() != SPCType.PAR2)
             throw new RuntimeException();
 
@@ -76,7 +76,7 @@ public final class VSConversion {
             }
             spcBodyList.add(newBody);
         }
-        DSMOutput dsmoutput = new DSMOutput() {
+        SPCFileAccess dsmoutput = new SPCFileAccess() {
 
             @Override
             public double tlen() {

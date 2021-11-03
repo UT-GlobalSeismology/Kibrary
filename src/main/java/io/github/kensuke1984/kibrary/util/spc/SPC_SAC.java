@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 
 /**
- * Operation that converts from {@link Spectrum} to {@link SACFileAccess} file.
+ * Operation that converts from {@link SPCFile} to {@link SACFileAccess} file.
  * Source time function can be convolved during this process.
  * <p>
  * It converts all the SPC files in eventFolders/model under the specified PSVFolder and SHFolder.
@@ -187,7 +187,7 @@ public final class SPC_SAC implements Operation {
         int nSAC = 0;
         // single
         if (psvPath == null || shPath == null) for (SPCFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
-            Spectrum one = Spectrum.getInstance(spc);
+            SPCFile one = SPCFile.getInstance(spc);
             // create event folder under outPath
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             // operate method createSACMaker() -> instance of an anonymous inner class is returned
@@ -198,13 +198,13 @@ public final class SPC_SAC implements Operation {
         }
         // both
         else for (SPCFileName spc : psvSPCs) {
-            Spectrum one = Spectrum.getInstance(spc);
+            SPCFile one = SPCFile.getInstance(spc);
             SPCFileName pair = pairFile(spc);
             if (pair == null || !pair.exists()) {
                 System.err.println(pair + " does not exist");
                 continue;
             }
-            Spectrum two = Spectrum.getInstance(pairFile(spc));
+            SPCFile two = SPCFile.getInstance(pairFile(spc));
             // create event folder under outPath
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             // operate method createSACMaker() -> instance of an anonymous inner class is returned
@@ -234,7 +234,7 @@ public final class SPC_SAC implements Operation {
      * @param secondarySPC null is ok
      * @return {@link SACMaker}
      */
-    private SACMaker createSACMaker(Spectrum primeSPC, Spectrum secondarySPC) {
+    private SACMaker createSACMaker(SPCFile primeSPC, SPCFile secondarySPC) {
         SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
                 new GlobalCMTID(primeSPC.getSourceID()));
         // create instance of an anonymous inner class extending SACMaker with the following run() function

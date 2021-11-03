@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
@@ -154,8 +154,8 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
                 SPCFileName shName = new FormattedSPCFileName(shPath);
                 SPCFileName psvName = toPSVname(shName);
                 try {
-                    DSMOutput shSPC = shName.read();
-                    DSMOutput psvSPC = psvName.read();
+                    SPCFileAccess shSPC = shName.read();
+                    SPCFileAccess psvSPC = psvName.read();
                     SACMaker sm = new SACMaker(psvSPC, shSPC, sourceTimeFunction);
                     sm.setComponents(components);
                     sm.setOutPath(eventDir.toPath());

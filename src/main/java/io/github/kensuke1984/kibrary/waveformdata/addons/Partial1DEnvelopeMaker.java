@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -516,7 +516,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 				.findAny().get();
 		}
 
-		private void process(DSMOutput spectrum) {
+		private void process(SPCFileAccess spectrum) {
 			for (SACComponent component : components)
 				spectrum.getSpcBodyList().stream().map(body -> body.getSpcComponent(component))
 						.forEach(spcComponent -> {
@@ -539,7 +539,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			}
 			
 			System.out.println(spcname);
-			DSMOutput spectrum = spcname.read();
+			SPCFileAccess spectrum = spcname.read();
 			if (spectrum.tlen() != tlen || spectrum.np() != np) {
 				System.err.println(spcname + " has different np or tlen.");
 				writeLog(spcname + " has different np or tlen.");
@@ -550,7 +550,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			String network = spcname.getNetworkCode();
 			Observer station = new Observer(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
-			DSMOutput qSpectrum = null;
+			SPCFileAccess qSpectrum = null;
 			if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum = fujiConversion.convert(spectrum);
 				process(qSpectrum);
@@ -624,7 +624,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			}
 			
 			System.out.println(spcname);
-			DSMOutput spectrum = spcname.read();
+			SPCFileAccess spectrum = spcname.read();
 			if (spectrum.tlen() != tlen || spectrum.np() != np) {
 				System.err.println(spcname + " has different np or tlen.");
 				writeLog(spcname + " has different np or tlen.");
@@ -632,7 +632,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			}
 			
 			System.out.println(shspcname);
-			DSMOutput shspectrum = shspcname.read();
+			SPCFileAccess shspectrum = shspcname.read();
 			if (shspectrum.tlen() != tlen || shspectrum.np() != np) {
 				System.err.println(shspcname + " has different np or tlen.");
 				writeLog(shspcname + " has different np or tlen.");
@@ -648,7 +648,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			String network = spcname.getNetworkCode();
 			Observer station = new Observer(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
-			DSMOutput qSpectrum = null;
+			SPCFileAccess qSpectrum = null;
 			if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum = fujiConversion.convert(spectrum);
 				process(qSpectrum);

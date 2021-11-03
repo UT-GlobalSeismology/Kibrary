@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * @version 0.0.1
  * @author anselme add network
  */
-public interface DSMOutput {
+public interface SPCFileAccess {
 
     /**
      * @return number of bodies

@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
@@ -68,7 +68,7 @@ public class BPVisual {
 		step = (int) (partialSamplingHz / finalSamplingHz);
 		
 		for (SPCFileName spcName : Utilities.collectSpcFileName(Paths.get("."))) {
-			DSMOutput bpSpc = spcName.read();
+			SPCFileAccess bpSpc = spcName.read();
 			
 			HorizontalPosition obsPos = bpSpc.getObserverPosition();
 			double[] bodyR = bpSpc.getBodyR();

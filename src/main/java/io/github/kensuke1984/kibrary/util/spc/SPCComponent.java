@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import java.util.Arrays;
 
 /**
- * Data for one element in one {@link SPCBody} in a {@link Spectrum}
+ * Data for one element in one {@link SPCBody} in a {@link SPCFile}
  *
  * @author Kensuke Konishi
  * @version 0.1.6

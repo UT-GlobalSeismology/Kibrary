@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * @author Kensuke Konishi
  * @author anselme add content for BP/FP catalog
  */
-public class Spectrum implements DSMOutput {
+public class SPCFile implements SPCFileAccess {
 
     private String stationCode;
     private String networkCode;
@@ -46,7 +46,7 @@ public class Spectrum implements DSMOutput {
     private double[] bodyR;
     private SPCType spcFileType;
 
-    public Spectrum(SPCFileName spcFileName) {
+    public SPCFile(SPCFileName spcFileName) {
         this.spcFileName = spcFileName; // TODO
     }
 
@@ -59,8 +59,8 @@ public class Spectrum implements DSMOutput {
      * @return
      * @author anselme
      */
-    public static Spectrum interpolate(Spectrum bp1, Spectrum bp2, Spectrum bp3, double[] dh) {
-        Spectrum bp = bp1;
+    public static SPCFile interpolate(SPCFile bp1, SPCFile bp2, SPCFile bp3, double[] dh) {
+        SPCFile bp = bp1;
         for (int ibody = 0; ibody < bp1.nbody; ibody++) {
             SPCBody body = SPCBody.interpolate(bp1.spcBody.get(ibody), bp2.spcBody.get(ibody), bp3.spcBody.get(ibody), dh);
             bp.spcBody.set(ibody, body);
@@ -80,10 +80,10 @@ public class Spectrum implements DSMOutput {
      * @author Kensuke Konishi
      * @author anselme add content for BP/FP catalog
      */
-    final public static Spectrum getInstance(SPCFileName spcFileName, double phi, HorizontalPosition observerPosition
+    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition observerPosition
             , Location sourceLocation, String observerName) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
-            Spectrum specFile = new Spectrum(spcFileName);
+            SPCFile specFile = new SPCFile(spcFileName);
             specFile.sourceID = spcFileName.getSourceID();
             specFile.stationCode = spcFileName.getStationCode();
             // read header PF
@@ -367,7 +367,7 @@ public class Spectrum implements DSMOutput {
      * @throws IOException
      * @author anselme
      */
-    public final static Spectrum getInstance(SPCFileName spcFileName, double phi) throws IOException {
+    public static final SPCFile getInstance(SPCFileName spcFileName, double phi) throws IOException {
         return getInstance(spcFileName, phi, null, null, null);
     }
 
@@ -377,7 +377,7 @@ public class Spectrum implements DSMOutput {
      * @throws IOException
      * @author anselme
      */
-    public final static Spectrum getInstance(SPCFileName spcFileName) throws IOException {
+    public static final SPCFile getInstance(SPCFileName spcFileName) throws IOException {
         return getInstance(spcFileName, 0., null, null, null);
     }
 

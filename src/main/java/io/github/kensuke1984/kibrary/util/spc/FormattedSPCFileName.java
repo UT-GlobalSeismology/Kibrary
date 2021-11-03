@@ -203,8 +203,8 @@ public class FormattedSPCFileName extends SPCFileName {
     //-------------------- read data of this name --------------------//
 
     @Override
-    public DSMOutput read() throws IOException {
-        return Spectrum.getInstance(this);
+    public SPCFileAccess read() throws IOException {
+        return SPCFile.getInstance(this);
     }
 
 }

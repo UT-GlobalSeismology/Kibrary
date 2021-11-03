@@ -143,6 +143,6 @@ public abstract class SPCFileName extends File {
      * @return output of DSM
      * @throws IOException if an I/O error occurs
      */
-    public abstract DSMOutput read() throws IOException;
+    public abstract SPCFileAccess read() throws IOException;
 
 }

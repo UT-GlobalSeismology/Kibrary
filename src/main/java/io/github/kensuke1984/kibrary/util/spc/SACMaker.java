@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * This class creates SAC files from one or two spector files ({@link Spectrum})
+ * This class creates SAC files from one or two spector files ({@link SPCFile})
  * <p>
  * SPC file name must be "station.eventID(PSV, SH).spc".
  * If the eventID is included in Global CMT catalog, the information for the event is written in SAC.
@@ -195,8 +195,8 @@ public class SACMaker implements Runnable {
         initialMap.put(SACHeaderEnum.num99, "-12345");
     }
 
-    private DSMOutput secondarySPC;
-    private DSMOutput primeSPC;
+    private SPCFileAccess secondarySPC;
+    private SPCFileAccess primeSPC;
     /**
      * [Hz]
      */
@@ -230,7 +230,7 @@ public class SACMaker implements Runnable {
      * @param oneSPC  one spc
      * @param pairSPC pair spc
      */
-    SACMaker(DSMOutput oneSPC, DSMOutput pairSPC) {
+    SACMaker(SPCFileAccess oneSPC, SPCFileAccess pairSPC) {
         this(oneSPC, pairSPC, null);
     }
 
@@ -239,7 +239,7 @@ public class SACMaker implements Runnable {
      * @param pairSPC            pair spc
      * @param sourceTimeFunction to consider
      */
-    public SACMaker(DSMOutput oneSPC, DSMOutput pairSPC, SourceTimeFunction sourceTimeFunction) {
+    public SACMaker(SPCFileAccess oneSPC, SPCFileAccess pairSPC, SourceTimeFunction sourceTimeFunction) {
         if (pairSPC != null && !check(oneSPC, pairSPC)) throw new RuntimeException("Input spc files are not a pair.");
         primeSPC = oneSPC;
         secondarySPC = pairSPC;
@@ -254,7 +254,7 @@ public class SACMaker implements Runnable {
     /**
      * @param oneSPC Spectrum for SAC
      */
-    public SACMaker(DSMOutput oneSPC) {
+    public SACMaker(SPCFileAccess oneSPC) {
         this(oneSPC, null, null);
     }
 
@@ -263,7 +263,7 @@ public class SACMaker implements Runnable {
      * @param spc2 secondary
      * @return if spc1 and spc2 have same information
      */
-    public static boolean check(DSMOutput spc1, DSMOutput spc2) {
+    public static boolean check(SPCFileAccess spc1, SPCFileAccess spc2) {
         boolean isOK = true;
         if (spc1.nbody() != spc2.nbody()) {
             System.err
@@ -371,12 +371,12 @@ public class SACMaker implements Runnable {
 
         String[] spcfiles = cli.getArgs();
         SPCFileName oneName = new FormattedSPCFileName(args[0]);
-        DSMOutput oneSPC = Spectrum.getInstance(oneName);
+        SPCFileAccess oneSPC = SPCFile.getInstance(oneName);
 
-        DSMOutput pairSPC = null;
+        SPCFileAccess pairSPC = null;
         if (1 < args.length) {
             SPCFileName pairName = new FormattedSPCFileName(args[1]);
-            pairSPC = Spectrum.getInstance(pairName);
+            pairSPC = SPCFile.getInstance(pairName);
         }
 
         SACMaker sm = new SACMaker(oneSPC, pairSPC);
