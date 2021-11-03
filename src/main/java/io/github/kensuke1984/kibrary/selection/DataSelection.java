@@ -96,8 +96,11 @@ public class DataSelection implements Operation {
      * Path of the timewindow output file
      */
     private Path outputGoodWindowPath;
+    /**
+     * Path of the result file that will be made inside each event folder
+     */
+    private String eachEventResultFile;
 
-    private String dateStr;
     private Set<SACComponent> components;
     /**
      * コンボリューションされている波形かそうでないか （両方は無理）
@@ -225,9 +228,10 @@ public class DataSelection implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        dateStr = Utilities.getTemporaryString();
+        String dateStr = Utilities.getTemporaryString();
         infoOutputpath = workPath.resolve("dataSelection" + dateStr + ".inf");
         outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+        eachEventResultFile = "selectionResult" + dateStr + ".txt";
         dataSelectionInfo = new ArrayList<>();
         goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
 
@@ -284,7 +288,7 @@ public class DataSelection implements Operation {
                 : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
 
         int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors");
+        System.err.println("Running on " + nThreads + " processors.");
         ExecutorService es = Executors.newFixedThreadPool(nThreads);
 
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
@@ -302,11 +306,12 @@ public class DataSelection implements Operation {
         System.err.println();
 
         System.err.println("Outputting values of criteria in " + infoOutputpath);
-        System.err.println("They are also written in stationList" + dateStr + ".txt inside each event folder.");
+        System.err.println("Results are written in " + eachEventResultFile + " inside each event folder.");
         DataSelectionInformationFile.write(dataSelectionInfo, infoOutputpath);
 
         System.err.println("Outputting selected timewindows in " + outputGoodWindowPath);
         TimewindowDataFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
+        System.err.println(goodTimewindowInformationSet.size() + " timewindows were selected.");
     }
 
     /**
@@ -510,7 +515,7 @@ public class DataSelection implements Operation {
             }
 
             try (PrintWriter lpw = new PrintWriter(
-                    Files.newBufferedWriter(obsEventDirectory.toPath().resolve("stationList" + dateStr + ".txt"),
+                    Files.newBufferedWriter(obsEventDirectory.toPath().resolve(eachEventResultFile),
                             StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
                 // all the observed files
                 if (convolved)

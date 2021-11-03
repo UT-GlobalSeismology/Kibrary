@@ -38,8 +38,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  *
- * @author Kensuke Konishi
- * @version 0.2.4
  */
 public class FilterDivider implements Operation {
 

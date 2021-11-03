@@ -22,28 +22,25 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
- * Writer of BasicDataset and PartialDataset
+ * Writer of BasicDataset and PartialDataset.
  * <p>
- * This class create a new set of dataset files.
+ * This class creates a new set of dataset files.
  *
- * @author Kensuke Konishi
- * @version 0.4.0.4
- * @author anselme added phase information
  */
 public class WaveformDataWriter implements Closeable, Flushable {
     /**
      * id information file
      */
-    private final Path IDPATH;
+    private final Path idPath;
     /**
      * wavedata file
      */
-    private final Path DATAPATH;
+    private final Path dataPath;
     /**
      * Because the header part is decided when this is constructed, the mode is
      * also decided(0: BasicID, 1: PartialID)
      */
-    private final int MODE;
+    private final int mode;
     /**
      * stream for id
      */
@@ -112,8 +109,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     public WaveformDataWriter(Path idPath, Path dataPath, Set<Observer> observerSet, Set<GlobalCMTID> globalCMTIDSet,
             double[][] periodRanges, Phase[] phases, Set<Location> perturbationPoints) throws IOException {
-        IDPATH = idPath;
-        DATAPATH = dataPath;
+        this.idPath = idPath;
+        this.dataPath = dataPath;
         if (checkDuplication(periodRanges)) throw new RuntimeException("Input periodRanges have duplication.");
         this.periodRanges = periodRanges;
         idStream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(idPath)));
@@ -132,7 +129,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         }
         makePhaseMap(phases);
         if (perturbationPoints != null) makePerturbationMap(perturbationPoints);
-        MODE = perturbationPoints == null ? 0 : 1;
+        mode = (perturbationPoints == null ? 0 : 1);
     }
 
     private static boolean checkDuplication(double[][] periodRanges) {
@@ -143,11 +140,11 @@ public class WaveformDataWriter implements Closeable, Flushable {
     }
 
     public Path getIDPath() {
-        return IDPATH;
+        return idPath;
     }
 
     public Path getDataPath() {
-        return DATAPATH;
+        return dataPath;
     }
 
     @Override
@@ -219,7 +216,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addBasicID(BasicID basicID) throws IOException {
-        if (MODE != 0) throw new RuntimeException("BasicID please, would you.");
+        if (mode != 0) throw new RuntimeException("BasicID please, would you.");
 
         Integer ista = observerMap.get(basicID.observer);
         if (ista == null) {
@@ -277,7 +274,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     public synchronized void addPartialID(PartialID partialID) throws IOException {
         if (partialID.TYPE != WaveformType.PARTIAL) throw new RuntimeException(
                     "This is not a partial derivative. " + Thread.currentThread().getStackTrace()[1].getMethodName());
-        if (MODE != 1) throw new RuntimeException("No Partial please, would you.");
+        if (mode != 1) throw new RuntimeException("No Partial please, would you.");
         long startByte = dataLength;
         addWaveform(partialID.getData());
         idStream.writeShort(observerMap.get(partialID.observer));

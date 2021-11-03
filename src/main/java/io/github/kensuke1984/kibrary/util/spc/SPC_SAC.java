@@ -39,9 +39,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * It converts all the SPC files in eventFolders/model under the specified PSVFolder and SHFolder.
  * If you leave 'model name' blank and each event folder has only one folder,
  * the model name will be set automatically as the name of that folder.
+ * <p>
+ * The waveform in time domain will be sampled in {@link #samplingHz},
+ * so the number of data points will become [time length x samplingHz].
  *
- * @author Kensuke Konishi
- * @version 0.2.4.5.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SPC_SAC implements Operation {

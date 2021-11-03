@@ -36,9 +36,6 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <li> Position of a waveform for the ID </li>
  * </ul>
  *
- * @author Kensuke Konishi
- * @version 0.3.1.2
- * @author anselme add phase information
  */
 public class BasicID {
 

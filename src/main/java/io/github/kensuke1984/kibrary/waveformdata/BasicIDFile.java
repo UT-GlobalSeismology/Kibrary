@@ -47,9 +47,6 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <dt>See in {@link #read(Path)}</dt>
  * </dl>
  *
- * @author Kensuke Konishi
- * @version 0.3.0.5.1
- * @see BasicID
  */
 public final class BasicIDFile {
 

@@ -67,9 +67,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> In 'timewindow.observer', information of each observer is written.</li>
  * </ol>
  *
- * @author Kensuke Konishi
- * @version 0.3.1
- * @author anselme add phase information
  */
 public final class TimewindowDataFile {
 

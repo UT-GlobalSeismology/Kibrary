@@ -72,13 +72,6 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * This class does not apply a digital filter, but extract information about
  * pass band written in SAC files.
- * <p>
- * TODO <b> Assume that there are no stations with same name but different
- * network in one event</b>
- *
- * @author Kensuke Konishi
- * @version 0.2.3
- * @author anselme
  *
  */
 public class ActualDatasetCompiler implements Operation {
@@ -390,7 +383,7 @@ public class ActualDatasetCompiler implements Operation {
        }
 
        if (correctMantle) {
-           System.err.println("Using mantle corrections");
+           System.err.println("Using mantle corrections.");
            mantleCorrectionSet = StaticCorrectionDataFile.read(mantleCorrectionPath);
        }
 
@@ -416,7 +409,7 @@ public class ActualDatasetCompiler implements Operation {
        readPeriodRanges();
 
        int nThreads = Runtime.getRuntime().availableProcessors();
-       System.err.println("Running on " + nThreads + " processors");
+       System.err.println("Running on " + nThreads + " processors.");
        ExecutorService execs = Executors.newFixedThreadPool(nThreads);
 
        String dateStr = Utilities.getTemporaryString();

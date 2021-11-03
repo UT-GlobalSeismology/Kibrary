@@ -229,11 +229,12 @@ public class TimewindowMaker implements Operation {
         } , 10, TimeUnit.HOURS);
 
         if (timewindowSet.isEmpty()) {
-            System.err.println("No timewindow is created");
+            System.err.println("No timewindow is created.");
         }
         else {
             System.err.println("Outputting in " + outputPath);
             TimewindowDataFile.write(timewindowSet, outputPath);
+            System.err.println(timewindowSet.size() + " timewindows were made.");
         }
     }
 
