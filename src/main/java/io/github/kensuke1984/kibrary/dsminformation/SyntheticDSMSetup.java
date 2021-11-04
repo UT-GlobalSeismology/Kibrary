@@ -299,26 +299,26 @@ public class SyntheticDSMSetup implements Operation {
             writeProperties(outPath.resolve("dsmifm.properties"));
 
         //synthetic station set
-        Set<Observer> synStationSet = new HashSet<>();
+        Set<Observer> synObserverSet = new HashSet<>();
         if (syntheticDataset) {
             for (int i = synMinDistance; i <= synMaxDistance; i+=1) {
                 double distance = i;
                 String stationName = String.format("%03d", i);
-                Observer station = new Observer(stationName
+                Observer observer = new Observer(stationName
                         , new HorizontalPosition(0, distance), Observer.SYN);
-                synStationSet.add(station);
+                synObserverSet.add(observer);
             }
         }
 
         //specfem test dataset
         if (specfemDataset) {
-            Set<Observer> specfemStationSet = IOUtils.readLines(SyntheticDSMSetup.class.getClassLoader()
+            Set<Observer> specfemObserverSet = IOUtils.readLines(SyntheticDSMSetup.class.getClassLoader()
                     .getResourceAsStream("specfem_stations.inf"), Charset.defaultCharset())
                 .stream().map(s -> Observer.createObserver(s)).collect(Collectors.toSet());
             try {
                 GlobalCMTAccess id = new GlobalCMTID("060994A").getEvent();
                 Path eventOut = outPath.resolve(id.toString());
-                SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, id, specfemStationSet, header, tlen, np);
+                SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, id, specfemObserverSet, header, tlen, np);
                 Files.createDirectories(eventOut.resolve(header));
                 info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                 info.writeSH(eventOut.resolve(header + "_SH.inf"));
@@ -329,7 +329,7 @@ public class SyntheticDSMSetup implements Operation {
 
         for (EventFolder eventDir : eventDirs) {
             try {
-                Set<Observer> stations = eventDir.sacFileSet().stream()
+                Set<Observer> observers = eventDir.sacFileSet().stream()
                         .filter(name -> name.isOBS() && components.contains(name.getComponent())).map(name -> {
                             try {
                                 return name.readHeader();
@@ -338,20 +338,20 @@ public class SyntheticDSMSetup implements Operation {
                             }
                         }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
                 if (syntheticDataset)
-                    stations = synStationSet;
-                if (stations.isEmpty())
+                    observers = synObserverSet;
+                if (observers.isEmpty())
                     continue;
 
                 // in the same event folder, observers with the same name should have same position
-                int numberOfStation = (int) stations.stream().map(Observer::toString).count();
-                if (numberOfStation != stations.size())
-                    System.err.println("!Caution there are stations with the same name and different positions in "
+                int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
+                if (numberOfObserver != observers.size())
+                    System.err.println("!Caution there are observers with the same name and different positions in "
                             + eventDir);
 
                 Path eventOut = outPath.resolve(eventDir.toString());
 
                 if (eventDir.getGlobalCMTID().getEvent() != null) {
-                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, tlen, np);
+                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, eventDir.getGlobalCMTID().getEvent(), observers, header, tlen, np);
                     Files.createDirectories(eventOut.resolve(header));
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));

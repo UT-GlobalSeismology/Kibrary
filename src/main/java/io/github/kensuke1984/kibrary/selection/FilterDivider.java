@@ -211,8 +211,14 @@ public class FilterDivider implements Operation {
             String eventname = folder.getName();
             try {
                 Set<SACFileName> set = folder.sacFileSet();
-                Files.createDirectories(outPath.resolve(eventname));
                 set.removeIf(s -> !components.contains(s.getComponent()));
+
+                // escape if the event folder was blank. The 'finally' will be executed, so count will be incremented.
+                if(set.size() == 0) {
+                    return;
+                }
+
+                Files.createDirectories(outPath.resolve(eventname));
                 set.forEach(this::filterAndout);
             } catch (Exception e) {
                 System.err.println("Error on " + folder);
