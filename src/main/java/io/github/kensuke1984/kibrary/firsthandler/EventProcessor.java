@@ -272,8 +272,6 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                System.err.println("aa");
-
                 // check location validity -> just display warning, but process the file nonetheless
                 // TODO: this may have to be modified or removed
                 if (!checkLocation(sacFile.getLocation())) {
@@ -282,31 +280,22 @@ class EventProcessor implements Runnable {
                     // continue; <- this file will not be skipped
                 }
 
-                System.err.println("bb");
-
                 // copy SAC file from the input directory to the output event directory; file name changed here
                 Path newSacPath = outputPath.resolve(newSacName(rawSacPath, sacFile));
                 Files.copy(rawSacPath, newSacPath);
-
-                System.err.println("cc");
 
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
                 // creating sif probably won't fail since it is merely substitution of values
                 StationInformationFile sif = new StationInformationFile(sacFile.getNetwork(), sacFile.getStation(),
                         sacFile.getLocation(), sacFile.getChannel());
-
-                System.err.println("dd");
-
                 try {
                     // this will fail if Station file is unfound, etc.
                     sif.readStationInformation(inputDir.toPath());
-                } catch (IOException e) {
+                } catch (Exception e) {
                     System.err.println("!!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
-
-                System.err.println("ee");
 
                 // check station coordinate
                 if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
@@ -332,12 +321,8 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                System.err.println("ff");
-
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
-
-                System.err.println("gg");
             }
         }
 
@@ -444,6 +429,7 @@ class EventProcessor implements Runnable {
             // overwrite permission
             sacD.inputCMD("ch lovrok true");
             // write station-related parameters
+            sacD.inputCMD("ch kstnm " + sif.getStation() + " knetwk " + sif.getNetwork());
             sacD.inputCMD("ch cmpaz " + sif.getAzimuth() + " cmpinc " + String.valueOf(inclination));
             sacD.inputCMD("ch stlo "  + sif.getLongitude() + " stla " + sif.getLatitude());
             // files with empty locations may have khole '-12345', so it is set to ''
