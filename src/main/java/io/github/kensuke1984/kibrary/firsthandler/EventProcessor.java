@@ -288,10 +288,15 @@ class EventProcessor implements Runnable {
                 Path newSacPath = outputPath.resolve(newSacName(rawSacPath, sacFile));
                 Files.copy(rawSacPath, newSacPath);
 
+                System.err.println("cc");
+
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
                 // creating sif probably won't fail since it is merely substitution of values
                 StationInformationFile sif = new StationInformationFile(sacFile.getNetwork(), sacFile.getStation(),
                         sacFile.getLocation(), sacFile.getChannel());
+
+                System.err.println("dd");
+
                 try {
                     // this will fail if Station file is unfound, etc.
                     sif.readStationInformation(inputDir.toPath());
@@ -301,7 +306,7 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                System.err.println("cc");
+                System.err.println("ee");
 
                 // check station coordinate
                 if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
@@ -327,12 +332,12 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                System.err.println("dd");
+                System.err.println("ff");
 
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
 
-                System.err.println("ee");
+                System.err.println("gg");
             }
         }
 
