@@ -34,9 +34,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Operation that filters observed and synthetic SAC files in eventFolders under obsDir and synDir.
- *
- * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
- * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
+ * Resulting files will all be placed inside event folders under outDir.
+ * <p>
+ * Filtering will be done even if only observed (and not synthetic) SAC files exist, or vice versa.
+ * If both obsDir and synDir is empty for a certain event, the corresponding event folder will not be created.
+ * <p>
+ * The lower and upper period limits of the filter will be written in headers USER0 and USER1 of resulting SAC files.
  *
  */
 public class FilterDivider implements Operation {
