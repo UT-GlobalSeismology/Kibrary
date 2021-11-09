@@ -272,6 +272,8 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
+                System.err.println("aa");
+
                 // check location validity -> just display warning, but process the file nonetheless
                 // TODO: this may have to be modified or removed
                 if (!checkLocation(sacFile.getLocation())) {
@@ -279,6 +281,8 @@ class EventProcessor implements Runnable {
                     // no need to move files to trash, because nothing is copied yet
                     // continue; <- this file will not be skipped
                 }
+
+                System.err.println("bb");
 
                 // copy SAC file from the input directory to the output event directory; file name changed here
                 Path newSacPath = outputPath.resolve(newSacName(rawSacPath, sacFile));
@@ -296,6 +300,8 @@ class EventProcessor implements Runnable {
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
+
+                System.err.println("cc");
 
                 // check station coordinate
                 if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
@@ -321,9 +327,12 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
+                System.err.println("dd");
+
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
 
+                System.err.println("ee");
             }
         }
 
