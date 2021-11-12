@@ -327,6 +327,8 @@ class EventProcessor implements Runnable {
 
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
+
+                throw new UnsupportedOperationException("ahaha");
             }
         }
 
@@ -628,7 +630,6 @@ class EventProcessor implements Runnable {
                         " -s lin -r cs -u vel";
         //System.out.println("runevalresp: "+ command);// 4debug
 
-        System.err.println("yay");
         ExternalProcess xProcess = ExternalProcess.launch(command, outputPath);
         return xProcess.waitFor() == 0;
 /*
