@@ -1,9 +1,7 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.entrance.StationInformationFile;
+import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -115,9 +114,8 @@ class EventProcessor implements Runnable {
      *
      * @param eventDir (EventFolder) The input event folder containing necessary SAC, STATION, and RESP files.
      * @param outPath (Path) The path where the ouput event directory should be made under.
-     * @throws IOException
      */
-    EventProcessor(EventFolder eventDir, Path outPath) throws IOException {
+    EventProcessor(EventFolder eventDir, Path outPath) {
         inputDir = eventDir;
         outputPath = outPath.resolve(eventDir.getName());
 
@@ -228,7 +226,11 @@ class EventProcessor implements Runnable {
             throw new RuntimeException("Error on elimination : " + inputDir.getName(), e);
         }
 
-        if (removeIntermediateFiles) removeIntermediateFiles();
+        try {
+            if (removeIntermediateFiles) removeIntermediateFiles();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         problem = check();
 
@@ -291,8 +293,10 @@ class EventProcessor implements Runnable {
                 try {
                     // this will fail if Station file is unfound, etc.
                     sif.readStationInformation(inputDir.toPath());
-                } catch (Exception e) {
+                } catch (IOException e) {
+                    // when file is unreadable, suppress exception and move on to the next SAC file
                     System.err.println("!!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    e.printStackTrace();
                     Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
                     continue;
                 }
@@ -523,7 +527,7 @@ class EventProcessor implements Runnable {
      * If everything succeeds, unneeded files will be moved to "doneDeconvolve".
      * @throws IOException
      */
-    private void deconvolveSacs() throws IOException{
+    private void deconvolveSacs() throws IOException {
 
         try (DirectoryStream<Path> eventDirStream = Files.newDirectoryStream(outputPath, "*.MOD")) {
             for (Path modPath : eventDirStream) {
@@ -541,31 +545,39 @@ class EventProcessor implements Runnable {
 
                 // run evalresp
                 // If it fails, throw MOD files to trash
-                if (!runEvalresp(headerMap, respPath)) {
+                try {
+                    if (!runEvalresp(headerMap, respPath)) {
+                        System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                        // throw MOD.* files which cannot produce SPECTRA to trash
+                        Utilities.moveToDirectory(modPath, invalidRespPath, true);
+                        continue;
+                    }
+                } catch (IOException e) {
                     System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    e.printStackTrace();
                     // throw MOD.* files which cannot produce SPECTRA to trash
                     Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
                 }
 
+                // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
+                if (Files.exists(afterPath)) {
+                    System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
+                    // throw *.MOD files to duplicateComponentPath
+                    Utilities.moveToDirectory(modPath, duplicateComponentPath, true);
+                    // throw SPECTRA files to duplicateComponentPath
+                    Utilities.moveToDirectory(spectraPath, duplicateComponentPath, true);
+                    continue;
+                }
+
+                int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
+
                 // execute deconvolution
                 try {
-                    int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-
-                    // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
-                    if (Files.exists(afterPath)) {
-                        System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
-                        // throw *.MOD files to duplicateComponentPath
-                        Utilities.moveToDirectory(modPath, duplicateComponentPath, true);
-                        // throw SPECTRA files to duplicateComponentPath
-                        Utilities.moveToDirectory(spectraPath, duplicateComponentPath, true);
-                        continue;
-                    }
-
                     SacDeconvolution.compute(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
-
-                } catch (Exception e) {
+                } catch (IOException e) {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    e.printStackTrace();
                     // throw *.MOD files to trash
                     Utilities.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
@@ -602,8 +614,9 @@ class EventProcessor implements Runnable {
      * @param headerMap (Map<SACHeaderEnum, String>) Header of sac file
      * @param inputPath (Path) Path of RESP file to be used, or the directory containing it.
      * @return (boolean) true if succeed
+     * @throws IOException
      */
-    private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) {
+    private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) throws IOException {
         int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
         double minFreq = SAMPLING_HZ / npts;
         String command =
@@ -614,6 +627,11 @@ class EventProcessor implements Runnable {
                         " -f " + inputPath.toAbsolutePath() +
                         " -s lin -r cs -u vel";
         //System.out.println("runevalresp: "+ command);// 4debug
+
+        System.err.println("yay");
+        ExternalProcess xProcess = ExternalProcess.launch(command, outputPath);
+        return xProcess.waitFor() == 0;
+/*
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
         pb.directory(outputPath.toFile());
         try {
@@ -636,6 +654,7 @@ class EventProcessor implements Runnable {
             e.printStackTrace();
         }
         return false;
+*/
     }
 
     /**
@@ -765,42 +784,52 @@ class EventProcessor implements Runnable {
 
     /**
      * Removes directories containing intermediate files.
+     * @throws IOException
      */
-    private void removeIntermediateFiles() {
-        try {
-            removeDirectory(doneMergePath.toFile());
-            removeDirectory(doneModifyPath.toFile());
-            removeDirectory(doneDeconvolvePath.toFile());
-            removeDirectory(doneRotatePath.toFile());
-            removeDirectory(unSetPath.toFile());
-            removeDirectory(unMergedPath.toFile());
-            removeDirectory(unModifiedPath.toFile());
-            removeDirectory(unRotatedPath.toFile());
-            removeDirectory(invalidStationPath.toFile());
-            removeDirectory(invalidRespPath.toFile());
-            removeDirectory(invalidTripletPath.toFile());
-            removeDirectory(unwantedDistancePath.toFile());
-            removeDirectory(unwantedCoordinatePath.toFile());
-            removeDirectory(duplicateComponentPath.toFile());
-            removeDirectory(duplicateInstrumentPath.toFile());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void removeIntermediateFiles() throws IOException {
+        removeDirectory(doneMergePath.toFile());
+        removeDirectory(doneModifyPath.toFile());
+        removeDirectory(doneDeconvolvePath.toFile());
+        removeDirectory(doneRotatePath.toFile());
+        removeDirectory(unSetPath.toFile());
+        removeDirectory(unMergedPath.toFile());
+        removeDirectory(unModifiedPath.toFile());
+        removeDirectory(unRotatedPath.toFile());
+        removeDirectory(invalidStationPath.toFile());
+        removeDirectory(invalidRespPath.toFile());
+        removeDirectory(invalidTripletPath.toFile());
+        removeDirectory(unwantedDistancePath.toFile());
+        removeDirectory(unwantedCoordinatePath.toFile());
+        removeDirectory(duplicateComponentPath.toFile());
+        removeDirectory(duplicateInstrumentPath.toFile());
     }
 
     /**
      * Deletes a given directory.
-     * Attempts to delete the directory is made two times before throwing an Exception.
+     * Attempts to delete the directory is made two times before throwing an IOException.
      * This method was made because DirectoryNotEmptyException was sometimes thrown
      * even if the cleaning of the directory seemed to have succeeded and the directory was empty.
      * @param dirFile (File) Directory to remove
-     * @throws Exception
+     * @throws IOException
      */
-    private void removeDirectory (File dirFile) throws Exception {
+    private void removeDirectory (File dirFile) throws IOException {
+
         try {
             FileUtils.deleteDirectory(dirFile);
-        } catch (Exception e) {
-            Thread.sleep(1000 * 5);
+        } catch (IOException e1) {
+            // wait
+            try {
+                Thread.sleep(1000 * 5);
+            } catch (InterruptedException e2) {
+                // InterruptedException means that someone wants the current thread to stop,
+                // but the 'interrupted' flag is reset when InterruptedException is thrown in sleep(),
+                // so the flag should be set back up.
+                // Then, throw RuntimeException to halt the program.
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e2);
+            }
+
+            // retry
             FileUtils.deleteDirectory(dirFile);
         }
     }

@@ -52,7 +52,7 @@ public class ExternalProcess {
         try {
             return check.start().waitFor() == 0;
         } catch (InterruptedException | IOException e) {
-            // Here, exceptions can be crushed because they are used just to check whether the executable is in PATH.
+            // Here, exceptions can be suppressed because they are used just to check whether the executable is in PATH.
             e.printStackTrace();
             return false;
         }

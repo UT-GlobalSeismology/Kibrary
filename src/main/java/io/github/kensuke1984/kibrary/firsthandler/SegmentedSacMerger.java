@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -88,8 +89,10 @@ class SegmentedSacMerger {
                     System.err.println("!! failed to merge : " + eventPath.getFileName() + " - " + group.getRootSacFileName());
                     group.move(notMergedBoxPath);
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
+                // suppress IOException here so that we can output the group.getRootSacFileName()
                 System.err.println("!! failed to merge : " + eventPath.getFileName() + " - " + group.getRootSacFileName());
+                e.printStackTrace();
                 group.move(notMergedBoxPath);
             }
         });
@@ -104,8 +107,9 @@ class SegmentedSacMerger {
                 .forEach(path -> {
                     try {
                         Utilities.moveToDirectory(path, unevenBoxPath, true);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } catch (IOException e) {
+                        // checked exceptions cannot be thrown here, so wrap it in unchecked exception
+                        throw new UncheckedIOException(e);
                     }
                 });
 

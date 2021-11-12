@@ -149,9 +149,12 @@ public class StationInformationFile {
             }
         }
 
-
         String [] head = line1.split("[\\s]*\\|[\\s]*");
         String [] data = line2.split("[\\s]*\\|[\\s]*");
+        if (head.length != data.length) {
+            throw new IOException("invalid StationInformationFile");
+        }
+
         for(int i =0; i< head.length; i++) {
             if(head[i].matches("Network")) {network = data[i];}
             else if(head[i].matches("Station")) {station = data[i];}
