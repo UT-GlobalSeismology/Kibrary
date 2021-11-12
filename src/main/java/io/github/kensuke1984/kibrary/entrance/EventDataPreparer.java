@@ -1,8 +1,6 @@
 package io.github.kensuke1984.kibrary.entrance;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -14,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
+import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -125,6 +124,10 @@ public class EventDataPreparer {
             command = "rdseed -fd " + mseedFileName;
         }
 
+        ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
+        return xProcess.waitFor() == 0;
+
+/*
         ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
 
         // set be the working directory of the command
@@ -151,7 +154,7 @@ public class EventDataPreparer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+*/
     }
 
     /**
@@ -164,7 +167,7 @@ public class EventDataPreparer {
      * </ul>
      * @throws IOException
      */
-    public void renameToMseedStyle() throws IOException {
+    public void renameSeedToMseedStyle() throws IOException {
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
                 String[] parts = sacPath.getFileName().toString().split("\\.");
@@ -218,7 +221,7 @@ public class EventDataPreparer {
      * @param args
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
 
         // working directory is set to current directory
         Path workPath = Paths.get("");
@@ -246,7 +249,7 @@ public class EventDataPreparer {
                     // expand mseed file
                     edp.openSeed();
                     // rename seed-style SAC file names to mseed-style
-                    edp.renameToMseedStyle();
+                    edp.renameSeedToMseedStyle();
                 }
             }
 

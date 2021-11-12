@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * A class of a new thread to read either the standard output or the standard error from an external process.
+ * <p>
  * This class is after <a
  * href=http://www.ne.jp/asahi/hishidama/home/tech/java/process.html#ProcessBuilder>here</a>
  * <p>
@@ -31,21 +33,14 @@ public class InputStreamThread extends Thread {
     }
 
     /**
-     * Wait until the inputstream is closed and return String[]
-     *
-     * @return {@link String}[] from input stream
+     * Keeps reading the output from the stream.
+     * The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
+     * This method will be executed inside this thread when the start() method is called.
      */
-    public String[] waitAndGetString() {
-        try {
-            while (!closed) Thread.sleep(100);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return LIST.toArray(new String[0]);
-    }
-
     @Override
     public void run() {
+        // By using try-with-resources, br will certainly be closed.
+        // INPUT_STREAM_READER, and also the InputStream used to make it, will then be closed as well.
         try (BufferedReader br = new BufferedReader(INPUT_STREAM_READER)) {
             for (; ; ) {
                 String line = br.readLine();
@@ -53,6 +48,9 @@ public class InputStreamThread extends Thread {
                 LIST.add(line);
             }
         } catch (IOException e) {
+            // Exceptions from threads will not be caught, so output the exception here,
+            // and throw RuntimeException to terminate the thread.
+            e.printStackTrace();
             throw new RuntimeException(e);
         } finally {
             closed = true;
@@ -60,8 +58,27 @@ public class InputStreamThread extends Thread {
     }
 
     /**
-     * List of String from the stream 文字列の取得
+     * Wait until the inputstream is closed and return String[]
      *
+     * @return {@link String}[] from input stream
+     */
+    public String[] waitAndGetString() {
+        try {
+            while (!closed) Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // This method is called from a master thread, so exceptions can be caught in higher levels.
+            // InterruptedException means that someone wants the master thread to stop,
+            // but the 'interrupted' flag is reset when InterruptedException is thrown in sleep(),
+            // so the flag should be set back up.
+            // Then, throw RuntimeException to halt the program.
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+        return LIST.toArray(new String[0]);
+    }
+
+    /**
+     * Get List of String from the stream
      * @return {@link List} of {@link String} from the {@link InputStream}
      */
     public List<String> getStringList() {

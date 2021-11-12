@@ -64,7 +64,7 @@ public class DataLobby implements Operation {
     private double lowerLongitude;
     private double upperLongitude;
 
-    private Set<GlobalCMTID> requestedIDs;
+    private Set<GlobalCMTID> requestedEvents;
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -159,7 +159,7 @@ public class DataLobby implements Operation {
      * @param args Request Mode: [parameter file name]
      * @throws Exception file name
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         DataLobby dl = new DataLobby(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataLobby.class.getName() + " is going");
@@ -176,34 +176,35 @@ public class DataLobby implements Operation {
         Files.createDirectories(outPath);
         System.err.println("Output directory is " + outPath);
 
-        requestedIDs = listIDs();
-        int n_total = requestedIDs.size();
+        requestedEvents = listEvents();
+        int n_total = requestedEvents.size();
         System.err.println(n_total + " events are found.");
 
         final AtomicInteger n = new AtomicInteger();
-        requestedIDs.forEach(id -> {
+        requestedEvents.forEach(event -> {
             try {
                 n.incrementAndGet();
-                System.err.println("Downloading files for " + id + " (# " + n + " of " + n_total + ") ...");
+                System.err.println("Downloading files for " + event + " (# " + n + " of " + n_total + ") ...");
 
                 // create event folder
-                EventFolder ef = new EventFolder(outPath.resolve(id.toString()));
-                if (!ef.mkdirs()) throw new RuntimeException("Can't create " + ef);
+                EventFolder ef = new EventFolder(outPath.resolve(event.toString()));
+                if (!ef.mkdirs()) throw new IOException("Can't create " + ef);
 
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 edp.downloadMseed(networks, channels, headAdjustment, footAdjustment);
                 edp.openSeed();
                 edp.downloadMetadata();
-            } catch (Exception e) {
-                System.err.println("Download for " + id + " failed.");
+            } catch (IOException e) {
+                // Here, suppress exceptions for events that failed, and move on to the next event.
+                System.err.println("Download for " + event + " failed.");
                 e.printStackTrace();
             }
         });
 
     }
 
-    private Set<GlobalCMTID> listIDs() {
+    private Set<GlobalCMTID> listEvents() {
         GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);
         search.setLatitudeRange(lowerLatitude, upperLatitude);
         search.setLongitudeRange(lowerLongitude, upperLongitude);
