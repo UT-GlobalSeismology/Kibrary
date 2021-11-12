@@ -11,11 +11,11 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.UncaughtExceptionAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
@@ -186,9 +186,10 @@ public class DataKitchen implements Operation {
         processors.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors");
-        ExecutorService es = Executors.newFixedThreadPool(nThreads);
+//        int nThreads = Runtime.getRuntime().availableProcessors();
+//        System.err.println("Running on " + nThreads + " processors");
+//        ExecutorService es = Executors.newFixedThreadPool(nThreads);
+        ExecutorService es = UncaughtExceptionAid.createAidedExecutorService();
 
         processors.forEach(es::submit);
         es.shutdown();
