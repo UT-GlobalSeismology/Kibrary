@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -170,66 +171,25 @@ class EventProcessor implements Runnable {
     @Override
     public void run() {
 
-        // copy, select, and set up SAC files
         try {
             Files.createDirectories(outputPath);
+            // copy, select, and set up SAC files
             setupSacs();
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on setup : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on setup : " + inputDir.getName(), e);
-        }
-
-        // merge segmented SAC files
-        try {
+            // merge segmented SAC files
             mergeSacSegments();
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on merge : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on merge : " + inputDir.getName(), e);
-        }
-
-        // remove trend, zero-pad, and cut SAC files
-        try {
+            // remove trend, zero-pad, and cut SAC files
             modifySacs();
-        } catch (Exception e) {
-            System.err.println("!!!!!!! Error on modify : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on modify : " + inputDir.getName(), e);
-        }
-
-        // instrumentation function deconvolution
-        try {
+            // instrumentation function deconvolution
             deconvolveSacs();
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on deconvolution : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on deconvolution : " + inputDir.getName(), e);
-        }
-
-        // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
-        try {
+            // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
             rotate();
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on rotation : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on rotation : " + inputDir.getName(), e);
-        }
-
-        // eliminating duplicate instruments and close stations
-        // this is done after everything else so that we don't lose usable data (ex. if we choose an unrotatable triplet)
-        try {
+            // eliminating duplicate instruments and close stations
+            // this is done after everything else so that we don't lose usable data (ex. if we choose an unrotatable triplet)
             duplicationElimination();
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on elimination : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on elimination : " + inputDir.getName(), e);
-        }
 
-        try {
             if (removeIntermediateFiles) removeIntermediateFiles();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
         }
 
         problem = check();
@@ -238,6 +198,47 @@ class EventProcessor implements Runnable {
 
         System.err.println("** " + event.getGlobalCMTID() + " finished");
 
+/*
+        try {
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on merge : " + inputDir.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on merge : " + inputDir.getName(), e);
+        }
+
+        try {
+        } catch (Exception e) {
+            System.err.println("!!!!!!! Error on modify : " + inputDir.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on modify : " + inputDir.getName(), e);
+        }
+
+        try {
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on deconvolution : " + inputDir.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on deconvolution : " + inputDir.getName(), e);
+        }
+
+        try {
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on rotation : " + inputDir.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on rotation : " + inputDir.getName(), e);
+        }
+
+        try {
+        } catch (IOException e) {
+            System.err.println("!!!!!!! Error on elimination : " + inputDir.getName());
+            e.printStackTrace();
+            throw new RuntimeException("Error on elimination : " + inputDir.getName(), e);
+        }
+
+        try {
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+*/
     }
 
     /**
@@ -328,7 +329,7 @@ class EventProcessor implements Runnable {
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
 
-                throw new UnsupportedOperationException("ahaha");
+                throw new IOException("ahaha");
             }
         }
 
