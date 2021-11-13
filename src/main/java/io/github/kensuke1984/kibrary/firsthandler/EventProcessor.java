@@ -198,47 +198,6 @@ class EventProcessor implements Runnable {
 
         System.err.println("** " + event.getGlobalCMTID() + " finished");
 
-/*
-        try {
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on merge : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on merge : " + inputDir.getName(), e);
-        }
-
-        try {
-        } catch (Exception e) {
-            System.err.println("!!!!!!! Error on modify : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on modify : " + inputDir.getName(), e);
-        }
-
-        try {
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on deconvolution : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on deconvolution : " + inputDir.getName(), e);
-        }
-
-        try {
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on rotation : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on rotation : " + inputDir.getName(), e);
-        }
-
-        try {
-        } catch (IOException e) {
-            System.err.println("!!!!!!! Error on elimination : " + inputDir.getName());
-            e.printStackTrace();
-            throw new RuntimeException("Error on elimination : " + inputDir.getName(), e);
-        }
-
-        try {
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-*/
     }
 
     /**
@@ -328,8 +287,6 @@ class EventProcessor implements Runnable {
 
                 // set sac headers using sii, and interpolate data with DELTA
                 fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
-
-                throw new IOException("ahaha");
             }
         }
 
