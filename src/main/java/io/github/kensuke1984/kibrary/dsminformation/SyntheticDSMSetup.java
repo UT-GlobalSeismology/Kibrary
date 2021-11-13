@@ -177,7 +177,7 @@ public class SyntheticDSMSetup implements Operation {
      * @param args [parameter file name]
      * @throws IOException if any
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         SyntheticDSMSetup sdif = new SyntheticDSMSetup(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(SyntheticDSMSetup.class.getName() + " is going.");
@@ -191,7 +191,7 @@ public class SyntheticDSMSetup implements Operation {
      * @author anselme add models, options for synthetic/specfem dataset, ...
      */
     @Override
-    public void run() throws Exception {
+    public void run() throws IOException {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
         String modelName = structurePath.toString().trim().toUpperCase();
         PolynomialStructure ps = null;
@@ -292,8 +292,8 @@ public class SyntheticDSMSetup implements Operation {
         }
 
         Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
-        System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
         if (property != null)
             writeProperties(outPath.resolve("dsmifm.properties"));
@@ -359,7 +359,8 @@ public class SyntheticDSMSetup implements Operation {
                 else {
                     System.err.println(eventDir.getGlobalCMTID() + "is not in the catalog");
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
+                // If there are any problems, move on to the next event.
                 System.err.println("Error on " + eventDir);
                 e.printStackTrace();
             }

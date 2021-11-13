@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,6 +32,7 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
@@ -209,7 +209,7 @@ public class DataSelection implements Operation {
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
         if (!property.containsKey("synPath")) property.setProperty("synPath", "");
         if (!property.containsKey("timewindowInformationFilePath"))
-            throw new RuntimeException("No timewindow specified");
+            throw new IllegalArgumentException("No timewindow specified");
         if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
         if (!property.containsKey("maxStaticShift")) property.setProperty("maxStaticShift", "10.");
         if (!property.containsKey("minCorrelation")) property.setProperty("minCorrelation", "0");
@@ -271,7 +271,7 @@ public class DataSelection implements Operation {
      * @param args [parameter file name]
      * @throws Exception if an I/O happens
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         DataSelection ds = new DataSelection(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataSelection.class.getName() + " is going.");
@@ -281,26 +281,18 @@ public class DataSelection implements Operation {
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() throws IOException {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
         sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
         staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
                 : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors.");
-        ExecutorService es = Executors.newFixedThreadPool(nThreads);
-
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
-
         while (!es.isTerminated()) {
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            ThreadAid.sleep(1000);
         }
         // this println() is for starting new line after writing "."s
         System.err.println();

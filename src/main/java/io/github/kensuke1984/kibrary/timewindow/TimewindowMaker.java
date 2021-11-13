@@ -197,7 +197,7 @@ public class TimewindowMaker implements Operation {
      * @param args [parameter file name]
      * @throws Exception if any
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         TimewindowMaker twm = new TimewindowMaker(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(TimewindowMaker.class.getName() + " is going.");
@@ -207,7 +207,7 @@ public class TimewindowMaker implements Operation {
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() throws IOException {
         System.out.println("Using exFrontShift = " + EX_FRONT_SHIFT);
         System.err.println("Invalid files, if any, will be listed in " + invalidList);
         Utilities.runEventProcess(workPath, eventDir -> {
@@ -223,7 +223,7 @@ public class TimewindowMaker implements Operation {
                         e.printStackTrace();
                     }
                 });
-            } catch (Exception e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         } , 10, TimeUnit.HOURS);

@@ -16,7 +16,6 @@ import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -29,6 +28,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
@@ -259,7 +259,7 @@ public class ActualDatasetCompiler implements Operation {
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
         if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
         if (!property.containsKey("timewindowPath"))
-            throw new RuntimeException("There is no information about timewindowPath.");
+            throw new IllegalArgumentException("There is no information about timewindowPath.");
         if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
         if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
         if (!property.containsKey("finalSamplingHz")) property.setProperty("finalSamplingHz", "1");
@@ -273,7 +273,7 @@ public class ActualDatasetCompiler implements Operation {
         if (!property.containsKey("noisePower")) property.setProperty("noisePower", "1");
     }
 
-    private void set() throws NoSuchFileException {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
@@ -298,7 +298,7 @@ public class ActualDatasetCompiler implements Operation {
         correctAmplitude = Boolean.parseBoolean(property.getProperty("correctAmplitude"));
         if (correctTime || correctAmplitude) {
             if (!property.containsKey("staticCorrectionPath"))
-                throw new RuntimeException("staticCorrectionPath is blank");
+                throw new IllegalArgumentException("staticCorrectionPath is blank");
             staticCorrectionPath = getPath("staticCorrectionPath");
             if (!Files.exists(staticCorrectionPath))
                 throw new NoSuchFileException("The static correction file " + staticCorrectionPath + " does not exist");
@@ -307,7 +307,7 @@ public class ActualDatasetCompiler implements Operation {
         correctMantle = Boolean.parseBoolean(property.getProperty("correctMantle"));
         if (correctMantle) {
             if (!property.containsKey("mantleCorrectionPath"))
-                throw new RuntimeException("mantleCorrectionPath is blank");
+                throw new IllegalArgumentException("mantleCorrectionPath is blank");
             mantleCorrectionPath = getPath("mantleCorrectionPath");
             if (!Files.exists(mantleCorrectionPath))
                 throw new NoSuchFileException("The mantle correction file " + mantleCorrectionPath + " does not exist");
@@ -319,6 +319,8 @@ public class ActualDatasetCompiler implements Operation {
         // =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
         sacSamplingHz = 20;
         finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+        if (sacSamplingHz % finalSamplingHz != 0)
+            throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + sacSamplingHz);
 
         minDistance = Double.parseDouble(property.getProperty("minDistance"));
         lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
@@ -339,7 +341,7 @@ public class ActualDatasetCompiler implements Operation {
     * @param args [a property file name]
     * @throws Exception if any
     */
-   public static void main(String[] args) throws Exception {
+   public static void main(String[] args) throws IOException {
        ActualDatasetCompiler adc = new ActualDatasetCompiler(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(ActualDatasetCompiler.class.getName() + " is going.");
@@ -349,10 +351,7 @@ public class ActualDatasetCompiler implements Operation {
    }
 
    @Override
-   public void run() throws Exception {
-       if (sacSamplingHz % finalSamplingHz != 0)
-           throw new RuntimeException("Must choose a finalSamplingHz that divides " + sacSamplingHz);
-
+   public void run() throws IOException {
        timewindowInformationSet = TimewindowDataFile.read(timewindowPath)
                .stream().filter(tw -> {
                    double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation()
@@ -408,9 +407,7 @@ public class ActualDatasetCompiler implements Operation {
 
        readPeriodRanges();
 
-       int nThreads = Runtime.getRuntime().availableProcessors();
-       System.err.println("Running on " + nThreads + " processors.");
-       ExecutorService execs = Executors.newFixedThreadPool(nThreads);
+       ExecutorService es = ThreadAid.createFixedThreadPool();
 
        String dateStr = Utilities.getTemporaryString();
        Path waveIDPath = null;
@@ -454,19 +451,18 @@ public class ActualDatasetCompiler implements Operation {
            dataWriter = bdw;
 
            for (EventFolder eventDir : eventDirs)
-               execs.execute(new Worker(eventDir));
-           execs.shutdown();
+               es.execute(new Worker(eventDir));
+           es.shutdown();
 
-           while (!execs.isTerminated())
-               Thread.sleep(1000);
+           while (!es.isTerminated()){
+               ThreadAid.sleep(1000);
+           }
            envelopeWriter.close();
            hyWriter.close();
            spcAmpWriter.close();
            spcImWriter.close();
            spcReWriter.close();
            System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
-       } catch (Exception e) {
-           e.printStackTrace();
        }
    }
 

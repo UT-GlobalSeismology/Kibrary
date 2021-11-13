@@ -11,11 +11,11 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
@@ -134,7 +134,7 @@ public class DataKitchen implements Operation {
                 catalog = 0;
                 break;
             default:
-                throw new RuntimeException("Invalid catalog name.");
+                throw new IllegalArgumentException("Invalid catalog name.");
         }
         minDistance = Double.parseDouble(property.getProperty("minDistance"));
         maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
@@ -162,19 +162,24 @@ public class DataKitchen implements Operation {
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
-        if (eventDirs.isEmpty()) return;
+        if (eventDirs.isEmpty()) {
+            System.err.println("No events found.");
+            return;
+        }
 
         outPath = workPath.resolve("processed" + Utilities.getTemporaryString());
-        System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
         // create processors for each event
         Set<EventProcessor> processors = eventDirs.stream().map(eventDir -> {
            try {
                 return new EventProcessor(eventDir, outPath);
             } catch (Exception e) {
+                // If there is something wrong, skip the event (suppress exceptions).
                 try {
-                    System.err.println(eventDir + " has problems. " + e);
+                    System.err.println(eventDir + " has problems. ");
+                    e.printStackTrace();
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -186,19 +191,12 @@ public class DataKitchen implements Operation {
         processors.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors");
-        ExecutorService es = Executors.newFixedThreadPool(nThreads);
-//        ExecutorService es = UncaughtExceptionAid.createAidedExecutorService();
-
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         processors.forEach(es::execute);
         es.shutdown();
-
-        try {
-            // check if everything is done every 5 seconds
-            while (!es.isTerminated()) Thread.sleep(1000 * 5);
-        } catch (Exception e2) {
-            e2.printStackTrace();
+        // check if everything is done every 5 seconds
+        while (!es.isTerminated()) {
+            ThreadAid.sleep(1000 * 5);
         }
 
         // print overall result

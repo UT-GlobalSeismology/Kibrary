@@ -13,12 +13,12 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.BandStopFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
@@ -172,7 +172,7 @@ public class FilterDivider implements Operation {
      * @param args [a property file name]
      * @throws Exception if any
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         FilterDivider divider = new FilterDivider(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(FilterDivider.class.getName() + " is going.");
@@ -182,27 +182,26 @@ public class FilterDivider implements Operation {
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
         Set<EventFolder> events = new HashSet<>();
         events.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
         events.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
-        if (events.isEmpty()) return;
+        if (events.isEmpty()) {
+            System.err.println("No events found.");
+            return;
+        }
 
         outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
-        System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors");
-        ExecutorService es = Executors.newFixedThreadPool(nThreads);
-
-        events.stream().map(this::process).forEach(es::submit);
+        ExecutorService es = ThreadAid.createFixedThreadPool();
+        events.stream().map(this::process).forEach(es::execute);
         es.shutdown();
-
         while (!es.isTerminated()) {
             System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / events.size()) + "%");
-            Thread.sleep(100);
+            ThreadAid.sleep(100);
         }
         System.err.println("\rFiltering finished.");
     }

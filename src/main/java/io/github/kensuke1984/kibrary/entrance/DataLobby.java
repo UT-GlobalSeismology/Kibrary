@@ -115,14 +115,17 @@ public class DataLobby implements Operation {
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("networks")) throw new RuntimeException("No information about networks");
+        if (!property.containsKey("networks"))
+            throw new IllegalArgumentException("No information about networks");
         if (!property.containsKey("channels")) property.setProperty("channels", "BH?");
         if (!property.containsKey("footAdjustment"))
-            throw new RuntimeException("No information about the foot adjustment");
+            throw new IllegalArgumentException("No information about the foot adjustment");
         if (!property.containsKey("headAdjustment"))
-            throw new RuntimeException("No information about the head adjustment");
-        if (!property.containsKey("startDate")) throw new RuntimeException("No information about the start date");
-        if (!property.containsKey("endDate")) throw new RuntimeException("No information about the end date");
+            throw new IllegalArgumentException("No information about the head adjustment");
+        if (!property.containsKey("startDate"))
+            throw new IllegalArgumentException("No information about the start date");
+        if (!property.containsKey("endDate"))
+            throw new IllegalArgumentException("No information about the end date");
         if (!property.containsKey("lowerMw")) property.setProperty("lowerMw", "5.5");
         if (!property.containsKey("upperMw")) property.setProperty("upperMw", "7.3");
         if (!property.containsKey("lowerDepth")) property.setProperty("lowerDepth", "100");
@@ -171,14 +174,16 @@ public class DataLobby implements Operation {
 
     @Override
     public void run() throws IOException {
-        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath.toString());
-        Path outPath = workPath.resolve("dl" + Utilities.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output directory is " + outPath);
-
         requestedEvents = listEvents();
         int n_total = requestedEvents.size();
         System.err.println(n_total + " events are found.");
+        if (n_total == 0) {
+            return;
+        }
+
+        Path outPath = workPath.resolve("dl" + Utilities.getTemporaryString());
+        Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
         final AtomicInteger n = new AtomicInteger();
         requestedEvents.forEach(event -> {

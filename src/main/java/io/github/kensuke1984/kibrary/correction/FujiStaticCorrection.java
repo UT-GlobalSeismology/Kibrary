@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
@@ -154,7 +154,7 @@ public class FujiStaticCorrection implements Operation {
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
         if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
         if (!property.containsKey("timewindowInformationPath"))
-            throw new RuntimeException("No timewindow specified");
+            throw new IllegalArgumentException("No timewindow specified");
         if (!property.containsKey("convolved")) property.setProperty("convolved", "false");
         if (!property.containsKey("threshold")) property.setProperty("threshold", "0.2");
         if (!property.containsKey("searchRange")) property.setProperty("searchRange", "10");
@@ -192,7 +192,7 @@ public class FujiStaticCorrection implements Operation {
      * @param args [parameter file name]
      * @throws Exception if any
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         FujiStaticCorrection fsc = new FujiStaticCorrection(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(FujiStaticCorrection.class.getName() + " is going.");
@@ -202,24 +202,16 @@ public class FujiStaticCorrection implements Operation {
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() throws IOException {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
         timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors.");
-        ExecutorService es = Executors.newFixedThreadPool(nThreads);
-
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
-
         while (!es.isTerminated()) {
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            ThreadAid.sleep(1000);
         }
 
         System.err.println("Outputting in " + outputPath);

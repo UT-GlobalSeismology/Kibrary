@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -25,6 +25,7 @@ import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -172,18 +173,16 @@ public final class SPC_SAC implements Operation {
         if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
 
         if (psvPath != null && (psvSPCs = collectPSVSPCs()).isEmpty())
-            throw new RuntimeException("No PSV spector files are found.");
+            throw new FileNotFoundException("No PSV spector files are found.");
 
         if (shPath != null && (shSPCs = collectSHSPCs()).isEmpty())
-            throw new RuntimeException("No SH spector files are found.");
+            throw new FileNotFoundException("No SH spector files are found.");
 
         outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
-        System.err.println("Output folder is " + outPath);
         Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        System.err.println("Running on " + nThreads + " processors");
-        ExecutorService execs = Executors.newFixedThreadPool(nThreads);
+        ExecutorService es = ThreadAid.createFixedThreadPool();
 
         int nSAC = 0;
         // single
@@ -193,7 +192,7 @@ public final class SPC_SAC implements Operation {
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             // operate method createSACMaker() -> instance of an anonymous inner class is returned
             // -> executes the run() of that class defined in createSACMaker()
-            execs.execute(createSACMaker(one, null));
+            es.execute(createSACMaker(one, null));
             nSAC++;
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " files");
         }
@@ -210,18 +209,16 @@ public final class SPC_SAC implements Operation {
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             // operate method createSACMaker() -> instance of an anonymous inner class is returned
             // -> executes the run() of that class defined in createSACMaker()
-            execs.execute(createSACMaker(one, two));
+            es.execute(createSACMaker(one, two));
             nSAC++;
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
         System.err.println("\rReading SPC files finished. " + nSAC + " total.");
 
-        execs.shutdown();
-        while (!execs.isTerminated()) try {
+        es.shutdown();
+        while (!es.isTerminated()) {
             System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
-            Thread.sleep(100);
-        } catch (Exception e) {
-            e.printStackTrace();
+            ThreadAid.sleep(100);
         }
         System.err.println("\rConverting finished.");
     }
