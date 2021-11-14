@@ -201,8 +201,10 @@ public class DataLobby implements Operation {
                 String mseedFileName = event + "." + Utilities.getTemporaryString() + ".mseed";
                 edp.downloadMseed(networks, channels, headAdjustment, footAdjustment, mseedFileName);
                 edp.openMseed(mseedFileName);
+                // download metadata for all the expanded SAC files in the event directory
+                edp.downloadMetadataMseed();
+                // format mseed-style SAC file names
                 edp.formatSacFileNames("mseed");
-                edp.downloadMetadata();
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
                 System.err.println("Download for " + event + " failed.");
