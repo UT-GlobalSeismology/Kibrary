@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -30,22 +30,22 @@ public interface SACHeaderAccess {
     boolean getBoolean(SACHeaderEnum sacHeaderEnum);
 
     /**
-     * @return {@link Location} of the source made from EVLA, EVLO and EVDP.
+     * @return {@link FullPosition} of the source made from EVLA, EVLO and EVDP.
      * Earth radius is considered as 6371.
      */
-    default Location getEventLocation() {
-        return new Location(getValue(SACHeaderEnum.EVLA), getValue(SACHeaderEnum.EVLO),
+    default FullPosition getEventLocation() {
+        return new FullPosition(getValue(SACHeaderEnum.EVLA), getValue(SACHeaderEnum.EVLO),
                 6371.0 - getValue(SACHeaderEnum.EVDP));
     }
 
     /**
      * Changes EVDP EVLO EVLA
      *
-     * @param eventLocation {@link Location} to be set to EVLA, EVLO and EVDP. Earth
+     * @param eventLocation {@link FullPosition} to be set to EVLA, EVLO and EVDP. Earth
      *                      radius is considered as 6371.
      * @return {@link SACHeaderAccess} with the location
      */
-    default SACHeaderAccess setEventLocation(Location eventLocation) {
+    default SACHeaderAccess setEventLocation(FullPosition eventLocation) {
         return setValue(SACHeaderEnum.EVLA, eventLocation.getLatitude())
                 .setValue(SACHeaderEnum.EVLO, eventLocation.getLongitude())
                 .setValue(SACHeaderEnum.EVDP, 6371 - eventLocation.getR());

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -28,7 +28,7 @@ public interface UnknownParameter {
 	 */
 	public PartialType getPartialType();
 	
-	public Location getLocation();
+	public FullPosition getLocation();
 	
 	public byte[] getBytes();
 

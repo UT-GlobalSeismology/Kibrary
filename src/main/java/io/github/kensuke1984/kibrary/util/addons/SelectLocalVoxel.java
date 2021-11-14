@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.math.geometry.ConvexPolygon;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class SelectLocalVoxel {
 		pw.close();
 	}
 	
-	public static boolean contains(Location l, HorizontalPosition lowerLeftPoint, HorizontalPosition upperRightPoint, double minDepth, double maxDepth) {
+	public static boolean contains(FullPosition l, HorizontalPosition lowerLeftPoint, HorizontalPosition upperRightPoint, double minDepth, double maxDepth) {
 		double depth = 6371. - l.getR();
 		if (depth < minDepth || depth > maxDepth)
 			return false;

@@ -33,7 +33,7 @@ class SegmentedSacMerger {
     /**
      * SacFileNameのリスト
      */
-    private SACFileName[] sacFileNameList;
+    private SacFileName[] sacFileNameList;
     private Set<SacGroup> sacGroupSet = new HashSet<>();
 
     /**
@@ -52,7 +52,7 @@ class SegmentedSacMerger {
 
     /**
      * Obtains all files with the suffix .SET under the working directory,
-     * and groups up files by {@link #createGroups(SACFileName[])}.
+     * and groups up files by {@link #createGroups(SacFileName[])}.
      * @throws IOException
      */
     private void listUpSacFiles() throws IOException {
@@ -61,7 +61,7 @@ class SegmentedSacMerger {
         try (Stream<Path> sacFileStream = Files.list(eventPath)) {
             sacFileNameList =
                     sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SET"))
-                            .map(SACFileName::new).toArray(SACFileName[]::new);
+                            .map(SacFileName::new).toArray(SacFileName[]::new);
         }
 
         // SacGroupをつくる
@@ -70,11 +70,11 @@ class SegmentedSacMerger {
     }
 
     /**
-     * Groups up SAC files when the result of {@link SACFileName#isRelated(SACFileName)} is true.
+     * Groups up SAC files when the result of {@link SacFileName#isRelated(SacFileName)} is true.
      * @param names (SACFileName[]) List of SAC files to be sorted into groups.
      */
-    private void createGroups(SACFileName[] names) {
-        for (SACFileName name : names)
+    private void createGroups(SacFileName[] names) {
+        for (SacFileName name : names)
             // 既存のグループに振り分けられなかったら新しいグループを作る
             if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SacGroup(eventPath, name));
     }

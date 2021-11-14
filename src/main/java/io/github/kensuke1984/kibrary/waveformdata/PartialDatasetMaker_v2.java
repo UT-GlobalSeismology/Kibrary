@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -406,7 +406,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 //			for (int ibody = 0, nbody = perturbationRs.length; ibody < nbody; ibody++) {
 				// とりあえずtransverse（２）成分についての名前
 //				Location location = fp.getObserverPosition().toLocation(perturbationRs[ibody]);//fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
-				Location location = bp.getObserverPosition().toLocation(bp.getBodyR()[ibody]);
+				FullPosition location = bp.getObserverPosition().toLocation(bp.getBodyR()[ibody]);
 //				System.out.println(location);
 				
 				if (!perturbationLocationSet.contains(location))
@@ -583,7 +583,7 @@ private class WorkerTimePartial implements Runnable {
 		private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
-			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
+			FullPosition stationLocation = new FullPosition(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
 			
 			if (sourceTimeFunction == -1)
 				System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
@@ -825,19 +825,19 @@ private class WorkerTimePartial implements Runnable {
 	private Set<GlobalCMTID> idSet;
 	private double[][] periodRanges;
 	private Phase[] phases;
-	private Set<Location> perturbationLocationSet;
+	private Set<FullPosition> perturbationLocationSet;
 
 	private void readPerturbationPoints() throws IOException {
 		try (Stream<String> lines = Files.lines(perturbationPath)) {
 			perturbationLocationSet = lines.map(line -> line.split("\\s+"))
-					.map(parts -> new Location(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]),
+					.map(parts -> new FullPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]),
 							Double.parseDouble(parts[2])))
 					.collect(Collectors.toSet());
 		}
 		if (timePartialPath != null) {
 			if (stationSet.isEmpty() || idSet.isEmpty())
 				throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
-			stationSet.forEach(station -> perturbationLocationSet.add(new Location(station.getPosition().getLatitude(),
+			stationSet.forEach(station -> perturbationLocationSet.add(new FullPosition(station.getPosition().getLatitude(),
 					station.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
 			idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
 		}

@@ -4,7 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.addons.HorizontalParameterMapping;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -54,7 +54,7 @@ public class CombineParameters {
 			Set<GlobalCMTID> globalCMTIDSet = Stream.of(partials).parallel().map(par -> par.getGlobalCMTID()).collect(Collectors.toSet());
 			
 			double[][] periodRanges = new double[][] {{partials[0].getMinPeriod(), partials[0].getMaxPeriod()}};
-			Set<Location> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getLocation()).collect(Collectors.toSet());
+			Set<FullPosition> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getLocation()).collect(Collectors.toSet());
 			
 //			Phase[] phases = new Phase[] {Phase.ScS, Phase.S};
 //			Phase[] phases = new Phase[] {Phase.PcP, Phase.P};

@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util.statistics;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -43,7 +43,7 @@ public class Histogram {
 			tmpLat = 0;
 			tmpLon = 0;
 		}
-		this.averageLoc = new Location(tmpLat, tmpLon, 0.);
+		this.averageLoc = new FullPosition(tmpLat, tmpLon, 0.);
 		
 //		Set<String> networkSet = Stream.of(new String[] {"CU", "IU", "II"})
 //				.collect(Collectors.toSet());
@@ -52,7 +52,7 @@ public class Histogram {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 			.forEach(id -> {
 				Observer station = stationSet.stream().filter(s->s.equals(id.getObserver())).findAny().get();
-				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
+				FullPosition cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
 				
 				// do not consider the following ids
 //				if (cmtLocation.getLongitude() > -80)
@@ -65,7 +65,7 @@ public class Histogram {
 				HorizontalPosition staLoc = station.getPosition();
 				double ed = 0;
 				if (centered) {
-					ed = (new Location(this.averageLoc.getLatitude(),
+					ed = (new FullPosition(this.averageLoc.getLatitude(),
 							id.getGlobalCMTID().getEvent().getCmtLocation().getLongitude(),
 							id.getGlobalCMTID().getEvent().getCmtLocation().getR()))
 							.getEpicentralDistance(staLoc)*180/Math.PI;
@@ -249,7 +249,7 @@ public class Histogram {
 
 //	}
 	
-	public Location getAverageLoc() {
+	public FullPosition getAverageLoc() {
 		return averageLoc;
 	}
 	
@@ -283,7 +283,7 @@ public class Histogram {
 	private double interval;
 	private int[] numberOfRecords;
 	private int maxValue;
-	private Location averageLoc;
+	private FullPosition averageLoc;
 	private double mean;
 	private double medianValue;
 }

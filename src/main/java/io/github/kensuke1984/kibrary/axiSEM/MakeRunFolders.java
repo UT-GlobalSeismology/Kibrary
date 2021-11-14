@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -122,7 +122,7 @@ public class MakeRunFolders {
 					double angle = idData.getCmtLocation().getTheta();
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
 						for (Observer sta : stationSet) {
-							Location rotatedStation 
+							FullPosition rotatedStation 
 								= rotateLocation(sta.getPosition().toLocation(Earth.EARTH_RADIUS), axis, angle);
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
 								, sta.getStation()
@@ -163,18 +163,18 @@ public class MakeRunFolders {
 		return m;
 	}
 	
-	private static RealVector getRotationAxisToNorthPole(Location location) {
+	private static RealVector getRotationAxisToNorthPole(FullPosition location) {
 		double x = location.toXYZ().getX();
 		double y = location.toXYZ().getY();
 		double n = Math.sqrt(x*x + y*y);
 		return new ArrayRealVector(new double[] {y/n, -x/n, 0.}).unitVector();
 	}
 	
-	private static Location rotateLocation(Location loc, RealVector axis, double angle) {
+	private static FullPosition rotateLocation(FullPosition loc, RealVector axis, double angle) {
 		RealMatrix rotationMatrix = rotationMatrix(axis, angle);
 		RealVector sourceVector = loc.toXYZ().toRealVector();
 		RealVector rotatedSourceVector = rotationMatrix.operate(sourceVector);
-		Location rotatedSourceLocation = new XYZ(rotatedSourceVector.getEntry(0), rotatedSourceVector.getEntry(1), rotatedSourceVector.getEntry(2))
+		FullPosition rotatedSourceLocation = new XYZ(rotatedSourceVector.getEntry(0), rotatedSourceVector.getEntry(1), rotatedSourceVector.getEntry(2))
 			.toLocation();
 		return rotatedSourceLocation;
 	}

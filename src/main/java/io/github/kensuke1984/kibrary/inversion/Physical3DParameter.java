@@ -6,7 +6,7 @@ import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -26,23 +26,23 @@ public class Physical3DParameter implements UnknownParameter {
     /**
      * location of the perturbation
      */
-    private final Location pointLocation;
+    private final FullPosition pointLocation;
     public final static int oneUnknownByte = 42;
     
 	public static void main(String[] args) {
-		UnknownParameter p = new Physical3DParameter(PartialType.MU, new Location(0, 0, Earth.EARTH_RADIUS), 1.);
+		UnknownParameter p = new Physical3DParameter(PartialType.MU, new FullPosition(0, 0, Earth.EARTH_RADIUS), 1.);
 		byte[] bytes = p.getBytes();
 		System.out.println(p);	
 		System.out.println(create(bytes));
 	}
 	
-    public Physical3DParameter(PartialType partialType, Location pointLocation, double weighting) {
+    public Physical3DParameter(PartialType partialType, FullPosition pointLocation, double weighting) {
         this.partialType = partialType;
         this.weighting = weighting;
         this.pointLocation = pointLocation;
     }
 
-    public Location getPointLocation() {
+    public FullPosition getPointLocation() {
         return pointLocation;
     }
 
@@ -87,7 +87,7 @@ public class Physical3DParameter implements UnknownParameter {
 	}
 	
 	@Override
-	public Location getLocation() {
+	public FullPosition getLocation() {
 		return pointLocation;
 	}
 	
@@ -130,7 +130,7 @@ public class Physical3DParameter implements UnknownParameter {
 		double r = ByteBuffer.wrap(loc3).getDouble();
 		double weight = ByteBuffer.wrap(weightByte).getDouble();
 		
-		return new Physical3DParameter(partialType, new Location(latitude, longitude, r), weight);
+		return new Physical3DParameter(partialType, new FullPosition(latitude, longitude, r), weight);
 	}
 
 }

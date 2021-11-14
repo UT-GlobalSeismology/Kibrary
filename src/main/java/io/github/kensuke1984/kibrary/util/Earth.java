@@ -75,10 +75,10 @@ public final class Earth {
      * Compute a length of major axis of similar oval, on which the location
      * exists, to the Earth
      *
-     * @param location {@link Location} of a target point
+     * @param location {@link FullPosition} of a target point
      * @return [km] length of a major axis of the oval, similar to Earth, where the location exists.
      */
-    public static double getExtendedShaft(Location location) {
+    public static double getExtendedShaft(FullPosition location) {
         if (location.getR() == 0) {
             System.err.println("location has no radius information, the extended shaft for the surface is returned.");
             return EQUATORIAL_RADIUS;
@@ -273,7 +273,7 @@ public final class Earth {
      * @param dLongitude [deg]
      * @return volume [km<sup>3</sup>]
      */
-    public static double getVolume(Location point, double dr, double dLatitude, double dLongitude) {
+    public static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
         double r = point.getR();
         if (r <= 0) throw new IllegalArgumentException("location has an invalid R: " + r);
 

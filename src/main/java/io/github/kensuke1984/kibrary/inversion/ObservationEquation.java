@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
 import io.github.kensuke1984.kibrary.math.Matrix;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
@@ -751,7 +751,7 @@ public class ObservationEquation {
      * @param location to look for
      * @return i, m<sub>i</sub> = type, parameterが何番目にあるか なければ-1
      */
-	private int whatNumber(PartialType type, Location location, Observer station, GlobalCMTID id, Phase[] phases) {
+	private int whatNumber(PartialType type, FullPosition location, Observer station, GlobalCMTID id, Phase[] phases) {
 		for (int i = 0; i < PARAMETER_LIST.size(); i++) {
 			if (PARAMETER_LIST.get(i).getPartialType() != type)
 				continue;

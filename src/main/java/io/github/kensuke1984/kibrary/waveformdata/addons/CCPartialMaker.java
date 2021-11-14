@@ -22,7 +22,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -175,7 +175,7 @@ public class CCPartialMaker {
 					pw = new PrintWriter(outpath.toFile());
 					for (int iunk = 0; iunk < ccParIJ.size(); iunk++) {
 						Trace partialCorr = ccParIJ.get(iunk).trace;
-						Location loc = ccParIJ.get(iunk).unknownParameter.getLocation();
+						FullPosition loc = ccParIJ.get(iunk).unknownParameter.getLocation();
 						PartialType type = ccParIJ.get(iunk).unknownParameter.getPartialType();
 						pw.print(type + " " + loc + " ");
 						for (int it = 0; it < partialCorr.getLength(); it++) {

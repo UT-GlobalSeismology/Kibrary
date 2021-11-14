@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 /**
  * Model SH18CEX by Nozomu Takeuchi
@@ -1196,9 +1196,9 @@ public final class SH18CEX {
 
     public static void main(String args[]) {
         if (args.length != 3) throw new IllegalArgumentException("radius[km] latitude[deg] longitude[deg]");
-        Location loc;
+        FullPosition loc;
         try {
-            loc = new Location(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[0]));
+            loc = new FullPosition(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[0]));
         } catch (Exception e) {
             throw new IllegalArgumentException("radius[km] latitude[deg] longitude[deg]");
         }
@@ -1245,7 +1245,7 @@ public final class SH18CEX {
 
     }
 
-    public static double getV(Location location) {
+    public static double getV(FullPosition location) {
         int fmin = 0;
         int fmax = 18;
         int nzpar = 13;

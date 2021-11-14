@@ -13,7 +13,7 @@ import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 public class SelectInBouncingRegion {
@@ -43,7 +43,7 @@ public class SelectInBouncingRegion {
 			TauP_Time timetool = new TauP_Time("prem");
 			timetool.parsePhaseList("ScS");
 			for (TimewindowData window : timewindows) {
-				Location eloc = window.getGlobalCMTID().getEvent().getCmtLocation();
+				FullPosition eloc = window.getGlobalCMTID().getEvent().getCmtLocation();
 				timetool.setSourceDepth(6371. - eloc.getR());
 				double distance = Math.toDegrees(eloc.getEpicentralDistance(window.getObserver().getPosition()));
 				double azimuth = Math.toDegrees(eloc.getAzimuth(window.getObserver().getPosition()));

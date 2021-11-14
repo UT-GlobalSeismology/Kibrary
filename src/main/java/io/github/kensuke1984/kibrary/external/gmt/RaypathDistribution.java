@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.inversion.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
@@ -157,7 +157,7 @@ public class RaypathDistribution implements Operation {
 	private void outputEvent() throws IOException {
 		List<String> lines = new ArrayList<>();
 		for (GlobalCMTID id : ids) {
-			Location loc = id.getEvent().getCmtLocation();
+			FullPosition loc = id.getEvent().getCmtLocation();
 			double latitude = loc.getLatitude();
 			double longitude = loc.getLongitude();
 			longitude = 0 <= longitude ? longitude : longitude + 360;
@@ -169,7 +169,7 @@ public class RaypathDistribution implements Operation {
 	private void outputEventCSV() throws IOException {
 		List<String> lines = new ArrayList<>();
 		for (GlobalCMTID id : ids) {
-			Location loc = id.getEvent().getCmtLocation();
+			FullPosition loc = id.getEvent().getCmtLocation();
 			double latitude = loc.getLatitude();
 			double longitude = loc.getLongitude();
 			double depth = 6371. - loc.getR();
@@ -278,11 +278,11 @@ public class RaypathDistribution implements Operation {
 					}
 				}).filter(Objects::nonNull)
 				.forEach(headerData -> {
-					Location eventLocation = headerData.getEventLocation();
+					FullPosition eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getObserver().getPosition();
 					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, phase)
 						.get(0);
-					Location turningPoint = info.getTurningPoint();
+					FullPosition turningPoint = info.getTurningPoint();
 					lines.add(String.format("%.2f %.2f %.2f"
 							, turningPoint.getLongitude()
 							, turningPoint.getLatitude()
@@ -316,14 +316,14 @@ public class RaypathDistribution implements Operation {
 					}
 				}).filter(Objects::nonNull)
 				.forEach(headerData -> {
-					Location eventLocation = headerData.getEventLocation();
+					FullPosition eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getObserver().getPosition();
 					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, phase);
 					Info info = null;
 					if (infoList.size() > 0) {
 						info = infoList.get(0);
-						Location enterPoint = info.getEnterPoint();
-						Location leavePoint = info.getLeavePoint();
+						FullPosition enterPoint = info.getEnterPoint();
+						FullPosition leavePoint = info.getLeavePoint();
 						if (eventClusterPath != null)
 							lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
 								, enterPoint.getLatitude()
@@ -367,15 +367,15 @@ public class RaypathDistribution implements Operation {
 					}
 				}).filter(Objects::nonNull)
 				.forEach(headerData -> {
-					Location eventLocation = headerData.getEventLocation();
+					FullPosition eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getObserver().getPosition();
 					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS);
 					Info info = null;
 					if (infoList.size() > 0) {
 						info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS)
 						.get(0);
-						Location enterDpp = info.getEnterPoint();
-						Location leaveDpp = info.getLeavePoint();
+						FullPosition enterDpp = info.getEnterPoint();
+						FullPosition leaveDpp = info.getLeavePoint();
 						if (stationPosition.getLongitude() >= -130 && stationPosition.getLongitude() <= -110)
 							lines_western.add(String.format("%.2f %.2f %.2f %.2f"
 								, enterDpp.getLatitude()

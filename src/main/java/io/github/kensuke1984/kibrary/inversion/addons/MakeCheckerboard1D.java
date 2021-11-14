@@ -14,7 +14,7 @@ import java.util.Map;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 public class MakeCheckerboard1D {
@@ -68,7 +68,7 @@ public class MakeCheckerboard1D {
 				= UnknownParameterFile.read(parameterPath);
 			BufferedWriter writer = Files.newBufferedWriter(outDvFile);
 			for (int i = 0; i < unknowns.size(); i ++) {
-				Location loc = (Location) unknowns.get(i)
+				FullPosition loc = (FullPosition) unknowns.get(i)
 						.getLocation();
 				double dmu = dMU(dv, loc.getR(), structure);
 //				double dKappa = dKappa(dv, loc.getR(), structure);

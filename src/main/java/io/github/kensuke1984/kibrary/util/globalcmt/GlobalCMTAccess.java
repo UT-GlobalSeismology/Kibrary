@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 import java.time.LocalDateTime;
 
@@ -19,13 +19,13 @@ public interface GlobalCMTAccess {
 
     MomentTensor getCmt();
 
-    Location getCmtLocation();
+    FullPosition getCmtLocation();
 
     LocalDateTime getCMTTime();
 
     double getHalfDuration();
 
-    Location getPDELocation();
+    FullPosition getPDELocation();
 
     LocalDateTime getPDETime();
 

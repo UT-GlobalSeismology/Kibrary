@@ -20,7 +20,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -167,11 +167,11 @@ public class InversionResult {
      * @param type     {@link PartialType}
      * @return locationの直近nPoints点からの補間値
      */
-    public static double complement(Map<UnknownParameter, Double> answer, int nPoints, int nPower, Location location,
+    public static double complement(Map<UnknownParameter, Double> answer, int nPoints, int nPower, FullPosition location,
             PartialType type) {
         if (!type.is3D())
             throw new RuntimeException(type + " is not 3d parameter"); // TODO
-        Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
+        Map<FullPosition, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
                 Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
         if (type.equals(PartialType.TIME_RECEIVER) || type.equals(PartialType.TIME_SOURCE) )
@@ -179,9 +179,9 @@ public class InversionResult {
         if (ansMap.containsKey(location))
             return ansMap.get(location);
 
-        Location[] nearLocations = location
+        FullPosition[] nearLocations = location
                 .getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
-                        .map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(Location[]::new));
+                        .map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(FullPosition[]::new));
         double[] r = new double[nPoints];
         double rTotal = 0;
         for (int iPoint = 0; iPoint < nPoints; iPoint++) {

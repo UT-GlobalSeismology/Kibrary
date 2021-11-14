@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.selection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -209,7 +209,7 @@ public class DividePerAzimuth {
 		Set<GlobalCMTID> events = info.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
 		events.stream().forEach(id -> {
-			Location loc = id.getEvent().getCmtLocation();
+			FullPosition loc = id.getEvent().getCmtLocation();
 			latLon[0] += loc.getLatitude();
 			latLon[1] += loc.getLongitude(); 
 		});

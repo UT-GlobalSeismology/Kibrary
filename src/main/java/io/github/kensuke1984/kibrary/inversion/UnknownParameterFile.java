@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.BufferedReader;
@@ -93,7 +93,7 @@ public class UnknownParameterFile {
 				case Vs:
 				case LAMBDA2MU:
 				default:
-					unknown = new Physical3DParameter(type, new Location(Double.parseDouble(parts[1]),
+					unknown = new Physical3DParameter(type, new FullPosition(Double.parseDouble(parts[1]),
 							Double.parseDouble(parts[2]), Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));
 					pars.add(unknown);
 				}

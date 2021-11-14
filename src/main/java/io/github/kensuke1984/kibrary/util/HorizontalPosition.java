@@ -1,19 +1,19 @@
 package io.github.kensuke1984.kibrary.util;
 
+import org.apache.commons.math3.util.FastMath;
+
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
-import org.apache.commons.math3.util.FastMath;
 
 /**
  * <p>
- * Position
- * </p>
+ * 2D Position on Earth.
+ * <p>
  * Latitude Longitude
  * <p>
  * This class is <b>immutable</b>.
- * </p>
  *
  * @author Kensuke Konishi
  * @version 0.1.1.3
@@ -26,7 +26,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Creates an instance with geographic latitude and longitude
      *
-     * @param latitude  [deg] geographic latitude [-90, 90] {@link Location#latitude}
+     * @param latitude  [deg] geographic latitude [-90, 90] {@link FullPosition#latitude}
      * @param longitude [deg] (-180, 360)
      */
     public HorizontalPosition(double latitude, double longitude) {
@@ -65,8 +65,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @param r [km] radius
      * @return Location newly created with the input r (deep copy)
      */
-    public Location toLocation(double r) {
-        return new Location(latitude.getLatitude(), longitude.getLongitude(), r);
+    public FullPosition toLocation(double r) {
+        return new FullPosition(latitude.getLatitude(), longitude.getLongitude(), r);
     }
 
     /**
@@ -234,45 +234,45 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     public Point2D toPoint2D() {
         return new Point2D(getLongitude(), getLatitude());
     }
-	
-	/**
-	 * @param azimuth
-	 * @param distance
-	 * @return HorizontalPosition located at distance from self along azimuth
-	 * @author anselme
-	 */
-	public HorizontalPosition fromAzimuth(double azimuth, double distance) {
-		double alpha = azimuth * Math.PI / 180;
-		double GCARC = distance * Math.PI / 180;
-		
-		double costheta = Math.cos(GCARC) * Math.cos(getTheta())
-				+ Math.sin(GCARC) * Math.sin(getTheta()) * Math.cos(alpha);
-		double sintheta = Math.sqrt(1 - costheta * costheta);
-		
-		double theta = Math.acos(costheta);
-		
-		double tmpCos = Math.min( (Math.cos(GCARC) - Math.cos(getTheta()) * costheta)
-					/ (Math.sin(getTheta()) * sintheta)
-				, 1.);
-		tmpCos = Math.max(tmpCos, -1.);
-		
-		double phi = getPhi() - Math.acos( tmpCos );
-		
-		double lat = 90 - theta * 180 / Math.PI;
-		double lon = phi * 180 / Math.PI;
-		
-		if (lon < -180)
-			lon = lon + 360;
-		
-		return new HorizontalPosition(lat, lon);
-	}
-	
-	public double getGeographicalAzimuth(HorizontalPosition position) {
-		return Earth.getGeographicalAzimuth(this, position);
-	}
-	
-	public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
-		return Earth.getGeographicalDistance(horizontalPosition, this);
-	}
+
+    /**
+     * @param azimuth
+     * @param distance
+     * @return HorizontalPosition located at distance from self along azimuth
+     * @author anselme
+     */
+    public HorizontalPosition fromAzimuth(double azimuth, double distance) {
+        double alpha = azimuth * Math.PI / 180;
+        double GCARC = distance * Math.PI / 180;
+
+        double costheta = Math.cos(GCARC) * Math.cos(getTheta())
+                + Math.sin(GCARC) * Math.sin(getTheta()) * Math.cos(alpha);
+        double sintheta = Math.sqrt(1 - costheta * costheta);
+
+        double theta = Math.acos(costheta);
+
+        double tmpCos = Math.min( (Math.cos(GCARC) - Math.cos(getTheta()) * costheta)
+                    / (Math.sin(getTheta()) * sintheta)
+                , 1.);
+        tmpCos = Math.max(tmpCos, -1.);
+
+        double phi = getPhi() - Math.acos( tmpCos );
+
+        double lat = 90 - theta * 180 / Math.PI;
+        double lon = phi * 180 / Math.PI;
+
+        if (lon < -180)
+            lon = lon + 360;
+
+        return new HorizontalPosition(lat, lon);
+    }
+
+    public double getGeographicalAzimuth(HorizontalPosition position) {
+        return Earth.getGeographicalAzimuth(this, position);
+    }
+
+    public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
+        return Earth.getGeographicalDistance(horizontalPosition, this);
+    }
 
 }

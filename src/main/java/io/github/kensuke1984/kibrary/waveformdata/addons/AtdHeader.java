@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -24,7 +24,7 @@ public class AtdHeader {
 	Phases[] phases;
 	StaticCorrectionType[] correctionTypes;
 	PartialType[] partialTypes;
-	Location[] locations;
+	FullPosition[] locations;
 	
 	public static final int oneWeightingTypeByte = 4;
 	public static final int onePhasesByte = 20;
@@ -32,7 +32,7 @@ public class AtdHeader {
 	public static final int oneCorrectionTypeByte = 10;
 	
 	public AtdHeader(WeightingType[] weightingTypes, FrequencyRange[] frequencyRanges
-			, Phases[] phases, StaticCorrectionType[] correctionTypes, PartialType[] partialTypes, Location[] locations) {
+			, Phases[] phases, StaticCorrectionType[] correctionTypes, PartialType[] partialTypes, FullPosition[] locations) {
 		this.weightingTypes = weightingTypes;
 		this.frequencyRanges = frequencyRanges;
 		this.phases = phases;
@@ -47,7 +47,7 @@ public class AtdHeader {
 		Phases[] phases;
 		StaticCorrectionType[] correctionTypes;
 		PartialType[] partialTypes;
-		Location[] locations;
+		FullPosition[] locations;
 		
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(ataPath)));) {
 			// Read header
@@ -56,7 +56,7 @@ public class AtdHeader {
 			phases = new Phases[dis.readShort()];
 			correctionTypes = new StaticCorrectionType[dis.readShort()];
 			partialTypes = new PartialType[dis.readShort()];
-			locations = new Location[dis.readShort()];
+			locations = new FullPosition[dis.readShort()];
 			
 			for (int i = 0; i < weightingTypes.length; i++) {
 				int n = dis.readInt();
@@ -87,7 +87,7 @@ public class AtdHeader {
 			for (int i = 0; i < locations.length; i++) {
 				dis.read(locationByte);
 				ByteBuffer bb = ByteBuffer.wrap(locationByte);
-				locations[i] = new Location(bb.getFloat(), bb.getFloat(), bb.getFloat());
+				locations[i] = new FullPosition(bb.getFloat(), bb.getFloat(), bb.getFloat());
 			}
 		}
 		
@@ -114,7 +114,7 @@ public class AtdHeader {
 		return partialTypes;
 	}
 	
-	public Location[] getLocations() {
+	public FullPosition[] getLocations() {
 		return locations;
 	}
 }

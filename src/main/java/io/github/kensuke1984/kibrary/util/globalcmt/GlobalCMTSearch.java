@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.util.Precision;
@@ -155,7 +155,7 @@ public class GlobalCMTSearch {
      */
     private static void printIDinformation(GlobalCMTID id) {
         GlobalCMTAccess event = id.getEvent();
-        Location location = event.getCmtLocation();
+        FullPosition location = event.getCmtLocation();
         double lat = location.getLatitude();
         double lon = location.getLongitude();
         double depth = Precision.round((6371 - location.getR()), 3);

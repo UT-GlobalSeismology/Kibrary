@@ -51,7 +51,7 @@ class SacTriplet {
      * @throws IOException
      */
     SacTriplet(Path sacPath, double grid) throws IOException {
-        SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
+        SacFileName sacFile = new SacFileName(sacPath.getFileName().toString());
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
 
         //set variables
@@ -77,7 +77,7 @@ class SacTriplet {
      * @return (boolean) true if the given SAC file is registered in this triplet.
      */
     boolean add(Path sacPath) {
-        SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
+        SacFileName sacFile = new SacFileName(sacPath.getFileName().toString());
 
         //if variables are same, register
         if(sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) &&
@@ -168,15 +168,15 @@ class SacTriplet {
      */
     void rename(String event) throws IOException {
         if (rRegistered) {
-            SACFileName rFile = new SACFileName(rPath.getFileName().toString());
+            SacFileName rFile = new SacFileName(rPath.getFileName().toString());
             Files.move(rPath, rPath.resolveSibling(rFile.getFinalFileName(event)));
         }
         if (tRegistered) {
-            SACFileName tFile = new SACFileName(tPath.getFileName().toString());
+            SacFileName tFile = new SacFileName(tPath.getFileName().toString());
             Files.move(tPath, tPath.resolveSibling(tFile.getFinalFileName(event)));
         }
         if (zRegistered) {
-            SACFileName zFile = new SACFileName(zPath.getFileName().toString());
+            SacFileName zFile = new SacFileName(zPath.getFileName().toString());
             Files.move(zPath, zPath.resolveSibling(zFile.getFinalFileName(event)));
         }
     }

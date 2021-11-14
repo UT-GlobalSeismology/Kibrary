@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 public class Complementation {
 	public static void main(String[] args) {
@@ -28,13 +28,13 @@ public class Complementation {
 		Path ppfilePath  = Paths.get(args[2]); // 水平方向5°おき、鉛直方向50kmおきのperturbation pointファイル
 		
 		Complementation c = new Complementation();
-		Location[] locations = c.readPoint(ppfilePath);  //既知の場所(5°おき)を読み込む	順番が大事
+		FullPosition[] locations = c.readPoint(ppfilePath);  //既知の場所(5°おき)を読み込む	順番が大事
 		double [] values = c.readValue(answerPath);  //既知の値を読み込む 順番が大事 場所と値の順番は同じね
-		Map<Location, Double> valueOfLocation = IntStream.range(0, locations.length)
+		Map<FullPosition, Double> valueOfLocation = IntStream.range(0, locations.length)
 				                                         .mapToObj(i -> i)
 				                                         .collect(Collectors.toMap(i -> locations[i], i -> values[i]));
 //		Location target = c.toPoint(cmpfilePath);  // 内挿したい点
-		Location[] targetList = c.readPoint(cmpfilePath);  //内挿したい点の配列
+		FullPosition[] targetList = c.readPoint(cmpfilePath);  //内挿したい点の配列
 //		Location[] nears = c.getNearest4(locations, target); //内挿したい点からの近接４点 locationsの中からtargetに近い4点
 //		double[] nearpointsValue = c.getValue(nears, valueOfLocation);
 //		double[] nearpointsValue = Arrays.stream(nears).mapToDouble(loc -> valueOfLocation.get(loc)).toArray(); // これは順番が同じというところからさがす
@@ -43,7 +43,7 @@ public class Complementation {
 		double tmp = 0;
 //		System.out.println(targetList.length);
 		for(int i=0;i<targetList.length;i++){
-			Location[] near = c.getNearestHorizontal4(locations, targetList[i]);
+			FullPosition[] near = c.getNearestHorizontal4(locations, targetList[i]);
 //			double[] nearpointValue = Arrays.stream(near).mapToDouble(loc -> valueOfLocation.get(loc)).toArray();
 			double[] nearpointsValue = new double[near.length];
 			  for(int n=0;n<near.length;n++){
@@ -74,7 +74,7 @@ public class Complementation {
 	 * @param target
 	 * @return
 	 */
-	public double complement(Location[] nearPoints, double[] nearpointsValue, Location target){
+	public double complement(FullPosition[] nearPoints, double[] nearpointsValue, FullPosition target){
 		double wsum = 0;
 		double wzsum = 0;
 		  for(int i=0;i<nearPoints.length;i++){	
@@ -89,7 +89,7 @@ public class Complementation {
 //		return value;
 	}
 	
-	public double complementEnhanceHorizontal(Location[] nearPoints, double[] nearpointsValue, Location target){
+	public double complementEnhanceHorizontal(FullPosition[] nearPoints, double[] nearpointsValue, FullPosition target){
 		double wsum = 0;
 		double wzsum = 0;
 		  for(int i=0;i<nearPoints.length;i++){	
@@ -103,7 +103,7 @@ public class Complementation {
 	}
 	
 	// TODO
-	public double trilinearInterpolation(double[][] xyz, double[] cellValues, Location target) {
+	public double trilinearInterpolation(double[][] xyz, double[] cellValues, FullPosition target) {
 		double v = 0;
 		double xd = (target.getLatitude() - xyz[0][0]) / (xyz[0][1] - xyz[0][0]);
 		double yd = (target.getLongitude() - xyz[1][0]) / (xyz[1][1] - xyz[1][0]);
@@ -123,7 +123,7 @@ public class Complementation {
 	 * @param michi
 	 * @return
 	 */
-	private static double weight(Location kichi, Location michi){
+	private static double weight(FullPosition kichi, FullPosition michi){
 //		double kLat = kichi.getLatitude();
 //		double kLon = kichi.getLongitude();
 //		double mLat = michi.getLatitude();
@@ -134,7 +134,7 @@ public class Complementation {
 //		return weight;
 	}
 	
-	private static double weightHorizontalEnhanced(Location loc1, Location loc2) {
+	private static double weightHorizontalEnhanced(FullPosition loc1, FullPosition loc2) {
 		double arcDistance = loc1.getEpicentralDistance(loc2) * (loc1.getR() + loc2.getR()) / 2.;
 		double dR = Math.abs(loc1.getR() - loc2.getR());
 		arcDistance /= 4.;
@@ -147,32 +147,32 @@ public class Complementation {
 	 * @param location この点に
 	 * @return 近い点を4つかえす
 	 */
-	public Location[] getNearest4(Location[] locations, Location location){
+	public FullPosition[] getNearest4(FullPosition[] locations, FullPosition location){
 //		double[] distance = distance(locations, location);
 //		Arrays.sort(distance); 
-		Location[] sortLoc = location.getNearestLocation(locations);
-		Location[] near4 = new Location[4];
+		FullPosition[] sortLoc = location.getNearestLocation(locations);
+		FullPosition[] near4 = new FullPosition[4];
 		for(int i=0;i<4;i++){
 			near4[i] = sortLoc[i];
 		}
 	    return near4;
 	}
 	
-	public Location[] getNearest4(Location[] locations, Location location, double maxSearchRange){
+	public FullPosition[] getNearest4(FullPosition[] locations, FullPosition location, double maxSearchRange){
 //		double[] distance = distance(locations, location);
 //		Arrays.sort(distance); 
-		Location[] sortLoc = location.getNearestLocation(locations, maxSearchRange);
-		Location[] near4 = new Location[4];
+		FullPosition[] sortLoc = location.getNearestLocation(locations, maxSearchRange);
+		FullPosition[] near4 = new FullPosition[4];
 		for(int i=0;i<4;i++){
 			near4[i] = sortLoc[i];
 		}
 	    return near4;
 	}
 	
-	public Location[] getNearest(Location[] locations, Location location){
+	public FullPosition[] getNearest(FullPosition[] locations, FullPosition location){
 		double minDistance = Double.MAX_VALUE;
-		Location[] nearest = new Location[1];
-		for (Location loc : locations) {
+		FullPosition[] nearest = new FullPosition[1];
+		for (FullPosition loc : locations) {
 			double distance = loc.getDistance(location);
 			if (distance < minDistance) {
 				minDistance = distance;
@@ -182,10 +182,10 @@ public class Complementation {
 		return nearest;
 	}
 	
-	public Location[] get8CellNodes(Location[] locations, Location location, double dR, double dL) {
-		Location[] nodes = new Location[8];
-		Location[] sortLoc = location.getNearestLocation(locations);
-		Location nearest = sortLoc[0];
+	public FullPosition[] get8CellNodes(FullPosition[] locations, FullPosition location, double dR, double dL) {
+		FullPosition[] nodes = new FullPosition[8];
+		FullPosition[] sortLoc = location.getNearestLocation(locations);
+		FullPosition nearest = sortLoc[0];
 		double lat = nearest.getLatitude();
 		double lon = nearest.getLongitude();
 		double r = nearest.getR();
@@ -207,31 +207,31 @@ public class Complementation {
 		
 		
 		nodes[0] = nearest;
-		nodes[1] = new Location(lat + dLat, lon, r);
-		nodes[2] = new Location(lat, lon + dLon, r);
-		nodes[3] = new Location(lat + dLat, lon + dLon, r);
-		nodes[4] = new Location(lat, lon, r - dRad);
-		nodes[5] = new Location(lat + dLat, lon, r - dRad);
-		nodes[6] = new Location(lat, lon + dLon, r - dRad);
-		nodes[7] = new Location(lat + dLat, lon + dLon, r - dRad);
+		nodes[1] = new FullPosition(lat + dLat, lon, r);
+		nodes[2] = new FullPosition(lat, lon + dLon, r);
+		nodes[3] = new FullPosition(lat + dLat, lon + dLon, r);
+		nodes[4] = new FullPosition(lat, lon, r - dRad);
+		nodes[5] = new FullPosition(lat + dLat, lon, r - dRad);
+		nodes[6] = new FullPosition(lat, lon + dLon, r - dRad);
+		nodes[7] = new FullPosition(lat + dLat, lon + dLon, r - dRad);
 		
-		Set<Location> fixedNodes = new HashSet<>();
+		Set<FullPosition> fixedNodes = new HashSet<>();
 		fixedNodes.add(nodes[0]);
 		for (int i = 1; i < 8; i++) {
-			Location[] nearests = nodes[i].getNearestLocation(locations);
+			FullPosition[] nearests = nodes[i].getNearestLocation(locations);
 			if (nearests.length > 0)
 				fixedNodes.add(nodes[i].getNearestLocation(locations)[0]);
 		}
 		
-		return fixedNodes.toArray(new Location[0]);
+		return fixedNodes.toArray(new FullPosition[0]);
 	}
 	
-	public double[][] getLocationsForTrilinear(Location[] locations, Location location, double dR, double dL) {
+	public double[][] getLocationsForTrilinear(FullPosition[] locations, FullPosition location, double dR, double dL) {
 		double[][] nodes = new double[3][];
 		for (int i = 0; i < 3; i++)
 			nodes[i] = new double[2];
-		Location[] sortLoc = location.getNearestLocation(locations);
-		Location nearest = sortLoc[0];
+		FullPosition[] sortLoc = location.getNearestLocation(locations);
+		FullPosition nearest = sortLoc[0];
 		double lat = nearest.getLatitude();
 		double lon = nearest.getLongitude();
 		double r = nearest.getR();
@@ -262,9 +262,9 @@ public class Complementation {
 	 * @param location
 	 * @return nearest location with the same radius as this
 	 */
-	public Location[] getNearestHorizontal4(Location[] locations, Location location){
-		Location[] sortLoc = location.getNearestHorizontalLocation(locations);
-		Location[] near4 = new Location[4];
+	public FullPosition[] getNearestHorizontal4(FullPosition[] locations, FullPosition location){
+		FullPosition[] sortLoc = location.getNearestHorizontalLocation(locations);
+		FullPosition[] near4 = new FullPosition[4];
 		for(int i = 0; i < 4;i++)
 			near4[i] = sortLoc[i];
 	    return near4;
@@ -276,7 +276,7 @@ public class Complementation {
 	 * @param location
 	 * @return
 	 */
-	private static double[] distance(Location[] locations, Location location){
+	private static double[] distance(FullPosition[] locations, FullPosition location){
 		 return IntStream.range(0, locations.length)
 				 .mapToDouble(i -> locations[i].getDistance(location))
 				 .toArray();
@@ -287,25 +287,25 @@ public class Complementation {
 	 * @param cmp
 	 * @return Location
 	 */
-	private Location toPoint(Path cmp) {
+	private FullPosition toPoint(Path cmp) {
 		String path = cmp.toString();
 		String line = Complementation.fileRead(path);
 		String[] parts = line.split("\\s+");
-		return new Location (Double.parseDouble(parts[0]), 
+		return new FullPosition (Double.parseDouble(parts[0]), 
 				Double.parseDouble(parts[1]), Double.parseDouble(parts[2]) );
 	 }
 	
-	private static Location toLocation(String line) {
+	private static FullPosition toLocation(String line) {
 		String[] parts = line.split("\\s+");
-		return new Location(Double.parseDouble(parts[0]),
+		return new FullPosition(Double.parseDouble(parts[0]),
 		Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
 	}
 	
-	private Location[] readPoint(Path ppPath){
+	private FullPosition[] readPoint(Path ppPath){
 		try {
 			return Files.readAllLines(ppPath).stream()
 					.map(Complementation::toLocation)
-					.toArray(n -> new Location[n]);
+					.toArray(n -> new FullPosition[n]);
 		}catch (Exception e) {
 			throw new RuntimeException("complement file has problems");
 		}

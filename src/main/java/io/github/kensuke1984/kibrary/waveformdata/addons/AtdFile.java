@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
@@ -133,14 +133,14 @@ public final class AtdFile {
 				new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
 			
 			Phases[] phases = atdEntries.stream().map(e -> e.getPhases()).distinct().collect(Collectors.toList()).toArray(new Phases[0]);
-			Location[] locations = atdEntries.stream().map(e -> e.getLocation()).distinct().collect(Collectors.toList()).toArray(new Location[0]);
+			FullPosition[] locations = atdEntries.stream().map(e -> e.getLocation()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
 			
 			Map<WeightingType, Integer> weightingTypeMap = new HashMap<>();
 			Map<FrequencyRange, Integer> frequencyRangesMap = new HashMap<>();
 			Map<Phases, Integer> phasesMap = new HashMap<>();
 			Map<StaticCorrectionType, Integer> correctionTypeMap = new HashMap<>();
 			Map<PartialType, Integer> partialTypeMap = new HashMap<>();
-			Map<Location, Integer> locationMap = new HashMap<>();
+			Map<FullPosition, Integer> locationMap = new HashMap<>();
 			
 			dos.writeShort(weightingTypes.length);
 			dos.writeShort(frequencyRanges.length);
@@ -240,7 +240,7 @@ public final class AtdFile {
 			Phases[] phases = new Phases[dis.readShort()];
 			StaticCorrectionType[] correctionTypes = new StaticCorrectionType[dis.readShort()];
 			PartialType[] partialTypes = new PartialType[dis.readShort()];
-			Location[] locations = new Location[dis.readShort()];
+			FullPosition[] locations = new FullPosition[dis.readShort()];
 			
 			int headerBytes = 6 * 2 + weightingTypes.length * oneWeightingTypeByte 
 					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte + correctionTypes.length * oneCorrectionTypeByte
@@ -281,7 +281,7 @@ public final class AtdFile {
 			for (int i = 0; i < locations.length; i++) {
 				dis.read(locationByte);
 				ByteBuffer bb = ByteBuffer.wrap(locationByte);
-				locations[i] = new Location(bb.getFloat(), bb.getFloat(), bb.getFloat());
+				locations[i] = new FullPosition(bb.getFloat(), bb.getFloat(), bb.getFloat());
 			}
 			
 			int nEntry = (int) (entryPart / oneEntryByte);
@@ -314,7 +314,7 @@ public final class AtdFile {
 			Phases[] phases = new Phases[dis.readShort()];
 			StaticCorrectionType[] correctionTypes = new StaticCorrectionType[dis.readShort()];
 			PartialType[] partialTypes = new PartialType[dis.readShort()];
-			Location[] locations = new Location[dis.readShort()];
+			FullPosition[] locations = new FullPosition[dis.readShort()];
 			
 			int headerBytes = 6 * 2 + weightingTypes.length * oneWeightingTypeByte 
 					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte + correctionTypes.length * oneCorrectionTypeByte
@@ -355,7 +355,7 @@ public final class AtdFile {
 			for (int i = 0; i < locations.length; i++) {
 				dis.read(locationByte);
 				ByteBuffer bb = ByteBuffer.wrap(locationByte);
-				locations[i] = new Location(bb.getFloat(), bb.getFloat(), bb.getFloat());
+				locations[i] = new FullPosition(bb.getFloat(), bb.getFloat(), bb.getFloat());
 			}
 			
 			int nEntry = (int) (entryPart / oneEntryByte);
@@ -380,7 +380,7 @@ public final class AtdFile {
 				int iPartialType = bb.getShort();
 				PartialType partialType = partialTypes[iPartialType];
 				int iLocation = bb.getShort();
-				Location location  = locations[iLocation];
+				FullPosition location  = locations[iLocation];
 				double value = bb.getDouble();
 				
 				int i0Atd = i / n1;
@@ -420,14 +420,14 @@ public final class AtdFile {
 	 * @return
 	 */
 	private static AtdEntry create(byte[] bytes, WeightingType[] weightingTypes, FrequencyRange[] frequencyRanges
-			, Phases[] phases, StaticCorrectionType[] correctionTypes, PartialType[] partialTypes, Location[] locations) {
+			, Phases[] phases, StaticCorrectionType[] correctionTypes, PartialType[] partialTypes, FullPosition[] locations) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		WeightingType weightingType = weightingTypes[bb.getShort()];
 		FrequencyRange frequencyRange = frequencyRanges[bb.getShort()];
 		Phases phase = phases[bb.getShort()];
 		StaticCorrectionType correctionType = correctionTypes[bb.getShort()];
 		PartialType partialType = partialTypes[bb.getShort()];
-		Location location = locations[bb.getShort()];
+		FullPosition location = locations[bb.getShort()];
 		double value = bb.getDouble();
 		
 //		Set<Phase> tmpset = new HashSet<>();

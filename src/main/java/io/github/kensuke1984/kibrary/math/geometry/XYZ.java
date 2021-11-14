@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.math.geometry;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 /**
  * 3次元直交座標 cartesian 右手系
@@ -97,9 +97,9 @@ public class XYZ extends XY {
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
-    public Location toLocation() {
+    public FullPosition toLocation() {
         RThetaPhi rtp = toSphericalCoordinate(x, y, z);
-        return new Location(Location.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
+        return new FullPosition(FullPosition.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
     }
 
 	public RThetaPhi toSphericalCoordinate() {

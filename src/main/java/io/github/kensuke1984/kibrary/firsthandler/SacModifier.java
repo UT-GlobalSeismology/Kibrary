@@ -10,7 +10,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
@@ -50,7 +50,7 @@ class SacModifier {
     SacModifier(GlobalCMTAccess globalCMTData, Path sacPath, boolean byPDE) throws IOException {
         this.sacPath = sacPath;
         this.headerMap = SACUtil.readHeader(sacPath);
-        SACFileName sacFile = new SACFileName(sacPath.getFileName().toString());
+        SacFileName sacFile = new SacFileName(sacPath.getFileName().toString());
         String modifiedFileName = sacFile.getModifiedFileName();
         this.modifiedPath = sacPath.resolveSibling(modifiedFileName);
         this.event = globalCMTData;
@@ -184,7 +184,7 @@ class SacModifier {
         // -> The tapering here is done just for the sake of connecting the zero-value segment and the incomplete waveform.
         //    Tapering of the whole waveform is done in SacDeconvolution.
 
-        Location sourceLocation = byPDE ? event.getPDELocation() : event.getCmtLocation();
+        FullPosition sourceLocation = byPDE ? event.getPDELocation() : event.getCmtLocation();
 
         headerMap.put(SACHeaderEnum.B, Double.toString((bInMillis + timeGapInMillis) / 1000.0));
         headerMap.put(SACHeaderEnum.E, Double.toString((eInMillis + timeGapInMillis) / 1000.0));

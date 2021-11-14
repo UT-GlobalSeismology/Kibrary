@@ -32,7 +32,7 @@ class SacGroup {
      */
     private Path workPath;
 
-    private Set<SACFileName> nameSet = new HashSet<>();
+    private Set<SacFileName> nameSet = new HashSet<>();
 
     /**
      * mergeしたSacFileName
@@ -40,17 +40,17 @@ class SacGroup {
     private String mergedSacFileName;
 
     /**
-     * 基準となる {@link SACFileName}
+     * 基準となる {@link SacFileName}
      */
-    private SACFileName rootSacFileName;
+    private SacFileName rootSacFileName;
 
     /**
-     * 基本となる {@link SACFileName}を追加
+     * 基本となる {@link SacFileName}を追加
      *
      * @param workPath    work path
      * @param sacFileName sacfile name
      */
-    SacGroup(Path workPath, SACFileName sacFileName) {
+    SacGroup(Path workPath, SacFileName sacFileName) {
         this.workPath = workPath;
         nameSet.add(sacFileName);
         rootSacFileName = sacFileName;
@@ -67,13 +67,13 @@ class SacGroup {
     }
 
     /**
-     * SacSetに{@link SACFileName}を加える 既に同じものが入っていたり
-     * {@link SACFileName#isRelated(SACFileName)}がfalseの場合追加しない
+     * SacSetに{@link SacFileName}を加える 既に同じものが入っていたり
+     * {@link SacFileName#isRelated(SacFileName)}がfalseの場合追加しない
      *
      * @param sacFileName to add
      * @return 追加したかどうか
      */
-    boolean add(SACFileName sacFileName) {
+    boolean add(SacFileName sacFileName) {
         return rootSacFileName.isRelated(sacFileName) && nameSet.add(sacFileName);
     }
 
@@ -92,7 +92,7 @@ class SacGroup {
 
     /**
      * Merges the series of related SAC files.
-     * The SAC files will first be sorted based on {@link SACFileName#compareTo(SACFileName)}.
+     * The SAC files will first be sorted based on {@link SacFileName#compareTo(SacFileName)}.
      * sortした後のファイルを一つ一つつなげていく だめな条件が出たファイルは関連するファイルも含めてゴミ箱行き
      * name1にname2をくっつける。 name1とname2が離れすぎていると そこでだめになる その一連のファイルもだめ
      *
@@ -100,7 +100,7 @@ class SacGroup {
      */
     boolean merge() throws IOException {
         //System.out.println("merging");
-        SACFileName[] sacFileNameList = nameSet.toArray(new SACFileName[0]);
+        SacFileName[] sacFileNameList = nameSet.toArray(new SacFileName[0]);
         // sort the sacFileNameList
         // files will be sorted in order of starttime
         Arrays.sort(sacFileNameList);
@@ -154,7 +154,7 @@ class SacGroup {
         }
         for (int i = 1; i < sacFileNameList.length; i++) {
             // sacfilename to be joined (file1)
-            SACFileName joinSacFileName = sacFileNameList[i];
+            SacFileName joinSacFileName = sacFileNameList[i];
             Path joinSacPath = workPath.resolve(joinSacFileName.toString());
             //System.err.println("joining " + joinSacFileName); // 4debug
 

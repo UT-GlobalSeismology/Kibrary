@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.correction;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.io.input.CloseShieldInputStream;
@@ -81,7 +81,7 @@ public class SCARDEC {
      * Depth is from
      * <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>
      */
-    private final Location EPICENTRAL_LOCATION;
+    private final FullPosition EPICENTRAL_LOCATION;
     private final double MW;
     /**
      * [N&middot;m]
@@ -105,7 +105,7 @@ public class SCARDEC {
      */
     private final Trace OPTIMAL_MOMENT_RATE_FUNCTION;
 
-    private SCARDEC(SCARDEC_ID id, Location epicentralLocation, double m0, double mw, double strike1, double dip1,
+    private SCARDEC(SCARDEC_ID id, FullPosition epicentralLocation, double m0, double mw, double strike1, double dip1,
                     double rake1, double strike2, double dip2, double rake2, Trace averageSTF, Trace optimalSTF) {
         EPICENTRAL_LOCATION = epicentralLocation;
         DIP1 = dip1;
@@ -134,7 +134,7 @@ public class SCARDEC {
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(SCARDEC_ROOT_PATH)));
              DataInputStream dis = new DataInputStream(zis)) {
             ZipEntry entry;
-            Location loc = null;
+            FullPosition loc = null;
             double m0 = Double.NaN;
             double mw = Double.NaN;
             double strike1 = Double.NaN;
@@ -152,7 +152,7 @@ public class SCARDEC {
                     continue;
                 for (int i = 0; i < 6; i++)
                     dis.readInt(); // origin time
-                loc = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                loc = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 m0 = dis.readDouble();
                 mw = dis.readDouble();
                 strike1 = dis.readDouble();
@@ -276,7 +276,7 @@ public class SCARDEC {
                 Arrays.stream(first.substring(first.indexOf(".0") + 3).split("\\s+")).mapToDouble(Double::parseDouble)
                         .toArray();
         double[] values = Arrays.stream(averageLines.get(1).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
-        Location src = new Location(latlon[0], latlon[1], 6371 - values[0]);
+        FullPosition src = new FullPosition(latlon[0], latlon[1], 6371 - values[0]);
 
         Function<List<String>, Trace> linesToSTF = lines -> {
             String[][] parts = lines.stream().skip(2).map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
@@ -307,7 +307,7 @@ public class SCARDEC {
                     .of(optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(),
                             optimalDIS.readInt(), optimalDIS.readInt());
 
-            Location aveloc = new Location(averageDIS.readDouble(), averageDIS.readDouble(), averageDIS.readDouble());
+            FullPosition aveloc = new FullPosition(averageDIS.readDouble(), averageDIS.readDouble(), averageDIS.readDouble());
             if (!aveLDT.equals(averageID.ORIGIN_TIME))
                 throw new RuntimeException("ORIGIN time in the file name and in the file are different!!");
             double avem0 = averageDIS.readDouble();
@@ -326,7 +326,7 @@ public class SCARDEC {
                 avestf[i] = averageDIS.readDouble();
             }
 
-            Location optloc = new Location(optimalDIS.readDouble(), optimalDIS.readDouble(), optimalDIS.readDouble());
+            FullPosition optloc = new FullPosition(optimalDIS.readDouble(), optimalDIS.readDouble(), optimalDIS.readDouble());
             double optm0 = optimalDIS.readDouble();
             double optmw = optimalDIS.readDouble();
             double optstrike1 = optimalDIS.readDouble();

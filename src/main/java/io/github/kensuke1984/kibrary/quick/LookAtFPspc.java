@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
@@ -36,7 +36,7 @@ public class LookAtFPspc {
 		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
-		Location sourceLocation = dsmOutput.getSourceLocation();
+		FullPosition sourceLocation = dsmOutput.getSourceLocation();
 		
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 		
@@ -67,7 +67,7 @@ public class LookAtFPspc {
 		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
-		Location sourceLocation = dsmOutput.getSourceLocation();
+		FullPosition sourceLocation = dsmOutput.getSourceLocation();
 		
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 	}

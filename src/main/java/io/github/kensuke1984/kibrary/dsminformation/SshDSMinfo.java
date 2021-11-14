@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
@@ -59,7 +59,7 @@ public class SshDSMinfo extends SyntheticDSMInputFile {
 			// structure
 			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
-			Location eventLocation = event.getCmtLocation();
+			FullPosition eventLocation = event.getCmtLocation();
 
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
@@ -112,7 +112,7 @@ public class SshDSMinfo extends SyntheticDSMInputFile {
 
 			// structure
 			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
-			Location eventLocation = event.getCmtLocation();
+			FullPosition eventLocation = event.getCmtLocation();
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
@@ -161,7 +161,7 @@ public class SshDSMinfo extends SyntheticDSMInputFile {
 
 			// structure
 			Arrays.stream(structure.toSHlines()).forEach(pw::println);
-			Location eventLocation = event.getCmtLocation();
+			FullPosition eventLocation = event.getCmtLocation();
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
@@ -209,7 +209,7 @@ public class SshDSMinfo extends SyntheticDSMInputFile {
 
 			// structure
 			Arrays.stream(structure.toSHlines()).forEach(pw::println);
-			Location eventLocation = event.getCmtLocation();
+			FullPosition eventLocation = event.getCmtLocation();
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");

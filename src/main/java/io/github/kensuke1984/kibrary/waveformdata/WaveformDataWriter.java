@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -60,7 +60,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     /**
      * index map for perturbation location
      */
-    private Map<Location, Integer> perturbationLocationMap;
+    private Map<FullPosition, Integer> perturbationLocationMap;
     /**
      * index map for phase name
      */
@@ -108,7 +108,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * @throws IOException if an error occurs
      */
     public WaveformDataWriter(Path idPath, Path dataPath, Set<Observer> observerSet, Set<GlobalCMTID> globalCMTIDSet,
-            double[][] periodRanges, Phase[] phases, Set<Location> perturbationPoints) throws IOException {
+            double[][] periodRanges, Phase[] phases, Set<FullPosition> perturbationPoints) throws IOException {
         this.idPath = idPath;
         this.dataPath = dataPath;
         if (checkDuplication(periodRanges)) throw new RuntimeException("Input periodRanges have duplication.");
@@ -168,10 +168,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
         }
     }
 
-    private void makePerturbationMap(Set<Location> perturbationMap) throws IOException {
+    private void makePerturbationMap(Set<FullPosition> perturbationMap) throws IOException {
         int i = 0;
         perturbationLocationMap = new HashMap<>();
-        for (Location loc : perturbationMap) {
+        for (FullPosition loc : perturbationMap) {
             perturbationLocationMap.put(loc, i++);
             idStream.writeDouble(loc.getLatitude());
             idStream.writeDouble(loc.getLongitude());

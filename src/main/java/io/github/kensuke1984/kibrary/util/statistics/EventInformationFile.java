@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util.statistics;
 
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -81,7 +81,7 @@ public class EventInformationFile {
 			pw.write("#GCMTID lat lon radius #transverse #vertical #radial Mw noiseToAmplitudeBeforeS noiseRatioVariance");
 			for (EventFolder folder : eventFolderSet) {
 				GlobalCMTID id = folder.getGlobalCMTID();
-				Location location = id.getEvent().getCmtLocation();
+				FullPosition location = id.getEvent().getCmtLocation();
 				double Mw = id.getEvent().getCmt().getMw();
 				Set<SACFileName> sacnames = folder.sacFileSet();
 				int nT = (int) sacnames.stream().filter(sacname -> sacname.getComponent().equals(SACComponent.T)).count();

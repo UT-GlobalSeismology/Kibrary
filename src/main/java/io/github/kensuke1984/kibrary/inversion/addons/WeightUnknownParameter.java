@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.BufferedReader;
@@ -127,7 +127,7 @@ public class WeightUnknownParameter {
 			double sensitivity = Double.parseDouble(ss[4]);
 			PartialType type = PartialType.valueOf(ss[0]);
 			
-			UnknownParameter p = new Physical3DParameter(type, new Location(lat, lon, r), 1.);
+			UnknownParameter p = new Physical3DParameter(type, new FullPosition(lat, lon, r), 1.);
 			sensitivityMap.put(p, sensitivity);
 		}
 		br.close();

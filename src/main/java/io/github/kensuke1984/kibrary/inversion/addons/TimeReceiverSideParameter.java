@@ -1,13 +1,13 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 public class TimeReceiverSideParameter implements UnknownParameter {
-	public Location getPointLocation() {
+	public FullPosition getPointLocation() {
 		return pointLocation;
 	}
 
@@ -21,7 +21,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 
 	public TimeReceiverSideParameter(Observer station, int bouncingOrder) {
 		this.station = station;
-		this.pointLocation = new Location(station.getPosition().getLatitude(), 
+		this.pointLocation = new FullPosition(station.getPosition().getLatitude(), 
 				station.getPosition().getLongitude(), 0.);
 		this.bouncingOrder = bouncingOrder;
 	}
@@ -70,7 +70,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	/**
 	 * location of the perturbation
 	 */
-	private final Location pointLocation;
+	private final FullPosition pointLocation;
 	
 	private final Observer station;
 	
@@ -95,7 +95,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	}
 	
 	@Override
-	public Location getLocation() {
+	public FullPosition getLocation() {
 		return pointLocation;
 	}
 	

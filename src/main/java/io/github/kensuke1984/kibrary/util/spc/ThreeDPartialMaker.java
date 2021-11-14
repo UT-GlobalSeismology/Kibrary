@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -465,7 +465,7 @@ public class ThreeDPartialMaker {
         String observerID = bp.getSourceID(); //TODO check it
 //		String observerName = bp.getObserverID();
         String observerNetwork = bp.getNetworkCode();
-        Location sourceLocation = fp.getSourceLocation();
+        FullPosition sourceLocation = fp.getSourceLocation();
         String sourceID = fp.getSourceID();
         double[] bodyR = bp.getBodyR();
         List<SPCBody> spcBodyList = new ArrayList<>(nbody);
@@ -519,7 +519,7 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            public Location getSourceLocation() {
+            public FullPosition getSourceLocation() {
                 return sourceLocation;
             }
 

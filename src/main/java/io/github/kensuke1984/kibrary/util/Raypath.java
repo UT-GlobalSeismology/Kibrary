@@ -29,9 +29,9 @@ public class Raypath {
      */
     protected final double epicentralDistance;
     /**
-     * {@link Location} of a seismic source
+     * {@link FullPosition} of a seismic source
      */
-    private final Location sourceLocation;
+    private final FullPosition sourceLocation;
     /**
      * {@link HorizontalPosition} of a seismic station
      */
@@ -40,10 +40,10 @@ public class Raypath {
     /**
      * Create a raypath for the source and station.
      *
-     * @param source  {@link Location} of a source
+     * @param source  {@link FullPosition} of a source
      * @param station {@link HorizontalPosition} of a station
      */
-    public Raypath(Location source, HorizontalPosition station) {
+    public Raypath(FullPosition source, HorizontalPosition station) {
         sourceLocation = source;
         stationPosition = station;
         azimuth = source.getAzimuth(station);
@@ -70,9 +70,9 @@ public class Raypath {
     }
 
     /**
-     * @return {@link Location} of the seismic source on the raypath
+     * @return {@link FullPosition} of the seismic source on the raypath
      */
-    public Location getSource() {
+    public FullPosition getSource() {
         return sourceLocation;
     }
 

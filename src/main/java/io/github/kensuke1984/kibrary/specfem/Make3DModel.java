@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.inversion.InversionResult;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 
 import java.io.FileWriter;
@@ -102,7 +102,7 @@ public class Make3DModel {
 		for (int k = 0; k < nr; k++) {
 			for (int i = -180; i <= 179; i+=1) {
 				for (int j = -89; j <= 89; j+=1) {
-					Location location = new Location(j, i, rmax - k * 5);
+					FullPosition location = new FullPosition(j, i, rmax - k * 5);
 					PerturbationPoint perturbation = new PerturbationPoint(location, dvs);
 					perturbations.add(perturbation);
 				}
@@ -141,7 +141,7 @@ public class Make3DModel {
 						latSign *= -1;
 					}
 					jCount++;
-					Location location = new Location(j+.5, i, r);
+					FullPosition location = new FullPosition(j+.5, i, r);
 					PerturbationPoint perturbation = new PerturbationPoint(location
 							, layerSign * dvs);
 //							, layerSign * lonSign * latSign * dvs);
@@ -161,7 +161,7 @@ public class Make3DModel {
 			for (int i = -180; i <= 175; i+=5) {
 				double latSign = 1;
 				for (int j = -88; j <= 87; j+=5) {
-					Location location = new Location(j+.5, i, r);
+					FullPosition location = new FullPosition(j+.5, i, r);
 					PerturbationPoint perturbation = new PerturbationPoint(location
 							, layerSign * dvs);
 //							, layerSign * lonSign * latSign * dvs);
@@ -185,7 +185,7 @@ public class Make3DModel {
 			for (int i = -180; i <= 175; i+=5) {
 				double latSign = 1;
 				for (int j = -88; j <= 87; j+=5) {
-					Location location = new Location(j+.5, i, r);
+					FullPosition location = new FullPosition(j+.5, i, r);
 					PerturbationPoint perturbation = new PerturbationPoint(location
 							, layerSign * lonSign * latSign * dvs);
 					perturbations.add(perturbation);
@@ -253,7 +253,7 @@ public class Make3DModel {
 				for (int j = 0; j <= nlat; j++) {
 					double lat = minLat + 4 * j;
 					
-					Location location = new Location(lat, lon, r);
+					FullPosition location = new FullPosition(lat, lon, r);
 					PerturbationPoint perturbation = new PerturbationPoint(location
 							, layerSign * lonSign * latSign * dvs);
 					perturbations.add(perturbation);
@@ -322,7 +322,7 @@ public class Make3DModel {
 				for (int j = 0; j <= nlat; j++) {
 					double lat = minLat + 4 * j;
 					
-					Location location = new Location(lat, lon, r);
+					FullPosition location = new FullPosition(lat, lon, r);
 					PerturbationPoint perturbation = new PerturbationPoint(location
 							, layerSign * lonSign * latSign * dvs);
 					perturbations.add(perturbation);
@@ -392,7 +392,7 @@ public class Make3DModel {
 				for (int j = 0; j <= nlat; j++) {
 					double lat = minLat + 6 * j;
 					
-					Location location = new Location(lat, lon, r);
+					FullPosition location = new FullPosition(lat, lon, r);
 					PerturbationPoint perturbation = new PerturbationPoint(location
 							, layerSign * lonSign * latSign * dvs);
 					perturbations.add(perturbation);
@@ -426,7 +426,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					perturbations.add(new PerturbationPoint(loc, dvs));
 				}
 			}
@@ -480,7 +480,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					double dv = 0;
 					if (depth == 2371)
 						dv = 0.;
@@ -639,7 +639,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					double dv = 0;
 					if (depth == 2371)
 						dv = 0.;
@@ -738,7 +738,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					double dv = 0;
 					if (depth == 2371)
 						dv = 0.;
@@ -887,7 +887,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					double dv = 0;
 					if (depth == 2371)
 						dv = 0.;
@@ -1012,7 +1012,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					double dv = 0;
 					if (depth == 2371)
 						dv = 0.;
@@ -1096,9 +1096,9 @@ public class Make3DModel {
 	}
 	
 	private static class PerturbationPoint {
-		Location location;
+		FullPosition location;
 		double dvs;
-		public PerturbationPoint(Location location, double dvs) {
+		public PerturbationPoint(FullPosition location, double dvs) {
 			this.location = location;
 			this.dvs = dvs;
 		}
@@ -1110,7 +1110,7 @@ public class Make3DModel {
 					, 6371. - location.getR()
 					, dvs);
 		}
-		public Location getLocation() {
+		public FullPosition getLocation() {
 			return location;
 		}
 	}
@@ -1144,7 +1144,7 @@ public class Make3DModel {
 				double lon = lonmin + ilon * dl;
 				for (int ilat = 0; ilat < nlat; ilat++) {
 					double lat = latmin + ilat * dl;
-					Location loc = new Location(lat, lon, 6371 - depth);
+					FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
 					double dvs = 0;
 					if (lat >= 3 && lat < 8) {
 						if (lon >= -83 && lon < -78)

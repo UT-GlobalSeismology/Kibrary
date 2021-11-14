@@ -83,7 +83,8 @@ public class DataLobby implements Operation {
             pw.println("#headAdjustment -10");
             pw.println("##Adjustment at the foot [min], must be integer and defined");
             pw.println("#footAdjustment 120");
-            pw.println("##Starting date yyyy-mm-dd, must be defined");
+            pw.println("##The following parameters are for seismic events to be searched for.");
+            pw.println("##Start date yyyy-mm-dd, must be defined");
             pw.println("#startDate 1990-01-01");
             pw.println("##End date yyyy-mm-dd, must be defined");
             pw.println("#endDate 2019-12-31");
@@ -95,7 +96,6 @@ public class DataLobby implements Operation {
             pw.println("#lowerDepth");
             pw.println("##Deeper limit of DEPTH (700)");
             pw.println("#upperDepth");
-            pw.println("##The following geometrical filter is for seismic events.");
             pw.println("##Lower limit of latitude [deg] [-90:upperLatitude) (-90)");
             pw.println("#lowerLatitude");
             pw.println("##Upper limit of latitude [deg] (lowerLatitude:90] (90)");
@@ -199,6 +199,7 @@ public class DataLobby implements Operation {
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 edp.downloadMseed(networks, channels, headAdjustment, footAdjustment);
                 edp.openSeed();
+                edp.formatSacFileNames("mseed");
                 edp.downloadMetadata();
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.

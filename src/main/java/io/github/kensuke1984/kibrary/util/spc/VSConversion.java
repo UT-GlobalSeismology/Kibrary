@@ -10,7 +10,7 @@ import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -57,7 +57,7 @@ public final class VSConversion {
         HorizontalPosition observerPosition = spectrum.getObserverPosition();
         String observerID = spectrum.getStationCode();
         String observerNetwork = spectrum.getNetworkCode();
-        Location sourceLocation = spectrum.getSourceLocation();
+        FullPosition sourceLocation = spectrum.getSourceLocation();
         String sourceID = spectrum.getSourceID();
         double[] bodyR = spectrum.getBodyR();
         for (int i = 0; i < spectrum.nbody(); i++) {
@@ -109,7 +109,7 @@ public final class VSConversion {
             }
 
             @Override
-            public Location getSourceLocation() {
+            public FullPosition getSourceLocation() {
                 return sourceLocation;
             }
 

@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -209,14 +209,14 @@ public class ResampleGrid {
 		List<UnknownParameter> resampled = new ArrayList<>();
 		
 		for (UnknownParameter p : parameters) {
-			Location loc = p.getLocation();
+			FullPosition loc = p.getLocation();
 			double lat = loc.getLatitude();
 			double lon = loc.getLongitude();
 			double r = loc.getR();
-			Location loc1 = new Location(lat - dlat/4., lon - dlon/4., r);
-			Location loc2 = new Location(lat - dlat/4., lon + dlon /4., r);
-			Location loc3 = new Location(lat + dlat/4., lon - dlon /4., r);
-			Location loc4 = new Location(lat + dlat/4., lon + dlon /4., r);
+			FullPosition loc1 = new FullPosition(lat - dlat/4., lon - dlon/4., r);
+			FullPosition loc2 = new FullPosition(lat - dlat/4., lon + dlon /4., r);
+			FullPosition loc3 = new FullPosition(lat + dlat/4., lon - dlon /4., r);
+			FullPosition loc4 = new FullPosition(lat + dlat/4., lon + dlon /4., r);
 			
 			resampled.add(new Physical3DParameter(p.getPartialType(), loc1, p.getWeighting() / 4.));
 			resampled.add(new Physical3DParameter(p.getPartialType(), loc2, p.getWeighting() / 4.));

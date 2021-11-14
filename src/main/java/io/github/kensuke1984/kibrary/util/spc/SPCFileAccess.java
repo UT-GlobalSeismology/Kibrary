@@ -6,7 +6,7 @@ package io.github.kensuke1984.kibrary.util.spc;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 /**
  * Data of DSM write
@@ -37,7 +37,7 @@ public interface SPCFileAccess {
     /**
      * @return Location of a seismic source.
      */
-    Location getSourceLocation();
+    FullPosition getSourceLocation();
 
     /**
      * @return ID of a source

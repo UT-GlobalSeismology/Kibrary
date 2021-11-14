@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
@@ -838,7 +838,7 @@ public class AtAMaker implements Operation {
 		for (Phases ps : usedPhases)
 			ps.toSet().stream().forEach(p -> tmpPhases.add(p));
 		Phase[] phaseArray = tmpPhases.toArray(new Phase[0]);
-		Set<Location> perturbationPoints = Stream.of(newUnknownParameters).map(p -> p.getLocation()).collect(Collectors.toSet());
+		Set<FullPosition> perturbationPoints = Stream.of(newUnknownParameters).map(p -> p.getLocation()).collect(Collectors.toSet());
 		writers = new WaveformDataWriter[frequencyRanges.length];
 		for (int i=0; i < frequencyRanges.length; i++) {
 			double[][] periodRanges = new double[][] { {1./frequencyRanges[i].getMaxFreq(), 1./frequencyRanges[i].getMinFreq()} };
@@ -968,7 +968,7 @@ public class AtAMaker implements Operation {
 							System.out.println("FP catalogue");
 							for (HorizontalPosition position : originalHorizontalPositions) {
 								if (fastCompute) {
-									Location fpSourceLoc = event.getEvent().getCmtLocation();
+									FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
 									HorizontalPosition bpSourceLoc = station.getPosition();
 									double distanceFP = fpSourceLoc.getEpicentralDistance(position);
 									double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(position);
@@ -993,7 +993,7 @@ public class AtAMaker implements Operation {
 								else if (mode.equals("BOTH")) {
 									HorizontalPosition position = fpnames.get(ispc).read().getObserverPosition();
 									if (fastCompute) {
-										Location fpSourceLoc = event.getEvent().getCmtLocation();
+										FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
 										HorizontalPosition bpSourceLoc = station.getPosition();
 										double distanceFP = fpSourceLoc.getEpicentralDistance(position);
 										double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(position);
@@ -1213,7 +1213,7 @@ public class AtAMaker implements Operation {
 						PrintWriter pw = new PrintWriter(outpath.toFile());
 						for (int i = 0; i < nOriginalUnknown; i++) {
 							double[] partialCorr = partialCorrs[i][iweight][ifreq][ista][jsta];
-							Location loc = originalUnknownParameters[i].getLocation();
+							FullPosition loc = originalUnknownParameters[i].getLocation();
 							PartialType type = originalUnknownParameters[i].getPartialType();
 							pw.print(type + " " + loc + " ");
 							for (int it = 0; it < partialCorr.length; it++) {
@@ -1591,7 +1591,7 @@ public class AtAMaker implements Operation {
 		pw.close();
 	}
 	
-	private int getParameterIndex(Location loc, PartialType type) {
+	private int getParameterIndex(FullPosition loc, PartialType type) {
 		int i = 0;
 		for (UnknownParameter p : originalUnknownParameters) {
 			if (p.getLocation().equals(loc) && p.getPartialType().equals(type))
@@ -1728,8 +1728,8 @@ public class AtAMaker implements Operation {
 				return;
 			}
 			
-			Location bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
-			Location fpSourceLoc = event.getEvent().getCmtLocation();
+			FullPosition bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
+			FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
 			double distanceBP = bpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
 			double distanceFP = fpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
 //			double distance = bpSourceLoc.getGeographicalDistance(obsPos) * 180. / Math.PI;
@@ -2077,7 +2077,7 @@ public class AtAMaker implements Operation {
 			threedPartialMaker.setSourceTimeFunction(stf);
 			
 			for (int ibody = 0; ibody < bodyR.length; ibody++) {
-				Location parameterLoc = obsPos.toLocation(bodyR[ibody]);
+				FullPosition parameterLoc = obsPos.toLocation(bodyR[ibody]);
 				
 				if (!originalUnkownRadii.contains(bodyR[ibody]))
 					continue;

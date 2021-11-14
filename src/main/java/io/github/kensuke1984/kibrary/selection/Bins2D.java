@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.DistanceAzimuth;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -26,7 +26,7 @@ public class Bins2D {
 		
 		for (TimewindowData timewindow : timewindows) {
 			Observer station = timewindow.getObserver();
-			Location eventLocation = event.getEvent().getCmtLocation();
+			FullPosition eventLocation = event.getEvent().getCmtLocation();
 			double distance = station.getPosition().getEpicentralDistance(eventLocation)
 					* 180. / Math.PI;
 			double azimuth = eventLocation.getAzimuth(station.getPosition()) * 180. / Math.PI;
@@ -61,7 +61,7 @@ public class Bins2D {
 	
 	public DistanceAzimuth getBinPosition(TimewindowData timewindow) {
 		Observer station = timewindow.getObserver();
-		Location eventLocation = event.getEvent().getCmtLocation();
+		FullPosition eventLocation = event.getEvent().getCmtLocation();
 		double distance = station.getPosition().getEpicentralDistance(eventLocation)
 				* 180. / Math.PI;
 		double azimuth = eventLocation.getAzimuth(station.getPosition()) * 180. / Math.PI;

@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveformdata.convert;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
@@ -41,7 +41,7 @@ public class LambdaMuToLambda2MuMu_prime {
 		List<PartialID> partialsMUPrime = new ArrayList<>();
 		List<PartialID> partialsLambda2mu = new ArrayList<>();
 		
-		final Location[] locations = partialsMU.stream().map(p -> p.getPerturbationLocation()).distinct().collect(Collectors.toList()).toArray(new Location[0]);
+		final FullPosition[] locations = partialsMU.stream().map(p -> p.getPerturbationLocation()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
 		final PartialID[] partialsOrder = partialsMU.stream().parallel().filter(p -> p.getPerturbationLocation().equals(locations[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
 		
 		int[] indexOrderedMU = new int[partialsMU.size()];
@@ -143,7 +143,7 @@ public class LambdaMuToLambda2MuMu_prime {
 			periodRanges[i] = periodRangeList.get(i);
 		}
 		
-		Set<Location> locationSet = Stream.of(locations).collect(Collectors.toSet());
+		Set<FullPosition> locationSet = Stream.of(locations).collect(Collectors.toSet());
 		
 		WaveformDataWriter writer = new WaveformDataWriter(outID, out, stationSet, globalCMTIDSet, periodRanges, phases, locationSet);
 		
@@ -170,7 +170,7 @@ public class LambdaMuToLambda2MuMu_prime {
 		return -1;
 	}
 	
-	private static int whichUnknown(PartialID partial, Location[] locations) {
+	private static int whichUnknown(PartialID partial, FullPosition[] locations) {
 		for (int i = 0; i < locations.length; i++) {
 			if (partial.getPerturbationLocation().equals(locations[i])) {
 				return i;

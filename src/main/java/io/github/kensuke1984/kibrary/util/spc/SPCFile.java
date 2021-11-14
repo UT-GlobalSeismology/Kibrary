@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 /**
  * Spectrum file by DSM.
@@ -34,7 +34,7 @@ public class SPCFile implements SPCFileAccess {
     /**
      * 震源の位置
      */
-    private Location sourceLocation;
+    private FullPosition sourceLocation;
     /**
      * 観測点の位置 深さの情報は含まない
      */
@@ -81,7 +81,7 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme add content for BP/FP catalog
      */
     public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition observerPosition
-            , Location sourceLocation, String observerName) throws IOException {
+            , FullPosition sourceLocation, String observerName) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
             SPCFile specFile = new SPCFile(spcFileName);
             specFile.sourceID = spcFileName.getSourceID();
@@ -186,12 +186,12 @@ public class SPCFile implements SPCFileAccess {
             case PARL:
             case PARN:
             case SYNTHETIC:
-                specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 break;
             case PBSHCAT:
             case PBPSVCAT:
                 if (sourceLocation == null)
-                    specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), 0);
+                    specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), 0);
                 else {
                     dis.readDouble();
                     dis.readDouble();
@@ -213,12 +213,12 @@ public class SPCFile implements SPCFileAccess {
 //				break;
             case PF:
             case PFSHO:
-                specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 break;
             case PFSHCAT:
             case PFPSVCAT:
                 if (sourceLocation == null)
-                    specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                    specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 else {
                     dis.readDouble();
                     dis.readDouble();
@@ -227,7 +227,7 @@ public class SPCFile implements SPCFileAccess {
                 }
                 break;
             case PB:
-                specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), 0); // TODO
+                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
                 break;
             default:
                 throw new RuntimeException("Unexpected");
@@ -402,7 +402,7 @@ public class SPCFile implements SPCFileAccess {
     }
 
     @Override
-    public Location getSourceLocation() {
+    public FullPosition getSourceLocation() {
         return sourceLocation;
     }
 

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.external;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -17,7 +17,7 @@ public class KeyHoleMarkupLanguage {
 
 
     public static String[] outPlaceMark(GlobalCMTID id) {
-        Location loc = id.getEvent().getCmtLocation();
+        FullPosition loc = id.getEvent().getCmtLocation();
         String[] lines = new String[17];
         double lat = loc.getLatitude();
         double lon = loc.getLongitude();

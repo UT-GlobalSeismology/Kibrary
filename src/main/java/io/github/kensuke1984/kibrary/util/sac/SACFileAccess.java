@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Trace;
 import org.apache.commons.math3.util.Precision;
@@ -185,7 +185,7 @@ public interface SACFileAccess extends SACHeaderAccess {
     double[] getData();
 
     @Override
-    default SACFileAccess setEventLocation(Location eventLocation) {
+    default SACFileAccess setEventLocation(FullPosition eventLocation) {
         return (SACFileAccess) SACHeaderAccess.super.setEventLocation(eventLocation);
     }
 

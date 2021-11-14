@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -56,7 +56,7 @@ public class TimeshiftParameter implements UnknownParameter {
     }
     
     @Override
-    public Location getLocation() {
+    public FullPosition getLocation() {
     	// TODO Auto-generated method stub
     	return null;
     }

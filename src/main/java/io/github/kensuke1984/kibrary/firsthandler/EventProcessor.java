@@ -13,7 +13,6 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
-import io.github.kensuke1984.kibrary.entrance.StationInformationFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -225,7 +224,7 @@ class EventProcessor implements Runnable {
             for (Path rawSacPath : sacPaths) {
                 // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
 
-                SACFileName sacFile = new SACFileName(rawSacPath.getFileName().toString());
+                SacFileName sacFile = new SacFileName(rawSacPath.getFileName().toString());
 
                 // check channel validity
                 if (!checkChannel(sacFile.getChannel())) {
@@ -245,7 +244,7 @@ class EventProcessor implements Runnable {
                 // copy SAC file from the input directory to the output event directory; file name changed here
                 Path newSacPath = outputPath.resolve(newSacName(rawSacPath, sacFile));
                 Files.copy(rawSacPath, newSacPath);
-
+/*
                 // read Station file; throw away new SAC file if Station file is unfound or unreadable
                 // creating sif probably won't fail since it is merely substitution of values
                 StationInformationFile sif = new StationInformationFile(sacFile.getNetwork(), sacFile.getStation(),
@@ -284,9 +283,9 @@ class EventProcessor implements Runnable {
                     Utilities.moveToDirectory(newSacPath, unSetPath, true);
                     continue;
                 }
-
+*/
                 // set sac headers using sii, and interpolate data with DELTA
-                fixHeaderAndDelta(newSacPath, sif, sacFile.getLocation().isEmpty());
+                fixDelta(newSacPath);
             }
         }
 
@@ -300,7 +299,7 @@ class EventProcessor implements Runnable {
      * @return (String) The new SAC file name
      * @throws IOException
      */
-    private String newSacName(Path sacPath, SACFileName sacFile) throws IOException {
+    private String newSacName(Path sacPath, SacFileName sacFile) throws IOException {
 
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
         int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
@@ -379,9 +378,7 @@ class EventProcessor implements Runnable {
      * @param blankLocation (boolean) true if the location is blank
      * @throws IOException
      */
-    private void fixHeaderAndDelta(Path sacPath, StationInformationFile sif, boolean blankLocation) throws IOException {
-        // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
-        double inclination = Double.parseDouble(sif.getDip()) + 90.0;
+    private void fixDelta(Path sacPath) throws IOException {
 
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
@@ -390,16 +387,6 @@ class EventProcessor implements Runnable {
             sacD.inputCMD("cd " + cwd);
             // read
             sacD.inputCMD("r " + sacPath.getFileName());
-            // overwrite permission
-            sacD.inputCMD("ch lovrok true");
-            // write station-related parameters
-            sacD.inputCMD("ch kstnm " + sif.getStation() + " knetwk " + sif.getNetwork());
-            sacD.inputCMD("ch cmpaz " + sif.getAzimuth() + " cmpinc " + String.valueOf(inclination));
-            sacD.inputCMD("ch stlo "  + sif.getLongitude() + " stla " + sif.getLatitude());
-            // files with empty locations may have khole '-12345', so it is set to ''
-            if (blankLocation) {
-                sacD.inputCMD("ch khole ''");
-            }
 
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
@@ -493,7 +480,7 @@ class EventProcessor implements Runnable {
             for (Path modPath : eventDirStream) {
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modPath);
 
-                SACFileName modFile = new SACFileName(modPath.getFileName().toString());
+                SacFileName modFile = new SacFileName(modPath.getFileName().toString());
                 String afterName = modFile.getDeconvolvedFileName();
                 Path afterPath = outputPath.resolve(afterName);
 
@@ -625,7 +612,7 @@ class EventProcessor implements Runnable {
 
         try (DirectoryStream<Path> xStream = Files.newDirectoryStream(outputPath, "*.X")) {
             for (Path xPath : xStream) {
-                SACFileName xFile = new SACFileName(xPath.getFileName().toString());
+                SacFileName xFile = new SacFileName(xPath.getFileName().toString());
                 Path yPath = outputPath.resolve(xFile.getNameWithComponent("Y"));
                 Path rPath = outputPath.resolve(xFile.getNameWithComponent("R"));
                 Path tPath = outputPath.resolve(xFile.getNameWithComponent("T"));

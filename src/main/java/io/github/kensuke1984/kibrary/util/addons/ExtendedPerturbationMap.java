@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 public class ExtendedPerturbationMap {
 
@@ -21,28 +21,28 @@ public class ExtendedPerturbationMap {
 		Path outpath = Paths.get("extendedInput.inf");
 		
 		double[] perturbationRs = readLayers(perturbationLayerPath);
-		Map<Location, Double> perturbationMap = readInput(inputPath);
+		Map<FullPosition, Double> perturbationMap = readInput(inputPath);
 		
 		double dL = 4.;
 		
-		Map<Location, Double> extended = extendedPerturbationMap(perturbationMap, dL, perturbationRs);
+		Map<FullPosition, Double> extended = extendedPerturbationMap(perturbationMap, dL, perturbationRs);
 		
 		PrintWriter pw = new PrintWriter(outpath.toFile());
-		for (Location loc : extended.keySet())
+		for (FullPosition loc : extended.keySet())
 			pw.println(loc + " " + extended.get(loc));
 		pw.close();
 	}
 
 	
-	public static Map<Location, Double> extendedPerturbationMap(Map<Location, Double> perturbationMap, double dL, double[] perturbationRs) {
-		Map<Location, Double> extended = new HashMap<>();
+	public static Map<FullPosition, Double> extendedPerturbationMap(Map<FullPosition, Double> perturbationMap, double dL, double[] perturbationRs) {
+		Map<FullPosition, Double> extended = new HashMap<>();
 		double minLat = 1e3;
 		double maxLat = -1e3;
 		double minLon = 1e3;
 		double maxLon = -1e3;
 		
-		Set<Location> locations = perturbationMap.keySet();
-		for (Location loci : locations) {
+		Set<FullPosition> locations = perturbationMap.keySet();
+		for (FullPosition loci : locations) {
 			double dvs = perturbationMap.get(loci);
 			extended.put(loci, dvs);
 			
@@ -55,21 +55,21 @@ public class ExtendedPerturbationMap {
 			if (loci.getLongitude() > maxLon)
 				maxLon = loci.getLongitude();
 			
-			Location[] additionalLocs = new Location[] {new Location(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())};
+			FullPosition[] additionalLocs = new FullPosition[] {new FullPosition(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())};
 			
-			Set<Location> thisRLocations = locations.stream()
+			Set<FullPosition> thisRLocations = locations.stream()
 					.filter(loc -> loc.getR() == loci.getR()).collect(Collectors.toSet());
 			boolean[] isAdds = new boolean[additionalLocs.length];
 			for (int j = 0; j < isAdds.length; j++)
 				isAdds[j] = true;
-			for (Location loc : thisRLocations) {
+			for (FullPosition loc : thisRLocations) {
 				for (int k = 0; k < additionalLocs.length; k++) {
 					if (loc.equals(additionalLocs[k]))
 						isAdds[k] = false;
@@ -92,7 +92,7 @@ public class ExtendedPerturbationMap {
 				for (int j=0; j < nLat; j++) {
 					double lon = minLon + (i - 1) * dL;
 					double lat = minLat + (j - 1) * dL;
-					Location loc = new Location(lat, lon, r);
+					FullPosition loc = new FullPosition(lat, lon, r);
 					if (!extended.containsKey(loc))
 						extended.put(loc, Double.NaN);
 				}
@@ -112,14 +112,14 @@ public class ExtendedPerturbationMap {
 		return rs;
 	}
 	
-	public static Map<Location, Double> readInput(Path inputPath) throws IOException {
-		Map<Location, Double> perturbationMap = new HashMap<>();
+	public static Map<FullPosition, Double> readInput(Path inputPath) throws IOException {
+		Map<FullPosition, Double> perturbationMap = new HashMap<>();
 		Files.readAllLines(inputPath).stream().forEach(s -> {
 			double lat = Double.parseDouble(s.trim().split(" ")[0]);
 			double lon = Double.parseDouble(s.trim().split(" ")[1]);
 			double r = Double.parseDouble(s.trim().split(" ")[2]);
 			double dvs = Double.parseDouble(s.trim().split(" ")[3]);
-			perturbationMap.put(new Location(lat, lon, r), dvs);
+			perturbationMap.put(new FullPosition(lat, lon, r), dvs);
 		});
 		
 		return perturbationMap;

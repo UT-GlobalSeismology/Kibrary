@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -300,7 +300,7 @@ public class Weighting {
 	
 	public static double weightingAzimuthTZCA(BasicID obs) {
 		double weight = 1.;
-		Location loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
+		FullPosition loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
 		double azimuth = Math.toDegrees(loc.getAzimuth(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
@@ -330,7 +330,7 @@ public class Weighting {
 	
 	public static double weightingDistanceTZCA(BasicID obs) {
 		double weight = 1.;
-		Location loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
+		FullPosition loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
 		double distance = Math.toDegrees(loc.getEpicentralDistance(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
@@ -372,7 +372,7 @@ public class Weighting {
 	
 	public static double weightEventTZCA(BasicID obs) {
 		double weight = 1.;
-		Location location = obs.getGlobalCMTID().getEvent().getCmtLocation();
+		FullPosition location = obs.getGlobalCMTID().getEvent().getCmtLocation();
 		
 		if (location.getLongitude() > -89)
 			weight = 1.5;

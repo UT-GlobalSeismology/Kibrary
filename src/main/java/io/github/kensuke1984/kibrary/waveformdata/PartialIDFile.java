@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -126,7 +126,7 @@ public final class PartialIDFile {
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
 			Phase[] phases = new Phase[dis.readShort()];
-			Location[] perturbationLocations = new Location[dis.readShort()];
+			FullPosition[] perturbationLocations = new FullPosition[dis.readShort()];
 			// 4 * short 
 //			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
 //					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
@@ -157,7 +157,7 @@ public final class PartialIDFile {
 			}
 			for (int i = 0; i < perturbationLocations.length; i++) {
 //				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
-				perturbationLocations[i] = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+				perturbationLocations[i] = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
 			}
 			int nid = (int) (idParts / oneIDByte);
 			System.err.println("Reading partialID file: " + idPath);
@@ -255,7 +255,7 @@ public final class PartialIDFile {
 	 * @return an ID written in the bytes
 	 */
 	private static PartialID createID(byte[] bytes, Observer[] stations, GlobalCMTID[] ids, double[][] periodRanges,
-			 Phase[] phases, Location[] perturbationLocations) {
+			 Phase[] phases, FullPosition[] perturbationLocations) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		Observer station = stations[bb.getShort()];
 		GlobalCMTID eventID = ids[bb.getShort()];
@@ -275,7 +275,7 @@ public final class PartialIDFile {
 		boolean isConvolved = 0 < bb.get();
 		long startByte = bb.getLong();
 		PartialType partialType = PartialType.getType(bb.get());
-		Location perturbationLocation = perturbationLocations[bb.getShort()];
+		FullPosition perturbationLocation = perturbationLocations[bb.getShort()];
 		return new PartialID(station, eventID, component, samplingHz, startTime, npts, period[0], period[1],
 				usablephases, startByte, isConvolved, perturbationLocation, partialType);
 	}

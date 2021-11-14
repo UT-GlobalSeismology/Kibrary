@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * Class for handling tasks related to the name of SAC files.
  * To be used in {@link EventProcessor}.
  */
-class SACFileName implements Comparable<SACFileName> {
+class SacFileName implements Comparable<SacFileName> {
 
     private String name;
     private LocalDateTime startTime;
@@ -41,7 +41,7 @@ class SACFileName implements Comparable<SACFileName> {
     private String qualityControl;
 
 
-    SACFileName(String sacFileName) {
+    SacFileName(String sacFileName) {
         name = sacFileName;
 
         String[] parts = sacFileName.split("\\.");
@@ -218,7 +218,7 @@ class SACFileName implements Comparable<SACFileName> {
     }
 
     @Override
-    public int compareTo(SACFileName o) {
+    public int compareTo(SacFileName o) {
         int c = network.compareTo(o.network);
         if (c != 0) return c;
         else if ((c = station.compareTo(o.station)) != 0) return c;
@@ -243,7 +243,7 @@ class SACFileName implements Comparable<SACFileName> {
      * This file will be compared with the SAC file given to the constructor of this class.
      * @return (boolean) true if the two SAC files are related.
      */
-    boolean isRelated(SACFileName sacFileName) {
+    boolean isRelated(SacFileName sacFileName) {
         return sacFileName.channel.equals(channel) && sacFileName.network.equals(network) &&
                 sacFileName.station.equals(station) && sacFileName.location.equals(location) &&
                 sacFileName.qualityControl.equals(qualityControl);

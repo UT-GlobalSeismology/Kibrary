@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -71,7 +71,7 @@ final public class NDK implements GlobalCMTAccess {
     /**
      * hypocenter location [28-33] Latitude [35-41] Longitude [43-47] Depth
      */
-    private Location hypocenterLocation;
+    private FullPosition hypocenterLocation;
     /**
      * [49-55] Reported magnitudes, usually mb and MS
      */
@@ -131,7 +131,7 @@ final public class NDK implements GlobalCMTAccess {
      */
     private double timeDifference;
 
-    private Location centroidLocation;
+    private FullPosition centroidLocation;
     /**
      * [60-63] Type of depth. "FREE" indicates that the depth was a result of
      * the inversion; "FIX " that the depth was fixed and not inverted for;
@@ -216,7 +216,7 @@ final public class NDK implements GlobalCMTAccess {
         ndk.hypocenterReferenceCatalog = parts[0];
         ndk.referenceDateTime = parseDateTime(parts[1], parts[2]);
         // System.out.println(referenceCalendar.get(Calendar.DAY_OF_YEAR));
-        ndk.hypocenterLocation = new Location(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
+        ndk.hypocenterLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
                 6371 - Double.parseDouble(parts[5]));
         ndk.mb = Double.parseDouble(parts[6]);
         ndk.ms = Double.parseDouble(parts[7]);
@@ -247,7 +247,7 @@ final public class NDK implements GlobalCMTAccess {
         // line3
         parts = lines[2].split("\\s+");
         ndk.timeDifference = Double.parseDouble(parts[1]);
-        ndk.centroidLocation = new Location(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
+        ndk.centroidLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
                 6371 - Double.parseDouble(parts[7]));
         ndk.depthType = parts[9];
         ndk.timeStamp = parts[10];
@@ -379,7 +379,7 @@ final public class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public Location getCmtLocation() {
+    public FullPosition getCmtLocation() {
         return centroidLocation;
     }
 
@@ -397,7 +397,7 @@ final public class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public Location getPDELocation() {
+    public FullPosition getPDELocation() {
         return hypocenterLocation;
     }
 

@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -70,7 +70,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             String[] structurePart = structure.toPSVlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
-            Location eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtLocation();
             // source
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
@@ -114,7 +114,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // structure
             String[] structurePart = structure.toSHlines();
             Arrays.stream(structurePart).forEach(pw::println);
-            Location eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtLocation();
             // source
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +

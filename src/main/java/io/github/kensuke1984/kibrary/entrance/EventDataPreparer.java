@@ -10,12 +10,16 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * Class for downloading mseed file, opening it, and downloading necessary metadata for a given event.
@@ -42,7 +46,11 @@ public class EventDataPreparer {
      * The event folder to download in
      */
     private final EventFolder eventDir;
-    private final GlobalCMTID id;
+    private Path sacSetPath;
+    private Path stationSetPath;
+    private Path respSetPath;
+
+    private final GlobalCMTAccess eventData;
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -58,7 +66,10 @@ public class EventDataPreparer {
     public EventDataPreparer (EventFolder eventFolder) {
 
         eventDir = eventFolder;
-        id = eventFolder.getGlobalCMTID();
+        sacSetPath = eventDir.toPath().resolve("sac");
+        stationSetPath = eventDir.toPath().resolve("station");
+        respSetPath = eventDir.toPath().resolve("resp");
+        eventData = eventFolder.getGlobalCMTID().getEvent();
 
     }
 
@@ -68,8 +79,8 @@ public class EventDataPreparer {
      * @param full (boolean) Whether the input file is actually a full seed file
      */
     public void setParameters (String mseedFile, boolean full) {
-        startTime = id.getEvent().getCMTTime();
-        endTime = id.getEvent().getCMTTime();
+        startTime = eventData.getCMTTime();
+        endTime = eventData.getCMTTime();
 
         mseedFileName = mseedFile;
         isFullSeed = full;
@@ -84,7 +95,7 @@ public class EventDataPreparer {
      * @throws IOException
      */
     public void downloadMseed(String networks, String channels, int headAdjustment, int footAdjustment) throws IOException {
-        LocalDateTime cmtTime = id.getEvent().getCMTTime();
+        LocalDateTime cmtTime = eventData.getCMTTime();
         startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
 
@@ -93,10 +104,10 @@ public class EventDataPreparer {
         URL url = new URL(urlString);
         long size = 0L;
 
-        mseedFileName = id + "." + date + ".mseed";
+        mseedFileName = eventData + "." + date + ".mseed";
         Path mseedPath = eventDir.toPath().resolve(mseedFileName);
         size = Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING);
-        System.err.println("Downloaded : " + id + " - " + size + " bytes");
+        System.err.println("Downloaded : " + eventData + " - " + size + " bytes");
     }
 
     /**
@@ -110,8 +121,8 @@ public class EventDataPreparer {
 
     /**
      * Runs mseed2sac to extract SAC files: "mseed2sac [mseedfile]".
-     * In case the input is a full seed file, rdseed is run instead: "rdseed -fd [seedfile]" (this does create RESP files).
-     * @return (boolean) true if mseed2sac succeeds
+     * In case the input is a full seed file, rdseed is run instead: "rdseed -fd [seedfile]" (this does not create RESP files).
+     * @return (boolean) true if mseed2sac (or rdseed) succeeds
      * @throws IOException
      */
     public boolean openSeed() throws IOException {
@@ -126,90 +137,88 @@ public class EventDataPreparer {
 
         ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
         return xProcess.waitFor() == 0;
-
-/*
-        ProcessBuilder pb = new ProcessBuilder(command.split("\\s")); // runevalresp in MseedSAC.javaを参考にした
-
-        // set be the working directory of the command
-        pb.directory(eventDir.getAbsoluteFile());
-        //System.out.println("working directory is: " + pb.directory()); //4debug
-
-        try {
-            // the standard error stream will be redirected to the standard output stream
-            pb.redirectErrorStream(true);
-            Process p = pb.start();
-
-            // The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
-            // Even if you want to stop printing the output from mseed2sac, just erase the line with println() and nothing else.
-            String str;
-            BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            // reading the buffer
-            while((str = brstd.readLine()) != null) {
-                System.out.println(str); // Comment out only this single line if you don't want the output.
-            }
-            brstd.close();
-
-            // wait until the command is finished
-            return p.waitFor() == 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-*/
     }
 
     /**
-     * Renames seed-style SAC file names to mseed-style names.
-     * <p>
-     * Note the difference in convention of SAC file names:
-     * <ul>
-     * <li> MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC" </li>
-     * <li> SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC" </li>
-     * </ul>
+     * Renames all SAC files in the event directory from a given style to a formatted one,
+     * and moves them to "sac".
+     * @param inputStyle (String) Style of input SAC file names.
      * @throws IOException
      */
-    public void renameSeedToMseedStyle() throws IOException {
+    public void formatSacFileNames(String inputStyle) throws IOException {
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
-                String[] parts = sacPath.getFileName().toString().split("\\.");
-                if(parts.length != 12) {
-                    System.err.println("invalid sac file name; skipping " + sacPath.getFileName());
-                    continue;
-                }
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
+                int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
+                int i2 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
+                int i3 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
+                int i4 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
+                int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
+                int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
 
-                String newName = parts[6] + "." + parts[7] + "." + parts[8] + "." + parts[9] + "." + parts[10] + "." +
-                        parts[0] + "." + parts[1] + "." + parts[2] + parts[3] + parts[4] + ".SAC";
-                Files.move(sacPath, sacPath.resolveSibling(newName));
+                SacFileName sacFile = new SacFileName(sacPath.getFileName().toString(), inputStyle);
+                Files.move(sacPath, sacSetPath.resolve(sacFile.getFormattedFileName(i1, i2, i3, i4, i5, i6)));
             }
         }
-
     }
+
     /**
      * Downloads Station files and Resp files for the event, given a set of SAC files.
-     * The downloads may be skipped if the SAC file name does not take a valid mseed-style form.
+     * The downloads may be skipped if the SAC file name is not formatted.
      * @throws IOException
      */
     public void downloadMetadata() throws IOException {
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(sacSetPath, "*.SAC")) {
             for (Path sacPath : sacPaths) {
-                String[] sacInfo = sacPath.getFileName().toString().split("\\.");
-                if(sacInfo.length != 9) {
-                    System.err.println("invalid sac file name; skipping " + sacPath.getFileName());
-                    continue;
-                }
 
-                // set information based on SAC File name created by mseed2sac
-                String network = sacInfo[0];
-                String station = sacInfo[1];
-                String location = sacInfo[2];
-                String channel = sacInfo[3];
-
-                StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel);
-                stationInfo.setRequest(startTime, endTime);
-                stationInfo.downloadStationInformation(eventDir.toPath());
+                // set information based on SAC File name
+                SacFileName sacFile = new SacFileName(sacPath.getFileName().toString(), "formatted");
+                String network = sacFile.getNetwork();
+                String station = sacFile.getStation();
+                String location = sacFile.getLocation();
+                String channel = sacFile.getChannel();
 
                 RespDataFile respData = new RespDataFile(network, station, location, channel);
                 respData.setRequest(startTime);
-                respData.downloadRespData(eventDir.toPath());
+                respData.downloadRespData(respSetPath);
+
+                StationInformationFile stationInfo = new StationInformationFile(network, station, location, channel, stationSetPath);
+                stationInfo.setRequest(startTime, endTime);
+                stationInfo.downloadStationInformation();
+                stationInfo.readStationInformation();
+
+                FullPosition sourcePosition = eventData.getCmtLocation();
+
+                // read SAC file
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
+                double[] sacdata = SACUtil.readSACData(sacPath);
+
+                // set observer info
+                // Files with empty locations may have khole "-12345", so it is set to "".
+                if (location.isEmpty()) {
+                    headerMap.put(SACHeaderEnum.KHOLE, "");
+                }
+                headerMap.put(SACHeaderEnum.STLA, stationInfo.getLatitude());
+                headerMap.put(SACHeaderEnum.STLO, stationInfo.getLongitude());
+                // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
+                double inclination = Double.parseDouble(stationInfo.getDip()) + 90.0;
+                headerMap.put(SACHeaderEnum.CMPINC, Double.toString(inclination));
+                headerMap.put(SACHeaderEnum.CMPAZ, stationInfo.getAzimuth());
+
+                // set event info
+                headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
+                headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourcePosition.getLatitude()));
+                headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourcePosition.getLongitude()));
+                headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourcePosition.getR()));
+
+                // set SAC settings
+                // overwrite permission
+                headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
+                // calculate DIST, GCARC, AZ, and BAZ automatically
+                headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
+
+                // overwrite SAC file
+                SACUtil.writeSAC(sacPath, headerMap, sacdata);
             }
         }
     }
@@ -240,7 +249,7 @@ public class EventDataPreparer {
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
             // for each (full) seed file (in case some exist)
-            // this is done before handling mseed files so that renameToMseedStyle() does not get applied to SAC files from mseed
+            // The procedures up to format must be done here so that seed-style and mseed-style SACs do not get mixed up.
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.seed")) {
                 for (Path seedPath : seedPaths) {
                     System.err.println("operating for " + seedPath + " ...");
@@ -248,8 +257,8 @@ public class EventDataPreparer {
                     edp.setParameters(seedPath.getFileName().toString(), true);
                     // expand mseed file
                     edp.openSeed();
-                    // rename seed-style SAC file names to mseed-style
-                    edp.renameSeedToMseedStyle();
+                    // format seed-style SAC file names
+                    edp.formatSacFileNames("seed");
                 }
             }
 
@@ -261,6 +270,8 @@ public class EventDataPreparer {
                     edp.setParameters(mseedPath.getFileName().toString(), false);
                     // expand mseed file
                     edp.openSeed();
+                    // format mseed-style SAC file names
+                    edp.formatSacFileNames("mseed");
                 }
             }
 
