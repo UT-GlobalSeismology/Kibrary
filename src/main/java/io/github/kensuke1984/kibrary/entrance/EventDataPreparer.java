@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
+import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -40,6 +41,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 public class EventDataPreparer {
 
     private static final String DATASELECT_URL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
+    /**
+     * [s] delta for SAC files. SAC files with different delta will be interpolated
+     * or downsampled.
+     */
+    private static final double  DELTA = 0.05;
 
     /**
      * The event folder to download in
@@ -219,7 +225,32 @@ public class EventDataPreparer {
 
                 // overwrite SAC file
                 SACUtil.writeSAC(sacPath, headerMap, sacdata);
+
+                fixDelta(sacPath);
             }
+        }
+    }
+
+    /**
+     * Sets SAC headers related to stations via StationInformation file,
+     * and also interpolates SAC file with DELTA (which is currently 0.05 sec thus 20 Hz).
+     * @param sacPath (Path) Path of SAC files whose name will be fixed.
+     * @param sif (StationInformationFile) Station information file.
+     * @param blankLocation (boolean) true if the location is blank
+     * @throws IOException
+     */
+    private void fixDelta(Path sacPath) throws IOException {
+
+        try (SAC sacD = SAC.createProcess()) {
+            String cwd = sacPath.getParent().toString();
+
+            // set current directory
+            sacD.inputCMD("cd " + cwd);
+            // read
+            sacD.inputCMD("r " + sacPath.getFileName());
+
+            sacD.inputCMD("interpolate delta " + DELTA);
+            sacD.inputCMD("w over");
         }
     }
 
