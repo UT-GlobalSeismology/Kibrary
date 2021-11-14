@@ -195,26 +195,11 @@ class SacModifier {
         headerMap.put(SACHeaderEnum.NZMIN, Integer.toString(eventTime.getMinute()));
         headerMap.put(SACHeaderEnum.NZSEC, Integer.toString(eventTime.getSecond()));
         headerMap.put(SACHeaderEnum.NZMSEC, Integer.toString(eventTime.getNano() / 1000 / 1000));
-        headerMap.put(SACHeaderEnum.KEVNM, event.toString());
-        headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourceLocation.getLatitude()));
-        headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourceLocation.getLongitude()));
-        headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourceLocation.getR()));
-        headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
-        headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
+
         SACUtil.writeSAC(modifiedPath, headerMap, sacdata);
         return true;
     }
 
-    /**
-     * Checks whether the epicentral distance of the SAC file is within a given range.
-     * @param min (double) [deg]
-     * @param max (double) [deg]
-     * @return (boolean) true if min <= epicentral distance <= max
-     */
-    boolean checkEpicentralDistance(double min, double max) {
-        double epicentralDistance = Double.parseDouble(headerMap.get(SACHeaderEnum.GCARC));
-        return min <= epicentralDistance && epicentralDistance <= max;
-    }
 
     /**
      * The SAC start time is set to the event time by deleting data before t=0 (set in {@link #zeroPad()}).

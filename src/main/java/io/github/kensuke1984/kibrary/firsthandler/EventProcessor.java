@@ -23,11 +23,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * Class for creating a dataset, for one event, that can be used in the inversion process.
- * An event directory with SAC files, STATION files, and RESP files must be given as input.
- * Input SAC file names must be in the mseed-style format (ex. "IU.MAJO.00.BH2.M.2014.202.144400.SAC").
+ * An event directory with a "sac" folder containing SAC files and a "resp" folder containing RESP files must be given as input.
+ * Input SAC file names must be formatted (ex. "IU.MAJO.00.BH2.M.2014.202.14.44.00.000.SAC").
  * <p>
  * SAC files will be deconvolved of instrumental response, and rotated to gain radial and transverse components.
- * Information about the station and event is written into the header.
  * Selection for the station coordinate and epicentral distance will be done based on the user's specifications.
  * <p>
  * This class requires that evalresp and sac exists in your PATH.
@@ -50,9 +49,13 @@ class EventProcessor implements Runnable {
     private static final double SAMPLING_HZ = 20;
 
     /**
-     * The input event folder
+     * Path of the input folder containing SAC files
      */
-    private final EventFolder inputDir;
+    private final Path inputSacSetPath;
+    /**
+     * Path of the input folder containing RESP files
+     */
+    private final Path inputRespSetPath;
     /**
      * Path of the output event folder
      */
@@ -97,14 +100,11 @@ class EventProcessor implements Runnable {
     private Path doneModifyPath;
     private Path doneDeconvolvePath;
     private Path doneRotatePath;
-    private Path unSetPath;
     private Path unMergedPath;
     private Path unModifiedPath;
     private Path unRotatedPath;
-    private Path invalidStationPath;
     private Path invalidRespPath;
     private Path invalidTripletPath;
-    private Path unwantedCoordinatePath;
     private Path unwantedDistancePath;
     private Path duplicateComponentPath;
     private Path duplicateInstrumentPath;
@@ -116,14 +116,11 @@ class EventProcessor implements Runnable {
      * @param outPath (Path) The path where the ouput event directory should be made under.
      */
     EventProcessor(EventFolder eventDir, Path outPath) {
-        inputDir = eventDir;
+        inputSacSetPath = eventDir.toPath().resolve("sac");
+        inputRespSetPath = eventDir.toPath().resolve("resp");
         outputPath = outPath.resolve(eventDir.getName());
 
         event = eventDir.getGlobalCMTID().getEvent();
-
-        unSetPath = outputPath.resolve("unSet");
-        invalidStationPath = outputPath.resolve("invalidStation");
-        unwantedCoordinatePath = outputPath.resolve("unwantedCoordinate");
 
         doneMergePath = outputPath.resolve("doneMerge");
         unMergedPath = outputPath.resolve("unMerged");
@@ -172,7 +169,7 @@ class EventProcessor implements Runnable {
 
         try {
             Files.createDirectories(outputPath);
-            // copy, select, and set up SAC files
+            // select, copy, and set up SAC files
             setupSacs();
             // merge segmented SAC files
             mergeSacSegments();
@@ -202,25 +199,21 @@ class EventProcessor implements Runnable {
     /**
      * This method sets up the SAC files to be used by carrying out the following:
      * <ul>
-     * <li> check whether the channel is supported by this class; if not, skip the SAC file </li>
+     * <li> check whether the channel is supported by this class; if not, skip </li>
      * <li> check whether the location is acceptable; if not, display warning </li>
+     * <li> check whether the epicentral distance is within the wanted range; if not, skip </li>
+     * <li> check whether the station coordinate is within the wanted range; if not, skip </li>
+     * <li> if the station coordinate is (0,0), skip </li>
+     * <li> check whether the dip value of the channel is valid; if not, skip </li>
      * <li> copy SAC file from the input directory to the output event directory with a new file name </li>
-     * <li> read Station file; if unreadable, throw away the new SAC file </li>
-     * <li> check whether the station coordinate is within the wanted range; if not, throw away the new SAC file </li>
-     * <li> if the station coordinate is (0,0), throw away the new SAC file </li>
-     * <li> check whether the dip value of the channel is valid; if not, throw away the new SAC file </li>
-     * <li> set SAC headers related to the station </li>
      * <li> interpolate the data with DELTA (which is currently 0.05 sec thus 20 Hz) </li>
      * </ul>
-     * If STATION files are unreadable, the corresponding SAC files are thrown in "invalidStation".
-     * SAC files that cannot be handled is put in "unSet",
-     * and those with unwanted coordinates are put in "unwantedCoordinate".
      * @throws IOException
      * @author Keisuke Otsuru
      */
     private void setupSacs() throws IOException {
 
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(inputDir.toPath(), "*.SAC")) {
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(inputSacSetPath, "*.SAC")) {
             for (Path rawSacPath : sacPaths) {
                 // rawSacPaths are paths of SAC files in the input directory; DO NOT MODIFY THEM
 
@@ -241,76 +234,54 @@ class EventProcessor implements Runnable {
                     // continue; <- this file will not be skipped
                 }
 
-                // copy SAC file from the input directory to the output event directory; file name changed here
-                Path newSacPath = outputPath.resolve(newSacName(rawSacPath, sacFile));
-                Files.copy(rawSacPath, newSacPath);
-/*
-                // read Station file; throw away new SAC file if Station file is unfound or unreadable
-                // creating sif probably won't fail since it is merely substitution of values
-                StationInformationFile sif = new StationInformationFile(sacFile.getNetwork(), sacFile.getStation(),
-                        sacFile.getLocation(), sacFile.getChannel());
-                try {
-                    // this will fail if Station file is unfound, etc.
-                    sif.readStationInformation(inputDir.toPath());
-                } catch (IOException e) {
-                    // when file is unreadable, suppress exception and move on to the next SAC file
-                    System.err.println("!!! unable to read Station file : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    e.printStackTrace();
-                    Utilities.moveToDirectory(newSacPath, invalidStationPath, true);
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(rawSacPath);
+                double distance = Double.parseDouble(headerMap.get(SACHeaderEnum.GCARC));
+                double latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
+                double longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
+                double inclination = Double.parseDouble(headerMap.get(SACHeaderEnum.CMPINC));
+
+                // check epicentral distance
+                if (distance < minDistance || maxDistance < distance) {
+                    //System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
+                    // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // check station coordinate
-                if (!checkStationCoordinate(Double.parseDouble(sif.getLatitude()), Double.parseDouble(sif.getLongitude()))) {
+                if (!checkStationCoordinate(latitude, longitude)) {
                     //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
-                    Utilities.moveToDirectory(newSacPath, unwantedCoordinatePath, true);
+                    // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
-                // rejetct stations at (0,0) <- these are most likely stations that do not have correct coordinates written in.
-                if (Double.parseDouble(sif.getLatitude()) == 0.0 && Double.parseDouble(sif.getLongitude()) == 0.0) {
+                // reject stations at (0,0) <- these are most likely stations that do not have correct coordinates written in.
+                if (latitude == 0.0 && longitude == 0.0) {
                     System.err.println("!! rejecting station at coordinate (0,0) : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
+                    // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
-                // if the dip of a [vertical|horizontal] channel is not perfectly [vertical|horizontal], throw away the new SAC file
-                // caution: up is dip=-90, down is dip=90
+                // check whether the inclination of a [vertical|horizontal] channel is perfectly [vertical|horizontal]
+                // caution: up is inc=0, down is inc=180
                 // TODO: are there stations with downwards Z ?
-                if ((isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != -90)
-                        || (!isVerticalChannel(sacFile.getChannel()) && Double.parseDouble(sif.getDip()) != 0)) {
-                    System.err.println("!! invalid dip (i.e. CMPINC) value : " + event.getGlobalCMTID() + " - " + sacFile.toString());
-                    Utilities.moveToDirectory(newSacPath, unSetPath, true);
+                if ((isVerticalChannel(sacFile.getChannel()) && inclination != 0)
+                        || (!isVerticalChannel(sacFile.getChannel()) && inclination != 90)) {
+                    System.err.println("!! invalid inclination : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
-*/
-                // set sac headers using sii, and interpolate data with DELTA
+
+                // copy SAC file from the input directory to the output event directory; file name changed here
+                Path newSacPath = outputPath.resolve(sacFile.getSetFileName());
+                Files.copy(rawSacPath, newSacPath);
+
+                // interpolate data with DELTA
                 fixDelta(newSacPath);
             }
         }
 
     }
 
-    /**
-     * This method generates a new SAC file name containing the starting time of the internal data.
-     * The starting time will be read from the SAC header, not the SAC file name.
-     * @param sacPath (Path) Path of the SAC file whose name will be fixed.
-     * @param sacFile (SACFileName) The SAC file whose name will be fixed.
-     * @return (String) The new SAC file name
-     * @throws IOException
-     */
-    private String newSacName(Path sacPath, SacFileName sacFile) throws IOException {
-
-        Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
-        int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
-        int i2 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
-        int i3 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
-        int i4 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
-        int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
-        int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
-
-        return sacFile.getSetFileName(i1, i2, i3, i4, i5, i6);
-    }
 
     /**
      * Checks whether the channel is supported by this class.
@@ -416,10 +387,8 @@ class EventProcessor implements Runnable {
      * <li> write headers related to the event </li>
      * <li> SAC start time is set to the event time </li>
      * <li> SAC file is cut so that npts = 2^n </li>
-     * <li> check whether the epicentral distance is in the wanted range; if not, throw the file away </li>
      * </ul>
-     * Successful files are put in "doneModify", while files that failed to be zero-padded go in "unModified"
-     * and those with unwanted epicentral distances end up in "unwantedDistance".
+     * Successful files are put in "doneModify", while files that failed to be zero-padded go in "unModified".
      * @throws IOException
      */
     private void modifySacs() throws IOException {
@@ -452,14 +421,6 @@ class EventProcessor implements Runnable {
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
                 sm.rebuild();
 
-                // filter stations by epicentral distance
-                if (!sm.checkEpicentralDistance(minDistance, maxDistance)) {
-                    //System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacPath.getFileName()); too noisy
-                    Utilities.moveToDirectory(sacPath, unwantedDistancePath, true);
-                    Utilities.moveToDirectory(sm.getModifiedPath(), unwantedDistancePath, true);
-                    continue;
-                }
-
                 // move SAC files after treatment into the merged folder
                 Utilities.moveToDirectory(sacPath, doneModifyPath, true);
             }
@@ -485,7 +446,7 @@ class EventProcessor implements Runnable {
                 Path afterPath = outputPath.resolve(afterName);
 
                 RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
-                Path respPath = inputDir.toPath().resolve(respFile.getRespFile());
+                Path respPath = inputRespSetPath.resolve(respFile.getRespFile());
                 Path spectraPath = outputPath.resolve(respFile.getSpectraFile());
 
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
@@ -560,7 +521,7 @@ class EventProcessor implements Runnable {
      *
      * @param headerMap (Map<SACHeaderEnum, String>) Header of sac file
      * @param inputPath (Path) Path of RESP file to be used, or the directory containing it.
-     * @return (boolean) true if succeed
+     * @return (boolean) true if success
      * @throws IOException
      */
     private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) throws IOException {
@@ -577,30 +538,6 @@ class EventProcessor implements Runnable {
 
         ExternalProcess xProcess = ExternalProcess.launch(command, outputPath);
         return xProcess.waitFor() == 0;
-/*
-        ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
-        pb.directory(outputPath.toFile());
-        try {
-            // the standard error stream will be redirected to the standard output stream
-            pb.redirectErrorStream(true);
-            Process p = pb.start();
-
-            // The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
-            // Even if you want to stop printing the output from mseed2sac, just erase the line with println() and nothing else.
-            String str;
-            BufferedReader brstd = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            // reading the buffer
-            while((str = brstd.readLine()) != null) {
-                System.out.println(str); // Comment out only this single line if you don't want the output.
-            }
-            brstd.close();
-
-            return p.waitFor() == 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-*/
     }
 
     /**
@@ -725,7 +662,7 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if any problem has occured
      */
     private boolean check() {
-        return Files.exists(invalidRespPath) || Files.exists(invalidStationPath) || Files.exists(invalidTripletPath);
+        return Files.exists(invalidRespPath) || Files.exists(invalidTripletPath);
     }
 
     /**
@@ -737,15 +674,12 @@ class EventProcessor implements Runnable {
         removeDirectory(doneModifyPath.toFile());
         removeDirectory(doneDeconvolvePath.toFile());
         removeDirectory(doneRotatePath.toFile());
-        removeDirectory(unSetPath.toFile());
         removeDirectory(unMergedPath.toFile());
         removeDirectory(unModifiedPath.toFile());
         removeDirectory(unRotatedPath.toFile());
-        removeDirectory(invalidStationPath.toFile());
         removeDirectory(invalidRespPath.toFile());
         removeDirectory(invalidTripletPath.toFile());
         removeDirectory(unwantedDistancePath.toFile());
-        removeDirectory(unwantedCoordinatePath.toFile());
         removeDirectory(duplicateComponentPath.toFile());
         removeDirectory(duplicateInstrumentPath.toFile());
     }

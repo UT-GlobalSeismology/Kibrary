@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.entrance;
 
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * BREAKFASTシステムへのデータリクエストの際のデータ部分

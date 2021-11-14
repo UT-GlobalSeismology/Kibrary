@@ -23,12 +23,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * Class for downloading mseed file, opening it, and downloading necessary metadata for a given event.
+ * Information about the station and event is written into the header.
  * Operations on mseed files (or full seed files) that are already downloaded can also be done by using the main method.
  * <p>
- * Note that the convention of resulting SAC file names will be in <strong>mseed format</strong>.
+ * Note that the convention of resulting SAC file names will be formatted as:
  * <ul>
- * <li> MSEED style: "IU.MAJO.00.BH2.M.2014.202.144400.SAC" </li>
- * <li> SEED style: "2010.028.07.54.00.0481.IC.SSE.00.BHE.M.SAC" </li>
+ * <li> MSEED style: "IU.MAJO.00.BH2.M.2014.202.14.44.00.000.SAC" </li>
  * </ul>
  * <p>
  * This class requires that mseed2sac (or rdseed in case of full seed files) exists in your PATH.

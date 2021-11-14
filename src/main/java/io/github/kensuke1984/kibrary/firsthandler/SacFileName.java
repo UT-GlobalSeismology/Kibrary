@@ -47,16 +47,10 @@ class SacFileName implements Comparable<SacFileName> {
         String[] parts = sacFileName.split("\\.");
         switch (parts[parts.length - 1]) {
         case "SAC":
-            network = parts[0];
-            station = parts[1];
-            location = parts[2];
-            channel = parts[3];
-            qualityControl = parts[4];
-            break;
         case "SET":
             startTime = LocalDateTime
                     .of(Integer.parseInt(parts[5]), 1, 1, Integer.parseInt(parts[7]), Integer.parseInt(parts[8]),
-                            Integer.parseInt(parts[9]), Integer.parseInt(parts[10]) * 100 * 1000)
+                            Integer.parseInt(parts[9]), Integer.parseInt(parts[10]) * 1000 * 1000)
                     .withDayOfYear(Integer.parseInt(parts[6]));
             network = parts[0];
             station = parts[1];
@@ -96,9 +90,11 @@ class SacFileName implements Comparable<SacFileName> {
      * Creates a new SAC file name for the resulting file after being set up.
      * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.year.jday.hour.min.sec.msec.SET"
      */
-    String getSetFileName(int year, int jday, int hour, int min, int sec, int msec) {
+    String getSetFileName() {
         return network + "." + station + "." + location + "." + channel + "." + qualityControl + "." +
-                year + "." + jday + "." + hour + "." + min + "." + sec + "." + msec + ".SET";
+                startTime.getYear() + "." + startTime.getDayOfYear() + "." + startTime.getHour() + "." +
+                startTime.getMinute() + "." + startTime.getSecond() + "." + startTime.getNano()/1000/1000 + ".SET";
+//                year + "." + jday + "." + hour + "." + min + "." + sec + "." + msec + ".SET";
     }
 
     /**

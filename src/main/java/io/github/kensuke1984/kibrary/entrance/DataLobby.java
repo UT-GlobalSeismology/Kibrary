@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 /**
  * Operation that downloads mseed files and additional metadata (STATIION and RESP files) for events that satisfy specifications.
  * Data for stations included in networks specified by the user is downloaded.
+ * SAC file names will be formatted, and information of the event and station will be written in SAC file headers.
  * TODO: the use of virtual networks is currently not supported.
  * <p>
  * Output directory "dl*" is created under the work path,

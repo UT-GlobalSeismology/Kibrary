@@ -20,10 +20,10 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * Operation to process downloaded SAC (and STATION and RESP) files so that they can be used in the inversion process.
+ * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
  * <p>
- * Event directories with SAC files, STATION files, and RESP files must be given as input.
- * Input SAC file names must be in the mseed-style format (ex. "IU.MAJO.00.BH2.M.2014.202.144400.SAC").
+ * Event directories with a "sac" folder containing SAC files and a "resp" folder containing RESP files must be given as input.
+ * Input SAC file names must be formatted (ex. "IU.MAJO.00.BH2.M.2014.202.14.44.00.000.SAC").
  * Output directory "processed*" will be created under the work path, and output event directories will be made under it.
  * Event if all data in an event directory are trashed, the empty event directory will be left.
  * In default settings, intermediate files created during this process will be deleted at the end.
