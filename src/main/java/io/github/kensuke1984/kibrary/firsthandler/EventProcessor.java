@@ -243,6 +243,7 @@ class EventProcessor implements Runnable {
                 // check epicentral distance
                 if (distance < minDistance || maxDistance < distance) {
                     System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
+                    System.err.println(distance);
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
