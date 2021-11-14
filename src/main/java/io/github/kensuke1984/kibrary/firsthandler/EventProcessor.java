@@ -242,14 +242,14 @@ class EventProcessor implements Runnable {
 
                 // check epicentral distance
                 if (distance < minDistance || maxDistance < distance) {
-                    //System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
+                    System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // check station coordinate
                 if (!checkStationCoordinate(latitude, longitude)) {
-                    //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); too noisy
+                    System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
