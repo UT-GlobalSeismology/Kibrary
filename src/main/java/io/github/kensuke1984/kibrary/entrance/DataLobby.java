@@ -197,8 +197,9 @@ public class DataLobby implements Operation {
 
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
-                edp.downloadMseed(networks, channels, headAdjustment, footAdjustment);
-                edp.openSeed();
+                String mseedFileName = event + "." + Utilities.getTemporaryString() + ".mseed";
+                edp.downloadMseed(networks, channels, headAdjustment, footAdjustment, mseedFileName);
+                edp.openMseed(mseedFileName);
                 edp.formatSacFileNames("mseed");
                 edp.downloadMetadata();
             } catch (IOException e) {
