@@ -104,7 +104,7 @@ class EventProcessor implements Runnable {
     private Path unModifiedPath;
     private Path unRotatedPath;
     private Path invalidRespPath;
-    private Path invalidTripletPath;
+    //private Path invalidTripletPath;
     private Path unwantedDistancePath;
     private Path duplicateComponentPath;
     private Path duplicateInstrumentPath;
@@ -136,7 +136,7 @@ class EventProcessor implements Runnable {
         doneRotatePath = outputPath.resolve("doneRotate");
         unRotatedPath = outputPath.resolve("unRotated");
 
-        invalidTripletPath = outputPath.resolve("invalidTriplet");
+        //invalidTripletPath = outputPath.resolve("invalidTriplet");
         duplicateInstrumentPath = outputPath.resolve("duplicateInstrument");
 
     }
@@ -242,15 +242,14 @@ class EventProcessor implements Runnable {
 
                 // check epicentral distance
                 if (distance < minDistance || maxDistance < distance) {
-                    System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
-                    System.err.println(distance + ", " + latitude + ", " + longitude + ", " + inclination);
+                    //System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // check station coordinate
                 if (!checkStationCoordinate(latitude, longitude)) {
-                    System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
+                    //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
@@ -611,12 +610,12 @@ class EventProcessor implements Runnable {
             }
         }
 
-        // throw away triplets that consist of neither {RTZ}, {RT}, nor {Z}
+        // triplets should consist of either {RTZ}, {RT}, or {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (!oneTriplet.checkValidity()) {
-                System.err.println("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
-                oneTriplet.dismiss();
-                oneTriplet.move(invalidTripletPath);
+                throw new IllegalStateException("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+                //oneTriplet.dismiss();
+                //oneTriplet.move(invalidTripletPath);
             }
         }
 
@@ -663,7 +662,7 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if any problem has occured
      */
     private boolean check() {
-        return Files.exists(invalidRespPath) || Files.exists(invalidTripletPath);
+        return Files.exists(invalidRespPath);// || Files.exists(invalidTripletPath);
     }
 
     /**
@@ -679,7 +678,7 @@ class EventProcessor implements Runnable {
         removeDirectory(unModifiedPath.toFile());
         removeDirectory(unRotatedPath.toFile());
         removeDirectory(invalidRespPath.toFile());
-        removeDirectory(invalidTripletPath.toFile());
+        //removeDirectory(invalidTripletPath.toFile());
         removeDirectory(unwantedDistancePath.toFile());
         removeDirectory(duplicateComponentPath.toFile());
         removeDirectory(duplicateInstrumentPath.toFile());

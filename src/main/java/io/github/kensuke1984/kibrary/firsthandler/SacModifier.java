@@ -10,7 +10,6 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
@@ -150,9 +149,9 @@ class SacModifier {
         // if the gap is bigger than tapertime then the SAC file is skipped.
         if (taperTime < timeGapInMillis) {
             // this shall not happen, because this should be checked in canInterpolate()
-            System.err.println("!!!!!!!seismogram starts too late : "
+            throw new IllegalStateException("Seismogram starts too late : "
                     + event.getGlobalCMTID() + " - " + modifiedPath.getFileName());
-            return false;
+            //return false;
         } else if (0 <= timeGapInMillis) {
             System.err.println("++ seismograms start after the event time, zero-padding : "
                     + event.getGlobalCMTID() + " - " + modifiedPath.getFileName());
@@ -183,8 +182,6 @@ class SacModifier {
         // 早く始まってるものは、taperいらない？
         // -> The tapering here is done just for the sake of connecting the zero-value segment and the incomplete waveform.
         //    Tapering of the whole waveform is done in SacDeconvolution.
-
-        FullPosition sourceLocation = byPDE ? event.getPDELocation() : event.getCmtLocation();
 
         headerMap.put(SACHeaderEnum.B, Double.toString((bInMillis + timeGapInMillis) / 1000.0));
         headerMap.put(SACHeaderEnum.E, Double.toString((eInMillis + timeGapInMillis) / 1000.0));

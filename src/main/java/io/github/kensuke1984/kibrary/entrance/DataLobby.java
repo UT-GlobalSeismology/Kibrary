@@ -202,7 +202,7 @@ public class DataLobby implements Operation {
                 edp.downloadMseed(networks, channels, headAdjustment, footAdjustment, mseedFileName);
                 edp.openMseed(mseedFileName);
                 // download metadata for all the expanded SAC files in the event directory
-                edp.downloadMetadataMseed();
+                edp.downloadXmlMseed();
                 // format mseed-style SAC file names
                 edp.formatSacFileNames("mseed");
             } catch (IOException e) {

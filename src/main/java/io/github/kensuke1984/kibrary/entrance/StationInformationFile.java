@@ -14,10 +14,10 @@ import java.time.format.DateTimeFormatter;
 
 
 /**
- * Class for Station files, which allows us to download Station Information files.
- * @see <a href=http://service.iris.edu/fdsnws/station/1/> IRIS DMC FDSNWS station Web Service
+ * Class for downloading and reading Station Information files.
+ * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
  */
-public class StationInformationFile {
+class StationInformationFile {
 
     private static final String STATION_URL = "http://service.iris.edu/fdsnws/station/1/query?";
     private String url;
@@ -46,14 +46,14 @@ public class StationInformationFile {
      * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
      *
      * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation
+     *      Service Documentation</a>
      * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
      * @param station  (String) Station code.
      * @param location (String) Location code. Set "" if blank.
      * @param channel  (String) Channel code.
      * @param parentPath (Path) Path of folder to contain this Station Information File.
      */
-    public StationInformationFile(String network, String station, String location, String channel, Path parentPath) {
+    StationInformationFile(String network, String station, String location, String channel, Path parentPath) {
 
         this.network = network;
         this.station = station;
@@ -74,7 +74,7 @@ public class StationInformationFile {
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */
-    public void setRequest(LocalDateTime startTime, LocalDateTime endTime) {
+    void setRequest(LocalDateTime startTime, LocalDateTime endTime) {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
@@ -92,7 +92,7 @@ public class StationInformationFile {
      * Method downloading the Station information from IRIS/WS.
      * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
      */
-    public void downloadStationInformation() {
+    void downloadStationInformation() {
         try {
             URL IRISWSURL = new URL(url);
             long size = 0L;
@@ -110,7 +110,7 @@ public class StationInformationFile {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public void readStationInformation() throws FileNotFoundException, IOException {
+    void readStationInformation() throws FileNotFoundException, IOException {
         File file = new File(stationPath.toString());
         String line1 = ""; //TODO 複数行の対応
         String line2 = "";
@@ -149,102 +149,102 @@ public class StationInformationFile {
         }
     }
 
-    public String getUrl() {
+    String getUrl() {
         return url;
     }
 
 
-    public void setUrl(String url) {
+    void setUrl(String url) {
         this.url = url;
     }
 
 
-    public String getStationFile() {
+    String getStationFile() {
         return stationFile;
     }
 
 
-    public String getNetwork() {
+    String getNetwork() {
         return network;
     }
 
 
-    public String getStation() {
+    String getStation() {
         return station;
     }
 
 
-    public String getLocation() {
+    String getLocation() {
         return location;
     }
 
 
-    public String getChannel() {
+    String getChannel() {
         return channel;
     }
 
 
-    public String getLatitude() {
+    String getLatitude() {
         return latitude;
     }
 
 
-    public String getLongitude() {
+    String getLongitude() {
         return longitude;
     }
 
 
-    public String getElevation() {
+    String getElevation() {
         return elevation;
     }
 
 
-    public String getDepth() {
+    String getDepth() {
         return depth;
     }
 
 
-    public String getAzimuth() {
+    String getAzimuth() {
         return azimuth;
     }
 
 
-    public String getDip() {
+    String getDip() {
         return dip;
     }
 
 
-    public String getSensorDescription() {
+    String getSensorDescription() {
         return sensorDescription;
     }
 
 
-    public String getScale() {
+    String getScale() {
         return scale;
     }
 
 
-    public String getScalefreq() {
+    String getScalefreq() {
         return scalefreq;
     }
 
 
-    public String getScaleunits() {
+    String getScaleunits() {
         return scaleunits;
     }
 
 
-    public String getSamplerate() {
+    String getSamplerate() {
         return samplerate;
     }
 
 
-    public LocalDateTime getStartTime() {
+    LocalDateTime getStartTime() {
         return startTime;
     }
 
 
-    public LocalDateTime getEndTime() {
+    LocalDateTime getEndTime() {
         return endTime;
     }
 

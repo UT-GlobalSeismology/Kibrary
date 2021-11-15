@@ -195,7 +195,7 @@ public class EventDataPreparer {
                 // set SAC settings
                 // overwrite permission
                 headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
-                // calculate DIST, GCARC, AZ, and BAZ automatically
+                // calculate DIST, GCARC, AZ, and BAZ automatically   TODO: calculate manually
                 headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
 
                 // overwrite SAC file
@@ -205,6 +205,86 @@ public class EventDataPreparer {
                 fixDelta(sacPath);
             }
         }
+    }
+    /**
+     * Downloads Station files and Resp files for the event, each in "station" and "resp", given a set of SAC files.
+     * Station and event information will be written into the SAC header. Then, the SAC file will be interpolated.
+     * The downloads may be skipped if the SAC file name is not in mseed-style.
+     * @throws IOException
+     */
+    public void downloadXmlMseed() throws IOException {
+        Files.createDirectories(stationSetPath);
+        Files.createDirectories(respSetPath);
+
+        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
+            for (Path sacPath : sacPaths) {
+
+                // set information based on SAC File name
+                SacFileName sacFile = new SacFileName(sacPath.getFileName().toString(), "mseed");
+                String network = sacFile.getNetwork();
+                String station = sacFile.getStation();
+                String location = sacFile.getLocation();
+                String channel = sacFile.getChannel();
+
+                StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
+                stationInfo.setRequest(startTime, endTime);
+                stationInfo.downloadStationXml();
+                stationInfo.readStationXml();
+
+                // create resp file
+                RespDataFile respData = new RespDataFile(network, station, location, channel);
+                xml2resp(stationInfo, respData);
+
+                // read SAC file
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
+                double[] sacdata = SACUtil.readSACData(sacPath);
+
+                // set observer info
+                // Files with empty locations may have khole "-12345", so it is set to "".
+                if (location.isEmpty()) {
+                    headerMap.put(SACHeaderEnum.KHOLE, "");
+                }
+                headerMap.put(SACHeaderEnum.STLA, stationInfo.getLatitude());
+                headerMap.put(SACHeaderEnum.STLO, stationInfo.getLongitude());
+                // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
+                double inclination = Double.parseDouble(stationInfo.getDip()) + 90.0;
+                headerMap.put(SACHeaderEnum.CMPINC, Double.toString(inclination));
+                headerMap.put(SACHeaderEnum.CMPAZ, stationInfo.getAzimuth());
+
+                // set event info
+                FullPosition sourcePosition = eventData.getCmtLocation();
+                headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
+                headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourcePosition.getLatitude()));
+                headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourcePosition.getLongitude()));
+                headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourcePosition.getR()));
+
+                // set SAC settings
+                // overwrite permission
+                headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
+                // calculate DIST, GCARC, AZ, and BAZ automatically   TODO: calculate manually
+                headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
+
+                // overwrite SAC file
+                SACUtil.writeSAC(sacPath, headerMap, sacdata);
+
+                // interpolate delta, and also stimulate automatic calculations of DIST, GCARC, AZ, and BAZ
+                fixDelta(sacPath);
+            }
+        }
+    }
+    /**
+     * Runs xml2resp to create RESP file from xml file: "xml2resp -o [outputfile] [inputfile]"
+     * @param xmlFile (StationXmlFile) Name of input XML file
+     * @param xmlFile (StationXmlFile) Name of input XML file
+     * @return (boolean) true if rdseed succeeds
+     * @throws IOException
+     */
+    public boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
+        String command = "xml2resp -o " + respSetPath.resolve(respFile.getRespFile()).toAbsolutePath()
+                + " " + stationSetPath.resolve(xmlFile.getXmlFile()).toAbsolutePath();
+        System.err.println(command);
+        ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
+        return xProcess.waitFor() == 0;
     }
 
     /**
@@ -252,7 +332,7 @@ public class EventDataPreparer {
                 // set SAC settings
                 // overwrite permission
                 headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
-                // calculate DIST, GCARC, AZ, and BAZ automatically
+                // calculate DIST, GCARC, AZ, and BAZ automatically   TODO: calculate manually
                 headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
 
                 // overwrite SAC file
@@ -264,7 +344,7 @@ public class EventDataPreparer {
         }
     }
 
-    /**
+    /** TODO: this need not be here if we can calculate manually.
      * Interpolates SAC file with DELTA (which is currently 0.05 sec thus 20 Hz).
      * Automatic calculations of DIST, GCARC, AZ, and BAZ will be stimulated here.
      * @param sacPath (Path) Path of SAC file to be treated.
@@ -336,7 +416,6 @@ public class EventDataPreparer {
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
             // for each mseed file (though there is probably only one)
-            // Mseed must be treated before seed so that SAC files from seed will not be picked up in downloadMetadata().
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     System.err.println("operating for " + mseedPath + " ...");
