@@ -22,11 +22,13 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class StationXmlFile {
 
-    private static final String STATION_URL = "http://service.iris.edu/fdsnws/station/1/query?";
+    private static final String STATION_URL_IRIS = "http://service.iris.edu/fdsnws/station/1/query?";
+    private static final String STATION_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/station/1/query?";
     private String url;
     private String xmlFile;
     private Path xmlPath;
 
+    private String datacenter = "";
     private String network = "";
     private String station = "";
     private String location = "";
@@ -50,8 +52,9 @@ class StationXmlFile {
      * @param channel  (String) Channel code.
      * @param parentPath (Path) Path of folder to contain this Station Information File.
      */
-    StationXmlFile(String network, String station, String location, String channel, Path parentPath) {
+    StationXmlFile(String datacenter, String network, String station, String location, String channel, Path parentPath) {
 
+        this.datacenter = datacenter;
         this.network = network;
         this.station = station;
         this.location = location;
@@ -77,7 +80,17 @@ class StationXmlFile {
 
         // set url here (version 2021-08-23) Requested Level is "response".
         // TODO: virtual networks may not be accepted
-        url = STATION_URL + "net=" + network + "&" + "sta=" + station
+        switch (datacenter) {
+        case "IRIS":
+            url = STATION_URL_IRIS;
+            break;
+        case "ORFEUS":
+            url = STATION_URL_ORFEUS;
+            break;
+        default:
+            throw new IllegalStateException("Invalid datacenter name");
+        }
+        url = url + "net=" + network + "&" + "sta=" + station
                 + "&" + "loc=" + requestLocation + "&" + "cha=" + channel
                 + "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
@@ -108,7 +121,7 @@ class StationXmlFile {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             // 2. SAXParserを取得
             SAXParser parser = factory.newSAXParser();
-            // 3. SAXのイベントハンドラを生成(下で定義しているインスタンス)
+            // 3. SAXのイベントハンドラを生成(下で定義しているクラスのインスタンス)
             StationXmlHandler handler = new StationXmlHandler();
             // 4. SAXParserにXMLを読み込ませて、SAXのイベントハンドラに処理を行わせる
             parser.parse(xmlPath.toFile(), handler);
@@ -201,10 +214,8 @@ class StationXmlFile {
             }
             if (qName.equals("Latitude")) {
                 latitude = text;
-                System.err.println("latitude: " + latitude);
             } else if (qName.equals("Longitude")) {
                 longitude = text;
-                System.err.println("longitude: " + longitude);
             } else if (qName.equals("Elevation")) {
                 elevation = text;
             } else if (qName.equals("Depth")) {

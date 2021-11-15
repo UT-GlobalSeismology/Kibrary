@@ -36,11 +36,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * The software
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/mseed2sac/>mseed2sac</a>
  * can be found at IRIS.
+ * <p>
+ * Additionally, xml2resp (which is included in the evalresp package) may also be needed in your PATH.
+ * <p>
+ * (memo: this class does not hold "datacenter" beacuse it is not needed for seed files that already exist.)
  *
  */
 public class EventDataPreparer {
 
-    private static final String DATASELECT_URL = "http://service.iris.edu/fdsnws/dataselect/1/query?";
+    private static final String DATASELECT_URL_IRIS = "http://service.iris.edu/fdsnws/dataselect/1/query?";
+    private static final String DATASELECT_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/dataselect/1/query?";
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -84,6 +89,7 @@ public class EventDataPreparer {
 
     /**
      * Downloads Mseed file from FDSNWS using specified parameters.
+     * @param datacenter (String) The name of the datacenter to download from.
      * @param networks (String) Network names for request, listed using commas. Wildcards (*, ?) allowed. Virtual networks are unsupported.
      * @param channels (String) Channels to be requested, listed using commas. Wildcards (*, ?) allowed.
      * @param headAdjustment (int) [min] The starting time of request with respect to event time.
@@ -91,14 +97,25 @@ public class EventDataPreparer {
      * @param mseedFileName (String) Name of output mseed file
      * @throws IOException
      */
-    public void downloadMseed(String networks, String channels, int headAdjustment, int footAdjustment, String mseedFileName)
+    public void downloadMseed(String datacenter, String networks, String channels, int headAdjustment, int footAdjustment, String mseedFileName)
             throws IOException {
 
         LocalDateTime cmtTime = eventData.getCMTTime();
         startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
 
-        String urlString = DATASELECT_URL + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
+        String urlString;
+        switch (datacenter) {
+        case "IRIS":
+            urlString = DATASELECT_URL_IRIS;
+            break;
+        case "ORFEUS":
+            urlString = DATASELECT_URL_ORFEUS;
+            break;
+        default:
+            throw new IllegalArgumentException("Invalid datacenter name.");
+        }
+        urlString = urlString + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
         long size = 0L;
@@ -210,9 +227,10 @@ public class EventDataPreparer {
      * Downloads Station files and Resp files for the event, each in "station" and "resp", given a set of SAC files.
      * Station and event information will be written into the SAC header. Then, the SAC file will be interpolated.
      * The downloads may be skipped if the SAC file name is not in mseed-style.
+     * @param datacenter (String) The name of the datacenter to download from.
      * @throws IOException
      */
-    public void downloadXmlMseed() throws IOException {
+    public void downloadXmlMseed(String datacenter) throws IOException {
         Files.createDirectories(stationSetPath);
         Files.createDirectories(respSetPath);
 
@@ -226,7 +244,7 @@ public class EventDataPreparer {
                 String location = sacFile.getLocation();
                 String channel = sacFile.getChannel();
 
-                StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
+                StationXmlFile stationInfo = new StationXmlFile(datacenter, network, station, location, channel, stationSetPath);
                 stationInfo.setRequest(startTime, endTime);
                 stationInfo.downloadStationXml();
                 stationInfo.readStationXml();
@@ -280,8 +298,8 @@ public class EventDataPreparer {
      * @throws IOException
      */
     public boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
-        String command = "xml2resp -o " + respSetPath.resolve(respFile.getRespFile()).toAbsolutePath()
-                + " " + stationSetPath.resolve(xmlFile.getXmlFile()).toAbsolutePath();
+        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespFile())
+                + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFile());
         System.err.println(command);
         ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
         return xProcess.waitFor() == 0;

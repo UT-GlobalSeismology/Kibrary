@@ -40,6 +40,7 @@ public class DataLobby implements Operation {
      */
     private Path workPath;
 
+    private String datacenter;
     private String networks;
     private String channels;
     private int headAdjustment;
@@ -74,6 +75,8 @@ public class DataLobby implements Operation {
             pw.println("manhattan DataLobby");
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
+            pw.println("##Datacenter to send request, chosen from [IRIS, ORFEUS] (IRIS)");
+            pw.println("#datacenter");
             pw.println("##Network names for request, listed using commas, must be defined");
             pw.println("##Wildcards (*, ?) are allowed. Virtual networks are currently not supported.");
             pw.println("##Note that it will make a request for all stations in the networks.");
@@ -116,6 +119,7 @@ public class DataLobby implements Operation {
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
+        if (!property.containsKey("datacenter")) property.setProperty("datacenter", "IRIS");
         if (!property.containsKey("networks"))
             throw new IllegalArgumentException("No information about networks");
         if (!property.containsKey("channels")) property.setProperty("channels", "BH?");
@@ -142,6 +146,7 @@ public class DataLobby implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
+        datacenter = property.getProperty("datacenter");
         networks = property.getProperty("networks"); //.split("\\s+");
         channels = property.getProperty("channels"); //.split("\\s+");
         headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
@@ -199,10 +204,10 @@ public class DataLobby implements Operation {
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 String mseedFileName = event + "." + Utilities.getTemporaryString() + ".mseed";
-                edp.downloadMseed(networks, channels, headAdjustment, footAdjustment, mseedFileName);
+                edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName);
                 edp.openMseed(mseedFileName);
                 // download metadata for all the expanded SAC files in the event directory
-                edp.downloadXmlMseed();
+                edp.downloadXmlMseed(datacenter);
                 // format mseed-style SAC file names
                 edp.formatSacFileNames("mseed");
             } catch (IOException e) {
