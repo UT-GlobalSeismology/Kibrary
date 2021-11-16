@@ -28,7 +28,6 @@ class StationXmlFile {
     private String xmlFile;
     private Path xmlPath;
 
-    private String datacenter = "";
     private String network = "";
     private String station = "";
     private String location = "";
@@ -52,9 +51,8 @@ class StationXmlFile {
      * @param channel  (String) Channel code.
      * @param parentPath (Path) Path of folder to contain this Station Information File.
      */
-    StationXmlFile(String datacenter, String network, String station, String location, String channel, Path parentPath) {
+    StationXmlFile(String network, String station, String location, String channel, Path parentPath) {
 
-        this.datacenter = datacenter;
         this.network = network;
         this.station = station;
         this.location = location;
@@ -74,7 +72,7 @@ class StationXmlFile {
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */
-    void setRequest(LocalDateTime startTime, LocalDateTime endTime) {
+    void setRequest(String datacenter, LocalDateTime startTime, LocalDateTime endTime) {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 

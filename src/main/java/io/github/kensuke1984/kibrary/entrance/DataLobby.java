@@ -182,9 +182,13 @@ public class DataLobby implements Operation {
     public void run() throws IOException {
         requestedEvents = listEvents();
         int n_total = requestedEvents.size();
-        System.err.println(n_total + " events are found.");
         if (n_total == 0) {
+            System.err.println("No events are found.");
             return;
+        } else if (n_total == 1) {
+            System.err.println(n_total + " event is found.");
+        } else {
+            System.err.println(n_total + " events are found.");
         }
 
         Path outPath = workPath.resolve("dl" + Utilities.getTemporaryString());
@@ -204,12 +208,16 @@ public class DataLobby implements Operation {
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 String mseedFileName = event + "." + Utilities.getTemporaryString() + ".mseed";
-                edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName);
-                edp.openMseed(mseedFileName);
+                if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
+                    System.err.println("Data not found for " + event + ", skipping.");
+                    return;
+                }
+
+                //edp.openMseed(mseedFileName);
                 // download metadata for all the expanded SAC files in the event directory
-                edp.downloadXmlMseed(datacenter);
+                //edp.downloadXmlMseed(datacenter);
                 // format mseed-style SAC file names
-                edp.formatSacFileNames("mseed");
+                //edp.formatSacFileNames("mseed");
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
                 System.err.println("Download for " + event + " failed.");
