@@ -161,7 +161,7 @@ public final class SPC_SAC implements Operation {
     public static void main(String[] args) throws IOException {
         SPC_SAC ss = new SPC_SAC(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(SPC_SAC.class.getName() + " is going.");
+        System.err.println(SPC_SAC.class.getName() + " is operating.");
         ss.run();
         System.err.println(SPC_SAC.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));

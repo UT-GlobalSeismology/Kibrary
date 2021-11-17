@@ -195,7 +195,7 @@ public class FujiStaticCorrection implements Operation {
     public static void main(String[] args) throws IOException {
         FujiStaticCorrection fsc = new FujiStaticCorrection(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(FujiStaticCorrection.class.getName() + " is going.");
+        System.err.println(FujiStaticCorrection.class.getName() + " is operating.");
         fsc.run();
         System.err.println(FujiStaticCorrection.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));

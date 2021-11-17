@@ -175,7 +175,7 @@ public class FilterDivider implements Operation {
     public static void main(String[] args) throws IOException {
         FilterDivider divider = new FilterDivider(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(FilterDivider.class.getName() + " is going.");
+        System.err.println(FilterDivider.class.getName() + " is operating.");
         divider.run();
         System.err.println(FilterDivider.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));

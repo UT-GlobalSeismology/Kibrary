@@ -171,7 +171,7 @@ public class DataLobby implements Operation {
     public static void main(String[] args) throws IOException {
         DataLobby dl = new DataLobby(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(DataLobby.class.getName() + " is going");
+        System.err.println(DataLobby.class.getName() + " is operating.");
         dl.run();
         System.err.println(DataLobby.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));

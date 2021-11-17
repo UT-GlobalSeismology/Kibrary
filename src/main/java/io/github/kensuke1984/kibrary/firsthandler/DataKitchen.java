@@ -153,7 +153,7 @@ public class DataKitchen implements Operation {
     public static void main(String[] args) throws IOException {
         DataKitchen dk = new DataKitchen(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(DataKitchen.class.getName() + " is going");
+        System.err.println(DataKitchen.class.getName() + " is operating.");
         dk.run();
         System.err.println(DataKitchen.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));

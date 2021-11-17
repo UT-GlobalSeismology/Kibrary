@@ -10,14 +10,19 @@ import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
-public class DataPolisher {
+public class DataAligner {
     private final boolean forSeed;
     private final String datacenter;
 
     /**
-     * A method to expand existing mseed files and download associated STATION and RESP files.
-     * The input mseed files must be in event directories under the current directory.
-     * Output files will be placed in each input event directory.
+     * A method to construct the dataset from existing mseed or seed files.
+     * In case of mseed files, StationXML files will be downloaded, and RESP files will be created from them.
+     * In case of seed files, RESP files will be created directly.
+     * <p>
+     * The input mseed files must be in "eventDir/mseed/" and seed files in "eventDir/seed/" under the current directory.
+     * All mseed files must be for the same datacenter.
+     * SAC, StationXML, and RESP files will each be placed in "eventDir/sac", "eventDir/station", and "eventDir/resp".
+     *
      * @param args [option]
      * <ul>
      * <li> -s : operate for seed files</li>
@@ -38,21 +43,26 @@ public class DataPolisher {
             System.err.println("Usage:");
             System.err.println(" [-s] : operate for seed files");
             System.err.println(" [-m datacenter] : operate for mseed files, and download from the specified datacenter");
+            System.err.println("   Choose datacenter from IRIS, ORFEUS.");
             System.err.println("You must specify one option or the other.");
             return;
         }
 
-        DataPolisher polisher = new DataPolisher(forSeed, datacenter);
-        polisher.polish();
+        DataAligner aligner = new DataAligner(forSeed, datacenter);
+        long startTime = System.nanoTime();
+        System.err.println(DataAligner.class.getName() + " is starting.");
+        aligner.align();
+        System.err.println(DataAligner.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime));
 
     }
 
-    private DataPolisher(boolean forSeed, String datacenter) {
+    private DataAligner(boolean forSeed, String datacenter) {
         this.forSeed = forSeed;
         this.datacenter = datacenter;
     }
 
-    private void polish() throws IOException {
+    private void align() throws IOException {
 
         // working directory is set to current directory
         Path workPath = Paths.get("");
@@ -69,6 +79,7 @@ public class DataPolisher {
         }
 
         // for each event directory
+        // This part is not parallelized because SocketException occurs when many threads download files simultaneously.
         for (EventFolder eventDir : eventDirs) {
             System.err.println(eventDir);
 
@@ -96,7 +107,6 @@ public class DataPolisher {
         while (!es.isTerminated()) {
             ThreadAid.sleep(100);
         }
-        System.err.println("Finished!");
     }
 
     private Runnable process(EventFolder eventDir) {

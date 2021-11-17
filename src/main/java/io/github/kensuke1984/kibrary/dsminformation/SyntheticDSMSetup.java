@@ -180,7 +180,7 @@ public class SyntheticDSMSetup implements Operation {
     public static void main(String[] args) throws IOException {
         SyntheticDSMSetup sdif = new SyntheticDSMSetup(Property.parse(args));
         long startTime = System.nanoTime();
-        System.err.println(SyntheticDSMSetup.class.getName() + " is going.");
+        System.err.println(SyntheticDSMSetup.class.getName() + " is operating.");
         sdif.run();
         System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime));

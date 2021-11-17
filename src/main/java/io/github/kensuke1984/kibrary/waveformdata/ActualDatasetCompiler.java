@@ -344,7 +344,7 @@ public class ActualDatasetCompiler implements Operation {
    public static void main(String[] args) throws IOException {
        ActualDatasetCompiler adc = new ActualDatasetCompiler(Property.parse(args));
        long startTime = System.nanoTime();
-       System.err.println(ActualDatasetCompiler.class.getName() + " is going.");
+       System.err.println(ActualDatasetCompiler.class.getName() + " is operating.");
        adc.run();
        System.err.println(ActualDatasetCompiler.class.getName() + " finished in "
                + Utilities.toTimeString(System.nanoTime() - startTime));

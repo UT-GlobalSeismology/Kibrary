@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 /**
  * Class for downloading mseed file, opening it, and downloading necessary metadata for a given event.
  * Information about the station and event is written into the header.
- * Operations on mseed files (or full seed files) that are already downloaded can also be done by using the main method.
  * <p>
  * Note that the convention of resulting SAC file names will be formatted as:
  * <ul>
@@ -221,7 +220,7 @@ public class EventDataPreparer {
     /**
      * Runs xml2resp to create RESP file from xml file: "xml2resp -o [outputfile] [inputfile]"
      * @param xmlFile (StationXmlFile) Name of input XML file
-     * @param xmlFile (StationXmlFile) Name of input XML file
+     * @param respFile (RespDataFile) Name of output RESP file
      * @return (boolean) true if rdseed succeeds
      * @throws IOException
      */
@@ -301,8 +300,7 @@ public class EventDataPreparer {
     }
 */
     /**
-     * Downloads Station files and Resp files for the event, each in "station" and "resp", given a set of SAC files.
-     * Station and event information will be written into the SAC header. Then, the SAC file will be interpolated.
+     * Downloads StationXML files for the event into "eventDir/station/", given a set of SAC files.
      * The downloads may be skipped if the SAC file name is not in mseed-style.
      * @param datacenter (String) The name of the datacenter to download from.
      * @throws IOException
@@ -332,6 +330,14 @@ public class EventDataPreparer {
         }
     }
 
+    /**
+     * Constructs SAC and RESP files for an event, given a set of SAC files derived from an mseed.
+     * RESP files will be created by xml2resp.
+     * Information of the station and event will be written into the SAC header.
+     * Then, the SAC file will be interpolated.
+     * The procedures may be skipped if the SAC file name is not in mseed-style.
+     * @throws IOException
+     */
     public void configureFilesMseed() throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
