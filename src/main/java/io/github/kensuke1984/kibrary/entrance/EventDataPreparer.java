@@ -144,7 +144,7 @@ public class EventDataPreparer {
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(mseedSetPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     flag = true;
-                    System.err.println("Opening " + mseedPath + " ...");
+                    System.err.println("++ Opening " + mseedPath + " ...");
                     // expand mseed file
                     if (!mseed2sac(mseedPath.getFileName().toString())) {
                         System.err.println("!! mseed2sac for "+ mseedPath + " failed.");
@@ -400,7 +400,8 @@ public class EventDataPreparer {
                 fixDelta(sacPath);
 
                 // move completed SAC file to "sac"
-                Files.move(sacPath, sacSetPath.resolve(sacFile.getFormattedFileName(i1, i2, i3, i4, i5, i6)));
+                Files.move(sacPath, sacSetPath.resolve(sacFile.getFormattedFileName(i1, i2, i3, i4, i5, i6)),
+                        StandardCopyOption.REPLACE_EXISTING);
             }
         }
     }
@@ -432,7 +433,8 @@ public class EventDataPreparer {
 
                 // move resp file
                 RespDataFile respData = new RespDataFile(network, station, location, channel);
-                Files.move(seedSetPath.resolve(respData.getRespFile()), respSetPath.resolve(respData.getRespFile()));
+                Files.move(seedSetPath.resolve(respData.getRespFile()), respSetPath.resolve(respData.getRespFile()),
+                        StandardCopyOption.REPLACE_EXISTING);
 
                 // read SAC file
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
@@ -471,7 +473,8 @@ public class EventDataPreparer {
                 fixDelta(sacPath);
 
                 // move completed SAC file to "sac"
-                Files.move(sacPath, sacSetPath.resolve(sacFile.getFormattedFileName(i1, i2, i3, i4, i5, i6)));
+                Files.move(sacPath, sacSetPath.resolve(sacFile.getFormattedFileName(i1, i2, i3, i4, i5, i6)),
+                        StandardCopyOption.REPLACE_EXISTING);
             }
         }
     }

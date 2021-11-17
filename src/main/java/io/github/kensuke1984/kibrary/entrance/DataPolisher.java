@@ -70,6 +70,8 @@ public class DataPolisher {
 
         // for each event directory
         for (EventFolder eventDir : eventDirs) {
+            System.err.println(eventDir);
+
             // create new instance for the event
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
