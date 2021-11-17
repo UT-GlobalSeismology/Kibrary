@@ -106,7 +106,7 @@ class StationXmlFile {
             long size = 0L;
 
             size = Files.copy(IRISWSURL.openStream(), xmlPath , StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Downloaded : " + xmlFile + " - " + size + " bytes");
+            //System.out.println("Downloaded : " + xmlFile + " - " + size + " bytes");
 
         } catch (IOException e) {
             System.out.println(e);

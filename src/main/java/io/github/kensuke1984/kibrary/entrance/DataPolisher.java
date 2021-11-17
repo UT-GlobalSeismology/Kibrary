@@ -11,21 +11,45 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 public class DataPolisher {
+    private final boolean forSeed;
+    private final String datacenter;
 
     /**
      * A method to expand existing mseed files and download associated STATION and RESP files.
      * The input mseed files must be in event directories under the current directory.
      * Output files will be placed in each input event directory.
-     * @param args
+     * @param args [option]
+     * <ul>
+     * <li> -s : operate for seed files</li>
+     * <li> -m datacenter : operate for mseed files, and download from the specified datacenter</li>
+     * </ul>
+     * You must specify one or the other.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        DataPolisher polisher = new DataPolisher();
+        boolean forSeed = false;
+        String datacenter = "";
+
+        if (args.length == 1 && args[0].equals("-s")) {
+            forSeed = true;;
+        } else if (args.length == 2 && args[0].equals("-m")) {
+            datacenter = args[1];
+        } else {
+            System.err.println("Usage:");
+            System.err.println(" [-s] : operate for seed files");
+            System.err.println(" [-m datacenter] : operate for mseed files, and download from the specified datacenter");
+            System.err.println("You must specify one option or the other.");
+            return;
+        }
+
+        DataPolisher polisher = new DataPolisher(forSeed, datacenter);
         polisher.polish();
 
     }
 
-    private DataPolisher() {
+    private DataPolisher(boolean forSeed, String datacenter) {
+        this.forSeed = forSeed;
+        this.datacenter = datacenter;
     }
 
     private void polish() throws IOException {
@@ -49,10 +73,18 @@ public class DataPolisher {
             // create new instance for the event
             EventDataPreparer edp = new EventDataPreparer(eventDir);
 
-            edp.openMseeds();
-            edp.downloadXmlMseed("IRIS");
-
-            edp.openSeeds();
+            if (forSeed) {
+                if (!edp.openSeeds()) {
+                    // if open fails, skip the event
+                    continue;
+                }
+            } else {
+                if (!edp.openMseeds()) {
+                    // if open fails, skip the event
+                    continue;
+                }
+                edp.downloadXmlMseed(datacenter);
+            }
         }
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
@@ -69,8 +101,11 @@ public class DataPolisher {
         return () -> {
             try {
                 EventDataPreparer edp = new EventDataPreparer(eventDir);
-                edp.configureFilesMseed();
-                edp.organizeFilesSeed();
+                if (forSeed) {
+                    edp.organizeFilesSeed();
+                } else {
+                    edp.configureFilesMseed();
+                }
             } catch (Exception e) {
                 System.err.println("Error on " + eventDir);
                 e.printStackTrace();

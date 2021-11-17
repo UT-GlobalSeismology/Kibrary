@@ -132,15 +132,33 @@ public class EventDataPreparer {
         return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
-    public void openMseeds() throws IOException {
+    /**
+     * Opens all mseed files under "mseed" using mseed2sac.
+     * @return (boolean) true if success; false if mseed2sac failed or if no mseed files are found.
+     * @throws IOException
+     */
+    public boolean openMseeds() throws IOException {
+        boolean flag = false;
+
         if (Files.exists(mseedSetPath)) {
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(mseedSetPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
+                    flag = true;
                     System.err.println("Opening " + mseedPath + " ...");
                     // expand mseed file
-                    mseed2sac(mseedPath.getFileName().toString());
+                    if (!mseed2sac(mseedPath.getFileName().toString())) {
+                        System.err.println("!! mseed2sac for "+ mseedPath + " failed.");
+                        return false;
+                    }
                 }
             }
+        }
+
+        if (flag) {
+            return true;
+        } else {
+            System.err.println("!! No mseed files found.");
+            return false;
         }
     }
 
@@ -157,15 +175,33 @@ public class EventDataPreparer {
         return xProcess.waitFor() == 0;
     }
 
-    public void openSeeds() throws IOException {
+    /**
+     * Opens all seed files under "seed" using rdseed.
+     * @return (boolean) true if success; false if rdseed failed or if no seed files are found.
+     * @throws IOException
+     */
+    public boolean openSeeds() throws IOException {
+        boolean flag = false;
+
         if (Files.exists(seedSetPath)) {
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(seedSetPath, "*.seed")) {
                 for (Path seedPath : seedPaths) {
-                    System.err.println("Opening " + seedPath + " ...");
-                    // expand mseed file
-                    rdseed(seedPath.getFileName().toString());
+                    flag = true;
+                    System.err.println("++ Opening " + seedPath + " ...");
+                    // expand seed file
+                    if (!rdseed(seedPath.getFileName().toString())) {
+                        System.err.println("!! rdseed for "+ seedPath + " failed.");
+                        return false;
+                    }
                 }
             }
+        }
+
+        if (flag) {
+            return true;
+        } else {
+            System.err.println("!! No seed files found.");
+            return false;
         }
     }
 
@@ -277,6 +313,7 @@ public class EventDataPreparer {
         }
 
         Files.createDirectories(stationSetPath);
+        System.err.println("++ Downloading XML files ...");
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(mseedSetPath, "*.SAC")) {
             for (Path sacPath : sacPaths) {
@@ -301,6 +338,7 @@ public class EventDataPreparer {
         }
 
         Files.createDirectories(respSetPath);
+        Files.createDirectories(sacSetPath);
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(mseedSetPath, "*.SAC")) {
             for (Path sacPath : sacPaths) {
@@ -380,6 +418,7 @@ public class EventDataPreparer {
         }
 
         Files.createDirectories(respSetPath);
+        Files.createDirectories(sacSetPath);
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(seedSetPath, "*.SAC")) {
             for (Path sacPath : sacPaths) {
@@ -457,31 +496,5 @@ public class EventDataPreparer {
             sacD.inputCMD("w over");
         }
     }
-
-    /**
-     * Renames all SAC files in the event directory from a given style to a formatted one,
-     * and moves them into "sac".
-     * @param inputStyle (String) Style of input SAC file names.
-     * @throws IOException
-     */
-    public void formatSacFileNames(String inputStyle) throws IOException {
-        Files.createDirectories(sacSetPath);
-
-        try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
-            for (Path sacPath : sacPaths) {
-                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
-                int i1 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
-                int i2 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
-                int i3 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
-                int i4 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
-                int i5 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
-                int i6 = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
-
-                SacFileName sacFile = new SacFileName(sacPath.getFileName().toString(), inputStyle);
-                Files.move(sacPath, sacSetPath.resolve(sacFile.getFormattedFileName(i1, i2, i3, i4, i5, i6)));
-            }
-        }
-    }
-
 
 }
