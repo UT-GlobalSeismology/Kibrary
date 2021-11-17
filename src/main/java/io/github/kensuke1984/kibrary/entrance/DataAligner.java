@@ -10,19 +10,22 @@ import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
+/**
+ * Constructs the dataset from downloaded mseed or seed files.
+ * In case of mseed files, StationXML files will be downloaded, and RESP files will be created from them.
+ * In case of seed files, RESP files will be created directly.
+ * SAC file names will be formatted, and information of the event and station will be written in SAC file headers.
+ * <p>
+ * The input mseed files must be in "eventDir/mseed/" and seed files in "eventDir/seed/" under the current directory.
+ * All mseed files must be for the same datacenter.
+ * Output SAC, StationXML, and RESP files will each be placed in "eventDir/sac", "eventDir/station", and "eventDir/resp".
+ *
+ */
 public class DataAligner {
     private final boolean forSeed;
     private final String datacenter;
 
     /**
-     * A method to construct the dataset from existing mseed or seed files.
-     * In case of mseed files, StationXML files will be downloaded, and RESP files will be created from them.
-     * In case of seed files, RESP files will be created directly.
-     * <p>
-     * The input mseed files must be in "eventDir/mseed/" and seed files in "eventDir/seed/" under the current directory.
-     * All mseed files must be for the same datacenter.
-     * SAC, StationXML, and RESP files will each be placed in "eventDir/sac", "eventDir/station", and "eventDir/resp".
-     *
      * @param args [option]
      * <ul>
      * <li> -s : operate for seed files</li>

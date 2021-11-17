@@ -98,9 +98,10 @@ class StationXmlFile {
 
     /**
      * Method downloading the Station information from IRIS/WS.
-     * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
+     * The downloaded file name will take the form "station.II.PFO.00.BHE.xml" or "station.IU.INU..BHE.xml".
+     * @return (boolean) true if download succeeded
      */
-    void downloadStationXml() {
+    boolean downloadStationXml() {
         try {
             URL IRISWSURL = new URL(url);
             long size = 0L;
@@ -109,11 +110,18 @@ class StationXmlFile {
             //System.out.println("Downloaded : " + xmlFile + " - " + size + " bytes");
 
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println("!! Failed to download stationXML file.");
+            e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
-    void readStationXml() {
+    /**
+     * Method to read a stationXML file.
+     * @return (boolean) true if read succeeded
+     */
+    boolean readStationXml() {
         try {
             // 1. SAXParserFactoryを取得
             SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -125,8 +133,11 @@ class StationXmlFile {
             parser.parse(xmlPath.toFile(), handler);
 
         } catch (SAXException | ParserConfigurationException | IOException e) {
-            System.out.println(e);
+            System.err.println("!! Failed to read stationXML file.");
+            e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
 

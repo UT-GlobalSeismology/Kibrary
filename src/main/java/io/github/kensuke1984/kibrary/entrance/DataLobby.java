@@ -20,13 +20,12 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
- * Operation that downloads mseed files and additional metadata (STATIION and RESP files) for events that satisfy specifications.
+ * Operation that downloads mseed files for events that satisfy specifications.
  * Data for stations included in networks specified by the user is downloaded.
- * SAC file names will be formatted, and information of the event and station will be written in SAC file headers.
  * TODO: the use of virtual networks is currently not supported.
  * <p>
  * Output directory "dl*" is created under the work path,
- * and event folders created under this directory will include the downloaded files.
+ * and eventDir/mseed created under this directory will include the downloaded files.
  * (memo: All download procedures were gathered here because downloading using multiple threads in FirstHandler caused errors.)
  * <p>
  * See also {@link EventDataPreparer}.
@@ -209,18 +208,13 @@ public class DataLobby implements Operation {
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 String mseedFileName = event + "." + Utilities.getTemporaryString() + ".mseed";
                 if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
-                    System.err.println("Data not found for " + event + ", skipping.");
+                    System.err.println("!! Data not found for " + event + ", skipping.");
                     return;
                 }
 
-                //edp.openMseed(mseedFileName);
-                // download metadata for all the expanded SAC files in the event directory
-                //edp.downloadXmlMseed(datacenter);
-                // format mseed-style SAC file names
-                //edp.formatSacFileNames("mseed");
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
-                System.err.println("Download for " + event + " failed.");
+                System.err.println("!! Download for " + event + " failed.");
                 e.printStackTrace();
             }
         });

@@ -358,11 +358,19 @@ public class EventDataPreparer {
 
                 // read stationXML file
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                stationInfo.readStationXml();
+                if (!stationInfo.readStationXml()) {
+                    // if the read fails, skip the SAC file
+                    // exception log is written inside the method
+                    continue;
+                }
 
                 // create resp file
                 RespDataFile respData = new RespDataFile(network, station, location, channel);
-                xml2resp(stationInfo, respData);
+                if (!xml2resp(stationInfo, respData)) {
+                    // if RESP file fails to be created, skip the SAC file
+                    System.err.println("!! xml2resp for "+ sacPath + " failed.");
+                    continue;
+                }
 
                 // read SAC file
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);

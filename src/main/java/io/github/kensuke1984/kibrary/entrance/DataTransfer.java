@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  * Downloads mseed files prepared after sending breqfast mails. Download is done through FTP access to IRIS server.
  * Output directory "seedsTransferredAt*" is created under the current path,
- * and event folders created under this directory will include the downloaded mseed files.
+ * and eventDir/mseed created under it will include the downloaded mseed files.
  * TODO: OHP (Ocean Hemisphere network Project of ERI) will be prepared.
  *
  */
@@ -33,6 +33,31 @@ final class DataTransfer {
     private DataTransfer() {
     }
 
+    /**
+     * @param args [option] [tag]<br>
+     *             If option -c, then check the number of files in the server,
+     *             else FTP [date string] to get seed files(*.seed) in
+     *             (/pub/userdata/`USERNAME`/) with the `tag`. If "*" (you might
+     *             need "\*"), then get all seed files in the folder. <br>
+     */
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage:");
+            System.err.println(" [-c] : check the number of files prepared at server.");
+            System.err.println(" [tag] : download files that contain the specified string");
+            System.err.println(" [*] (may need be \\*) : download all files at server");
+            System.err.println("You must specify one of these options.");
+            return;
+        }
+
+        try {
+            Path outPath = Paths.get("seedsTransferredAt" + Utilities.getTemporaryString());
+            get(args[0], outPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private static void get(String date, Path outPath) {
 
@@ -72,12 +97,12 @@ final class DataTransfer {
                 // get event ID and create event directory
                 String[] parts = ffile.getName().split("\\.");
                 String eventID = parts[0];
-                Path eventPath = outPath.resolve(eventID);
-                Files.createDirectories(eventPath);
+                Path eventMseedPath = outPath.resolve(eventID).resolve("mseed");
+                Files.createDirectories(eventMseedPath);
 
                 // download file in event directory
                 try (BufferedOutputStream ostream = new BufferedOutputStream(
-                        Files.newOutputStream(eventPath.resolve(ffile.getName()), StandardOpenOption.CREATE_NEW))) {
+                        Files.newOutputStream(eventMseedPath.resolve(ffile.getName()), StandardOpenOption.CREATE_NEW))) {
                     System.err.println("Receiving " + ffile.getName());
                     ftpclient.retrieveFile(IRIS_USER_PATH + "/" + ffile.getName(), ostream);
                 } catch (Exception e) {
@@ -95,23 +120,5 @@ final class DataTransfer {
         }
     }
 
-    /**
-     * @param args [option] [tag]<br>
-     *             If option -c, then check the number of files in the server,
-     *             else FTP [date string] to get seed files(*.seed) in
-     *             (/pub/userdata/`USERNAME`/) with the `tag`. If "*" (you might
-     *             need "\*"), then get all seed files in the folder. <br>
-     */
-    public static void main(String[] args) {
-        if (args.length != 1) throw new IllegalArgumentException(
-                "Usage:[-c](to check the number only) [tag] or [*] (may need be \\*) if all seeds you need");
-        try {
-            Path outPath = Paths.get("seedsTransferredAt" + Utilities.getTemporaryString());
-            get(args[0], outPath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
 }
