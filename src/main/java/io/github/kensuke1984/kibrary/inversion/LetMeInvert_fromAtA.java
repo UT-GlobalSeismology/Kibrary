@@ -57,15 +57,15 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtAEntry;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtAFile;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtdEntry;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtdFile;
-import io.github.kensuke1984.kibrary.waveformdata.addons.ResidualVarianceFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveform.addons.AtAEntry;
+import io.github.kensuke1984.kibrary.waveform.addons.AtAFile;
+import io.github.kensuke1984.kibrary.waveform.addons.AtdEntry;
+import io.github.kensuke1984.kibrary.waveform.addons.AtdFile;
+import io.github.kensuke1984.kibrary.waveform.addons.ResidualVarianceFile;
 
 /**
  * 

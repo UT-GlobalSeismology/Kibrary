@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.apache.commons.math3.complex.Complex;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 

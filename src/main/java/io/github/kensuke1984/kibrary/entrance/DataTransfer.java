@@ -46,16 +46,18 @@ final class DataTransfer {
             System.err.println(" [-c] : check the number of files prepared at server.");
             System.err.println(" [tag] : download files that contain the specified string");
             System.err.println(" [*] (may need be \\*) : download all files at server");
-            System.err.println("You must specify one of these options.");
+            System.err.println(" You must specify one of these options.");
             return;
         }
 
-        try {
-            Path outPath = Paths.get("seedsTransferredAt" + Utilities.getTemporaryString());
-            get(args[0], outPath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        long startTime = System.nanoTime();
+        System.err.println(DataTransfer.class.getName() + " is starting.");
+
+        Path outPath = Paths.get("seedsTransferredAt" + Utilities.getTemporaryString());
+        get(args[0], outPath);
+
+        System.err.println(DataTransfer.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime));
 
     }
 

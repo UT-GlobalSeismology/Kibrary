@@ -6,29 +6,29 @@ import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
-import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMSetup;
+import io.github.kensuke1984.kibrary.dsmsetup.InformationFileMaker;
+import io.github.kensuke1984.kibrary.dsmsetup.SshDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
+import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
-import io.github.kensuke1984.kibrary.selection.FilterDivider;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
-import io.github.kensuke1984.kibrary.waveformdata.ActualDatasetCompiler;
-import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker_v2;
-import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker_v2;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtAMaker;
-import io.github.kensuke1984.kibrary.waveformdata.addons.ObservedSyntheticDatasetMaker_SpcTest;
-import io.github.kensuke1984.kibrary.waveformdata.addons.Partial1DEnvelopeMaker;
-import io.github.kensuke1984.kibrary.waveformdata.addons.Partial1DSpcMaker;
+import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
+import io.github.kensuke1984.kibrary.waveform.Partial1DDatasetMaker_v2;
+import io.github.kensuke1984.kibrary.waveform.PartialDatasetMaker_v2;
+import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
+import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
+import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
+import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
 
 /**
  * The list of names of manhattan (operation)
@@ -45,7 +45,7 @@ public enum Manhattan {
 	FujiStaticCorrection(6, FujiStaticCorrection.class), //
 	InformationFileMaker(7, InformationFileMaker.class), //
 	LetMeInvert(8, LetMeInvert.class), //
-	ObservedSyntheticDatasetMaker(9, ActualDatasetCompiler.class), //
+	ObservedSyntheticDatasetMaker(9, ActualWaveformCompiler.class), //
 	Partial1DDatasetMaker(10, Partial1DDatasetMaker_v2.class), //
 	PartialDatasetMaker(11, PartialDatasetMaker_v2.class), //
 	PhaseEnvelope(12, PhaseEnvelope.class), //

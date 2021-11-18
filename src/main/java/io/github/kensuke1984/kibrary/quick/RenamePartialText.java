@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 import java.io.File;
 import java.io.IOException;

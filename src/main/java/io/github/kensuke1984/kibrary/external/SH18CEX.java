@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.external;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.FullPosition;
 
 /**
