@@ -447,10 +447,10 @@ public class DataSelection implements Operation {
 
         private GlobalCMTID event;
 
-        private Worker(EventFolder ed) {
-            this.obsEventDirectory = ed;
-            event = ed.getGlobalCMTID();
-            synEventDirectory = new EventFolder(synPath.resolve(ed.getName()));
+        private Worker(EventFolder eventDir) {
+            this.obsEventDirectory = eventDir;
+            event = eventDir.getGlobalCMTID();
+            synEventDirectory = new EventFolder(synPath.resolve(eventDir.getName()));
         }
 
         private Set<TimewindowData> imposeSn_ScSnPair(Set<TimewindowData> info) {

@@ -179,10 +179,10 @@ public class FilterDivider implements Operation {
     @Override
     public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
-        Set<EventFolder> events = new HashSet<>();
-        events.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
-        events.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
-        if (events.isEmpty()) {
+        Set<EventFolder> eventDirs = new HashSet<>();
+        eventDirs.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
+        eventDirs.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
+        if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;
         }
@@ -192,10 +192,10 @@ public class FilterDivider implements Operation {
         System.err.println("Output folder is " + outPath);
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
-        events.stream().map(this::process).forEach(es::execute);
+        eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
-            System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / events.size()) + "%");
+            System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "%");
             ThreadAid.sleep(100);
         }
         System.err.println("\rFiltering finished.");
@@ -203,11 +203,11 @@ public class FilterDivider implements Operation {
 
     private AtomicInteger processedFolders = new AtomicInteger(); // already processed
 
-    private Runnable process(EventFolder folder) {
+    private Runnable process(EventFolder eventDir) {
         return () -> {
-            String eventname = folder.getName();
+            String eventname = eventDir.getName();
             try {
-                Set<SACFileName> set = folder.sacFileSet();
+                Set<SACFileName> set = eventDir.sacFileSet();
                 set.removeIf(s -> !components.contains(s.getComponent()));
 
                 // escape if the event folder was blank. The 'finally' will be executed, so count will be incremented.
@@ -218,7 +218,7 @@ public class FilterDivider implements Operation {
                 Files.createDirectories(outPath.resolve(eventname));
                 set.forEach(this::filterAndout);
             } catch (Exception e) {
-                System.err.println("Error on " + folder);
+                System.err.println("Error on " + eventDir);
                 e.printStackTrace();
             } finally {
                 processedFolders.incrementAndGet();

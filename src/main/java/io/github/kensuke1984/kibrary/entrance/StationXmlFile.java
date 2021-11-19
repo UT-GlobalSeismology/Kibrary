@@ -17,7 +17,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * Class for downloading and reading Station XML files.
+ * Class for downloading and reading StationXML files.
  * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
  */
 class StationXmlFile {
@@ -43,13 +43,11 @@ class StationXmlFile {
     /**
      * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
      *
-     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation</a>
-     * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
+     * @param network  (String) Regular network (ex. IU).
      * @param station  (String) Station code.
      * @param location (String) Location code. Set "" if blank.
      * @param channel  (String) Channel code.
-     * @param parentPath (Path) Path of folder to contain this Station Information File.
+     * @param parentPath (Path) Path of folder to contain this StationXML File.
      */
     StationXmlFile(String network, String station, String location, String channel, Path parentPath) {
 
@@ -67,8 +65,8 @@ class StationXmlFile {
     /**
      * Sets the URL to be used in IRIS DMC FDSNWS STATION Web Service.
      *
-     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation
+     * @see <a href=http://service.iris.edu/irisws/station/1/> IRIS DMC FDSNWS STATION Web
+     *      Service Documentation</a>
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */

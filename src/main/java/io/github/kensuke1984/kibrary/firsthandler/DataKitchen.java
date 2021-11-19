@@ -172,7 +172,7 @@ public class DataKitchen implements Operation {
         System.err.println("Output folder is " + outPath);
 
         // create processors for each event
-        Set<EventProcessor> processors = eventDirs.stream().map(eventDir -> {
+        Set<EventProcessor> eps = eventDirs.stream().map(eventDir -> {
            try {
                 return new EventProcessor(eventDir, outPath);
             } catch (Exception e) {
@@ -188,11 +188,11 @@ public class DataKitchen implements Operation {
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
         // set parameters
-        processors.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
+        eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
-        processors.forEach(es::execute);
+        eps.forEach(es::execute);
         es.shutdown();
         // check if everything is done every 5 seconds
         while (!es.isTerminated()) {
@@ -202,7 +202,7 @@ public class DataKitchen implements Operation {
         // print overall result
         boolean success = true;
         System.err.println("Overall result:");
-        for (EventProcessor processor : processors) {
+        for (EventProcessor processor : eps) {
             if (!processor.hasRun()) {
                 System.err.println("! " + processor.getEventID() + " failed.");
                 success = false;

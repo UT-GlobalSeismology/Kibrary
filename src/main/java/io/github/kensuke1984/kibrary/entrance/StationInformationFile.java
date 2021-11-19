@@ -45,9 +45,7 @@ class StationInformationFile {
     /**
      * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
      *
-     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation</a>
-     * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
+     * @param network  (String) Regular network (ex. IU).
      * @param station  (String) Station code.
      * @param location (String) Location code. Set "" if blank.
      * @param channel  (String) Channel code.
@@ -69,8 +67,8 @@ class StationInformationFile {
     /**
      * Sets the URL to be used in IRIS DMC FDSNWS STATION Web Service.
      *
-     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation
+     * @see <a href=http://service.iris.edu/irisws/station/1/> IRIS DMC FDSNWS STATION Web
+     *      Service Documentation</a>
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */
