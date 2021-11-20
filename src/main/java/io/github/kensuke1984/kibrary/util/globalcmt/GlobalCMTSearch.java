@@ -1,9 +1,10 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.util.FullPosition;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

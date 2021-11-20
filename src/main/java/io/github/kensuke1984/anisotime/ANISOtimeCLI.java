@@ -1,7 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
 import org.apache.commons.cli.*;

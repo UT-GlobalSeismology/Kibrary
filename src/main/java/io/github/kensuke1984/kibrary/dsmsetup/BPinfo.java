@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 import java.io.IOException;
 import java.io.PrintWriter;

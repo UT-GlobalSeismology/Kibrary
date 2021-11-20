@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 import java.io.IOException;
 import java.time.LocalDate;

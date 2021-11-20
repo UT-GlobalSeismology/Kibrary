@@ -1,11 +1,14 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 /**
- * Latitude [-90, 90] The value is rounded off to the fourth decimal position.
- *
+ * Latitude [-90, 90].
+ * The value is rounded off to the fourth decimal place.
+ *<p>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
@@ -27,12 +30,13 @@ class Latitude implements Comparable<Latitude> {
      */
     private double theta;
     private double inGeographicLatitude;
-	/**
-	 * epsilon to test equality within a range for this.latitude 
-	 */
-	private final double eps = 1e-4;
+    /**
+     * epsilon to test equality within a range for this.latitude
+     */
+    private final double eps = 1e-4;
 
     /**
+     * Creates a Latitude instance. The input must be within [-90, 90].
      * @param geographicLatitude [deg] [-90, 90]
      */
     Latitude(double geographicLatitude) {
@@ -55,12 +59,13 @@ class Latitude implements Comparable<Latitude> {
     }
 
     /**
+     * Returns Latitude made from geocentric angle from North Pole.
      * @param theta [rad] spherical coordinates [0, &pi;]
      * @return geographic latitude [deg]
      */
     static double toLatitude(double theta) {
         if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
-                "Invalid theta(must be[0, pi]): " + theta + " @" +
+                "Invalid theta (must be[0, pi]): " + theta + " @" +
                         Thread.currentThread().getStackTrace()[1].getMethodName());
 
         double geocentric = 0.5 * Math.PI - theta;
@@ -72,17 +77,17 @@ class Latitude implements Comparable<Latitude> {
         return Double.compare(geographicLatitude, o.geographicLatitude);
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
 //		long temp;
 //		temp = Double.doubleToLongBits(geographicLatitude);
 //		result = prime * result + (int) (temp ^ (temp >>> 32));
-		int temp = (int) (geographicLatitude);
-		result = prime * result + temp;
-		return result;
-	}
+        int temp = (int) (geographicLatitude);
+        result = prime * result + temp;
+        return result;
+    }
 
     /**
      *@author anselme compare within eps
@@ -96,11 +101,11 @@ class Latitude implements Comparable<Latitude> {
         // return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
         return Utilities.equalWithinEpsilon(geographicLatitude, other.geographicLatitude, eps);
     }
-
+/*
     public double getInGeographicLatitude() {
         return inGeographicLatitude;
     }
-
+*/
     /**
      * @return geographic latitude [deg]
      */
@@ -121,5 +126,5 @@ class Latitude implements Comparable<Latitude> {
     public double getTheta() {
         return theta;
     }
-	
+
 }

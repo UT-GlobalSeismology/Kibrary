@@ -5,8 +5,8 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Data of DSM write

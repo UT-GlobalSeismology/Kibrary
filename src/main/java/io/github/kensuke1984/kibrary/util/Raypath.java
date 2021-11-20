@@ -6,6 +6,9 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.anisotime.RaypathCatalog;
 import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 

@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
-import io.github.kensuke1984.kibrary.util.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 public class Complementation {
 	public static void main(String[] args) {

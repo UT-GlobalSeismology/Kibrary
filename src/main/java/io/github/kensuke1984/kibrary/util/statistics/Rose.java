@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.util.statistics;
 
 import io.github.kensuke1984.kibrary.external.gmt.CrossSectionLine;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 

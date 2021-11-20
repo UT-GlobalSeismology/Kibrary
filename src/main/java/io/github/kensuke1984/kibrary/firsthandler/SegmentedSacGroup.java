@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * A group of SAC files with the same network, station, location, channel, and qualityID.
  * This means that they are supposed to compose part of the same waveform.
  */
-class SacGroup {
+class SegmentedSacGroup {
 
     /**
      * mergeする際のファイルのタイムウインドウのずれの許容範囲 sacfile のDELTA * maxgapNumber
@@ -50,7 +50,7 @@ class SacGroup {
      * @param workPath    work path
      * @param sacFileName sacfile name
      */
-    SacGroup(Path workPath, SacFileName sacFileName) {
+    SegmentedSacGroup(Path workPath, SacFileName sacFileName) {
         this.workPath = workPath;
         nameSet.add(sacFileName);
         rootSacFileName = sacFileName;

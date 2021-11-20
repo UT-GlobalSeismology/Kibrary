@@ -1,9 +1,10 @@
 package io.github.kensuke1984.kibrary.correction;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.complex.Complex;

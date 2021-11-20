@@ -34,7 +34,7 @@ class SegmentedSacMerger {
      * SacFileNameのリスト
      */
     private SacFileName[] sacFileNameList;
-    private Set<SacGroup> sacGroupSet = new HashSet<>();
+    private Set<SegmentedSacGroup> sacGroupSet = new HashSet<>();
 
     /**
      *
@@ -76,7 +76,7 @@ class SegmentedSacMerger {
     private void createGroups(SacFileName[] names) {
         for (SacFileName name : names)
             // 既存のグループに振り分けられなかったら新しいグループを作る
-            if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SacGroup(eventPath, name));
+            if (sacGroupSet.stream().noneMatch(group -> group.add(name))) sacGroupSet.add(new SegmentedSacGroup(eventPath, name));
     }
 
     /**

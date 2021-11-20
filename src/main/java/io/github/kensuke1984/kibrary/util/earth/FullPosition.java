@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * <p>

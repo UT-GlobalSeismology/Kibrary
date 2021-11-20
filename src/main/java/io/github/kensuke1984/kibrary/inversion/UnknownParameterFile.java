@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.BufferedReader;
@@ -14,8 +13,9 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.inversion.addons.TimeReceiverSideParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.TimeSourceSideParameter;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Observer;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**

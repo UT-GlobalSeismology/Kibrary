@@ -14,7 +14,7 @@ import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class ComputeTimeDiff {
 

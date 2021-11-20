@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 

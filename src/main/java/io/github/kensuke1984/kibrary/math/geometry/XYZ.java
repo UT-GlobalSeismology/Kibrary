@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.math.geometry;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.util.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
  * 3次元直交座標 cartesian 右手系

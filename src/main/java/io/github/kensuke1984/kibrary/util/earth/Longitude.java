@@ -1,12 +1,17 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 /**
- * Longitude (-180, 180]
- * If you input 200, then the value is considered -160.
+ * Longitude (-180, 180].
  * The value is rounded off to the 4th decimal position.
+ * <p>
+ * The input can be in range [-180, 360).
+ * If you input 200, then the value is considered -160.
+ * <p>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
@@ -27,18 +32,19 @@ class Longitude implements Comparable<Longitude> {
      * [0, 2*&pi;) &phi; in spherical coordinates [rad]
      */
     private double phi;
-	/**
-	 * epsilon to test equality within a range for this.longitude 
-	 */
-	private final double eps = 1e-4;
+    /**
+     * epsilon to test equality within a range for this.longitude
+     */
+    private final double eps = 1e-4;
 
     /**
      * @param longitude [deg] [-180, 360)
      */
     Longitude(double longitude) {
         if (!checkLongitude(longitude)) throw new IllegalArgumentException(
-                "The input longitude: " + longitude + " is invalid (must be [-180, 360).");
+                "The input longitude: " + longitude + " is invalid (must be [-180, 360)).");
         INPUT_LONGITUDE = longitude;
+
         if (180 < longitude) {
             phi = FastMath.toRadians(longitude - 360);
             this.longitude = -360 + longitude;
@@ -60,17 +66,22 @@ class Longitude implements Comparable<Longitude> {
         return -180 <= longitude && longitude < 360;
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+    @Override
+    public int compareTo(Longitude o) {
+        return Double.compare(longitude, o.longitude);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
 //		long temp;
 //		temp = Double.doubleToLongBits(longitude);
 //		result = prime * result + (int) (temp ^ (temp >>> 32));
-		int temp = (int) longitude;
-		result = prime * result + temp;
-		return result;
-	}
+        int temp = (int) longitude;
+        result = prime * result + temp;
+        return result;
+    }
 
     /**
      *@author anselme equals within epsilon
@@ -106,13 +117,8 @@ class Longitude implements Comparable<Longitude> {
     /**
      * @return raw value input to constructor
      */
-    public double getValue() {
+/*    public double getValue() {
         return INPUT_LONGITUDE;
     }
-
-    @Override
-    public int compareTo(Longitude o) {
-        return Double.compare(longitude, o.longitude);
-    }
-
+*/
 }

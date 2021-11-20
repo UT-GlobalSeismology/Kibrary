@@ -94,6 +94,7 @@ final class DataTransfer {
 
             // download
             Files.createDirectories(outPath);
+            System.err.println("Output folder is " + outPath);
             for (FTPFile ffile : ffiles) {
 
                 // get event ID and create event directory

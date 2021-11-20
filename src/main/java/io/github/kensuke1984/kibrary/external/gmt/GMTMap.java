@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 import java.nio.file.Path;
 import java.util.Arrays;

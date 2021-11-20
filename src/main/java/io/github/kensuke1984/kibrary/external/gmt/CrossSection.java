@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * 中心点　距離（中心点からの面の広がり）　azimuth r など から、断面を作る

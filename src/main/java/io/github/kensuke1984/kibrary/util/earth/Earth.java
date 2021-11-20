@@ -1,6 +1,7 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
+
 import org.apache.commons.math3.util.FastMath;
 
 import java.util.Arrays;
