@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
@@ -242,6 +243,7 @@ class EventProcessor implements Runnable {
                 double latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
                 double longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
                 double inclination = Double.parseDouble(headerMap.get(SACHeaderEnum.CMPINC));
+                HorizontalPosition position = new HorizontalPosition(latitude, longitude);
 
                 // check epicentral distance
                 if (distance < minDistance || maxDistance < distance) {
@@ -251,14 +253,14 @@ class EventProcessor implements Runnable {
                 }
 
                 // check station coordinate
-                if (!checkStationCoordinate(latitude, longitude)) {
+                if (!position.isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude)) {
                     //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // reject stations at (0,0) <- these are most likely stations that do not have correct coordinates written in.
-                if (latitude == 0.0 && longitude == 0.0) {
+                if (position.equals(new HorizontalPosition(0.0, 0.0))) {
                     System.err.println("!! rejecting station at coordinate (0,0) : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
@@ -324,24 +326,6 @@ class EventProcessor implements Runnable {
         // since checkChannel() is done, input should always be 3 letters
         if (channel.substring(2).equals("Z")) return true;
         else return false;
-    }
-
-    /**
-     * Checks whether the station is positioned in the wanted coordinate range.
-     * @param latitude (double) Latitude of the station to check
-     * @param longitude (double) Longitude of the station to check
-     * @return (boolean) true if position is fine
-     */
-    private boolean checkStationCoordinate(double latitude, double longitude) {
-        //latitude
-        if (latitude < minLatitude || maxLatitude < latitude) return false;
-        // longitude [-180, 180]
-        if (maxLongitude <= 180) if (longitude < minLongitude || maxLongitude < longitude) return false;
-        // longitude [0, 360]
-        if (minLongitude <= 180 && 180 < maxLongitude) if (longitude < minLongitude && maxLongitude - 360 < longitude) return false;
-        if (180 < minLongitude && 180 < maxLongitude) if (longitude < minLongitude - 360 || maxLongitude - 360 < longitude) return false;
-        // else
-        return true;
     }
 
     /**

@@ -1,10 +1,11 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.correction.MomentTensor;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * NDK format in Global CMT Catalog
@@ -328,18 +329,10 @@ final public class NDK implements GlobalCMTAccess {
         if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate)) return false;
         if (!search.getPredicateSet().stream().allMatch(p -> p.test(this))) return false;
 
-        // latitude
-        double latitude = centroidLocation.getLatitude();
-        if (latitude < search.getLowerLatitude() || search.getUpperLatitude() < latitude) return false;
-        // longitude
-        double lowerLongitude = search.getLowerLongitude();
-        double upperLongitude = search.getUpperLongitude();
-        double longitude = centroidLocation.getLongitude();
-
-        // longitude [-180, 180)
-        if (upperLongitude < 180) if (upperLongitude < longitude || longitude < lowerLongitude) return false;
-        // longitude [0, 360)
-        if (180 <= upperLongitude) if (longitude < lowerLongitude && upperLongitude - 360 < longitude) return false;
+        // latitude & longitude
+        HorizontalPosition position = new HorizontalPosition(centroidLocation.getLatitude(), centroidLocation.getLongitude());
+        if (!position.isInRange(search.getLowerLatitude(), search.getUpperLatitude(), search.getLowerLongitude(), search.getUpperLongitude()))
+            return false;
 
         // depth
         double depth = 6371 - centroidLocation.getR();
@@ -410,25 +403,25 @@ final public class NDK implements GlobalCMTAccess {
     public String toString() {
         return id.toString();
     }
-    
-	@Override
-	public void setCMT(MomentTensor mt) {
-		momentTensor = mt;
-	}
-	
-	@Override
-	public double getTimeDifference() {
-		return timeDifference;
-	}
-	
-	@Override
-	public String getHypocenterReferenceCatalog() {
-		return hypocenterReferenceCatalog;
-	}
-	
-	@Override
-	public String getGeographicalLocationName() {
-		return geographicalLocation;
-	}
+
+    @Override
+    public void setCMT(MomentTensor mt) {
+        momentTensor = mt;
+    }
+
+    @Override
+    public double getTimeDifference() {
+        return timeDifference;
+    }
+
+    @Override
+    public String getHypocenterReferenceCatalog() {
+        return hypocenterReferenceCatalog;
+    }
+
+    @Override
+    public String getGeographicalLocationName() {
+        return geographicalLocation;
+    }
 
 }

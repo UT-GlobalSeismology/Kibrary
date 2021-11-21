@@ -155,14 +155,24 @@ public class DataLobby implements Operation {
 
         startDate = LocalDate.parse(property.getProperty("startDate"));
         endDate = LocalDate.parse(property.getProperty("endDate"));
+        if (startDate.isAfter(endDate))
+            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
         lowerMw = Double.parseDouble(property.getProperty("lowerMw"));
         upperMw = Double.parseDouble(property.getProperty("upperMw"));
+        if (lowerMw > upperMw)
+            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
         lowerDepth = Double.parseDouble(property.getProperty("lowerDepth"));
         upperDepth = Double.parseDouble(property.getProperty("upperDepth"));
+        if (lowerDepth > upperDepth)
+            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
         lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
         upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
+        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
+            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
         lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
         upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
+        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
+            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
     }
 
     /**

@@ -94,9 +94,9 @@ public class DataKitchen implements Operation {
             pw.println("#minLongitude");
             pw.println("##Upper limit of station longitude [deg] (minLongitude:360] (180)");
             pw.println("#maxLongitude");
-            pw.println("##Threshold to judge which stations are in the same position [deg] (0.01)"); // = about 1 km
+            pw.println("##Threshold to judge which stations are in the same position, non-negative [deg] (0.01)"); // = about 1 km
             pw.println("##If two stations are closer to each other than this threshold, one will be eliminated.");
-            pw.println("#coordinateGrid 0.01");
+            pw.println("#coordinateGrid");
             pw.println("##(boolean) If this is true, remove intermediate files (true)");
             pw.println("#removeIntermediateFile");
         }
@@ -141,11 +141,19 @@ public class DataKitchen implements Operation {
         }
         minDistance = Double.parseDouble(property.getProperty("minDistance"));
         maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
+        if (minDistance < 0 || minDistance > maxDistance || 180 < maxDistance)
+            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
         minLatitude = Double.parseDouble(property.getProperty("minLatitude"));
         maxLatitude = Double.parseDouble(property.getProperty("maxLatitude"));
+        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude)
+            throw new IllegalArgumentException("Latitude range " + minLatitude + " , " + maxLatitude + " is invalid.");
         minLongitude = Double.parseDouble(property.getProperty("minLongitude"));
         maxLongitude = Double.parseDouble(property.getProperty("maxLongitude"));
+        if (minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude)
+            throw new IllegalArgumentException("Longitude range " + minLongitude + " , " + maxLongitude + " is invalid.");
         coordinateGrid = Double.parseDouble(property.getProperty("coordinateGrid"));
+        if (coordinateGrid < 0)
+            throw new IllegalArgumentException("coordinateGrid must be non-negative.");
         removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
     }
 

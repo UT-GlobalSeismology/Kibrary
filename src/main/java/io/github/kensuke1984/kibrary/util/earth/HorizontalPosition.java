@@ -34,6 +34,44 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
+     * Checks whether this position is inside a given coordinate range.
+     * @param minLatitude (double) [-90:maxLatitude)
+     * @param maxLatitude (double) (minLatitude:90]
+     * @param minLongitude (double) [-180:maxLongitude)
+     * @param maxLongitude (double) (minLongitude:360]
+     * @return (boolean) true if position is inside the given range
+     *
+     * @author otsuru
+     * @since 2021/11/21
+     */
+    public boolean isInRange(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude) {
+        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude
+                || minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude) {
+            throw new IllegalArgumentException("The input coordinage range: " + minLatitude + ", " + maxLatitude + ", "
+                    + minLongitude + ", " + maxLongitude + " is invalid.");
+        }
+
+        //latitude
+        if (latitude.getLatitude() < minLatitude || maxLatitude < latitude.getLatitude()) return false;
+
+        // longitude; min [-180, 180) and max [-180, 180)
+        if (maxLongitude < 180) {
+            if (longitude.getLongitude() < minLongitude || maxLongitude < longitude.getLongitude()) return false;
+        }
+        // longitude; min [-180, 180) and max [180, 360]
+        if (minLongitude < 180 && 180 <= maxLongitude) {
+            if (longitude.getLongitude() < minLongitude && maxLongitude - 360 < longitude.getLongitude()) return false;
+        }
+        // longitude; min [180, 360] and max [180, 360]
+        if (180 <= minLongitude && 180 <= maxLongitude) {
+            if (longitude.getLongitude() < minLongitude - 360 || maxLongitude - 360 < longitude.getLongitude()) return false;
+        }
+
+        return true;
+
+    }
+
+    /**
      * Sorting order is Latitude &rarr; Longitude
      */
     @Override
