@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.correction;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 import org.apache.commons.io.input.CloseShieldInputStream;

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.util.data;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +22,6 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
 
-import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -172,7 +171,7 @@ public final class ObserverInformationFile {
                 } catch (Exception e) {
                     System.out.println("Working folder?");
                     try (BufferedReader br = new BufferedReader(
-                            new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+                            new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
                         path = br.readLine().trim();
                         if (!path.startsWith("/"))
                             path = System.getProperty("user.dir") + "/" + path;

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.data;
 
 
 import io.github.kensuke1984.anisotime.ComputationalMesh;

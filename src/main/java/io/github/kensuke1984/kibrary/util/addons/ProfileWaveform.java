@@ -15,8 +15,8 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;

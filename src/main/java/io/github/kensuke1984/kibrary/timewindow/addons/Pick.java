@@ -10,9 +10,8 @@ import java.util.Set;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauPException;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Trace;
-
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;

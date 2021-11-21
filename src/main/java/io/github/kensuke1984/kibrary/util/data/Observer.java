@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.data;
 
 
 import java.nio.ByteBuffer;

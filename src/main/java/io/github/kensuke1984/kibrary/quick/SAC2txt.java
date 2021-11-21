@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;

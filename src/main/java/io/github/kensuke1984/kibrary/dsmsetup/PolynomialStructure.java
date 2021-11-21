@@ -1,7 +1,8 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.data.Trace;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.io.IOException;

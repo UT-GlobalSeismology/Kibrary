@@ -2,10 +2,10 @@ package io.github.kensuke1984.kibrary.waveform.convert;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;

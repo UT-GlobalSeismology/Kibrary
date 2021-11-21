@@ -10,13 +10,13 @@ import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType
 import io.github.kensuke1984.kibrary.inversion.addons.WeightUnknownParameter;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.MatrixComputation;
-import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;

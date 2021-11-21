@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import io.github.kensuke1984.kibrary.util.Observer;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 

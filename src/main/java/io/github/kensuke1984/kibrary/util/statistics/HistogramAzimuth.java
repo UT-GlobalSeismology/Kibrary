@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.util.statistics;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.util.Observer;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;

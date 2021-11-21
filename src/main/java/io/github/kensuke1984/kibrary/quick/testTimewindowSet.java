@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.quick;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Observer;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.correction;
 
-import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;

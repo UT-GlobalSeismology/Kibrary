@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
-import io.github.kensuke1984.kibrary.util.Observer;
-import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 import org.apache.commons.math3.util.Precision;
