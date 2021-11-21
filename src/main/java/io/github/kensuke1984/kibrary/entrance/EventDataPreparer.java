@@ -38,6 +38,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * (memo: this class does not hold "datacenter" beacuse it is not needed for seed files that already exist.)
  *
+ * @since 2021/09/14
+ * @author otsuru
  */
 public class EventDataPreparer {
 

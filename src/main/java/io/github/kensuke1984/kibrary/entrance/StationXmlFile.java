@@ -19,6 +19,9 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * Class for downloading and reading StationXML files.
  * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
+ *
+ * @since 2021/11/15
+ * @author otsuru
  */
 class StationXmlFile {
 

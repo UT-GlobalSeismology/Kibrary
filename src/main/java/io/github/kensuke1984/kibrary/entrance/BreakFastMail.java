@@ -1,20 +1,20 @@
 package io.github.kensuke1984.kibrary.entrance;
 
-import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.mail.DefaultAuthenticator;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.mail.DefaultAuthenticator;
+
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 /**
  * BREQ_FAST request Mail
  *
  * @author Kensuke Konishi
- * @version 0.1.1
  */
 public class BreakFastMail {
 

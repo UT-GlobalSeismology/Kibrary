@@ -25,6 +25,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * とりあえずtaperはsine taperで
  * <p>
  * Information about instrument response can be found <a href=http://docs.fdsn.org/projects/stationxml/en/latest/response.html>here</a>.
+ *
+ * @author Kensuke Konishi
  */
 class SacDeconvolution {
 

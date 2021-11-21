@@ -28,6 +28,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * If the network code is 'DSM', comparison of networks between instances is not done;
  * station code and horizontal position is considered.
  *
+ * @author Kensuke Konishi
  */
 public class Observer implements Comparable<Observer> {
 

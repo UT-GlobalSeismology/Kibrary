@@ -16,7 +16,6 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * This class is <b>immutable</b>.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.3
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 

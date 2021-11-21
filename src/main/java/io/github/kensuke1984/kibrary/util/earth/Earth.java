@@ -10,7 +10,6 @@ import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
  * Earth utility.
  *
  * @author Kensuke Konishi
- * @version 0.1.2
  */
 public final class Earth {
     /**

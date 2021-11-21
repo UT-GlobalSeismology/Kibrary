@@ -18,6 +18,7 @@ import java.nio.file.Path;
  * where ObserverID is "station_network".
  * 'PSV', 'SH' must be upper case. 'station' and 'network' must be 8 or less letters.
  *
+ * @author Kensuke Konishi
  */
 public class FormattedSPCFileName extends SPCFileName {
 

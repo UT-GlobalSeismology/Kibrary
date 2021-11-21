@@ -12,8 +12,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.3
- * @author anselme modify equals within epsilon
  */
 class Latitude implements Comparable<Latitude> {
 

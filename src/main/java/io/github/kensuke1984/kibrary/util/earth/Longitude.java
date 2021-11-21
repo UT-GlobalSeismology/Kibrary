@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.0.4
  */
 class Longitude implements Comparable<Longitude> {
 

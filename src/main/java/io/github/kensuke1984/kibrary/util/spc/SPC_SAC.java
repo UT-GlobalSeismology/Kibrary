@@ -44,6 +44,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * The waveform in time domain will be sampled in {@link #samplingHz},
  * so the number of data points will become [time length x samplingHz].
  *
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SPC_SAC implements Operation {

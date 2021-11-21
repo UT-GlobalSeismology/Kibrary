@@ -20,6 +20,8 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * All mseed files must be for the same datacenter.
  * Output SAC, StationXML, and RESP files will each be placed in "eventDir/sac", "eventDir/station", and "eventDir/resp".
  *
+ * @since 2021/11/17
+ * @author otsuru
  */
 public class DataAligner {
     private final boolean forSeed;

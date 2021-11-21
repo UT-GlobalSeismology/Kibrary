@@ -21,8 +21,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <p>
  * For OHP request, TTTT is now only one digit.
  *
- * @author kensuke
- * @version 0.0.6
+ * @author Kensuke Konishi
  * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
  * guide</a>
  */

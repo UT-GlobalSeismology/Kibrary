@@ -13,6 +13,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 /**
  * Class for a set of R, T, and Z component SAC files of the same network, station, location, and instrument.
  *
+ * @since 2021/10/04
+ * @author otsuru
  */
 class SacTriplet {
 
