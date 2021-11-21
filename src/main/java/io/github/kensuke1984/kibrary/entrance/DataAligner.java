@@ -85,25 +85,31 @@ public class DataAligner {
 
         // for each event directory
         // This part is not parallelized because SocketException occurs when many threads download files simultaneously.
-        for (EventFolder eventDir : eventDirs) {
-            System.err.println(eventDir);
+        eventDirs.stream().sorted().forEach(eventDir -> {
+            try {
+                System.err.println(eventDir);
 
-            // create new instance for the event
-            EventDataPreparer edp = new EventDataPreparer(eventDir);
+                // create new instance for the event
+                EventDataPreparer edp = new EventDataPreparer(eventDir);
 
-            if (forSeed) {
-                if (!edp.openSeeds()) {
-                    // if open fails, skip the event
-                    continue;
+                if (forSeed) {
+                    if (!edp.openSeeds()) {
+                        // if open fails, skip the event
+                        return;
+                    }
+                } else {
+                    if (!edp.openMseeds()) {
+                        // if open fails, skip the event
+                        return;
+                    }
+                    edp.downloadXmlMseed(datacenter);
                 }
-            } else {
-                if (!edp.openMseeds()) {
-                    // if open fails, skip the event
-                    continue;
-                }
-                edp.downloadXmlMseed(datacenter);
+            } catch (IOException e) {
+                // Here, suppress exceptions for events that failed, and move on to the next event.
+                System.err.println("!! Operation for " + eventDir + " failed.");
+                e.printStackTrace();
             }
-        }
+        });
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);

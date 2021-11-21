@@ -44,6 +44,32 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     private volatile NDK ndk;
 
     /**
+     * Displays information of input event IDs.
+     * Results are written in the standard output.
+     * @param args [GlobalCMTID ...]
+     */
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Usage: [GlobalCMTID ...] (list using spaces)");
+            return;
+        }
+
+        for (String idString : args) {
+            if (!isGlobalCMTID(idString)) {
+                System.err.println(idString + " does not exist.");
+                continue;
+            }
+
+            GlobalCMTID id = new GlobalCMTID(idString);
+            GlobalCMTAccess event = id.getEvent();
+
+            System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
+            System.out.println("Centroid Time: " + event.getCMTTime());
+            System.out.println("Centroid location(latitude longitude radius): " + event.getCmtLocation());
+        }
+    }
+
+    /**
      * Create an instance for an input
      * If no ID exists for the input, throw {@link RuntimeException}
      *
@@ -70,26 +96,6 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     public static boolean isGlobalCMTID(String string) {
         return RECENT_GLOBALCMTID_PATTERN.matcher(string).matches() ||
                 PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
-    }
-
-    /**
-     * @param args [Global CMT ID...]
-     */
-    public static void main(String[] args) {
-        if (args.length == 0) throw new IllegalArgumentException("Usage: [Global CMT IDs]");
-        for (String idString : args) {
-            if (!isGlobalCMTID(idString)) {
-                System.err.println(idString + " does not exist.");
-                continue;
-            }
-
-            GlobalCMTID id = new GlobalCMTID(idString);
-            GlobalCMTAccess event = id.getEvent();
-
-            System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
-            System.out.println("Centroid Time: " + event.getCMTTime());
-            System.out.println("Centroid location(latitude longitude radius): " + event.getCmtLocation());
-        }
     }
 
     /**

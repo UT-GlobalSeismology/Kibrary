@@ -13,12 +13,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 /**
- * Raypath between a source at {@link #sourceLocation} and a receiver at
- * {@link #stationPosition} <br>
+ * Raypath between a source at {@link #sourcePosition} and a receiver at
+ * {@link #receiverPosition} <br>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.4
  */
 public class Raypath {
 
@@ -34,24 +33,24 @@ public class Raypath {
     /**
      * {@link FullPosition} of a seismic source
      */
-    private final FullPosition sourceLocation;
+    private final FullPosition sourcePosition;
     /**
      * {@link HorizontalPosition} of a seismic station
      */
-    private final HorizontalPosition stationPosition;
+    private final HorizontalPosition receiverPosition;
 
     /**
      * Create a raypath for the source and station.
      *
      * @param source  {@link FullPosition} of a source
-     * @param station {@link HorizontalPosition} of a station
+     * @param receiver {@link HorizontalPosition} of a receiver
      */
-    public Raypath(FullPosition source, HorizontalPosition station) {
-        sourceLocation = source;
-        stationPosition = station;
-        azimuth = source.getAzimuth(station);
-        epicentralDistance = Earth.getEpicentralDistance(source, station);
-        backAzimuth = source.getBackAzimuth(station);
+    public Raypath(FullPosition source, HorizontalPosition receiver) {
+        sourcePosition = source;
+        receiverPosition = receiver;
+        azimuth = source.getAzimuth(receiver);
+        epicentralDistance = Earth.getEpicentralDistance(source, receiver);
+        backAzimuth = source.getBackAzimuth(receiver);
     }
 
     /**
@@ -76,14 +75,14 @@ public class Raypath {
      * @return {@link FullPosition} of the seismic source on the raypath
      */
     public FullPosition getSource() {
-        return sourceLocation;
+        return sourcePosition;
     }
 
     /**
      * @return {@link HorizontalPosition} of the seismic station on the raypath
      */
-    public HorizontalPosition getStation() {
-        return stationPosition;
+    public HorizontalPosition getReceiver() {
+        return receiverPosition;
     }
 
     /**
@@ -108,13 +107,13 @@ public class Raypath {
     }
 
     /**
+     * 震源から観測点に向けての震央距離thetaでの座標
      * @param theta [rad]
-     * @return {@link HorizontalPosition} on the raypath which has epicentral
-     * distance of theta from the source. 震源から観測点に向けての震央距離thetaでの座標
+     * @return {@link HorizontalPosition} on the raypath where the epicentral distance from the source is theta.
      */
     public HorizontalPosition positionOnRaypathAt(double theta) {
         return RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0).rotateaboutZ(Math.PI - azimuth)
-                .rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).toLocation();
+                .rotateaboutY(sourcePosition.getTheta()).rotateaboutZ(sourcePosition.getPhi()).toLocation();
     }
 
     /**
@@ -125,8 +124,8 @@ public class Raypath {
      * and station is on the Standard meridian
      */
     public HorizontalPosition moveToNorthPole(HorizontalPosition position) {
-        return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(-sourceLocation.getPhi())
-                .rotateaboutY(-sourceLocation.getTheta()).rotateaboutZ(-Math.PI + azimuth).toLocation();
+        return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(-sourcePosition.getPhi())
+                .rotateaboutY(-sourcePosition.getTheta()).rotateaboutZ(-Math.PI + azimuth).toLocation();
     }
 
     /**
@@ -138,7 +137,7 @@ public class Raypath {
      */
     public HorizontalPosition moveFromNorthPole(HorizontalPosition position) {
         return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(Math.PI - azimuth)
-                .rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).toLocation();
+                .rotateaboutY(sourcePosition.getTheta()).rotateaboutZ(sourcePosition.getPhi()).toLocation();
     }
 
     /**
@@ -163,7 +162,7 @@ public class Raypath {
      */
     public io.github.kensuke1984.anisotime.Raypath[] toANISOtime(Phase phase, VelocityStructure structure) {
         return RaypathCatalog.computeCatalog(structure, ComputationalMesh.simple(structure), 10)
-                .searchPath(phase, sourceLocation.getR(), epicentralDistance, false);
+                .searchPath(phase, sourcePosition.getR(), epicentralDistance, false);
     }
 
 }

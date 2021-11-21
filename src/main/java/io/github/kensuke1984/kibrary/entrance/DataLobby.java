@@ -207,7 +207,7 @@ public class DataLobby implements Operation {
         System.err.println("Output folder is " + outPath);
 
         final AtomicInteger n = new AtomicInteger();
-        requestedEvents.forEach(event -> {
+        requestedEvents.stream().sorted().forEach(event -> {
             try {
                 n.incrementAndGet();
                 System.err.println("Downloading files for " + event + " (# " + n + " of " + n_total + ") ...");

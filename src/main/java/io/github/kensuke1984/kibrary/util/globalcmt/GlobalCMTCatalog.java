@@ -1,10 +1,5 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.io.input.CloseShieldInputStream;
-
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,6 +12,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.swing.JOptionPane;
+
+import org.apache.commons.io.input.CloseShieldInputStream;
+
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Catalog of global CMT solutions.
@@ -51,7 +53,7 @@ public final class GlobalCMTCatalog {
             } catch (Exception e) {
                 System.err.println("A catalog filename?");
                 try (BufferedReader br = new BufferedReader(
-                        new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+                        new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
                     path = br.readLine().trim();
                     if (!path.startsWith("/")) path = System.getProperty("user.dir") + "/" + path;
                 } catch (Exception e2) {
@@ -118,9 +120,9 @@ public final class GlobalCMTCatalog {
     static Set<NDK> allNDK() {
         return NDKs;
     }
-    
+
     public static Path getCatalogPath() {
-    	return CATALOG_PATH;
+        return CATALOG_PATH;
     }
 
 }

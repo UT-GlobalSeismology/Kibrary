@@ -1,9 +1,5 @@
 package io.github.kensuke1984.kibrary.util;
 
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.linear.*;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -16,6 +12,15 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+
 /**
  * Utility for a function y = f(x)
  * <p>
@@ -24,7 +29,6 @@ import java.util.stream.IntStream;
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.4
  */
 public class Trace {
 
@@ -145,7 +149,7 @@ public class Trace {
 
         return compare.length < base.length ? bestShift : -bestShift;
     }
-    
+
     public static int findBestShiftParallel(double[] base, double[] compare) {
         double[] shorter;
         double[] longer;
@@ -357,7 +361,7 @@ public class Trace {
         }
         return shift;
     }
-    
+
     /**
      * Assume the interval of x is same as that of this.
      *
@@ -383,7 +387,7 @@ public class Trace {
         });
         return shifts[new ArrayRealVector(cors).getMaxIndex()];
     }
-    
+
     public double findBestShiftConsiderAmplitude(Trace trace) {
         int gapLength = X.length - trace.getLength();
         if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
@@ -399,7 +403,7 @@ public class Trace {
                 cor += Y[i + j] * trace.Y[j];
                 y2 += Y[i + j] * Y[i + j];
                 if (Math.abs(Y[j+i]) > max)
-                	max = Math.abs(Y[j+i]);
+                    max = Math.abs(Y[j+i]);
             }
             cor /= y2 * compY2;
             cor *= 2 * Math.abs(compMax - max) / (compMax + max);
@@ -410,7 +414,7 @@ public class Trace {
         }
         return shift;
     }
-    
+
     public double findBestL1Shift(Trace trace) {
         int gapLength = X.length - trace.getLength();
         if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
@@ -593,82 +597,82 @@ public class Trace {
         }
         Files.write(path, outLines, options);
     }
-    
+
     public Trace removeTrend() {
-    	double mean = 0;
-    	for (double y : Y)
-    		mean += y;
-    	mean /= Y.length;
-    	return new Trace(X, Y_VECTOR.mapSubtract(mean).toArray());
+        double mean = 0;
+        for (double y : Y)
+            mean += y;
+        mean /= Y.length;
+        return new Trace(X, Y_VECTOR.mapSubtract(mean).toArray());
     }
-    
+
     public Trace truncateToLength(int length) {
-    	return new Trace(Arrays.copyOfRange(X, 0, length), Arrays.copyOfRange(Y, 0, length));
+        return new Trace(Arrays.copyOfRange(X, 0, length), Arrays.copyOfRange(Y, 0, length));
     }
-    
+
     public double correlation(Trace trace) {
-    	return Y_VECTOR.dotProduct(trace.Y_VECTOR) / (Y_VECTOR.getNorm() * trace.Y_VECTOR.getNorm());
+        return Y_VECTOR.dotProduct(trace.Y_VECTOR) / (Y_VECTOR.getNorm() * trace.Y_VECTOR.getNorm());
     }
 
     public int[] robustPeakFinder() {
-		int lag = 300;
-		double threshold = 3.5;
-		double influence = 0.5;
-		
-		double[] signals = new double[getLength()];
-		double[] filteredY = new double[getLength()];
-		double[] avgFilter = new double[getLength()];
-		double[] stdFilter = new double[getLength()];
-		
-		for (int i = 0; i < lag; i++)
-			filteredY[i] = Y[i];
-		avgFilter[lag - 1] = mean(Y_VECTOR.getSubVector(0, lag).toArray());
-		stdFilter[lag - 1] = std(Y_VECTOR.getSubVector(0, lag).toArray());
-		
-		for (int i = lag; i < Y.length; i++) {
-//			System.out.println(y[i] + " " + Math.abs(y[i] - avgFilter[i-1]) + " " + threshold * stdFilter[i-1]);
-			 if (Math.abs(Y[i] - avgFilter[i-1]) > threshold * stdFilter[i-1]) {
-			    if (Y[i] > avgFilter[i-1])
-			    	signals[i] = 1;
-			    else
-			      signals[i] = -1;
-			    filteredY[i] = influence * Y[i] + (1-influence) * filteredY[i-1];
-			 }
-			 else {
-			    signals[i] = 0;
-			    filteredY[i] = Y[i];
-			 }
-			 double[] cutFiltered = Arrays.copyOfRange(filteredY, i - lag, i + 1);
-			 avgFilter[i] = mean(cutFiltered);
-			 stdFilter[i] = std(cutFiltered);
-		}
-		
-		List<Integer> indicesList = new ArrayList<>();
-		for (int i = 0; i < signals.length - 1; i++) {
-			if (signals[i] == 0 && Math.abs(signals[i + 1]) == 1)
-				indicesList.add(i + 1);
-		}
-		
-		int[] indices = new int[indicesList.size()];
-		for (int i = 0; i < indices.length; i++)
-			indices[i] = indicesList.get(i);
-		
-		return indices; 
-	}
+        int lag = 300;
+        double threshold = 3.5;
+        double influence = 0.5;
 
-	private static double mean(double[] y) {
-		double sum = 0;
-		for (double yy : y)
-			sum += yy;
-		return sum / y.length;
-	}
-	
-	private static double std(double[] y) {
-		double std = 0;
-		double mean = mean(y);
-		for (double yy : y)
-			std += (yy - mean) * (yy - mean);
-		return Math.sqrt(std / y.length);
-	}
-	
+        double[] signals = new double[getLength()];
+        double[] filteredY = new double[getLength()];
+        double[] avgFilter = new double[getLength()];
+        double[] stdFilter = new double[getLength()];
+
+        for (int i = 0; i < lag; i++)
+            filteredY[i] = Y[i];
+        avgFilter[lag - 1] = mean(Y_VECTOR.getSubVector(0, lag).toArray());
+        stdFilter[lag - 1] = std(Y_VECTOR.getSubVector(0, lag).toArray());
+
+        for (int i = lag; i < Y.length; i++) {
+//			System.out.println(y[i] + " " + Math.abs(y[i] - avgFilter[i-1]) + " " + threshold * stdFilter[i-1]);
+             if (Math.abs(Y[i] - avgFilter[i-1]) > threshold * stdFilter[i-1]) {
+                if (Y[i] > avgFilter[i-1])
+                    signals[i] = 1;
+                else
+                  signals[i] = -1;
+                filteredY[i] = influence * Y[i] + (1-influence) * filteredY[i-1];
+             }
+             else {
+                signals[i] = 0;
+                filteredY[i] = Y[i];
+             }
+             double[] cutFiltered = Arrays.copyOfRange(filteredY, i - lag, i + 1);
+             avgFilter[i] = mean(cutFiltered);
+             stdFilter[i] = std(cutFiltered);
+        }
+
+        List<Integer> indicesList = new ArrayList<>();
+        for (int i = 0; i < signals.length - 1; i++) {
+            if (signals[i] == 0 && Math.abs(signals[i + 1]) == 1)
+                indicesList.add(i + 1);
+        }
+
+        int[] indices = new int[indicesList.size()];
+        for (int i = 0; i < indices.length; i++)
+            indices[i] = indicesList.get(i);
+
+        return indices;
+    }
+
+    private static double mean(double[] y) {
+        double sum = 0;
+        for (double yy : y)
+            sum += yy;
+        return sum / y.length;
+    }
+
+    private static double std(double[] y) {
+        double std = 0;
+        double mean = mean(y);
+        for (double yy : y)
+            std += (yy - mean) * (yy - mean);
+        return Math.sqrt(std / y.length);
+    }
+
 }
