@@ -284,7 +284,7 @@ public class VelocityField3D_deprec {
 											+ "_" + inverse.simple() + i + ".txt");
 									PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outpath3, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 									for (double r : perturbationRs) {
-										FullPosition loc = p.toLocation(r);
+										FullPosition loc = p.toFullPosition(r);
 										double d = layerMap.get(r);
 										double dmu = locAnswerMap.get(loc);
 										double r1 = r - d/2.;

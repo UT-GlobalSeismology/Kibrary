@@ -85,10 +85,10 @@ public class MakeUnknownParameterFile {
 				}
 		double latitude = point.getLatitude();// 地理緯度
 		double longitude = point.getLongitude();
-		FullPosition tmpLoc = point.toLocation(r - 0.5 * dr);
+		FullPosition tmpLoc = point.toFullPosition(r - 0.5 * dr);
 		// tmpLoc.setR(r - 0.5 * dr);
 		double startA = Earth.getExtendedShaft(tmpLoc);
-		tmpLoc = tmpLoc.toLocation(r + 0.5 * dr);
+		tmpLoc = tmpLoc.toFullPosition(r + 0.5 * dr);
 		double endA = Earth.getExtendedShaft(tmpLoc);
 		r = Earth.getExtendedShaft(point);
 //		 System.out.println(startA + " " + endA);

@@ -260,7 +260,7 @@ public class ParameterMapping {
 			
 			UnknownParameter refUnknown = originalUnknowns[iNewToOriginal[i][0]];
 			PartialType type = refUnknown.getPartialType();
-			FullPosition location = refUnknown.getLocation().toLocation(rmean);
+			FullPosition location = refUnknown.getLocation().toFullPosition(rmean);
 			UnknownParameter newUnknown = new Physical3DParameter(type, location, weight);
 			unknowns[i] = newUnknown;
 		}

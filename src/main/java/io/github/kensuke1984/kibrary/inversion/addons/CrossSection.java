@@ -96,7 +96,7 @@ public class CrossSection {
 		HorizontalPosition startPos = extremities[0];
 		HorizontalPosition endPos = extremities[1];
 		FullPosition centerLocation = startPos.getMidpoint(endPos)
-				.toLocation(Earth.EARTH_RADIUS);
+				.toFullPosition(Earth.EARTH_RADIUS);
 		double azimuth = centerLocation.getAzimuth(endPos);
 //		double theta = 20. * Math.PI/180.;
 		double theta = centerLocation.getEpicentralDistance(endPos) + Math.toRadians(0.);
@@ -152,7 +152,7 @@ public class CrossSection {
 		for (int k = 0; k < positions.length; k++) {
 			HorizontalPosition position = positions[k];
 			for (int i = 0; i < rs.length; i++) {
-				FullPosition location = position.toLocation(rs[i]);
+				FullPosition location = position.toFullPosition(rs[i]);
 				FullPosition[] nearPoints 
 					= comp.getNearest4(locations, location, maxSearchRange);
 //					= comp.getNearest(locations, location);
@@ -450,7 +450,7 @@ public class CrossSection {
 			FullPosition[] thisRLocations = locations.stream()
 					.filter(loc -> loc.getR() == r).collect(Collectors.toSet()).toArray(new FullPosition[0]);
 			for (HorizontalPosition pos : newPositions) {
-				FullPosition location = pos.toLocation(r);
+				FullPosition location = pos.toFullPosition(r);
 				FullPosition[] nearest = comp.getNearest4(thisRLocations, location);
 				double[] values = new double[nearest.length];
 				for (int i = 0; i < nearest.length; i++) {
@@ -505,7 +505,7 @@ public class CrossSection {
 			for (int k = 0; k < positions.length; k++) {
 				HorizontalPosition position = positions[k];
 				for (int i = 0; i < rs.length; i++) {
-					FullPosition location = position.toLocation(rs[i]);
+					FullPosition location = position.toFullPosition(rs[i]);
 					FullPosition[] nearPoints 
 						= comp.getNearest4(locations, location);
 					double[] nearPointsValue = new double[4];

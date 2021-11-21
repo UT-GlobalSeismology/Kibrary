@@ -26,8 +26,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Creates an instance with geographic latitude and longitude
      *
-     * @param latitude  [deg] geographic latitude [-90, 90] {@link FullPosition#latitude}
-     * @param longitude [deg] (-180, 360)
+     * @param latitude  [deg] geographic latitude [-90, 90]
+     * @param longitude [deg] [-180, 360)
      */
     public HorizontalPosition(double latitude, double longitude) {
         this.latitude = new Latitude(latitude);
@@ -62,16 +62,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @param r [km] radius
-     * @return Location newly created with the input r (deep copy)
-     */
-    public FullPosition toLocation(double r) {
-        return new FullPosition(latitude.getLatitude(), longitude.getLongitude(), r);
-    }
-
-    /**
      * @param position {@link HorizontalPosition} to compute azimuth with
-     * @return locationとのazimuth [rad]
+     * @return positionとのazimuth [rad]
      */
     public double getAzimuth(HorizontalPosition position) {
         return Earth.getAzimuth(this, position);
@@ -79,44 +71,10 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * @param position {@link HorizontalPosition} to compute back azimuth with
-     * @return locationとのback azimuth [rad]
+     * @return positionとのback azimuth [rad]
      */
     public double getBackAzimuth(HorizontalPosition position) {
         return Earth.getBackAzimuth(this, position);
-    }
-
-    /**
-     * @return geographic latitude [deg] [-90, 90]
-     */
-    public double getLatitude() {
-        return latitude.getLatitude();
-    }
-
-    /**
-     * (-180:180]
-     *
-     * @return geographic longitude [deg]
-     */
-    public double getLongitude() {
-        return longitude.getLongitude();
-    }
-
-    /**
-     * &theta; in spherical coordinates
-     *
-     * @return &theta; [rad] in spherical coordinate.
-     */
-    public double getTheta() {
-        return latitude.getTheta();
-    }
-
-    /**
-     * &phi; in spherical coordinate
-     *
-     * @return phi [rad] in spherical coordinate.
-     */
-    public double getPhi() {
-        return longitude.getPhi();
     }
 
     /**
@@ -125,6 +83,14 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      */
     public double getEpicentralDistance(HorizontalPosition horizontalPosition) {
         return Earth.getEpicentralDistance(horizontalPosition, this);
+    }
+
+    public double getGeographicalAzimuth(HorizontalPosition position) {
+        return Earth.getGeographicalAzimuth(this, position);
+    }
+
+    public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
+        return Earth.getGeographicalDistance(horizontalPosition, this);
     }
 
     /**
@@ -158,26 +124,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         // System.out.println(midRTP);
         return new HorizontalPosition(Latitude.toLatitude(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
         // System.out.println(midLoc);
-    }
-
-    /**
-     * @param r radius
-     * @return {@link XYZ} at radius ｒ
-     */
-    public XYZ toXYZ(double r) {
-        return RThetaPhi.toCartesian(r, getTheta(), getPhi());
-    }
-
-    @Override
-    public String toString() {
-        return latitude.getLatitude() + " " + longitude.getLongitude();
-    }
-
-    /**
-     * @return geocentric latitude [rad]
-     */
-    public double getGeocentricLatitude() {
-        return latitude.getGeocentricLatitude();
     }
 
     /**
@@ -229,13 +175,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @return Point2D of this
-     */
-    public Point2D toPoint2D() {
-        return new Point2D(getLongitude(), getLatitude());
-    }
-
-    /**
      * @param azimuth
      * @param distance
      * @return HorizontalPosition located at distance from self along azimuth
@@ -267,12 +206,72 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         return new HorizontalPosition(lat, lon);
     }
 
-    public double getGeographicalAzimuth(HorizontalPosition position) {
-        return Earth.getGeographicalAzimuth(this, position);
+    /**
+     * @return geographic latitude [deg] [-90, 90]
+     */
+    public double getLatitude() {
+        return latitude.getLatitude();
     }
 
-    public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
-        return Earth.getGeographicalDistance(horizontalPosition, this);
+    /**
+     * @return geocentric latitude [rad] [-&pi;/2, &pi;/2]
+     */
+    public double getGeocentricLatitude() {
+        return latitude.getGeocentricLatitude();
     }
+
+    /**
+     * @return geographic longitude [deg] [-180:180)
+     */
+    public double getLongitude() {
+        return longitude.getLongitude();
+    }
+
+    /**
+     * &theta; in spherical coordinates
+     *
+     * @return &theta; [rad] in spherical coordinate [0, &pi;]
+     */
+    public double getTheta() {
+        return latitude.getTheta();
+    }
+
+    /**
+     * &phi; in spherical coordinate
+     *
+     * @return &phi; [rad] in spherical coordinate [-&pi;, &pi;)
+     */
+    public double getPhi() {
+        return longitude.getPhi();
+    }
+
+    /**
+     * @param r [km] radius
+     * @return FullPosition newly created with the input r (deep copy)
+     */
+    public FullPosition toFullPosition(double r) {
+        return new FullPosition(latitude.getLatitude(), longitude.getLongitude(), r);
+    }
+
+    /**
+     * @return Point2D of this
+     */
+    public Point2D toPoint2D() {
+        return new Point2D(getLongitude(), getLatitude());
+    }
+
+    /**
+     * @param r radius
+     * @return {@link XYZ} at radius ｒ
+     */
+    public XYZ toXYZ(double r) {
+        return RThetaPhi.toCartesian(r, getTheta(), getPhi());
+    }
+
+    @Override
+    public String toString() {
+        return latitude.getLatitude() + " " + longitude.getLongitude();
+    }
+
 
 }

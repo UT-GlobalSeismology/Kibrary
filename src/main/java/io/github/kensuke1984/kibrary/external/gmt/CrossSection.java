@@ -41,7 +41,7 @@ public class CrossSection extends CrossSectionLine {
 //		System.exit(0);
         for (int i = 0; i < positions.length; i++) {
             for (int j = 0; j < r.length; j++) {
-                locations[i * r.length + j] = positions[i].toLocation(r[j]);
+                locations[i * r.length + j] = positions[i].toFullPosition(r[j]);
 //				System.out.println(locations[i*r.length+j]);
                 thetaX[i * r.length + j] = tmpThetaX[i];
             }

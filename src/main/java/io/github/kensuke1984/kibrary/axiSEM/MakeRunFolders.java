@@ -123,7 +123,7 @@ public class MakeRunFolders {
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
 						for (Observer sta : stationSet) {
 							FullPosition rotatedStation 
-								= rotateLocation(sta.getPosition().toLocation(Earth.EARTH_RADIUS), axis, angle);
+								= rotateLocation(sta.getPosition().toFullPosition(Earth.EARTH_RADIUS), axis, angle);
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
 								, sta.getStation()
 								, sta.getNetwork()

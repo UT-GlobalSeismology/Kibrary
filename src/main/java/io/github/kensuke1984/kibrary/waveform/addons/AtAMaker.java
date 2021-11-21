@@ -1728,7 +1728,7 @@ public class AtAMaker implements Operation {
 				return;
 			}
 			
-			FullPosition bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
+			FullPosition bpSourceLoc = station.getPosition().toFullPosition(Earth.EARTH_RADIUS);
 			FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
 			double distanceBP = bpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
 			double distanceFP = fpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
@@ -2077,7 +2077,7 @@ public class AtAMaker implements Operation {
 			threedPartialMaker.setSourceTimeFunction(stf);
 			
 			for (int ibody = 0; ibody < bodyR.length; ibody++) {
-				FullPosition parameterLoc = obsPos.toLocation(bodyR[ibody]);
+				FullPosition parameterLoc = obsPos.toFullPosition(bodyR[ibody]);
 				
 				if (!originalUnkownRadii.contains(bodyR[ibody]))
 					continue;

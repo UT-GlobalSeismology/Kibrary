@@ -6,11 +6,11 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * Longitude (-180, 180].
- * The value is rounded off to the 4th decimal position.
+ * Longitude [-180, 180).
+ * The value is rounded off to the 4th decimal place.
  * <p>
  * The input can be in range [-180, 360).
- * If you input 200, then the value is considered -160.
+ * If you input 200, then the value is considered to be -160.
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
@@ -18,24 +18,21 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @version 0.1.0.4
  */
 class Longitude implements Comparable<Longitude> {
-    /**
-     * input value [-180, 360) [deg]
-     */
-    private final double INPUT_LONGITUDE;
 
     /**
-     * (-180, 180] geographic longitude [deg]
+     * the number of decimal places to round off the longitude value
+     */
+    private static final int PRECISION = 4;
+
+    /**
+     * [-180, 180) geographic longitude [deg]
      */
     private double longitude;
 
     /**
-     * [0, 2*&pi;) &phi; in spherical coordinates [rad]
+     * [-&pi;, &pi;) &phi; in spherical coordinates [rad]
      */
     private double phi;
-    /**
-     * epsilon to test equality within a range for this.longitude
-     */
-    private final double eps = 1e-4;
 
     /**
      * @param longitude [deg] [-180, 360)
@@ -43,21 +40,17 @@ class Longitude implements Comparable<Longitude> {
     Longitude(double longitude) {
         if (!checkLongitude(longitude)) throw new IllegalArgumentException(
                 "The input longitude: " + longitude + " is invalid (must be [-180, 360)).");
-        INPUT_LONGITUDE = longitude;
 
-        if (180 < longitude) {
-            phi = FastMath.toRadians(longitude - 360);
-            this.longitude = -360 + longitude;
+        if (180 <= longitude) {
+            this.longitude = Precision.round(longitude - 360, PRECISION);
         } else {
-            phi = FastMath.toRadians(longitude);
-            this.longitude = longitude;
+            this.longitude = Precision.round(longitude, PRECISION);
         }
-        this.longitude = Precision.round(this.longitude, 4);
-        phi = Precision.round(phi, 4);
+        phi = FastMath.toRadians(this.longitude);
     }
 
     /**
-     * check if the longitude is [-180, 360)
+     * check if the longitude is within [-180, 360)
      *
      * @param longitude [deg]
      * @return if the longitude is valid
@@ -93,11 +86,11 @@ class Longitude implements Comparable<Longitude> {
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
 //        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
-        return Utilities.equalWithinEpsilon(longitude, other.longitude, eps);
+        return Utilities.equalWithinEpsilon(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
     }
 
     /**
-     * (-180, 180]
+     * [-180, 180)
      *
      * @return longitude [deg]
      */
@@ -106,7 +99,7 @@ class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * [0, 2*&pi;)
+     * [-&pi;, &pi;)
      *
      * @return &phi; [rad]
      */
@@ -114,11 +107,4 @@ class Longitude implements Comparable<Longitude> {
         return phi;
     }
 
-    /**
-     * @return raw value input to constructor
-     */
-/*    public double getValue() {
-        return INPUT_LONGITUDE;
-    }
-*/
 }

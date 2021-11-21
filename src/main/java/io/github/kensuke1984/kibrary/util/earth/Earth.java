@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
-import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
+import java.util.Arrays;
 
 import org.apache.commons.math3.util.FastMath;
 
-import java.util.Arrays;
+import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 
 /**
  * Earth utility.
@@ -42,8 +42,20 @@ public final class Earth {
     }
 
     /**
-     * Compute length between points on lower and upper latitudes in the same
-     * meridian. 。
+     * Compute a distance along a meridian between the equator and
+     * an input latitude.
+     *
+     * @param latitude [deg] geographic latitude [-90, 90]
+     * @return [km] distance along the meridian between the equator and latitude.
+     */
+    private static double getMeridionalParts(double latitude) {
+        if (latitude < -90 || 90 < latitude)
+            throw new IllegalArgumentException("Input latitude: " + latitude + " is invalid.");
+        return getSUMforMeridionalParts(latitude) * EQUATORIAL_RADIUS;
+    }
+
+    /**
+     * Compute length between points on lower and upper latitudes in the same meridian.
      *
      * @param lowerLatitude [deg] geographic latitude
      * @param upperLatitude [deg] geographic latitude
@@ -52,7 +64,7 @@ public final class Earth {
     public static double getMeridionalParts(double lowerLatitude, double upperLatitude) {
         if (upperLatitude < lowerLatitude || lowerLatitude < -90 || 90 < lowerLatitude || upperLatitude < -90 ||
                 90 < upperLatitude) throw new IllegalArgumentException(
-                "input latitudes lower, upper: " + lowerLatitude + ", " + upperLatitude + " are invalid.");
+                "Input latitudes lower, upper: " + lowerLatitude + ", " + upperLatitude + " are invalid.");
 
         if (0 <= lowerLatitude) return getMeridionalParts(upperLatitude) - getMeridionalParts(lowerLatitude);
         else if (upperLatitude < 0) return getMeridionalParts(lowerLatitude) - getMeridionalParts(upperLatitude);
@@ -60,7 +72,7 @@ public final class Earth {
     }
 
     /**
-     * Compute an radius of a position on the surface after oval consideration
+     * Compute the radius of a position on the surface after oval consideration
      *
      * @param position {@link HorizontalPosition} of a target point
      * @return [km] revised radius of the position after oval consideration
@@ -76,31 +88,18 @@ public final class Earth {
      * Compute a length of major axis of similar oval, on which the location
      * exists, to the Earth
      *
-     * @param location {@link FullPosition} of a target point
+     * @param position {@link FullPosition} of a target point
      * @return [km] length of a major axis of the oval, similar to Earth, where the location exists.
      */
-    public static double getExtendedShaft(FullPosition location) {
-        if (location.getR() == 0) {
-            System.err.println("location has no radius information, the extended shaft for the surface is returned.");
+    public static double getExtendedShaft(FullPosition position) {
+        if (position.getR() == 0) {
+            System.err.println("Position has no radius information, the extended shaft for the surface is returned.");
             return EQUATORIAL_RADIUS;
         }
-        double r2 = location.getR() * location.getR();
-        double theta = location.getGeocentricLatitude();
+        double r2 = position.getR() * position.getR();
+        double theta = position.getGeocentricLatitude();
         return FastMath.sqrt(r2 * FastMath.cos(theta) * FastMath.cos(theta) +
                 r2 * FastMath.sin(theta) * FastMath.sin(theta) / (1 - E * E));
-    }
-
-    /**
-     * Compute a distance along a meridian between the equator and
-     * an input latitude.
-     *
-     * @param latitude [deg] geographic latitude [-90, 90]
-     * @return [km] distance along the meridian between the equator and latitude.
-     */
-    private static double getMeridionalParts(double latitude) {
-        if (latitude < -90 || 90 < latitude)
-            throw new IllegalArgumentException("input latitude: " + latitude + " is invalid.");
-        return getSUMforMeridionalParts(latitude) * EQUATORIAL_RADIUS;
     }
 
     /**
@@ -112,7 +111,7 @@ public final class Earth {
      */
     private static double getSUMforMeridionalParts(double latitude) {
         if (latitude < -90 || 90 < latitude)
-            throw new IllegalArgumentException("input latitude: " + latitude + " is invalid.");
+            throw new IllegalArgumentException("Input latitude: " + latitude + " is invalid.");
         double s = 0; // length
         // double N=0;
         double n2 = N * N;
@@ -128,62 +127,6 @@ public final class Earth {
         s += 315 / 512.0 * n4 * FastMath.sin(8 * phi);
         s /= 1 + N;
         return s;
-    }
-
-    /**
-     * Compute epicentral distance between pos1 and pos2
-     *
-     * @param pos1 {@link HorizontalPosition} of a point
-     * @param pos2 {@link HorizontalPosition} of a point
-     * @return [rad] epicentral distance between pos1 and pos2
-     */
-    public static double getEpicentralDistance(HorizontalPosition pos1, HorizontalPosition pos2) {
-
-        double theta1 = pos1.getTheta();
-        double theta2 = pos2.getTheta();
-        double phi1 = pos1.getPhi();
-        double phi2 = pos2.getPhi();
-        // cos a = a*b/|a|/|b|
-        double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2) +
-                FastMath.cos(theta1) * FastMath.cos(theta2);
-        return FastMath.acos(cosAlpha);
-    }
-
-    /**
-     * @param eq      {@link HorizontalPosition} of source
-     * @param station {@link HorizontalPosition} of station
-     * @return [rad] azimuth of the station from the eq
-     */
-    public static double getAzimuth(HorizontalPosition eq, HorizontalPosition station) {
-        double e = eq.getTheta();
-        double s = station.getTheta();
-        // System.out.println("eq:"+e+" station: "+s);
-        double deltaPhi = -eq.getPhi() + station.getPhi();
-        double delta = getEpicentralDistance(eq, station);
-        double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi)) /
-                FastMath.sin(delta);
-        if (1 < cos) cos = 1;
-        else if (cos < -1) cos = -1;
-        double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
-        double az = FastMath.acos(cos);
-        return 0 <= sin ? az : -az + 2 * Math.PI;
-    }
-
-    /**
-     * @param sourcePos   {@link HorizontalPosition} of a source
-     * @param receiverPos {@link HorizontalPosition} of a receiver
-     * @return [rad] Back azimuth of the receiver from the source
-     */
-    public static double getBackAzimuth(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
-        double e = sourcePos.getTheta();
-        double s = receiverPos.getTheta();
-        double deltaPhi = sourcePos.getPhi() - receiverPos.getPhi();
-        double delta = getEpicentralDistance(sourcePos, receiverPos);
-        double cos = (FastMath.cos(e) * FastMath.sin(s) - FastMath.sin(e) * FastMath.cos(s) * FastMath.cos(deltaPhi)) /
-                FastMath.sin(delta);
-        double sin = FastMath.sin(e) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
-        double az = FastMath.acos(cos);
-        return 0 <= sin ? az : -az + 2 * Math.PI;
     }
 
     /**
@@ -280,8 +223,8 @@ public final class Earth {
 
         double latitude = point.getLatitude();
         double longitude = point.getLongitude();
-        double startA = getExtendedShaft(point.toLocation(r - 0.5 * dr));
-        double endA = getExtendedShaft(point.toLocation(r + 0.5 * dr));
+        double startA = getExtendedShaft(point.toFullPosition(r - 0.5 * dr));
+        double endA = getExtendedShaft(point.toFullPosition(r + 0.5 * dr));
         return getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
                 longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
     }
@@ -312,51 +255,107 @@ public final class Earth {
         double s1 = el1.getS(theta0, theta1);
         return s1 - s0;
     }
-    
-	/**
-	 * @param eq
-	 * @param station
-	 * @return
-	 * @author anselme
-	 */
-	public static double getGeographicalAzimuth(HorizontalPosition eq, HorizontalPosition station) {
-		double e = (90. - eq.getLatitude()) * Math.PI / 180.;
-		double s = (90. - station.getLatitude()) * Math.PI / 180.;
-		// System.out.println("eq:"+e+" station: "+s);
-		double deltaPhi = -eq.getPhi() + station.getPhi();
-		double delta = getGeographicalDistance(eq, station);
-		double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi))
-				/ FastMath.sin(delta);
-		if (1 < cos)
-			cos = 1;
-		else if (cos < -1)
-			cos = -1;
-		double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
-		double az = FastMath.acos(cos);
-		// System.out.println(cos+" "+az);
-		// System.out.println(az*180/Math.PI);
-		return 0 <= sin ? az : -az + 2 * Math.PI;
-	}
-	
-	/**
-	 * @param loc1
-	 * @param loc2
-	 * @return
-	 * @author anselme
-	 */
-	public static double getGeographicalDistance(HorizontalPosition loc1, HorizontalPosition loc2) {
-		double theta1 = (90. - loc1.getLatitude()) * Math.PI / 180.;
-		double theta2 = (90. - loc2.getLatitude()) * Math.PI / 180.;
-		double phi1 = loc1.getPhi();
-		double phi2 = loc2.getPhi();
 
-		/*
-		 * cos a = a*b/|a|/|b|
-		 */
-		double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2)
-				+ FastMath.cos(theta1) * FastMath.cos(theta2);
+    /**
+     * @param eq
+     * @param station
+     * @return
+     * @author anselme
+     */
+    public static double getGeographicalAzimuth(HorizontalPosition eq, HorizontalPosition station) {
+        double e = (90. - eq.getLatitude()) * Math.PI / 180.;
+        double s = (90. - station.getLatitude()) * Math.PI / 180.;
+        // System.out.println("eq:"+e+" station: "+s);
+        double deltaPhi = -eq.getPhi() + station.getPhi();
+        double delta = getGeographicalDistance(eq, station);
+        double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi))
+                / FastMath.sin(delta);
+        if (1 < cos)
+            cos = 1;
+        else if (cos < -1)
+            cos = -1;
+        double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
+        double az = FastMath.acos(cos);
+        // System.out.println(cos+" "+az);
+        // System.out.println(az*180/Math.PI);
+        return 0 <= sin ? az : -az + 2 * Math.PI;
+    }
 
-		return FastMath.acos(cosAlpha);
-	}
-    
+    /**
+     * @param loc1
+     * @param loc2
+     * @return
+     * @author anselme
+     */
+    public static double getGeographicalDistance(HorizontalPosition loc1, HorizontalPosition loc2) {
+        double theta1 = (90. - loc1.getLatitude()) * Math.PI / 180.;
+        double theta2 = (90. - loc2.getLatitude()) * Math.PI / 180.;
+        double phi1 = loc1.getPhi();
+        double phi2 = loc2.getPhi();
+
+        /*
+         * cos a = a*b/|a|/|b|
+         */
+        double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2)
+                + FastMath.cos(theta1) * FastMath.cos(theta2);
+
+        return FastMath.acos(cosAlpha);
+    }
+
+    /**
+     * Compute epicentral distance between pos1 and pos2
+     *
+     * @param pos1 {@link HorizontalPosition} of a point
+     * @param pos2 {@link HorizontalPosition} of a point
+     * @return [rad] epicentral distance between pos1 and pos2
+     */
+    public static double getEpicentralDistance(HorizontalPosition pos1, HorizontalPosition pos2) {
+
+        double theta1 = pos1.getTheta();
+        double theta2 = pos2.getTheta();
+        double phi1 = pos1.getPhi();
+        double phi2 = pos2.getPhi();
+        // cos a = a*b/|a|/|b|
+        double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2) +
+                FastMath.cos(theta1) * FastMath.cos(theta2);
+        return FastMath.acos(cosAlpha);
+    }
+
+    /**
+     * @param eq      {@link HorizontalPosition} of source
+     * @param station {@link HorizontalPosition} of station
+     * @return [rad] azimuth of the station from the eq
+     */
+    public static double getAzimuth(HorizontalPosition eq, HorizontalPosition station) {
+        double e = eq.getTheta();
+        double s = station.getTheta();
+        // System.out.println("eq:"+e+" station: "+s);
+        double deltaPhi = -eq.getPhi() + station.getPhi();
+        double delta = getEpicentralDistance(eq, station);
+        double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi)) /
+                FastMath.sin(delta);
+        if (1 < cos) cos = 1;
+        else if (cos < -1) cos = -1;
+        double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
+        double az = FastMath.acos(cos);
+        return 0 <= sin ? az : -az + 2 * Math.PI;
+    }
+
+    /**
+     * @param sourcePos   {@link HorizontalPosition} of a source
+     * @param receiverPos {@link HorizontalPosition} of a receiver
+     * @return [rad] Back azimuth of the receiver from the source
+     */
+    public static double getBackAzimuth(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
+        double e = sourcePos.getTheta();
+        double s = receiverPos.getTheta();
+        double deltaPhi = sourcePos.getPhi() - receiverPos.getPhi();
+        double delta = getEpicentralDistance(sourcePos, receiverPos);
+        double cos = (FastMath.cos(e) * FastMath.sin(s) - FastMath.sin(e) * FastMath.cos(s) * FastMath.cos(deltaPhi)) /
+                FastMath.sin(delta);
+        double sin = FastMath.sin(e) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
+        double az = FastMath.acos(cos);
+        return 0 <= sin ? az : -az + 2 * Math.PI;
+    }
+
 }

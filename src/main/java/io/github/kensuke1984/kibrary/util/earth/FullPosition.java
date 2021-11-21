@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -12,11 +14,11 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * <p>
  * 3D position on Earth.
  * <p>
- * Latitude (-180, 180) Longitude（-90, 90）Radius [0,&infin;)
+ * Latitude (-180, 180) Longitude（-90, 90）Radius [0, &infin;)
  * <p>
  * <b>This class is IMMUTABLE</b>.
  * <p>
- * This class rounds off values at the 4th decimal point.
+ * The radius is rounded off to the 6th decimal place.
  *
  * @author Kensuke Konishi
  * @version 0.1.1.3
@@ -25,13 +27,13 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 public class FullPosition extends HorizontalPosition {
 
     /**
-     * [km] radius rounded off to the 3 decimal places.
+     * the number of decimal places to round off the radius value
+     */
+    private static final int R_PRECISION = 6;
+    /**
+     * [0, &infin;) radius [km]
      */
     private final double R;
-    /**
-     * equals within epsilon
-     */
-    private double eps = 1e-4;
 
     /**
      * @param latitude  [deg] geographical latitude
@@ -40,8 +42,8 @@ public class FullPosition extends HorizontalPosition {
      */
     public FullPosition(double latitude, double longitude, double r) {
         super(latitude, longitude);
-//        R = Precision.round(r, 3);
-        R = r;
+        R = Precision.round(r, R_PRECISION);
+//        R = r;
     }
 
     public static double toLatitude(double theta) {
@@ -56,6 +58,34 @@ public class FullPosition extends HorizontalPosition {
         int horizontalCompare = super.compareTo(o);
         if (horizontalCompare != 0 || !(o instanceof FullPosition)) return horizontalCompare;
         return Double.compare(R, ((FullPosition) o).R);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+//      long temp;
+//      temp = Double.doubleToLongBits(R);
+//      result = prime * result + (int) (temp ^ (temp >>> 32));
+//      int temp = (int) (R / eps / 10);
+        int temp = (int) R;
+        result = prime * result + temp;
+        return result;
+    }
+
+    /**
+     *
+     * @author anselme equals within epsilon
+     * @return true only when the other object is also FullPosition and latitude, longitude, radius are all equal
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!super.equals(obj)) return false;
+        if (getClass() != obj.getClass()) return false;
+        FullPosition other = (FullPosition) obj;
+//        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
+        return Utilities.equalWithinEpsilon(R, other.R, Math.pow(10, -R_PRECISION)/2);
     }
 
     /**
@@ -116,32 +146,6 @@ public class FullPosition extends HorizontalPosition {
         return location.toXYZGeographical().getDistance(toXYZGeographical());
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-//		long temp;
-//		temp = Double.doubleToLongBits(R);
-//		result = prime * result + (int) (temp ^ (temp >>> 32));
-//		int temp = (int) (R / eps / 10);
-        int temp = (int) R;
-        result = prime * result + temp;
-        return result;
-    }
-
-    /**
-     *@author anselme equals within epsilon
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!super.equals(obj)) return false;
-        if (getClass() != obj.getClass()) return false;
-        FullPosition other = (FullPosition) obj;
-//        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
-        return Utilities.equalWithinEpsilon(R, other.R, eps);
-    }
-
     /**
      * @param locations to be sorted.
      * @return locations in the order of the distance from this.
@@ -184,7 +188,7 @@ public class FullPosition extends HorizontalPosition {
 
     @Override
     public String toString() {
-        return super.toString() + ' ' + R;
+        return super.toString() + " " + R;
     }
 
 }

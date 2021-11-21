@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Latitude [-90, 90].
- * The value is rounded off to the fourth decimal place.
+ * The value is rounded off to the 4th decimal place.
  *<p>
  * This class is <b>IMMUTABLE</b>
  *
@@ -18,48 +18,25 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 class Latitude implements Comparable<Latitude> {
 
     /**
-     * geographic latitude [deg] [-90, 90]
+     * the number of decimal places to round off the latitude value
+     */
+    private static final int PRECISION = 4;
+
+    /**
+     * [-90, 90] geographic latitude [deg]
      */
     private double geographicLatitude;
     /**
-     * geocentric latitude [deg] [-90, 90]
+     * [-&pi;/2, &pi;/2] geocentric latitude [rad]
      */
     private double geocentricLatitude;
     /**
-     * [0, &pi;] radian &theta; in spherical coordinates.
+     * [0, &pi;] &theta; in spherical coordinates [rad]
      */
     private double theta;
-    private double inGeographicLatitude;
-    /**
-     * epsilon to test equality within a range for this.latitude
-     */
-    private final double eps = 1e-4;
 
     /**
-     * Creates a Latitude instance. The input must be within [-90, 90].
-     * @param geographicLatitude [deg] [-90, 90]
-     */
-    Latitude(double geographicLatitude) {
-        inGeographicLatitude = geographicLatitude;
-        this.geographicLatitude = Precision.round(geographicLatitude, 4);
-        if (!checkLatitude(geographicLatitude)) throw new IllegalArgumentException(
-                "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
-        geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
-        theta = 0.5 * Math.PI - geocentricLatitude;
-    }
-
-    /**
-     * check if the latitude works for this class
-     *
-     * @param latitude [deg]
-     * @return if the latitude is valid
-     */
-    private static boolean checkLatitude(double latitude) {
-        return -90 <= latitude && latitude <= 90;
-    }
-
-    /**
-     * Returns Latitude made from geocentric angle from North Pole.
+     * Method to convert a (double) latitude value to a (double) theta value.
      * @param theta [rad] spherical coordinates [0, &pi;]
      * @return geographic latitude [deg]
      */
@@ -70,6 +47,30 @@ class Latitude implements Comparable<Latitude> {
 
         double geocentric = 0.5 * Math.PI - theta;
         return FastMath.toDegrees(Earth.toGeographical(geocentric));
+    }
+
+
+    /**
+     * Creates a Latitude instance. The input must be within [-90, 90].
+     * @param geographicLatitude [deg] [-90, 90]
+     */
+    Latitude(double geographicLatitude) {
+        if (!checkLatitude(geographicLatitude)) throw new IllegalArgumentException(
+                "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
+
+        this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
+        geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
+        theta = 0.5 * Math.PI - geocentricLatitude;
+    }
+
+    /**
+     * check if the latitude is within [-90, 90].
+     *
+     * @param latitude [deg]
+     * @return if the latitude is valid
+     */
+    private static boolean checkLatitude(double latitude) {
+        return -90 <= latitude && latitude <= 90;
     }
 
     @Override
@@ -99,13 +100,9 @@ class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
         // return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
-        return Utilities.equalWithinEpsilon(geographicLatitude, other.geographicLatitude, eps);
+        return Utilities.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
     }
-/*
-    public double getInGeographicLatitude() {
-        return inGeographicLatitude;
-    }
-*/
+
     /**
      * @return geographic latitude [deg]
      */

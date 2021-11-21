@@ -315,7 +315,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 //				perturbationRs[i] = perturbationLocations[i].getR();
 			
 			String stationName = bp.getSourceID();
-			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
+			if (!station.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
 				throw new RuntimeException("There may be a station with the same name but other networks.");
 
 			if (bp.tlen() != tlen || bp.np() != np)
@@ -406,7 +406,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 //			for (int ibody = 0, nbody = perturbationRs.length; ibody < nbody; ibody++) {
 				// とりあえずtransverse（２）成分についての名前
 //				Location location = fp.getObserverPosition().toLocation(perturbationRs[ibody]);//fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
-				FullPosition location = bp.getObserverPosition().toLocation(bp.getBodyR()[ibody]);
+				FullPosition location = bp.getObserverPosition().toFullPosition(bp.getBodyR()[ibody]);
 //				System.out.println(location);
 				
 				if (!perturbationLocationSet.contains(location))

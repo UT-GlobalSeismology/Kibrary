@@ -4,9 +4,7 @@ package io.github.kensuke1984.kibrary.util;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -37,12 +35,6 @@ public class Observer implements Comparable<Observer> {
      * network code for stations in synthetic datasets
      */
     public static final String SYN = "DSM";
-    /**
-     * The number of decimal places to round off coordinates
-     * when judging whether observers (with same network and station) are in the same position.
-     * It is OK if the value is different from {@link DataKitchen#coordinateGrid}.
-     */
-    public static final int COORDINATE_SCALE = 2;
     /**
      * maximum number of letters of station
      */
@@ -136,13 +128,15 @@ public class Observer implements Comparable<Observer> {
         return new Observer(stationName, position, network);
     }
 
+    /**
+     * Sorting order is station &rarr; network &rarr; position.
+     */
     @Override
     public int compareTo(Observer o) {
         int name = station.compareTo(o.station);
         if (name != 0)
             return name;
         int net = network.compareTo(o.network);
-//		int pos = comparePosition(o) == true ? 0 : 1;
         return net != 0 ? net : position.compareTo(o.getPosition());
     }
 
@@ -159,9 +153,9 @@ public class Observer implements Comparable<Observer> {
     /**
      * Observers are considered equal if and only if
      * [network code is equal && station code is equal
-     * && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
+     * && position is {@link HorizontalPosition#equals(Object)}].
      * If the network code is 'DSM', comparison of networks between instances is not done;
-     * station code and horizontal position is considered.
+     * only station code and horizontal position are considered.
      */
     @Override
     public boolean equals(Object obj) {
@@ -176,7 +170,7 @@ public class Observer implements Comparable<Observer> {
         if (position == null) {
             if (other.position != null)
                 return false;
-        } else if (!equal(position, other.position))
+        } else if (!position.equals(other.position))
             return false;
 
         if (station == null) {
@@ -193,33 +187,6 @@ public class Observer implements Comparable<Observer> {
             return false;
 
         return true;
-    }
-
-    /**
-     * Judges whether 2 observers are at the same position.
-     * @param pos1
-     * @param pos2
-     * @return
-     */
-    private boolean equal(HorizontalPosition pos1, HorizontalPosition pos2) {
-        if (Precision.round(pos1.getLatitude(), COORDINATE_SCALE)
-                != Precision.round(pos2.getLatitude(), COORDINATE_SCALE))
-            return false;
-        else if (Precision.round(pos1.getLongitude(), COORDINATE_SCALE)
-                != Precision.round(pos2.getLongitude(), COORDINATE_SCALE))
-            return false;
-        else
-            return true;
-        // this way, it is transitive (i.e. if (x==y && y==z) then x==z)
-
-/*      //this is not transitive:
-        if (!Utilities.equalWithinEpsilon(pos1.getLatitude(), pos2.getLatitude(), COORDINATE_GRID))
-            return false;
-        else if (!Utilities.equalWithinEpsilon(pos1.getLongitude(), pos2.getLongitude(), COORDINATE_GRID))
-            return false;
-        else
-            return true;
-*/
     }
 
     /**
