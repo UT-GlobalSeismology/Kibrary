@@ -15,7 +15,8 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -74,8 +75,8 @@ public class EventInformationFile {
     }
 
     private static void createEventInformationFile(Path workPath, OpenOption... options) throws IOException {
-        Path outpath = workPath.resolve("event" + Utilities.getTemporaryString() + ".inf");
-        Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workPath);
+        Path outpath = workPath.resolve("event" + GadgetUtils.getTemporaryString() + ".inf");
+        Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(workPath);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, options))) {
             pw.write("#GCMTID lat lon radius #transverse #vertical #radial Mw noiseToAmplitudeBeforeS noiseRatioVariance");
             for (EventFolder folder : eventFolderSet) {

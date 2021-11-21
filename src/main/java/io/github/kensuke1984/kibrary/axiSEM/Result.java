@@ -8,7 +8,8 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -67,7 +68,7 @@ public class Result implements Operation {
 		long startT = System.nanoTime();
 		result.run();
 		System.err.println(
-				Result.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				Result.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - startT));
 	
 //		 test of resampling method
 //		/*
@@ -123,7 +124,7 @@ public class Result implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(SshDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+				.get(SshDSMInformationFileMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan Result");
 			pw.println("##These are the properties for Result");
@@ -169,7 +170,7 @@ public class Result implements Operation {
 		set();
 		
 		try {
-			Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workPath);
+			Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(workPath);
 			for (EventFolder eventFolder : eventFolderSet) {
 				Path resultFolder = eventFolder.toPath()
 						.resolve("SOLVER/" + meshName + "/Data_Postprocessing/SEISMOGRAMS");
@@ -187,7 +188,7 @@ public class Result implements Operation {
 					double latitude = Double.parseDouble(s[2]);
 					double longitude = Double.parseDouble(s[3]);
 					Observer station = new Observer(stationName
-							, new HorizontalPosition(latitude, longitude), network);
+							, network, new HorizontalPosition(latitude, longitude));
 					stationSet.add(station);
 				}
 				

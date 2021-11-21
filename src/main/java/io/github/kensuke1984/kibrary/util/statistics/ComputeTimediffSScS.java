@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -83,7 +83,7 @@ public class ComputeTimediffSScS {
 		
 //		timewindows.removeIf(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201007261731A")));
 		
-		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workdir);
+		Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(workdir);
 		
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("S, ScS");

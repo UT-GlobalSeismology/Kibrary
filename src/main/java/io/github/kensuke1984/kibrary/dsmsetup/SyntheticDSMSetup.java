@@ -23,7 +23,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -97,7 +98,7 @@ public class SyntheticDSMSetup implements Operation {
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths
-                .get(SyntheticDSMSetup.class.getName() + Utilities.getTemporaryString() + ".properties");
+                .get(SyntheticDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan SyntheticDSMInformationFileMaker");
             pw.println("##SacComponents that observers must have to be used (Z R T)");
@@ -183,7 +184,7 @@ public class SyntheticDSMSetup implements Operation {
         System.err.println(SyntheticDSMSetup.class.getName() + " is operating.");
         sdsms.run();
         System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
     }
 
     /**
@@ -192,7 +193,7 @@ public class SyntheticDSMSetup implements Operation {
      */
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(obsPath);
         String modelName = structurePath.toString().trim().toUpperCase();
         PolynomialStructure ps = null;
 
@@ -291,7 +292,7 @@ public class SyntheticDSMSetup implements Operation {
             }
         }
 
-        Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
+        Path outPath = workPath.resolve("synthetic" + GadgetUtils.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
@@ -305,7 +306,7 @@ public class SyntheticDSMSetup implements Operation {
                 double distance = i;
                 String stationName = String.format("%03d", i);
                 Observer observer = new Observer(stationName
-                        , new HorizontalPosition(0, distance), Observer.SYN);
+                        , Observer.SYN, new HorizontalPosition(0, distance));
                 synObserverSet.add(observer);
             }
         }

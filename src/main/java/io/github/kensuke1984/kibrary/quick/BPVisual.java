@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.SpcFileUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -67,7 +67,7 @@ public class BPVisual {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 		
-		for (SPCFileName spcName : Utilities.collectSpcFileName(Paths.get("."))) {
+		for (SPCFileName spcName : SpcFileUtils.collectSpcFileName(Paths.get("."))) {
 			SPCFileAccess bpSpc = spcName.read();
 			
 			HorizontalPosition obsPos = bpSpc.getObserverPosition();

@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -26,7 +26,7 @@ class BasicIDMerge {
 		Path src1Data = Paths.get(args[3]);
 		BasicID[] src0 = BasicIDFile.read(src0ID, src0Data);
 		BasicID[] src1 = BasicIDFile.read(src1ID, src1Data);
-		String tmpstr = Utilities.getTemporaryString();
+		String tmpstr = GadgetUtils.getTemporaryString();
 		Path idPath = workingDir.resolve("waveformID" + tmpstr + ".dat");
 		Path dataPath = workingDir.resolve("waveform" + tmpstr + ".dat");
 		

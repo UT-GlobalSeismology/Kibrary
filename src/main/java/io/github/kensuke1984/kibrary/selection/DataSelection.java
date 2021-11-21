@@ -32,14 +32,15 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -155,7 +156,7 @@ public class DataSelection implements Operation {
                     && s.getComponent() == t.getComponent();
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(DataSelection.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(DataSelection.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataSelection");
             pw.println("##Path of a working folder (.)");
@@ -228,7 +229,7 @@ public class DataSelection implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        String dateStr = Utilities.getTemporaryString();
+        String dateStr = GadgetUtils.getTemporaryString();
         infoOutputpath = workPath.resolve("dataSelection" + dateStr + ".inf");
         outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
         eachEventResultFile = "selectionResult" + dateStr + ".txt";
@@ -277,22 +278,22 @@ public class DataSelection implements Operation {
         System.err.println(DataSelection.class.getName() + " is operating.");
         ds.run();
         System.err.println(DataSelection.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(obsPath);
         sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
         staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
                 : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
+        ExecutorService es = ThreadUtils.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
-            ThreadAid.sleep(1000);
+            ThreadUtils.sleep(1000);
         }
         // this println() is for starting new line after writing "."s
         System.err.println();

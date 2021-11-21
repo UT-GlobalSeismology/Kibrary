@@ -21,7 +21,8 @@ import org.apache.commons.io.FileUtils;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
@@ -52,12 +53,12 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	public SecondHandler(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
-		String date = Utilities.getTemporaryString();
+		String date = GadgetUtils.getTemporaryString();
 		trashName = "secondHandlerTrash" + date;
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(SecondHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(SecondHandler.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan SecondHandler");
 			pw.println("##Path of a working folder (.)");
@@ -95,7 +96,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 		long time = System.nanoTime();
 		s.run();
 		System.err.println(
-				SecondHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
+				SecondHandler.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - time));
 	}
 
     /**
@@ -265,7 +266,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
 	@Override
 	public void run() throws Exception {
-		Utilities.runEventProcess(workPath, this, 2, TimeUnit.HOURS);
+		ThreadUtils.runEventProcess(workPath, this, 2, TimeUnit.HOURS);
 	}
 
 }

@@ -14,7 +14,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -57,7 +57,7 @@ public class DataRequestor implements Operation {
     private Set<GlobalCMTID> requestedIDs;
     private boolean send;
     private Properties property;
-    private String date = Utilities.getTemporaryString();
+    private String date = GadgetUtils.getTemporaryString();
 
     public DataRequestor(Properties property) {
         this.property = (Properties) property.clone();
@@ -84,7 +84,7 @@ public class DataRequestor implements Operation {
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(DataRequestor.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(DataRequestor.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataRequestor");
             pw.println("##Path of a work folder (.)");
@@ -201,7 +201,7 @@ public class DataRequestor implements Operation {
         System.out.println(requestedIDs.size() + " events are found.");
         System.out.println("Label contains \"" + date + "\"");
         requestedIDs.forEach(id -> output(createBreakFastMail(id)));
-        Path sent = workPath.resolve("sent" + Utilities.getTemporaryString());
+        Path sent = workPath.resolve("sent" + GadgetUtils.getTemporaryString());
         if (send) try {
             System.err.println("Sending requests in 5 sec.");
             System.err.println("Sent mails will be in " + sent);

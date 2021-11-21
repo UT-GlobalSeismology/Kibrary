@@ -7,7 +7,8 @@ import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
@@ -76,7 +77,7 @@ public class RaypathDistribution implements Operation {
 	}
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(RaypathDistribution.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(RaypathDistribution.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan RaypathDistribution");
 			pw.println("##Work folder (.)");
@@ -108,7 +109,7 @@ public class RaypathDistribution implements Operation {
 		System.out.println(RaypathDistribution.class.getName() + " is going.");
 		rd.run();
 		System.out.println(RaypathDistribution.class.getName() + " finished in "
-				+ Utilities.toTimeString(System.nanoTime() - start));
+				+ GadgetUtils.toTimeString(System.nanoTime() - start));
 	}
 
 	private void set() throws IOException {
@@ -144,7 +145,7 @@ public class RaypathDistribution implements Operation {
 	}
 
 	private void setName() {
-		String date = Utilities.getTemporaryString();
+		String date = GadgetUtils.getTemporaryString();
 		stationPath = workPath.resolve("rdStation" + date + ".inf");
 		eventPath = workPath.resolve("rdEvent" + date + ".inf");
 		raypathPath = workPath.resolve("rdRaypath" + date + ".inf");
@@ -192,7 +193,7 @@ public class RaypathDistribution implements Operation {
 	public void run() throws IOException {
 		setName();
 		if (timeWindowInformationFile == null)
-			ids = Utilities.globalCMTIDSet(workPath);
+			ids = FolderUtils.globalCMTIDSet(workPath);
 		else
 			ids = timeWindowInformationFile.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
@@ -233,7 +234,7 @@ public class RaypathDistribution implements Operation {
 	}
 
 	private void outputRaypath() throws IOException {
-		List<String> lines = Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		List<String> lines = FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
@@ -262,7 +263,7 @@ public class RaypathDistribution implements Operation {
 		final Phase phase = phasetmp;
 		
 		List<String> lines = new ArrayList<>();
-		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
@@ -300,7 +301,7 @@ public class RaypathDistribution implements Operation {
 			phasetmp = Phase.PcP;
 		final Phase phase = phasetmp;
 		
-		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
@@ -351,7 +352,7 @@ public class RaypathDistribution implements Operation {
 		List<String> lines_central = new ArrayList<>();
 		List<String> lines_eastern = new ArrayList<>();
 		
-		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {

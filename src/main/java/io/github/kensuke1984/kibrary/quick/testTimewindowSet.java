@@ -31,7 +31,7 @@ public class testTimewindowSet {
 	
 	private static Set<TimewindowData> getTestwindows() {
 		GlobalCMTID id = new GlobalCMTID("200503070717A");
-		Observer station = new Observer("340A", new HorizontalPosition(31.41670036315918, -93.88960266113281), "TA");
+		Observer station = new Observer("340A", "TA", new HorizontalPosition(31.41670036315918, -93.88960266113281));
 		
 		FullPosition loc = id.getEvent().getCmtLocation();
 		double distance = loc.getEpicentralDistance(station.getPosition()) * 180. / Math.PI ;

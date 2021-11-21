@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class CheckStaticCorrection {
 			mixed.add(mix);
 		}
 		
-		Path outmix = Paths.get("staticCorrection" + Utilities.getTemporaryString() + ".dat");
+		Path outmix = Paths.get("staticCorrection" + GadgetUtils.getTemporaryString() + ".dat");
 		StaticCorrectionDataFile.write(mixed, outmix);
 		
 		Path outpath0 = Paths.get("corrections_each_record_difference.txt");

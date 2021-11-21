@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -49,7 +49,7 @@ public class MakeUnknownParameterFile {
 			});
 			
 			// create unknowns file
-			Path unknownPath = Paths.get("unknowns" + Utilities.getTemporaryString() + ".inf");
+			Path unknownPath = Paths.get("unknowns" + GadgetUtils.getTemporaryString() + ".inf");
 			Files.deleteIfExists(unknownPath);
 			Files.createFile(unknownPath);
 			

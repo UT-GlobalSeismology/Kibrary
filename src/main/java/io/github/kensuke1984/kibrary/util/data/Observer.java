@@ -47,33 +47,33 @@ public class Observer implements Comparable<Observer> {
     private static final int NET_LENGTH = 2;
 
     /**
-     * network code
-     */
-    private final String network;
-    /**
      * station code
      */
     private final String station;
+    /**
+     * network code
+     */
+    private final String network;
     /**
      * the {@link HorizontalPosition} of the station
      */
     private final HorizontalPosition position;
 
     /**
-     * @param stationName Name of the station (must be 8 or less letters)
-     * @param network     Name of the network of the station (must be 8 or less letters)
-     * @param position    Horizontal POSITION of the station
+     * @param station    Name of the station (must be 8 or less letters)
+     * @param network    Name of the network of the station (must be 8 or less letters)
+     * @param position   Horizontal POSITION of the station
      */
-    public Observer(String stationName, HorizontalPosition position, String network) {
-        if (8 < stationName.length() || 8 < network.length())
+    public Observer(String station, String network, HorizontalPosition position) {
+        if (8 < station.length() || 8 < network.length())
             throw new IllegalArgumentException("Both station and network name must be 8 or less letters.");
-        this.station = stationName;
+        this.station = station;
         this.network = network;
         this.position = position;
     }
 
     public Observer(String observerID, HorizontalPosition position) {
-        this(observerID.split("_")[0], position, observerID.split("_")[1]);
+        this(observerID.split("_")[0], observerID.split("_")[1], position);
     }
 
     public Observer(Observer station) {
@@ -89,13 +89,13 @@ public class Observer implements Comparable<Observer> {
     public static Observer of(SACHeaderAccess sacHeaderData) {
         return sacHeaderData.getSACString(SACHeaderEnum.KNETWK) == "-12345"
                 ? new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
+                        SYN,
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)),
-                        SYN)
+                                sacHeaderData.getValue(SACHeaderEnum.STLO)))
                 : new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
+                        sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)),
-                        sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim());
+                                sacHeaderData.getValue(SACHeaderEnum.STLO)));
     }
 
     /**
@@ -116,7 +116,7 @@ public class Observer implements Comparable<Observer> {
         String name = new String(str).trim();
         bb.get(str);
         String network = new String(str).trim();
-        return new Observer(name, new HorizontalPosition(bb.getDouble(), bb.getDouble()), network);
+        return new Observer(name, network, new HorizontalPosition(bb.getDouble(), bb.getDouble()));
     }
 
     public static Observer createObserver(String stationLine) {
@@ -126,7 +126,7 @@ public class Observer implements Comparable<Observer> {
         double latitude = Double.parseDouble(ss[2]);
         double longitude = Double.parseDouble(ss[3]);
         HorizontalPosition position = new HorizontalPosition(latitude, longitude);
-        return new Observer(stationName, position, network);
+        return new Observer(stationName, network, position);
     }
 
     /**
@@ -191,17 +191,17 @@ public class Observer implements Comparable<Observer> {
     }
 
     /**
-     * @return the name of the network
-     */
-    public String getNetwork() {
-        return network;
-    }
-
-    /**
      * @return the name of the station
      */
     public String getStation() {
         return station;
+    }
+
+    /**
+     * @return the name of the network
+     */
+    public String getNetwork() {
+        return network;
     }
 
     /**
@@ -221,8 +221,9 @@ public class Observer implements Comparable<Observer> {
     }
 
     public String getPaddedInfoString() {
-        return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH) + " "
-            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 9) + " "
-            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 9);
+        return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH)
+                + " " + position.toString();
+//            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 9) + " "
+//            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 9);
     }
 }

@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 
 /**
  * Waveform inversion with Metropolis–Hastings algorithm.
@@ -100,6 +100,6 @@ public class MetroPoliceHastings<M, D> {
                 printWriter.println(i + " " + likelihoods[i]);
         }
         System.err.println(MetroPoliceHastings.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - start));
+                GadgetUtils.toTimeString(System.nanoTime() - start));
     }
 }

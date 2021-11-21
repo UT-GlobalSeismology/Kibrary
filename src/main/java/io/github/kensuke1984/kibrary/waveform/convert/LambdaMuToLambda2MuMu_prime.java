@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveform.convert;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -120,7 +120,7 @@ public class LambdaMuToLambda2MuMu_prime {
 			partialsLambda2mu.add(parLambda2mu);
 		}
 		
-		String tmpString = Utilities.getTemporaryString();
+		String tmpString = GadgetUtils.getTemporaryString();
 		Path outID = Paths.get("partialID" + tmpString +".dat");
 		Path out = Paths.get("partial" + tmpString + ".dat");
 		

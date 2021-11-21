@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.earth;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 
 /**
  * Latitude [-90, 90].
@@ -98,7 +98,7 @@ class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
         // return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
-        return Utilities.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
+        return MathUtils.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
     }
 
     /**
@@ -122,4 +122,19 @@ class Latitude implements Comparable<Latitude> {
         return theta;
     }
 
+    /**
+     * Print String so that all latitudes will have uniform number of digits.
+     * Total number of digits is the sum of:
+     * <ul>
+     * <li>1 (the minus sign)</li>
+     * <li>2 (the integer part; 0~90)</li>
+     * <li>1 (the period)</li>
+     * <li>{@value #PRECISION} (the decimal part)</li>
+     * <ul>
+     */
+    @Override
+    public String toString() {
+        String format = "%" + (4 + PRECISION) + "." + PRECISION + "f";
+        return String.format(format, geographicLatitude);
+    }
 }

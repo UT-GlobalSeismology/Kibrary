@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 import java.nio.file.Path;
@@ -61,8 +61,8 @@ public final class GMTMap {
         this.maxLatitude = maxLatitude;
         mapName = title.isEmpty() ? " " : title;
         setROption();
-        epsFileName = "gmt" + Utilities.getTemporaryString() + ".eps";
-        scriptFileName = "gmt" + Utilities.getTemporaryString() + ".sh";
+        epsFileName = "gmt" + GadgetUtils.getTemporaryString() + ".eps";
+        scriptFileName = "gmt" + GadgetUtils.getTemporaryString() + ".sh";
     }
 
     /**

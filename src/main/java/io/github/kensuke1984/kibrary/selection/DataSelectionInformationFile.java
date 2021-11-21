@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -43,7 +43,7 @@ public class DataSelectionInformationFile {
 
         Files.readAllLines(infoPath).stream().forEach(line -> {
             String[] s = line.split("\\s+");
-            Observer observer = new Observer(s[0], new HorizontalPosition(Double.parseDouble(s[2]), Double.parseDouble(s[3])), s[1]);
+            Observer observer = new Observer(s[0], s[1], new HorizontalPosition(Double.parseDouble(s[2]), Double.parseDouble(s[3])));
             Phase[] phases = Stream.of(s[8].split(",")).map(string -> Phase.create(string)).toArray(Phase[]::new);
 
             TimewindowData timewindow = new TimewindowData(Double.parseDouble(s[6]), Double.parseDouble(s[7]), observer,
@@ -79,9 +79,9 @@ public class DataSelectionInformationFile {
         int[] vars = new int[nVar];
         int[] ccs = new int[nCC];
         int[] ratios = new int[nRatio];
-        Path varPath = rootpath.resolve("histogram_variance" + Utilities.getTemporaryString() + ".dat");
-        Path corPath = rootpath.resolve("histogram_cc" + Utilities.getTemporaryString() + ".dat");
-        Path ratioPath = rootpath.resolve("histogram_ratio" + Utilities.getTemporaryString() + ".dat");
+        Path varPath = rootpath.resolve("histogram_variance" + GadgetUtils.getTemporaryString() + ".dat");
+        Path corPath = rootpath.resolve("histogram_cc" + GadgetUtils.getTemporaryString() + ".dat");
+        Path ratioPath = rootpath.resolve("histogram_ratio" + GadgetUtils.getTemporaryString() + ".dat");
 
         for (DataSelectionInformation info : infoList) {
             if (info.getVariance() > maxVar

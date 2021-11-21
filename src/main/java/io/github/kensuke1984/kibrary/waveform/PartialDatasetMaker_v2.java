@@ -41,7 +41,9 @@ import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.SpcFileUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -643,7 +645,7 @@ private class WorkerTimePartial implements Runnable {
 	private double dtheta;
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(PartialDatasetMaker_v2.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(PartialDatasetMaker_v2.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan PartialDatasetMaker");
 			pw.println("##Path of a working folder (.)");
@@ -800,7 +802,7 @@ private class WorkerTimePartial implements Runnable {
 	private void setLog() throws IOException {
 		synchronized (PartialDatasetMaker_v2.class) {
 			do {
-				dateString = Utilities.getTemporaryString();
+				dateString = GadgetUtils.getTemporaryString();
 				logPath = workPath.resolve("pdm" + dateString + ".log");
 			} while (Files.exists(logPath));
 			Files.createFile(logPath);
@@ -904,7 +906,7 @@ private class WorkerTimePartial implements Runnable {
 		// time partials for each event
 		if (timePartialPath != null) {
 			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-			Set<EventFolder> timePartialEventDirs = Utilities.eventFolderSet(timePartialPath);
+			Set<EventFolder> timePartialEventDirs = FolderUtils.eventFolderSet(timePartialPath);
 			for (EventFolder eventDir : timePartialEventDirs) {
 				execs.execute(new WorkerTimePartial(eventDir));
 				System.out.println("Working for time partials for " + eventDir);
@@ -938,12 +940,12 @@ private class WorkerTimePartial implements Runnable {
 			List<SPCFileName> bpFiles = null;
 			List<SPCFileName> bpFiles_PSV = null;
 			if (mode.equals("SH"))
-				bpFiles = Utilities.collectOrderedSHSpcFileName(bpModelPath);
+				bpFiles = SpcFileUtils.collectOrderedSHSpcFileName(bpModelPath);
 			else if (mode.equals("PSV"))
-				bpFiles = Utilities.collectOrderedPSVSpcFileName(bpModelPath);
+				bpFiles = SpcFileUtils.collectOrderedPSVSpcFileName(bpModelPath);
 			else if (mode.equals("BOTH")) {
-				bpFiles = Utilities.collectOrderedSHSpcFileName(bpModelPath);
-				bpFiles_PSV = Utilities.collectOrderedPSVSpcFileName(bpModelPath);
+				bpFiles = SpcFileUtils.collectOrderedSHSpcFileName(bpModelPath);
+				bpFiles_PSV = SpcFileUtils.collectOrderedPSVSpcFileName(bpModelPath);
 			}
 			System.out.println(bpFiles.size() + " bpfiles are found");
 
@@ -1165,14 +1167,14 @@ private class WorkerTimePartial implements Runnable {
 		System.err.println(PartialDatasetMaker_v2.class.getName() + " is going..");
 		pdm.run();
 		System.err.println(PartialDatasetMaker_v2.class.getName() + " finished in "
-				+ Utilities.toTimeString(System.nanoTime() - startTime));
+				+ GadgetUtils.toTimeString(System.nanoTime() - startTime));
 	}
 
 	private void terminate() throws IOException {
 		partialDataWriter.close();
 		endTime = System.nanoTime();
 		long nanoSeconds = endTime - startTime;
-		String endLine = "Everything is done in " + Utilities.toTimeString(nanoSeconds) + ". Over n out! ";
+		String endLine = "Everything is done in " + GadgetUtils.toTimeString(nanoSeconds) + ". Over n out! ";
 		System.err.println(endLine);
 		writeLog(endLine);
 		writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");

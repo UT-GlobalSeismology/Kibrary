@@ -46,7 +46,8 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -271,7 +272,7 @@ public class LetMeInvert_fromAtA implements Operation {
 	private boolean applyRadialWeight;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan LetMeInvert");
 			pw.println("##These properties for LetMeInvert");
@@ -703,7 +704,7 @@ public class LetMeInvert_fromAtA implements Operation {
 							e.printStackTrace();
 						}
 						
-						System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
+						System.err.println("Inversion is done in " + GadgetUtils.toTimeString(System.nanoTime() - start));
 					}
 				}
 			}
@@ -945,7 +946,7 @@ public class LetMeInvert_fromAtA implements Operation {
 		long startT = System.nanoTime();
 		lmi.run();
 		System.err.println(
-				LetMeInvert_fromAtA.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				LetMeInvert_fromAtA.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - startT));
 	}
 
 	/**
@@ -1033,7 +1034,7 @@ public class LetMeInvert_fromAtA implements Operation {
 //		int independentN = (int) (eq[iweight][ifreq][iphase].getDlength() / alpha);
 		int independentN = (int) (npts / alpha);
 		for (int i = 0; i < aic.length; i++)
-			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
+			aic[i] = MathUtils.computeAIC(variance[i], independentN, i);
 		return aic;
 	}
 

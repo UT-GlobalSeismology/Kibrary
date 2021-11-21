@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -55,10 +55,10 @@ public class PolynomialStructure implements Serializable {
         System.out.println("#r \u03C1 Vpv Vph Vsv Vsh \u03B7 Q\u03BC Q\u03BA");
         for (int izone = 0; izone < nzone; izone++) {
             for (double r = rmin[izone]; r < rmax[izone]; r += deltaR)
-                Utilities.println(r, getRhoAt(r), getVpvAt(r), getVphAt(r), getVsvAt(r), getVshAt(r), getEtaAt(r),
+                GadgetUtils.println(r, getRhoAt(r), getVpvAt(r), getVphAt(r), getVsvAt(r), getVshAt(r), getEtaAt(r),
                         getQmuAt(r), getQkappaAt(r));
             double r1 = rmax[izone];
-            Utilities.println(r1, getRhoAt(r1), getVpvAt(r1), getVphAt(r1), getVsvAt(r1), getVshAt(r1), getEtaAt(r1),
+            GadgetUtils.println(r1, getRhoAt(r1), getVpvAt(r1), getVphAt(r1), getVsvAt(r1), getVshAt(r1), getEtaAt(r1),
                     getQmuAt(r1), getQkappaAt(r1));
         }
     }

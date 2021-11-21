@@ -6,9 +6,10 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 
 /**
  * Constructs the dataset from downloaded mseed or seed files.
@@ -58,7 +59,7 @@ public class DataAligner {
         System.err.println(DataAligner.class.getName() + " is starting.");
         aligner.align();
         System.err.println(DataAligner.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
 
     }
 
@@ -73,7 +74,7 @@ public class DataAligner {
         Path workPath = Paths.get("");
 
         // import event directories in working directory
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
         if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;
@@ -111,12 +112,12 @@ public class DataAligner {
             }
         });
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
+        ExecutorService es = ThreadUtils.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
         System.err.println("Finishing up ...");
         while (!es.isTerminated()) {
-            ThreadAid.sleep(100);
+            ThreadUtils.sleep(100);
         }
     }
 

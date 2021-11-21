@@ -4,7 +4,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -83,7 +84,7 @@ public class InformationFileMaker implements Operation {
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(InformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(InformationFileMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan InformationFileMaker");
 			pw.println("##Path of a working folder (.)");
@@ -124,7 +125,7 @@ public class InformationFileMaker implements Operation {
 		System.err.println(InformationFileMaker.class.getName() + " is going.");
 		ifm.run();
 		System.err.println(InformationFileMaker.class.getName() + " finished in "
-				+ Utilities.toTimeString(System.nanoTime() - start));
+				+ GadgetUtils.toTimeString(System.nanoTime() - start));
 	}
 	
 	private void checkAndPutDefaults() {
@@ -256,7 +257,7 @@ public class InformationFileMaker implements Operation {
 		if (!Files.exists(stationInformationPath))
 			throw new NoSuchFileException(stationInformationPath.toString());
 		readParameterPointInformation();
-		outputPath = workPath.resolve("threedPartial" + Utilities.getTemporaryString());
+		outputPath = workPath.resolve("threedPartial" + GadgetUtils.getTemporaryString());
 		Files.createDirectories(outputPath);
 
 		if (property != null)
@@ -269,7 +270,7 @@ public class InformationFileMaker implements Operation {
 		createPointInformationFile();
 		
 		//
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
 
 		// reading station information
 		Set<Observer> stationSet = ObserverInformationFile.read(stationInformationPath);

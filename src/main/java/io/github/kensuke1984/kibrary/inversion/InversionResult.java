@@ -19,7 +19,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -129,7 +129,7 @@ public class InversionResult {
      */
     private static BasicID toBasicID(String[] parts) {
         Observer station = new Observer(parts[1],
-                new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
+                parts[2], new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])));
         String[] phaseParts = parts[13].split(",");
         Phase[] phases = new Phase[phaseParts.length];
         for (int i = 0; i < phases.length; i++)
@@ -321,7 +321,7 @@ public class InversionResult {
      * @return the Akaike Information criterion for the answer
      */
     public double aicOf(double a, InverseMethodEnum inverse, int n) {
-        return Utilities.computeAIC(varianceOf(inverse, n), (int) (npts / a), n);
+        return MathUtils.computeAIC(varianceOf(inverse, n), (int) (npts / a), n);
     }
 
     /**
@@ -788,9 +788,9 @@ public class InversionResult {
                 .unmodifiableMap(Files.readAllLines(stationPath).stream().skip(1).map(line -> line.split("\\s+"))
                         .collect(Collectors.toMap(
                                 parts -> new Observer(((String[]) parts)[0],
-                                        new HorizontalPosition(Double.parseDouble(((String[]) parts)[2]),
-                                                Double.parseDouble(((String[]) parts)[3])),
-                                                ((String[]) parts)[1]),
+                                        ((String[]) parts)[1],
+                                                new HorizontalPosition(Double.parseDouble(((String[]) parts)[2]),
+                                                        Double.parseDouble(((String[]) parts)[3]))),
                                 parts -> Double.parseDouble(((String[]) parts)[4]))));
         for (InverseMethodEnum inverse : inverseMethods) {
             // TODO
@@ -1031,7 +1031,7 @@ public class InversionResult {
      * @return the Akaike Information criterion for the initial model. (k=0)
      */
     public double getInitialAIC(double a) {
-        return Utilities.computeAIC(getInitialVariance(), (int) (npts / a), 0);
+        return MathUtils.computeAIC(getInitialVariance(), (int) (npts / a), 0);
     }
 
     public void set_mul(double mul) {

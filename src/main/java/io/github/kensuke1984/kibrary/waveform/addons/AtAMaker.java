@@ -18,7 +18,8 @@ import io.github.kensuke1984.kibrary.inversion.addons.Weighting;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.SpcFileUtils;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -291,9 +292,9 @@ public class AtAMaker implements Operation {
 		
 		//bpnames
 		bpPath = getPath("bpPath");
-		bpnames = Utilities.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
+		bpnames = SpcFileUtils.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
 		if (mode.equals("PSV") || mode.equals("BOTH"))
-			bpnames_PSV = Utilities.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
+			bpnames_PSV = SpcFileUtils.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
 		else
 			bpnames_PSV = null;
 		
@@ -435,7 +436,7 @@ public class AtAMaker implements Operation {
 		atam.run();
 		
 		System.out.println(AtAMaker.class.getName() + " finished in "
-				+ Utilities.toTimeString(System.nanoTime() - startTime));
+				+ GadgetUtils.toTimeString(System.nanoTime() - startTime));
 	}
 	
 	private Path rootWaveformPath;
@@ -454,7 +455,7 @@ public class AtAMaker implements Operation {
 	 * @throws IOException
 	 */
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(AtAMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(AtAMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan AtAMaker");
 			pw.println("##Number of processors used for parallel computation (1)");
@@ -734,7 +735,7 @@ public class AtAMaker implements Operation {
 		
 		totalWindowCounter = new AtomicInteger();
 		
-		String tempString = Utilities.getTemporaryString();
+		String tempString = GadgetUtils.getTemporaryString();
 		
 //		logfile = workPath.resolve("atam" + tempString + ".log");
 //		Files.createFile(logfile);
@@ -902,9 +903,9 @@ public class AtAMaker implements Operation {
 				}
 		
 		//--- initialize fpnameMaps
-		fpnameMap = Utilities.collectMapOfOrderedSHFpFileName(fpPath, modelName);
+		fpnameMap = SpcFileUtils.collectMapOfOrderedSHFpFileName(fpPath, modelName);
 		if (mode.equals("PSV") || mode.equals("BOTH")) {
-			fpnameMap_PSV = Utilities.collectMapOfOrderedPSVFpFileName(fpPath, modelName);
+			fpnameMap_PSV = SpcFileUtils.collectMapOfOrderedPSVFpFileName(fpPath, modelName);
 		}
 		
 		for (GlobalCMTID event : usedEventList) {
@@ -927,9 +928,9 @@ public class AtAMaker implements Operation {
 			
 			Path fpEventPath = fpPath.resolve(event.toString()).resolve(modelName);
 //			List<SPCFile> fpnames = Utilities.collectOrderedSpcFileName(fpEventPath);
-			fpnames = Utilities.collectOrderedSHSpcFileName(fpEventPath);
+			fpnames = SpcFileUtils.collectOrderedSHSpcFileName(fpEventPath);
 			if (mode.equals("PSV") || mode.equals("BOTH")) {
-				fpnames_PSV = Utilities.collectOrderedPSVSpcFileName(fpEventPath);
+				fpnames_PSV = SpcFileUtils.collectOrderedPSVSpcFileName(fpEventPath);
 			}
 			
 			for (Observer station : eventStations) {

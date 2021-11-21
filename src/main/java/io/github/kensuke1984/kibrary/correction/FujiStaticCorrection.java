@@ -21,12 +21,13 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -110,7 +111,7 @@ public class FujiStaticCorrection implements Operation {
     private Set<TimewindowData> timewindowInformation;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(FujiStaticCorrection.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan FujiStaticCorrection");
             pw.println("##Path of a working folder (.)");
@@ -167,7 +168,7 @@ public class FujiStaticCorrection implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        String date = Utilities.getTemporaryString();
+        String date = GadgetUtils.getTemporaryString();
         outputPath = workPath.resolve("staticCorrection" + date + ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
@@ -198,20 +199,20 @@ public class FujiStaticCorrection implements Operation {
         System.err.println(FujiStaticCorrection.class.getName() + " is operating.");
         fsc.run();
         System.err.println(FujiStaticCorrection.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(obsPath);
         timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
+        ExecutorService es = ThreadUtils.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
-            ThreadAid.sleep(1000);
+            ThreadUtils.sleep(1000);
         }
 
         System.err.println("Outputting in " + outputPath);

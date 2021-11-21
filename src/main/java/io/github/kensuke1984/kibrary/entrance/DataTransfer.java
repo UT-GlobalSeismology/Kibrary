@@ -13,7 +13,7 @@ import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 
 /**
  * Downloads mseed files prepared after sending breqfast mails. Download is done through FTP access to IRIS server.
@@ -54,11 +54,11 @@ final class DataTransfer {
         long startTime = System.nanoTime();
         System.err.println(DataTransfer.class.getName() + " is starting.");
 
-        Path outPath = Paths.get("seedsTransferredAt" + Utilities.getTemporaryString());
+        Path outPath = Paths.get("seedsTransferredAt" + GadgetUtils.getTemporaryString());
         get(args[0], outPath);
 
         System.err.println(DataTransfer.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
 
     }
 

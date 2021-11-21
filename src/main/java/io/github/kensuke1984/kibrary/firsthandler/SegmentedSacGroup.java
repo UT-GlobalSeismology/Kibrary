@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FileUtils;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -85,7 +85,7 @@ class SegmentedSacGroup {
     void move(Path trash) {
         nameSet.stream().map(Object::toString).map(workPath::resolve).forEach(srcPath -> {
             try {
-                Utilities.moveToDirectory(srcPath, trash, true);
+                FileUtils.moveToDirectory(srcPath, trash, true);
             } catch (Exception e) {
                 e.printStackTrace();
             }

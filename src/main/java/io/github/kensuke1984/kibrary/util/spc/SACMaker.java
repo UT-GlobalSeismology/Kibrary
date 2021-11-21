@@ -24,7 +24,7 @@ import org.apache.commons.math3.util.FastMath;
 import io.github.kensuke1984.kibrary.correction.SCARDEC;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -442,7 +442,7 @@ public class SACMaker implements Runnable {
             if (secondarySPC != null)
                 body.addBody(secondarySPC.getSpcBodyList().get(i));
             compute(body);
-            String bodyR = Utilities.toStringWithD(2, primeSPC.getBodyR()[i]);
+            String bodyR = MathUtils.toStringWithD(2, primeSPC.getBodyR()[i]);
             for (SACComponent component : components) {
                 // System.out.println(component);
                 SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)

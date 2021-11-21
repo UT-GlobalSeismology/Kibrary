@@ -15,9 +15,10 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 
 /**
  * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
@@ -73,7 +74,7 @@ public class DataKitchen implements Operation {
     private boolean removeIntermediateFile;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(DataKitchen.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(DataKitchen.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataKitchen");
             pw.println("##Path of a work folder (.)");
@@ -167,18 +168,18 @@ public class DataKitchen implements Operation {
         System.err.println(DataKitchen.class.getName() + " is operating.");
         dk.run();
         System.err.println(DataKitchen.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
         if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;
         }
 
-        outPath = workPath.resolve("processed" + Utilities.getTemporaryString());
+        outPath = workPath.resolve("processed" + GadgetUtils.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
@@ -202,12 +203,12 @@ public class DataKitchen implements Operation {
         eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
+        ExecutorService es = ThreadUtils.createFixedThreadPool();
         eps.forEach(es::execute);
         es.shutdown();
         // check if everything is done every 5 seconds
         while (!es.isTerminated()) {
-            ThreadAid.sleep(1000 * 5);
+            ThreadUtils.sleep(1000 * 5);
         }
 
         // print overall result

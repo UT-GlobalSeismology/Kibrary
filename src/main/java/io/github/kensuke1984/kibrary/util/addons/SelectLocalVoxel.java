@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.math.geometry.ConvexPolygon;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -26,7 +26,7 @@ public class SelectLocalVoxel {
 		
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);
 		
-		Path outpath = Paths.get("maskSelectUnknown" + Utilities.getTemporaryString() + ".inf");
+		Path outpath = Paths.get("maskSelectUnknown" + GadgetUtils.getTemporaryString() + ".inf");
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		
 		for (UnknownParameter p : parameterList) {

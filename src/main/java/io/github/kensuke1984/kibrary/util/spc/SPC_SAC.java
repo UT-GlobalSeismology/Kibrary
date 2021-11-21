@@ -25,10 +25,12 @@ import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.SpcFileUtils;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -90,7 +92,7 @@ public final class SPC_SAC implements Operation {
             readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(SPC_SAC.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(SPC_SAC.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan SPC_SAC");
             pw.println("##Path of a working folder (.)");
@@ -165,7 +167,7 @@ public final class SPC_SAC implements Operation {
         System.err.println(SPC_SAC.class.getName() + " is operating.");
         ss.run();
         System.err.println(SPC_SAC.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
@@ -179,11 +181,11 @@ public final class SPC_SAC implements Operation {
         if (shPath != null && (shSPCs = collectSHSPCs()).isEmpty())
             throw new FileNotFoundException("No SH spector files are found.");
 
-        outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
+        outPath = workPath.resolve("spcsac" + GadgetUtils.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
+        ExecutorService es = ThreadUtils.createFixedThreadPool();
 
         int nSAC = 0;
         // single
@@ -219,7 +221,7 @@ public final class SPC_SAC implements Operation {
         es.shutdown();
         while (!es.isTerminated()) {
             System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
-            ThreadAid.sleep(100);
+            ThreadUtils.sleep(100);
         }
         System.err.println("\rConverting finished.");
     }
@@ -274,7 +276,7 @@ public final class SPC_SAC implements Operation {
     }
 
     private void readUserSourceTimeFunctions() throws IOException {
-        Set<GlobalCMTID> ids = Utilities.globalCMTIDSet(workPath);
+        Set<GlobalCMTID> ids = FolderUtils.globalCMTIDSet(workPath);
         userSourceTimeFunctions = new HashMap<>(ids.size());
         for (GlobalCMTID id : ids)
             userSourceTimeFunctions
@@ -379,8 +381,8 @@ public final class SPC_SAC implements Operation {
 
     private void setModelName() throws IOException {
         Set<EventFolder> eventFolders = new HashSet<>();
-        if (psvPath != null) eventFolders.addAll(Utilities.eventFolderSet(psvPath));
-        if (shPath != null) eventFolders.addAll(Utilities.eventFolderSet(shPath));
+        if (psvPath != null) eventFolders.addAll(FolderUtils.eventFolderSet(psvPath));
+        if (shPath != null) eventFolders.addAll(FolderUtils.eventFolderSet(shPath));
         Set<String> possibleNames =
                 eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
                         .collect(Collectors.toSet());
@@ -395,10 +397,10 @@ public final class SPC_SAC implements Operation {
 
     private Set<SPCFileName> collectSHSPCs() throws IOException {
         Set<SPCFileName> shSet = new HashSet<>();
-        Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(shPath);
+        Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(shPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
-            Utilities.collectSpcFileName(modelFolder).stream()
+            SpcFileUtils.collectSpcFileName(modelFolder).stream()
                     .filter(f -> !f.getName().contains("par") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
         }
         return shSet;
@@ -406,10 +408,10 @@ public final class SPC_SAC implements Operation {
 
     private Set<SPCFileName> collectPSVSPCs() throws IOException {
         Set<SPCFileName> psvSet = new HashSet<>();
-        Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(psvPath);
+        Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(psvPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
-            Utilities.collectSpcFileName(modelFolder).stream()
+            SpcFileUtils.collectSpcFileName(modelFolder).stream()
                     .filter(f -> !f.getName().contains("par") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
         }
         return psvSet;

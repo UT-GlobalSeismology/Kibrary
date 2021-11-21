@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.timewindow.addons;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -37,7 +37,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 	
 	public static void main(String[] args) {
 		Path timewindowPath = Paths.get(args[0]);
-		Path timewindowOldFormatPath = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
+		Path timewindowOldFormatPath = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
 		
 		try {
 			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
@@ -121,7 +121,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			Set<TimewindowData> infoSet = Arrays.stream(bytes).parallel().map(b -> create_old(b, stations, cmtIDs))
 					.collect(Collectors.toSet());
 			System.err.println(
-					infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));
+					infoSet.size() + " timewindow data were found in " + GadgetUtils.toTimeString(System.nanoTime() - t));
 			return Collections.unmodifiableSet(infoSet);
 		}
 	}

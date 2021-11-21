@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -193,7 +193,7 @@ public final class TimewindowDataFile {
             Set<TimewindowData> infoSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
             System.err.println(
-                    infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));
+                    infoSet.size() + " timewindow data were found in " + GadgetUtils.toTimeString(System.nanoTime() - t));
             return Collections.unmodifiableSet(infoSet);
         }
     }

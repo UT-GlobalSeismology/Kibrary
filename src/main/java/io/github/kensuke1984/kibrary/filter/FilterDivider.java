@@ -18,10 +18,11 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -92,7 +93,7 @@ public class FilterDivider implements Operation {
     private int npts;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(FilterDivider.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(FilterDivider.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan FilterDivider");
             pw.println("##Path of a working folder (.)");
@@ -173,30 +174,30 @@ public class FilterDivider implements Operation {
         System.err.println(FilterDivider.class.getName() + " is operating.");
         divider.run();
         System.err.println(FilterDivider.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
         Set<EventFolder> eventDirs = new HashSet<>();
-        eventDirs.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
-        eventDirs.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
+        eventDirs.addAll(Files.exists(obsPath) ? FolderUtils.eventFolderSet(obsPath) : Collections.emptySet());
+        eventDirs.addAll(Files.exists(synPath) ? FolderUtils.eventFolderSet(synPath) : Collections.emptySet());
         if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;
         }
 
-        outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
+        outPath = workPath.resolve("filtered" + GadgetUtils.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
+        ExecutorService es = ThreadUtils.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
             System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "%");
-            ThreadAid.sleep(100);
+            ThreadUtils.sleep(100);
         }
         System.err.println("\rFiltering finished.");
     }

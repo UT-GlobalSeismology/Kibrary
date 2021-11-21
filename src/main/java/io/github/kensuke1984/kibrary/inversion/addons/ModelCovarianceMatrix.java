@@ -19,7 +19,7 @@ import org.apache.commons.math3.linear.CholeskyDecomposition;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -534,9 +534,9 @@ public class ModelCovarianceMatrix {
 		int i1 = -1;
 		int i2 = -1;
 		for (int i = 0; i < radii.length; i++) {
-			if (Utilities.equalWithinEpsilon(r1, radii[i], eps))
+			if (MathUtils.equalWithinEpsilon(r1, radii[i], eps))
 				i1 = i;
-			if (Utilities.equalWithinEpsilon(r1, radii[i], eps))
+			if (MathUtils.equalWithinEpsilon(r1, radii[i], eps))
 				i2 = i;
 		}
 		return Math.abs(i2 - i1);

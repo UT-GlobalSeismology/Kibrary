@@ -307,7 +307,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     @Override
     public String toString() {
-        return latitude.getLatitude() + " " + longitude.getLongitude();
+        return latitude.toString() + " " + longitude.toString();
     }
 
 

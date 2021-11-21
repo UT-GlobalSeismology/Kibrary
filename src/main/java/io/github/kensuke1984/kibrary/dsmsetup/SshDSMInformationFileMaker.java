@@ -3,7 +3,8 @@ package io.github.kensuke1984.kibrary.dsmsetup;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -69,12 +70,12 @@ public class SshDSMInformationFileMaker implements Operation {
 		System.err.println(SshDSMInformationFileMaker.class.getName() + " is going.");
 		sdif.run();
 		System.err.println(SshDSMInformationFileMaker.class.getName() + " finished in "
-				+ Utilities.toTimeString(System.nanoTime() - start));
+				+ GadgetUtils.toTimeString(System.nanoTime() - start));
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(SshDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+				.get(SshDSMInformationFileMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan SshDSMInformationFileMaker");
 			pw.println("##These properties for SshDSMInformationFileMaker");
@@ -145,7 +146,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			tmpwindows = TimewindowDataFile.read(timewindowInformationPath);
 		final Set<TimewindowData> timewindows = tmpwindows;
 		
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
 		PolynomialStructure ps = PolynomialStructure.PREM;
 		if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
 			ps = PolynomialStructure.PREM;
@@ -158,7 +159,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		}
 		else
 			ps = new PolynomialStructure(structurePath);
-		String temporaryString = Utilities.getTemporaryString();
+		String temporaryString = GadgetUtils.getTemporaryString();
 		Path output = workPath.resolve("oneDPartial" + temporaryString);
 		Files.createDirectories(output);
 		Set<SACComponent> useComponents = components;

@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.earth;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 
 /**
  * Longitude [-180, 180).
@@ -85,7 +85,7 @@ class Longitude implements Comparable<Longitude> {
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
 //        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
-        return Utilities.equalWithinEpsilon(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
+        return MathUtils.equalWithinEpsilon(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
     }
 
     /**
@@ -106,4 +106,19 @@ class Longitude implements Comparable<Longitude> {
         return phi;
     }
 
+    /**
+     * Print String so that all longitudes will have uniform number of digits.
+     * Total number of digits is the sum of:
+     * <ul>
+     * <li>1 (the minus sign)</li>
+     * <li>3 (the integer part; 0~360)</li>
+     * <li>1 (the period)</li>
+     * <li>{@value #PRECISION} (the decimal part)</li>
+     * <ul>
+     */
+    @Override
+    public String toString() {
+        String format = "%" + (5 + PRECISION) + "." + PRECISION + "f";
+        return String.format(format, longitude);
+    }
 }

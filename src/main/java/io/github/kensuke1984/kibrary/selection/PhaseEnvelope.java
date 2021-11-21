@@ -36,7 +36,8 @@ import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -100,7 +101,7 @@ public class PhaseEnvelope implements Operation {
 	}
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(PhaseEnvelope.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(PhaseEnvelope.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan PhaseEnvelope");
 			pw.println("##Path of a working folder (.)");
@@ -181,7 +182,7 @@ public class PhaseEnvelope implements Operation {
 
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-		String date = Utilities.getTemporaryString();
+		String date = GadgetUtils.getTemporaryString();
 		outputPath = workPath.resolve("timewindow" + date + ".dat");
 		timewindowSet = Collections.synchronizedSet(new HashSet<>());
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
@@ -216,13 +217,13 @@ public class PhaseEnvelope implements Operation {
 		long startT = System.nanoTime();
 		phaseEnvelope.run();
 		System.err.println(
-				PhaseEnvelope.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				PhaseEnvelope.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - startT));
 	}
 	
 	@Override
 	public void run() throws Exception {
 		Set<TimewindowData> infoset = new HashSet<>();
-		Utilities.runEventProcess(obsPath, obsEventDir -> {
+		ThreadUtils.runEventProcess(obsPath, obsEventDir -> {
 			try {
 				obsEventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 					.forEach(obsname -> {

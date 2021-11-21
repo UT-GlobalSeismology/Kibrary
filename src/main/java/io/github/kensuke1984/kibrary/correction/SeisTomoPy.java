@@ -64,7 +64,7 @@ public class SeisTomoPy {
 		String line = "";
 		while ((line = br.readLine()) != null) {
 			String[] ss = line.split("\\s+");
-			Observer station = new Observer(ss[4], new HorizontalPosition(Double.parseDouble(ss[6]), Double.parseDouble(ss[7])), ss[5]);
+			Observer station = new Observer(ss[4], ss[5], new HorizontalPosition(Double.parseDouble(ss[6]), Double.parseDouble(ss[7])));
 			SACComponent component = ss[9].trim().equals("S") ? SACComponent.T : SACComponent.Z;
 			
 			double shift = -Double.parseDouble(ss[10]);

@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 
 /**
  * This class will create a default property for a procedure in Kibrary.
@@ -27,7 +27,7 @@ public class Property {
         }
         Manhattan.printList();
         System.err.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
-        String input = Utilities.readInputLine();
+        String input = GadgetUtils.readInputLine();
         if (input.isEmpty()) System.exit(1);
         Manhattan.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
     }

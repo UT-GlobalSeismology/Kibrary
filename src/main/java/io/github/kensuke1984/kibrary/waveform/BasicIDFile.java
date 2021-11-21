@@ -18,7 +18,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.io.FilenameUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -133,7 +133,7 @@ public final class BasicIDFile {
                 ids[i] = id.setData(data);
             });
         }
-        System.err.println("Reading waveform done in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println("Reading waveform done in " + GadgetUtils.toTimeString(System.nanoTime() - t));
         return ids;
     }
 
@@ -186,7 +186,7 @@ public final class BasicIDFile {
                 ids[i] = createID(bytes[i], observers, events, periodRanges, phases);
             });
             System.err.println(
-                    "Reading " + ids.length + " basic IDs done in " + Utilities.toTimeString(System.nanoTime() - t));
+                    "Reading " + ids.length + " basic IDs done in " + GadgetUtils.toTimeString(System.nanoTime() - t));
             return ids;
         }
     }

@@ -18,7 +18,8 @@ import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -73,22 +74,22 @@ public class MakeWindowScS {
 		
 		double minPeriod = 8.;
 		
-		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workdir);
+		Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(workdir);
 		
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("S, ScS, sS");
 		
 		Set<TimewindowData> infoSet = new HashSet<>();
-		Path outpath = workdir.resolve("selectedTimewindow_ScS" + Utilities.getTemporaryString() + ".dat");
+		Path outpath = workdir.resolve("selectedTimewindow_ScS" + GadgetUtils.getTemporaryString() + ".dat");
 		
 		Set<TimewindowData> infoSetScStight = new HashSet<>();
-		Path outpathTight = workdir.resolve("selectedTimewindow_ScStight" + Utilities.getTemporaryString() + ".dat");
+		Path outpathTight = workdir.resolve("selectedTimewindow_ScStight" + GadgetUtils.getTemporaryString() + ".dat");
 		
 		Set<TimewindowData> infoSetScd = new HashSet<>();
-		Path outpathScd = workdir.resolve("selectedTimewindow_Scd" + Utilities.getTemporaryString() + ".dat");
+		Path outpathScd = workdir.resolve("selectedTimewindow_Scd" + GadgetUtils.getTemporaryString() + ".dat");
 		
 		Set<TimewindowData> infoSet_noSelection = new HashSet<>();
-		Path outpath_noSelection = workdir.resolve("timewindow_ScS" + Utilities.getTemporaryString() + ".dat");
+		Path outpath_noSelection = workdir.resolve("timewindow_ScS" + GadgetUtils.getTemporaryString() + ".dat");
 		
 		Set<TimewindowData> infoSetS = new HashSet<>();
 		Path outpathS = workdir.resolve("timewindow_S.dat");

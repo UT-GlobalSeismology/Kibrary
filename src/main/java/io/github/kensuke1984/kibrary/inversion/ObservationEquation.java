@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
 import io.github.kensuke1984.kibrary.math.Matrix;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -458,7 +458,7 @@ public class ObservationEquation {
 //		System.out.println(count.get()+" "+ DVECTOR.getNTimeWindow() * PARAMETER_LIST.size()+" "+PARAMETER_LIST.size());
         if (count.get() != DVECTOR.getNTimeWindow() * PARAMETER_LIST.size())
             throw new RuntimeException("Input partials are not enough.");
-        System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println("A is read and built in " + GadgetUtils.toTimeString(System.nanoTime() - t));
     }
 	
     /**
@@ -560,7 +560,7 @@ public class ObservationEquation {
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
 					DVECTOR.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + " + n + ")");  
 		}
-		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
+		System.err.println("A is read and built in " + GadgetUtils.toTimeString(System.nanoTime() - t));
 		
 		// Normalize time partials
 		Map<UnknownParameter, Double> timeWeightsMap = new HashMap<>();

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -71,7 +71,7 @@ public class DataLobby implements Operation {
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(DataLobby.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(DataLobby.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataLobby");
             pw.println("##Path of a work folder (.)");
@@ -185,7 +185,7 @@ public class DataLobby implements Operation {
         System.err.println(DataLobby.class.getName() + " is operating.");
         dl.run();
         System.err.println(DataLobby.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
+                GadgetUtils.toTimeString(System.nanoTime() - startTime));
 
     }
 
@@ -202,7 +202,7 @@ public class DataLobby implements Operation {
             System.err.println(n_total + " events are found.");
         }
 
-        Path outPath = workPath.resolve("dl" + Utilities.getTemporaryString());
+        Path outPath = workPath.resolve("dl" + GadgetUtils.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
@@ -218,7 +218,7 @@ public class DataLobby implements Operation {
 
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
-                String mseedFileName = event + "." + Utilities.getTemporaryString() + ".mseed";
+                String mseedFileName = event + "." + GadgetUtils.getTemporaryString() + ".mseed";
                 if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
                     System.err.println("!! Data not found for " + event + ", skipping.");
                     return;

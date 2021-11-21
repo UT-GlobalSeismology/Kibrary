@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 
 import edu.sc.seis.TauP.TauModel;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -300,7 +300,7 @@ public final class TauPPierceReader {
 //						System.out.println(tmp);
 					double[] s = Arrays.stream(line.trim().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 					double depth = s[1];
-					if (Utilities.equalWithinEpsilon(depth, pierceDepth, 1.)) {
+					if (MathUtils.equalWithinEpsilon(depth, pierceDepth, 1.)) {
 						if (!foundEnterPoint) {
 							enterPoints[count] = new FullPosition(s[3], s[4], Earth.EARTH_RADIUS - depth);
 							foundEnterPoint = true;

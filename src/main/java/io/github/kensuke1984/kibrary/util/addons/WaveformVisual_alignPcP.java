@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -36,7 +36,7 @@ public class WaveformVisual_alignPcP {
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		String tmpString = Utilities.getTemporaryString();
+		String tmpString = GadgetUtils.getTemporaryString();
 		
 		Path stackDir = Paths.get("stack" + tmpString);
 		Path profileDir = Paths.get("profile" + tmpString);

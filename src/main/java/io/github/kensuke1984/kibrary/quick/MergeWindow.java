@@ -8,7 +8,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 
 public class MergeWindow {
 
@@ -27,7 +27,7 @@ public class MergeWindow {
 			outWindows.add(window);
 		
 
-		Path outputPath = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
+		Path outputPath = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
 		TimewindowDataFile.write(outWindows, outputPath);
 	}
 

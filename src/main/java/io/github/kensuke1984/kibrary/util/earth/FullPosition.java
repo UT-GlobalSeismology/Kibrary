@@ -8,7 +8,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 
 /**
  * <p>
@@ -84,7 +84,7 @@ public class FullPosition extends HorizontalPosition {
         if (getClass() != obj.getClass()) return false;
         FullPosition other = (FullPosition) obj;
 //        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
-        return Utilities.equalWithinEpsilon(R, other.R, Math.pow(10, -R_PRECISION)/2);
+        return MathUtils.equalWithinEpsilon(R, other.R, Math.pow(10, -R_PRECISION)/2);
     }
 
     /**

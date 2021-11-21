@@ -28,7 +28,6 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.aid.ThreadAid;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -40,7 +39,9 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -204,7 +205,7 @@ public class ActualWaveformCompiler implements Operation {
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths
-                .get(ActualWaveformCompiler.class.getName() + Utilities.getTemporaryString() + ".properties");
+                .get(ActualWaveformCompiler.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan ObservedSyntheticDatasetMaker");
             pw.println("##Path of a working directory (.)");
@@ -347,7 +348,7 @@ public class ActualWaveformCompiler implements Operation {
        System.err.println(ActualWaveformCompiler.class.getName() + " is operating.");
        awc.run();
        System.err.println(ActualWaveformCompiler.class.getName() + " finished in "
-               + Utilities.toTimeString(System.nanoTime() - startTime));
+               + GadgetUtils.toTimeString(System.nanoTime() - startTime));
    }
 
    @Override
@@ -387,7 +388,7 @@ public class ActualWaveformCompiler implements Operation {
        }
 
        // obsDirからイベントフォルダを指定
-       eventDirs = Utilities.eventFolderSet(obsPath);
+       eventDirs = FolderUtils.eventFolderSet(obsPath);
 
        if (timewindowRefPath != null)
            timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)
@@ -407,9 +408,9 @@ public class ActualWaveformCompiler implements Operation {
 
        readPeriodRanges();
 
-       ExecutorService es = ThreadAid.createFixedThreadPool();
+       ExecutorService es = ThreadUtils.createFixedThreadPool();
 
-       String dateStr = Utilities.getTemporaryString();
+       String dateStr = GadgetUtils.getTemporaryString();
        Path waveIDPath = null;
        Path waveformPath = null;
        Path envelopeIDPath = null;
@@ -455,7 +456,7 @@ public class ActualWaveformCompiler implements Operation {
            es.shutdown();
 
            while (!es.isTerminated()){
-               ThreadAid.sleep(1000);
+               ThreadUtils.sleep(1000);
            }
            envelopeWriter.close();
            hyWriter.close();
@@ -469,7 +470,7 @@ public class ActualWaveformCompiler implements Operation {
    private void readPeriodRanges() {
         try {
             List<double[]> ranges = new ArrayList<>();
-            Set<SACFileName> sacfilenames = Utilities.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+            Set<SACFileName> sacfilenames = FolderUtils.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
             for (SACFileName name : sacfilenames) {
                 if (!name.isOBS()) continue;
                 SACHeaderAccess header = name.readHeader();

@@ -16,7 +16,6 @@ import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -387,7 +386,7 @@ class EventProcessor implements Runnable {
                 // check whether the file can be zero-padded
                 if (!sm.canInterpolate()) {
                     System.err.println("!! unable to zero-pad : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
-                    Utilities.moveToDirectory(sacPath, unModifiedPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
 
@@ -397,8 +396,8 @@ class EventProcessor implements Runnable {
                 // check whether the waveform has non-zero data
                 if (sm.isCompleteZero()) {
                     System.err.println("!! waveform is 0 or NaN : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
-                    Utilities.moveToDirectory(sacPath, unModifiedPath, true);
-                    Utilities.moveToDirectory(sm.getModifiedPath(), unModifiedPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(sacPath, unModifiedPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(sm.getModifiedPath(), unModifiedPath, true);
                     continue;
                 }
 
@@ -409,7 +408,7 @@ class EventProcessor implements Runnable {
                 sm.rebuild();
 
                 // move SAC files after treatment into the merged folder
-                Utilities.moveToDirectory(sacPath, doneModifyPath, true);
+                io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(sacPath, doneModifyPath, true);
             }
         }
     }
@@ -444,14 +443,14 @@ class EventProcessor implements Runnable {
                     if (!runEvalresp(headerMap, respPath)) {
                         System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                         // throw MOD.* files which cannot produce SPECTRA to trash
-                        Utilities.moveToDirectory(modPath, invalidRespPath, true);
+                        io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(modPath, invalidRespPath, true);
                         continue;
                     }
                 } catch (IOException e) {
                     System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                     e.printStackTrace();
                     // throw MOD.* files which cannot produce SPECTRA to trash
-                    Utilities.moveToDirectory(modPath, invalidRespPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
                 }
 
@@ -459,9 +458,9 @@ class EventProcessor implements Runnable {
                 if (Files.exists(afterPath)) {
                     System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw *.MOD files to duplicateComponentPath
-                    Utilities.moveToDirectory(modPath, duplicateComponentPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(modPath, duplicateComponentPath, true);
                     // throw SPECTRA files to duplicateComponentPath
-                    Utilities.moveToDirectory(spectraPath, duplicateComponentPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(spectraPath, duplicateComponentPath, true);
                     continue;
                 }
 
@@ -474,21 +473,21 @@ class EventProcessor implements Runnable {
                     System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
                     e.printStackTrace();
                     // throw *.MOD files to trash
-                    Utilities.moveToDirectory(modPath, invalidRespPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
                     // In case that outdated RESP file cannot produce any SPECTRA file,
                     // the existence condition is added (2021.08.21 kenji)
                     if(Files.exists(spectraPath)) {
-                        Utilities.moveToDirectory(spectraPath, invalidRespPath, true);
+                        io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(spectraPath, invalidRespPath, true);
                     }
                     continue;
                 }
 
                 // move processed SPECTRA files to archive
-                Utilities.moveToDirectory(spectraPath, doneDeconvolvePath, true);
+                io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(spectraPath, doneDeconvolvePath, true);
 
                 // move processed MOD files to archive
-                Utilities.moveToDirectory(modPath, doneDeconvolvePath, true);
+                io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(modPath, doneDeconvolvePath, true);
             }
         }
 
@@ -544,17 +543,17 @@ class EventProcessor implements Runnable {
                 // throw away .X file if its pair .Y file does not exist
                 if (!Files.exists(yPath)) {
                     System.err.println("!! pair .Y file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + xFile.toString());
-                    Utilities.moveToDirectory(xPath, unRotatedPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(xPath, unRotatedPath, true);
                     continue;
                 }
                 boolean rotated = SACUtil.rotate(xPath, yPath, rPath, tPath);
                 if (rotated) {
-                    Utilities.moveToDirectory(xPath, doneRotatePath, true);
-                    Utilities.moveToDirectory(yPath, doneRotatePath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(xPath, doneRotatePath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(yPath, doneRotatePath, true);
                 } else {
                     System.err.println("!! rotate failed : " + event.getGlobalCMTID() + " - " + xFile.toString());
-                    Utilities.moveToDirectory(xPath, unRotatedPath, true);
-                    Utilities.moveToDirectory(yPath, unRotatedPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(xPath, unRotatedPath, true);
+                    io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(yPath, unRotatedPath, true);
                 }
             }
         }
@@ -563,7 +562,7 @@ class EventProcessor implements Runnable {
         try (DirectoryStream<Path> yPaths = Files.newDirectoryStream(outputPath, "*.Y")) {
             for (Path yPath : yPaths) {
                 System.err.println("!! pair .X file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + yPath.getFileName());
-                Utilities.moveToDirectory(yPath, unRotatedPath, true);
+                io.github.kensuke1984.kibrary.util.FileUtils.moveToDirectory(yPath, unRotatedPath, true);
             }
         }
     }
