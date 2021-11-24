@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 
@@ -173,7 +173,7 @@ public class DataKitchen implements Operation {
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
         if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;

@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.SpcFileUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -906,7 +906,7 @@ private class WorkerTimePartial implements Runnable {
 		// time partials for each event
 		if (timePartialPath != null) {
 			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-			Set<EventFolder> timePartialEventDirs = FolderUtils.eventFolderSet(timePartialPath);
+			Set<EventFolder> timePartialEventDirs = DatasetUtils.eventFolderSet(timePartialPath);
 			for (EventFolder eventDir : timePartialEventDirs) {
 				execs.execute(new WorkerTimePartial(eventDir));
 				System.out.println("Working for time partials for " + eventDir);

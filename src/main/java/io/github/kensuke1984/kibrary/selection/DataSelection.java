@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -283,7 +283,7 @@ public class DataSelection implements Operation {
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(obsPath);
         sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
         staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
                 : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));

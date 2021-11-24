@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.specfem;
 
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -34,7 +34,7 @@ public class MakeRunFolder {
 			if (!Files.isDirectory(specfemRoot))
 				throw new FileNotFoundException(specfemRoot.toString());
 			
-			List<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(eventFolderPath)
+			List<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(eventFolderPath)
 					.stream().collect(Collectors.toList());
 			
 			AtomicInteger iatom = new AtomicInteger(1);

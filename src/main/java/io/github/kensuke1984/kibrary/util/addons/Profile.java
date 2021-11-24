@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -42,7 +42,7 @@ public class Profile {
 			Files.createDirectories(profilePath);
 			Files.createDirectories(stackPath);
 			
-			Set<EventFolder> events = FolderUtils.eventFolderSet(WorkingDir);
+			Set<EventFolder> events = DatasetUtils.eventFolderSet(WorkingDir);
 			
 			int resampling = 10;
 			for (EventFolder event : events) {

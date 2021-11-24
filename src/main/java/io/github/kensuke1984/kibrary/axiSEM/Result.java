@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -170,7 +170,7 @@ public class Result implements Operation {
 		set();
 		
 		try {
-			Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(workPath);
+			Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(workPath);
 			for (EventFolder eventFolder : eventFolderSet) {
 				Path resultFolder = eventFolder.toPath()
 						.resolve("SOLVER/" + meshName + "/Data_Postprocessing/SEISMOGRAMS");

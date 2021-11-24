@@ -57,7 +57,7 @@ public class ThreadUtils {
         long startTime = System.nanoTime();
     
         ExecutorService exec = createFixedThreadPool();
-        for (EventFolder eventDirectory : FolderUtils.eventFolderSet(workPath))
+        for (EventFolder eventDirectory : DatasetUtils.eventFolderSet(workPath))
             exec.execute(() -> process.accept(eventDirectory));
         exec.shutdown();
         try {

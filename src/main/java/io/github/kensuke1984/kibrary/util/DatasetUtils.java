@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
-public class FolderUtils {
+public class DatasetUtils {
 
     /**
      * Collect GlobalCMTIDs of event folders that exist under a given folder.

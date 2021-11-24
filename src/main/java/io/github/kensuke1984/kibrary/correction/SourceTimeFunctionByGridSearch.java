@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -246,7 +246,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	public void run() {
 		try {
 			Set<EventFolder> eventFolders 
-				= FolderUtils.eventFolderSet(workPath);
+				= DatasetUtils.eventFolderSet(workPath);
 			
 			Set<StaticCorrectionData> staticCorrections = new HashSet<>();
 			if (staticCorrectionFile != null)

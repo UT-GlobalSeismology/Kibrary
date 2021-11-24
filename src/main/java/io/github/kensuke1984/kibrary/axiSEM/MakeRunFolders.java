@@ -24,7 +24,7 @@ import org.apache.commons.math3.util.FastMath;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -74,7 +74,7 @@ public class MakeRunFolders {
 			if (!Files.isDirectory(axiSEMSolverFolder))
 				throw new FileNotFoundException(axiSEMSolverFolder.toString());
 			
-			Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(currentWorkingDir);
+			Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(currentWorkingDir);
 			
 			Files.createDirectories(syntheticFolder);
 			

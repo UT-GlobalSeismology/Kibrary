@@ -216,6 +216,11 @@ public class Observer implements Comparable<Observer> {
         return station + "_" + network;
     }
 
+    /**
+     * @return
+     *
+     * @deprecated use toString().
+     */
     public String getStringID() { // TODO erase
         return station + "_" + network;
     }

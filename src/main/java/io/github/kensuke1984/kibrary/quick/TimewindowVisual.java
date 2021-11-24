@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.addons.DistanceAzimuth;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -55,7 +55,7 @@ public class TimewindowVisual {
 				staticCorrectionPaths.add(Paths.get(args[i]));
 		}
 		else
-			ids = FolderUtils.eventFolderSet(root).stream()
+			ids = DatasetUtils.eventFolderSet(root).stream()
 				.map(event -> event.getGlobalCMTID()).collect(Collectors.toSet());
 		
 		List<Set<StaticCorrectionData>> correctionList = new ArrayList();

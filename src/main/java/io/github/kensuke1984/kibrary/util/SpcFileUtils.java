@@ -138,7 +138,7 @@ public final class SpcFileUtils {
      */
     public static Map<GlobalCMTID, List<SPCFileName>> collectMapOfOrderedSHFpFileName(Path fpPath, String model) throws IOException {
         Map<GlobalCMTID, List<SPCFileName>> fpfileMap = new HashMap<>();
-        Set<EventFolder> events = FolderUtils.eventFolderSet(fpPath);
+        Set<EventFolder> events = DatasetUtils.eventFolderSet(fpPath);
         for (EventFolder event : events) {
             Path path = fpPath.resolve(event.getGlobalCMTID().toString()).resolve(model);
             List<SPCFileName> list = new ArrayList<>();
@@ -241,7 +241,7 @@ public final class SpcFileUtils {
      */
     public static Map<GlobalCMTID, List<SPCFileName>> collectMapOfOrderedPSVFpFileName(Path fpPath, String model) throws IOException {
         Map<GlobalCMTID, List<SPCFileName>> fpfileMap = new HashMap<>();
-        Set<EventFolder> events = FolderUtils.eventFolderSet(fpPath);
+        Set<EventFolder> events = DatasetUtils.eventFolderSet(fpPath);
         for (EventFolder event : events) {
             Path path = fpPath.resolve(event.getGlobalCMTID().toString()).resolve(model);
             List<SPCFileName> list = new ArrayList<>();

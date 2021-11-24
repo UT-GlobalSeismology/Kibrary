@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
@@ -32,7 +32,7 @@ class SACVarianceComparator implements DataComparator<SACFileAccess[]> {
     }
 
     private SACFileAccess[] readObserved(Path obsDir) throws IOException {
-        SACFileName[] names = FolderUtils.sacFileNameSet(obsDir).stream().filter(SACFileName::isOBS)
+        SACFileName[] names = DatasetUtils.sacFileNameSet(obsDir).stream().filter(SACFileName::isOBS)
                 .sorted(Comparator.comparing(File::getName)).toArray(SACFileName[]::new);
         SACFileAccess[] dataset = new SACFileAccess[names.length];
         for (int i = 0; i < names.length; i++)

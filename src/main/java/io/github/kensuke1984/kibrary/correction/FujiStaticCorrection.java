@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -204,7 +204,7 @@ public class FujiStaticCorrection implements Operation {
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(obsPath);
         timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
 
         ExecutorService es = ThreadUtils.createFixedThreadPool();

@@ -39,7 +39,7 @@ public class MathUtils {
     public static double toSignificantFigure(int n, double d) {
         if (n < 1)
             throw new RuntimeException("invalid input n");
-    
+
         final long log10 = (long) Math.floor(Math.log10(Math.abs(d)));
         final double power10 = FastMath.pow(10, log10 - n + 1);
         return Math.round(d / power10) * power10;
@@ -69,20 +69,6 @@ public class MathUtils {
      * @return
      * @author anselme
      */
-    public static boolean equalWithinEpsilon(float v1, float v2, float eps) {
-        if (Math.abs(v1 - v2) > eps)
-            return false;
-        else
-            return true;
-    }
-
-    /**
-     * @param v1
-     * @param v2
-     * @param eps
-     * @return
-     * @author anselme
-     */
     public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
         if (Math.abs(v1 - v2) > eps)
             return false;
@@ -90,44 +76,5 @@ public class MathUtils {
             return true;
     }
 
-    /**
-     * @param n
-     * @param maxn
-     * @return formatted number (String)
-     * @author kenji
-     */
-    static public String formatNumber(int n,int maxn){
-        String formatted;
-    
-        int lengthMaxn = Integer.toString(maxn).length();
-    
-        switch (lengthMaxn){
-        case 1:
-            formatted = String.format("%01d", n);
-            break;
-        case 2:
-            formatted = String.format("%02d", n);
-            break;
-        case 3:
-            formatted = String.format("%03d", n);
-            break;
-        case 4:
-            formatted = String.format("%04d", n);
-            break;
-        case 5:
-            formatted = String.format("%05d", n);
-            break;
-        case 6:
-            formatted = String.format("%06d", n);
-            break;
-        default:
-            formatted = ""; // dummy
-            System.out.println("Error in FormatNumber: maxn is improper!");
-            System.exit(1);
-            break;
-        }
-    
-        return formatted;
-    }
 
 }

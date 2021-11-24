@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.SpcFileUtils;
@@ -1053,7 +1053,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 //		writeLog(filter.toString());
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());
-		idSet = FolderUtils.globalCMTIDSet(workPath);
+		idSet = DatasetUtils.globalCMTIDSet(workPath);
 		setPerturbationLocation();
 		phases = timewindowInformationSet.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
@@ -1063,10 +1063,10 @@ public class Partial1DEnvelopeMaker implements Operation {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 
-		Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
 		Set<EventFolder> timePartialEventDirs = new HashSet<>();
 		if (timePartialPath != null)
-			timePartialEventDirs = FolderUtils.eventFolderSet(timePartialPath);
+			timePartialEventDirs = DatasetUtils.eventFolderSet(timePartialPath);
 
 		// create ThreadPool
 		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);

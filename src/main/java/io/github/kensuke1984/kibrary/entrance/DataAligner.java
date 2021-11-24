@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 
@@ -74,7 +74,7 @@ public class DataAligner {
         Path workPath = Paths.get("");
 
         // import event directories in working directory
-        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
         if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;

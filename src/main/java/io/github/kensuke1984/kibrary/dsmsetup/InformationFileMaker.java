@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
@@ -270,7 +270,7 @@ public class InformationFileMaker implements Operation {
 		createPointInformationFile();
 		
 		//
-		Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
 
 		// reading station information
 		Set<Observer> stationSet = ObserverInformationFile.read(stationInformationPath);

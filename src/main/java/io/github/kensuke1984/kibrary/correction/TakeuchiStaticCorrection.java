@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -140,7 +140,7 @@ public class TakeuchiStaticCorrection implements Operation {
     public void run() throws IOException {
         Set<SACFileName> nameSet;
         try {
-            nameSet = FolderUtils.sacFileNameSet(obsPath);
+            nameSet = DatasetUtils.sacFileNameSet(obsPath);
         } catch (Exception e3) {
             throw new RuntimeException(obsPath + " may have problems");
         }

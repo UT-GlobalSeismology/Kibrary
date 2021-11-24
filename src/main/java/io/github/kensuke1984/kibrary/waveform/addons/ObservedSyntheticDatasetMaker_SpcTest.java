@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -337,7 +337,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		try {
 			List<double[]> ranges = new ArrayList<>();
 			
-			Set<SACFileName> sacfilenames = FolderUtils.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+			Set<SACFileName> sacfilenames = DatasetUtils.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
 			
 //			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
 			for (SACFileName name : sacfilenames) {
@@ -430,7 +430,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		}
 
 		// obsDirからイベントフォルダを指定
-		eventDirs = FolderUtils.eventFolderSet(obsPath);
+		eventDirs = DatasetUtils.eventFolderSet(obsPath);
 		
 		if (timewindowRefPath != null)
 			timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)

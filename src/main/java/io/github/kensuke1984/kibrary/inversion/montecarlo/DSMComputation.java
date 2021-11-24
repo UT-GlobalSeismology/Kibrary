@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.external.DSMMPI;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -72,7 +72,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
     }
 
     private SyntheticDSMInputFile[] init(Path obsDir, Set<Observer> stationSet) throws IOException {
-        return FolderUtils.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
+        return DatasetUtils.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
             try {
                 Set<Observer> stations =
                         eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getStationCode)
@@ -114,7 +114,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
                 makeSacFiles(folder);
                 applyFilter(folder);
             }
-            Set<SACFileName> nameSet = new TreeSet<>(FolderUtils.sacFileNameSet(root));
+            Set<SACFileName> nameSet = new TreeSet<>(DatasetUtils.sacFileNameSet(root));
             List<SACFileAccess> dataList = new ArrayList<>(nameSet.size());
             for (SACFileName sacFileName : nameSet) dataList.add(sacFileName.read());
             return dataList.toArray(new SACFileAccess[nameSet.size()]);

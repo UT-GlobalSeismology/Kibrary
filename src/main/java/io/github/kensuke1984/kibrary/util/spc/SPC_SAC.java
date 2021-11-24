@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.SpcFileUtils;
@@ -276,7 +276,7 @@ public final class SPC_SAC implements Operation {
     }
 
     private void readUserSourceTimeFunctions() throws IOException {
-        Set<GlobalCMTID> ids = FolderUtils.globalCMTIDSet(workPath);
+        Set<GlobalCMTID> ids = DatasetUtils.globalCMTIDSet(workPath);
         userSourceTimeFunctions = new HashMap<>(ids.size());
         for (GlobalCMTID id : ids)
             userSourceTimeFunctions
@@ -381,8 +381,8 @@ public final class SPC_SAC implements Operation {
 
     private void setModelName() throws IOException {
         Set<EventFolder> eventFolders = new HashSet<>();
-        if (psvPath != null) eventFolders.addAll(FolderUtils.eventFolderSet(psvPath));
-        if (shPath != null) eventFolders.addAll(FolderUtils.eventFolderSet(shPath));
+        if (psvPath != null) eventFolders.addAll(DatasetUtils.eventFolderSet(psvPath));
+        if (shPath != null) eventFolders.addAll(DatasetUtils.eventFolderSet(shPath));
         Set<String> possibleNames =
                 eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
                         .collect(Collectors.toSet());
@@ -397,7 +397,7 @@ public final class SPC_SAC implements Operation {
 
     private Set<SPCFileName> collectSHSPCs() throws IOException {
         Set<SPCFileName> shSet = new HashSet<>();
-        Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(shPath);
+        Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(shPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
             SpcFileUtils.collectSpcFileName(modelFolder).stream()
@@ -408,7 +408,7 @@ public final class SPC_SAC implements Operation {
 
     private Set<SPCFileName> collectPSVSPCs() throws IOException {
         Set<SPCFileName> psvSet = new HashSet<>();
-        Set<EventFolder> eventFolderSet = FolderUtils.eventFolderSet(psvPath);
+        Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(psvPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
             SpcFileUtils.collectSpcFileName(modelFolder).stream()

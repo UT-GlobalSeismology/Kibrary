@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -193,7 +193,7 @@ public class RaypathDistribution implements Operation {
 	public void run() throws IOException {
 		setName();
 		if (timeWindowInformationFile == null)
-			ids = FolderUtils.globalCMTIDSet(workPath);
+			ids = DatasetUtils.globalCMTIDSet(workPath);
 		else
 			ids = timeWindowInformationFile.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
@@ -234,7 +234,7 @@ public class RaypathDistribution implements Operation {
 	}
 
 	private void outputRaypath() throws IOException {
-		List<String> lines = FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		List<String> lines = DatasetUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
@@ -263,7 +263,7 @@ public class RaypathDistribution implements Operation {
 		final Phase phase = phasetmp;
 		
 		List<String> lines = new ArrayList<>();
-		FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		DatasetUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
@@ -301,7 +301,7 @@ public class RaypathDistribution implements Operation {
 			phasetmp = Phase.PcP;
 		final Phase phase = phasetmp;
 		
-		FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		DatasetUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
@@ -352,7 +352,7 @@ public class RaypathDistribution implements Operation {
 		List<String> lines_central = new ArrayList<>();
 		List<String> lines_eastern = new ArrayList<>();
 		
-		FolderUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+		DatasetUtils.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {

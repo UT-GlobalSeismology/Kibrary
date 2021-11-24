@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -193,7 +193,7 @@ public class SyntheticDSMSetup implements Operation {
      */
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = FolderUtils.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(obsPath);
         String modelName = structurePath.toString().trim().toUpperCase();
         PolynomialStructure ps = null;
 

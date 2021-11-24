@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -258,7 +258,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	private void readPeriodRanges() {
 		try {
 			List<double[]> ranges = new ArrayList<>();
-			for (SACFileName name : FolderUtils.sacFileNameSet(obsPath)) {
+			for (SACFileName name : DatasetUtils.sacFileNameSet(obsPath)) {
 				if (!name.isOBS())
 					continue;
 				SACHeaderAccess header = name.readHeader();
@@ -310,7 +310,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 			staticCorrectionSet = StaticCorrectionDataFile.read(staticCorrectionPath);
 
 		// obsDirからイベントフォルダを指定
-		eventDirs = FolderUtils.eventFolderSet(obsPath);
+		eventDirs = DatasetUtils.eventFolderSet(obsPath);
 		timewindowInformationSet = TimewindowDataFile.read(timewindowPath);
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());

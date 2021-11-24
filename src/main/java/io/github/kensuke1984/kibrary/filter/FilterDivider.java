@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FolderUtils;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -181,8 +181,8 @@ public class FilterDivider implements Operation {
     public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
         Set<EventFolder> eventDirs = new HashSet<>();
-        eventDirs.addAll(Files.exists(obsPath) ? FolderUtils.eventFolderSet(obsPath) : Collections.emptySet());
-        eventDirs.addAll(Files.exists(synPath) ? FolderUtils.eventFolderSet(synPath) : Collections.emptySet());
+        eventDirs.addAll(Files.exists(obsPath) ? DatasetUtils.eventFolderSet(obsPath) : Collections.emptySet());
+        eventDirs.addAll(Files.exists(synPath) ? DatasetUtils.eventFolderSet(synPath) : Collections.emptySet());
         if (eventDirs.isEmpty()) {
             System.err.println("No events found.");
             return;
