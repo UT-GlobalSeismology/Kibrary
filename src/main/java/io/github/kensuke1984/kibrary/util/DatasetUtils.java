@@ -44,6 +44,24 @@ public class DatasetUtils {
     }
 
     /**
+     * Checks whether a given number of events is non-zero, and displays the number.
+     * @param num (int) Number of events
+     * @return  (boolean) true of the number is non-zero
+     */
+    public static boolean checkEventNum(int num) {
+        if (num == 0) {
+            System.err.println("No events found.");
+            return false;
+        } else if (num == 1) {
+            System.err.println("1 event is found.");
+            return true;
+        } else {
+            System.err.println(num + " events are found.");
+            return true;
+        }
+    }
+
+    /**
      * Collect all SAC files inside event folders under a given folder.
      * Errors in reading each event folder is just noticed. Such event folders
      * will be ignored.

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -193,13 +194,8 @@ public class DataLobby implements Operation {
     public void run() throws IOException {
         requestedEvents = listEvents();
         int n_total = requestedEvents.size();
-        if (n_total == 0) {
-            System.err.println("No events are found.");
+        if (!DatasetUtils.checkEventNum(n_total)) {
             return;
-        } else if (n_total == 1) {
-            System.err.println(n_total + " event is found.");
-        } else {
-            System.err.println(n_total + " events are found.");
         }
 
         Path outPath = workPath.resolve("dl" + GadgetUtils.getTemporaryString());
