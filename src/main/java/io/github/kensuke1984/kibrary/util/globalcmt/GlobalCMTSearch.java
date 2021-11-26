@@ -1,11 +1,5 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.math3.util.Precision;
-
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
@@ -15,6 +9,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 /**
  * Query for search of Global CMT
  *
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * TODO thread safe (immutable)
  */
 public class GlobalCMTSearch {
-	
+
     private static DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     /**
      * Added predicate set.
@@ -46,7 +46,7 @@ public class GlobalCMTSearch {
      */
     private double lowerLatitude = -90;
     /**
-     * lower limit of longitude range [-180:180] (deg) Default: -180
+     * lower limit of longitude range [-180:360] (deg) Default: -180
      */
     private double lowerLongitude = -180;
     /**
@@ -90,7 +90,7 @@ public class GlobalCMTSearch {
      */
     private double upperLatitude = 90;
     /**
-     * upper limit of longitude range [-180:180] Default: 180
+     * upper limit of longitude range [-180:360] Default: 180
      */
     private double upperLongitude = 180;
     /**
@@ -290,7 +290,7 @@ public class GlobalCMTSearch {
         GlobalCMTID[] ids = search().toArray(new GlobalCMTID[0]);
         if (ids.length == 0) throw new RuntimeException("No ID matches");
         if (ids.length == 1) return ids[0];
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
             System.out.println("Which ID do you want to use?");
             System.out.println("# ID date time latitude longitude depth");
             for (int i = 0; i < ids.length; i++) {
@@ -390,11 +390,11 @@ public class GlobalCMTSearch {
      * Longitude range<br>
      * Default:[-180:180]<br>
      *
-     * @param lowerLongitude [-180, upperLongitude or 180)
-     * @param upperLongitude (lowerLongitude, 360)
+     * @param lowerLongitude [-180, upperLongitude)
+     * @param upperLongitude (lowerLongitude, 360]
      */
     public GlobalCMTSearch setLongitudeRange(double lowerLongitude, double upperLongitude) {
-        if (upperLongitude < lowerLongitude || 180 <= lowerLongitude || lowerLongitude < -180 || 360 < upperLongitude)
+        if (lowerLongitude < -180 || upperLongitude < lowerLongitude || 360 < upperLongitude)
             throw new IllegalArgumentException("Invalid longitude range.");
         this.lowerLongitude = lowerLongitude;
         this.upperLongitude = upperLongitude;
@@ -467,5 +467,5 @@ public class GlobalCMTSearch {
         this.upperTensionAxisPlunge = upperTensionAxisPlunge;
         return this;
     }
-    
+
 }

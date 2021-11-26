@@ -10,7 +10,12 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class ThreadUtils {
+/**
+ * Utilities for running threads.
+ *
+ * @since 2021/11/25 - created when Utilities.java was split up.
+ */
+public final class ThreadUtils {
 
     private ThreadUtils() {
     }
@@ -55,7 +60,7 @@ public class ThreadUtils {
     public static long runEventProcess(Path workPath, Consumer<EventFolder> process, long timeout, TimeUnit unit)
             throws IOException {
         long startTime = System.nanoTime();
-    
+
         ExecutorService exec = createFixedThreadPool();
         for (EventFolder eventDirectory : DatasetUtils.eventFolderSet(workPath))
             exec.execute(() -> process.accept(eventDirectory));

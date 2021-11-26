@@ -28,7 +28,12 @@ import org.apache.commons.mail.SimpleEmail;
 
 import io.github.kensuke1984.kibrary.Environment;
 
-public class GadgetUtils {
+/**
+ * Utilities for handling gadgets such as mail, clipboard, or Strings.
+ *
+ * @since 2021/11/25 - created when Utilities.java was split up.
+ */
+public final class GadgetUtils {
 
     /**
      * @param path      Path of the target

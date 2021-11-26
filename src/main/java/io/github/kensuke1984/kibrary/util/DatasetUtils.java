@@ -14,7 +14,12 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
-public class DatasetUtils {
+/**
+ * Utilities for handling a dataset folder that includes event folders.
+ *
+ * @since 2021/11/25 - created when Utilities.java was split up.
+ */
+public final class DatasetUtils {
 
     /**
      * Collect GlobalCMTIDs of event folders that exist under a given folder.
@@ -47,6 +52,9 @@ public class DatasetUtils {
      * Checks whether a given number of events is non-zero, and displays the number.
      * @param num (int) Number of events
      * @return  (boolean) true of the number is non-zero
+     *
+     * @author otsuru
+     * @since 2021/11/25
      */
     public static boolean checkEventNum(int num) {
         if (num == 0) {

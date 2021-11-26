@@ -16,12 +16,9 @@ import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 /**
- * Utilities for a workpath containing event folders which have SAC files. also
- * this contains various useful static methods.
+ * Utilities for collecting SPC files.
  *
- * @author Kensuke Konishi
- * @version 0.1.11
- * @author anselme add methods for FP/BP catalog
+ * @since 2021/11/25 - created when Utilities.java was split up.
  */
 public final class SpcFileUtils {
 

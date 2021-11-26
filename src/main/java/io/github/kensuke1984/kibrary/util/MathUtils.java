@@ -3,7 +3,12 @@ package io.github.kensuke1984.kibrary.util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.FastMath;
 
-public class MathUtils {
+/**
+ * Some calculation Utilities.
+ *
+ * @since 2021/11/25 - created when Utilities.java was split up.
+ */
+public final class MathUtils {
 
     /**
      * @param variance variance

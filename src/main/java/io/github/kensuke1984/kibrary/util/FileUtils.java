@@ -25,7 +25,12 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.IOUtils;
 
-public class FileUtils {
+/**
+ * Utilities to handle files.
+ *
+ * @since 2021/11/25 - created when Utilities.java was split up.
+ */
+public final class FileUtils {
 
     /**
      * Moves a given file to a specified directory.
