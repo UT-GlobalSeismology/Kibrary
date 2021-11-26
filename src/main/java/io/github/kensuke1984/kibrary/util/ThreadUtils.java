@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 /**
  * Utilities for running threads.
  *
- * @since 2021/11/25 - created when Utilities.java was split up.
+ * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class ThreadUtils {
 

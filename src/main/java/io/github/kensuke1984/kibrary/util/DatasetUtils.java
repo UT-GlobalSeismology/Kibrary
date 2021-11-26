@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 /**
  * Utilities for handling a dataset folder that includes event folders.
  *
- * @since 2021/11/25 - created when Utilities.java was split up.
+ * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class DatasetUtils {
 

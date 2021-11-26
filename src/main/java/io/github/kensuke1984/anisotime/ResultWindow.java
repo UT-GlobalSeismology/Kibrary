@@ -88,10 +88,10 @@ class ResultWindow extends javax.swing.JPanel {
      * @param travelTime         [s]
      */
     void addRow(double epicentralDistance, double depth, String phase, double travelTime, double rayparameter) {
-        String delta = MathUtils.fixDecimalPlaces(2, epicentralDistance);
-        String depthS = MathUtils.fixDecimalPlaces(2, depth);
-        String p = MathUtils.fixDecimalPlaces(2, rayparameter);
-        String time = MathUtils.fixDecimalPlaces(2, travelTime);
+        String delta = MathUtils.roundToString(epicentralDistance, 2);
+        String depthS = MathUtils.roundToString(depth, 2);
+        String p = MathUtils.roundToString(rayparameter, 2);
+        String time = MathUtils.roundToString(travelTime, 2);
         try {
             SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1.getModel()))
                     .addRow(new String[]{delta, depthS, phase, time, p}));

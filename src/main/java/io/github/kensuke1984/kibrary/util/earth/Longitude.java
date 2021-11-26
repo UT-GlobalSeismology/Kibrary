@@ -118,7 +118,8 @@ class Longitude implements Comparable<Longitude> {
      */
     @Override
     public String toString() {
-        String format = "%" + (5 + PRECISION) + "." + PRECISION + "f";
-        return String.format(format, longitude);
+        return MathUtils.padToString(longitude, 4, PRECISION);
+        //String format = "%" + (5 + PRECISION) + "." + PRECISION + "f";
+        //return String.format(format, longitude);
     }
 }

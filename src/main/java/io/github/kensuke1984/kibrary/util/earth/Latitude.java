@@ -134,7 +134,8 @@ class Latitude implements Comparable<Latitude> {
      */
     @Override
     public String toString() {
-        String format = "%" + (4 + PRECISION) + "." + PRECISION + "f";
-        return String.format(format, geographicLatitude);
+        return MathUtils.padToString(geographicLatitude, 3, PRECISION);
+        //String format = "%" + (4 + PRECISION) + "." + PRECISION + "f";
+        //return String.format(format, geographicLatitude);
     }
 }

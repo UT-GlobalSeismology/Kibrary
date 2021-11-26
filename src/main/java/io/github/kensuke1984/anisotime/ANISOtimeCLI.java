@@ -289,10 +289,10 @@ final class ANISOtimeCLI {
             EpsGraphics epsGraphics = new EpsGraphics(phase.toString(), bos, 0, 0, panel.getWidth(), panel.getHeight(),
                     ColorMode.COLOR_RGB);
             panel.paintComponent(epsGraphics);
-            String rayp = MathUtils.fixDecimalPlaces(decimalPlaces, rayParameter);
-            String delt = MathUtils.fixDecimalPlaces(decimalPlaces, delta);
-            String tra = MathUtils.fixDecimalPlaces(decimalPlaces, time);
-            String depth = MathUtils.fixDecimalPlaces(decimalPlaces, structure.earthRadius() - eventR);
+            String rayp = MathUtils.roundToString(rayParameter, decimalPlaces);
+            String delt = MathUtils.roundToString(delta, decimalPlaces);
+            String tra = MathUtils.roundToString(time, decimalPlaces);
+            String depth = MathUtils.roundToString(structure.earthRadius() - eventR, decimalPlaces);
             String line = phase + ", Ray parameter: " + rayp + ", Depth[km]:" + depth + ", Epicentral distance[deg]: " +
                     delt + ", Travel time[s]: " + tra;
             int startInt = (int) panel.changeX(-line.length() / 2 * 6371 / 45);
@@ -414,7 +414,7 @@ final class ANISOtimeCLI {
     private void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
         out.println(phase.getDISPLAY_NAME() + " " +
                 IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
-                        .mapToObj(i -> MathUtils.fixDecimalPlaces(decimalPlace, values[i]))
+                        .mapToObj(i -> MathUtils.roundToString(values[i], decimalPlace))
                         .collect(Collectors.joining(" ")));
     }
     
@@ -438,14 +438,14 @@ final class ANISOtimeCLI {
     	double incident = Math.toDegrees(raypath.computeIncidentAngle(ppReceiver, Math.toDegrees(p), Earth.EARTH_RADIUS));
     	
     	out.printf(TAUP_FORMAT + "\n",
-    			MathUtils.fixDecimalPlaces(decimalPlace, distance),
-    			MathUtils.fixDecimalPlaces(decimalPlace, depth),
+    			MathUtils.roundToString(distance, decimalPlace),
+    			MathUtils.roundToString(depth, decimalPlace),
     			phase.getDISPLAY_NAME(),
-    			MathUtils.fixDecimalPlaces(decimalPlace, time),
-    			MathUtils.fixDecimalPlaces(decimalPlace, p),
-    			MathUtils.fixDecimalPlaces(decimalPlace, takeoff),
-    			MathUtils.fixDecimalPlaces(decimalPlace, incident),
-    			MathUtils.fixDecimalPlaces(decimalPlace, targetDistance),
+    			MathUtils.roundToString(time, decimalPlace),
+    			MathUtils.roundToString(p, decimalPlace),
+    			MathUtils.roundToString(takeoff, decimalPlace),
+    			MathUtils.roundToString(incident, decimalPlace),
+    			MathUtils.roundToString(targetDistance, decimalPlace),
     			phase.getPHASENAME());
     }
 

@@ -6,7 +6,7 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * Some calculation Utilities.
  *
- * @since 2021/11/25 - created when Utilities.java was split up.
+ * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class MathUtils {
 
@@ -22,11 +22,13 @@ public final class MathUtils {
     }
 
     /**
-     * @param n     number of decimal places
-     * @param value to fix
-     * @return string for fixed value
+     * Transforms a value to a String.
+     *
+     * @param value (double) The value to turn into a String
+     * @param n (int) The number of decimal places
+     * @return (String) The String form of the value
      */
-    public static String fixDecimalPlaces(int n, double value) {
+    public static String roundToString(double value, int n) {
         double factor = Math.pow(10, n);
         double fixedValue = Math.round(value * factor) / factor;
         int integerPart = (int) Math.floor(fixedValue);
@@ -37,34 +39,52 @@ public final class MathUtils {
     }
 
     /**
-     * @param n the effective digit
-     * @param d value to change
-     * @return changed value which effective digit is n
-     */
-    public static double toSignificantFigure(int n, double d) {
-        if (n < 1)
-            throw new RuntimeException("invalid input n");
-
-        final long log10 = (long) Math.floor(Math.log10(Math.abs(d)));
-        final double power10 = FastMath.pow(10, log10 - n + 1);
-        return Math.round(d / power10) * power10;
-    }
-
-    /**
-     * Changes an input double value to a string. The value is rounded to have n
-     * decimal places.
+     * Changes an input double value to a string. The letter "d" is used instead of a decimal ".".
+     * The value is rounded to have n decimal places.
      *
-     * @param n the number of decimal places (Note that if decimal is 0, this
-     *          value will be ignored)
-     * @param d to be changed
-     * @return String with d expressing .
+     * @param value (double) The value to be changed into String
+     * @param n (int) The number of decimal places (Note that if decimal is 0, this value will be ignored)
+     * @return (String) The String form of the value with "d" expressing "."
      */
-    public static String toStringWithD(int n, double d) {
-        int intValue = (int) d;
-        double decimal = d - intValue;
+    public static String roundToStringWithD(double value, int n) {
+        int intValue = (int) value;
+        double decimal = value - intValue;
         decimal *= Math.pow(10, n);
         int decimalInt = (int) Math.round(decimal);
         return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
+    }
+
+    /**
+     * Transforms a value to a padded String.
+     * The left side is padded with spaces and the right with "0"s.
+     *
+     * @param value (double) The value to turn into a String
+     * @param nInteger (int) The number of digits for the integer part, including the minus sign but excluding the decimal point.
+     * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point.
+     * @return (String) The padded String form of the value
+     *
+     * @since 2021/11/26
+     * @author otsuru
+     */
+    public static String padToString(double value, int nInteger, int nDecimal) {
+        String format = "%" + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
+        return String.format(format, value);
+    }
+
+    /**
+     * Rounds value to n effective digits.
+     *
+     * @param value (double) The value to be rounded
+     * @param n (int) The number of effective digits
+     * @return (double) The rounded value which has n effective digits
+     */
+    public static double roundToEffective(double value, int n) {
+        if (n < 1)
+            throw new RuntimeException("invalid input n");
+
+        final long log10 = (long) Math.floor(Math.log10(Math.abs(value)));
+        final double power10 = FastMath.pow(10, log10 - n + 1);
+        return Math.round(value / power10) * power10;
     }
 
     /**
