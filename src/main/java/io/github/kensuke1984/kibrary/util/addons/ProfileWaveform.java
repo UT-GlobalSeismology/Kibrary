@@ -36,6 +36,22 @@ public class ProfileWaveform {
         Path workingDir = Paths.get("");
         Path basicIDPath = Paths.get(args[0]);
         Path basicPath = Paths.get(args[1]);
+        SACComponent component = null;
+        switch(args[2]) {
+        case "Z":
+            component = SACComponent.getComponent(1);
+            break;
+        case "R":
+            component = SACComponent.getComponent(2);
+            break;
+        case "T":
+            component = SACComponent.getComponent(3);
+            break;
+        default:
+            System.err.println("Component is illegal");
+            return;
+        }
+
         try {
             BasicID[] waveforms = BasicIDFile.read(basicIDPath, basicPath);
 
@@ -71,7 +87,7 @@ public class ProfileWaveform {
                 }
             }
 
-            int maxDistance = 120; // TODO change
+            int maxDistance = 180; // TODO change
 
             List<GlobalCMTID> events = Stream.of(obsIDs).map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toList());
 
@@ -95,7 +111,7 @@ public class ProfileWaveform {
                 RealVector[] synStacks = new ArrayRealVector[maxDistance];
 
                 for (int i = 0; i < obsIDs.length; i++) {
-                    if (obsIDs[i].getGlobalCMTID().equals(event)) {
+                    if (obsIDs[i].getGlobalCMTID().equals(event) && obsIDs[i].getSacComponent().equals(component)) {
 
                         // read waveform data
                         BasicID obsID = obsIDs[i];
@@ -119,9 +135,9 @@ public class ProfileWaveform {
                         double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
                                 .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
                         pwProfile.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs, distance)
-                                + "w lines lw 1 lc \"black\",\\");
+                                + "w lines lw 1 lt 1 lc \"black\",\\");
                         pwProfile.println("\"" + filename + "\" " + String.format("u 1:($3/%.3e+%.2f) ", maxObs, distance)
-                                + "w lines lw 1 lc \"red\",\\");
+                                + "w lines lw 1 lt 2 lc \"red\",\\");
 
                         // add to stack waveform
                         int k = (int) distance;
@@ -152,7 +168,7 @@ public class ProfileWaveform {
                     if (obsStacks[i] != null) {
 
                         // print stack traces
-                        String filename = i + "." + event.toString() + ".T" + ".txt";
+                        String filename = i + "." + event.toString() + "." + component + ".txt";
                         Path tracePath = stackEventPath.resolve(filename);
                         PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath,
                                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
@@ -164,9 +180,9 @@ public class ProfileWaveform {
                         double distance = i;
                         double maxObs = obsStacks[i].getLInfNorm();
                         pwStack.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs, distance)
-                                + "w lines lw 1 lc \"black\",\\");
+                                + "w lines lw 1 lt 1 lc \"black\",\\");
                         pwStack.println("\"" + filename + "\" " + String.format("u 1:($3/%.3e+%.2f) ", maxObs, distance)
-                                + "w lines lw 1 lc \"red\",\\");
+                                + "w lines lw 1 lt 2 lc \"red\",\\");
                     }
                 }
                 pwStack.println();

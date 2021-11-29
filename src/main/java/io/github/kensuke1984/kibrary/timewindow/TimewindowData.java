@@ -130,7 +130,7 @@ public class TimewindowData extends Timewindow {
     @Override
     public String toString() {
         List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
-        return observer.getPaddedInfoString() + " " + eventID.getPaddedString() + " " + component + " "
+        return observer.getPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
                 + startTime + " " + endTime + " " + String.join(",", phaseStrings);
     }
 

@@ -143,7 +143,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
         return id;
     }
 
-    public String getPaddedString() {
+    public String toPaddedString() {
         return StringUtils.rightPad(id, LENGTH);
     }
 
