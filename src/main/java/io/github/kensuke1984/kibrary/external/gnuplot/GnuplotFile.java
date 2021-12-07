@@ -92,9 +92,6 @@ public class GnuplotFile {
             if (!ylabel.isEmpty()) pw.println("set ylabel \"" + ylabel + "\"");
             if (!title.isEmpty()) pw.println("set title \"" + title + "\"");
 
-            System.err.println(lines.size());
-            System.err.println(lines.get(0).toString());
-
             for (int i = 0; i < lines.size(); i++) {
                 if (i == 0) {
                     pw.print("plot ");
