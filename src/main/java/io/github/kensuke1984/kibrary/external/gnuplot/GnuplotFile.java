@@ -27,22 +27,22 @@ public class GnuplotFile {
     /**
      * x軸のラベル
      */
-    private String xlabel = null;
+    private String xlabel = "";
     /**
      * y軸のラベル
      */
-    private String ylabel = null;
+    private String ylabel = "";
     /**
      * 図のタイトル
      */
-    private String title = null;
+    private String title = "";
 
     /**
      * 凡例をつけるか
      */
     private boolean key = false;
 
-    // For the following variables, flags are used because primitive types cannot be null.
+    // For the following variables, flags are used because primitive types cannot be empty.
 
     /**
      * set size ratio ??? の　???
