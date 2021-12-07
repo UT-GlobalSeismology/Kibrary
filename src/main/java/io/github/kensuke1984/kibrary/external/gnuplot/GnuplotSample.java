@@ -13,6 +13,7 @@ public class GnuplotSample {
 
         GnuplotFile gnuplot = new GnuplotFile(Paths.get("sample.plt"));
         GnuplotLineAppearance appearance = new GnuplotLineAppearance();
+        System.err.println(appearance);
 
         gnuplot.setTerminal("png");
         gnuplot.setOutput("sample.png");

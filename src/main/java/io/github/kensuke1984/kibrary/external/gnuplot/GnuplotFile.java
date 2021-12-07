@@ -48,7 +48,7 @@ public class GnuplotFile {
      * set size ratio ??? の　???
      */
     private double ratio;
-    private boolean ratioFlag;
+    private boolean ratioFlag = false;
     private double xmin;
     private double xmax;
     private boolean xrangeFlag = false;
@@ -91,6 +91,9 @@ public class GnuplotFile {
             if (!xlabel.isEmpty()) pw.println("set xlabel \"" + xlabel + "\"");
             if (!ylabel.isEmpty()) pw.println("set ylabel \"" + ylabel + "\"");
             if (!title.isEmpty()) pw.println("set title \"" + title + "\"");
+
+            System.err.println(lines.size());
+            System.err.println(lines.get(0).toString());
 
             for (int i = 0; i < lines.size(); i++) {
                 if (i == 0) {
