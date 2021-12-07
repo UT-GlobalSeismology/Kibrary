@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.external;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.NoSuchFileException;
@@ -10,12 +11,12 @@ import java.nio.file.NoSuchFileException;
  * @author Kensuke Konishi
  * @version 0.0.2
  */
-public class Gnuplot extends ExternalProcess {
+public class Gnuplot extends ExternalProcess implements Closeable {
     private PrintWriter standardInput;
 
     private Gnuplot(Process process) {
         super(process);
-        standardInput = new PrintWriter(process.getOutputStream());
+        standardInput = new PrintWriter(super.standardInputStream);
     }
 
     public static Gnuplot createProcess() throws IOException {
@@ -23,23 +24,25 @@ public class Gnuplot extends ExternalProcess {
         throw new NoSuchFileException("No gnuplot in PATH.");
     }
 
-    public void close() throws InterruptedException {
-        standardInput.println("q");
-        standardInput.flush();
-        standardInput.close();
-        process.waitFor();
-        standardOutput.join();
-        standardError.join();
-    }
-
     /**
      * make orders in Gnuplot
      *
-     * @param line command line for SAC
+     * @param line (String) Command line for gnuplot
      */
     public void inputCMD(String line) {
-        standardInput.println(line);
-        standardInput.flush();
+        synchronized (super.standardInputStream) {
+            standardInput.println(line);
+            standardInput.flush();
+        }
     }
+
+    @Override
+    public void close() {
+        standardInput.println("q");
+        standardInput.flush();
+        standardInput.close();
+        super.waitFor();
+    }
+
 
 }

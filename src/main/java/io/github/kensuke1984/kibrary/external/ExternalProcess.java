@@ -25,17 +25,17 @@ public class ExternalProcess {
     }
 
     /**
-     * {@link Stream} for standard write
+     * {@link Stream} for standard write (Output of the process, input for this program)
      */
-    protected final InputStreamThread standardOutput;
+    protected final InputStreamThread standardOutputThread;
     /**
-     * {@link Stream} for standard error
+     * {@link Stream} for standard error (Output of the process, input for this program)
      */
-    protected final InputStreamThread standardError;
+    protected final InputStreamThread standardErrorThread;
     /**
-     * connected to standard input
+     * connected to standard input (Input of the process, output for this program)
      */
-    protected final OutputStream standardInput;
+    protected final OutputStream standardInputStream;
 
     protected Process process;
 
@@ -77,33 +77,33 @@ public class ExternalProcess {
      */
     ExternalProcess(Process process) {
         this.process = process;
-        standardInput = process.getOutputStream();
-        standardOutput = new InputStreamThread(process.getInputStream());
-        standardError = new InputStreamThread(process.getErrorStream());
+        standardInputStream = process.getOutputStream();
+        standardOutputThread = new InputStreamThread(process.getInputStream());
+        standardErrorThread = new InputStreamThread(process.getErrorStream());
         // By calling start(), the threads are activated and their run() methods are executed.
-        standardOutput.start();
-        standardError.start();
+        standardOutputThread.start();
+        standardErrorThread.start();
     }
 
     /**
      * @return {@link OutputStream} connected to the standard input to the process
      */
-    public OutputStream getStandardInput() {
-        return standardInput;
+    public OutputStream getStandardInputStream() {
+        return standardInputStream;
     }
 
     /**
      * @return {@link InputStreamThread} connected from the standard write of the process
      */
-    public InputStreamThread getStandardOutput() {
-        return standardOutput;
+    public InputStreamThread getStandardOutputThread() {
+        return standardOutputThread;
     }
 
     /**
      * @return {@link InputStreamThread} connected from the standard error of the process
      */
-    public InputStreamThread getStandardError() {
-        return standardError;
+    public InputStreamThread getStandardErrorThread() {
+        return standardErrorThread;
     }
 
     /**
@@ -112,10 +112,10 @@ public class ExternalProcess {
      */
     public int waitFor() {
         try {
-            int result = this.process.waitFor();
-            standardError.join();
-            standardOutput.join();
-            return result;
+            int exit = this.process.waitFor();
+            standardErrorThread.join();
+            standardOutputThread.join();
+            return exit;
         } catch (InterruptedException e) {
             // InterruptedException means that someone wants the current thread to stop,
             // but the 'interrupted' flag is reset when InterruptedException is thrown in sleep(),
