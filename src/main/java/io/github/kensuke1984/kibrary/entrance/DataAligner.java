@@ -71,7 +71,7 @@ public class DataAligner {
     private void align() throws IOException {
 
         // working directory is set to current directory
-        Path workPath = Paths.get("");
+        Path workPath = Paths.get(".");
 
         // import event directories in working directory
         Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);

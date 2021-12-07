@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  */
 public class ProfileWaveform {
     public static void main(String[] args) {
-        Path workingDir = Paths.get("");
+        Path workingDir = Paths.get(".");
         Path basicIDPath = Paths.get(args[0]);
         Path basicPath = Paths.get(args[1]);
         SACComponent component = null;

@@ -69,7 +69,7 @@ public class GnuplotFile {
     public boolean execute() throws IOException {
         if (!ExternalProcess.isInPath("gnuplot")) throw new NoSuchFileException("No gnuplot in PATH.");
 
-        ExternalProcess xProcess = ExternalProcess.launch("gnuplot " + filePath, Paths.get(""));
+        ExternalProcess xProcess = ExternalProcess.launch("gnuplot " + filePath, Paths.get("."));
         return xProcess.waitFor() == 0;
     }
 
