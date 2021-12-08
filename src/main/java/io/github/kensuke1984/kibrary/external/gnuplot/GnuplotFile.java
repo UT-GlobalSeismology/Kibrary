@@ -102,10 +102,15 @@ public class GnuplotFile {
             if (!ylabel.isEmpty()) pw.println("set ylabel \"" + ylabel + "\"");
             if (!title.isEmpty()) pw.println("set title \"" + title + "\"");
 
+            // each page
             for (int k = 0; k < pages.size(); k++) {
                 pw.println("set multiplot layout " + pages.get(k).size() + ",1");
 
+                // each field
                 for (int j = 0; j < pages.get(k).size(); j++) {
+                    pw.println("set label 1 at graph 0 1 " + pages.get(k).field(j).getLabel());
+
+                    // each line
                     for (int i = 0; i < pages.get(k).field(j).size(); i++) {
                         if (i == 0) {
                             pw.print("plot ");
@@ -147,6 +152,13 @@ public class GnuplotFile {
         drawStarted = true;
         // add field to current page
         pages.get(pages.size() - 1).nextField();
+    }
+
+    public void setLabelOnField(String label) {
+        drawStarted = true;
+        // add label to current field
+        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        page.field(page.size() - 1).setLabel(label);
     }
 
     /**

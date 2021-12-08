@@ -5,6 +5,7 @@ import java.util.List;
 
 class GnuplotField {
 
+    private String label;
     private List<GnuplotLine> lines = new ArrayList<GnuplotLine>();
 
     GnuplotField(){
@@ -22,4 +23,11 @@ class GnuplotField {
         return lines.get(num);
     }
 
+    void setLabel(String label) {
+        this.label = label;
+    }
+
+    String getLabel() {
+        return label;
+    }
 }

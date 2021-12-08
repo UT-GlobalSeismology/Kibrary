@@ -23,13 +23,19 @@ public class GnuplotSample {
         gnuplot.setYlabel("value");
         //gnuplot.setTitle("Test");
 
+        gnuplot.setLabelOnField("AAA AA");
         gnuplot.addLine("sample.txt", 1, 2, appearance1);
         gnuplot.addLine("sample.txt", 1, 3, appearance2);
         gnuplot.nextField();
+
         gnuplot.addLine("sample.txt", 1, 4, appearance2);
+        gnuplot.setLabelOnField("ABB AA 1234.5");
         gnuplot.nextPage();
+
         gnuplot.addLine("sample.txt", 1, 2, appearance1);
+        gnuplot.setLabelOnField("This is a label.");
         gnuplot.addLine("sample.txt", 1, 4, appearance2);
+        gnuplot.nextField();
 
         gnuplot.write();
         gnuplot.execute();
