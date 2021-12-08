@@ -65,6 +65,7 @@ public class GnuplotLineAppearance {
         this.linewidth = linewidth;
     }
 
+    @Override
     public String toString() {
         return "w lines lt " + linetype + " lc rgb \"" + linecolor.nameColorName() + "\" lw " + linewidth;
     }

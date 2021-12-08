@@ -22,6 +22,7 @@ public class GnuplotFile {
     private final Path filePath;
 
     private String terminal = "png";
+    private boolean isPdf = false;
     private String output = "output.png";
 
     /**
@@ -60,10 +61,12 @@ public class GnuplotFile {
     private double ytics;
     private boolean yticsFlag = false;
 
-    private List<GnuplotLine> lines = new ArrayList<GnuplotLine>();
+    private boolean drawStarted = false;
+    private List<GnuplotMultiplot> pages = new ArrayList<GnuplotMultiplot>();
 
     public GnuplotFile(Path path) {
         filePath = path;
+        pages.add(new GnuplotMultiplot());
     }
 
     public boolean execute() throws IOException {
@@ -92,20 +95,28 @@ public class GnuplotFile {
             if (!ylabel.isEmpty()) pw.println("set ylabel \"" + ylabel + "\"");
             if (!title.isEmpty()) pw.println("set title \"" + title + "\"");
 
-            for (int i = 0; i < lines.size(); i++) {
-                if (i == 0) {
-                    pw.print("plot ");
-                } else {
-                    pw.print("    ");
+            for (int k = 0; k < pages.size(); k++) {
+                pw.print("set multiplot layout " + pages.get(k).size() + ",1");
+
+                for (int j = 0; j < pages.get(k).size(); j++) {
+                    for (int i = 0; i < pages.get(k).field(j).size(); i++) {
+                        if (i == 0) {
+                            pw.print("plot ");
+                        } else {
+                            pw.print("    ");
+                        }
+
+                        pw.print(pages.get(k).field(j).line(i).toString());
+
+                        if (i == pages.get(k).field(j).size() - 1) {
+                            pw.println();
+                        } else {
+                            pw.println(",\\");
+                        }
+                    }
                 }
 
-                pw.print(lines.get(i).toString());
-
-                if (i == lines.size() - 1) {
-                    pw.println();
-                } else {
-                    pw.println(",\\");
-                }
+                pw.print("unset multiplot");
             }
 
             pw.flush();
@@ -114,23 +125,63 @@ public class GnuplotFile {
     }
 
     public void addLine(String fileName, String plotPart, GnuplotLineAppearance appearance) {
-        lines.add(new GnuplotLine(fileName, plotPart, appearance));
+        drawStarted = true;
+        // add line to current page
+        pages.get(pages.size() - 1).addLine(new GnuplotLine(fileName, plotPart, appearance));
     }
 
     public void addLine(String fileName, int columnX, int columnY, GnuplotLineAppearance appearance) {
-        lines.add(new GnuplotLine(fileName, columnX, columnY, appearance));
+        drawStarted = true;
+        // add line to current page
+        pages.get(pages.size() - 1).addLine(new GnuplotLine(fileName, columnX, columnY, appearance));
     }
 
-    public void setTerminal(String terminal) {
-        this.terminal = terminal;
+    public void nextField() {
+        drawStarted = true;
+        // add field to current page
+        pages.get(pages.size() - 1).nextField();
+    }
+
+    /**
+     * Switches to the next page.
+     * This can only be done for "pdf" style. Otherwise, an IllegalArgumentException will be thrown.
+     */
+    public void nextPage() {
+        if (!isPdf) throw new IllegalArgumentException("New page cannot be added for output types other than pdf.");
+        drawStarted = true;
+        pages.add(new GnuplotMultiplot());
+    }
+
+    /**
+     * Sets the type of output graph file and its name.
+     * This must be set before lines, fields, or pages are added.
+     * If this function is called after drawing has started, and IllegalStateException will be thrown.
+     * @param type (String) Choose from "pdf", "png", and "eps". Otherwise, IlleganArgumentException will be thrown.
+     * @param output (String) Name of output file
+     */
+    public void setOutput(String type, String output) {
+        if (drawStarted) throw new IllegalStateException("Output cannot be changed after drawing has started.");
+
+        switch(type) {
+        case "pdf":
+            this.terminal = "pdfcairo enhanced";
+            this.isPdf = true;
+            break;
+        case "png":
+            this.terminal = "pngcairo enhanced";
+            break;
+        case "eps":
+            this.terminal = "epscairo enhanced";
+            break;
+        default:
+            throw new IllegalArgumentException("Unrecognizable file type.");
+        }
+
+        this.output = output;
     }
 
     public String getTerminal() {
         return terminal;
-    }
-
-    public void setOutput(String output) {
-        this.output = output;
     }
 
     public String getOutput() {
