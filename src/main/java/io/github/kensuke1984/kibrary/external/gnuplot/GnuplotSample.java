@@ -17,12 +17,11 @@ public class GnuplotSample {
         GnuplotLineAppearance appearance1 = new GnuplotLineAppearance();
         GnuplotLineAppearance appearance2 = new GnuplotLineAppearance(2, GnuplotColorNames.red, 3);
 
-        gnuplot.setOutput("pdf","sample.pdf");
+        gnuplot.setOutput("pdf", "sample.pdf", 21, 29.7, true);
 
         gnuplot.setXlabel("time");
         gnuplot.setYlabel("value");
-        gnuplot.setTitle("Test");
-        gnuplot.setRatio(1.7);
+        //gnuplot.setTitle("Test");
 
         gnuplot.addLine("sample.txt", 1, 2, appearance1);
         gnuplot.addLine("sample.txt", 1, 3, appearance2);

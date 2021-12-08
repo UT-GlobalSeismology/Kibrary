@@ -24,6 +24,9 @@ public class GnuplotFile {
     private String terminal = "png";
     private boolean isPdf = false;
     private String output = "output.png";
+    private double sizeX = 640;
+    private double sizeY = 480;
+    private boolean cm = false;
 
     /**
      * x軸のラベル
@@ -81,7 +84,11 @@ public class GnuplotFile {
      */
     public void write() throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath))) {
-            pw.println("set term " + terminal);
+            if (cm) {
+                pw.println("set term " + terminal + " size " + sizeX + "cm," + sizeY + "cm");
+            } else {
+                pw.println("set term " + terminal + " size " + sizeX + "," + sizeY);
+            }
             pw.println("set out \"" + output + "\"");
 
             if (!key) pw.println("unset key");
@@ -153,17 +160,21 @@ public class GnuplotFile {
     }
 
     /**
-     * Sets the type of output graph file and its name.
+     * Sets the type of output graph file, its name, and size.
      * This must be set before lines, fields, or pages are added.
-     * If this function is called after drawing has started, and IllegalStateException will be thrown.
+     * If this function is called after drawing has started, an IllegalStateException will be thrown.
      * @param type (String) Choose from "pdf", "png", and "eps". Otherwise, IlleganArgumentException will be thrown.
      * @param output (String) Name of output file
+     * @param sizeX (double) Width of output file
+     * @param sizeY (double) Height of output file
+     * @param cm (boolean) true if the size is given in cm ; if false, pixels (must be true for pdf and eps)
      */
-    public void setOutput(String type, String output) {
+    public void setOutput(String type, String output, double sizeX, double sizeY, boolean cm) {
         if (drawStarted) throw new IllegalStateException("Output cannot be changed after drawing has started.");
 
         switch(type) {
         case "pdf":
+            if (!cm) throw new IllegalArgumentException("For pdf, size cannot be set in pixels.");
             this.terminal = "pdfcairo enhanced";
             this.isPdf = true;
             break;
@@ -171,6 +182,7 @@ public class GnuplotFile {
             this.terminal = "pngcairo enhanced";
             break;
         case "eps":
+            if (!cm) throw new IllegalArgumentException("For eps, size cannot be set in pixels.");
             this.terminal = "epscairo enhanced";
             break;
         default:
@@ -178,6 +190,9 @@ public class GnuplotFile {
         }
 
         this.output = output;
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
+        this.cm = cm;
     }
 
     public String getTerminal() {
