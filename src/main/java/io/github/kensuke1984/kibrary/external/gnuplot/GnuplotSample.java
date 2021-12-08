@@ -19,6 +19,10 @@ public class GnuplotSample {
 
         gnuplot.setOutput("pdf","sample.pdf");
 
+        gnuplot.setXlabel("time");
+        gnuplot.setYlabel("value");
+        gnuplot.setTitle("Test");
+        gnuplot.setRatio(1.7);
 
         gnuplot.addLine("sample.txt", 1, 2, appearance1);
         gnuplot.addLine("sample.txt", 1, 3, appearance2);

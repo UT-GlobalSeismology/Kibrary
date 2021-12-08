@@ -96,7 +96,7 @@ public class GnuplotFile {
             if (!title.isEmpty()) pw.println("set title \"" + title + "\"");
 
             for (int k = 0; k < pages.size(); k++) {
-                pw.print("set multiplot layout " + pages.get(k).size() + ",1");
+                pw.println("set multiplot layout " + pages.get(k).size() + ",1");
 
                 for (int j = 0; j < pages.get(k).size(); j++) {
                     for (int i = 0; i < pages.get(k).field(j).size(); i++) {
@@ -116,7 +116,7 @@ public class GnuplotFile {
                     }
                 }
 
-                pw.print("unset multiplot");
+                pw.println("unset multiplot");
             }
 
             pw.flush();
