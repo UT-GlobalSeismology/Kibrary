@@ -108,7 +108,9 @@ public class GnuplotFile {
 
                 // each field
                 for (int j = 0; j < pages.get(k).size(); j++) {
-                    pw.println("set label 1 at graph 0 1 " + pages.get(k).field(j).getLabel());
+                    if (pages.get(k).field(j).hasLabel()) {
+                        pw.println("set label 1 at graph 0,0.9 \"" + pages.get(k).field(j).getLabel() + "\"");
+                    }
 
                     // each line
                     for (int i = 0; i < pages.get(k).field(j).size(); i++) {
