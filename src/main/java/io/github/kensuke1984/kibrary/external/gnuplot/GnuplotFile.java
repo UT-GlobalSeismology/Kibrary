@@ -13,6 +13,8 @@ import io.github.kensuke1984.kibrary.external.ExternalProcess;
 
 /**
  * Plot file for gnuplot.
+ * <p>
+ * Gnuplot version 5.0 or above must be in your PATH.
  *
  * @author Kensuke Konishi
  * @version 0.0.1
@@ -124,9 +126,12 @@ public class GnuplotFile {
 
                 // each field
                 for (int j = 0; j < pages.get(k).numField(); j++) {
+
                     // each label
-                    for (int label = 0; label < pages.get(k).field(j).numLabel(); label++) {
-                        pw.println("set label " + label + " " + pages.get(k).field(j).label(label).toString());
+                    if (pages.get(k).field(j).numLabel() == 0) {
+                        pw.println("unset label");
+                    } else for (int label = 0; label < pages.get(k).field(j).numLabel(); label++) {
+                        pw.println("set label " + (label + 1) + " " + pages.get(k).field(j).label(label).toString());
                     }
 
                     // each line
