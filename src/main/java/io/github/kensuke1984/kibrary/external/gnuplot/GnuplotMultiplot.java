@@ -16,12 +16,7 @@ class GnuplotMultiplot {
         fields.add(new GnuplotField());
     }
 
-    void addLine(GnuplotLine line) {
-        // add line to the current field
-        fields.get(fields.size() - 1).addLine(line);
-    }
-
-    int size() {
+    int numField() {
         return fields.size();
     }
 

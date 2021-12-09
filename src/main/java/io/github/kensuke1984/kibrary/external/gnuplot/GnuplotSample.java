@@ -18,27 +18,28 @@ public class GnuplotSample {
         GnuplotLineAppearance appearance2 = new GnuplotLineAppearance(2, GnuplotColorNames.red, 3);
 
         gnuplot.setOutput("pdf", "sample.pdf", 21, 29.7, true);
+        gnuplot.setKey(true, true, "top right");
 
         gnuplot.setXlabel("time");
         gnuplot.setYlabel("value");
         //gnuplot.setTitle("Test");
 
-        gnuplot.setLabelOnField("AAA AA");
-        gnuplot.addLine("sample.txt", 1, 2, appearance1);
-        gnuplot.addLine("sample.txt", 1, 3, appearance2);
+        gnuplot.addLabel("AAA AA", "graph", 0, 0.95);
+        gnuplot.addLine("sample.txt", 1, 2, appearance1, "hello");
+        gnuplot.addLine("sample.txt", 1, 3, appearance2, "world");
         gnuplot.nextField();
 
-        gnuplot.addLine("sample.txt", 1, 4, appearance2);
-        gnuplot.setLabelOnField("ABB AA 1234.5");
+        gnuplot.addLine("sample.txt", 1, 4, appearance2, "");
         gnuplot.nextPage();
 
-        gnuplot.addLine("sample.txt", 1, 2, appearance1);
-        gnuplot.setLabelOnField("This is a label.");
-        gnuplot.addLine("sample.txt", 1, 4, appearance2);
+        gnuplot.addLine("sample.txt", 1, 2, appearance1, "");
+        gnuplot.addLabel("ABB AA 1234.5", "graph", 0, 0.95);
+        gnuplot.addLabel("This is a label.", "graph", 0, 0.85);
+        gnuplot.addLine("sample.txt", 1, 4, appearance2, "test");
         gnuplot.nextField();
 
         gnuplot.write();
-        gnuplot.execute();
+        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
 
     }
 

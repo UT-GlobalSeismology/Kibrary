@@ -5,8 +5,8 @@ import java.util.List;
 
 class GnuplotField {
 
-    private String label = "";
     private List<GnuplotLine> lines = new ArrayList<GnuplotLine>();
+    private List<GnuplotLabel> labels = new ArrayList<GnuplotLabel>();
 
     GnuplotField(){
     }
@@ -15,7 +15,7 @@ class GnuplotField {
         lines.add(line);
     }
 
-    int size() {
+    int numLine() {
         return lines.size();
     }
 
@@ -23,15 +23,15 @@ class GnuplotField {
         return lines.get(num);
     }
 
-    void setLabel(String label) {
-        this.label = label;
+    void addLabel(GnuplotLabel label) {
+        this.labels.add(label);
     }
 
-    boolean hasLabel() {
-        return !label.isEmpty();
+    int numLabel() {
+        return labels.size();
     }
 
-    String getLabel() {
-        return label;
+    GnuplotLabel label(int index) {
+        return labels.get(index);
     }
 }

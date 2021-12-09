@@ -9,9 +9,9 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 public class GnuplotLineAppearance {
 
     /**
-     * line type (-1 to 10, may depend on environment)
+     * dash type of line (1 to 10, may depend on environment)
      */
-    private int linetype = 1;
+    private int dashtype = 1;
 
     /**
      * line color
@@ -27,26 +27,26 @@ public class GnuplotLineAppearance {
     /**
      * Constructor using default settings.
      * Default:
-     *  linetype 1,
+     *  dashtype 1,
      *  linecolor black,
      *  linewidth 1
      */
     public GnuplotLineAppearance() {
     }
 
-    public GnuplotLineAppearance(int linetype, GnuplotColorNames linecolor, int linewidth) {
-        this.linetype = linetype;
+    public GnuplotLineAppearance(int dashtype, GnuplotColorNames linecolor, int linewidth) {
+        this.dashtype = dashtype;
         this.linecolor = linecolor;
         this.linewidth = linewidth;
     }
 
 
-    public int getLinetype() {
-        return linetype;
+    public int getDashtype() {
+        return dashtype;
     }
 
-    public void setLinetype(int linetype) {
-        this.linetype = linetype;
+    public void setDashtype(int dashtype) {
+        this.dashtype = dashtype;
     }
 
     public GnuplotColorNames getLinecolor() {
@@ -67,6 +67,6 @@ public class GnuplotLineAppearance {
 
     @Override
     public String toString() {
-        return "w lines lt " + linetype + " lc rgb \"" + linecolor.nameColorName() + "\" lw " + linewidth;
+        return "w lines dt " + dashtype + " lc rgb \"" + linecolor.nameColorName() + "\" lw " + linewidth;
     }
 }

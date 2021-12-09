@@ -19,13 +19,25 @@ import io.github.kensuke1984.kibrary.external.ExternalProcess;
  */
 public class GnuplotFile {
 
+    /**
+     * Plot file path
+     */
     private final Path filePath;
 
-    private String terminal = "png";
-    private boolean isPdf = false;
+    /**
+     * Output graph file name
+     */
     private String output = "output.png";
+    /**
+     * Whether the output file extension is pdf
+     */
+    private boolean isPdf = false;
+    private String terminal = "pngcairo enhanced";
     private double sizeX = 640;
     private double sizeY = 480;
+    /**
+     * Whether the size is set in cm (true: cm ; false: pixels)
+     */
     private boolean cm = false;
 
     /**
@@ -42,9 +54,9 @@ public class GnuplotFile {
     private String title = "";
 
     /**
-     * 凡例をつけるか
+     * Settings for the key. If "", no key.
      */
-    private boolean key = false;
+    private String keySettings = "";
 
     // For the following variables, flags are used because primitive types cannot be empty.
 
@@ -91,7 +103,11 @@ public class GnuplotFile {
             }
             pw.println("set out \"" + output + "\"");
 
-            if (!key) pw.println("unset key");
+            if (!keySettings.isEmpty()) {
+                pw.println("set key " + keySettings);
+            } else {
+                pw.println("unset key");
+            }
             if (ratioFlag) pw.println("set size ratio " + ratio);
             if (xrangeFlag) pw.println("set xrange [" + xmin + ":" + xmax + "]");
             if (yrangeFlag) pw.println("set yrange [" + ymin + ":" + ymax + "]");
@@ -104,16 +120,17 @@ public class GnuplotFile {
 
             // each page
             for (int k = 0; k < pages.size(); k++) {
-                pw.println("set multiplot layout " + pages.get(k).size() + ",1");
+                pw.println("set multiplot layout " + pages.get(k).numField() + ",1");
 
                 // each field
-                for (int j = 0; j < pages.get(k).size(); j++) {
-                    if (pages.get(k).field(j).hasLabel()) {
-                        pw.println("set label 1 at graph 0,0.9 \"" + pages.get(k).field(j).getLabel() + "\"");
+                for (int j = 0; j < pages.get(k).numField(); j++) {
+                    // each label
+                    for (int label = 0; label < pages.get(k).field(j).numLabel(); label++) {
+                        pw.println("set label " + label + " " + pages.get(k).field(j).label(label).toString());
                     }
 
                     // each line
-                    for (int i = 0; i < pages.get(k).field(j).size(); i++) {
+                    for (int i = 0; i < pages.get(k).field(j).numLine(); i++) {
                         if (i == 0) {
                             pw.print("plot ");
                         } else {
@@ -122,7 +139,7 @@ public class GnuplotFile {
 
                         pw.print(pages.get(k).field(j).line(i).toString());
 
-                        if (i == pages.get(k).field(j).size() - 1) {
+                        if (i == pages.get(k).field(j).numLine() - 1) {
                             pw.println();
                         } else {
                             pw.println(",\\");
@@ -138,29 +155,50 @@ public class GnuplotFile {
         }
     }
 
-    public void addLine(String fileName, String plotPart, GnuplotLineAppearance appearance) {
+    /**
+     * @param fileName (String)
+     * @param plotPart (String) The content of the "using" part.
+     * @param appearance ({@link GnuplotAppearance})
+     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     */
+    public void addLine(String fileName, String plotPart, GnuplotLineAppearance appearance, String title) {
         drawStarted = true;
         // add line to current page
-        pages.get(pages.size() - 1).addLine(new GnuplotLine(fileName, plotPart, appearance));
+        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLine(new GnuplotLine(fileName, plotPart, appearance, title));
     }
 
-    public void addLine(String fileName, int columnX, int columnY, GnuplotLineAppearance appearance) {
+    /**
+     * @param fileName (String)
+     * @param columnX (double) The column number of input file to use for the x-axis
+     * @param columnY (double) The column number of input file to use for the y-axis
+     * @param appearance ({@link GnuplotAppearance})
+     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     */
+    public void addLine(String fileName, int columnX, int columnY, GnuplotLineAppearance appearance, String title) {
         drawStarted = true;
         // add line to current page
-        pages.get(pages.size() - 1).addLine(new GnuplotLine(fileName, columnX, columnY, appearance));
+        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLine(new GnuplotLine(fileName, columnX, columnY, appearance, title));
+    }
+
+    /**
+     * @param label (String)
+     * @param coordinate (String) The coordinate system used to specify position, from "first", "second", "graph", "screen", or "character".
+     * @param posX (double)
+     * @param posY (double)
+     */
+    public void addLabel(String label, String coordinate, double posX, double posY) {
+        drawStarted = true;
+        // add label to current field
+        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinate, posX, posY));
     }
 
     public void nextField() {
         drawStarted = true;
         // add field to current page
         pages.get(pages.size() - 1).nextField();
-    }
-
-    public void setLabelOnField(String label) {
-        drawStarted = true;
-        // add label to current field
-        GnuplotMultiplot page = pages.get(pages.size() - 1);
-        page.field(page.size() - 1).setLabel(label);
     }
 
     /**
@@ -217,12 +255,23 @@ public class GnuplotFile {
         return output;
     }
 
-    public void setKey(boolean key) {
-        this.key = key;
+    /**
+     * @param set (boolean) Whether to display key
+     * @param box (boolean) Whether to surround the key with box
+     * @param position (String) Position and additional options (if unneeded, set this "")
+     */
+    public void setKey(boolean set, boolean box, String position) {
+        if(!set) {
+            this.keySettings = "";
+        } else if (!box){
+            this.keySettings = "nobox "+ position;
+        } else {
+            this.keySettings = "box " + position;
+        }
     }
 
-    public boolean getKey() {
-        return key;
+    public String getKeySettings() {
+        return keySettings;
     }
 
     public void setRatio(double ratio) {
