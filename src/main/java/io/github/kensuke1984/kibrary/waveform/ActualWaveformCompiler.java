@@ -38,8 +38,8 @@ import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -58,20 +58,19 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * The write is a set of an ID and waveform files.
  * <p>
  * Observed and synthetic waveforms in SAC files are collected from the obsDir
- * and synDir, respectively. Only SAC files, which sample rates are
- * {@link #sacSamplingHz}, are used. Both
- * folders must have event folders inside which have waveforms.
+ * and synDir, respectively. Only SAC files with sample rates of
+ * {@link #sacSamplingHz} are used.
+ * Both folders must have event folders inside which have waveforms.
  * <p>
- * The static correction is applied as described in {@link StaticCorrection}
+ * The static correction is applied as described in {@link StaticCorrection}.
  * <p>
- * The sample rates of the data is
- * {@link #finalSamplingHz}.<br>
+ * The sample rates of the resulting data is {@link #finalSamplingHz}.
  * Timewindow information in {@link #timewindowPath} is used for cutting windows.
  * <p>
  * Only pairs of a seismic source and a receiver with both an observed and
  * synthetic waveform are collected.
  * <p>
- * This class does not apply a digital filter, but extract information about
+ * This class does not apply a digital filter, but extracts information about
  * pass band written in SAC files.
  *
  */
@@ -82,6 +81,10 @@ public class ActualWaveformCompiler implements Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
     /**
      * {@link Path} of a root folder containing observed dataset
      */
@@ -411,6 +414,10 @@ public class ActualWaveformCompiler implements Operation {
        ExecutorService es = ThreadUtils.createFixedThreadPool();
 
        String dateStr = GadgetUtils.getTemporaryString();
+       outPath = workPath.resolve("compiled" + dateStr);
+       Files.createDirectories(outPath);
+       System.err.println("Output folder is " + outPath);
+
        Path waveIDPath = null;
        Path waveformPath = null;
        Path envelopeIDPath = null;
@@ -424,18 +431,18 @@ public class ActualWaveformCompiler implements Operation {
        Path spcImIDPath = null;
        Path spcImPath = null;
 
-       waveIDPath = workPath.resolve("actualID" + dateStr + ".dat");
-       waveformPath = workPath.resolve("actual" + dateStr + ".dat");
-       envelopeIDPath = workPath.resolve("envelopeID" + dateStr + ".dat");
-       envelopePath = workPath.resolve("envelope" + dateStr + ".dat");
-       hyIDPath = workPath.resolve("hyID" + dateStr + ".dat");
-       hyPath = workPath.resolve("hy" + dateStr + ".dat");
-       spcAmpIDPath = workPath.resolve("spcAmpID" + dateStr + ".dat");
-       spcAmpPath = workPath.resolve("spcAmp" + dateStr + ".dat");
-       spcReIDPath = workPath.resolve("spcReID" + dateStr + ".dat");
-       spcRePath = workPath.resolve("spcRe" + dateStr + ".dat");
-       spcImIDPath = workPath.resolve("spcImID" + dateStr + ".dat");
-       spcImPath = workPath.resolve("spcIm" + dateStr + ".dat");
+       waveIDPath = outPath.resolve("actualID" + dateStr + ".dat");
+       waveformPath = outPath.resolve("actual" + dateStr + ".dat");
+       envelopeIDPath = outPath.resolve("envelopeID" + dateStr + ".dat");
+       envelopePath = outPath.resolve("envelope" + dateStr + ".dat");
+       hyIDPath = outPath.resolve("hyID" + dateStr + ".dat");
+       hyPath = outPath.resolve("hy" + dateStr + ".dat");
+       spcAmpIDPath = outPath.resolve("spcAmpID" + dateStr + ".dat");
+       spcAmpPath = outPath.resolve("spcAmp" + dateStr + ".dat");
+       spcReIDPath = outPath.resolve("spcReID" + dateStr + ".dat");
+       spcRePath = outPath.resolve("spcRe" + dateStr + ".dat");
+       spcImIDPath = outPath.resolve("spcImID" + dateStr + ".dat");
+       spcImPath = outPath.resolve("spcIm" + dateStr + ".dat");
 
        try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, observerSet, eventSet,
                periodRanges, phases)) {

@@ -79,11 +79,12 @@ public class GnuplotFile {
     private boolean yticsFlag = false;
 
     private boolean drawStarted = false;
-    private List<GnuplotMultiplot> pages = new ArrayList<GnuplotMultiplot>();
+    private List<GnuplotPage> pages = new ArrayList<GnuplotPage>();
 
     public GnuplotFile(Path path) {
         filePath = path;
-        pages.add(new GnuplotMultiplot());
+        // make first page
+        pages.add(new GnuplotPage());
     }
 
     public boolean execute() throws IOException {
@@ -169,7 +170,7 @@ public class GnuplotFile {
     public void addLine(String fileName, String plotPart, GnuplotLineAppearance appearance, String title) {
         drawStarted = true;
         // add line to current page
-        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        GnuplotPage page = pages.get(pages.size() - 1);
         page.field(page.numField() - 1).addLine(new GnuplotLine(fileName, plotPart, appearance, title));
     }
 
@@ -183,7 +184,7 @@ public class GnuplotFile {
     public void addLine(String fileName, int columnX, int columnY, GnuplotLineAppearance appearance, String title) {
         drawStarted = true;
         // add line to current page
-        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        GnuplotPage page = pages.get(pages.size() - 1);
         page.field(page.numField() - 1).addLine(new GnuplotLine(fileName, columnX, columnY, appearance, title));
     }
 
@@ -196,7 +197,7 @@ public class GnuplotFile {
     public void addLabel(String label, String coordinate, double posX, double posY) {
         drawStarted = true;
         // add label to current field
-        GnuplotMultiplot page = pages.get(pages.size() - 1);
+        GnuplotPage page = pages.get(pages.size() - 1);
         page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinate, posX, posY));
     }
 
@@ -213,7 +214,7 @@ public class GnuplotFile {
     public void nextPage() {
         if (!isPdf) throw new IllegalArgumentException("New page cannot be added for output types other than pdf.");
         drawStarted = true;
-        pages.add(new GnuplotMultiplot());
+        pages.add(new GnuplotPage());
     }
 
     /**

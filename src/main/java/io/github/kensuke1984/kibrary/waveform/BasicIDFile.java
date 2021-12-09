@@ -25,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
- * Utilities for a pair of an ID file and a waveform file. The files are for
- * observed and synthetic waveforms (NOT partial)<br>
+ * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}.
+ * The files are for observed and synthetic waveforms (NOT partial).
  * <p>
  * The file contains
  * <p>(File information)</p>
@@ -47,6 +47,9 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <dt>See in {@link #read(Path)}</dt>
  * </dl>
  *
+ * <p>
+ * When the main method of this class is executed,
+ * the input binary-format files can be exported in ascii format.
  */
 public final class BasicIDFile {
 
@@ -58,50 +61,8 @@ public final class BasicIDFile {
     private BasicIDFile() {
     }
 
-    private static void outputGlobalCMTID(String header, BasicID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".globalCMTID");
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.event).distinct()
-                .map(id -> id.toString() + " " + id.getEvent().getCmtLocation()).sorted()
-                .collect(Collectors.toList());
-        Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
-        System.err.println(outPath + " is created as a list of global CMT IDs.");
-    }
-
-    private static void outputStations(String header, BasicID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".station");
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct().sorted()
-                .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
-        Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
-        System.err.println(outPath + " is created as a list of stations.");
-    }
-
     /**
-     * Options: -a: show all IDs
-     *
-     * @param args [option] [id file name]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        if (args.length == 1) {
-            BasicID[] ids = read(Paths.get(args[0]));
-            // print(Paths.get(args[0]));
-            String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
-            try {
-                outputStations(header, ids);
-                outputGlobalCMTID(header, ids);
-            } catch (Exception e) {
-                System.err.println("Could not write information about " + args[0]);
-                System.err.println("If you want to see all IDs inside, then use a '-a' option.");
-            }
-        } else if (args.length == 2 && args[0].equals("-a")) {
-            BasicID[] ids = read(Paths.get(args[1]));
-            Arrays.stream(ids).forEach(System.out::println);
-        } else {
-            System.err.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
-        }
-    }
-
-    /**
+     * Reads both the ID file and the waveform file.
      * @param idPath
      *            {@link Path} of an ID file, if it does not exist, an
      *            IOException
@@ -138,6 +99,8 @@ public final class BasicIDFile {
     }
 
     /**
+     * Reads only the ID file (and not the waveform file).
+     *
      * @param idPath {@link Path} of an ID file
      * @return Array of {@link BasicID} without waveform data
      * @throws IOException if an I/O error occurs
@@ -192,6 +155,8 @@ public final class BasicIDFile {
     }
 
     /**
+     * Method for reading the actual ID part.
+     * <p>
      * An ID information contains<br>
      * obs or syn(1)<br>
      * observer number(2)<br>
@@ -233,5 +198,73 @@ public final class BasicIDFile {
                 usablephases, startByte, isConvolved);
         return bid;
     }
+
+    /**
+     * Exports data files in ascii format.
+     *
+     * @param args [option]
+     * <ul>
+     * <li> [-i IDFile] : exports ID file in standard output</li>
+     * <li> [-w IDFile WaveformFile] : exports ID file in standard output and waveforms in event directories under current path</li>
+     * </ul>
+     * You must specify one or the other.
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+
+        if (args.length == 1) {
+            BasicID[] ids = read(Paths.get(args[0]));
+            // print(Paths.get(args[0]));
+            String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
+            try {
+                outputStations(header, ids);
+                outputGlobalCMTID(header, ids);
+            } catch (Exception e) {
+                System.err.println("Could not write information about " + args[0]);
+                System.err.println("If you want to see all IDs inside, then use a '-a' option.");
+            }
+        } else if (args.length == 2 && args[0].equals("-i")) {
+            BasicID[] ids = read(Paths.get(args[1]));
+            Arrays.stream(ids).forEach(System.out::println);
+        } else if (args.length == 3 && args[0].equals("-w")) {
+            BasicID[] ids = read(Paths.get(args[1]), Paths.get(args[2]));
+            Arrays.stream(ids).forEach(System.out::println);
+        } else {
+            System.err.println("Usage:");
+            System.err.println(" [-i IDFile] : exports ID file in standard output");
+            System.err.println(" [-w IDFile WaveformFile] : exports ID file in standard output and waveforms in event directories under current path");
+        }
+
+    }
+
+    /**
+     * @param header
+     * @param ids
+     * @throws IOException
+     * @deprecated
+     */
+    private static void outputGlobalCMTID(String header, BasicID[] ids) throws IOException {
+        Path outPath = Paths.get(header + ".globalCMTID");
+        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.event).distinct()
+                .map(id -> id.toString() + " " + id.getEvent().getCmtLocation()).sorted()
+                .collect(Collectors.toList());
+        Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
+        System.err.println(outPath + " is created as a list of global CMT IDs.");
+    }
+
+    /**
+     * @param header
+     * @param ids
+     * @throws IOException
+     * @deprecated
+     */
+    private static void outputStations(String header, BasicID[] ids) throws IOException {
+        Path outPath = Paths.get(header + ".station");
+        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct().sorted()
+                .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
+        Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
+        System.err.println(outPath + " is created as a list of stations.");
+    }
+
 
 }

@@ -9,13 +9,13 @@ import java.nio.file.Paths;
  * @author otsuru
  * @since 2021/12/07
  */
-public class GnuplotSample {
+final class GnuplotSample {
 
     public static void main(String[] args) throws IOException {
 
         GnuplotFile gnuplot = new GnuplotFile(Paths.get("sample.plt"));
         GnuplotLineAppearance appearance1 = new GnuplotLineAppearance();
-        GnuplotLineAppearance appearance2 = new GnuplotLineAppearance(2, GnuplotColorNames.red, 3);
+        GnuplotLineAppearance appearance2 = new GnuplotLineAppearance(2, GnuplotColorName.red, 3);
 
         gnuplot.setOutput("pdf", "sample.pdf", 21, 29.7, true);
         gnuplot.setKey(true, true, "top right");

@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 /**
  * Writer of BasicDataset and PartialDataset.
  * <p>
- * This class creates a new set of dataset files.
+ * This class creates a new set of ID and waveform files in binary-format.
  *
  */
 public class WaveformDataWriter implements Closeable, Flushable {
@@ -212,6 +212,19 @@ public class WaveformDataWriter implements Closeable, Flushable {
     }
 
     /**
+     * An ID information contains<br>
+     * obs or syn(1)<br>
+     * observer number(2)<br>
+     * event number(2)<br>
+     * component(1)<br>
+     * period range(1) <br>
+     * phases numbers(10*2)<br>
+     * start time(4)<br>
+     * number of points(4)<br>
+     * sampling hz(4) <br>
+     * convoluted(or observed) or not(1)<br>
+     * position of a waveform for the ID in the datafile(8)
+     *
      * @param basicID StartByte will be ignored and set properly in the write file.
      * @throws IOException if an I/O error occurs
      */
@@ -223,12 +236,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
             throw new RuntimeException("No such observer: " + basicID.observer + " " + basicID);
         }
 
-        switch (basicID.TYPE) {
+        switch (basicID.TYPE) { // if it is obs 1Byte
         case OBS:
-            idStream.writeBoolean(true); // if it is obs 1Byte
+            idStream.writeBoolean(true);
             break;
         case SYN:
-            idStream.writeBoolean(false); // if it is obs
+            idStream.writeBoolean(false);
             break;
         default:
             throw new RuntimeException("This is a partial derivative.");

@@ -16,7 +16,7 @@ public class GnuplotLineAppearance {
     /**
      * line color
      */
-    private GnuplotColorNames linecolor = GnuplotColorNames.black;
+    private GnuplotColorName linecolor = GnuplotColorName.black;
 
     /**
      * line width
@@ -34,7 +34,7 @@ public class GnuplotLineAppearance {
     public GnuplotLineAppearance() {
     }
 
-    public GnuplotLineAppearance(int dashtype, GnuplotColorNames linecolor, int linewidth) {
+    public GnuplotLineAppearance(int dashtype, GnuplotColorName linecolor, int linewidth) {
         this.dashtype = dashtype;
         this.linecolor = linecolor;
         this.linewidth = linewidth;
@@ -49,11 +49,11 @@ public class GnuplotLineAppearance {
         this.dashtype = dashtype;
     }
 
-    public GnuplotColorNames getLinecolor() {
+    public GnuplotColorName getLinecolor() {
         return linecolor;
     }
 
-    public void setLinecolor(GnuplotColorNames linecolor) {
+    public void setLinecolor(GnuplotColorName linecolor) {
         this.linecolor = linecolor;
     }
 

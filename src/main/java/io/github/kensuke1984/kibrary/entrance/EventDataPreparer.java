@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @since 2021/09/14
  * @author otsuru
  */
-public class EventDataPreparer {
+class EventDataPreparer {
 
     private static final String DATASELECT_URL_IRIS = "http://service.iris.edu/fdsnws/dataselect/1/query?";
     private static final String DATASELECT_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/dataselect/1/query?";
@@ -68,7 +68,7 @@ public class EventDataPreparer {
      * @param eventFolder (EventFolder) The event folder.
      * Input files must be in this folder if there are any. Output files will also be placed in this folder.
      */
-    public EventDataPreparer (EventFolder eventFolder) {
+    EventDataPreparer (EventFolder eventFolder) {
         eventDir = eventFolder;
         mseedSetPath = eventDir.toPath().resolve("mseed");
         seedSetPath = eventDir.toPath().resolve("seed");
@@ -89,7 +89,7 @@ public class EventDataPreparer {
      * @return (boolean) whether an mseed file was downloaded
      * @throws IOException
      */
-    public boolean downloadMseed(String datacenter, String networks, String channels, int headAdjustment, int footAdjustment, String mseedFileName)
+    boolean downloadMseed(String datacenter, String networks, String channels, int headAdjustment, int footAdjustment, String mseedFileName)
             throws IOException {
 
         LocalDateTime cmtTime = eventData.getCMTTime();
@@ -138,7 +138,7 @@ public class EventDataPreparer {
      * @return (boolean) true if success; false if mseed2sac failed or if no mseed files are found.
      * @throws IOException
      */
-    public boolean openMseeds() throws IOException {
+    boolean openMseeds() throws IOException {
         boolean flag = false;
 
         if (Files.exists(mseedSetPath)) {
@@ -170,7 +170,7 @@ public class EventDataPreparer {
      * @return (boolean) true if mseed2sac succeeds
      * @throws IOException
      */
-    public boolean mseed2sac(String mseedFileName) throws IOException {
+    private boolean mseed2sac(String mseedFileName) throws IOException {
         String command = "mseed2sac " + mseedFileName;
         ExternalProcess xProcess = ExternalProcess.launch(command, mseedSetPath);
         return xProcess.waitFor() == 0;
@@ -181,7 +181,7 @@ public class EventDataPreparer {
      * @return (boolean) true if success; false if rdseed failed or if no seed files are found.
      * @throws IOException
      */
-    public boolean openSeeds() throws IOException {
+    boolean openSeeds() throws IOException {
         boolean flag = false;
 
         if (Files.exists(seedSetPath)) {
@@ -213,7 +213,7 @@ public class EventDataPreparer {
      * @return (boolean) true if rdseed succeeds
      * @throws IOException
      */
-    public boolean rdseed(String seedFileName) throws IOException {
+    private boolean rdseed(String seedFileName) throws IOException {
         String command = "rdseed -fRd " + seedFileName;
         ExternalProcess xProcess = ExternalProcess.launch(command, seedSetPath);
         return xProcess.waitFor() == 0;
@@ -226,7 +226,7 @@ public class EventDataPreparer {
      * @return (boolean) true if rdseed succeeds
      * @throws IOException
      */
-    public boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
+    private boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
         String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespFile())
                 + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFile());
         //System.err.println(command);
@@ -307,7 +307,7 @@ public class EventDataPreparer {
      * @param datacenter (String) The name of the datacenter to download from.
      * @throws IOException
      */
-    public void downloadXmlMseed(String datacenter) throws IOException {
+    void downloadXmlMseed(String datacenter) throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
         }
@@ -340,7 +340,7 @@ public class EventDataPreparer {
      * The procedures may be skipped if the SAC file name is not in mseed-style.
      * @throws IOException
      */
-    public void configureFilesMseed() throws IOException {
+    void configureFilesMseed() throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
         }
@@ -429,7 +429,7 @@ public class EventDataPreparer {
      * The procedures may be skipped if the SAC file name is not in seed-style.
      * @throws IOException
      */
-    public void organizeFilesSeed() throws IOException {
+    void organizeFilesSeed() throws IOException {
         if (!Files.exists(seedSetPath)) {
             return;
         }

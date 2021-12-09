@@ -6,7 +6,7 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
  * @author Kensuke Konishi
  * @version 0.0.1.1
  */
-public enum GnuplotColorNames {
+public enum GnuplotColorName {
     white, // #ffffff = 255 255 255
     black, // #000000 = 0 0 0
     gray0, // #000000 = 0 0 0

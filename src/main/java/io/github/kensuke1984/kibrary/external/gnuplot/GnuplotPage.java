@@ -3,11 +3,11 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 import java.util.ArrayList;
 import java.util.List;
 
-class GnuplotMultiplot {
+class GnuplotPage {
 
     private List<GnuplotField> fields = new ArrayList<GnuplotField>();
 
-    GnuplotMultiplot(){
+    GnuplotPage(){
         // make first field
         fields.add(new GnuplotField());
     }
