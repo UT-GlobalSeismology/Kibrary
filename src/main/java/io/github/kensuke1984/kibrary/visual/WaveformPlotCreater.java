@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,7 +28,7 @@ public class WaveformPlotCreater {
 
         for (EventFolder eventDir : eventDirs) {
             BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
-                    .sorted().collect(Collectors.toList()).toArray(new BasicID[0]);
+                    .sorted(Comparator.comparing(BasicID::getObserver)).collect(Collectors.toList()).toArray(new BasicID[0]);
             createPlot(eventDir, useIds);
         }
 
