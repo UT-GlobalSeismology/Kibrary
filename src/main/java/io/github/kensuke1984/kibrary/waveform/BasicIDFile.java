@@ -21,7 +21,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -327,8 +326,9 @@ public final class BasicIDFile {
                     PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath,
                             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
                     for (int j = 0; j < obsData.length; j++) {
-                        pwTrace.println(j + " " + MathUtils.padToString(obsData[j], 5, 6)
-                                + " " + MathUtils.padToString(synData[j], 5, 6));
+                        pwTrace.println(j + " " + obsData[j] + " " + synData[j]);
+                        //pwTrace.println(j + " " + MathUtils.padToString(obsData[j], 5, 6)
+                        //        + " " + MathUtils.padToString(synData[j], 5, 6));
                         //pwTrace.printf("%d %.6e %.6e\n", j, obsData[j], synData[j]);
                     }
                     pwTrace.close();
