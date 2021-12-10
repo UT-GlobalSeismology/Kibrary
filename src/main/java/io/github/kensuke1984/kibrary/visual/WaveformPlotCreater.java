@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 public class WaveformPlotCreater {
 
     public static void main(String[] args) throws IOException {
-        BasicID[] ids = BasicIDFile.read(Paths.get(args[1]));
+        BasicID[] ids = BasicIDFile.read(Paths.get(args[0]));
 
         Path workPath = Paths.get(".");
         Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
@@ -45,8 +45,8 @@ public class WaveformPlotCreater {
         gnuplot.setOutput("pdf", eventDir.toString() + ".pdf", 21, 29.7, true);
         gnuplot.setKey(true, true, "top right");
 
-        gnuplot.setXlabel("time");
-        gnuplot.setYlabel("value");
+        //gnuplot.setXlabel("time");
+        //gnuplot.setYlabel("value");
         //gnuplot.setTitle("Test");
 
         int i = 0;
@@ -70,6 +70,6 @@ public class WaveformPlotCreater {
         }
 
         gnuplot.write();
-        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+        if (!gnuplot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
     }
 }
