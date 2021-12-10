@@ -286,6 +286,9 @@ public final class BasicIDFile {
             Arrays.stream(ids).forEach(System.out::println);
         } else if (args.length == 3 && args[0].equals("-w")) {
             BasicID[] ids = read(Paths.get(args[1]), Paths.get(args[2]));
+
+            System.err.println(ids[0].getObserver() + " " + ids[0].getData()[0]);
+
             outputWaveforms(ids);
         } else {
             System.err.println("Usage:");
@@ -302,6 +305,8 @@ public final class BasicIDFile {
         pairUp(ids, obsList, synList);
 
         List<GlobalCMTID> events = obsList.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toList());
+
+        System.err.println(obsList.get(0).getObserver() + " " + obsList.get(0).getData()[0]);
 
         for (GlobalCMTID event : events) {
 
