@@ -44,7 +44,7 @@ public class WaveformPlotCreater {
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(2, GnuplotColorName.red, 1);
 
         gnuplot.setOutput("pdf", eventDir.toString() + ".pdf", 21, 29.7, true);
-        gnuplot.setMargin(10, 2);
+        gnuplot.setMargin(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setKey(true, true, "top right");
 

@@ -44,11 +44,9 @@ public class GnuplotFile {
     private String fontName = "Arial";
     private int fontSizeTitle = 18;
     private int fontSizeLabel = 12;
-    private int fontSizeTicks = 12;
+    private int fontSizeTics = 12;
     private int fontSizeKey = 12;
     private int fontSizeDefault = 12;
-    private int lmargin = 0;
-    private int rmargin = 0;
 
     /**
      * x軸のラベル
@@ -85,6 +83,9 @@ public class GnuplotFile {
     private boolean xticsFlag = false;
     private double ytics;
     private boolean yticsFlag = false;
+    private int lmargin;
+    private int rmargin;
+    private boolean marginFlag = false;
 
     private boolean drawStarted = false;
     private List<GnuplotPage> pages = new ArrayList<GnuplotPage>();
@@ -116,19 +117,20 @@ public class GnuplotFile {
             pw.println("set term " + terminal + " " + terminalSize + " font \"" + fontName + "," + fontSizeDefault + "\"");
             pw.println("set out \"" + output + "\"");
 
-            pw.println("set lmargin" + lmargin);
-            pw.println("set rmargin" + rmargin);
-
             pw.println("set title font \"" + fontName + "," + fontSizeTitle + "\"");
             pw.println("set xlabel font \"" + fontName + "," + fontSizeLabel + "\"");
             pw.println("set ylabel font \"" + fontName + "," + fontSizeLabel + "\"");
-            pw.println("set ticks font \"" + fontName + "," + fontSizeTicks + "\"");
+            pw.println("set tics font \"" + fontName + "," + fontSizeTics + "\"");
             pw.println("set key font \"" + fontName + "," + fontSizeKey + "\"");
 
             if (!keySettings.isEmpty()) {
                 pw.println("set key " + keySettings);
             } else {
                 pw.println("unset key");
+            }
+            if(marginFlag) {
+                pw.println("set lmargin " + lmargin);
+                pw.println("set rmargin " + rmargin);
             }
             if (ratioFlag) pw.println("set size ratio " + ratio);
             if (xrangeFlag) pw.println("set xrange [" + xmin + ":" + xmax + "]");
@@ -284,15 +286,15 @@ public class GnuplotFile {
      * @param fontName (String) Font name to use for all letters in the graph file
      * @param title (int) Font size for the title
      * @param label (int) Font size for xlabel and ylabel
-     * @param ticks (int) Font size for xtics and ytics
+     * @param tics (int) Font size for xtics and ytics
      * @param key (int) Font size for the key
      * @param fileDefault (int) Font size for anything else (ex. added labels)
      */
-    public void setFont(String fontName, int title, int label, int ticks, int key, int fileDefault) {
+    public void setFont(String fontName, int title, int label, int tics, int key, int fileDefault) {
         this.fontName = fontName;
         this.fontSizeTitle = title;
         this.fontSizeLabel = label;
-        this.fontSizeTicks = ticks;
+        this.fontSizeTics = tics;
         this.fontSizeKey = key;
         this.fontSizeDefault = fileDefault;
     }
@@ -300,6 +302,7 @@ public class GnuplotFile {
     public void setMargin(int lmargin, int rmargin) {
         this.lmargin = lmargin;
         this.rmargin = rmargin;
+        marginFlag = true;
     }
 
     /**
