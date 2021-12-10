@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -13,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * <p>
- * ID for observed and synthetic waveform
+ * ID and waveform data for a pair of event and observer of observed and synthetic waveforms.
  * </p>
  * This class is <b>IMMUTABLE</b> <br>
  * <p>
@@ -25,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <li> Whether it is observed(true) or synthetic(false) </li>
  * <li> Name of station </li>
  * <li> Name of network </li>
- * <li> Horizontal position of station (latitude longitude) </li>
+ * <li> Horizontal position of observer (latitude longitude) </li>
  * <li> Global CMT ID </li>
  * <li> Component (ZRT) </li>
  * <li> Period minimum and maximum </li>
@@ -187,6 +188,31 @@ public class BasicID {
             if (other.observer != null) return false;
         } else if (!observer.equals(other.observer)) return false;
         return true;
+    }
+
+    /**
+     * Judges whether id0 and id1 has the same
+     * component, npts, sampling Hz, start time, max period, min period, observer, and global cmt id.
+     * This method ignores whether the input IDs are observed or synthetic. TODO start time
+     *
+     * @param id0 {@link BasicID}
+     * @param id1 {@link BasicID}
+     * @return if the IDs are same
+     */
+    public static boolean isPair(BasicID id0, BasicID id1) {
+        boolean res = false;
+        if (id0.getPhases() == null && id1.getPhases() == null) // for compatibility with old format of BasicID
+            res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+                    && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
+                    && id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20.
+                    && id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+        else {
+            res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+                && id0.getSacComponent() == id1.getSacComponent()
+                && id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
+                && id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+        }
+        return res;
     }
 
 

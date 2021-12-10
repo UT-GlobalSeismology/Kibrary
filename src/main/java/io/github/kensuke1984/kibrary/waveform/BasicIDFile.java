@@ -3,11 +3,13 @@ package io.github.kensuke1984.kibrary.waveform;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +21,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -30,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * The file contains
  * <p>(File information)</p>
- * <dl><dd>Numbers of stations, events and period ranges</dd>
+ * <dl><dd>Numbers of observers, events and period ranges</dd>
  * </dl>
  * <p>(All waveforms information)</p>
  * <dl>
@@ -200,12 +203,67 @@ public final class BasicIDFile {
     }
 
     /**
+     * Pairs up observed and synthetic BasicIDs included inside an array with random order.
+     * @param ids (BasicID[]) Array of IDs to be paired up
+     * @param resultObsList ({@literal List<BasicID>}) An empty list to write in the resulting observed IDs
+     * @param resultSynList ({@literal List<BasicID>}) An empty list to write in the resulting synthetic IDs
+     */
+    public static void pairUp(BasicID[] ids, List<BasicID> resultObsList, List<BasicID> resultSynList) {
+
+        // 観測波形の抽出 list observed IDs
+        List<BasicID> obsList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.OBS)
+                .collect(Collectors.toList());
+                //.filter(CHOOSER::test).collect(Collectors.toList());
+
+        // 重複チェック 重複が見つかればここから進まない
+        for (int i = 0; i < obsList.size(); i++)
+            for (int j = i + 1; j < obsList.size(); j++)
+                if (obsList.get(i).equals(obsList.get(j)))
+                    throw new RuntimeException("Duplicate observed detected");
+
+        // 理論波形の抽出
+        List<BasicID> synList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.SYN)
+                .collect(Collectors.toList());
+                //.filter(CHOOSER::test).collect(Collectors.toList());
+
+        // 重複チェック
+        for (int i = 0; i < synList.size() - 1; i++)
+            for (int j = i + 1; j < synList.size(); j++)
+                if (synList.get(i).equals(synList.get(j)))
+                    throw new RuntimeException("Duplicate synthetic detected");
+
+        System.err.println("Number of obs IDs before pairing with syn IDs = " + obsList.size());
+        if (obsList.size() != synList.size())
+            System.err.println("The numbers of observed IDs " + obsList.size() + " and " + " synthetic IDs "
+                    + synList.size() + " are different ");
+
+        for (int i = 0; i < synList.size(); i++) {
+            boolean foundPair = false;
+            for (int j = 0; j < obsList.size(); j++) {
+                if (BasicID.isPair(synList.get(i), obsList.get(j))) {
+                    resultObsList.add(obsList.get(j));
+                    resultSynList.add(synList.get(i));
+                    foundPair = true;
+                    break;
+                }
+            }
+            if (!foundPair) {
+                System.err.println("Didn't find OBS for " + synList.get(i));
+            }
+        }
+
+        if (resultObsList.size() != resultSynList.size())
+            throw new RuntimeException("unanticipated");
+
+    }
+
+    /**
      * Exports data files in ascii format.
      *
      * @param args [option]
      * <ul>
      * <li> [-i IDFile] : exports ID file in standard output</li>
-     * <li> [-w IDFile WaveformFile] : exports ID file in standard output and waveforms in event directories under current path</li>
+     * <li> [-w IDFile WaveformFile] : exports waveforms in event directories under current path</li>
      * </ul>
      * You must specify one or the other.
      * @throws IOException if an I/O error occurs
@@ -228,13 +286,50 @@ public final class BasicIDFile {
             Arrays.stream(ids).forEach(System.out::println);
         } else if (args.length == 3 && args[0].equals("-w")) {
             BasicID[] ids = read(Paths.get(args[1]), Paths.get(args[2]));
-            Arrays.stream(ids).forEach(System.out::println);
+            outputWaveforms(ids);
         } else {
             System.err.println("Usage:");
             System.err.println(" [-i IDFile] : exports ID file in standard output");
-            System.err.println(" [-w IDFile WaveformFile] : exports ID file in standard output and waveforms in event directories under current path");
+            System.err.println(" [-w IDFile WaveformFile] : exports waveforms in event directories under current path");
         }
 
+    }
+
+    private static void outputWaveforms(BasicID[] ids) throws IOException {
+
+        List<BasicID> obsList = new ArrayList<>();
+        List<BasicID> synList = new ArrayList<>();
+        pairUp(ids, obsList, synList);
+
+        List<GlobalCMTID> events = obsList.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toList());
+
+        for (GlobalCMTID event : events) {
+
+            // create event directory under current path
+            Path eventPath = Paths.get(event.toString());
+            Files.createDirectories(eventPath);
+
+            for (int i = 0; i < obsList.size(); i++) {
+                if (obsList.get(i).getGlobalCMTID().equals(event)) {
+                    BasicID obsID = obsList.get(i);
+                    BasicID synID = synList.get(i);
+                    double[] obsData = obsID.getData();
+                    double[] synData = synID.getData();
+
+                    // output waveform data to txt file
+                    String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+                    Path tracePath = eventPath.resolve(filename);
+                    PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath,
+                            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+                    for (int j = 0; j < obsData.length; j++) {
+                        pwTrace.println(j + " " + MathUtils.padToString(obsData[j], 5, 6)
+                                + " " + MathUtils.padToString(synData[j], 5, 6));
+                        //pwTrace.printf("%d %.6e %.6e\n", j, obsData[j], synData[j]);
+                    }
+                    pwTrace.close();
+                }
+            }
+        }
     }
 
     /**
