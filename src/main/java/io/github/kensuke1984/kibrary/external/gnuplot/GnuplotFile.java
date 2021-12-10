@@ -41,6 +41,15 @@ public class GnuplotFile {
      */
     private boolean cm = false;
 
+    private String fontName = "Arial";
+    private int fontSizeTitle = 18;
+    private int fontSizeLabel = 12;
+    private int fontSizeTicks = 12;
+    private int fontSizeKey = 12;
+    private int fontSizeDefault = 12;
+    private int lmargin = 0;
+    private int rmargin = 0;
+
     /**
      * x軸のラベル
      */
@@ -98,12 +107,23 @@ public class GnuplotFile {
      */
     public void write() throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath))) {
+            String terminalSize;
             if (cm) {
-                pw.println("set term " + terminal + " size " + sizeX + "cm," + sizeY + "cm");
+                terminalSize =  "size " + sizeX + "cm," + sizeY + "cm";
             } else {
-                pw.println("set term " + terminal + " size " + sizeX + "," + sizeY);
+                terminalSize = "size " + sizeX + "," + sizeY;
             }
+            pw.println("set term " + terminal + " " + terminalSize + " font \"" + fontName + "," + fontSizeDefault + "\"");
             pw.println("set out \"" + output + "\"");
+
+            pw.println("set lmargin" + lmargin);
+            pw.println("set rmargin" + rmargin);
+
+            pw.println("set title font \"" + fontName + "," + fontSizeTitle + "\"");
+            pw.println("set xlabel font \"" + fontName + "," + fontSizeLabel + "\"");
+            pw.println("set ylabel font \"" + fontName + "," + fontSizeLabel + "\"");
+            pw.println("set ticks font \"" + fontName + "," + fontSizeTicks + "\"");
+            pw.println("set key font \"" + fontName + "," + fontSizeKey + "\"");
 
             if (!keySettings.isEmpty()) {
                 pw.println("set key " + keySettings);
@@ -258,6 +278,28 @@ public class GnuplotFile {
 
     public String getOutput() {
         return output;
+    }
+
+    /**
+     * @param fontName (String) Font name to use for all letters in the graph file
+     * @param title (int) Font size for the title
+     * @param label (int) Font size for xlabel and ylabel
+     * @param ticks (int) Font size for xtics and ytics
+     * @param key (int) Font size for the key
+     * @param fileDefault (int) Font size for anything else (ex. added labels)
+     */
+    public void setFont(String fontName, int title, int label, int ticks, int key, int fileDefault) {
+        this.fontName = fontName;
+        this.fontSizeTitle = title;
+        this.fontSizeLabel = label;
+        this.fontSizeTicks = ticks;
+        this.fontSizeKey = key;
+        this.fontSizeDefault = fileDefault;
+    }
+
+    public void setMargin(int lmargin, int rmargin) {
+        this.lmargin = lmargin;
+        this.rmargin = rmargin;
     }
 
     /**

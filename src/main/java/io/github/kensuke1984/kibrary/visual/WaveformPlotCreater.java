@@ -27,7 +27,7 @@ public class WaveformPlotCreater {
 
         for (EventFolder eventDir : eventDirs) {
             BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
-                    .collect(Collectors.toList()).toArray(new BasicID[0]);
+                    .sorted().collect(Collectors.toList()).toArray(new BasicID[0]);
             createPlot(eventDir, useIds);
         }
 
@@ -43,6 +43,8 @@ public class WaveformPlotCreater {
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(2, GnuplotColorName.red, 1);
 
         gnuplot.setOutput("pdf", eventDir.toString() + ".pdf", 21, 29.7, true);
+        gnuplot.setMargin(10, 2);
+        gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setKey(true, true, "top right");
 
         //gnuplot.setXlabel("time");
