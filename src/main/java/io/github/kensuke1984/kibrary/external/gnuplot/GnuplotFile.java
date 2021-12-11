@@ -149,19 +149,21 @@ public class GnuplotFile {
                 // each field
                 for (int j = 0; j < pages.get(k).numField(); j++) {
 
+                    if (pages.get(k).field(j).numLine() == 0) continue;
+
                     // each label
                     if (pages.get(k).field(j).numLabel() == 0) {
-                        pw.println("unset label");
+                        pw.println(" unset label");
                     } else for (int label = 0; label < pages.get(k).field(j).numLabel(); label++) {
-                        pw.println("set label " + (label + 1) + " " + pages.get(k).field(j).label(label).toString());
+                        pw.println(" set label " + (label + 1) + " " + pages.get(k).field(j).label(label).toString());
                     }
 
                     // each line
                     for (int i = 0; i < pages.get(k).field(j).numLine(); i++) {
                         if (i == 0) {
-                            pw.print("plot ");
+                            pw.print(" plot ");
                         } else {
-                            pw.print("    ");
+                            pw.print("      ");
                         }
 
                         pw.print(pages.get(k).field(j).line(i).toString());

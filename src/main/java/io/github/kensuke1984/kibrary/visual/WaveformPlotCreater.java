@@ -40,8 +40,9 @@ public class WaveformPlotCreater {
         BasicIDFile.pairUp(ids, obsList, synList);
 
         GnuplotFile gnuplot = new GnuplotFile(eventDir.toPath().resolve(eventDir.toString() + ".plt"));
-        GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-        GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(2, GnuplotColorName.red, 1);
+        GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
+        GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
+        GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
 
         gnuplot.setOutput("pdf", eventDir.toString() + ".pdf", 21, 29.7, true);
         gnuplot.setMargin(15, 5);
@@ -57,8 +58,9 @@ public class WaveformPlotCreater {
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
             gnuplot.addLabel(obsID.getObserver().getPaddedInfoString(), "graph", 0, 0.95);
             gnuplot.addLabel(eventDir.toString(), "graph", 0, 0.85);
-            gnuplot.addLine(filename, 1, 2, obsAppearance, "observed");
-            gnuplot.addLine(filename, 1, 3, synAppearance, "synthetic");
+            gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
+            gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
+            gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
 
             i++;
             if(i%10 == 0) {

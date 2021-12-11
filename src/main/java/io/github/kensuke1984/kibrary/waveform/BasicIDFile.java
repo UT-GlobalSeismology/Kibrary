@@ -294,6 +294,12 @@ public final class BasicIDFile {
 
     }
 
+    /**
+     * Outputs wavoform data for each event-observeer pair into txt files.
+     *
+     * @param ids
+     * @throws IOException
+     */
     private static void outputWaveforms(BasicID[] ids) throws IOException {
 
         List<BasicID> obsList = new ArrayList<>();
@@ -314,6 +320,10 @@ public final class BasicIDFile {
                     BasicID synID = synList.get(i);
                     double[] obsData = obsID.getData();
                     double[] synData = synID.getData();
+                    double obsStartTime = obsID.getStartTime();
+                    double synStartTime = synID.getStartTime();
+                    double obsSamplingHz = obsID.getSamplingHz();
+                    double synSamplingHz = synID.getSamplingHz();
 
                     // output waveform data to txt file
                     String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
@@ -321,10 +331,9 @@ public final class BasicIDFile {
                     PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath,
                             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
                     for (int j = 0; j < obsData.length; j++) {
-                        pwTrace.println(j + " " + obsData[j] + " " + synData[j]);
-                        //pwTrace.println(j + " " + MathUtils.padToString(obsData[j], 5, 6)
-                        //        + " " + MathUtils.padToString(synData[j], 5, 6));
-                        //pwTrace.printf("%d %.6e %.6e\n", j, obsData[j], synData[j]);
+                        double obsTime = obsStartTime + j * obsSamplingHz;
+                        double synTime = synStartTime + j * synSamplingHz;
+                        pwTrace.println(obsTime + " " + obsData[j] + " " + synTime + " " + synData[j]);
                     }
                     pwTrace.close();
                 }
