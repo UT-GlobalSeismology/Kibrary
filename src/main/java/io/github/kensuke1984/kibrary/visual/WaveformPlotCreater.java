@@ -93,7 +93,7 @@ public class WaveformPlotCreater implements Operation {
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-        basicIDPath = getPath("timewindowPath");
+        basicIDPath = getPath("basicIDPath");
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
 
