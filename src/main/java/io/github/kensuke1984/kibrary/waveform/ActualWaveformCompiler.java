@@ -210,7 +210,7 @@ public class ActualWaveformCompiler implements Operation {
         Path outPath = Paths
                 .get(ActualWaveformCompiler.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan ObservedSyntheticDatasetMaker");
+            pw.println("manhattan ActualWaveformCompiler");
             pw.println("##Path of a working directory (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");

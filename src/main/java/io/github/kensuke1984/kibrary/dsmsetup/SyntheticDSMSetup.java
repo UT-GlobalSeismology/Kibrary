@@ -100,7 +100,7 @@ public class SyntheticDSMSetup implements Operation {
         Path outPath = Paths
                 .get(SyntheticDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan SyntheticDSMInformationFileMaker");
+            pw.println("manhattan SyntheticDSMSetup");
             pw.println("##SacComponents that observers must have to be used (Z R T)");
             pw.println("#components");
             pw.println("##Path of a work folder (.)");
