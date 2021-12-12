@@ -57,11 +57,10 @@ public class WaveformPlotCreater implements Operation {
     private boolean splitComponents;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths
-                .get(WaveformPlotCreater.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(WaveformPlotCreater.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan WaveformPlotCreater");
-            pw.println("##Path of a working directory (.)");
+            pw.println("##Path of a working directory. This must contain event directories with waveform txt files. (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");
@@ -146,7 +145,6 @@ public class WaveformPlotCreater implements Operation {
 
    }
 
-
     /**
      * @param eventDir (EventFolder)
      * @param ids (BasicID) IDs to be plotted
@@ -154,6 +152,10 @@ public class WaveformPlotCreater implements Operation {
      * @throws IOException
      */
     private static void createPlot(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
+        if (ids.length == 0) {
+            return;
+        }
+
         List<BasicID> obsList = new ArrayList<>();
         List<BasicID> synList = new ArrayList<>();
         BasicIDFile.pairUp(ids, obsList, synList);
@@ -176,9 +178,8 @@ public class WaveformPlotCreater implements Operation {
         int i = 0;
         for (BasicID obsID : obsList) {
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-            gnuplot.addLabel(obsID.getObserver().getPaddedInfoString(), "graph", 0, 0.95);
-            gnuplot.addLabel(obsID.getSacComponent().toString(), "graph", 0, 0.85);
-            gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0, 0.05);
+            gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0, 0.95);
+            gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0, 0.85);
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");

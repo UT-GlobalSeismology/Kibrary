@@ -30,7 +30,7 @@ public class GnuplotFile {
      */
     private String output = "output.png";
     /**
-     * Whether the output file extension is pdf
+     * Whether the output graph file format is pdf
      */
     private boolean isPdf = false;
     private String terminal = "pngcairo enhanced";
@@ -232,28 +232,28 @@ public class GnuplotFile {
 
     /**
      * Switches to the next page.
-     * This can only be done for "pdf" style. Otherwise, an IllegalArgumentException will be thrown.
+     * This can only be done for "pdf" format. Otherwise, an IllegalArgumentException will be thrown.
      */
     public void nextPage() {
-        if (!isPdf) throw new IllegalArgumentException("New page cannot be added for output types other than pdf.");
+        if (!isPdf) throw new IllegalArgumentException("New page cannot be added for output file formats other than pdf.");
         drawStarted = true;
         pages.add(new GnuplotPage());
     }
 
     /**
-     * Sets the type of output graph file, its name, and size.
+     * Sets the format of output graph file, its name, and size.
      * This must be set before lines, fields, or pages are added.
      * If this function is called after drawing has started, an IllegalStateException will be thrown.
-     * @param type (String) Choose from "pdf", "png", and "eps". Otherwise, IlleganArgumentException will be thrown.
+     * @param format (String) Choose from "pdf", "png", and "eps". Otherwise, IlleganArgumentException will be thrown.
      * @param output (String) Name of output file
      * @param sizeX (double) Width of output file
      * @param sizeY (double) Height of output file
      * @param cm (boolean) true if the size is given in cm ; if false, pixels (must be true for pdf and eps)
      */
-    public void setOutput(String type, String output, double sizeX, double sizeY, boolean cm) {
+    public void setOutput(String format, String output, double sizeX, double sizeY, boolean cm) {
         if (drawStarted) throw new IllegalStateException("Output cannot be changed after drawing has started.");
 
-        switch(type) {
+        switch(format) {
         case "pdf":
             if (!cm) throw new IllegalArgumentException("For pdf, size cannot be set in pixels.");
             this.terminal = "pdfcairo enhanced";
@@ -267,7 +267,7 @@ public class GnuplotFile {
             this.terminal = "epscairo enhanced";
             break;
         default:
-            throw new IllegalArgumentException("Unrecognizable file type.");
+            throw new IllegalArgumentException("Unrecognizable file format " + format + ".");
         }
 
         this.output = output;
