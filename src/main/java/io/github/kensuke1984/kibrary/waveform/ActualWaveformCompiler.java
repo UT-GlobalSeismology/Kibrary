@@ -42,7 +42,9 @@ import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -410,12 +412,13 @@ public class ActualWaveformCompiler implements Operation {
 
        readPeriodRanges();
 
-       ExecutorService es = ThreadUtils.createFixedThreadPool();
-
        String dateStr = GadgetUtils.getTemporaryString();
        outPath = workPath.resolve("compiled" + dateStr);
        Files.createDirectories(outPath);
        System.err.println("Output folder is " + outPath);
+
+       ObserverInformationFile.write(observerSet, outPath.resolve("observer" + dateStr + ".inf"));
+       EventInformationFile.write(eventSet, outPath.resolve("event" + dateStr + ".inf"));
 
        Path waveIDPath = null;
        Path waveformPath = null;
@@ -456,6 +459,8 @@ public class ActualWaveformCompiler implements Operation {
            spcImWriter = new WaveformDataWriter(spcImIDPath, spcImPath,
                    observerSet, eventSet, periodRanges, phases);
            dataWriter = bdw;
+
+           ExecutorService es = ThreadUtils.createFixedThreadPool();
 
            for (EventFolder eventDir : eventDirs)
                es.execute(new Worker(eventDir));

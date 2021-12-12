@@ -17,8 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.commons.io.FilenameUtils;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -269,18 +267,7 @@ public final class BasicIDFile {
      */
     public static void main(String[] args) throws IOException {
 
-        if (args.length == 1) {
-            BasicID[] ids = read(Paths.get(args[0]));
-            // print(Paths.get(args[0]));
-            String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
-            try {
-                outputStations(header, ids);
-                outputGlobalCMTID(header, ids);
-            } catch (Exception e) {
-                System.err.println("Could not write information about " + args[0]);
-                System.err.println("If you want to see all IDs inside, then use a '-a' option.");
-            }
-        } else if (args.length == 2 && args[0].equals("-i")) {
+        if (args.length == 2 && args[0].equals("-i")) {
             BasicID[] ids = read(Paths.get(args[1]));
             Arrays.stream(ids).forEach(System.out::println);
         } else if (args.length == 3 && args[0].equals("-w")) {
@@ -340,35 +327,5 @@ public final class BasicIDFile {
             }
         }
     }
-
-    /**
-     * @param header
-     * @param ids
-     * @throws IOException
-     * @deprecated
-     */
-    private static void outputGlobalCMTID(String header, BasicID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".globalCMTID");
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.event).distinct()
-                .map(id -> id.toString() + " " + id.getEvent().getCmtLocation()).sorted()
-                .collect(Collectors.toList());
-        Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
-        System.err.println(outPath + " is created as a list of global CMT IDs.");
-    }
-
-    /**
-     * @param header
-     * @param ids
-     * @throws IOException
-     * @deprecated
-     */
-    private static void outputStations(String header, BasicID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".station");
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct().sorted()
-                .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
-        Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
-        System.err.println(outPath + " is created as a list of stations.");
-    }
-
 
 }

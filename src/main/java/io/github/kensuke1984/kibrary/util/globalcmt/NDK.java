@@ -249,7 +249,7 @@ final public class NDK implements GlobalCMTAccess {
         parts = lines[2].split("\\s+");
         ndk.timeDifference = Double.parseDouble(parts[1]);
         ndk.centroidLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
-                6371 - Double.parseDouble(parts[7]));
+                6371 - Double.parseDouble(parts[7])); //TODO: regard elliptical shape of earth
         ndk.depthType = parts[9];
         ndk.timeStamp = parts[10];
 

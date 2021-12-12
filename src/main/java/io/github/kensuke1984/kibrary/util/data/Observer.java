@@ -225,6 +225,9 @@ public class Observer implements Comparable<Observer> {
         return station + "_" + network;
     }
 
+    /**
+     * @return (String) station network latitude longitude
+     */
     public String getPaddedInfoString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH)
                 + " " + position.toString();

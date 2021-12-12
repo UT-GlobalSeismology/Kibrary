@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -226,11 +225,8 @@ public final class TimewindowDataFile {
     }
 
     /**
-     * The binary-format timewindow information file is output in ascii format, as follows:
-     * <ol>
-     * <li> In the standard output, information of each timewindow is written.</li>
-     * <li> In 'timewindow.observer', information of each observer is written.</li>
-     * </ol>
+     * The binary-format timewindow information file is output in the standard output.
+     *
      * @param args [information file name]
      * @throws IOException if an I/O error occurs
      */
@@ -238,20 +234,7 @@ public final class TimewindowDataFile {
         Set<TimewindowData> set;
         if (args.length == 1) {
             set = TimewindowDataFile.read(Paths.get(args[0]));
-        }
-/*        else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
-            String timewindowname;
-            if (args[0] == "--debug")
-                timewindowname = args[1];
-            else
-                timewindowname = args[0];
-            set = TimewindowInformationFile.read(Paths.get(timewindowname));
-
-            Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_observer.inf");
-            Path outpathEvent = Paths.get(timewindowname.split(".inf")[0] + "_event.inf");
-        }
-*/
-        else {
+        } else {
             String s = "";
             Path f;
             do {
@@ -265,16 +248,5 @@ public final class TimewindowDataFile {
 
         set.stream().sorted().forEach(tw -> {System.out.println(tw.toString());});
 
-        Set<Observer> observers = set.stream().map(tw -> tw.getObserver()).collect(Collectors.toSet());
-        Path observerFile = Paths.get("timewindow.observer");
-        Files.deleteIfExists(observerFile);
-        Files.createFile(observerFile);
-        try {
-            for (Observer s : observers)
-                Files.write(observerFile, (s.getStation() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
-                        , StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

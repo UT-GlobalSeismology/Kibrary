@@ -29,7 +29,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
- * File containing information of observers .<br>
+ * File containing information of observers.
+ * <p>
  * Each line: station code, network code, latitude, longitude.
  *
  * @author Kensuke Konishi
@@ -41,19 +42,16 @@ public final class ObserverInformationFile {
     }
 
     /**
-     * @param stationSet Set of station information
-     * @param outPath    of write file
-     * @param options    for write
+     * @param observerSet Set of observers
+     * @param outPath     of write file
+     * @param options     for write
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<Observer> observerSet, Path outPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            observerSet.forEach(s -> {
-                try {
-                    pw.println(s.getStation() + " " + s.getNetwork() + " " + s.getPosition());
-                } catch (Exception e) {
-                    pw.println(s.getStation() + " " + s.getPosition());
-                }
+            pw.println("# station network latitude longitude");
+            observerSet.stream().sorted().forEach(observer -> {
+                pw.println(observer.getPaddedInfoString());
             });
         }
     }
@@ -70,11 +68,13 @@ public final class ObserverInformationFile {
                 String[] parts = line.split("\\s+");
                 HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),
                         Double.parseDouble(parts[3]));
-                Observer st = new Observer(parts[0], parts[1], hp);
-                if (!observerSet.add(st))
-                    throw new RuntimeException("There is duplication in " + infoPath + "\n" + st);
+                Observer observer = new Observer(parts[0], parts[1], hp);
+                if (!observerSet.add(observer))
+                    throw new RuntimeException("There is duplication of " + observer + " in " + infoPath + ".");
             });
         }
+
+        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
         if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()){
             System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
             Map<String, List<Observer>> nameToObserver = new HashMap<>();
@@ -101,6 +101,50 @@ public final class ObserverInformationFile {
     }
 
     /**
+     * Reads observer information from SAC files in event directories under a working directory,
+     * and creates an observer information file under the working directory.
+     *
+     * @param args [working directory to collect observers from]
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        if (0 < args.length) {
+            String path = args[0];
+            if (!path.startsWith("/"))
+                path = System.getProperty("user.dir") + "/" + path;
+            Path f = Paths.get(path);
+            if (Files.exists(f) && Files.isDirectory(f))
+                createObserverInformationFile(f);
+            else
+                System.err.println(f + " does not exist or is not a directory.");
+        } else {
+            Path workPath;
+            String path = "";
+            do {
+                try {
+                    path = JOptionPane.showInputDialog("Working folder?", path);
+                } catch (Exception e) {
+                    System.err.println("Working folder?");
+                    try (BufferedReader br = new BufferedReader(
+                            new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
+                        path = br.readLine().trim();
+                        if (!path.startsWith("/"))
+                            path = System.getProperty("user.dir") + "/" + path;
+                    } catch (Exception e2) {
+                        e2.printStackTrace();
+                        throw new RuntimeException();
+                    }
+                }
+                if (path == null || path.isEmpty()) return;
+                workPath = Paths.get(path);
+                if (!Files.isDirectory(workPath)) continue;
+            } while (!Files.exists(workPath) || !Files.isDirectory(workPath));
+            createObserverInformationFile(workPath);
+        }
+
+    }
+
+    /**
      * ワーキングディレクトリ下のイベントフォルダ群からステーション情報を抽出して書き込む。
      *
      * @param workPath under which this looks for event folders and stations under
@@ -109,7 +153,7 @@ public final class ObserverInformationFile {
      * @throws IOException if an I/O error occurs
      */
     public static void createObserverInformationFile(Path workPath, OpenOption... options) throws IOException {
-        Path out = workPath.resolve("observer" + GadgetUtils.getTemporaryString() + ".inf");
+        Path outPath = workPath.resolve("observer" + GadgetUtils.getTemporaryString() + ".inf");
 
         Set<SACFileName> sacNameSet = DatasetUtils.sacFileNameSet(workPath);
         Set<Observer> observerSet = sacNameSet.stream().filter(sacname -> sacname.getComponent().equals(SACComponent.T)).map(sacName -> {
@@ -121,6 +165,7 @@ public final class ObserverInformationFile {
             }
         }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
 
+        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
         if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
             System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
             Map<String, List<Observer>> nameToObserver = new HashMap<>();
@@ -143,51 +188,7 @@ public final class ObserverInformationFile {
             });
         }
 
-        write(observerSet, out, options);
-    }
-
-    /**
-     * ワーキングディレクトリ下のイベントフォルダ群からステーション情報を抽出して書き込む。 Creates a file for stations
-     * under the working folder.
-     *
-     * @param args [folder: to look into for stations (containing event folders)]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        if (0 < args.length) {
-            String path = args[0];
-            if (!path.startsWith("/"))
-                path = System.getProperty("user.dir") + "/" + path;
-            Path f = Paths.get(path);
-            if (Files.exists(f) && Files.isDirectory(f))
-                createObserverInformationFile(f);
-            else
-                System.out.println(f + " does not exist or is not a directory.");
-        } else {
-            Path workPath;
-            String path = "";
-            do {
-                try {
-                    path = JOptionPane.showInputDialog("Working folder?", path);
-                } catch (Exception e) {
-                    System.out.println("Working folder?");
-                    try (BufferedReader br = new BufferedReader(
-                            new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
-                        path = br.readLine().trim();
-                        if (!path.startsWith("/"))
-                            path = System.getProperty("user.dir") + "/" + path;
-                    } catch (Exception e2) {
-                        e2.printStackTrace();
-                        throw new RuntimeException();
-                    }
-                }
-                if (path == null || path.isEmpty()) return;
-                workPath = Paths.get(path);
-                if (!Files.isDirectory(workPath)) continue;
-            } while (!Files.exists(workPath) || !Files.isDirectory(workPath));
-            createObserverInformationFile(workPath);
-        }
-
+        write(observerSet, outPath, options);
     }
 
 }

@@ -13,7 +13,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * Identifier of an event listed in Global CMT project.
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
+ * When a set of GlobalCMTIDs is sorted, they will be in dictionary order, not order of event time.
  *
  * @author Kensuke Konishi
  * @version 0.1.1.2
