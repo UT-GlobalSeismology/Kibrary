@@ -93,7 +93,7 @@ public class FilterDivider implements Operation {
     private int npts;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(FilterDivider.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(FilterDivider.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan FilterDivider");
             pw.println("##Path of a working folder (.)");

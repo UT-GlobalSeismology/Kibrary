@@ -72,7 +72,7 @@ public class DataLobby implements Operation {
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(DataLobby.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(DataLobby.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataLobby");
             pw.println("##Path of a work folder (.)");
@@ -125,10 +125,10 @@ public class DataLobby implements Operation {
         if (!property.containsKey("networks"))
             throw new IllegalArgumentException("No information about networks");
         if (!property.containsKey("channels")) property.setProperty("channels", "BH?");
-        if (!property.containsKey("footAdjustment"))
-            throw new IllegalArgumentException("No information about the foot adjustment");
         if (!property.containsKey("headAdjustment"))
             throw new IllegalArgumentException("No information about the head adjustment");
+        if (!property.containsKey("footAdjustment"))
+            throw new IllegalArgumentException("No information about the foot adjustment");
         if (!property.containsKey("startDate"))
             throw new IllegalArgumentException("No information about the start date");
         if (!property.containsKey("endDate"))
@@ -187,7 +187,6 @@ public class DataLobby implements Operation {
         dl.run();
         System.err.println(DataLobby.class.getName() + " finished in " +
                 GadgetUtils.toTimeString(System.nanoTime() - startTime));
-
     }
 
     @Override

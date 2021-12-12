@@ -97,8 +97,7 @@ public class SyntheticDSMSetup implements Operation {
     private boolean specfemDataset;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths
-                .get(SyntheticDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(SyntheticDSMSetup.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan SyntheticDSMSetup");
             pw.println("##SacComponents that observers must have to be used (Z R T)");

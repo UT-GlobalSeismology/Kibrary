@@ -111,7 +111,7 @@ public class TimewindowMaker implements Operation {
     private double[][] catalogue_pP;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(TimewindowMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(TimewindowMaker.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan TimewindowMaker");
             pw.println("##Path of a working folder (.)");

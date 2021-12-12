@@ -24,8 +24,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -111,7 +111,7 @@ public class FujiStaticCorrection implements Operation {
     private Set<TimewindowData> timewindowInformation;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(FujiStaticCorrection.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(FujiStaticCorrection.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan FujiStaticCorrection");
             pw.println("##Path of a working folder (.)");

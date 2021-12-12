@@ -74,7 +74,7 @@ public class DataKitchen implements Operation {
     private boolean removeIntermediateFile;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(DataKitchen.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Property.generatePath(DataKitchen.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan DataKitchen");
             pw.println("##Path of a work folder (.)");
