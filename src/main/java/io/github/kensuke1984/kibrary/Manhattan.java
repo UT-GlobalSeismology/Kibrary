@@ -67,7 +67,7 @@ public enum Manhattan {
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
     DataLobby(27, DataLobby.class), //
     WaveformPlotCreater(28, WaveformPlotCreater.class), //
-    RecordSectionCreater(28, RecordSectionCreater.class), //
+    RecordSectionCreater(29, RecordSectionCreater.class), //
     ;
 
     private Class<? extends Operation> c;
