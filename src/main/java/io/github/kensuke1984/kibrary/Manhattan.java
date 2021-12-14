@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.Partial1DDatasetMaker_v2;
@@ -66,6 +67,7 @@ public enum Manhattan {
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
     DataLobby(27, DataLobby.class), //
     WaveformPlotCreater(28, WaveformPlotCreater.class), //
+    RecordSectionCreater(28, RecordSectionCreater.class), //
     ;
 
     private Class<? extends Operation> c;
