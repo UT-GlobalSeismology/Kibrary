@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import org.apache.commons.math3.util.ArithmeticUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.math3.util.ArithmeticUtils;
 
 /**
  * Header part of a file for DSM.
@@ -140,7 +140,7 @@ class DSMInputHeader {
         outputLines.add("c ampratio using in l-cutoff" + " (see KTG04 fig.8)");
         outputLines.add(RATL + " ratl");
         outputLines.add("c artificial damping " + "for wrap-around (see GO94 5.1)");
-        outputLines.add(Double.toString(ARTIFICIAL_DAMPING));
+        outputLines.add(String.valueOf(ARTIFICIAL_DAMPING));
         outputLines.add(IMIN + " " + IMAX);
 
         return outputLines.toArray(new String[11]);

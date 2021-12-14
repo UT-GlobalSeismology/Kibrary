@@ -234,8 +234,8 @@ class SegmentedSacGroup {
 
         double e = eInMillis / 1000.0;
         //System.out.println(e+" "+eInMillis);
-        headerMap.put(SACHeaderEnum.NPTS, Integer.toString(sacdata.size()));
-        headerMap.put(SACHeaderEnum.E, Double.toString(e));
+        headerMap.put(SACHeaderEnum.NPTS, String.valueOf(sacdata.size()));
+        headerMap.put(SACHeaderEnum.E, String.valueOf(e));
         double[] sdata = sacdata.stream().mapToDouble(Double::doubleValue).toArray();
 
         SACUtil.writeSAC(workPath.resolve(mergedSacFileName), headerMap, sdata);

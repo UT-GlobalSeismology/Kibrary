@@ -167,7 +167,7 @@ public class WaveformPlotCreater implements Operation {
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
 
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-        gnuplot.setMargin(15, 5);
+        gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setKey(true, "top right");
 
@@ -178,8 +178,8 @@ public class WaveformPlotCreater implements Operation {
         int i = 0;
         for (BasicID obsID : obsList) {
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-            gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0, 0.95);
-            gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0, 0.85);
+            gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
+            gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");

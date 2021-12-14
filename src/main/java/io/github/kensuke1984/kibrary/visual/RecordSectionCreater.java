@@ -51,6 +51,10 @@ public class RecordSectionCreater implements Operation {
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
+    /**
+     * apparent velocity to use when reducing time [s/deg]
+     */
+    private double reductionSlowness;
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(RecordSectionCreater.class);
@@ -62,9 +66,8 @@ public class RecordSectionCreater implements Operation {
             pw.println("#components");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
-
-//            pw.println("##(boolean) Whether to export individual files for each component (true)");
-//            pw.println("#splitComponents");
+            pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
+            pw.println("#reductionSlowness");
         }
         System.err.println(outPath + " is created.");
     }
@@ -79,7 +82,7 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("basicIDPath"))
             throw new IllegalArgumentException("There is no information about basicIDPath.");
-//        if (!property.containsKey("splitComponents")) property.setProperty("splitComponents", "true");
+        if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
     }
 
     private void set() throws IOException {
@@ -93,7 +96,7 @@ public class RecordSectionCreater implements Operation {
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
 
-//        splitComponents = Boolean.parseBoolean(property.getProperty("splitComponents"));
+        reductionSlowness = Double.parseDouble(property.getProperty("reductionSlowness"));
     }
 
    /**
@@ -132,7 +135,7 @@ public class RecordSectionCreater implements Operation {
        }
    }
 
-    private static void createRecordSection(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
+    private void createRecordSection(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
         if (ids.length == 0) {
             return;
         }
@@ -147,12 +150,14 @@ public class RecordSectionCreater implements Operation {
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
 
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-        gnuplot.setMargin(15, 15);
-        gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
+        gnuplot.setMarginH(15, 15);
+        gnuplot.setMarginV(15, 15);
+        gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
         gnuplot.unsetKey();
 
         gnuplot.setTitle(eventDir.toString());
-        gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
+//        gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
+        gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
         gnuplot.setYlabel("Distance (deg)");
 
         for (BasicID obsID : obsList) {
@@ -161,7 +166,7 @@ public class RecordSectionCreater implements Operation {
             double maxObs = 1.0;
 
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-            gnuplot.addLabel(obsID.getObserver().toString(), "graph", 1, "first", distance);
+            gnuplot.addLabel(obsID.getObserver().getStation() + " " + obsID.getObserver().getNetwork(), "graph", 1.01, "first", distance);
             gnuplot.addLine(filename, String.format("3:($2/%.3e+%.2f) ", maxObs, distance), obsAppearance, "observed");
             gnuplot.addLine(filename, String.format("3:($4/%.3e+%.2f) ", maxObs, distance), synAppearance, "synthetic");
         }

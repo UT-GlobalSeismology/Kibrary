@@ -176,24 +176,24 @@ class SacModifier {
             System.arraycopy(sacdata, 0, neosacdata, gapPoint, neosacdata.length - gapPoint);
 
             int npts = neosacdata.length;
-            headerMap.put(SACHeaderEnum.NPTS, Integer.toString(npts));
+            headerMap.put(SACHeaderEnum.NPTS, String.valueOf(npts));
             sacdata = neosacdata;
             timeGapInMillis = 0;
-            // headerMap.put(SacHeaderEnum.B, Double.toString(0));
+            // headerMap.put(SacHeaderEnum.B, String.valueOf(0));
         }
         // 早く始まってるものは、taperいらない？
         // -> The tapering here is done just for the sake of connecting the zero-value segment and the incomplete waveform.
         //    Tapering of the whole waveform is done in SacDeconvolution.
 
-        headerMap.put(SACHeaderEnum.B, Double.toString((bInMillis + timeGapInMillis) / 1000.0));
-        headerMap.put(SACHeaderEnum.E, Double.toString((eInMillis + timeGapInMillis) / 1000.0));
+        headerMap.put(SACHeaderEnum.B, String.valueOf((bInMillis + timeGapInMillis) / 1000.0));
+        headerMap.put(SACHeaderEnum.E, String.valueOf((eInMillis + timeGapInMillis) / 1000.0));
 
-        headerMap.put(SACHeaderEnum.NZYEAR, Integer.toString(eventTime.getYear()));
-        headerMap.put(SACHeaderEnum.NZJDAY, Integer.toString(eventTime.getDayOfYear()));
-        headerMap.put(SACHeaderEnum.NZHOUR, Integer.toString(eventTime.getHour()));
-        headerMap.put(SACHeaderEnum.NZMIN, Integer.toString(eventTime.getMinute()));
-        headerMap.put(SACHeaderEnum.NZSEC, Integer.toString(eventTime.getSecond()));
-        headerMap.put(SACHeaderEnum.NZMSEC, Integer.toString(eventTime.getNano() / 1000 / 1000));
+        headerMap.put(SACHeaderEnum.NZYEAR, String.valueOf(eventTime.getYear()));
+        headerMap.put(SACHeaderEnum.NZJDAY, String.valueOf(eventTime.getDayOfYear()));
+        headerMap.put(SACHeaderEnum.NZHOUR, String.valueOf(eventTime.getHour()));
+        headerMap.put(SACHeaderEnum.NZMIN, String.valueOf(eventTime.getMinute()));
+        headerMap.put(SACHeaderEnum.NZSEC, String.valueOf(eventTime.getSecond()));
+        headerMap.put(SACHeaderEnum.NZMSEC, String.valueOf(eventTime.getNano() / 1000 / 1000));
 
         SACUtil.writeSAC(modifiedPath, headerMap, sacdata);
         return true;

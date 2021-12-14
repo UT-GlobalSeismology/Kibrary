@@ -276,21 +276,21 @@ class EventDataPreparer {
                 headerMap.put(SACHeaderEnum.STLO, stationInfo.getLongitude());
                 // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
                 double inclination = Double.parseDouble(stationInfo.getDip()) + 90.0;
-                headerMap.put(SACHeaderEnum.CMPINC, Double.toString(inclination));
+                headerMap.put(SACHeaderEnum.CMPINC, String.valueOf(inclination));
                 headerMap.put(SACHeaderEnum.CMPAZ, stationInfo.getAzimuth());
 
                 // set event info
                 FullPosition sourcePosition = eventData.getCmtLocation();
                 headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
-                headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourcePosition.getLatitude()));
-                headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourcePosition.getLongitude()));
-                headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourcePosition.getR()));
+                headerMap.put(SACHeaderEnum.EVLA, String.valueOf(sourcePosition.getLatitude()));
+                headerMap.put(SACHeaderEnum.EVLO, String.valueOf(sourcePosition.getLongitude()));
+                headerMap.put(SACHeaderEnum.EVDP, String.valueOf(6371 - sourcePosition.getR()));
 
                 // set SAC settings
                 // overwrite permission
-                headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
+                headerMap.put(SACHeaderEnum.LOVROK, String.valueOf(true));
                 // calculate DIST, GCARC, AZ, and BAZ automatically   TODO: calculate manually
-                headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
+                headerMap.put(SACHeaderEnum.LCALDA, String.valueOf(true));
 
                 // overwrite SAC file
                 SACUtil.writeSAC(sacPath, headerMap, sacdata);
@@ -393,21 +393,21 @@ class EventDataPreparer {
                 headerMap.put(SACHeaderEnum.STLO, stationInfo.getLongitude());
                 // CAUTION: up is dip=-90 but CMPINC=0, horizontal is dip=0 but CMPINC=90
                 double inclination = Double.parseDouble(stationInfo.getDip()) + 90.0;
-                headerMap.put(SACHeaderEnum.CMPINC, Double.toString(inclination));
+                headerMap.put(SACHeaderEnum.CMPINC, String.valueOf(inclination));
                 headerMap.put(SACHeaderEnum.CMPAZ, stationInfo.getAzimuth());
 
                 // set event info
                 FullPosition sourcePosition = eventData.getCmtLocation();
                 headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
-                headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourcePosition.getLatitude()));
-                headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourcePosition.getLongitude()));
-                headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourcePosition.getR()));
+                headerMap.put(SACHeaderEnum.EVLA, String.valueOf(sourcePosition.getLatitude()));
+                headerMap.put(SACHeaderEnum.EVLO, String.valueOf(sourcePosition.getLongitude()));
+                headerMap.put(SACHeaderEnum.EVDP, String.valueOf(6371 - sourcePosition.getR()));
 
                 // set SAC settings
                 // overwrite permission
-                headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
+                headerMap.put(SACHeaderEnum.LOVROK, String.valueOf(true));
                 // calculate DIST, GCARC, AZ, and BAZ automatically   TODO: calculate manually
-                headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
+                headerMap.put(SACHeaderEnum.LCALDA, String.valueOf(true));
 
                 // overwrite SAC file
                 SACUtil.writeSAC(sacPath, headerMap, sacdata);
@@ -472,15 +472,15 @@ class EventDataPreparer {
                 // set event info
                 FullPosition sourcePosition = eventData.getCmtLocation();
                 headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
-                headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourcePosition.getLatitude()));
-                headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourcePosition.getLongitude()));
-                headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourcePosition.getR()));
+                headerMap.put(SACHeaderEnum.EVLA, String.valueOf(sourcePosition.getLatitude()));
+                headerMap.put(SACHeaderEnum.EVLO, String.valueOf(sourcePosition.getLongitude()));
+                headerMap.put(SACHeaderEnum.EVDP, String.valueOf(6371 - sourcePosition.getR()));
 
                 // set SAC settings
                 // overwrite permission
-                headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
+                headerMap.put(SACHeaderEnum.LOVROK, String.valueOf(true));
                 // calculate DIST, GCARC, AZ, and BAZ automatically   TODO: calculate manually
-                headerMap.put(SACHeaderEnum.LCALDA, Boolean.toString(true));
+                headerMap.put(SACHeaderEnum.LCALDA, String.valueOf(true));
 
                 // overwrite SAC file
                 SACUtil.writeSAC(sacPath, headerMap, sacdata);

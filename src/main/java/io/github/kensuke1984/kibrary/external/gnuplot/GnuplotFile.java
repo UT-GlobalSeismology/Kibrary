@@ -85,7 +85,10 @@ public class GnuplotFile {
     private boolean yticsFlag = false;
     private int lmargin;
     private int rmargin;
-    private boolean marginFlag = false;
+    private boolean marginHFlag = false;
+    private int tmargin;
+    private int bmargin;
+    private boolean marginVFlag = false;
 
     private boolean drawStarted = false;
     private List<GnuplotPage> pages = new ArrayList<GnuplotPage>();
@@ -128,9 +131,13 @@ public class GnuplotFile {
             } else {
                 pw.println("unset key");
             }
-            if(marginFlag) {
+            if(marginHFlag) {
                 pw.println("set lmargin " + lmargin);
                 pw.println("set rmargin " + rmargin);
+            }
+            if(marginVFlag) {
+                pw.println("set tmargin " + tmargin);
+                pw.println("set bmargin " + bmargin);
             }
             if (ratioFlag) pw.println("set size ratio " + ratio);
             if (xrangeFlag) pw.println("set xrange [" + xmin + ":" + xmax + "]");
@@ -314,10 +321,16 @@ public class GnuplotFile {
         this.fontSizeDefault = fileDefault;
     }
 
-    public void setMargin(int lmargin, int rmargin) {
+    public void setMarginH(int lmargin, int rmargin) {
         this.lmargin = lmargin;
         this.rmargin = rmargin;
-        marginFlag = true;
+        marginHFlag = true;
+    }
+
+    public void setMarginV(int tmargin, int bmargin) {
+        this.tmargin = tmargin;
+        this.bmargin = bmargin;
+        marginVFlag = true;
     }
 
     /**
