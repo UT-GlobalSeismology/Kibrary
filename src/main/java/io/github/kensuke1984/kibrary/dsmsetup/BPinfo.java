@@ -1,11 +1,5 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/dsminformation/BPinfo.java
-=======
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-
->>>>>>> d87d2ecf0f5359cf47b7ef2068d923abca34324c:src/main/java/io/github/kensuke1984/kibrary/dsmsetup/BPinfo.java
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -13,8 +7,9 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+
 
 /**
  * Information file for computation of back propagation.
@@ -110,11 +105,7 @@ public class BPinfo extends DSMInputHeader {
             // write info
             pw.println("c write directory");
             pw.println(OUTPUT + "/");
-<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/dsminformation/BPinfo.java
             pw.println(STATION.toString());
-=======
-            pw.println(STATION.getStation());
->>>>>>> d87d2ecf0f5359cf47b7ef2068d923abca34324c:src/main/java/io/github/kensuke1984/kibrary/dsmsetup/BPinfo.java
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
@@ -192,11 +183,7 @@ public class BPinfo extends DSMInputHeader {
             // write info
             pw.println("c write directory");
             pw.println(OUTPUT + "/");
-<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/dsminformation/BPinfo.java
             pw.println(STATION.toString());
-=======
-            pw.println(STATION.getStation());
->>>>>>> d87d2ecf0f5359cf47b7ef2068d923abca34324c:src/main/java/io/github/kensuke1984/kibrary/dsmsetup/BPinfo.java
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
