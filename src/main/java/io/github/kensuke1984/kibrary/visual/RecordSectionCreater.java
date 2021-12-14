@@ -167,8 +167,10 @@ public class RecordSectionCreater implements Operation {
 
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
             gnuplot.addLabel(obsID.getObserver().getStation() + " " + obsID.getObserver().getNetwork(), "graph", 1.01, "first", distance);
-            gnuplot.addLine(filename, String.format("3:($2/%.3e+%.2f) ", maxObs, distance), obsAppearance, "observed");
-            gnuplot.addLine(filename, String.format("3:($4/%.3e+%.2f) ", maxObs, distance), synAppearance, "synthetic");
+            String obsUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reductionSlowness, maxObs, distance);
+            gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
+            String synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reductionSlowness, maxObs, distance);
+            gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
         }
 
         gnuplot.write();
