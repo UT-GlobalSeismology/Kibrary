@@ -1,7 +1,9 @@
 package io.github.kensuke1984.anisotime;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FileUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -45,9 +47,9 @@ public class RaypathCatalog implements Serializable {
         }));
         // piac.zip
         URL website = new URL("https://bit.ly/31EUOZk");
-        Utilities.download(website, zipPath, true);
+        FileUtils.download(website, zipPath, true);
         try {
-            if (!PIAC_SHA256.equals(Utilities.checksum(zipPath, "SHA-256")))
+            if (!PIAC_SHA256.equals(GadgetUtils.checksum(zipPath, "SHA-256")))
                 throw new RuntimeException("Downloaded file is broken.");
         } catch (NoSuchAlgorithmException ignored) {
         }
@@ -74,7 +76,7 @@ public class RaypathCatalog implements Serializable {
             } catch (IOException ignored) {
             }
         }));
-        Utilities.extractZip(zipPath, piacTemp);
+        FileUtils.extractZip(zipPath, piacTemp);
         if (!Files.exists(ISO_PREM_PATH)) Files.copy(ipremPath, ISO_PREM_PATH);
         if (!Files.exists(PREM_PATH)) Files.copy(piacTemp.resolve("prem.cat"), PREM_PATH);
         if (!Files.exists(AK135_PATH)) Files.copy(piacTemp.resolve("ak135.cat"), AK135_PATH);
@@ -177,7 +179,7 @@ public class RaypathCatalog implements Serializable {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for PREM...");
                     PREM = read(PREM_PATH);
-                    System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
+                    System.err.println(" in " + GadgetUtils.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for PREM...");
@@ -204,7 +206,7 @@ public class RaypathCatalog implements Serializable {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for ISO_PREM...");
                     ISO_PREM = read(ISO_PREM_PATH);
-                    System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
+                    System.err.println(" in " + GadgetUtils.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for ISO_PREM...");
@@ -231,7 +233,7 @@ public class RaypathCatalog implements Serializable {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for AK135...");
                     AK135 = read(AK135_PATH);
-                    System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
+                    System.err.println(" in " + GadgetUtils.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for AK135...");
@@ -699,7 +701,7 @@ public class RaypathCatalog implements Serializable {
                 bounceCatalogs.add(new BounceCatalog(targetPhase, computeRaypaths(targetPhase, edges[0], edges[1])));
         }
         System.err.println(
-                "\rCreating catalogs for bouncing waves done in " + Utilities.toTimeString(System.nanoTime() - t));
+                "\rCreating catalogs for bouncing waves done in " + GadgetUtils.toTimeString(System.nanoTime() - t));
     }
 
     /**
@@ -769,7 +771,7 @@ public class RaypathCatalog implements Serializable {
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.PKiKP, 0, pPKiKP)));
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.SKiKS, 0, pPKiKP)));
         System.err
-                .println("\rCatalogs for boundaries are computed in " + Utilities.toTimeString(System.nanoTime() - t));
+                .println("\rCatalogs for boundaries are computed in " + GadgetUtils.toTimeString(System.nanoTime() - t));
     }
 
     /**
@@ -803,7 +805,7 @@ public class RaypathCatalog implements Serializable {
         catalogOfReflections();
         catalogOfBounceWaves();
         computeDiffraction();
-        System.err.println("A catalog was made in " + Utilities.toTimeString(System.nanoTime() - time));
+        System.err.println("A catalog was made in " + GadgetUtils.toTimeString(System.nanoTime() - time));
     }
 
     /**

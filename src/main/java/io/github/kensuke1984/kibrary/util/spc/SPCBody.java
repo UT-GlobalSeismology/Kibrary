@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import org.apache.commons.math3.complex.Complex;
 
@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
- * the object means a body in {@link Spectrum} the body means the spcdata of
+ * the object means a body in {@link SPCFile} the body means the spcdata of
  * each perturbation point...
  * <p>
  * スペクトルファイル（spcsac） の中のあるボディ

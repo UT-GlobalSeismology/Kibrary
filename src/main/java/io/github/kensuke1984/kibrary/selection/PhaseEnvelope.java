@@ -34,13 +34,14 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -100,7 +101,7 @@ public class PhaseEnvelope implements Operation {
 	}
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(PhaseEnvelope.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(PhaseEnvelope.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan PhaseEnvelope");
 			pw.println("##Path of a working folder (.)");
@@ -181,7 +182,7 @@ public class PhaseEnvelope implements Operation {
 
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-		String date = Utilities.getTemporaryString();
+		String date = GadgetUtils.getTemporaryString();
 		outputPath = workPath.resolve("timewindow" + date + ".dat");
 		timewindowSet = Collections.synchronizedSet(new HashSet<>());
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
@@ -216,13 +217,13 @@ public class PhaseEnvelope implements Operation {
 		long startT = System.nanoTime();
 		phaseEnvelope.run();
 		System.err.println(
-				PhaseEnvelope.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				PhaseEnvelope.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - startT));
 	}
 	
 	@Override
 	public void run() throws Exception {
-		Set<TimewindowInformation> infoset = new HashSet<>();
-		Utilities.runEventProcess(obsPath, obsEventDir -> {
+		Set<TimewindowData> infoset = new HashSet<>();
+		ThreadUtils.runEventProcess(obsPath, obsEventDir -> {
 			try {
 				obsEventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 					.forEach(obsname -> {
@@ -232,7 +233,7 @@ public class PhaseEnvelope implements Operation {
 						
 //							String network = obsname.readHeader().getSACString(SACHeaderEnum.KNETWK);
 //							String stationString = obsname.getStationName() + "_" + network;
-							String stationString = obsname.getStationName();
+							String stationString = obsname.getStationCode();
 							GlobalCMTID id = obsname.getGlobalCMTID();
 							SACComponent component = obsname.getComponent();
 							String name = convolute
@@ -241,8 +242,8 @@ public class PhaseEnvelope implements Operation {
 							SACFileName synname = new SACFileName(synEventPath.resolve(name));
 							System.out.println(obsname);
 							
-							SACData obssac = null;
-							SACData synsac = null;
+							SACFileAccess obssac = null;
+							SACFileAccess synsac = null;
 							
 							double obsDep = 0;
 							double synDep = 0;
@@ -280,7 +281,7 @@ public class PhaseEnvelope implements Operation {
 			//							for (int i = 0; i < timewindows.length; i++)
 			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
 										
-										double distance = obssac.getEventLocation().getEpicentralDistance(obssac.getStation().getPosition())
+										double distance = obssac.getEventLocation().getEpicentralDistance(obssac.getObserver().getPosition())
 											* 180 / Math.PI;
 										double eventR = obssac.getEventLocation().getR();
 										
@@ -292,7 +293,7 @@ public class PhaseEnvelope implements Operation {
 										if (show) {
 											try {
 												System.out.println("plotting...");
-												String title = obssac.getStation() + " " + obsEventDir.getGlobalCMTID();
+												String title = obssac.getObserver() + " " + obsEventDir.getGlobalCMTID();
 												showSeriesAndSpectra(obssac.createTrace(), synname.read().createTrace(), freqIntPE, timewindows, phases, title);
 				//								showTimeSeries(obsname.read().createTrace(), synname.read().createTrace(), timewindows);
 												System.in.read();
@@ -310,7 +311,7 @@ public class PhaseEnvelope implements Operation {
 												for (int i = 0; i < timewindows.length; i++) {
 													Phase[] phasenames = new Phase[phases[i].length];
 													phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
-													TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getStation()
+													TimewindowData info = new TimewindowData(timewindows[i][0], timewindows[i][1], obsname.read().getObserver()
 															, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
 													infoset.add(info);
 												}
@@ -326,7 +327,7 @@ public class PhaseEnvelope implements Operation {
 				e.printStackTrace();
 			}
 		}, 10, TimeUnit.HOURS);
-		TimewindowInformationFile.write(infoset, outputPath);
+		TimewindowDataFile.write(infoset, outputPath);
 	}
 	
 	private double[][][] computePhaseEnvelope(SACFileName obsname, SACFileName synname) {
@@ -618,7 +619,7 @@ public class PhaseEnvelope implements Operation {
 		}
 	}
 	
-	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACData obsdata, SACData syndata, double threshold) {
+	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACFileAccess obsdata, SACFileAccess syndata, double threshold) {
 		Trace obstrace = obsdata.createTrace().cutWindow(0, 4000.);
 		Trace syntrace = syndata.createTrace().cutWindow(0, 4000);
 		double maxobs = obstrace.getMaxValue();
@@ -645,8 +646,8 @@ public class PhaseEnvelope implements Operation {
 	private double[] dominantFrequencySwave(SACFileName sfn, double beforeArrival, double afterArrival) throws IllegalStateException {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
-			SACData sd = sfn.read();
-			double distance = sd.getEventLocation().getEpicentralDistance(sd.getStation().getPosition())
+			SACFileAccess sd = sfn.read();
+			double distance = sd.getEventLocation().getEpicentralDistance(sd.getObserver().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();
 			Phase[] phases = null;
@@ -1049,7 +1050,7 @@ public class PhaseEnvelope implements Operation {
 	
 	private boolean show; 
 	
-	private Set<TimewindowInformation> timewindowSet;
+	private Set<TimewindowData> timewindowSet;
 	
 	protected final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 	

@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 import edu.sc.seis.TauP.TauModel;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 
 /**
  * <p>

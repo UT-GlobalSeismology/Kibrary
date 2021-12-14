@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.IOException;
@@ -237,7 +237,7 @@ public class ThreeDParameterMapping {
 			
 			UnknownParameter refUnknown = originalUnknowns[iNewToOriginal[i][0]];
 			PartialType type = refUnknown.getPartialType();
-			Location location = new Location(latmean, lonmean, rmean);
+			FullPosition location = new FullPosition(latmean, lonmean, rmean);
 			UnknownParameter newUnknown = new Physical3DParameter(type, location, weight);
 			unknowns[i] = newUnknown;
 		}

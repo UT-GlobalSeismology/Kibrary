@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-
 import java.util.List;
+
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 
 public class Grid {

@@ -1,10 +1,11 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
-import io.github.kensuke1984.kibrary.util.Location;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * NDK format in Global CMT Catalog
@@ -56,7 +57,7 @@ import java.time.format.DateTimeFormatter;
  * http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
  * guide</a>
  */
-final public class NDK implements GlobalCMTData {
+final public class NDK implements GlobalCMTAccess {
 
     private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
     /**
@@ -71,7 +72,7 @@ final public class NDK implements GlobalCMTData {
     /**
      * hypocenter location [28-33] Latitude [35-41] Longitude [43-47] Depth
      */
-    private Location hypocenterLocation;
+    private FullPosition hypocenterLocation;
     /**
      * [49-55] Reported magnitudes, usually mb and MS
      */
@@ -131,7 +132,7 @@ final public class NDK implements GlobalCMTData {
      */
     private double timeDifference;
 
-    private Location centroidLocation;
+    private FullPosition centroidLocation;
     /**
      * [60-63] Type of depth. "FREE" indicates that the depth was a result of
      * the inversion; "FIX " that the depth was fixed and not inverted for;
@@ -216,7 +217,7 @@ final public class NDK implements GlobalCMTData {
         ndk.hypocenterReferenceCatalog = parts[0];
         ndk.referenceDateTime = parseDateTime(parts[1], parts[2]);
         // System.out.println(referenceCalendar.get(Calendar.DAY_OF_YEAR));
-        ndk.hypocenterLocation = new Location(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
+        ndk.hypocenterLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
                 6371 - Double.parseDouble(parts[5]));
         ndk.mb = Double.parseDouble(parts[6]);
         ndk.ms = Double.parseDouble(parts[7]);
@@ -247,8 +248,8 @@ final public class NDK implements GlobalCMTData {
         // line3
         parts = lines[2].split("\\s+");
         ndk.timeDifference = Double.parseDouble(parts[1]);
-        ndk.centroidLocation = new Location(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
-                6371 - Double.parseDouble(parts[7]));
+        ndk.centroidLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
+                6371 - Double.parseDouble(parts[7])); //TODO: regard elliptical shape of earth
         ndk.depthType = parts[9];
         ndk.timeStamp = parts[10];
 
@@ -328,18 +329,10 @@ final public class NDK implements GlobalCMTData {
         if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate)) return false;
         if (!search.getPredicateSet().stream().allMatch(p -> p.test(this))) return false;
 
-        // latitude
-        double latitude = centroidLocation.getLatitude();
-        if (latitude < search.getLowerLatitude() || search.getUpperLatitude() < latitude) return false;
-        // longitude
-        double lowerLongitude = search.getLowerLongitude();
-        double upperLongitude = search.getUpperLongitude();
-        double longitude = centroidLocation.getLongitude();
-
-        // longitude [-180, 180)
-        if (upperLongitude < 180) if (upperLongitude < longitude || longitude < lowerLongitude) return false;
-        // longitude [0, 360)
-        if (180 <= upperLongitude) if (longitude < lowerLongitude && upperLongitude - 360 < longitude) return false;
+        // latitude & longitude
+        HorizontalPosition position = new HorizontalPosition(centroidLocation.getLatitude(), centroidLocation.getLongitude());
+        if (!position.isInRange(search.getLowerLatitude(), search.getUpperLatitude(), search.getLowerLongitude(), search.getUpperLongitude()))
+            return false;
 
         // depth
         double depth = 6371 - centroidLocation.getR();
@@ -379,7 +372,7 @@ final public class NDK implements GlobalCMTData {
     }
 
     @Override
-    public Location getCmtLocation() {
+    public FullPosition getCmtLocation() {
         return centroidLocation;
     }
 
@@ -397,7 +390,7 @@ final public class NDK implements GlobalCMTData {
     }
 
     @Override
-    public Location getPDELocation() {
+    public FullPosition getPDELocation() {
         return hypocenterLocation;
     }
 
@@ -410,25 +403,25 @@ final public class NDK implements GlobalCMTData {
     public String toString() {
         return id.toString();
     }
-    
-	@Override
-	public void setCMT(MomentTensor mt) {
-		momentTensor = mt;
-	}
-	
-	@Override
-	public double getTimeDifference() {
-		return timeDifference;
-	}
-	
-	@Override
-	public String getHypocenterReferenceCatalog() {
-		return hypocenterReferenceCatalog;
-	}
-	
-	@Override
-	public String getGeographicalLocationName() {
-		return geographicalLocation;
-	}
+
+    @Override
+    public void setCMT(MomentTensor mt) {
+        momentTensor = mt;
+    }
+
+    @Override
+    public double getTimeDifference() {
+        return timeDifference;
+    }
+
+    @Override
+    public String getHypocenterReferenceCatalog() {
+        return hypocenterReferenceCatalog;
+    }
+
+    @Override
+    public String getGeographicalLocationName() {
+        return geographicalLocation;
+    }
 
 }

@@ -6,9 +6,9 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 
 public class MergeWindow {
 
@@ -16,19 +16,19 @@ public class MergeWindow {
 		Path infoPath = Paths.get(args[0]);
 		Path infoPath2 = Paths.get(args[1]);
 		
-		Set<TimewindowInformation> windows = TimewindowInformationFile.read(infoPath);
-		Set<TimewindowInformation> windows2 = TimewindowInformationFile.read(infoPath2);
+		Set<TimewindowData> windows = TimewindowDataFile.read(infoPath);
+		Set<TimewindowData> windows2 = TimewindowDataFile.read(infoPath2);
 		
-		Set<TimewindowInformation> outWindows = new HashSet<>();
+		Set<TimewindowData> outWindows = new HashSet<>();
 		
-		for (TimewindowInformation window : windows)
+		for (TimewindowData window : windows)
 			outWindows.add(window);
-		for (TimewindowInformation window : windows2)
+		for (TimewindowData window : windows2)
 			outWindows.add(window);
 		
 
-		Path outputPath = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
-		TimewindowInformationFile.write(outWindows, outputPath);
+		Path outputPath = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
+		TimewindowDataFile.write(outWindows, outputPath);
 	}
 
 }

@@ -1,16 +1,16 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 import java.io.IOException;
@@ -35,19 +35,19 @@ public class Profile {
 		double relativeSlowness = -1.;
 		
 		try {
-			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 			
 			Path profilePath = WorkingDir.resolve("profile");
 			Path stackPath = WorkingDir.resolve("stack");
 			Files.createDirectories(profilePath);
 			Files.createDirectories(stackPath);
 			
-			Set<EventFolder> events = Utilities.eventFolderSet(WorkingDir);
+			Set<EventFolder> events = DatasetUtils.eventFolderSet(WorkingDir);
 			
 			int resampling = 10;
 			for (EventFolder event : events) {
 				try {
-				Set<TimewindowInformation> eventtimewindows = timewindows.stream()
+				Set<TimewindowData> eventtimewindows = timewindows.stream()
 						.filter(tw -> tw.getGlobalCMTID().equals(event.getGlobalCMTID())).collect(Collectors.toSet());
 				
 				Path eventProfilePath = profilePath.resolve(event.getName());
@@ -82,7 +82,7 @@ public class Profile {
 					
 					int n = sacnames.size();
 					for (SACFileName sacname : sacnames) {
-						List<TimewindowInformation> timewindow = findWindow(eventtimewindows, sacname).stream().filter(tw -> new Phases(tw.getPhases()).equals(phase))
+						List<TimewindowData> timewindow = findWindow(eventtimewindows, sacname).stream().filter(tw -> new Phases(tw.getPhases()).equals(phase))
 								.collect(Collectors.toList());
 						
 						if (timewindow.size() == 0)
@@ -91,8 +91,8 @@ public class Profile {
 						if (timewindow.size() != 1)
 							System.out.println("Warning: found more than one timewindow " + sacname + " : " + timewindow.size());
 						
-						SACData sacdata = sacname.read();
-						String filename = sacname.getStationName() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
+						SACFileAccess sacdata = sacname.read();
+						String filename = sacname.getStationCode() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
 						Path tracePath = profilePhasePath.resolve(filename);
 						
 //						PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
@@ -100,7 +100,7 @@ public class Profile {
 //						Timewindow largerWindow = new Timewindow(timewindow.get(0).getStartTime() - 100, timewindow.get(0).getEndTime() + 200);
 						
 	//					Trace obstrace = sacname.read().createTrace().cutWindow(700, 1800);
-						SACData obsdata = sacname.read();
+						SACFileAccess obsdata = sacname.read();
 						Trace obstrace = obsdata.createTrace().cutWindow(timewindow.get(0));
 						
 	//					String synname = sacname.getName().replace(".T", ".Tsc");
@@ -110,7 +110,7 @@ public class Profile {
 	//					List<Trace> windowSyntraces = timewindow.stream().map(tw -> syndata.createTrace().cutWindow(tw)).collect(Collectors.toList());
 						
 						double maxObs = obsdata.createTrace().cutWindow(timewindow.get(0)).getYVector().getLInfNorm();
-						double distance = sacdata.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(sacdata.getStation().getPosition())
+						double distance = sacdata.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(sacdata.getObserver().getPosition())
 								* 180. / Math.PI;
 						
 	//					double t0 = timewindow.get(0).getStartTime();
@@ -278,13 +278,13 @@ public class Profile {
 		return new Trace(xs, ys);
 	}
 	
-	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
-		SACData data = sacname.read();
-		Station station = data.getStation();
+	private static List<TimewindowData> findWindow(Set<TimewindowData> timewindows, SACFileName sacname) throws IOException {
+		SACFileAccess data = sacname.read();
+		Observer station = data.getObserver();
 		GlobalCMTID id = data.getGlobalCMTID();
 		SACComponent component = sacname.getComponent();
 		return timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
-				&& tw.getStation().equals(station)
+				&& tw.getObserver().equals(station)
 				&& tw.getComponent().equals(component))
 				.collect(Collectors.toList());
 	}

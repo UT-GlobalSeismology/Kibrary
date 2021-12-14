@@ -1,13 +1,13 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,18 +28,18 @@ public class StationAverageTimeshift {
 		Path staticCorrectionPath = Paths.get(args[0]);
 		Path timewindowPath = Paths.get(args[1]);
 
-		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+		Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(staticCorrectionPath);
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
-		Map<Station, Double> stationAverages = new HashMap<Station, Double>();
-		Map<Station, Integer> stationCount = new HashMap<Station, Integer>();
+		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
+		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
 		
 		Map<HorizontalPosition, Double> histogramAverage = new HashMap<>();
 		Map<HorizontalPosition, Double> histogramVariance = new HashMap<>();
 		Map<HorizontalPosition, Integer> histogramCount = new HashMap<>();
 		Map<HorizontalPosition, Double> histogramRatio = new HashMap<>();
 		
-		for (TimewindowInformation tw : timewindows) {
+		for (TimewindowData tw : timewindows) {
 			boolean contin = true;
 			for (Phase p : tw.getPhases()) {
 				if (p.equals(Phase.S) || p.equals(Phase.s))
@@ -48,8 +48,8 @@ public class StationAverageTimeshift {
 			if (contin)
 				continue;
 			
-			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getStation())
+			List<StaticCorrectionData> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
+					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
 					.collect(Collectors.toList());
@@ -57,9 +57,9 @@ public class StationAverageTimeshift {
 				System.out.println("No correction found for " + tw);
 				continue;
 			}
-			StaticCorrection correction = correctionList.get(0);
+			StaticCorrectionData correction = correctionList.get(0);
 			
-			Station sta = correction.getStation();
+			Observer sta = correction.getObserver();
 			Double shift = correction.getTimeshift();
 			if (stationAverages.containsKey(sta)) {
 				shift = shift + stationAverages.get(sta);
@@ -88,7 +88,7 @@ public class StationAverageTimeshift {
 			}
 		}
 		
-		for (TimewindowInformation tw : timewindows) {
+		for (TimewindowData tw : timewindows) {
 			boolean contin = true;
 			for (Phase p : tw.getPhases()) {
 				if (p.equals(Phase.S) || p.equals(Phase.s))
@@ -97,8 +97,8 @@ public class StationAverageTimeshift {
 			if (contin)
 				continue;
 			
-			List<StaticCorrection> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
-					&& corr.getStation().equals(tw.getStation())
+			List<StaticCorrectionData> correctionList = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(tw.getGlobalCMTID()) 
+					&& corr.getObserver().equals(tw.getObserver())
 					&& corr.getComponent().equals(tw.getComponent()))
 //					&& corr.getSynStartTime() < tw.getStartTime() + 0.1 && corr.getSynStartTime() > tw.getStartTime() - 0.1)
 					.collect(Collectors.toList());
@@ -106,9 +106,9 @@ public class StationAverageTimeshift {
 				System.out.println("No correction found for " + tw);
 				continue;
 			}
-			StaticCorrection correction = correctionList.get(0);
+			StaticCorrectionData correction = correctionList.get(0);
 			
-			Station sta = correction.getStation();
+			Observer sta = correction.getObserver();
 			Double shift = correction.getTimeshift();
 			
 			HorizontalPosition pos = getBin(sta.getPosition(), 1., 1.);
@@ -130,12 +130,12 @@ public class StationAverageTimeshift {
 		Files.createFile(outpathP);
 		Files.deleteIfExists(outpathM);
 		Files.createFile(outpathM);
-		for (Station sta : stationCount.keySet()) {
+		for (Observer sta : stationCount.keySet()) {
 			double shift = stationAverages.get(sta) / stationCount.get(sta);
 			if (shift >= 0)
-				Files.write(outpathP, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathP, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
 			else
-				Files.write(outpathM, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathM, (sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 		
 		Path outpathHistogramAverage = Paths.get("histogramStationAverageShift.inf");

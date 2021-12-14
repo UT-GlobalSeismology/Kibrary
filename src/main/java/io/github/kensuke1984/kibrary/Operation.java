@@ -1,14 +1,20 @@
 package io.github.kensuke1984.kibrary;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.lang3.EnumUtils;
-
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+
+import org.apache.commons.lang3.EnumUtils;
+
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 
 /**
  * Main procedures in Kibrary
@@ -28,7 +34,7 @@ public interface Operation {
             }
             if (list.isEmpty()) throw new NoSuchFileException("No property file is found");
             System.err.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
-            String input = Utilities.readInputLine();
+            String input = GadgetUtils.readInputLine();
             if (input.isEmpty()) System.exit(9);
             return list.get(Integer.parseInt(input) - 1);
         }
@@ -43,7 +49,7 @@ public interface Operation {
         if (args.length == 0) {
             Manhattan.printList();
             System.err.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
-            String input = Utilities.readInputLine();
+            String input = GadgetUtils.readInputLine();
             if (input.isEmpty()) System.exit(1);
             args = new String[]{Manhattan.valueOf(Integer.parseInt(input)).toString()};
         }
@@ -67,6 +73,7 @@ public interface Operation {
                 Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
             } catch (Exception e) {
                 System.err.println("Could not run " + manhattan + " due to " + e.getCause());
+                e.printStackTrace();
             }
         }
     }
@@ -76,7 +83,7 @@ public interface Operation {
     Properties getProperties();
 
     /**
-     * This method creates a file for the properties as the path.
+     * This method creates a file to save properties in the given path.
      *
      * @param path    a path for the file (should be *.properties)
      * @param options if any

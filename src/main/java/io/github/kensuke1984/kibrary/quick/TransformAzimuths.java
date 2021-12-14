@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import edu.sc.seis.TauP.SphericalCoords;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class TransformAzimuths {
 

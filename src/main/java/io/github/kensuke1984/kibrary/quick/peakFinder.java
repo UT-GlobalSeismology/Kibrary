@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.quick;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 public class peakFinder {

@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.util.statistics;
 
 import io.github.kensuke1984.kibrary.external.gmt.CrossSectionLine;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.util.SpcFileUtils;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class Rose {
 		double[][][] gridAzimuthHist = new double[nLat][nLon][nAz];
 		
 		for (BasicID id : ids) {
-			CrossSectionLine line = new CrossSectionLine(id.getGlobalCMTID().getEvent().getCmtLocation().toHorizontalPosition(), id.getStation().getPosition(), deltaThetaRad);
+			CrossSectionLine line = new CrossSectionLine(id.getGlobalCMTID().getEvent().getCmtLocation().toHorizontalPosition(), id.getObserver().getPosition(), deltaThetaRad);
 			Set<HorizontalPosition> indices = Stream.of(line.getPositions()).map(pos -> {
 					int ilat = (int) ((pos.getLatitude() + 90) / dL);
 					int ilon = (int) ((pos.getLongitude() + 180) / dL);

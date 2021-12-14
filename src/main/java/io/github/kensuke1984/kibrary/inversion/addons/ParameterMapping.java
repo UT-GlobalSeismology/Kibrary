@@ -3,9 +3,9 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.BufferedReader;
@@ -178,7 +178,7 @@ public class ParameterMapping {
 				if (originalUnknowns[k].getLocation().toHorizontalPosition().equals(horizontalPoint)) {
 					for (int l = 0; l < radiiOriginalToNewIndex.size(); l++) {
 						double r = radii.get(l);
-						if (Utilities.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
+						if (MathUtils.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
 							iOriginalToNew[k] = radiiOriginalToNewIndex.get(l) * horizontalPoints.size() + i 
 									+ typeIndex.get(originalUnknowns[k].getPartialType()) * nNewUnknown / typeIndex.size();
 						}
@@ -260,7 +260,7 @@ public class ParameterMapping {
 			
 			UnknownParameter refUnknown = originalUnknowns[iNewToOriginal[i][0]];
 			PartialType type = refUnknown.getPartialType();
-			Location location = refUnknown.getLocation().toLocation(rmean);
+			FullPosition location = refUnknown.getLocation().toFullPosition(rmean);
 			UnknownParameter newUnknown = new Physical3DParameter(type, location, weight);
 			unknowns[i] = newUnknown;
 		}

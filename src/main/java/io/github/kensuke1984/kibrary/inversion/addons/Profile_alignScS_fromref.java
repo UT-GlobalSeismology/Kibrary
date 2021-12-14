@@ -1,18 +1,18 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -107,10 +107,10 @@ public class Profile_alignScS_fromref {
 			
 			double dt = 1. / obsList.get(0).getSamplingHz();
 			
-			Map<Station, Double> stationSynVariance = new HashMap<>();
-			Map<Station, Double> stationBornVariance = new HashMap<>();
-			Map<Station, Double> stationObsNorm = new HashMap<>();
-			obsList.parallelStream().map(id -> id.getStation()).distinct().forEach(station -> {
+			Map<Observer, Double> stationSynVariance = new HashMap<>();
+			Map<Observer, Double> stationBornVariance = new HashMap<>();
+			Map<Observer, Double> stationObsNorm = new HashMap<>();
+			obsList.parallelStream().map(id -> id.getObserver()).distinct().forEach(station -> {
 				stationSynVariance.put(station, new Double(0));
 				stationBornVariance.put(station, new Double(0));
 				stationObsNorm.put(station, new Double(0));
@@ -172,10 +172,10 @@ public class Profile_alignScS_fromref {
 				Trace[][] synTraces = new Trace[m][l+1];
 				Trace[][] bornTraces = new Trace[m][l+1];
 				
-				List<List<Station>> azimuthStationList = new ArrayList<>();
+				List<List<Observer>> azimuthStationList = new ArrayList<>();
 				
 				for (int i = 0; i < l; i++)
-					azimuthStationList.add(new ArrayList<Station>());
+					azimuthStationList.add(new ArrayList<Observer>());
 				
 				Path stackPath = stackRoot.resolve(event.toString());
 				Files.createDirectories(stackPath);
@@ -217,9 +217,9 @@ public class Profile_alignScS_fromref {
 						continue;
 					}
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -252,8 +252,8 @@ public class Profile_alignScS_fromref {
 					bornVariance += tmpBornVariance;
 					obsNorm += tmpObsNorm;
 					
-					List<Station> tmpList = azimuthStationList.get(j);
-					tmpList.add(id.getStation());
+					List<Observer> tmpList = azimuthStationList.get(j);
+					tmpList.add(id.getObserver());
 					azimuthStationList.set(j, tmpList);
 				}
 					double tmpSyn = synVariance / obsNorm;
@@ -538,7 +538,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		return new Trace(xs, ys);
 	}
 
-	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, double azimuth) throws IOException {
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Observer> stations, double azimuth) throws IOException {
 		Path outpath = rootpath.resolve("plot_map_" + event + "_az" + (int) (azimuth) + ".gmt");
 		String outpathps = "map_" + event + "_az" + (int) (azimuth) + ".ps";
 		PrintWriter pw = new PrintWriter(outpath.toFile());
@@ -556,12 +556,12 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		ss += "gmt psxy -R-170/-52/-41/75 -JQ270/4.4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
 		double evLat = event.getEvent().getCmtLocation().getLatitude();
 		double evLon = event.getEvent().getCmtLocation().getLongitude();
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		
 		ss += "gmt psxy -R -J -Si0.11 -P -Groyalblue -Wthinnest,black -K -O >> $outputps <<END\n";
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format("%.2f %.2f\n", station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		
@@ -617,7 +617,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		double maxObs = ir.observedOf(id).getYVector().getLInfNorm() * 4;
 		String name = ir.getTxtName(id);
 		
-		double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+		double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 				* 180. / Math.PI;
 		if (id.getSacComponent().equals(SACComponent.R))
 			outputString.scriptString_R += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
@@ -682,7 +682,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		double bornRatio = bornVector.getLInfNorm() / obsVector.getLInfNorm();
 
 		
-		outputString.eachMisfitString += id.getStation().getName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+		outputString.eachMisfitString += id.getObserver().getStation() + " " + id.getObserver().getNetwork() + " " + id.getObserver().getPosition() + " "
 				+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 				+ tmpSyn + " " + tmpBorn + " " + synCorr + " " + bornCorr + "\n";
 		
@@ -698,7 +698,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 //		data.totalBornVariancePARVS += tmpBornPARVSVariance;
 //		data.totalObsNorm += tmpObsNorm;
 		
-		Station sta = id.getStation();
+		Observer sta = id.getObserver();
 		try {
 //			tmpSynVariance += stationSynVariance.get(sta);
 //			tmpBornVariance += stationBornVariance.get(sta);

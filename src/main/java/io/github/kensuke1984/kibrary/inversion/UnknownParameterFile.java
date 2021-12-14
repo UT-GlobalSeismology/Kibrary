@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.BufferedReader;
@@ -14,8 +13,9 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.inversion.addons.TimeReceiverSideParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.TimeSourceSideParameter;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -61,9 +61,9 @@ public class UnknownParameterFile {
 					pars.add(unknown);
 					break;
 				case TIME_RECEIVER:
-					unknown = new TimeReceiverSideParameter(new Station(parts[1],
-							new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])),
-							parts[2]), Integer.parseInt(parts[5]));
+					unknown = new TimeReceiverSideParameter(new Observer(parts[1],
+							parts[2],
+							new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]))), Integer.parseInt(parts[5]));
 					pars.add(unknown);
 					break;
 				case PARA:
@@ -93,7 +93,7 @@ public class UnknownParameterFile {
 				case Vs:
 				case LAMBDA2MU:
 				default:
-					unknown = new Physical3DParameter(type, new Location(Double.parseDouble(parts[1]),
+					unknown = new Physical3DParameter(type, new FullPosition(Double.parseDouble(parts[1]),
 							Double.parseDouble(parts[2]), Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));
 					pars.add(unknown);
 				}

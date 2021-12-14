@@ -21,15 +21,16 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
-import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
@@ -66,14 +67,14 @@ public class MakeRunFolders {
 			*/
 			
 			Path currentWorkingDir = Paths.get(System.getProperty("user.dir"));
-			Path syntheticFolder = currentWorkingDir.resolve("synthetic" + Utilities.getTemporaryString());
+			Path syntheticFolder = currentWorkingDir.resolve("synthetic" + GadgetUtils.getTemporaryString());
 			Path axiSEMFolder = Paths.get(args[0]);
 			Path axiSEMSolverFolder = axiSEMFolder.resolve("SOLVER");
 			
 			if (!Files.isDirectory(axiSEMSolverFolder))
 				throw new FileNotFoundException(axiSEMSolverFolder.toString());
 			
-			Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(currentWorkingDir);
+			Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(currentWorkingDir);
 			
 			Files.createDirectories(syntheticFolder);
 			
@@ -86,7 +87,7 @@ public class MakeRunFolders {
 					
 					Path eventFile = localDirPath.resolve("CMTSOLUTION");
 					GlobalCMTID id = eventFolder.getGlobalCMTID();
-					GlobalCMTData idData = id.getEvent();
+					GlobalCMTAccess idData = id.getEvent();
 					MomentTensor mt = idData.getCmt();
 					double pow = Math.pow(10, mt.getMtExp());
 					String s = String.format("PDE...%nevent name: %s%ntime shift: %.4f%nhalf duration: "
@@ -109,10 +110,10 @@ public class MakeRunFolders {
 						);
 					Files.write(eventFile, s.getBytes());
 					
-					Set<Station> stationSet = new HashSet<>();
+					Set<Observer> stationSet = new HashSet<>();
 					eventFolder.sacFileSet().parallelStream().forEach(sac -> {
 						try {
-							stationSet.add(sac.read().getStation());
+							stationSet.add(sac.read().getObserver());
 						} catch (IOException e) {
 							System.err.format("IOException: %s%n", e);
 						}
@@ -121,11 +122,11 @@ public class MakeRunFolders {
 					RealVector axis = getRotationAxisToNorthPole(idData.getCmtLocation());
 					double angle = idData.getCmtLocation().getTheta();
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
-						for (Station sta : stationSet) {
-							Location rotatedStation 
-								= rotateLocation(sta.getPosition().toLocation(Earth.EARTH_RADIUS), axis, angle);
+						for (Observer sta : stationSet) {
+							FullPosition rotatedStation 
+								= rotateLocation(sta.getPosition().toFullPosition(Earth.EARTH_RADIUS), axis, angle);
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
-								, sta.getName()
+								, sta.getStation()
 								, sta.getNetwork()
 								, rotatedStation.getLatitude()
 								, rotatedStation.getLongitude())
@@ -163,18 +164,18 @@ public class MakeRunFolders {
 		return m;
 	}
 	
-	private static RealVector getRotationAxisToNorthPole(Location location) {
+	private static RealVector getRotationAxisToNorthPole(FullPosition location) {
 		double x = location.toXYZ().getX();
 		double y = location.toXYZ().getY();
 		double n = Math.sqrt(x*x + y*y);
 		return new ArrayRealVector(new double[] {y/n, -x/n, 0.}).unitVector();
 	}
 	
-	private static Location rotateLocation(Location loc, RealVector axis, double angle) {
+	private static FullPosition rotateLocation(FullPosition loc, RealVector axis, double angle) {
 		RealMatrix rotationMatrix = rotationMatrix(axis, angle);
 		RealVector sourceVector = loc.toXYZ().toRealVector();
 		RealVector rotatedSourceVector = rotationMatrix.operate(sourceVector);
-		Location rotatedSourceLocation = new XYZ(rotatedSourceVector.getEntry(0), rotatedSourceVector.getEntry(1), rotatedSourceVector.getEntry(2))
+		FullPosition rotatedSourceLocation = new XYZ(rotatedSourceVector.getEntry(0), rotatedSourceVector.getEntry(1), rotatedSourceVector.getEntry(2))
 			.toLocation();
 		return rotatedSourceLocation;
 	}

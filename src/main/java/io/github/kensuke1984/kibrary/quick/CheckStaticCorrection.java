@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 
 import java.io.IOException;
@@ -19,18 +19,18 @@ public class CheckStaticCorrection {
 		Path fujiStaticPath = Paths.get(args[0]);
 		Path SEMStaticPath = Paths.get(args[1]);
 		
-		Set<StaticCorrection> fujiCorrections = StaticCorrectionFile.read(fujiStaticPath);
-		Set<StaticCorrection> semCorrections = StaticCorrectionFile.read(SEMStaticPath);
+		Set<StaticCorrectionData> fujiCorrections = StaticCorrectionDataFile.read(fujiStaticPath);
+		Set<StaticCorrectionData> semCorrections = StaticCorrectionDataFile.read(SEMStaticPath);
 		
-		Set<StaticCorrection> ratios = new HashSet<>();
-		Set<StaticCorrection> differences = new HashSet<>();
-		Set<StaticCorrection> mixed = new HashSet<>();
+		Set<StaticCorrectionData> ratios = new HashSet<>();
+		Set<StaticCorrectionData> differences = new HashSet<>();
+		Set<StaticCorrectionData> mixed = new HashSet<>();
 		
-		for (StaticCorrection corr : fujiCorrections) {
-			StaticCorrection semCorr = null;
+		for (StaticCorrectionData corr : fujiCorrections) {
+			StaticCorrectionData semCorr = null;
 			try {
 				semCorr = semCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
-					&& corr.getStation().equals(c.getStation())
+					&& corr.getObserver().equals(c.getObserver())
 					&& corr.getComponent().equals(c.getComponent())
 					&& new Phases(corr.getPhases()).equals(new Phases(c.getPhases()))).findFirst().get();
 //					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
@@ -40,24 +40,24 @@ public class CheckStaticCorrection {
 			double ratio = Math.abs(semCorr.getTimeshift() - corr.getTimeshift()) / Math.abs(corr.getTimeshift());
 			double difference = corr.getTimeshift() - semCorr.getTimeshift();
 //			ratio = Math.log(ratio);
-			StaticCorrection tmpCorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrectionData tmpCorr = new StaticCorrectionData(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), ratio, corr.getAmplitudeRatio(), corr.getPhases());
-			StaticCorrection tmpCorr2 = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrectionData tmpCorr2 = new StaticCorrectionData(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), difference, corr.getAmplitudeRatio(), corr.getPhases());
-			StaticCorrection zeroCorr = new StaticCorrection(corr.getStation(), corr.getGlobalCMTID(), corr.getComponent()
+			StaticCorrectionData zeroCorr = new StaticCorrectionData(corr.getObserver(), corr.getGlobalCMTID(), corr.getComponent()
 					, corr.getSynStartTime(), 0., corr.getAmplitudeRatio(), corr.getPhases());
-			StaticCorrection mix = Math.abs(difference) <= Math.abs(corr.getTimeshift()) ? semCorr : zeroCorr;
+			StaticCorrectionData mix = Math.abs(difference) <= Math.abs(corr.getTimeshift()) ? semCorr : zeroCorr;
 			ratios.add(tmpCorr);
 			differences.add(tmpCorr2);
 			mixed.add(mix);
 		}
 		
-		Path outmix = Paths.get("staticCorrection" + Utilities.getTemporaryString() + ".dat");
-		StaticCorrectionFile.write(mixed, outmix);
+		Path outmix = Paths.get("staticCorrection" + GadgetUtils.getTemporaryString() + ".dat");
+		StaticCorrectionDataFile.write(mixed, outmix);
 		
 		Path outpath0 = Paths.get("corrections_each_record_difference.txt");
 		PrintWriter pw0 = new PrintWriter(outpath0.toFile());
-		for (StaticCorrection corr : differences)
+		for (StaticCorrectionData corr : differences)
 			pw0.println(corr);
 		pw0.close();
 		
@@ -85,20 +85,20 @@ public class CheckStaticCorrection {
 		
 		Path outpath4 = Paths.get("correctionDifferenceStation.txt");
 		PrintWriter pw4 = new PrintWriter(outpath4.toFile());
-		for (StaticCorrection corr : differences) {
-			pw4.println(corr.getStation() + " " + corr.getStation().getPosition() + " " + corr.getTimeshift());
+		for (StaticCorrectionData corr : differences) {
+			pw4.println(corr.getObserver() + " " + corr.getObserver().getPosition() + " " + corr.getTimeshift());
 		}
 		pw4.close();
 	}
 	
-	public static double[][] averageMap(Set<StaticCorrection> ratios) {
+	public static double[][] averageMap(Set<StaticCorrectionData> ratios) {
 		double[][] map = new double[360][180];
 		int[][] count = new int[360][180];
-		for (StaticCorrection corr : ratios) {
-			double lon = corr.getStation().getPosition().getLongitude();
+		for (StaticCorrectionData corr : ratios) {
+			double lon = corr.getObserver().getPosition().getLongitude();
 			if (lon < 0)
 				lon += 360;
-			double lat = corr.getStation().getPosition().getLatitude() + 90;
+			double lat = corr.getObserver().getPosition().getLatitude() + 90;
 			int ilon = (int) lon;
 			int ilat = (int) lat;
 			if (ilon == 360)

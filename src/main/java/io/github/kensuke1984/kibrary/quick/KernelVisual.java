@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -50,7 +50,7 @@ public class KernelVisual {
 				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
-				Path dir2 = dir1.resolve(partial.getStation().getName());
+				Path dir2 = dir1.resolve(partial.getObserver().getStation());
 				if (!Files.exists(dir2))
 					Files.createDirectories(dir2);
 				Path dir3 = dir2.resolve(new Phases(partial.getPhases()).toString());

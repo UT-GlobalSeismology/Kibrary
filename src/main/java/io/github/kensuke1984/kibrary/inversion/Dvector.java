@@ -1,19 +1,19 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.quick.taupModelMaker;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.SpcFileUtils;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -97,7 +97,7 @@ public class Dvector {
 	/**
 	 * Map of variance of the dataset for a station
 	 */
-	private Map<Station, Double> stationVariance;
+	private Map<Observer, Double> stationVariance;
 	private boolean atLeastThreeRecordsPerStation;
 	List<DataSelectionInformation> selectionInfo;
     /**
@@ -115,7 +115,7 @@ public class Dvector {
 	/**
 	 * Set of stations read in vector.
 	 */
-	private Set<Station> usedStationSet;
+	private Set<Observer> usedStationSet;
 	/**
 	 * weighting for i th timewindow.
 	 */
@@ -227,7 +227,7 @@ public class Dvector {
 				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
 					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
 				double distance = Math.toDegrees(obs.getGlobalCMTID().getEvent().getCmtLocation()
-						.getEpicentralDistance(obs.getStation().getPosition()));
+						.getEpicentralDistance(obs.getObserver().getPosition()));
 				double a = 3.;
 				double w = (a-1) / (91-67) * (91-distance) + 1.;
 				return 1. / obsVec.getLInfNorm() * w;
@@ -241,7 +241,7 @@ public class Dvector {
 					return 0.;
 				}
 				double d = Math.toDegrees(obs.getGlobalCMTID().getEvent().getCmtLocation()
-						.getEpicentralDistance(obs.getStation().getPosition()));
+						.getEpicentralDistance(obs.getObserver().getPosition()));
 				double w = 1. * Math.cos((d - 70) / (78 - d) * Math.PI / 2.) + 1.;
 				if (d > 78 || d < 70) w = 1.;
 				return 1. / obsVec.getLInfNorm() * w; 
@@ -272,9 +272,9 @@ public class Dvector {
 					return 0.;
 				}
 				double weight = 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
-				if (obs.getStation().getPosition().getLongitude() <= -80)
+				if (obs.getObserver().getPosition().getLongitude() <= -80)
 					weight *= weightingEpicentralDistanceTZ(obs) * weightingAzimuthTZ(obs);
-				if (networkSet.contains(obs.getStation().getNetwork()))
+				if (networkSet.contains(obs.getObserver().getNetwork()))
 					weight *= 2;
 				return weight;
 			};
@@ -524,12 +524,12 @@ public class Dvector {
 	public static boolean isPair(BasicID id0, BasicID id1) {
 		boolean res = false;
 		if (id0.getPhases() == null && id1.getPhases() == null) // for compatibility with old format of BasicID
-			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+			res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 					&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
 					&& id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20.
 					&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
 		else {
-			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+			res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 				&& id0.getSacComponent() == id1.getSacComponent()
 				&& id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
 				&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
@@ -561,7 +561,7 @@ public class Dvector {
 	 */
 	private double weightingEpicentralDistanceDpp(BasicID obs) {
 		double weight = 1.;
-		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 		
 		double maxWeight = 2.;
 		
@@ -597,7 +597,7 @@ public class Dvector {
 	 */
 	public double weightingAzimuthDpp(BasicID obs) {
 		double weight = 1.;
-		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
+		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
 		
 		double maxWeight = 2.;
 		
@@ -635,7 +635,7 @@ public class Dvector {
 	 */
 	private double weightingEpicentralDistanceTZ(BasicID obs) {
 		double weight = 1.;
-		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 		
 //		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
 //		histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
@@ -655,7 +655,7 @@ public class Dvector {
 	 */
 	public double weightingAzimuthTZ(BasicID obs) {
 		double weight = 1.;
-		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
+		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
 		
 //		histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
 //			, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
@@ -679,7 +679,7 @@ public class Dvector {
 	 */
 	private static double weightingEpicentralDistance(BasicID obs) {
 		double weight = 1.;
-		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 		Phases phases = new Phases(obs.getPhases());
 		
 //		double[][] histogram = new double[][] { {45, 0.741}, {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
@@ -861,7 +861,7 @@ public class Dvector {
 	/**
 	 * @return set of stations in vector
 	 */
-	public Set<Station> getUsedStationSet() {
+	public Set<Observer> getUsedStationSet() {
 		return Collections.unmodifiableSet(usedStationSet);
 	}
 
@@ -927,8 +927,8 @@ public class Dvector {
      */
 	public void outputVarianceOf(Path outPath, RealVector[] vectors) throws IOException {
 		Files.createDirectories(outPath);
-		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
-		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
@@ -938,7 +938,7 @@ public class Dvector {
 		Path eachVariancePath = outPath.resolve("eachVariance.txt");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
 			for (int i = 0; i < nTimeWindow; i++) {
-				Station station = obsIDs[i].getStation();
+				Observer station = obsIDs[i].getObserver();
 				GlobalCMTID id = obsIDs[i].getGlobalCMTID();
 				double obs2 = obsVec[i].dotProduct(obsVec[i]);
 				RealVector del = vectors[i].subtract(obsVec[i]);
@@ -967,8 +967,8 @@ public class Dvector {
 	private void read() {
 		this.npts = 0;
 		int start = 0;
-		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
-		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Observer, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
@@ -984,13 +984,13 @@ public class Dvector {
 			DataSelectionInformation info = null;
 			if (selectionInfo != null) {
 				GlobalCMTID id = obsIDs[i].getGlobalCMTID();
-				Station station = obsIDs[i].getStation();
+				Observer station = obsIDs[i].getObserver();
 				double startTime = obsIDs[i].getStartTime();
 				SACComponent component = obsIDs[i].getSacComponent();
 				System.out.println(obsIDs[i]);
 				info = selectionInfo.stream().filter(selec -> {
-					TimewindowInformation tw = selec.getTimewindow();
-					return tw.getStation().equals(station) 
+					TimewindowData tw = selec.getTimewindow();
+					return tw.getObserver().equals(station) 
 							&& tw.getGlobalCMTID().equals(id)
 							&& tw.getComponent().equals(component)
 							&& Math.abs(tw.getStartTime() - startTime) < 0.1;
@@ -1068,9 +1068,9 @@ public class Dvector {
 			double denominator = obsVec[i].dotProduct(obsVec[i]);
 			dVec[i] = obsVec[i].subtract(synVec[i]);
 			double numerator = dVec[i].dotProduct(dVec[i]);
-			stationDenominator.put(obsIDs[i].getStation(),
-					stationDenominator.get(obsIDs[i].getStation()) + denominator);
-			stationNumerator.put(obsIDs[i].getStation(), stationNumerator.get(obsIDs[i].getStation()) + numerator);
+			stationDenominator.put(obsIDs[i].getObserver(),
+					stationDenominator.get(obsIDs[i].getObserver()) + denominator);
+			stationNumerator.put(obsIDs[i].getObserver(), stationNumerator.get(obsIDs[i].getObserver()) + numerator);
 			eventDenominator.put(obsIDs[i].getGlobalCMTID(),
 					eventDenominator.get(obsIDs[i].getGlobalCMTID()) + denominator);
 			eventNumerator.put(obsIDs[i].getGlobalCMTID(), eventNumerator.get(obsIDs[i].getGlobalCMTID()) + numerator);
@@ -1116,7 +1116,7 @@ public class Dvector {
 	/**
 	 * @return map of variance of waveforms for each station
 	 */
-	public Map<Station, Double> getStationVariance() {
+	public Map<Observer, Double> getStationVariance() {
 		return Collections.unmodifiableMap(stationVariance);
 	}
 	
@@ -1176,9 +1176,9 @@ public class Dvector {
 	 */
 	private List<BasicID> moreThanThreeEventsPerStation(List<BasicID> ids) {
 		List<BasicID> filteredIds = new ArrayList<>();
-		Set<Station> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());
-		for (Station station : stations) {
-			List<BasicID> tmps = ids.stream().filter(id -> id.getStation().equals(station)).collect(Collectors.toList());
+		Set<Observer> stations = ids.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
+		for (Observer station : stations) {
+			List<BasicID> tmps = ids.stream().filter(id -> id.getObserver().equals(station)).collect(Collectors.toList());
 			int numberOfGCMTId = (int) tmps.stream().map(id -> id.getGlobalCMTID()).distinct().count();
 			if (numberOfGCMTId >= 2)
 				tmps.forEach(tmp -> filteredIds.add(tmp));
@@ -1213,9 +1213,9 @@ public class Dvector {
 			}
 			double[] data = Arrays.copyOfRange(id.getData(), nStart, nEnd);
 			double[] synData = Arrays.copyOfRange(synID.getData(), nStart, nEnd);
-			obsIDs[i] = new BasicID(id.getWaveformType(), id.getSamplingHz(), id.getStartTime(), n, id.getStation()
+			obsIDs[i] = new BasicID(id.getWaveformType(), id.getSamplingHz(), id.getStartTime(), n, id.getObserver()
 				, id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolute(), data);
-			synIDs[i] = new BasicID(synID.getWaveformType(), synID.getSamplingHz(), synID.getStartTime(), n, synID.getStation()
+			synIDs[i] = new BasicID(synID.getWaveformType(), synID.getSamplingHz(), synID.getStartTime(), n, synID.getObserver()
 					, synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(), synID.getMaxPeriod(), synID.getPhases(), synID.getStartByte(), synID.isConvolute(), synData);
 		}
 		read();
@@ -1292,7 +1292,7 @@ public class Dvector {
 		usedGlobalCMTIDset = new HashSet<>();
 		usedStationSet = new HashSet<>();
 		for (int i = 0; i < nTimeWindow; i++) {
-			usedStationSet.add(obsIDs[i].getStation());
+			usedStationSet.add(obsIDs[i].getObserver());
 			usedGlobalCMTIDset.add(obsIDs[i].getGlobalCMTID());
 		}
 		

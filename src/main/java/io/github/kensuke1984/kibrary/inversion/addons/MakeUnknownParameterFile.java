@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.IOException;
@@ -34,8 +34,8 @@ public class MakeUnknownParameterFile {
 		
 		try {
 			// read perturbation points lat lon r
-			List<Location> perturbations = Files.readAllLines(perturbationPointPath)
-					.stream().map(s -> new Location(Double.parseDouble(s.trim().split(" ")[0])
+			List<FullPosition> perturbations = Files.readAllLines(perturbationPointPath)
+					.stream().map(s -> new FullPosition(Double.parseDouble(s.trim().split(" ")[0])
 							,Double.parseDouble(s.trim().split(" ")[1])
 							,Double.parseDouble(s.trim().split(" ")[2])))
 					.collect(Collectors.toList());
@@ -49,14 +49,14 @@ public class MakeUnknownParameterFile {
 			});
 			
 			// create unknowns file
-			Path unknownPath = Paths.get("unknowns" + Utilities.getTemporaryString() + ".inf");
+			Path unknownPath = Paths.get("unknowns" + GadgetUtils.getTemporaryString() + ".inf");
 			Files.deleteIfExists(unknownPath);
 			Files.createFile(unknownPath);
 			
 //			int nDigit = (int) Math.log10(perturbations.size()) + 1;
 			for (PartialType type : types) {
 				for (int i = 0; i < perturbations.size(); i++) {
-					Location perturbation = perturbations.get(i);
+					FullPosition perturbation = perturbations.get(i);
 					double dR = 0;
 					try {
 						 dR = layerMap.get(perturbation.getR());
@@ -78,17 +78,17 @@ public class MakeUnknownParameterFile {
 		}
 	}
 
-	public static double getVolume(Location point, double dr, double dLatitude, double dLongitude) {
+	public static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
 		double r = point.getR();
 		if (r <= 0) {
 			System.out.println("location has no R information or invalid R:" + r);
 				}
 		double latitude = point.getLatitude();// 地理緯度
 		double longitude = point.getLongitude();
-		Location tmpLoc = point.toLocation(r - 0.5 * dr);
+		FullPosition tmpLoc = point.toFullPosition(r - 0.5 * dr);
 		// tmpLoc.setR(r - 0.5 * dr);
 		double startA = Earth.getExtendedShaft(tmpLoc);
-		tmpLoc = tmpLoc.toLocation(r + 0.5 * dr);
+		tmpLoc = tmpLoc.toFullPosition(r + 0.5 * dr);
 		double endA = Earth.getExtendedShaft(tmpLoc);
 		r = Earth.getExtendedShaft(point);
 //		 System.out.println(startA + " " + endA);

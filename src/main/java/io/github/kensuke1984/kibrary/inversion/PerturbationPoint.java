@@ -1,7 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+
 import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedWriter;
@@ -33,11 +34,11 @@ public class PerturbationPoint extends HorizontalPoint {
 
     private double dLongitude;
 
-    private Map<Location, Double> volumeMap;
+    private Map<FullPosition, Double> volumeMap;
     /**
      * locations of points perturbationLocation[i] = the location of the i th point
      */
-    private Location[] perturbationLocation;
+    private FullPosition[] perturbationLocation;
     /**
      * number of points
      */
@@ -103,7 +104,7 @@ public class PerturbationPoint extends HorizontalPoint {
     }
 
     public void printVolumes() {
-        for (Location perLoc : perturbationLocation)
+        for (FullPosition perLoc : perturbationLocation)
             System.out.println(perLoc + " " + volumeMap.get(perLoc));
     }
 
@@ -113,7 +114,7 @@ public class PerturbationPoint extends HorizontalPoint {
     public void computeVolumes() {
         volumeMap = new HashMap<>();
         ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        for (Location perLoc : perturbationLocation)
+        for (FullPosition perLoc : perturbationLocation)
             es.execute(new VolumeCalculator(perLoc));
 
         es.shutdown();
@@ -133,7 +134,7 @@ public class PerturbationPoint extends HorizontalPoint {
         computeVolumes();
 
         try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)))) {
-            for (Location loc : perturbationLocation) {
+            for (FullPosition loc : perturbationLocation) {
                 System.err.println(loc);
                 double volume = volumeMap.get(loc);
                 pw.println("MU " + loc + " " + volume);
@@ -155,7 +156,7 @@ public class PerturbationPoint extends HorizontalPoint {
         dLongitude = dlongitude;
     }
 
-    public Map<Location, Double> getVolumeMap() {
+    public Map<FullPosition, Double> getVolumeMap() {
         return volumeMap;
     }
 
@@ -171,7 +172,7 @@ public class PerturbationPoint extends HorizontalPoint {
      * @return array of radius
      */
     public double[] getR() {
-        return Arrays.stream(perturbationLocation).mapToDouble(Location::getR).toArray();
+        return Arrays.stream(perturbationLocation).mapToDouble(FullPosition::getR).toArray();
     }
 
     /**
@@ -192,14 +193,14 @@ public class PerturbationPoint extends HorizontalPoint {
             lines.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));
 
             pointN = lines.size();
-            perturbationLocation = new Location[pointN];
+            perturbationLocation = new FullPosition[pointN];
             pointName = new String[pointN];
 
             for (int i = 0; i < pointN; i++) {
                 String[] parts = lines.get(i).split("\\s+");
                 pointName[i] = parts[0];
                 double r = Double.parseDouble(parts[1]);
-                perturbationLocation[i] = new Location(getHorizontalPosition(pointName[i]).getLatitude(),
+                perturbationLocation[i] = new FullPosition(getHorizontalPosition(pointName[i]).getLatitude(),
                         getHorizontalPosition(pointName[i]).getLongitude(), r);
                 // perturbationLocation[i].setR(r);
             }
@@ -208,7 +209,7 @@ public class PerturbationPoint extends HorizontalPoint {
         }
     }
 
-    public Location[] getPerturbationLocation() {
+    public FullPosition[] getPerturbationLocation() {
         return perturbationLocation;
     }
 
@@ -217,20 +218,20 @@ public class PerturbationPoint extends HorizontalPoint {
     }
 
     /**
-     * @param location {@link Location} for target
+     * @param location {@link FullPosition} for target
      * @return Location[] in order of the distance from an input location from the closest
      */
-    public Location[] getNearestLocation(Location location) {
-        Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
+    public FullPosition[] getNearestLocation(FullPosition location) {
+        FullPosition[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
         Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location)));
         return locations;
     }
 
     private class VolumeCalculator implements Runnable {
 
-        private final Location LOC;
+        private final FullPosition LOC;
 
-        private VolumeCalculator(Location loc) {
+        private VolumeCalculator(FullPosition loc) {
             LOC = loc;
         }
 

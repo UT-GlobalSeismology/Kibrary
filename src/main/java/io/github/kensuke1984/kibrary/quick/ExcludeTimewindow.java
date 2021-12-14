@@ -1,14 +1,14 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -34,11 +34,11 @@ public class ExcludeTimewindow {
 	public static void main(String[] args) {
 		Path timewindowFile = Paths.get(args[0]);
 //		Path timewindowASCIIFile = Paths.get(args[1]);
-		Path newTimewindowFile = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
+		Path newTimewindowFile = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
 		
 //		Path timewindowFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s/timewindow_PPcP.dat");
 		
-		String tmpS = Utilities.getTemporaryString();
+		String tmpS = GadgetUtils.getTemporaryString();
 		Path newTimewindowFile1 = Paths.get("timewindow1_" + tmpS + ".dat");
 		Path newTimewindowFile2 = Paths.get("timewindow2_" + tmpS + ".dat");
 		
@@ -92,7 +92,7 @@ public class ExcludeTimewindow {
 //		System.out.println(recordIDList.size());
 		
 		try {
-			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowFile);
+			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowFile);
 //			Set<TimewindowInformation> newTimewindows = excludeStation(timewindows, timewindowASCIIFile);
 			
 //			Set<Phases> phaseSet = new HashSet<>();
@@ -105,20 +105,20 @@ public class ExcludeTimewindow {
 			Set<String> excludedStations = Stream.of(tmpStations).collect(Collectors.toSet());
 			
 			if (args.length == 3) { //2
-				Set<Station> stations = StationInformationFile.read(Paths.get(args[1]));
+				Set<Observer> stations = ObserverInformationFile.read(Paths.get(args[1]));
 				
-				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
-						.filter(tw -> stations.contains(tw.getStation()))
+				Set<TimewindowData> newTimewindows = timewindows.parallelStream()
+						.filter(tw -> stations.contains(tw.getObserver()))
 //						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI <= 35.)
 						.collect(Collectors.toSet());
 				
-				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+				TimewindowDataFile.write(newTimewindows, newTimewindowFile);
 			}
 			else {
-				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
+				Set<TimewindowData> newTimewindows = timewindows.parallelStream()
 						.filter(tw ->  {
-							System.out.println(cluster.getAzimuthIndex(tw.getStation().getPosition()));
-							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+							System.out.println(cluster.getAzimuthIndex(tw.getObserver().getPosition()));
+							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
 //							if (distance > 30. || distance < 17.)
 //								return false;
 //							if (distance < 30. || distance > 90.)
@@ -143,7 +143,7 @@ public class ExcludeTimewindow {
 //								return false;
 							if (!clusterIDs.contains(tw.getGlobalCMTID()))
 								return false;
-							if (cluster.getAzimuthIndex(tw.getStation().getPosition()) != 3) return false;
+							if (cluster.getAzimuthIndex(tw.getObserver().getPosition()) != 3) return false;
 							else 
 								return true;
 						})
@@ -243,7 +243,7 @@ public class ExcludeTimewindow {
 //				newTimewindows = timewindows.stream().filter(tw -> tw.getStation().getStationName().equals("PH10") ||
 //						tw.getStation().getStationName().equals("Y12C")).collect(Collectors.toSet());
 				
-				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+				TimewindowDataFile.write(newTimewindows, newTimewindowFile);
 //				
 				
 //				Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
@@ -319,7 +319,7 @@ public class ExcludeTimewindow {
 		}
 	}
 	
-	private static Set<TimewindowInformation> excludeStation(Set<TimewindowInformation> timewindows
+	private static Set<TimewindowData> excludeStation(Set<TimewindowData> timewindows
 			, Path timewindowASCIIFile) throws IOException {
 		BufferedReader reader = Files.newBufferedReader(timewindowASCIIFile);
 		String line = null;
@@ -334,8 +334,8 @@ public class ExcludeTimewindow {
 			excludeTimewindows.add(info);
 		}
 		
-		Set<TimewindowInformation> newTimewindows = new HashSet<>();
-		for (TimewindowInformation tw : timewindows) {
+		Set<TimewindowData> newTimewindows = new HashSet<>();
+		for (TimewindowData tw : timewindows) {
 			boolean exclude = false;
 			for (ReducedInfo info : excludeTimewindows) {
 				if (info.isPair(tw)) {
@@ -352,7 +352,7 @@ public class ExcludeTimewindow {
 		return newTimewindows;
 	}
 	
-	private static Set<TimewindowInformation> excludePhase(Set<TimewindowInformation> timewindows,
+	private static Set<TimewindowData> excludePhase(Set<TimewindowData> timewindows,
 			Set<Phases> phaseSet) throws IOException {
 		return timewindows.stream().filter(tw -> 
 			!phaseSet.contains(new Phases(tw.getPhases()))
@@ -372,8 +372,8 @@ public class ExcludeTimewindow {
 			this.startTime = startTime;
 		}
 		
-		public boolean isPair(TimewindowInformation tw) {
-			if (!tw.getStation().getName().equals(stationName))
+		public boolean isPair(TimewindowData tw) {
+			if (!tw.getObserver().getStation().equals(stationName))
 				return false;
 			else if (!tw.getGlobalCMTID().equals(id))
 				return false;

@@ -19,8 +19,8 @@ import org.apache.commons.math3.linear.CholeskyDecomposition;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 public class ModelCovarianceMatrix {
@@ -50,16 +50,16 @@ public class ModelCovarianceMatrix {
 		
 		//test
 		List<UnknownParameter> params = new ArrayList<>();
-		UnknownParameter p1 = new Physical3DParameter(PartialType.MU, new Location(0, 0, 6371),  1.);
-		UnknownParameter p2 = new Physical3DParameter(PartialType.MU, new Location(2, 0, 6371),  1.);
-		UnknownParameter p3 = new Physical3DParameter(PartialType.MU, new Location(4, 0, 6371),  1.);
+		UnknownParameter p1 = new Physical3DParameter(PartialType.MU, new FullPosition(0, 0, 6371),  1.);
+		UnknownParameter p2 = new Physical3DParameter(PartialType.MU, new FullPosition(2, 0, 6371),  1.);
+		UnknownParameter p3 = new Physical3DParameter(PartialType.MU, new FullPosition(4, 0, 6371),  1.);
 		params.add(p1);
 		params.add(p2);
 		params.add(p3);
 		
-		UnknownParameter l1 = new Physical3DParameter(PartialType.LAMBDA, new Location(0, 0, 6371),  1.);
-		UnknownParameter l2 = new Physical3DParameter(PartialType.LAMBDA, new Location(2, 0, 6371),  1.);
-		UnknownParameter l3 = new Physical3DParameter(PartialType.LAMBDA, new Location(4, 0, 6371),  1.);
+		UnknownParameter l1 = new Physical3DParameter(PartialType.LAMBDA, new FullPosition(0, 0, 6371),  1.);
+		UnknownParameter l2 = new Physical3DParameter(PartialType.LAMBDA, new FullPosition(2, 0, 6371),  1.);
+		UnknownParameter l3 = new Physical3DParameter(PartialType.LAMBDA, new FullPosition(4, 0, 6371),  1.);
 		params.add(l1);
 		params.add(l2);
 		params.add(l3);
@@ -311,8 +311,8 @@ public class ModelCovarianceMatrix {
 			List<Integer> tmpI = new ArrayList<>();
 			List<Double> tmpV = new ArrayList<>();
 			for (int j = 0; j < n ; j++) {
-				Location loci = parameters.get(i).getLocation();
-				Location locj = parameters.get(j).getLocation();
+				FullPosition loci = parameters.get(i).getLocation();
+				FullPosition locj = parameters.get(j).getLocation();
 				double delta = Math.toDegrees(loci.getEpicentralDistance(locj));
 				double dr = Math.abs(loci.getR() - locj.getR());
 				double cmH = 0;
@@ -534,9 +534,9 @@ public class ModelCovarianceMatrix {
 		int i1 = -1;
 		int i2 = -1;
 		for (int i = 0; i < radii.length; i++) {
-			if (Utilities.equalWithinEpsilon(r1, radii[i], eps))
+			if (MathUtils.equalWithinEpsilon(r1, radii[i], eps))
 				i1 = i;
-			if (Utilities.equalWithinEpsilon(r1, radii[i], eps))
+			if (MathUtils.equalWithinEpsilon(r1, radii[i], eps))
 				i2 = i;
 		}
 		return Math.abs(i2 - i1);

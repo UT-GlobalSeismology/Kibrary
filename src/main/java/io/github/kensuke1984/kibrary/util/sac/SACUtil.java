@@ -1,8 +1,5 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
-import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.Trace;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -12,6 +9,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
+
+import io.github.kensuke1984.kibrary.external.SAC;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 
 /**
  * Read/Write of a SAC file. (SAC: seismic analysis code)
@@ -26,39 +26,59 @@ public final class SACUtil {
     }
 
     /**
-     * By rotating hoge.E and hoge.N, write hoge.R and hoge.T The rotation is
-     * done by SAC (rotate r).
+     * <p>
+     * Rotates the azimuth of two input SAC files hoge.E and hoge.N (or hoge.1 and hoge.2),
+     * and writes the result in hoge.R and hoge.T.
+     * The rotation is done by SAC (rotate r).
+     * <p>
+     * The input SAC file pair must:
+     * <ul>
+     * <li> be files of the same event and station, </li>
+     * <li> have the same sampling rate, </li>
+     * <li> have related headers defined (EVLA, EVLO, STLA, STLO, CMPAZ, CMPINC), </li>
+     * <li> be horizontal components (CMPINC=90). </li>
+     * </ul>
+     * In addition, it is checked whether the two files:
+     * <ul>
+     * <li> have an azimuth difference of 90 (or 270) degrees, </li>
+     * <li> have the same NPTS. </li>
+     * </ul>
+     * The order of the two input SAC files is arbitrary (the output will be the same either way).
+     * <p>
+     * As for the outputs, the R component will be in the direction opposite of the event when viewed from the station
+     * (i.e. opposite of BAZ),
+     * and the T component will be in the direction 90 degrees counter-clockwise from the R component.
      *
-     * @param sacEPath    SAC file which component is E. must exist.
-     * @param sacNPath    SAC file which component is N. must exist.
-     * @param outputRPath for write SAC with respect to R
-     * @param outputTPath for write SAC with respect to T
-     * @return if the write is successful
+     * @param sacEPath (Path)   SAC file which component is E. must exist.
+     * @param sacNPath (Path)   SAC file which component is N. must exist.
+     * @param outputRPath (Path) for write SAC with respect to R
+     * @param outputTPath (Path) for write SAC with respect to T
+     * @return (boolean) true if the write is successful
      * @throws IOException if an I/O error occurs. If sacEPath or sacNPath does not
      *                     exist, if write Paths already exist.
      */
-    public static boolean rotate(Path sacEPath, Path sacNPath, Path outputRPath, Path outputTPath) throws IOException {
+    public static boolean rotate(Path sacAPath, Path sacBPath, Path outputRPath, Path outputTPath) throws IOException {
         if (Files.exists(outputRPath)) throw new FileAlreadyExistsException(outputRPath.toString());
         if (Files.exists(outputTPath)) throw new FileAlreadyExistsException(outputTPath.toString());
 
         // read headers of the input files
-        Map<SACHeaderEnum, String> mapE = readHeader(sacEPath);
-        Map<SACHeaderEnum, String> mapN = readHeader(sacNPath);
+        Map<SACHeaderEnum, String> mapA = readHeader(sacAPath);
+        Map<SACHeaderEnum, String> mapB = readHeader(sacBPath);
 
-        int npts = Integer.parseInt(mapE.get(SACHeaderEnum.NPTS));
-        if (npts != Integer.parseInt(mapN.get(SACHeaderEnum.NPTS))) return false;
+        int npts = Integer.parseInt(mapA.get(SACHeaderEnum.NPTS));
+        if (npts != Integer.parseInt(mapB.get(SACHeaderEnum.NPTS))) return false;
 
-        double cmpazE = Double.parseDouble(mapE.get(SACHeaderEnum.CMPAZ));
-        double cmpazN = Double.parseDouble(mapN.get(SACHeaderEnum.CMPAZ));
-        double dCmpaz = Math.abs(cmpazE - cmpazN);
-        if (dCmpaz != 90) return false;
+        double cmpazA = Double.parseDouble(mapA.get(SACHeaderEnum.CMPAZ));
+        double cmpazB = Double.parseDouble(mapB.get(SACHeaderEnum.CMPAZ));
+        double dCmpaz = Math.abs(cmpazA - cmpazB);
+        if (dCmpaz != 90 && dCmpaz != 270) return false;
 
         // sacを開く
         try (SAC sacProcess = SAC.createProcess()) {
             Path rPath = outputRPath.getFileName();
             Path tPath = outputTPath.getFileName();
-            sacProcess.inputCMD("cd " + sacNPath.toAbsolutePath().getParent());
-            sacProcess.inputCMD("r " + sacNPath.getFileName() + " " + sacEPath.getFileName());
+            sacProcess.inputCMD("cd " + sacAPath.toAbsolutePath().getParent());
+            sacProcess.inputCMD("r " + sacAPath.getFileName() + " " + sacBPath.getFileName());
             sacProcess.inputCMD("rotate r");
             sacProcess.inputCMD("w " + rPath + " " + tPath);
             sacProcess.inputCMD("r " + rPath);

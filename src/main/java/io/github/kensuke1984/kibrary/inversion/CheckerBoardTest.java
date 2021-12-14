@@ -2,15 +2,15 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
-import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.inversion.addons.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.waveformdata.*;
+import io.github.kensuke1984.kibrary.waveform.*;
 import io.github.kensuke1984.anisotime.Phase;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -61,7 +61,7 @@ public class CheckerBoardTest implements Operation {
 	private ObservationEquation eq;
 	private Properties property;
 	private Path workPath;
-	private Set<Station> stationSet = new HashSet<>();
+	private Set<Observer> stationSet = new HashSet<>();
 	private double[][] ranges;
 	private Phase[] phases;
 	private Set<GlobalCMTID> idSet = new HashSet<>();
@@ -77,7 +77,7 @@ public class CheckerBoardTest implements Operation {
 	}
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(CheckerBoardTest.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(CheckerBoardTest.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan CheckerBoardTest");
 			pw.println("##Path of a working folder (.)");
@@ -115,7 +115,7 @@ public class CheckerBoardTest implements Operation {
 		System.err.println(CheckerBoardTest.class.getName() + " is going.");
 		cbt.run();
 		System.err.println(
-				CheckerBoardTest.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
+				CheckerBoardTest.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - time));
 	}
 	
 	private void checkAndPutDefaults() {
@@ -150,7 +150,7 @@ public class CheckerBoardTest implements Operation {
 		List<double[]> ranges = new ArrayList<>();
 		Set<Phase> tmpPhases = new HashSet<>();
 		for (BasicID id : eq.getDVector().getObsIDs()) {
-			stationSet.add(id.getStation());
+			stationSet.add(id.getObserver());
 			idSet.add(id.getGlobalCMTID());
 			for (Phase phase : id.getPhases())
 				tmpPhases.add(phase);
@@ -287,7 +287,7 @@ public class CheckerBoardTest implements Operation {
 		RealVector pseudoM = readPseudoM();
 		RealVector pseudoD = computePseudoD(pseudoM);
 		RealVector bornVec = pseudoD.add(getSynVector());
-		String dateStr = Utilities.getTemporaryString();
+		String dateStr = GadgetUtils.getTemporaryString();
 		Path outIDPath = workPath.resolve("pseudoID" + dateStr + ".dat");
 		Path outDataPath = workPath.resolve("pseudo" + dateStr + ".dat");
 

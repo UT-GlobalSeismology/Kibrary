@@ -1,8 +1,5 @@
 package io.github.kensuke1984.kibrary.util;
 
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.CopyOption;
@@ -14,11 +11,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+
 /**
- * Utility for an event folder
+ * Utility for an event folder.
+ *
+ * <p>
+ * Class File is Comparable, so this class is also Comparable.
  *
  * @author Kensuke Konishi
- * @version 0.0.8.4.1
  */
 
 public class EventFolder extends File {

@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 public class TimeSourceSideParameter implements UnknownParameter {
-	public Location getPointLocation() {
+	public FullPosition getPointLocation() {
 		return pointLocation;
 	}
 
@@ -64,7 +64,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
 	/**
 	 * location of the perturbation
 	 */
-	private final Location pointLocation;
+	private final FullPosition pointLocation;
 	
 	private final GlobalCMTID id;
 	
@@ -83,7 +83,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
 	}
 	
 	@Override
-	public Location getLocation() {
+	public FullPosition getLocation() {
 		return pointLocation;
 	}
 	

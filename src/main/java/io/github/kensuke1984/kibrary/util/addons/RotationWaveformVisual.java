@@ -1,13 +1,14 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,7 +38,7 @@ public class RotationWaveformVisual {
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		Path stackDir = Paths.get("stack" + Utilities.getTemporaryString());
+		Path stackDir = Paths.get("stack" + GadgetUtils.getTemporaryString());
 		Files.createDirectory(stackDir);
 		
 		double dt = 1./ ids[0].getSamplingHz();
@@ -46,8 +47,8 @@ public class RotationWaveformVisual {
 		List<BasicID> tmp_R = Stream.of(ids).filter(id -> id.getSacComponent().equals(SACComponent.R)).collect(Collectors.toList());
 		List<BasicID> ids_R = new ArrayList<>();
 		for (BasicID idZ : ids_Z) {
-			BasicID idR = tmp_R.stream().filter(id -> id.getGlobalCMTID().equals(idZ.getGlobalCMTID()) && id.getStation().equals(idZ.getStation())
-					&& id.getWaveformType().equals(idZ.getWaveformType()) && Utilities.equalWithinEpsilon(id.getStartTime(), idZ.getStartTime(), 0.1))
+			BasicID idR = tmp_R.stream().filter(id -> id.getGlobalCMTID().equals(idZ.getGlobalCMTID()) && id.getObserver().equals(idZ.getObserver())
+					&& id.getWaveformType().equals(idZ.getWaveformType()) && MathUtils.equalWithinEpsilon(id.getStartTime(), idZ.getStartTime(), 0.1))
 					.findFirst().get();
 			ids_R.add(idR);
 		}
@@ -72,7 +73,7 @@ public class RotationWaveformVisual {
 				BasicID idZ = ids_Z_event.get(i);
 				BasicID idR = ids_R_event.get(i);
 				
-				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(idZ.getStation().getPosition()));
+				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(idZ.getObserver().getPosition()));
 				int k = (int) (distance * 2);
 				
 				timeTool.calcTime(distance);

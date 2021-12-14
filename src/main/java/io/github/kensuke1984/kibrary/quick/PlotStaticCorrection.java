@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,7 +23,7 @@ public class PlotStaticCorrection {
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 			double dt = dVector.getObsIDs()[i].getStartTime() - dVector.getSynIDs()[i].getStartTime();
-			pw.write(dVector.getObsIDs()[i].getStation() + " " + dVector.getObsIDs()[i].getGlobalCMTID() + " " + dt + "\n");
+			pw.write(dVector.getObsIDs()[i].getObserver() + " " + dVector.getObsIDs()[i].getGlobalCMTID() + " " + dt + "\n");
 		}
 		
 		pw.close();

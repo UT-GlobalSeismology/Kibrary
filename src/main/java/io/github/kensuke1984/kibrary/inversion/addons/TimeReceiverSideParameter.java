@@ -1,27 +1,27 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 public class TimeReceiverSideParameter implements UnknownParameter {
-	public Location getPointLocation() {
+	public FullPosition getPointLocation() {
 		return pointLocation;
 	}
 
 	@Override
 	public String toString() {
-		return partialType + " " + station.getName() + " " + station.getNetwork() + " " + station.getPosition() + " " + bouncingOrder + " " + weighting;
+		return partialType + " " + station.getStation() + " " + station.getNetwork() + " " + station.getPosition() + " " + bouncingOrder + " " + weighting;
 	}
 
 	private final PartialType partialType = PartialType.TIME_RECEIVER;
 	private final double weighting = 1.;
 
-	public TimeReceiverSideParameter(Station station, int bouncingOrder) {
+	public TimeReceiverSideParameter(Observer station, int bouncingOrder) {
 		this.station = station;
-		this.pointLocation = new Location(station.getPosition().getLatitude(), 
+		this.pointLocation = new FullPosition(station.getPosition().getLatitude(), 
 				station.getPosition().getLongitude(), 0.);
 		this.bouncingOrder = bouncingOrder;
 	}
@@ -70,13 +70,13 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	/**
 	 * location of the perturbation
 	 */
-	private final Location pointLocation;
+	private final FullPosition pointLocation;
 	
-	private final Station station;
+	private final Observer station;
 	
 	private final int bouncingOrder;
 	
-	public Station getStation() {
+	public Observer getStation() {
 		return station;
 	}
 	
@@ -95,7 +95,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	}
 	
 	@Override
-	public Location getLocation() {
+	public FullPosition getLocation() {
 		return pointLocation;
 	}
 	

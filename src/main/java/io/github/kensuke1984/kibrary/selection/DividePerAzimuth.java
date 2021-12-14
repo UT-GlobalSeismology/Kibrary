@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.selection;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ import edu.sc.seis.TauP.TimeDist;
 
 public class DividePerAzimuth {
 	
-	private Set<TimewindowInformation> info;
+	private Set<TimewindowData> info;
 	private HorizontalPosition averageEventPosition;
 //	private double averageAzimuth = -1000.0;
 	public double[] azimuthRange;
@@ -36,7 +36,7 @@ public class DividePerAzimuth {
 	
 	public DividePerAzimuth(Path timewindowInformationPath, Path workPath, int nSlices) {
 		try {
-			this.info = TimewindowInformationFile.read(timewindowInformationPath);
+			this.info = TimewindowDataFile.read(timewindowInformationPath);
 			setAverageEventPosition();
 			setRotation();
 			setAzimuthRange();
@@ -50,7 +50,7 @@ public class DividePerAzimuth {
 	
 	public DividePerAzimuth(Path timewindowInformationPath, Path workPath) {
 		try {
-			this.info = TimewindowInformationFile.read(timewindowInformationPath);
+			this.info = TimewindowDataFile.read(timewindowInformationPath);
 			setAverageEventPosition();
 			setRotation();
 			setAzimuthRange();
@@ -142,7 +142,7 @@ public class DividePerAzimuth {
 //		}
 		//
 		
-		List<Set<TimewindowInformation>> windowsInRegion = dpa.divide2D(regions);
+		List<Set<TimewindowData>> windowsInRegion = dpa.divide2D(regions);
 		List<Set<HorizontalPosition>> bottomingPoints = dpa.getBottomingPointInRegion();
 		Path outpathBottom = Paths.get("bottomingPointsRegions.inf");
 		Files.deleteIfExists(outpathBottom);
@@ -173,11 +173,11 @@ public class DividePerAzimuth {
 		for (int i = 0; i < regions.size(); i++) {
 			String name = "";
 			name = originalName + "-s" + i + ".dat";
-			Set<TimewindowInformation> onePart = windowsInRegion.get(i);
+			Set<TimewindowData> onePart = windowsInRegion.get(i);
 			if (onePart.size() > 0) {
 				Path outputPath = dpa.workPath.resolve(Paths.get(name));
 				System.err.println("Write " + onePart.size() + " timewindows in " + name);
-				TimewindowInformationFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				TimewindowDataFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 			}
 		}
 	}
@@ -186,7 +186,7 @@ public class DividePerAzimuth {
 		if (averageEventPosition == null)
 			setAverageEventPosition();
 		
-		Set<Station> stations = info.stream().map(tw -> tw.getStation())
+		Set<Observer> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		
 		double[] minMax = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
@@ -209,7 +209,7 @@ public class DividePerAzimuth {
 		Set<GlobalCMTID> events = info.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
 		events.stream().forEach(id -> {
-			Location loc = id.getEvent().getCmtLocation();
+			FullPosition loc = id.getEvent().getCmtLocation();
 			latLon[0] += loc.getLatitude();
 			latLon[1] += loc.getLongitude(); 
 		});
@@ -224,7 +224,7 @@ public class DividePerAzimuth {
 	private void setAzimuthRange() {
 		azimuthRange = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
 		
-		Set<Station> stations = info.stream().map(tw -> tw.getStation())
+		Set<Observer> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		stations.stream().forEach(station -> {
 			double azimuth = averageEventPosition.getAzimuth(station.getPosition());
@@ -263,20 +263,20 @@ public class DividePerAzimuth {
 			return azimuth;
 	}
 	
-	private List<Set<TimewindowInformation>> divide() {
-		List<Set<TimewindowInformation>> slices = new ArrayList<>();
+	private List<Set<TimewindowData>> divide() {
+		List<Set<TimewindowData>> slices = new ArrayList<>();
 		for (int i = 0; i < nSlices; i++)
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
-			double azimuth = averageEventPosition.getAzimuth(tw.getStation().getPosition());
+			double azimuth = averageEventPosition.getAzimuth(tw.getObserver().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			double ratio = (azimuth - azimuthRange[0]) / (azimuthRange[1] - azimuthRange[0]);
 			int i = (int) (ratio * nSlices);
 			if (i == nSlices)
 				i -= 1;
-			Set<TimewindowInformation> tmp = slices.get(i);
+			Set<TimewindowData> tmp = slices.get(i);
 			tmp.add(tw);
 			slices.set(i, tmp);
 		});
@@ -288,15 +288,15 @@ public class DividePerAzimuth {
 		return slices;
 	}
 	
-	private List<Set<TimewindowInformation>> divide(List<Double> azimuths) {
-		List<Set<TimewindowInformation>> slices = new ArrayList<>();
+	private List<Set<TimewindowData>> divide(List<Double> azimuths) {
+		List<Set<TimewindowData>> slices = new ArrayList<>();
 		
 		nSlices = azimuths.size() + 1;
 		for (int i = 0; i < nSlices; i++)
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
-			double azimuth = averageEventPosition.getAzimuth(tw.getStation().getPosition());
+			double azimuth = averageEventPosition.getAzimuth(tw.getObserver().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			azimuth *= 180. / Math.PI;
@@ -310,7 +310,7 @@ public class DividePerAzimuth {
 			if (azimuth > azimuths.get(azimuths.size() - 1))
 				i = azimuths.size();
 			
-			Set<TimewindowInformation> tmp = slices.get(i);
+			Set<TimewindowData> tmp = slices.get(i);
 			tmp.add(tw);
 			slices.set(i, tmp);
 		});
@@ -320,8 +320,8 @@ public class DividePerAzimuth {
 	
 	private List<Set<HorizontalPosition>> bottomingPointInRegion;
 	
-	private List<Set<TimewindowInformation>> divide2D(List<Double[]> regions) {
-		List<Set<TimewindowInformation>> datasets = new ArrayList<>();
+	private List<Set<TimewindowData>> divide2D(List<Double[]> regions) {
+		List<Set<TimewindowData>> datasets = new ArrayList<>();
 		
 		int nRegions = regions.size();
 		for (int i = 0; i < nRegions; i++) {
@@ -333,10 +333,10 @@ public class DividePerAzimuth {
 			TauP_Time timetool = new TauP_Time("prem");
 			timetool.parsePhaseList("ScS");
 			
-			for (TimewindowInformation tw : info) {
+			for (TimewindowData tw : info) {
 				HorizontalPosition evtLoc = tw.getGlobalCMTID().getEvent().getCmtLocation();
-				double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getStation().getPosition());
-				double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition());
+				double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getObserver().getPosition());
+				double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition());
 				
 				//
 				timetool.setSourceDepth(6371. - tw.getGlobalCMTID().getEvent().getCmtLocation().getR());
@@ -379,7 +379,7 @@ public class DividePerAzimuth {
 				if (i == -1)
 					continue;
 				
-				Set<TimewindowInformation> tmp = datasets.get(i);
+				Set<TimewindowData> tmp = datasets.get(i);
 				tmp.add(tw);
 				datasets.set(i, tmp);
 				

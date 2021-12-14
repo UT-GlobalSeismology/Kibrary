@@ -17,17 +17,17 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
+import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -44,7 +44,7 @@ public class ComputeTimediffSScS {
 		
 		Path mantleCorrectionFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/mantleCorrection_S-ScS_semucb.dat");
 		
-		Set<StaticCorrection> mantleCorrections = StaticCorrectionFile.read(mantleCorrectionFile);
+		Set<StaticCorrectionData> mantleCorrections = StaticCorrectionDataFile.read(mantleCorrectionFile);
 		
 //		mantleCorrections = null;
 		
@@ -71,10 +71,10 @@ public class ComputeTimediffSScS {
 		double minDistance = 30.;
 		double maxDistance = 100.;
 		
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath).stream()
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath).stream()
 			.filter(tw -> {
 					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation()
-							.getEpicentralDistance(tw.getStation().getPosition()));
+							.getEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance || distance > maxDistance)
 						return false;
 					return true;
@@ -83,7 +83,7 @@ public class ComputeTimediffSScS {
 		
 //		timewindows.removeIf(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201007261731A")));
 		
-		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workdir);
+		Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(workdir);
 		
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("S, ScS");
@@ -100,11 +100,11 @@ public class ComputeTimediffSScS {
 			
 			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR());
 			
-			Set<TimewindowInformation> thisWindows = timewindows.stream()
+			Set<TimewindowData> thisWindows = timewindows.stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))
 					.collect(Collectors.toSet());
 			
-			Set<StaticCorrection> thisCorrections = null;
+			Set<StaticCorrectionData> thisCorrections = null;
 			if (mantleCorrections != null)
 				thisCorrections = mantleCorrections.stream()
 					.filter(c -> c.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))
@@ -114,14 +114,14 @@ public class ComputeTimediffSScS {
 			obsNames.removeIf(sfn -> !sfn.isOBS());
 			obsNames.removeIf(obsName -> 
 				thisWindows.stream().filter(tw -> tw.getGlobalCMTID().equals(obsName.getGlobalCMTID())
-						&& tw.getStation().getName().equals(obsName.getStationName())
+						&& tw.getObserver().getStation().equals(obsName.getStationCode())
 						&& tw.getComponent().equals(obsName.getComponent()))
 				.count() != 1
 			);
 			SACFileName[] obsNamesArray = obsNames.toArray(new SACFileName[obsNames.size()]);
 			
-			SACData[] obsSacs = new SACData[obsNames.size()];
-			SACData[] synSacs = new SACData[obsNames.size()];
+			SACFileAccess[] obsSacs = new SACFileAccess[obsNames.size()];
+			SACFileAccess[] synSacs = new SACFileAccess[obsNames.size()];
 			double[] timeS = new double[obsNames.size()];
 			double[] timeScS = new double[obsNames.size()];
 			double[] pierceDists = new double[obsNames.size()];
@@ -318,17 +318,17 @@ public class ComputeTimediffSScS {
 						.dotProduct(tmpObsScS.getYVector().subtract(templateScS.getYVector()))
 						/ tmpObsScS.getYVector().dotProduct(tmpObsScS.getYVector());
 				
-				SACData tmpsac = obsSacs[i];
+				SACFileAccess tmpsac = obsSacs[i];
 				double corrShift = 0;
 				if (mantleCorrections != null) {
-					StaticCorrection mantleCorr = thisCorrections.stream().filter(c -> c.getStation().equals(tmpsac.getStation()))
+					StaticCorrectionData mantleCorr = thisCorrections.stream().filter(c -> c.getObserver().equals(tmpsac.getObserver()))
 						.findFirst().get();
 					corrShift = mantleCorr.getTimeshift();
 				}
 				double deltaTSScSCorr = deltaTSScS - corrShift;
 				
 				if (correlation > minCorrScS && var < maxVarScS)
-					pw.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getStation() + " " + 
+					pw.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getObserver() + " " + 
 						midPoint.getLatitude() + " " + midPoint.getLongitude() + " " + deltaTSScS + " " 
 							+ deltaTSScSCorr + " " + ratioSScS + " " + widthSratio + " " 
 							+ "index_" + index + " " + "az_" + az_cluster_index[i] + " " + obsSacs[i].getValue(SACHeaderEnum.GCARC));
