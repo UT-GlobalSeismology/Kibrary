@@ -83,7 +83,7 @@ public interface Operation {
     Properties getProperties();
 
     /**
-     * This method creates a file for the properties as the path.
+     * This method creates a file to save properties in the given path.
      *
      * @param path    a path for the file (should be *.properties)
      * @param options if any

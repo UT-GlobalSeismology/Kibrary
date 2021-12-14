@@ -202,7 +202,7 @@ public class GnuplotFile {
      * @param columnX (double) The column number of input file to use for the x-axis
      * @param columnY (double) The column number of input file to use for the y-axis
      * @param appearance ({@link GnuplotAppearance})
-     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     * @param title (String) Name to display in key (if it is set on). If you want to set "notitle", set this as "".
      */
     public void addLine(String fileName, int columnX, int columnY, GnuplotLineAppearance appearance, String title) {
         drawStarted = true;
@@ -222,6 +222,19 @@ public class GnuplotFile {
         // add label to current field
         GnuplotPage page = pages.get(pages.size() - 1);
         page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinate, posX, posY));
+    }
+    /**
+     * @param label (String)
+     * @param coordinateX (String) The coordinate system used to specify posX, from "first", "second", "graph", "screen", or "character".
+     * @param posX (double)
+     * @param coordinateY (String) The coordinate system used to specify posY, from "first", "second", "graph", "screen", or "character".
+     * @param posY (double)
+     */
+    public void addLabel(String label, String coordinateX, double posX, String coordinateY, double posY) {
+        drawStarted = true;
+        // add label to current field
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinateX, posX, coordinateY, posY));
     }
 
     public void nextField() {
@@ -308,18 +321,23 @@ public class GnuplotFile {
     }
 
     /**
-     * @param set (boolean) Whether to display key
+     * Sets the legend of the graph. To turn it off, use {@link #unsetKey()}.
      * @param box (boolean) Whether to surround the key with box
      * @param position (String) Position and additional options (if unneeded, set this "")
      */
-    public void setKey(boolean set, boolean box, String position) {
-        if(!set) {
-            this.keySettings = "";
-        } else if (!box){
+    public void setKey(boolean box, String position) {
+        if (!box){
             this.keySettings = "nobox "+ position;
         } else {
             this.keySettings = "box " + position;
         }
+    }
+
+    /**
+     * Unsets the legend of the graph. To turn it on, use {@link #setKey()}.
+     */
+    public void unsetKey() {
+        this.keySettings = "";
     }
 
     public String getKeySettings() {

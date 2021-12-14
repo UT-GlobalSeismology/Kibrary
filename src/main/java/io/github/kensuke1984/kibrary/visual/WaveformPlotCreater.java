@@ -99,7 +99,7 @@ public class WaveformPlotCreater implements Operation {
         splitComponents = Boolean.parseBoolean(property.getProperty("splitComponents"));
     }
 
-    /**
+   /**
     *
     * @param args [a property file name]
     * @throws Exception if any
@@ -125,8 +125,8 @@ public class WaveformPlotCreater implements Operation {
        for (EventFolder eventDir : eventDirs) {
            if (splitComponents) {
                for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
-                           .filter(id -> id.getSacComponent().equals(component))
+                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                           && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList()).toArray(new BasicID[0]);
 
@@ -169,7 +169,7 @@ public class WaveformPlotCreater implements Operation {
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
         gnuplot.setMargin(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
-        gnuplot.setKey(true, true, "top right");
+        gnuplot.setKey(true, "top right");
 
         //gnuplot.setXlabel("time");
         //gnuplot.setYlabel("value");
