@@ -15,6 +15,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
@@ -48,6 +51,10 @@ public class RecordSectionCreater implements Operation {
      */
     private Path basicIDPath;
     /**
+     * {@link Path} of a basic file
+     */
+    private Path basicPath;
+    /**
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
@@ -66,6 +73,8 @@ public class RecordSectionCreater implements Operation {
             pw.println("#components");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
+            pw.println("##Path of a basic file, must be defined");
+            pw.println("#basicPath actual.dat");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness");
         }
@@ -82,6 +91,8 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("basicIDPath"))
             throw new IllegalArgumentException("There is no information about basicIDPath.");
+        if (!property.containsKey("basicPath"))
+            throw new IllegalArgumentException("There is no information about basicPath.");
         if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
     }
 
@@ -95,6 +106,9 @@ public class RecordSectionCreater implements Operation {
         basicIDPath = getPath("basicIDPath");
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
+        basicPath = getPath("basicPath");
+        if (!Files.exists(basicPath))
+            throw new NoSuchFileException("The basic file " + basicPath + " does not exist");
 
         reductionSlowness = Double.parseDouble(property.getProperty("reductionSlowness"));
     }
@@ -120,7 +134,7 @@ public class RecordSectionCreater implements Operation {
            return;
        }
 
-       BasicID[] ids = BasicIDFile.read(basicIDPath);
+       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
 
        for (EventFolder eventDir : eventDirs) {
            for (SACComponent component : components) {
@@ -160,10 +174,17 @@ public class RecordSectionCreater implements Operation {
         gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
         gnuplot.setYlabel("Distance (deg)");
 
-        for (BasicID obsID : obsList) {
+        for (int i = 0; i < obsList.size(); i++) {
+            BasicID obsID = obsList.get(i);
+            BasicID synID = synList.get(i);
+            double[] obsData = obsID.getData();
+            double[] synData = synID.getData();
+            RealVector obsDataVector = new ArrayRealVector(obsData);
+            RealVector synDataVector = new ArrayRealVector(synData);
+
             double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
                     .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-            double maxObs = 1.0;
+            double maxObs = obsDataVector.getLInfNorm();
 
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
             gnuplot.addLabel(obsID.getObserver().getStation() + " " + obsID.getObserver().getNetwork(), "graph", 1.01, "first", distance);

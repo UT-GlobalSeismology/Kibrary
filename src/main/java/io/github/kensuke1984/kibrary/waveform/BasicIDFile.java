@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>(Each waveform information)</p>
  * <dl>
  * <dt>Each BasicID information</dt>
- * <dt>See in {@link #read(Path)}</dt>
+ * <dt>See in {@link #createID(byte[], Observer[], GlobalCMTID[], double[][], Phase[])}</dt>
  * </dl>
  *
  * <p>
