@@ -225,13 +225,13 @@ public class RecordSectionCreater implements Operation {
     private double selectAmp (AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
         switch (style) {
         case obsEach:
-            return obsEachMax * ampScale;
+            return obsEachMax / ampScale;
         case synEach:
-            return synEachMax * ampScale;
+            return synEachMax / ampScale;
         case obsMean:
-            return obsMeanMax * ampScale;
+            return obsMeanMax / ampScale;
         case synMean:
-            return synMeanMax * ampScale;
+            return synMeanMax / ampScale;
         default:
             throw new IllegalArgumentException("Input AmpStyle is unknown.");
         }
