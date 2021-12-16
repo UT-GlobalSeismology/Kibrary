@@ -36,6 +36,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <li> If it is either convolved or observed, true </li>
  * <li> Position of a waveform for the ID </li>
  * </ul>
+ * <p>
+ * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
  */
 public class BasicID {

@@ -62,6 +62,9 @@ public class RecordSectionCreater implements Operation {
      * apparent velocity to use when reducing time [s/deg]
      */
     private double reductionSlowness;
+    private AmpStyle obsAmpStyle;
+    private AmpStyle synAmpStyle;
+    private double ampScale;
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(RecordSectionCreater.class);
@@ -77,6 +80,12 @@ public class RecordSectionCreater implements Operation {
             pw.println("#basicPath actual.dat");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness");
+            pw.println("##Method for standarization of observed waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
+            pw.println("#obsAmpStyle");
+            pw.println("##Method for standarization of synthetic waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
+            pw.println("#synAmpStyle");
+            pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
+            pw.println("#ampScale");
         }
         System.err.println(outPath + " is created.");
     }
@@ -94,6 +103,9 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("basicPath"))
             throw new IllegalArgumentException("There is no information about basicPath.");
         if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
+        if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "obsEach");
+        if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "obsEach");
+        if (!property.containsKey("ampScale")) property.setProperty("ampScale", "1.0");
     }
 
     private void set() throws IOException {
@@ -111,6 +123,9 @@ public class RecordSectionCreater implements Operation {
             throw new NoSuchFileException("The basic file " + basicPath + " does not exist");
 
         reductionSlowness = Double.parseDouble(property.getProperty("reductionSlowness"));
+        obsAmpStyle = AmpStyle.valueOf(property.getProperty("obsAmpStyle"));
+        synAmpStyle = AmpStyle.valueOf(property.getProperty("synAmpStyle"));
+        ampScale = Double.parseDouble(property.getProperty("ampScale"));
     }
 
    /**
@@ -174,29 +189,52 @@ public class RecordSectionCreater implements Operation {
         gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
         gnuplot.setYlabel("Distance (deg)");
 
+        // calculate the average of the maximum amplitudes of waveforms
+        double obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+        double synMeanMax = synList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+
+        // for each pair of observed and synthetic waveforms
         for (int i = 0; i < obsList.size(); i++) {
             BasicID obsID = obsList.get(i);
             BasicID synID = synList.get(i);
-            double[] obsData = obsID.getData();
-            double[] synData = synID.getData();
-            RealVector obsDataVector = new ArrayRealVector(obsData);
-            RealVector synDataVector = new ArrayRealVector(synData);
+            RealVector obsDataVector = new ArrayRealVector(obsID.getData());
+            RealVector synDataVector = new ArrayRealVector(synID.getData());
 
             double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
                     .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-            double maxObs = obsDataVector.getLInfNorm();
+            double obsMax = obsDataVector.getLInfNorm();
+            double synMax = synDataVector.getLInfNorm();
+
+            // decide the coefficient to amplify each wavefrom
+            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
 
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
             gnuplot.addLabel(obsID.getObserver().getStation() + " " + obsID.getObserver().getNetwork(), "graph", 1.01, "first", distance);
-            String obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, maxObs, distance);
+            String obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
             gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
-            String synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, maxObs, distance);
+            String synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
             gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
         }
 
         gnuplot.write();
         if (!gnuplot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
 
+    }
+
+    private double selectAmp (AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
+        switch (style) {
+        case obsEach:
+            return obsEachMax * ampScale;
+        case synEach:
+            return synEachMax * ampScale;
+        case obsMean:
+            return obsMeanMax * ampScale;
+        case synMean:
+            return synMeanMax * ampScale;
+        default:
+            throw new IllegalArgumentException("Input AmpStyle is unknown.");
+        }
     }
 
     @Override
@@ -207,6 +245,13 @@ public class RecordSectionCreater implements Operation {
     @Override
     public Path getWorkPath() {
         return workPath;
+    }
+
+    private static enum AmpStyle {
+        obsEach,
+        synEach,
+        obsMean,
+        synMean
     }
 
 }
