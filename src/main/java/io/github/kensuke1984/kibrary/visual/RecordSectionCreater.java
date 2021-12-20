@@ -68,6 +68,7 @@ public class RecordSectionCreater implements Operation {
     private double ampScale;
 
     private boolean byAzimuth;
+    private boolean flipAzimuth;
     private double lowerDistance;
     private double upperDistance;
     private double lowerAzimuth;
@@ -96,13 +97,16 @@ public class RecordSectionCreater implements Operation {
             pw.println("#ampScale");
             pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
             pw.println("#byAzimuth");
-            pw.println("##(double) Lower limit of epicentral distance range [0:upperDistance) (0)");
+            pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
+            pw.println("##This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("#flipAzimuth");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [0:upperDistance) (0)");
             pw.println("#lowerDistance");
-            pw.println("##(double) Upper limit of epicentral distance range (lowerDistance:180] (180)");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used (lowerDistance:180] (180)");
             pw.println("#upperDistance");
-            pw.println("##(double) Lower limit of azimuth range [-360:upperAzimuth) (0)");
+            pw.println("##(double) Lower limit of range of azimuth to be used [-360:upperAzimuth) (0)");
             pw.println("#lowerAzimuth");
-            pw.println("##(double) Upper limit of azimuth range (lowerAzimuth:360] (360)");
+            pw.println("##(double) Upper limit of range of azimuth to be used (lowerAzimuth:360] (360)");
             pw.println("#upperAzimuth");
         }
         System.err.println(outPath + " is created.");
@@ -126,6 +130,7 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("ampScale")) property.setProperty("ampScale", "1.0");
 
         if (!property.containsKey("byAzimuth")) property.setProperty("byAzimuth", "false");
+        if (!property.containsKey("flipAzimuth")) property.setProperty("flipAzimuth", "false");
         if (!property.containsKey("lowerDistance")) property.setProperty("lowerDistance", "0");
         if (!property.containsKey("upperDistance")) property.setProperty("upperDistance", "180");
         if (!property.containsKey("lowerAzimuth")) property.setProperty("lowerAzimuth", "0");
@@ -152,6 +157,7 @@ public class RecordSectionCreater implements Operation {
         ampScale = Double.parseDouble(property.getProperty("ampScale"));
 
         byAzimuth = Boolean.parseBoolean(property.getProperty("byAzimuth"));
+        flipAzimuth = Boolean.parseBoolean(property.getProperty("flipAzimuth"));
         lowerDistance = Double.parseDouble(property.getProperty("lowerDistance"));
         upperDistance = Double.parseDouble(property.getProperty("upperDistance"));
         lowerAzimuth = Double.parseDouble(property.getProperty("lowerAzimuth"));
@@ -219,11 +225,11 @@ public class RecordSectionCreater implements Operation {
         gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
         if (!byAzimuth) {
             gnuplot.setYlabel("Distance (deg)");
-            gnuplot.setYrange(lowerDistance, upperDistance);
+//            gnuplot.setYrangeLimit(lowerDistance, upperDistance);
             gnuplot.addLabel("station network azimuth", "graph", 1.01, 1.05);
         } else {
             gnuplot.setYlabel("Azimuth (deg)");
-            gnuplot.setYrange(lowerAzimuth, upperAzimuth);
+//            gnuplot.setYrangeLimit(lowerAzimuth, upperAzimuth);
             gnuplot.addLabel("station network distance", "graph", 1.01, 1.05);
         }
 
@@ -243,9 +249,7 @@ public class RecordSectionCreater implements Operation {
                     .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
             if (lowerDistance <= distance && distance <= upperDistance && MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth)) {
-                if (azimuth < lowerAzimuth) {
-                    azimuth += 360;
-                } else if (upperAzimuth < azimuth) {
+                if (flipAzimuth == true && 180 <= azimuth) {
                     azimuth -= 360;
                 }
 

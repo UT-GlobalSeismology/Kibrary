@@ -73,12 +73,20 @@ public class GnuplotFile {
      */
     private double ratio;
     private boolean ratioFlag = false;
+
     private double xmin;
     private double xmax;
     private boolean xrangeFlag = false;
+    private double xminLimit;
+    private double xmaxLimit;
+    private boolean xrangeLimitFlag = false;
     private double ymin;
     private double ymax;
     private boolean yrangeFlag = false;
+    private double yminLimit;
+    private double ymaxLimit;
+    private boolean yrangeLimitFlag = false;
+
     private double xtics;
     private boolean xticsFlag = false;
     private double ytics;
@@ -140,8 +148,18 @@ public class GnuplotFile {
                 pw.println("set bmargin " + bmargin);
             }
             if (ratioFlag) pw.println("set size ratio " + ratio);
-            if (xrangeFlag) pw.println("set xrange [" + xmin + ":" + xmax + "]");
-            if (yrangeFlag) pw.println("set yrange [" + ymin + ":" + ymax + "]");
+
+            if (xrangeFlag) {
+                pw.println("set xrange [" + xmin + ":" + xmax + "]");
+            } else if (xrangeLimitFlag) {
+                pw.println("set xrange [" + xminLimit + "<*:*<" + xmaxLimit + "]");
+            }
+            if (yrangeFlag) {
+                pw.println("set yrange [" + ymin + ":" + ymax + "]");
+            } else if (yrangeLimitFlag) {
+                pw.println("set yrange [" + yminLimit + "<*:*<" + ymaxLimit + "]");
+            }
+
             if (xticsFlag) pw.println("set xtics " + xtics);
             if (yticsFlag) pw.println("set ytics " + ytics);
 
@@ -373,11 +391,39 @@ public class GnuplotFile {
         xrangeFlag = true;
     }
 
+    /**
+     * Sets a limit to the range of autoscaling for the x-axis.
+     * If {@link #setXrange(double, double)} is used, this will be ignored.
+     * @param xminLimit
+     * @param xmaxLimit
+     */
+    public void setXrangeLimit(double xminLimit, double xmaxLimit) {
+        if (xmaxLimit <= xminLimit)
+            throw new IllegalArgumentException("Input xminLimit xmaxLimit " + xminLimit + " " + xmaxLimit + " are invalid");
+        this.xminLimit = xminLimit;
+        this.xmaxLimit = xmaxLimit;
+        xrangeLimitFlag = true;
+    }
+
     public void setYrange(double ymin, double ymax) {
         if (ymax <= ymin) throw new IllegalArgumentException("Input ymin ymax " + ymin + " " + ymax + " are invalid");
         this.ymin = ymin;
         this.ymax = ymax;
         yrangeFlag = true;
+    }
+
+    /**
+     * Sets a limit to the range of autoscaling for the y-axis.
+     * If {@link #setYrange(double, double)} is used, this will be ignored.
+     * @param yminLimit
+     * @param ymaxLimit
+     */
+    public void setYrangeLimit(double yminLimit, double ymaxLimit) {
+        if (ymaxLimit <= yminLimit)
+            throw new IllegalArgumentException("Input yminLimit ymaxLimit " + yminLimit + " " + ymaxLimit + " are invalid");
+        this.yminLimit = yminLimit;
+        this.ymaxLimit = ymaxLimit;
+        yrangeLimitFlag = true;
     }
 
     public double getXmin() {
