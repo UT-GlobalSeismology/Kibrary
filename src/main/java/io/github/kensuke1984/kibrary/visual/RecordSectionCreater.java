@@ -219,11 +219,14 @@ public class RecordSectionCreater implements Operation {
         gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
         if (!byAzimuth) {
             gnuplot.setYlabel("Distance (deg)");
+            gnuplot.setYrange(lowerDistance, upperDistance);
             gnuplot.addLabel("station network azimuth", "graph", 1.01, 1.05);
         } else {
             gnuplot.setYlabel("Azimuth (deg)");
+            gnuplot.setYrange(lowerAzimuth, upperAzimuth);
             gnuplot.addLabel("station network distance", "graph", 1.01, 1.05);
         }
+
 
         // calculate the average of the maximum amplitudes of waveforms
         double obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
@@ -240,6 +243,12 @@ public class RecordSectionCreater implements Operation {
                     .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
             if (lowerDistance <= distance && distance <= upperDistance && MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth)) {
+                if (azimuth < lowerAzimuth) {
+                    azimuth += 360;
+                } else if (upperAzimuth < azimuth) {
+                    azimuth -= 360;
+                }
+
                 RealVector obsDataVector = new ArrayRealVector(obsID.getData());
                 RealVector synDataVector = new ArrayRealVector(synID.getData());
                 double obsMax = obsDataVector.getLInfNorm();
@@ -253,11 +262,13 @@ public class RecordSectionCreater implements Operation {
                 String obsUsingString;
                 String synUsingString;
                 if (!byAzimuth) {
-                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + azimuth, "graph", 1.01, "first", distance);
+                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
+                            "graph", 1.0, "first", distance);
                     obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
                     synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
                 } else {
-                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + distance, "graph", 1.01, "first", azimuth);
+                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
+                            "graph", 1.0, "first", azimuth);
                     obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
                     synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
                 }

@@ -112,7 +112,8 @@ public final class MathUtils {
             throw new IllegalArgumentException("The input angles " + angle + "," + lower + "," + upper + " are invalid.");
         }
 
-        if ((lower <= angle && angle <= upper) || (lower+360 <= angle && angle <= upper+360)) {
+        // In the following, the third part is for the case of angle==0
+        if ((lower <= angle && angle <= upper) || (lower+360 <= angle && angle <= upper+360) || (lower-360 <= angle && angle <= upper-360)) {
             return true;
         } else {
             return false;
