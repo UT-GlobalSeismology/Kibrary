@@ -101,5 +101,22 @@ public final class MathUtils {
             return true;
     }
 
+    /**
+     * @param angle [0:360)
+     * @param lower [-360:upper)
+     * @param upper (lower:360]
+     * @return (boolean) true if "angle" is within the range set by "lower" and "upper"
+     */
+    public static boolean checkAngleRange(double angle, double lower, double upper) {
+        if (angle < 0 || 360 <= angle || lower < -360 || upper < lower || 360 < upper) {
+            throw new IllegalArgumentException("The input angles " + angle + "," + lower + "," + upper + " are invalid.");
+        }
+
+        if ((lower <= angle && angle <= upper) || (lower+360 <= angle && angle <= upper+360)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 }

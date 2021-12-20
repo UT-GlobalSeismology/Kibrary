@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -66,6 +67,13 @@ public class RecordSectionCreater implements Operation {
     private AmpStyle synAmpStyle;
     private double ampScale;
 
+    private boolean byAzimuth;
+    private double lowerDistance;
+    private double upperDistance;
+    private double lowerAzimuth;
+    private double upperAzimuth;
+
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(RecordSectionCreater.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -86,6 +94,16 @@ public class RecordSectionCreater implements Operation {
             pw.println("#synAmpStyle");
             pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
             pw.println("#ampScale");
+            pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
+            pw.println("#byAzimuth");
+            pw.println("##(double) Lower limit of epicentral distance range [0:upperDistance) (0)");
+            pw.println("#lowerDistance");
+            pw.println("##(double) Upper limit of epicentral distance range (lowerDistance:180] (180)");
+            pw.println("#upperDistance");
+            pw.println("##(double) Lower limit of azimuth range [-360:upperAzimuth) (0)");
+            pw.println("#lowerAzimuth");
+            pw.println("##(double) Upper limit of azimuth range (lowerAzimuth:360] (360)");
+            pw.println("#upperAzimuth");
         }
         System.err.println(outPath + " is created.");
     }
@@ -106,6 +124,12 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "obsEach");
         if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "obsEach");
         if (!property.containsKey("ampScale")) property.setProperty("ampScale", "1.0");
+
+        if (!property.containsKey("byAzimuth")) property.setProperty("byAzimuth", "false");
+        if (!property.containsKey("lowerDistance")) property.setProperty("lowerDistance", "0");
+        if (!property.containsKey("upperDistance")) property.setProperty("upperDistance", "180");
+        if (!property.containsKey("lowerAzimuth")) property.setProperty("lowerAzimuth", "0");
+        if (!property.containsKey("upperAzimuth")) property.setProperty("upperAzimuth", "360");
     }
 
     private void set() throws IOException {
@@ -126,6 +150,12 @@ public class RecordSectionCreater implements Operation {
         obsAmpStyle = AmpStyle.valueOf(property.getProperty("obsAmpStyle"));
         synAmpStyle = AmpStyle.valueOf(property.getProperty("synAmpStyle"));
         ampScale = Double.parseDouble(property.getProperty("ampScale"));
+
+        byAzimuth = Boolean.parseBoolean(property.getProperty("byAzimuth"));
+        lowerDistance = Double.parseDouble(property.getProperty("lowerDistance"));
+        upperDistance = Double.parseDouble(property.getProperty("upperDistance"));
+        lowerAzimuth = Double.parseDouble(property.getProperty("lowerAzimuth"));
+        upperAzimuth = Double.parseDouble(property.getProperty("upperAzimuth"));
     }
 
    /**
@@ -179,7 +209,7 @@ public class RecordSectionCreater implements Operation {
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
 
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-        gnuplot.setMarginH(15, 15);
+        gnuplot.setMarginH(15, 25);
         gnuplot.setMarginV(15, 15);
         gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
         gnuplot.unsetKey();
@@ -187,7 +217,13 @@ public class RecordSectionCreater implements Operation {
         gnuplot.setTitle(eventDir.toString());
 //        gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
         gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
-        gnuplot.setYlabel("Distance (deg)");
+        if (!byAzimuth) {
+            gnuplot.setYlabel("Distance (deg)");
+            gnuplot.addLabel("station network azimuth", "graph", 1.01, 1.05);
+        } else {
+            gnuplot.setYlabel("Azimuth (deg)");
+            gnuplot.addLabel("station network distance", "graph", 1.01, 1.05);
+        }
 
         // calculate the average of the maximum amplitudes of waveforms
         double obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
@@ -197,24 +233,37 @@ public class RecordSectionCreater implements Operation {
         for (int i = 0; i < obsList.size(); i++) {
             BasicID obsID = obsList.get(i);
             BasicID synID = synList.get(i);
-            RealVector obsDataVector = new ArrayRealVector(obsID.getData());
-            RealVector synDataVector = new ArrayRealVector(synID.getData());
 
             double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
                     .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-            double obsMax = obsDataVector.getLInfNorm();
-            double synMax = synDataVector.getLInfNorm();
+            double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                    .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
-            // decide the coefficient to amplify each wavefrom
-            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            if (lowerDistance <= distance && distance <= upperDistance && MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth)) {
+                RealVector obsDataVector = new ArrayRealVector(obsID.getData());
+                RealVector synDataVector = new ArrayRealVector(synID.getData());
+                double obsMax = obsDataVector.getLInfNorm();
+                double synMax = synDataVector.getLInfNorm();
 
-            String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-            gnuplot.addLabel(obsID.getObserver().getStation() + " " + obsID.getObserver().getNetwork(), "graph", 1.01, "first", distance);
-            String obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
-            gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
-            String synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
-            gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
+                // decide the coefficient to amplify each wavefrom
+                double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+                double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+
+                String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+                String obsUsingString;
+                String synUsingString;
+                if (!byAzimuth) {
+                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + azimuth, "graph", 1.01, "first", distance);
+                    obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
+                    synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
+                } else {
+                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + distance, "graph", 1.01, "first", azimuth);
+                    obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
+                    synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
+                }
+                gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
+                gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
+            }
         }
 
         gnuplot.write();

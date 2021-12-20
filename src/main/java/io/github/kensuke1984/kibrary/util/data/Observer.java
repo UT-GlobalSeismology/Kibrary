@@ -216,6 +216,10 @@ public class Observer implements Comparable<Observer> {
         return station + "_" + network;
     }
 
+    public String toPaddedString() {
+        return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH);
+    }
+
     /**
      * @return
      *
