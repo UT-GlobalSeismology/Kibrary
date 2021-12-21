@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -56,9 +57,17 @@ public class RecordSectionCreater implements Operation {
      */
     private Path basicPath;
     /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
+    /**
+     * Events to work for. If this is empty, work for all events in workPath.
+     */
+    private Set<GlobalCMTID> tendEvents;
     /**
      * apparent velocity to use when reducing time [s/deg]
      */
@@ -81,8 +90,12 @@ public class RecordSectionCreater implements Operation {
             pw.println("manhattan RecordSectionCreater");
             pw.println("##Path of a working directory. This must contain event directories with waveform txt files. (.)");
             pw.println("#workPath");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
+            pw.println("#tag");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
+            pw.println("#tendEvents");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic file, must be defined");
@@ -119,11 +132,14 @@ public class RecordSectionCreater implements Operation {
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
+        if (!property.containsKey("tag")) property.setProperty("tag", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
+        if (!property.containsKey("tendEvents")) property.setProperty("tendEvents", "");
         if (!property.containsKey("basicIDPath"))
             throw new IllegalArgumentException("There is no information about basicIDPath.");
         if (!property.containsKey("basicPath"))
             throw new IllegalArgumentException("There is no information about basicPath.");
+
         if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
         if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "obsEach");
         if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "obsEach");
@@ -141,9 +157,16 @@ public class RecordSectionCreater implements Operation {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+        tag = property.getProperty("tag");
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
+
+        if (!property.getProperty("tendEvents").isEmpty()) {
+            tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)
+                    .collect(Collectors.toSet());
+        }
+
         basicIDPath = getPath("basicIDPath");
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
@@ -181,6 +204,10 @@ public class RecordSectionCreater implements Operation {
    @Override
    public void run() throws IOException {
        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
+       // choose only events that are included in tendEvents
+       if (!tendEvents.isEmpty()) {
+           eventDirs = eventDirs.stream().filter(event -> tendEvents.contains(event.getGlobalCMTID())).collect(Collectors.toSet());
+       }
        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
            return;
        }
@@ -194,7 +221,13 @@ public class RecordSectionCreater implements Operation {
                        .sorted(Comparator.comparing(BasicID::getObserver))
                        .collect(Collectors.toList()).toArray(new BasicID[0]);
 
-               String fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
+               String fileNameRoot;
+               if (tag.isEmpty()) {
+                   fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
+               }
+               else {
+                   fileNameRoot = "profile_" + tag + "_" + eventDir.toString() + "_" + component.toString();
+               }
                createRecordSection(eventDir, useIds, fileNameRoot);
            }
        }
@@ -248,37 +281,43 @@ public class RecordSectionCreater implements Operation {
             double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
                     .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
-            if (lowerDistance <= distance && distance <= upperDistance && MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth)) {
-                if (flipAzimuth == true && 180 <= azimuth) {
-                    azimuth -= 360;
-                }
-
-                RealVector obsDataVector = new ArrayRealVector(obsID.getData());
-                RealVector synDataVector = new ArrayRealVector(synID.getData());
-                double obsMax = obsDataVector.getLInfNorm();
-                double synMax = synDataVector.getLInfNorm();
-
-                // decide the coefficient to amplify each wavefrom
-                double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-                double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-
-                String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-                String obsUsingString;
-                String synUsingString;
-                if (!byAzimuth) {
-                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
-                            "graph", 1.0, "first", distance);
-                    obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
-                    synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
-                } else {
-                    gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
-                            "graph", 1.0, "first", azimuth);
-                    obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
-                    synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
-                }
-                gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
-                gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
+            // skip waveform if distance or azimuth is out of bounds
+            if (distance < lowerDistance || upperDistance < distance
+                    || MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                continue;
             }
+
+            // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
+            if (flipAzimuth == true && 180 <= azimuth) {
+                azimuth -= 360;
+            }
+
+            RealVector obsDataVector = new ArrayRealVector(obsID.getData());
+            RealVector synDataVector = new ArrayRealVector(synID.getData());
+            double obsMax = obsDataVector.getLInfNorm();
+            double synMax = synDataVector.getLInfNorm();
+
+            // decide the coefficient to amplify each wavefrom
+            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+
+            String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+            // TODO: if !files.exists(), export
+            String obsUsingString;
+            String synUsingString;
+            if (!byAzimuth) {
+                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
+                        "graph", 1.0, "first", distance);
+                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
+                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
+            } else {
+                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
+                        "graph", 1.0, "first", azimuth);
+                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
+                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
+            }
+            gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
+            gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
         }
 
         gnuplot.write();
