@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -67,7 +68,7 @@ public class RecordSectionCreater implements Operation {
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
-    private Set<GlobalCMTID> tendEvents;
+    private Set<GlobalCMTID> tendEvents = new HashSet<>();
     /**
      * apparent velocity to use when reducing time [s/deg]
      */

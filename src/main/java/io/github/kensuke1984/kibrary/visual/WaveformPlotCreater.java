@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  */
 public class WaveformPlotCreater implements Operation {
 
-    private static final int NUM_PER_PAGE = 10;
+    private static final int NUM_PER_PAGE = 12;
 
     private final Properties property;
     /**
