@@ -204,23 +204,35 @@ public class RecordSectionCreater implements Operation {
 
    @Override
    public void run() throws IOException {
-       Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
-       // choose only events that are included in tendEvents
-       if (!tendEvents.isEmpty()) {
-           eventDirs = eventDirs.stream().filter(event -> tendEvents.contains(event.getGlobalCMTID())).collect(Collectors.toSet());
+       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+
+       // get all events included in basicIDs
+       Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+               .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       // eventDirs of events to be used
+       Set<EventFolder> eventDirs;
+       if (tendEvents.isEmpty()) {
+           eventDirs = allEvents.stream()
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       } else {
+           // choose only events that are included in tendEvents
+           eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
        }
        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
            return;
        }
 
-       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
-
        for (EventFolder eventDir : eventDirs) {
+           // create event directory if it does not exist
+           Files.createDirectories(eventDir.toPath());
+
            for (SACComponent component : components) {
                BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                        && id.getSacComponent().equals(component))
                        .sorted(Comparator.comparing(BasicID::getObserver))
-                       .collect(Collectors.toList()).toArray(new BasicID[0]);
+                       .toArray(BasicID[]::new);
+                       //.collect(Collectors.toList()).toArray(new BasicID[0]);
 
                String fileNameRoot;
                if (tag.isEmpty()) {
@@ -259,14 +271,11 @@ public class RecordSectionCreater implements Operation {
         gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
         if (!byAzimuth) {
             gnuplot.setYlabel("Distance (deg)");
-//            gnuplot.setYrangeLimit(lowerDistance, upperDistance);
-            gnuplot.addLabel("station network azimuth", "graph", 1.01, 1.05);
+            gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
         } else {
             gnuplot.setYlabel("Azimuth (deg)");
-//            gnuplot.setYrangeLimit(lowerAzimuth, upperAzimuth);
-            gnuplot.addLabel("station network distance", "graph", 1.01, 1.05);
+            gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
         }
-
 
         // calculate the average of the maximum amplitudes of waveforms
         double obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
@@ -293,27 +302,31 @@ public class RecordSectionCreater implements Operation {
                 azimuth -= 360;
             }
 
+            // output waveform data to text file if it has not already been done so
+            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+                BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
+            }
+
             RealVector obsDataVector = new ArrayRealVector(obsID.getData());
             RealVector synDataVector = new ArrayRealVector(synID.getData());
             double obsMax = obsDataVector.getLInfNorm();
             double synMax = synDataVector.getLInfNorm();
 
-            // decide the coefficient to amplify each wavefrom
+            // decide the coefficient to amplify each waveform
             double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
             double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
 
-            String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-            // TODO: if !files.exists(), export
             String obsUsingString;
             String synUsingString;
             if (!byAzimuth) {
                 gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
-                        "graph", 1.0, "first", distance);
+                        "graph", 1.01, "first", distance);
                 obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
                 synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
             } else {
                 gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
-                        "graph", 1.0, "first", azimuth);
+                        "graph", 1.01, "first", azimuth);
                 obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
                 synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
             }
