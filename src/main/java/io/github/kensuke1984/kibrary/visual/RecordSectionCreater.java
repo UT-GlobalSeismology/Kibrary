@@ -84,6 +84,8 @@ public class RecordSectionCreater implements Operation {
     private double lowerAzimuth;
     private double upperAzimuth;
 
+    private boolean createProfile = true;
+
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(RecordSectionCreater.class);
@@ -236,123 +238,17 @@ public class RecordSectionCreater implements Operation {
 
                String fileNameRoot;
                if (tag.isEmpty()) {
-                   fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
+                   fileNameRoot = eventDir.toString() + "_" + component.toString();
                }
                else {
-                   fileNameRoot = "profile_" + tag + "_" + eventDir.toString() + "_" + component.toString();
+                   fileNameRoot = tag + "_" + eventDir.toString() + "_" + component.toString();
                }
-               createRecordSection(eventDir, useIds, fileNameRoot);
+
+               Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
+               plotter.plot();
            }
        }
    }
-
-    private void createRecordSection(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
-        if (ids.length == 0) {
-            return;
-        }
-
-        List<BasicID> obsList = new ArrayList<>();
-        List<BasicID> synList = new ArrayList<>();
-        BasicIDFile.pairUp(ids, obsList, synList);
-
-        GnuplotFile gnuplot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
-
-        GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-        GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-
-        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-        gnuplot.setMarginH(15, 25);
-        gnuplot.setMarginV(15, 15);
-        gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
-        gnuplot.unsetKey();
-
-        gnuplot.setTitle(eventDir.toString());
-//        gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
-        gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
-        if (!byAzimuth) {
-            gnuplot.setYlabel("Distance (deg)");
-            gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
-        } else {
-            gnuplot.setYlabel("Azimuth (deg)");
-            gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
-        }
-
-        // calculate the average of the maximum amplitudes of waveforms
-        double obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
-        double synMeanMax = synList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
-
-        // for each pair of observed and synthetic waveforms
-        for (int i = 0; i < obsList.size(); i++) {
-            BasicID obsID = obsList.get(i);
-            BasicID synID = synList.get(i);
-
-            double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
-                    .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-            double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
-                    .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
-
-            // skip waveform if distance or azimuth is out of bounds
-            if (distance < lowerDistance || upperDistance < distance
-                    || MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
-                continue;
-            }
-
-            // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
-            if (flipAzimuth == true && 180 <= azimuth) {
-                azimuth -= 360;
-            }
-
-            // output waveform data to text file if it has not already been done so
-            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
-            if (!Files.exists(eventDir.toPath().resolve(filename))) {
-                BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
-            }
-
-            RealVector obsDataVector = new ArrayRealVector(obsID.getData());
-            RealVector synDataVector = new ArrayRealVector(synID.getData());
-            double obsMax = obsDataVector.getLInfNorm();
-            double synMax = synDataVector.getLInfNorm();
-
-            // decide the coefficient to amplify each waveform
-            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-
-            String obsUsingString;
-            String synUsingString;
-            if (!byAzimuth) {
-                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
-                        "graph", 1.01, "first", distance);
-                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
-                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
-            } else {
-                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
-                        "graph", 1.01, "first", azimuth);
-                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
-                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
-            }
-            gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
-            gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
-        }
-
-        gnuplot.write();
-        if (!gnuplot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
-
-    }
-
-    private double selectAmp (AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
-        switch (style) {
-        case obsEach:
-            return obsEachMax / ampScale;
-        case synEach:
-            return synEachMax / ampScale;
-        case obsMean:
-            return obsMeanMax / ampScale;
-        case synMean:
-            return synMeanMax / ampScale;
-        default:
-            throw new IllegalArgumentException("Input AmpStyle is unknown.");
-        }
-    }
 
     @Override
     public Properties getProperties() {
@@ -369,6 +265,145 @@ public class RecordSectionCreater implements Operation {
         synEach,
         obsMean,
         synMean
+    }
+
+    private class Plotter {
+        private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
+        private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private EventFolder eventDir;
+        private BasicID[] ids;
+        private String fileNameRoot;
+        private GnuplotFile profilePlot;
+        private double obsMeanMax;
+        private double synMeanMax;
+
+        private Plotter(EventFolder eventDir, BasicID[] ids, String fileNameRoot) {
+            this.eventDir = eventDir;
+            this.ids = ids;
+            this.fileNameRoot = fileNameRoot;
+        }
+
+        public void plot() throws IOException {
+            if (ids.length == 0) {
+                return;
+            }
+
+            List<BasicID> obsList = new ArrayList<>();
+            List<BasicID> synList = new ArrayList<>();
+            BasicIDFile.pairUp(ids, obsList, synList);
+
+            if (createProfile) {
+                profilePlotSetup();
+            }
+
+            // calculate the average of the maximum amplitudes of waveforms
+            obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+            synMeanMax = synList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+
+            // for each pair of observed and synthetic waveforms
+            for (int i = 0; i < obsList.size(); i++) {
+                BasicID obsID = obsList.get(i);
+                BasicID synID = synList.get(i);
+
+                double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                        .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                        .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
+
+                // skip waveform if distance or azimuth is out of bounds
+                if (distance < lowerDistance || upperDistance < distance
+                        || MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                    continue;
+                }
+
+                // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
+                if (flipAzimuth == true && 180 <= azimuth) {
+                    azimuth -= 360;
+                }
+
+                RealVector obsDataVector = new ArrayRealVector(obsID.getData());
+                RealVector synDataVector = new ArrayRealVector(synID.getData());
+
+                if (createProfile) {
+                    profilePlotContent(obsID, synID, obsDataVector, synDataVector, distance, azimuth);
+                }
+            }
+
+            if (createProfile) {
+                profilePlot.write();
+                if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+            }
+
+        }
+
+        private void profilePlotSetup() {
+            profilePlot = new GnuplotFile(eventDir.toPath().resolve("profile_" + fileNameRoot + ".plt"));
+
+            profilePlot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            profilePlot.setMarginH(15, 25);
+            profilePlot.setMarginV(15, 15);
+            profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
+            profilePlot.unsetKey();
+
+            profilePlot.setTitle(eventDir.toString());
+//            gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
+            profilePlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+            if (!byAzimuth) {
+                profilePlot.setYlabel("Distance (deg)");
+                profilePlot.addLabel("station network azimuth", "graph", 1.0, 1.0);
+            } else {
+                profilePlot.setYlabel("Azimuth (deg)");
+                profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
+            }
+        }
+
+        private void profilePlotContent(BasicID obsID, BasicID synID, RealVector obsDataVector, RealVector synDataVector,
+                double distance, double azimuth) throws IOException {
+
+            // output waveform data to text file if it has not already been done so
+            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+                BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
+            }
+
+            // decide the coefficient to amplify each waveform
+            double obsMax = obsDataVector.getLInfNorm();
+            double synMax = synDataVector.getLInfNorm();
+            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+
+            String obsUsingString;
+            String synUsingString;
+            if (!byAzimuth) {
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
+                        "graph", 1.01, "first", distance);
+                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
+                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
+            } else {
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
+                        "graph", 1.01, "first", azimuth);
+                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
+                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
+            }
+            profilePlot.addLine(filename, obsUsingString, obsAppearance, "observed");
+            profilePlot.addLine(filename, synUsingString, synAppearance, "synthetic");
+        }
+
+        private double selectAmp (AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
+            switch (style) {
+            case obsEach:
+                return obsEachMax / ampScale;
+            case synEach:
+                return synEachMax / ampScale;
+            case obsMean:
+                return obsMeanMax / ampScale;
+            case synMean:
+                return synMeanMax / ampScale;
+            default:
+                throw new IllegalArgumentException("Input AmpStyle is unknown.");
+            }
+        }
+
     }
 
 }
