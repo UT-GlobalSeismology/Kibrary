@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.ThreadUtils;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -218,6 +219,10 @@ public class DataLobby implements Operation {
                     System.err.println("!! Data not found for " + event + ", skipping.");
                     return;
                 }
+
+                // wait 2 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+                System.err.println("Resting for 2 minutes ...");
+                ThreadUtils.sleep(1000 * 60 * 2);
 
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
