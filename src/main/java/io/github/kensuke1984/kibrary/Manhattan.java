@@ -6,9 +6,9 @@ import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.dsmsetup.InformationFileMaker;
-import io.github.kensuke1984.kibrary.dsmsetup.SshDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
+import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
@@ -25,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
-import io.github.kensuke1984.kibrary.waveform.Partial1DDatasetMaker_v2;
-import io.github.kensuke1984.kibrary.waveform.PartialDatasetMaker_v2;
+import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
+import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
 import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
@@ -45,18 +45,18 @@ public enum Manhattan {
     FilterDivider(4, FilterDivider.class), //
     DataKitchen(5, DataKitchen.class), //
     FujiStaticCorrection(6, FujiStaticCorrection.class), //
-    InformationFileMaker(7, InformationFileMaker.class), //
+    ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
     LetMeInvert(8, LetMeInvert.class), //
     ActualWaveformCompiler(9, ActualWaveformCompiler.class), //
-    Partial1DDatasetMaker(10, Partial1DDatasetMaker_v2.class), //
-    PartialDatasetMaker(11, PartialDatasetMaker_v2.class), //
+    PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
+    PartialWaveformAssembler3D(11, PartialWaveformAssembler3D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
     RaypathDistribution(13, RaypathDistribution.class), //
     Result(14, Result.class), //
     SecondHandler(15, SecondHandler.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
     SPC_SAC(17, SPC_SAC.class), //
-    SshDSMInformationFileMaker(18, SshDSMInformationFileMaker.class), //
+    OneDPartialDSMSetup(18, OneDPartialDSMSetup.class), //
     SyntheticDSMSetup(19, SyntheticDSMSetup.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
     TimewindowMaker(21, TimewindowMaker.class),//

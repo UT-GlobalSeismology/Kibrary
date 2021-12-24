@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.axiSEM;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.dsmsetup.SshDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -124,7 +124,7 @@ public class Result implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(SshDSMInformationFileMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(OneDPartialDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan Result");
 			pw.println("##These are the properties for Result");

@@ -1,23 +1,32 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
-import org.apache.commons.io.FileUtils;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.Stream;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 
 /**
  * This class makes information files for <br>
@@ -29,8 +38,8 @@ import java.util.stream.Stream;
  * @version 0.2.2.1
  * @author anselme add content for catalog
  */
-public class InformationFileMaker implements Operation {
-	
+public class ThreeDPartialDSMSetup implements Operation {
+
 	/**
 	 * np default: 1024
 	 */
@@ -59,7 +68,7 @@ public class InformationFileMaker implements Operation {
 	private Properties property;
 	/**
 	 * locations of perturbation points
-	 * 
+	 *
 	 */
 	private HorizontalPosition[] perturbationPointPositions;
 	/**
@@ -68,7 +77,7 @@ public class InformationFileMaker implements Operation {
 	 */
 	private double[] perturbationR;
 	private Path outputPath;
-	
+
 	private boolean jointCMT;
 	private boolean catalogue;
 	/**
@@ -77,16 +86,16 @@ public class InformationFileMaker implements Operation {
 	private double thetamin;
 	private double thetamax;
 	private double dtheta;
-	
-	public InformationFileMaker(Properties property) throws IOException {
+
+	public ThreeDPartialDSMSetup(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(InformationFileMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(ThreeDPartialDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("manhattan InformationFileMaker");
+			pw.println("manhattan ThreeDPartialDSMSetup");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
 			pw.println("##Path of an information file for locations of perturbation point, must be set");
@@ -111,7 +120,7 @@ public class InformationFileMaker implements Operation {
 		}
 		System.err.println(outPath + " is created.");
 	}
-	
+
     /**
      * With static members, make two information files for back- and forward
      * propagation.
@@ -120,14 +129,14 @@ public class InformationFileMaker implements Operation {
      * @throws IOException if any
      */
 	public static void main(String[] args) throws Exception {
-		InformationFileMaker ifm = new InformationFileMaker(Property.parse(args));
+		ThreeDPartialDSMSetup tpds = new ThreeDPartialDSMSetup(Property.parse(args));
 		long start = System.nanoTime();
-		System.err.println(InformationFileMaker.class.getName() + " is going.");
-		ifm.run();
-		System.err.println(InformationFileMaker.class.getName() + " finished in "
+		System.err.println(ThreeDPartialDSMSetup.class.getName() + " is going.");
+		tpds.run();
+		System.err.println(ThreeDPartialDSMSetup.class.getName() + " finished in "
 				+ GadgetUtils.toTimeString(System.nanoTime() - start));
 	}
-	
+
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
@@ -143,11 +152,11 @@ public class InformationFileMaker implements Operation {
 			property.setProperty("jointCMT", "false");
 		if (!property.containsKey("catalogue"))
 			property.setProperty("catalogue", "false");
-		
+
 		// additional info
 		property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogPath().toString());
 	}
-	
+
 	private void set() throws IOException {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
@@ -180,9 +189,9 @@ public class InformationFileMaker implements Operation {
 		}
 		else
 			ps = PolynomialStructure.PREM;
-		
+
 		jointCMT = Boolean.parseBoolean(property.getProperty("jointCMT"));
-		
+
 		catalogue = Boolean.parseBoolean(property.getProperty("catalogue"));
 		if (catalogue) {
 			double[] tmpthetainfo = Stream.of(property.getProperty("thetaRange").trim().split("\\s+")).mapToDouble(Double::parseDouble)
@@ -262,13 +271,13 @@ public class InformationFileMaker implements Operation {
 
 		if (property != null)
 			writeProperties(outputPath.resolve("ifm.properties"));
-		
+
 		Path bpPath = outputPath.resolve("BPinfo");
 		Path fpPath = outputPath.resolve("FPinfo");
 		Path fpCatPath = outputPath.resolve("FPcat");
 		Path bpCatPath = outputPath.resolve("BPcat");
 		createPointInformationFile();
-		
+
 		//
 		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
 
@@ -282,7 +291,7 @@ public class InformationFileMaker implements Operation {
 			GlobalCMTAccess ev;
 			try {
 				ev = ed.getGlobalCMTID().getEvent();
-				
+
 				// joint CMT inversion
 				if (jointCMT) {
 					int mtEXP = 25;
@@ -294,10 +303,10 @@ public class InformationFileMaker implements Operation {
 					mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
 					mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
 					mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
-					
+
 					for (int i = 0; i < 6; i++) {
 						ev.setCMT(mts[i]);
-						FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+						FPInputFile fp = new FPInputFile(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 						Path infPath = fpPath.resolve(ev.toString() + "_mt" + i);
 						Files.createDirectories(infPath.resolve(header));
 						fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
@@ -305,12 +314,12 @@ public class InformationFileMaker implements Operation {
 					}
 				}
 				else {
-					FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+					FPInputFile fp = new FPInputFile(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 					Path infPath = fpPath.resolve(ev.toString());
 					Files.createDirectories(infPath.resolve(header));
 					fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
 					fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
-					
+
 					Path catInfPath = fpCatPath.resolve(ev.toString());
 					Files.createDirectories(catInfPath.resolve(header));
 					fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
@@ -324,7 +333,7 @@ public class InformationFileMaker implements Operation {
 		System.out.println("making information files for the stations(bp)");
 		for (Observer station : stationSet) {
 			// System.out.println(str);
-			BPinfo bp = new BPinfo(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+			BPInputFile bp = new BPInputFile(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 			Path infPath = bpPath.resolve("0000" + station);
 			// infDir.mkdir();
 			// System.out.println(infDir.getPath()+" was made");
@@ -332,7 +341,7 @@ public class InformationFileMaker implements Operation {
 			bp.writeSHBP(infPath.resolve(header + "_SH.inf"));
 			bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
 		}
-		BPinfo bp = new BPinfo(header, ps, tlen, np, perturbationR, perturbationPointPositions);
+		BPInputFile bp = new BPInputFile(header, ps, tlen, np, perturbationR, perturbationPointPositions);
 		Path catInfPath = bpCatPath;
 		Files.createDirectories(catInfPath.resolve(header));
 		bp.writeSHBPCat(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);

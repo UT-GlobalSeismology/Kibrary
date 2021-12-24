@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
  * @version 0.0.6.2
  * @author anselme add information files for psv/sh fpcat (catalog)
  */
-public class FPinfo extends DSMInputHeader {
+public class FPInputFile extends DSMInputHeader {
 
     private final GlobalCMTAccess EVENT;
     private final HorizontalPosition[] POSITIONS;
@@ -38,7 +38,7 @@ public class FPinfo extends DSMInputHeader {
      * @param perturbationPointR will be copied
      * @param perturbationPoint  will be copied
      */
-    public FPinfo(GlobalCMTAccess event, String outputDir, PolynomialStructure structure, double tlen, int np,
+    public FPInputFile(GlobalCMTAccess event, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationPointR, HorizontalPosition[] perturbationPoint) {
         super(tlen, np);
         EVENT = event;

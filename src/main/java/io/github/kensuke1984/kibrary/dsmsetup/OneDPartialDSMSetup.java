@@ -1,23 +1,27 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * Information file for SSHSH
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
  * @author Kensuke Konishi
  * @version 0.1.3
  */
-public class SshDSMInformationFileMaker implements Operation {
+public class OneDPartialDSMSetup implements Operation {
 
 	private Properties property;
 	/**
@@ -55,29 +59,29 @@ public class SshDSMInformationFileMaker implements Operation {
 	private Path structurePath;
 	private Path timewindowInformationPath;
 
-	public SshDSMInformationFileMaker(Properties property) throws IOException {
+	public OneDPartialDSMSetup(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 	}
-	
+
     /**
      * @param args [parameter file name]
      * @throws Exception if any
      */
 	public static void main(String[] args) throws Exception {
-		SshDSMInformationFileMaker sdif = new SshDSMInformationFileMaker(Property.parse(args));
+		OneDPartialDSMSetup opds = new OneDPartialDSMSetup(Property.parse(args));
 		long start = System.nanoTime();
-		System.err.println(SshDSMInformationFileMaker.class.getName() + " is going.");
-		sdif.run();
-		System.err.println(SshDSMInformationFileMaker.class.getName() + " finished in "
+		System.err.println(OneDPartialDSMSetup.class.getName() + " is going.");
+		opds.run();
+		System.err.println(OneDPartialDSMSetup.class.getName() + " finished in "
 				+ GadgetUtils.toTimeString(System.nanoTime() - start));
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(SshDSMInformationFileMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(OneDPartialDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("manhattan SshDSMInformationFileMaker");
+			pw.println("manhattan OneDPartialDSMSetup");
 			pw.println("##These properties for SshDSMInformationFileMaker");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
@@ -97,7 +101,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		}
 		System.err.println(outPath + " is created.");
 	}
-	
+
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
@@ -112,7 +116,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
 			throw new RuntimeException("perturbationR must be defined.");
 	}
-	
+
 	private void set() throws IOException {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
@@ -127,7 +131,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		if (property.containsKey("structureFile")) structurePath = Paths.get(property.getProperty("structureFile"));
 		perturbationR = Arrays.stream(property.getProperty("perturbationR").split("\\s+"))
 				.mapToDouble(Double::parseDouble).toArray();
-		
+
 		if (property.containsKey("timewindowInformationPath"))
 			timewindowInformationPath = Paths.get(property.getProperty("timewindowInformationPath"));
 		else
@@ -145,7 +149,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		if (timewindowInformationPath != null)
 			tmpwindows = TimewindowDataFile.read(timewindowInformationPath);
 		final Set<TimewindowData> timewindows = tmpwindows;
-		
+
 		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
 		PolynomialStructure ps = PolynomialStructure.PREM;
 		if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
@@ -173,21 +177,21 @@ public class SshDSMInformationFileMaker implements Operation {
 							return null;
 						}
 					}).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
-			
+
 			//select stations in timewindows
 			if (timewindowInformationPath != null) {
-				stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getObserver().equals(sta) 
+				stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getObserver().equals(sta)
 						&& tw.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
 						&& useComponents.contains(tw.getComponent())).count() == 0);
 			}
-			
+
 			if (stations.isEmpty())
 				continue;
 			int numberOfStation = (int) stations.stream().map(Observer::getStation).count();
 			if (numberOfStation != stations.size())
 				System.err.println("!Caution there are stations with the same name and different positions in "
 						+ eventDir.getGlobalCMTID());
-			SshDSMinfo info = new SshDSMinfo(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, perturbationR,
+			OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, perturbationR,
 					tlen, np);
 			Path outEvent = output.resolve(eventDir.toString());
 			Path modelPath = outEvent.resolve(header);

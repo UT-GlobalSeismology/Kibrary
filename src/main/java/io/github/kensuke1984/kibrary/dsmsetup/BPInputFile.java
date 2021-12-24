@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * @version 0.0.6
  * @author anselme add information files for psv/sh bpcat (catalog)
  */
-public class BPinfo extends DSMInputHeader {
+public class BPInputFile extends DSMInputHeader {
 
     private final String OUTPUT;
 
@@ -39,7 +39,7 @@ public class BPinfo extends DSMInputHeader {
      * @param perturbationPointR   will be copied
      * @param perturbationPosition will be copied
      */
-    public BPinfo(Observer station, String outputDir, PolynomialStructure structure, double tlen, int np,
+    public BPInputFile(Observer station, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
         super(tlen, np);
         STATION = station;
@@ -49,7 +49,7 @@ public class BPinfo extends DSMInputHeader {
         POSITIONS = perturbationPosition.clone();
     }
 
-	public BPinfo(String outputDir, PolynomialStructure structure, double tlen, int np,
+	public BPInputFile(String outputDir, PolynomialStructure structure, double tlen, int np,
 			double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
 		super(tlen, np);
 		STATION = null;
