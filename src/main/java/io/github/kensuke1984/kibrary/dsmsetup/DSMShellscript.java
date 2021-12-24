@@ -5,6 +5,12 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Class for automatically generating shellscript files to execute TIPSV and TISH.
+ *
+ * @author otsuru
+ * @since 2021/12/23
+ */
 class DSMShellscript {
 
     private Path workPath;
@@ -80,7 +86,7 @@ class DSMShellscript {
             if (mpi) {
                 pw.println("    mpirun -n $Ncore $(which mpi-tipsv) < PREM_PSV.inf > runPSV.log &");
             } else {
-                pw.println("    tipsv < PREM_PSV.inf >> runPSV.log &");
+                pw.println("    tipsv < PREM_PSV.inf > runPSV.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");
@@ -112,7 +118,7 @@ class DSMShellscript {
             if (mpi) {
                 pw.println("    mpirun -n $Ncore $(which mpi-tish) < PREM_SH.inf > runSH.log &");
             } else {
-                pw.println("    tish < PREM_SH.inf >> runSH.log &");
+                pw.println("    tish < PREM_SH.inf > runSH.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");

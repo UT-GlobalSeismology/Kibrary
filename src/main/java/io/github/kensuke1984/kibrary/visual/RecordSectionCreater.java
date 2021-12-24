@@ -34,7 +34,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * Creates record section.
+ * Creates record section for each event included in a BasicID file.
+ * A pair of a basic ID file and basic waveform file is required as input.
  * <p>
  * Waveform data for each observer must be written in txt files under event directories.
  * Output pdf files will be created under each of the existing event directories.
