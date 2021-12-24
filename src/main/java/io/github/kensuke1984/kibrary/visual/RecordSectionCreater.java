@@ -10,10 +10,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -23,12 +27,15 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * Creates record section.
+ * Creates record section for each event included in a BasicID file.
+ * A pair of a basic ID file and basic waveform file is required as input.
  * <p>
  * Waveform data for each observer must be written in txt files under event directories.
  * Output pdf files will be created under each of the existing event directories.
@@ -48,13 +55,38 @@ public class RecordSectionCreater implements Operation {
      */
     private Path basicIDPath;
     /**
+     * {@link Path} of a basic file
+     */
+    private Path basicPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
     /**
+     * Events to work for. If this is empty, work for all events in workPath.
+     */
+    private Set<GlobalCMTID> tendEvents = new HashSet<>();
+    /**
      * apparent velocity to use when reducing time [s/deg]
      */
     private double reductionSlowness;
+    private AmpStyle obsAmpStyle;
+    private AmpStyle synAmpStyle;
+    private double ampScale;
+
+    private boolean byAzimuth;
+    private boolean flipAzimuth;
+    private double lowerDistance;
+    private double upperDistance;
+    private double lowerAzimuth;
+    private double upperAzimuth;
+
+    private boolean createProfile = true;
+
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(RecordSectionCreater.class);
@@ -62,12 +94,37 @@ public class RecordSectionCreater implements Operation {
             pw.println("manhattan RecordSectionCreater");
             pw.println("##Path of a working directory. This must contain event directories with waveform txt files. (.)");
             pw.println("#workPath");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
+            pw.println("#tag");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
+            pw.println("#tendEvents");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
+            pw.println("##Path of a basic file, must be defined");
+            pw.println("#basicPath actual.dat");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness");
+            pw.println("##Method for standarization of observed waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
+            pw.println("#obsAmpStyle");
+            pw.println("##Method for standarization of synthetic waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
+            pw.println("#synAmpStyle");
+            pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
+            pw.println("#ampScale");
+            pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
+            pw.println("#byAzimuth");
+            pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
+            pw.println("##This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("#flipAzimuth");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [0:upperDistance) (0)");
+            pw.println("#lowerDistance");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used (lowerDistance:180] (180)");
+            pw.println("#upperDistance");
+            pw.println("##(double) Lower limit of range of azimuth to be used [-360:upperAzimuth) (0)");
+            pw.println("#lowerAzimuth");
+            pw.println("##(double) Upper limit of range of azimuth to be used (lowerAzimuth:360] (360)");
+            pw.println("#upperAzimuth");
         }
         System.err.println(outPath + " is created.");
     }
@@ -79,24 +136,59 @@ public class RecordSectionCreater implements Operation {
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
+        if (!property.containsKey("tag")) property.setProperty("tag", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
+        if (!property.containsKey("tendEvents")) property.setProperty("tendEvents", "");
         if (!property.containsKey("basicIDPath"))
             throw new IllegalArgumentException("There is no information about basicIDPath.");
+        if (!property.containsKey("basicPath"))
+            throw new IllegalArgumentException("There is no information about basicPath.");
+
         if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
+        if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "obsEach");
+        if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "obsEach");
+        if (!property.containsKey("ampScale")) property.setProperty("ampScale", "1.0");
+
+        if (!property.containsKey("byAzimuth")) property.setProperty("byAzimuth", "false");
+        if (!property.containsKey("flipAzimuth")) property.setProperty("flipAzimuth", "false");
+        if (!property.containsKey("lowerDistance")) property.setProperty("lowerDistance", "0");
+        if (!property.containsKey("upperDistance")) property.setProperty("upperDistance", "180");
+        if (!property.containsKey("lowerAzimuth")) property.setProperty("lowerAzimuth", "0");
+        if (!property.containsKey("upperAzimuth")) property.setProperty("upperAzimuth", "360");
     }
 
     private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
+        tag = property.getProperty("tag");
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
+
+        if (!property.getProperty("tendEvents").isEmpty()) {
+            tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)
+                    .collect(Collectors.toSet());
+        }
+
         basicIDPath = getPath("basicIDPath");
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
+        basicPath = getPath("basicPath");
+        if (!Files.exists(basicPath))
+            throw new NoSuchFileException("The basic file " + basicPath + " does not exist");
 
         reductionSlowness = Double.parseDouble(property.getProperty("reductionSlowness"));
+        obsAmpStyle = AmpStyle.valueOf(property.getProperty("obsAmpStyle"));
+        synAmpStyle = AmpStyle.valueOf(property.getProperty("synAmpStyle"));
+        ampScale = Double.parseDouble(property.getProperty("ampScale"));
+
+        byAzimuth = Boolean.parseBoolean(property.getProperty("byAzimuth"));
+        flipAzimuth = Boolean.parseBoolean(property.getProperty("flipAzimuth"));
+        lowerDistance = Double.parseDouble(property.getProperty("lowerDistance"));
+        upperDistance = Double.parseDouble(property.getProperty("upperDistance"));
+        lowerAzimuth = Double.parseDouble(property.getProperty("lowerAzimuth"));
+        upperAzimuth = Double.parseDouble(property.getProperty("upperAzimuth"));
     }
 
    /**
@@ -115,68 +207,49 @@ public class RecordSectionCreater implements Operation {
 
    @Override
    public void run() throws IOException {
-       Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
+       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+
+       // get all events included in basicIDs
+       Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+               .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       // eventDirs of events to be used
+       Set<EventFolder> eventDirs;
+       if (tendEvents.isEmpty()) {
+           eventDirs = allEvents.stream()
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       } else {
+           // choose only events that are included in tendEvents
+           eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       }
        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
            return;
        }
 
-       BasicID[] ids = BasicIDFile.read(basicIDPath);
-
        for (EventFolder eventDir : eventDirs) {
+           // create event directory if it does not exist
+           Files.createDirectories(eventDir.toPath());
+
            for (SACComponent component : components) {
                BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                        && id.getSacComponent().equals(component))
                        .sorted(Comparator.comparing(BasicID::getObserver))
-                       .collect(Collectors.toList()).toArray(new BasicID[0]);
+                       .toArray(BasicID[]::new);
+                       //.collect(Collectors.toList()).toArray(new BasicID[0]);
 
-               String fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
-               createRecordSection(eventDir, useIds, fileNameRoot);
+               String fileNameRoot;
+               if (tag.isEmpty()) {
+                   fileNameRoot = eventDir.toString() + "_" + component.toString();
+               }
+               else {
+                   fileNameRoot = tag + "_" + eventDir.toString() + "_" + component.toString();
+               }
+
+               Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
+               plotter.plot();
            }
        }
    }
-
-    private void createRecordSection(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
-        if (ids.length == 0) {
-            return;
-        }
-
-        List<BasicID> obsList = new ArrayList<>();
-        List<BasicID> synList = new ArrayList<>();
-        BasicIDFile.pairUp(ids, obsList, synList);
-
-        GnuplotFile gnuplot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
-
-        GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-        GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-
-        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-        gnuplot.setMarginH(15, 15);
-        gnuplot.setMarginV(15, 15);
-        gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
-        gnuplot.unsetKey();
-
-        gnuplot.setTitle(eventDir.toString());
-//        gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
-        gnuplot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
-        gnuplot.setYlabel("Distance (deg)");
-
-        for (BasicID obsID : obsList) {
-            double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
-                    .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-            double maxObs = 1.0;
-
-            String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-            gnuplot.addLabel(obsID.getObserver().getStation() + " " + obsID.getObserver().getNetwork(), "graph", 1.01, "first", distance);
-            String obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, maxObs, distance);
-            gnuplot.addLine(filename, obsUsingString, obsAppearance, "observed");
-            String synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, maxObs, distance);
-            gnuplot.addLine(filename, synUsingString, synAppearance, "synthetic");
-        }
-
-        gnuplot.write();
-        if (!gnuplot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
-
-    }
 
     @Override
     public Properties getProperties() {
@@ -186,6 +259,152 @@ public class RecordSectionCreater implements Operation {
     @Override
     public Path getWorkPath() {
         return workPath;
+    }
+
+    private static enum AmpStyle {
+        obsEach,
+        synEach,
+        obsMean,
+        synMean
+    }
+
+    private class Plotter {
+        private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
+        private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private EventFolder eventDir;
+        private BasicID[] ids;
+        private String fileNameRoot;
+        private GnuplotFile profilePlot;
+        private double obsMeanMax;
+        private double synMeanMax;
+
+        private Plotter(EventFolder eventDir, BasicID[] ids, String fileNameRoot) {
+            this.eventDir = eventDir;
+            this.ids = ids;
+            this.fileNameRoot = fileNameRoot;
+        }
+
+        public void plot() throws IOException {
+            if (ids.length == 0) {
+                return;
+            }
+
+            List<BasicID> obsList = new ArrayList<>();
+            List<BasicID> synList = new ArrayList<>();
+            BasicIDFile.pairUp(ids, obsList, synList);
+
+            if (createProfile) {
+                profilePlotSetup();
+            }
+
+            // calculate the average of the maximum amplitudes of waveforms
+            obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+            synMeanMax = synList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+
+            // for each pair of observed and synthetic waveforms
+            for (int i = 0; i < obsList.size(); i++) {
+                BasicID obsID = obsList.get(i);
+                BasicID synID = synList.get(i);
+
+                double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                        .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                        .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
+
+                // skip waveform if distance or azimuth is out of bounds
+                if (distance < lowerDistance || upperDistance < distance
+                        || MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                    continue;
+                }
+
+                // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
+                if (flipAzimuth == true && 180 <= azimuth) {
+                    azimuth -= 360;
+                }
+
+                RealVector obsDataVector = new ArrayRealVector(obsID.getData());
+                RealVector synDataVector = new ArrayRealVector(synID.getData());
+
+                if (createProfile) {
+                    profilePlotContent(obsID, synID, obsDataVector, synDataVector, distance, azimuth);
+                }
+            }
+
+            if (createProfile) {
+                profilePlot.write();
+                if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+            }
+
+        }
+
+        private void profilePlotSetup() {
+            profilePlot = new GnuplotFile(eventDir.toPath().resolve("profile_" + fileNameRoot + ".plt"));
+
+            profilePlot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            profilePlot.setMarginH(15, 25);
+            profilePlot.setMarginV(15, 15);
+            profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
+            profilePlot.unsetKey();
+
+            profilePlot.setTitle(eventDir.toString());
+//            gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
+            profilePlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+            if (!byAzimuth) {
+                profilePlot.setYlabel("Distance (deg)");
+                profilePlot.addLabel("station network azimuth", "graph", 1.0, 1.0);
+            } else {
+                profilePlot.setYlabel("Azimuth (deg)");
+                profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
+            }
+        }
+
+        private void profilePlotContent(BasicID obsID, BasicID synID, RealVector obsDataVector, RealVector synDataVector,
+                double distance, double azimuth) throws IOException {
+
+            // output waveform data to text file if it has not already been done so
+            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+                BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
+            }
+
+            // decide the coefficient to amplify each waveform
+            double obsMax = obsDataVector.getLInfNorm();
+            double synMax = synDataVector.getLInfNorm();
+            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+
+            String obsUsingString;
+            String synUsingString;
+            if (!byAzimuth) {
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
+                        "graph", 1.01, "first", distance);
+                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
+                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
+            } else {
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
+                        "graph", 1.01, "first", azimuth);
+                obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
+                synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);
+            }
+            profilePlot.addLine(filename, obsUsingString, obsAppearance, "observed");
+            profilePlot.addLine(filename, synUsingString, synAppearance, "synthetic");
+        }
+
+        private double selectAmp (AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
+            switch (style) {
+            case obsEach:
+                return obsEachMax / ampScale;
+            case synEach:
+                return synEachMax / ampScale;
+            case obsMean:
+                return obsMeanMax / ampScale;
+            case synMean:
+                return synMeanMax / ampScale;
+            default:
+                throw new IllegalArgumentException("Input AmpStyle is unknown.");
+            }
+        }
+
     }
 
 }

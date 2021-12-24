@@ -81,6 +81,8 @@ public class SyntheticDSMSetup implements Operation {
     private Path timewindowPath;
     private boolean usewindow;
 
+    private boolean mpi;
+
     /**
      * whether a set of virtual observers are to be created
      */
@@ -114,6 +116,8 @@ public class SyntheticDSMSetup implements Operation {
             pw.println("#tlen");
             pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
             pw.println("#np");
+            pw.println("##(boolean) Whether to use MPI in the subsequent DSM calculations (true)");
+            pw.println("#mpi");
             pw.println("##(boolean) If a virtual set of observers is to be created (false)");
             pw.println("#syntheticDataset");
             pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
@@ -136,9 +140,10 @@ public class SyntheticDSMSetup implements Operation {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
+        if (!property.containsKey("header")) property.setProperty("header", "PREM");
         if (!property.containsKey("tlen")) property.setProperty("tlen", "3276.8");
         if (!property.containsKey("np")) property.setProperty("np", "512");
-        if (!property.containsKey("header")) property.setProperty("header", "PREM");
+        if (!property.containsKey("mpi")) property.setProperty("mpi", "true");
         if (!property.containsKey("syntheticDataset")) property.setProperty("syntheticDataset", "false");
         if (!property.containsKey("synMinDistance")) property.setProperty("synMinDistance", "1");
         if (!property.containsKey("synMaxDistance")) property.setProperty("synMaxDistance", "170");
@@ -156,13 +161,14 @@ public class SyntheticDSMSetup implements Operation {
         obsPath = getPath("obsPath");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-        np = Integer.parseInt(property.getProperty("np").split("\\s+")[0]);
-        tlen = Double.parseDouble(property.getProperty("tlen").split("\\s+")[0]);
         header = property.getProperty("header").split("\\s+")[0];
         if (property.containsKey("structureFile"))
             structurePath = Paths.get(property.getProperty("structureFile").split("\\s+")[0]);
         else
             structurePath = Paths.get("PREM");
+        tlen = Double.parseDouble(property.getProperty("tlen").split("\\s+")[0]);
+        np = Integer.parseInt(property.getProperty("np").split("\\s+")[0]);
+        mpi = Boolean.parseBoolean(property.getProperty("mpi"));
 
         syntheticDataset = Boolean.parseBoolean(property.getProperty("syntheticDataset"));
         synMinDistance = Integer.parseInt(property.getProperty("synMinDistance"));
@@ -331,6 +337,7 @@ public class SyntheticDSMSetup implements Operation {
             }
         }
 
+        // output information files in each event directory
         for (EventFolder eventDir : eventDirs) {
             try {
                 Set<Observer> observers = eventDir.sacFileSet().stream()
@@ -369,6 +376,11 @@ public class SyntheticDSMSetup implements Operation {
                 e.printStackTrace();
             }
         }
+
+        // output shellscripts for execution of tipsv and tish
+        DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size());
+        shell.writePSV();
+        shell.writeSH();
     }
 
     @Override

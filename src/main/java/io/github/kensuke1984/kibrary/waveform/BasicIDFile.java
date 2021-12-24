@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>(Each waveform information)</p>
  * <dl>
  * <dt>Each BasicID information</dt>
- * <dt>See in {@link #read(Path)}</dt>
+ * <dt>See in {@link #createID(byte[], Observer[], GlobalCMTID[], double[][], Phase[])}</dt>
  * </dl>
  *
  * <p>
@@ -282,7 +282,7 @@ public final class BasicIDFile {
     }
 
     /**
-     * Outputs wavoform data for each event-observeer pair into txt files.
+     * Outputs waveform data for each event-observer pair into txt files.
      *
      * @param ids
      * @throws IOException
@@ -293,7 +293,7 @@ public final class BasicIDFile {
         List<BasicID> synList = new ArrayList<>();
         pairUp(ids, obsList, synList);
 
-        List<GlobalCMTID> events = obsList.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toList());
+        Set<GlobalCMTID> events = obsList.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
 
         for (GlobalCMTID event : events) {
 
@@ -305,27 +305,47 @@ public final class BasicIDFile {
                 if (obsList.get(i).getGlobalCMTID().equals(event)) {
                     BasicID obsID = obsList.get(i);
                     BasicID synID = synList.get(i);
-                    double[] obsData = obsID.getData();
-                    double[] synData = synID.getData();
-                    double obsStartTime = obsID.getStartTime();
-                    double synStartTime = synID.getStartTime();
-                    double obsSamplingHz = obsID.getSamplingHz();
-                    double synSamplingHz = synID.getSamplingHz();
 
-                    // output waveform data to txt file
-                    String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
-                    Path tracePath = eventPath.resolve(filename);
-                    PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath,
-                            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-                    for (int j = 0; j < obsData.length; j++) {
-                        double obsTime = obsStartTime + j * obsSamplingHz;
-                        double synTime = synStartTime + j * synSamplingHz;
-                        pwTrace.println(obsTime + " " + obsData[j] + " " + synTime + " " + synData[j]);
-                    }
-                    pwTrace.close();
+                    outputWaveformTxt(eventPath, obsID, synID);
                 }
             }
         }
+    }
+
+    /**
+     * Writes data of a given pair of observed and synthetic waveforms into a text file.
+     * @param eventPath (Path) The event directory in which to create the text file
+     * @param obsID
+     * @param synID
+     * @throws IOException
+     */
+    public static void outputWaveformTxt(Path eventPath, BasicID obsID, BasicID synID) throws IOException {
+        double[] obsData = obsID.getData();
+        double[] synData = synID.getData();
+        double obsStartTime = obsID.getStartTime();
+        double synStartTime = synID.getStartTime();
+        double obsSamplingHz = obsID.getSamplingHz();
+        double synSamplingHz = synID.getSamplingHz();
+
+        Path outputPath = eventPath.resolve(getWaveformTxtFileName(obsID));
+
+        try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
+            for (int j = 0; j < obsData.length; j++) {
+                double obsTime = obsStartTime + j * obsSamplingHz;
+                double synTime = synStartTime + j * synSamplingHz;
+                pwTrace.println(obsTime + " " + obsData[j] + " " + synTime + " " + synData[j]);
+            }
+        }
+    }
+
+    /**
+     * The name of text file which is to contain waveform data.
+     * @param oneID
+     * @return
+     */
+    public static String getWaveformTxtFileName(BasicID oneID) {
+        return oneID.getObserver() + "." + oneID.getGlobalCMTID() + "." + oneID.getSacComponent() + ".txt";
     }
 
 }

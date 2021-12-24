@@ -40,6 +40,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  */
 public class WaveformPlotCreater implements Operation {
 
+    private static final int NUM_PER_PAGE = 12;
+
     private final Properties property;
     /**
      * Path of the work folder
@@ -185,13 +187,13 @@ public class WaveformPlotCreater implements Operation {
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
 
             i++;
-            if(i%10 == 0) {
+            if(i % NUM_PER_PAGE == 0) {
                 gnuplot.nextPage();
             } else {
                 gnuplot.nextField();
             }
         }
-        while(i % 10 != 0) {
+        while(i % NUM_PER_PAGE != 0) {
             i++;
             gnuplot.nextField();
         }
