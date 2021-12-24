@@ -612,6 +612,7 @@ public class ThreeDPartialMaker {
      */
     public double[] createPartialSerial(SACComponent component, int iBody, PartialType type) {
         // return array of zero for partials whose radius is too close to the BP or FP source
+    	// fp, bp is SPCFileAccess
         double bpR = bp.getBodyR()[iBody];
         double fpR = fp.getBodyR()[iBody];
         if (fpR != bpR)

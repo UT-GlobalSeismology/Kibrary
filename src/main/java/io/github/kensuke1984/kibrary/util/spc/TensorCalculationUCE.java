@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
-
-import java.util.Arrays;
 
 /**
  * Calculation of U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub> in
@@ -110,7 +110,8 @@ class TensorCalculationUCE {
 	public Complex[] calcSerial(int i) {
 		Complex[] partial = new Complex[np + 1];
 		Arrays.fill(partial, Complex.ZERO);
-
+		// fp, bp is SPCBody
+		
 		for (int r = 0; r < 3; r++)
 			for (int s = 0; s < 3; s++) {
 				SPCTensorComponent irs = SPCTensorComponent.valueOfBP(i + 1, r + 1, s + 1);
