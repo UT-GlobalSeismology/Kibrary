@@ -112,9 +112,9 @@ public class RecordSectionCreater implements Operation {
             pw.println("#binWidth");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness");
-            pw.println("##Method for standarization of observed waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
+            pw.println("##Method for standarization of observed waveform amplitude, from [obsEach,synEach,obsMean,synMean] (synEach)");
             pw.println("#obsAmpStyle");
-            pw.println("##Method for standarization of synthetic waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
+            pw.println("##Method for standarization of synthetic waveform amplitude, from [obsEach,synEach,obsMean,synMean] (synEach)");
             pw.println("#synAmpStyle");
             pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
             pw.println("#ampScale");
@@ -154,8 +154,8 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("createBinStack")) property.setProperty("createBinStack", "false");
         if (!property.containsKey("binWidth")) property.setProperty("binWidth", "1.0");
         if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
-        if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "obsEach");
-        if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "obsEach");
+        if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "synEach");
+        if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "synEach");
         if (!property.containsKey("ampScale")) property.setProperty("ampScale", "1.0");
 
         if (!property.containsKey("byAzimuth")) property.setProperty("byAzimuth", "false");
@@ -380,11 +380,13 @@ public class RecordSectionCreater implements Operation {
                 binStackPlotSetup();
 
                 for (int j = 0; j < obsStacks.length; j++) {
-                    binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth);
+                    if (obsStacks[j] != null && synStacks[j] != null) {
+                        binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth);
+                    }
                 }
 
-                profilePlot.write();
-                if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+                binStackPlot.write();
+                if (!binStackPlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
             }
 
         }
@@ -424,8 +426,7 @@ public class RecordSectionCreater implements Operation {
             binStackPlot.unsetKey();
 
             binStackPlot.setTitle(eventDir.toString());
-//            gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
-            binStackPlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+            binStackPlot.setXlabel("Time in window (s)");
             if (!byAzimuth) {
                 binStackPlot.setYlabel("Distance (deg)");
             } else {
@@ -477,6 +478,10 @@ public class RecordSectionCreater implements Operation {
             double synMax = synStack.getLInfNorm();
             double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
             double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+
+            if (byAzimuth == true && flipAzimuth == true && 180 <= y) {
+                y -= 360;
+            }
 
             String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
             String synUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
