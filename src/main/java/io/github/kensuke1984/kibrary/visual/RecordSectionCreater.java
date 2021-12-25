@@ -70,6 +70,9 @@ public class RecordSectionCreater implements Operation {
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
+    private boolean createProfile;
+    private boolean createBinStack;
+    private double binWidth;
     /**
      * apparent velocity to use when reducing time [s/deg]
      */
@@ -85,9 +88,6 @@ public class RecordSectionCreater implements Operation {
     private double lowerAzimuth;
     private double upperAzimuth;
 
-    private boolean createProfile = true;
-
-
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(RecordSectionCreater.class);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -98,12 +98,18 @@ public class RecordSectionCreater implements Operation {
             pw.println("#tag");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");
-            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
-            pw.println("#tendEvents");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic file, must be defined");
             pw.println("#basicPath actual.dat");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
+            pw.println("#tendEvents");
+            pw.println("##(boolean) Whether to create a profile (true)");
+            pw.println("#createProfile");
+            pw.println("##(boolean) Whether to create a binned stack (false)");
+            pw.println("#createBinStack");
+            pw.println("##(double) The width of each bin [deg] (1.0)");
+            pw.println("#binWidth");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness");
             pw.println("##Method for standarization of observed waveform amplitude, from [obsEach,synEach,obsMean,synMean] (obsEach)");
@@ -138,12 +144,15 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
         if (!property.containsKey("tag")) property.setProperty("tag", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("tendEvents")) property.setProperty("tendEvents", "");
         if (!property.containsKey("basicIDPath"))
             throw new IllegalArgumentException("There is no information about basicIDPath.");
         if (!property.containsKey("basicPath"))
             throw new IllegalArgumentException("There is no information about basicPath.");
 
+        if (!property.containsKey("tendEvents")) property.setProperty("tendEvents", "");
+        if (!property.containsKey("createProfile")) property.setProperty("createProfile", "true");
+        if (!property.containsKey("createBinStack")) property.setProperty("createBinStack", "false");
+        if (!property.containsKey("binWidth")) property.setProperty("binWidth", "1.0");
         if (!property.containsKey("reductionSlowness")) property.setProperty("reductionSlowness", "0");
         if (!property.containsKey("obsAmpStyle")) property.setProperty("obsAmpStyle", "obsEach");
         if (!property.containsKey("synAmpStyle")) property.setProperty("synAmpStyle", "obsEach");
@@ -165,12 +174,6 @@ public class RecordSectionCreater implements Operation {
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-
-        if (!property.getProperty("tendEvents").isEmpty()) {
-            tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)
-                    .collect(Collectors.toSet());
-        }
-
         basicIDPath = getPath("basicIDPath");
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
@@ -178,6 +181,14 @@ public class RecordSectionCreater implements Operation {
         if (!Files.exists(basicPath))
             throw new NoSuchFileException("The basic file " + basicPath + " does not exist");
 
+        if (!property.getProperty("tendEvents").isEmpty()) {
+            tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)
+                    .collect(Collectors.toSet());
+        }
+
+        createProfile = Boolean.parseBoolean(property.getProperty("createProfile"));
+        createBinStack = Boolean.parseBoolean(property.getProperty("createBinStack"));
+        binWidth = Double.parseDouble(property.getProperty("binWidth"));
         reductionSlowness = Double.parseDouble(property.getProperty("reductionSlowness"));
         obsAmpStyle = AmpStyle.valueOf(property.getProperty("obsAmpStyle"));
         synAmpStyle = AmpStyle.valueOf(property.getProperty("synAmpStyle"));
@@ -271,13 +282,21 @@ public class RecordSectionCreater implements Operation {
     private class Plotter {
         private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+
         private EventFolder eventDir;
         private BasicID[] ids;
         private String fileNameRoot;
+
         private GnuplotFile profilePlot;
+        private GnuplotFile binStackPlot;
         private double obsMeanMax;
         private double synMeanMax;
 
+        /**
+         * @param eventDir
+         * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
+         * @param fileNameRoot
+         */
         private Plotter(EventFolder eventDir, BasicID[] ids, String fileNameRoot) {
             this.eventDir = eventDir;
             this.ids = ids;
@@ -295,6 +314,17 @@ public class RecordSectionCreater implements Operation {
 
             if (createProfile) {
                 profilePlotSetup();
+            }
+
+            // create array to insert stacked waveforms
+            RealVector[] obsStacks;
+            RealVector[] synStacks;
+            if (!byAzimuth) {
+                obsStacks = new ArrayRealVector[(int) Math.ceil(180 / binWidth)];
+                synStacks = new ArrayRealVector[(int) Math.ceil(180 / binWidth)];
+            } else {
+                obsStacks = new ArrayRealVector[(int) Math.ceil(360 / binWidth)];
+                synStacks = new ArrayRealVector[(int) Math.ceil(360 / binWidth)];
             }
 
             // calculate the average of the maximum amplitudes of waveforms
@@ -317,16 +347,27 @@ public class RecordSectionCreater implements Operation {
                     continue;
                 }
 
-                // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
-                if (flipAzimuth == true && 180 <= azimuth) {
-                    azimuth -= 360;
-                }
-
                 RealVector obsDataVector = new ArrayRealVector(obsID.getData());
                 RealVector synDataVector = new ArrayRealVector(synID.getData());
 
                 if (createProfile) {
-                    profilePlotContent(obsID, synID, obsDataVector, synDataVector, distance, azimuth);
+                    // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
+                    if (flipAzimuth == true && 180 <= azimuth) {
+                        profilePlotContent(obsID, synID, obsDataVector, synDataVector, distance, azimuth - 360);
+                    } else {
+                        profilePlotContent(obsID, synID, obsDataVector, synDataVector, distance, azimuth);
+                    }
+                }
+
+                if (createBinStack) {
+                    int k;
+                    if (!byAzimuth) {
+                        k = (int) Math.floor(distance / binWidth);
+                    } else {
+                        k = (int) Math.floor(azimuth / binWidth);
+                    }
+                    obsStacks[k] = (obsStacks[k] == null ? obsDataVector : add(obsStacks[k], obsDataVector));
+                    synStacks[k] = (synStacks[k] == null ? synDataVector : add(synStacks[k], synDataVector));
                 }
             }
 
@@ -335,12 +376,25 @@ public class RecordSectionCreater implements Operation {
                 if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
             }
 
+            if (createBinStack) {
+                binStackPlotSetup();
+
+                for (int j = 0; j < obsStacks.length; j++) {
+                    binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth);
+                }
+
+                profilePlot.write();
+                if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+            }
+
         }
 
         private void profilePlotSetup() {
-            profilePlot = new GnuplotFile(eventDir.toPath().resolve("profile_" + fileNameRoot + ".plt"));
+            String profileFileNameRoot = "profile_" + fileNameRoot;
 
-            profilePlot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            profilePlot = new GnuplotFile(eventDir.toPath().resolve(profileFileNameRoot + ".plt"));
+
+            profilePlot.setOutput("pdf", profileFileNameRoot + ".pdf", 21, 29.7, true);
             profilePlot.setMarginH(15, 25);
             profilePlot.setMarginV(15, 15);
             profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
@@ -355,6 +409,27 @@ public class RecordSectionCreater implements Operation {
             } else {
                 profilePlot.setYlabel("Azimuth (deg)");
                 profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
+            }
+        }
+
+        private void binStackPlotSetup() {
+            String binStackFileNameRoot = "binStack_" + fileNameRoot;
+
+            binStackPlot = new GnuplotFile(eventDir.toPath().resolve(binStackFileNameRoot + ".plt"));
+
+            binStackPlot.setOutput("pdf", binStackFileNameRoot + ".pdf", 21, 29.7, true);
+            binStackPlot.setMarginH(15, 10);
+            binStackPlot.setMarginV(15, 15);
+            binStackPlot.setFont("Arial", 20, 15, 15, 15, 10);
+            binStackPlot.unsetKey();
+
+            binStackPlot.setTitle(eventDir.toString());
+//            gnuplot.setXlabel("Time aligned on S-wave arrival (s)"); //TODO
+            binStackPlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+            if (!byAzimuth) {
+                binStackPlot.setYlabel("Distance (deg)");
+            } else {
+                binStackPlot.setYlabel("Azimuth (deg)");
             }
         }
 
@@ -373,6 +448,7 @@ public class RecordSectionCreater implements Operation {
             double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
             double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
 
+            // Set "using" part. For x values, reduce time by distance. For y values, add either distance or azimuth.
             String obsUsingString;
             String synUsingString;
             if (!byAzimuth) {
@@ -390,6 +466,48 @@ public class RecordSectionCreater implements Operation {
             profilePlot.addLine(filename, synUsingString, synAppearance, "synthetic");
         }
 
+        private void binStackPlotContent(RealVector obsStack, RealVector synStack, double y) throws IOException {
+            SACComponent component = ids[0].getSacComponent();
+            double samplingHz = ids[0].getSamplingHz();
+
+            String fileName = y + "." + eventDir.toString() + "." + component + ".txt";
+            outputBinStackTxt(obsStack, synStack, fileName, samplingHz);
+
+            double obsMax = obsStack.getLInfNorm();
+            double synMax = synStack.getLInfNorm();
+            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+
+            String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
+            String synUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
+            binStackPlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
+            binStackPlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+        }
+
+        /**
+         * Outputs a text file including stacked waveform.
+         * Column 1: time ;
+         * column 2: obs ;
+         * column 3: syn.
+         *
+         * @param obsStack
+         * @param synStack
+         * @param fileName
+         * @param samplingHz
+         * @throws IOException
+         */
+        private void outputBinStackTxt(RealVector obsStack, RealVector synStack, String fileName, double samplingHz) throws IOException {
+            Path outputPath = eventDir.toPath().resolve(fileName);
+
+            try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
+                for (int j = 0; j < obsStack.getDimension(); j++) {
+                    double time = j * samplingHz;
+                    pwTrace.println(time + " " + obsStack.getEntry(j) + " " + synStack.getEntry(j));
+                }
+            }
+        }
+
         private double selectAmp (AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
             switch (style) {
             case obsEach:
@@ -403,6 +521,20 @@ public class RecordSectionCreater implements Operation {
             default:
                 throw new IllegalArgumentException("Input AmpStyle is unknown.");
             }
+        }
+
+        private RealVector add(RealVector v1, RealVector v2) {
+            RealVector res = null;
+
+            if (v1.getDimension() == 0)
+                res = v2;
+            else if (v2.getDimension() == 0)
+                res = v1;
+            else
+                res = v1.getDimension() > v2.getDimension() ? v2.add(v1.getSubVector(0, v2.getDimension()))
+                        : v1.add(v2.getSubVector(0, v1.getDimension()));
+
+            return res;
         }
 
     }
