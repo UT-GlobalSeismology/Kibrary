@@ -177,8 +177,10 @@ public class WaveformPlotCreater implements Operation {
         //gnuplot.setYlabel("value");
         //gnuplot.setTitle("Test");
 
-        int i = 0;
-        for (BasicID obsID : obsList) {
+        int i;
+        for (i = 0; i < obsList.size(); i++) {
+            BasicID obsID = obsList.get(i);
+
             String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
             gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
@@ -186,13 +188,16 @@ public class WaveformPlotCreater implements Operation {
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
 
-            i++;
-            if(i % NUM_PER_PAGE == 0) {
-                gnuplot.nextPage();
-            } else {
-                gnuplot.nextField();
+            // this is not done for the last obsID because we don't want an extra blank page to be created
+            if ((i + 1) < obsList.size()) {
+                if ((i + 1) % NUM_PER_PAGE == 0) {
+                    gnuplot.nextPage();
+                } else {
+                    gnuplot.nextField();
+                }
             }
         }
+        // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
         while(i % NUM_PER_PAGE != 0) {
             i++;
             gnuplot.nextField();
