@@ -233,7 +233,7 @@ public class DataSelection implements Operation {
         infoOutputpath = workPath.resolve("dataSelection" + dateStr + ".inf");
         outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
         eachEventResultFile = "selectionResult" + dateStr + ".txt";
-        dataSelectionInfo = new ArrayList<>();
+        dataSelectionInfo = Collections.synchronizedList(new ArrayList<>());
         goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
