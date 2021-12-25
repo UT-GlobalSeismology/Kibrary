@@ -48,6 +48,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * </dl>
  *
  * <p>
+ * This class also contains methods for exporting waveform data in ascii-format text files.
  * When the main method of this class is executed,
  * the input binary-format files can be exported in ascii format.
  */

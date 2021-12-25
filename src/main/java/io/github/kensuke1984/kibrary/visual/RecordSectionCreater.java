@@ -35,10 +35,18 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * Creates record section for each event included in a BasicID file.
+ * Both profiles and binned stacks can be generated.
+ * <p>
  * A pair of a basic ID file and basic waveform file is required as input.
  * <p>
- * Waveform data for each observer must be written in txt files under event directories.
- * Output pdf files will be created under each of the existing event directories.
+ * For profiles, if text files of waveform data for each observer exist under event directories, they will be used;
+ * if not, they will be generated using {@link BasicIDFile}. The content of these files should always be the same.
+ * <p>
+ * For binned stacks, text files of waveform data for each bin will be written under event directories.
+ * They will be regenerated each time beacause their contents depend on the settings used
+ * (such as which observers to use, plotting by distance or by azimuth, standarization method, etc.).
+ * <p>
+ * Output pdf files and their corresponding plt files will be created under each of the existing event directories.
  *
  * @author otsuru
  * @since 2021/12/11
