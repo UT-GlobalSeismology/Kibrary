@@ -15,6 +15,7 @@ import java.util.Map;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -110,13 +111,13 @@ class EventDataPreparer {
         urlString = urlString + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
-        long size = 0L;
 
         try {
+            System.err.println("++ Downloading mseed file ...");
             Files.createDirectories(mseedSetPath);
             Path mseedPath = mseedSetPath.resolve(mseedFileName);
-            size = Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING);
-            System.err.println("Downloaded : " + eventData + " - " + size + " bytes");
+            double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
+            System.err.println("++ Downloaded : " + eventData + " - " + MathUtils.roundToString(sizeMiB, 3) + " MiB");
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;
@@ -140,7 +141,12 @@ class EventDataPreparer {
      */
     boolean openMseeds() throws IOException {
         boolean flag = false;
-
+/*
+        if (Files.exists(stationSetPath)) {
+            System.err.println("++ Found station directory, skipping mseed2sac.");
+            return true;
+        }
+*/
         if (Files.exists(mseedSetPath)) {
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(mseedSetPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
@@ -183,7 +189,12 @@ class EventDataPreparer {
      */
     boolean openSeeds() throws IOException {
         boolean flag = false;
-
+/*
+        if (Files.exists(sacSetPath)) {
+            System.err.println("++ Found sac directory, skipping rdseed.");
+            return true;
+        }
+*/
         if (Files.exists(seedSetPath)) {
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(seedSetPath, "*.seed")) {
                 for (Path seedPath : seedPaths) {
@@ -326,8 +337,10 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
-                stationInfo.downloadStationXml();
+                if (!Files.exists(stationInfo.getXmlPath())) {
+                    stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
+                    stationInfo.downloadStationXml();
+                }
             }
         }
     }

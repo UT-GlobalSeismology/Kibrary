@@ -52,6 +52,10 @@ public class WaveformPlotCreater implements Operation {
      */
     private Path basicIDPath;
     /**
+     * {@link Path} of a basic waveform file
+     */
+    private Path basicPath;
+    /**
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
@@ -68,6 +72,8 @@ public class WaveformPlotCreater implements Operation {
             pw.println("#components");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
+            pw.println("##Path of a basic waveform file, must be defined");
+            pw.println("#basicPath actual.dat");
             pw.println("##(boolean) Whether to export individual files for each component (true)");
             pw.println("#splitComponents");
         }
@@ -84,6 +90,8 @@ public class WaveformPlotCreater implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("basicIDPath"))
             throw new IllegalArgumentException("There is no information about basicIDPath.");
+        if (!property.containsKey("basicPath"))
+            throw new IllegalArgumentException("There is no information about basicPath.");
         if (!property.containsKey("splitComponents")) property.setProperty("splitComponents", "true");
     }
 
@@ -97,6 +105,9 @@ public class WaveformPlotCreater implements Operation {
         basicIDPath = getPath("basicIDPath");
         if (!Files.exists(basicIDPath))
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
+        basicPath = getPath("basicPath");
+        if (!Files.exists(basicPath))
+            throw new NoSuchFileException("The basic waveform file " + basicPath + " does not exist");
 
         splitComponents = Boolean.parseBoolean(property.getProperty("splitComponents"));
     }
@@ -122,7 +133,7 @@ public class WaveformPlotCreater implements Operation {
            return;
        }
 
-       BasicID[] ids = BasicIDFile.read(basicIDPath);
+       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
 
        for (EventFolder eventDir : eventDirs) {
            if (splitComponents) {
@@ -180,8 +191,14 @@ public class WaveformPlotCreater implements Operation {
         int i;
         for (i = 0; i < obsList.size(); i++) {
             BasicID obsID = obsList.get(i);
+            BasicID synID = synList.get(i);
 
-            String filename = obsID.getObserver() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+            // output waveform data to text file if it has not already been done so
+            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+                BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
+            }
+
             gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");

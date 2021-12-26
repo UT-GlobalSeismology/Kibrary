@@ -16,6 +16,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import io.github.kensuke1984.kibrary.util.MathUtils;
+
 /**
  * Class for downloading and reading StationXML files.
  * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
@@ -134,13 +136,40 @@ class StationXmlFile {
             parser.parse(xmlPath.toFile(), handler);
 
         } catch (SAXException | ParserConfigurationException | IOException e) {
-            System.err.println("!! Failed to read stationXML file.");
+            System.err.println("!! Failed to read " + xmlFile);
             e.printStackTrace();
             return false;
         }
-        return true;
+        return check();
     }
 
+    /**
+     * Checks whether latitude, longitude, dip, and azimuth has been properly set.
+     * Their individual values are not checked.
+     * @return (boolean) true if the 4 values are set
+     */
+    boolean check() {
+        if (latitude.isEmpty()) {
+            System.err.println("!! Latitude empty: " + xmlFile);
+            return false;
+        } else if (longitude.isEmpty()) {
+            System.err.println("!! Longitude empty: " + xmlFile);
+            return false;
+        } else if (dip.isEmpty()) {
+            System.err.println("!! Dip empty: " + xmlFile);
+            return false;
+        } else if (azimuth.isEmpty()) {
+            // for channels of Z component, it is OK if azimuth is empty; it is set 0 here to prevent NumberFormatException
+            // CAUTION: up is dip=-90, horizontal is dip=0
+            if (MathUtils.equalWithinEpsilon(Double.parseDouble(dip), -90, 0.01)) {
+                azimuth = "0";
+            } else {
+                System.err.println("!! Azimuth empty: " + xmlFile);
+                return false;
+            }
+        }
+        return true;
+    }
 
     String getUrl() {
         return url;
@@ -154,6 +183,10 @@ class StationXmlFile {
 
     String getXmlFile() {
         return xmlFile;
+    }
+
+    Path getXmlPath() {
+        return xmlPath;
     }
 
 
@@ -187,11 +220,17 @@ class StationXmlFile {
     }
 
 
+    /**
+     * @return (String) MAY BE EMPTY!!
+     */
     String getElevation() {
         return elevation;
     }
 
 
+    /**
+     * @return (String) MAY BE EMPTY!!
+     */
     String getDepth() {
         return depth;
     }

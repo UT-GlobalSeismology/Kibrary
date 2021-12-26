@@ -108,7 +108,7 @@ public class RecordSectionCreater implements Operation {
             pw.println("#components");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic file, must be defined");
+            pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
             pw.println("#tendEvents");
@@ -187,7 +187,7 @@ public class RecordSectionCreater implements Operation {
             throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
         basicPath = getPath("basicPath");
         if (!Files.exists(basicPath))
-            throw new NoSuchFileException("The basic file " + basicPath + " does not exist");
+            throw new NoSuchFileException("The basic waveform file " + basicPath + " does not exist");
 
         if (!property.getProperty("tendEvents").isEmpty()) {
             tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)

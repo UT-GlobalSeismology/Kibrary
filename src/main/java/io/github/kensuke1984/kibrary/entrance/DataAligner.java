@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.kensuke1984.kibrary.util.DatasetUtils;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -42,7 +43,7 @@ public class DataAligner {
         String datacenter = "";
 
         if (args.length == 1 && args[0].equals("-s")) {
-            forSeed = true;;
+            forSeed = true;
         } else if (args.length == 2 && args[0].equals("-m")) {
             datacenter = args[1];
         } else {
@@ -75,15 +76,18 @@ public class DataAligner {
 
         // import event directories in working directory
         Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
-        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
+        int n_total = eventDirs.size();
+        if (!DatasetUtils.checkEventNum(n_total)) {
             return;
         }
 
         // for each event directory
         // This part is not parallelized because SocketException occurs when many threads download files simultaneously.
+        final AtomicInteger n = new AtomicInteger();
         eventDirs.stream().sorted().forEach(eventDir -> {
             try {
-                System.err.println(eventDir);
+                n.incrementAndGet();
+                System.err.println(eventDir + " (# " + n + " of " + n_total + ")");
 
                 // create new instance for the event
                 EventDataPreparer edp = new EventDataPreparer(eventDir);

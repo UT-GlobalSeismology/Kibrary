@@ -206,7 +206,7 @@ public class DataLobby implements Operation {
         requestedEvents.stream().sorted().forEach(event -> {
             try {
                 n.incrementAndGet();
-                System.err.println("Downloading files for " + event + " (# " + n + " of " + n_total + ") ...");
+                System.err.println(event + " (# " + n + " of " + n_total + ")");
 
                 // create event folder
                 EventFolder ef = new EventFolder(outPath.resolve(event.toString()));
@@ -221,12 +221,12 @@ public class DataLobby implements Operation {
                 }
 
                 // wait 2 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                System.err.println("Resting for 2 minutes ...");
+                System.err.println("++ Resting for 2 minutes ...");
                 ThreadUtils.sleep(1000 * 60 * 2);
 
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
-                System.err.println("!! Download for " + event + " failed.");
+                System.err.println("!! Download for " + event + " failed, skipping.");
                 e.printStackTrace();
             }
         });

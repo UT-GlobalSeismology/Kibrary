@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.MathUtils;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -268,8 +269,8 @@ class EventProcessor implements Runnable {
                 // check whether the inclination of a [vertical|horizontal] channel is perfectly [vertical|horizontal]
                 // caution: up is inc=0, down is inc=180
                 // TODO: are there stations with downwards Z ?
-                if ((isVerticalChannel(sacFile.getChannel()) && inclination != 0)
-                        || (!isVerticalChannel(sacFile.getChannel()) && inclination != 90)) {
+                if ((isVerticalChannel(sacFile.getChannel()) && MathUtils.equalWithinEpsilon(inclination, 0, 0.01) == false)
+                        || (!isVerticalChannel(sacFile.getChannel()) && MathUtils.equalWithinEpsilon(inclination, 90, 0.01) == false)) {
                     System.err.println("!! invalid inclination : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
