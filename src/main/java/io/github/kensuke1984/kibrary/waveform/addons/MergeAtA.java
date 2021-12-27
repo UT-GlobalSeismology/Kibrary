@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 public class MergeAtA {
 	public static void main(String[] args) throws IOException {
@@ -17,7 +17,7 @@ public class MergeAtA {
 			ataSum = AtAFile.add(ataSum, ata);
 		}
 		
-		Path outpath = Paths.get("ata" + GadgetUtils.getTemporaryString() + ".dat");
+		Path outpath = Paths.get("ata" + GadgetAid.getTemporaryString() + ".dat");
 		AtAFile.write(ataSum, header.getWeightingTypes(), header.getFrequencyRanges()
 				, header.getUnknownParameters(), header.getPhases(), outpath);
 	}

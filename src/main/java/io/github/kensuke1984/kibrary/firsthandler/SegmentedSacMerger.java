@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.kibrary.util.FileUtils;
+import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
  * Merging of SAC files
@@ -108,7 +108,7 @@ class SegmentedSacMerger {
         Arrays.stream(sacFileNameList).map(Object::toString).map(eventPath::resolve).filter(Files::exists)
                 .forEach(path -> {
                     try {
-                        FileUtils.moveToDirectory(path, unevenBoxPath, true);
+                        FileAid.moveToDirectory(path, unevenBoxPath, true);
                     } catch (IOException e) {
                         // checked exceptions cannot be thrown here, so wrap it in unchecked exception
                         throw new UncheckedIOException(e);

@@ -15,9 +15,9 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
 
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -90,8 +90,8 @@ public class EventInformationFile {
     }
 
     private static void createEventInformationFile(Path workPath, OpenOption... options) throws IOException {
-        Path outPath = workPath.resolve("event" + GadgetUtils.getTemporaryString() + ".inf");
-        Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(workPath);
+        Path outPath = workPath.resolve("event" + GadgetAid.getTemporaryString() + ".inf");
+        Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(workPath);
         Set<GlobalCMTID> eventSet = eventFolderSet.stream().map(ef -> ef.getGlobalCMTID()).collect(Collectors.toSet());
 
         write(eventSet, outPath, options);

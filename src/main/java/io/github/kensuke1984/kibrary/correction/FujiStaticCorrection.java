@@ -24,10 +24,10 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -168,7 +168,7 @@ public class FujiStaticCorrection implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        String date = GadgetUtils.getTemporaryString();
+        String date = GadgetAid.getTemporaryString();
         outputPath = workPath.resolve("staticCorrection" + date + ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
@@ -199,20 +199,20 @@ public class FujiStaticCorrection implements Operation {
         System.err.println(FujiStaticCorrection.class.getName() + " is operating.");
         fsc.run();
         System.err.println(FujiStaticCorrection.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(obsPath);
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
         timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
 
-        ExecutorService es = ThreadUtils.createFixedThreadPool();
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventDirs.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
-            ThreadUtils.sleep(1000);
+            ThreadAid.sleep(1000);
         }
 
         System.err.println("Outputting in " + outputPath);

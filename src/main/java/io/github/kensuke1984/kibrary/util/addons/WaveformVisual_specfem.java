@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -51,7 +51,7 @@ public class WaveformVisual_specfem {
 		
 		Set<GlobalCMTID> events = obsList.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		String tmpString = GadgetUtils.getTemporaryString();
+		String tmpString = GadgetAid.getTemporaryString();
 		
 		Path stackDir = Paths.get("stack" + tmpString);
 		Path profileDir = Paths.get("profile" + tmpString);

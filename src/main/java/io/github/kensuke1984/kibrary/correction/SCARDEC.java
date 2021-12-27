@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.correction;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.FileUtils;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -45,7 +45,7 @@ public class SCARDEC {
     private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
     private static void downloadCatalog() throws IOException {
-        FileUtils.download(new URL("https://bit.ly/3baFtTF"), SCARDEC_ROOT_PATH, false);
+        FileAid.download(new URL("https://bit.ly/3baFtTF"), SCARDEC_ROOT_PATH, false);
     }
 
     static {

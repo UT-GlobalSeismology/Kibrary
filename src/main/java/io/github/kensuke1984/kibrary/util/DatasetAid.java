@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class DatasetUtils {
+public final class DatasetAid {
 
     /**
      * Collect GlobalCMTIDs of event folders that exist under a given folder.
@@ -101,7 +101,7 @@ public final class DatasetUtils {
      */
     public static void moveSacfile(Path path, Predicate<SACFileName> predicate)
             throws IOException, InterruptedException {
-        String directoryName = "movedSacfiles" + GadgetUtils.getTemporaryString();
+        String directoryName = "movedSacfiles" + GadgetAid.getTemporaryString();
         // System.out.println(directoryName);
         Consumer<EventFolder> moveProcess = eventDirectory -> {
             try {
@@ -110,7 +110,7 @@ public final class DatasetUtils {
                 e.printStackTrace();
             }
         };
-        ThreadUtils.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
+        ThreadAid.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
     }
 
 }

@@ -38,10 +38,10 @@ import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
@@ -352,7 +352,7 @@ public class ActualWaveformCompiler implements Operation {
        System.err.println(ActualWaveformCompiler.class.getName() + " is operating.");
        awc.run();
        System.err.println(ActualWaveformCompiler.class.getName() + " finished in "
-               + GadgetUtils.toTimeString(System.nanoTime() - startTime));
+               + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }
 
    @Override
@@ -392,7 +392,7 @@ public class ActualWaveformCompiler implements Operation {
        }
 
        // obsDirからイベントフォルダを指定
-       eventDirs = DatasetUtils.eventFolderSet(obsPath);
+       eventDirs = DatasetAid.eventFolderSet(obsPath);
 
        if (timewindowRefPath != null)
            timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)
@@ -412,7 +412,7 @@ public class ActualWaveformCompiler implements Operation {
 
        readPeriodRanges();
 
-       String dateStr = GadgetUtils.getTemporaryString();
+       String dateStr = GadgetAid.getTemporaryString();
        outPath = workPath.resolve("compiled" + dateStr);
        Files.createDirectories(outPath);
        System.err.println("Output folder is " + outPath);
@@ -460,14 +460,14 @@ public class ActualWaveformCompiler implements Operation {
                    observerSet, eventSet, periodRanges, phases);
            dataWriter = bdw;
 
-           ExecutorService es = ThreadUtils.createFixedThreadPool();
+           ExecutorService es = ThreadAid.createFixedThreadPool();
 
            for (EventFolder eventDir : eventDirs)
                es.execute(new Worker(eventDir));
            es.shutdown();
 
            while (!es.isTerminated()){
-               ThreadUtils.sleep(1000);
+               ThreadAid.sleep(1000);
            }
            envelopeWriter.close();
            hyWriter.close();
@@ -481,7 +481,7 @@ public class ActualWaveformCompiler implements Operation {
    private void readPeriodRanges() {
         try {
             List<double[]> ranges = new ArrayList<>();
-            Set<SACFileName> sacfilenames = DatasetUtils.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+            Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
             for (SACFileName name : sacfilenames) {
                 if (!name.isOBS()) continue;
                 SACHeaderAccess header = name.readHeader();

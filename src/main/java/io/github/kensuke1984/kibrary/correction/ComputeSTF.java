@@ -19,7 +19,7 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -61,7 +61,7 @@ public class ComputeSTF {
 		
 //		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
 		
-		Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(workdir);
+		Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(workdir);
 		
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("S, ScS");

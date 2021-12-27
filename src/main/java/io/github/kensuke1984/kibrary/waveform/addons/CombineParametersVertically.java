@@ -5,7 +5,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.addons.HorizontalParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.ParameterMapping;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -37,7 +37,7 @@ public class CombineParametersVertically {
 		Path unknownPath = Paths.get(args[2]);
 		Path verticalMappingPath = Paths.get(args[3]);
 		
-		String tmpString = GadgetUtils.getTemporaryString();
+		String tmpString = GadgetAid.getTemporaryString();
 		Path outIDPath = Paths.get("partialID" + tmpString + ".dat");
 		Path outPath = Paths.get("partial" + tmpString + ".dat");
 		

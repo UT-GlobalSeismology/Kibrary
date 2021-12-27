@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
  * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
@@ -168,17 +168,17 @@ public class DataKitchen implements Operation {
         System.err.println(DataKitchen.class.getName() + " is operating.");
         dk.run();
         System.err.println(DataKitchen.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
-        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
+        if (!DatasetAid.checkEventNum(eventDirs.size())) {
             return;
         }
 
-        outPath = workPath.resolve("processed" + GadgetUtils.getTemporaryString());
+        outPath = workPath.resolve("processed" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
@@ -202,12 +202,12 @@ public class DataKitchen implements Operation {
         eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
                 minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
 
-        ExecutorService es = ThreadUtils.createFixedThreadPool();
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);
         es.shutdown();
         // check if everything is done every 5 seconds
         while (!es.isTerminated()) {
-            ThreadUtils.sleep(1000 * 5);
+            ThreadAid.sleep(1000 * 5);
         }
 
         // print overall result

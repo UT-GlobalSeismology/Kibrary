@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -292,7 +292,7 @@ public final class AtdFile {
 				create(b, weightingTypes, frequencyRanges, phases, correctionTypes, partialTypes, locations))
 				.collect(Collectors.toList());
 			System.err.println(
-					ataEntries.size() + " AtA elements were found in " + GadgetUtils.toTimeString(System.nanoTime() - t));
+					ataEntries.size() + " AtA elements were found in " + GadgetAid.toTimeString(System.nanoTime() - t));
 			return Collections.unmodifiableList(ataEntries);
 		}
 	}
@@ -389,7 +389,7 @@ public final class AtdFile {
 						= new AtdEntry(weightingType, frequencyRange, phase, correctionType, partialType, location, value);
 			}
 			System.err.println(
-					nEntry + " Atd elements were found in " + GadgetUtils.toTimeString(System.nanoTime() - t));
+					nEntry + " Atd elements were found in " + GadgetAid.toTimeString(System.nanoTime() - t));
 			return atdEntries;
 		}
 	}

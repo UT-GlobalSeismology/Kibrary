@@ -15,7 +15,7 @@ import java.util.Map;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -117,7 +117,7 @@ class EventDataPreparer {
             Files.createDirectories(mseedSetPath);
             Path mseedPath = mseedSetPath.resolve(mseedFileName);
             double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println("++ Downloaded : " + eventData + " - " + MathUtils.roundToString(sizeMiB, 3) + " MiB");
+            System.err.println("++ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;
@@ -141,13 +141,17 @@ class EventDataPreparer {
      */
     boolean openMseeds() throws IOException {
         boolean flag = false;
-/*
-        if (Files.exists(stationSetPath)) {
-            System.err.println("++ Found station directory, skipping mseed2sac.");
-            return true;
-        }
-*/
+
         if (Files.exists(mseedSetPath)) {
+
+            // SAC files that are left here may have been broken during configuration, so delete them
+            try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(mseedSetPath, "*.SAC")) {
+                for (Path sacPath : sacPaths) {
+                    Files.delete(sacPath);
+                }
+            }
+
+            // open all mseeds, though there is probably only one
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(mseedSetPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     flag = true;
@@ -189,13 +193,17 @@ class EventDataPreparer {
      */
     boolean openSeeds() throws IOException {
         boolean flag = false;
-/*
-        if (Files.exists(sacSetPath)) {
-            System.err.println("++ Found sac directory, skipping rdseed.");
-            return true;
-        }
-*/
+
         if (Files.exists(seedSetPath)) {
+
+            // SAC files that are left here may have been broken during configuration, so delete them
+            try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(seedSetPath, "*.SAC")) {
+                for (Path sacPath : sacPaths) {
+                    Files.delete(sacPath);
+                }
+            }
+
+            // open all seeds, though there is probably only one
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(seedSetPath, "*.seed")) {
                 for (Path seedPath : seedPaths) {
                     flag = true;

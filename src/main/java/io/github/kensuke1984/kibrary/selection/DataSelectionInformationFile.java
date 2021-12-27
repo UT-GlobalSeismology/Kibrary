@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -79,9 +79,9 @@ public class DataSelectionInformationFile {
         int[] vars = new int[nVar];
         int[] ccs = new int[nCC];
         int[] ratios = new int[nRatio];
-        Path varPath = rootpath.resolve("histogram_variance" + GadgetUtils.getTemporaryString() + ".dat");
-        Path corPath = rootpath.resolve("histogram_cc" + GadgetUtils.getTemporaryString() + ".dat");
-        Path ratioPath = rootpath.resolve("histogram_ratio" + GadgetUtils.getTemporaryString() + ".dat");
+        Path varPath = rootpath.resolve("histogram_variance" + GadgetAid.getTemporaryString() + ".dat");
+        Path corPath = rootpath.resolve("histogram_cc" + GadgetAid.getTemporaryString() + ".dat");
+        Path ratioPath = rootpath.resolve("histogram_ratio" + GadgetAid.getTemporaryString() + ".dat");
 
         for (DataSelectionInformation info : infoList) {
             if (info.getVariance() > maxVar

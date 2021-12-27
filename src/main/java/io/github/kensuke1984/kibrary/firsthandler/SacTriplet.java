@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import io.github.kensuke1984.kibrary.util.FileUtils;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -152,13 +152,13 @@ class SacTriplet {
      */
     void move(Path dir) throws IOException {
         if (rRegistered) {
-            FileUtils.moveToDirectory(rPath, dir, true);
+            FileAid.moveToDirectory(rPath, dir, true);
         }
         if (tRegistered) {
-            FileUtils.moveToDirectory(tPath, dir, true);
+            FileAid.moveToDirectory(tPath, dir, true);
         }
         if (zRegistered) {
-            FileUtils.moveToDirectory(zPath, dir, true);
+            FileAid.moveToDirectory(zPath, dir, true);
         }
     }
 

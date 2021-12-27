@@ -24,10 +24,10 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -221,7 +221,7 @@ public class RecordSectionCreater implements Operation {
        System.err.println(RecordSectionCreater.class.getName() + " is operating.");
        rsc.run();
        System.err.println(RecordSectionCreater.class.getName() + " finished in "
-               + GadgetUtils.toTimeString(System.nanoTime() - startTime));
+               + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }
 
    @Override
@@ -241,7 +241,7 @@ public class RecordSectionCreater implements Operation {
            eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
                    .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
        }
-       if (!DatasetUtils.checkEventNum(eventDirs.size())) {
+       if (!DatasetAid.checkEventNum(eventDirs.size())) {
            return;
        }
 
@@ -351,7 +351,7 @@ public class RecordSectionCreater implements Operation {
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
-                        || MathUtils.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                        || MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
                     continue;
                 }
 
@@ -461,12 +461,12 @@ public class RecordSectionCreater implements Operation {
             String obsUsingString;
             String synUsingString;
             if (!byAzimuth) {
-                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(azimuth, 3, 2),
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2),
                         "graph", 1.01, "first", distance);
                 obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
                 synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
             } else {
-                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathUtils.padToString(distance, 3, 2),
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2),
                         "graph", 1.01, "first", azimuth);
                 obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
                 synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);

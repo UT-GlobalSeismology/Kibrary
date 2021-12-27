@@ -40,10 +40,10 @@ import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.MathUtils;
-import io.github.kensuke1984.kibrary.util.SpcFileUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -94,7 +94,7 @@ public class Partial1DSpcMaker implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(Partial1DSpcMaker.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(Partial1DSpcMaker.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan Partial1DSpcMaker");
 			pw.println("##Path of a working directory (.)");
@@ -655,7 +655,7 @@ public class Partial1DSpcMaker implements Operation {
 					double bodyR = spectrum.getBodyR()[k];
 					boolean exists = false;
 					for (double r : Partial1DSpcMaker.this.bodyR)
-						if (MathUtils.equalWithinEpsilon(r, bodyR, eps))
+						if (MathAid.equalWithinEpsilon(r, bodyR, eps))
 							exists = true;
 					if (!exists)
 						continue;
@@ -674,7 +674,7 @@ public class Partial1DSpcMaker implements Operation {
 						double bodyR = spectrum.getBodyR()[k];
 						boolean exists = false;
 						for (double r : Partial1DSpcMaker.this.bodyR)
-							if (MathUtils.equalWithinEpsilon(r, bodyR, eps))
+							if (MathAid.equalWithinEpsilon(r, bodyR, eps))
 								exists = true;
 						if (!exists)
 							continue;
@@ -757,7 +757,7 @@ public class Partial1DSpcMaker implements Operation {
 						throw new RuntimeException("sh and psv bodyR differ " + shspectrum.getBodyR()[k] + " " + bodyR);
 					boolean exists = false;
 					for (double r : Partial1DSpcMaker.this.bodyR)
-						if (MathUtils.equalWithinEpsilon(r, bodyR, eps))
+						if (MathAid.equalWithinEpsilon(r, bodyR, eps))
 							exists = true;
 					if (!exists)
 						continue;
@@ -785,7 +785,7 @@ public class Partial1DSpcMaker implements Operation {
 						double bodyR = spectrum.getBodyR()[k];
 						boolean exists = false;
 						for (double r : Partial1DSpcMaker.this.bodyR)
-							if (MathUtils.equalWithinEpsilon(r, bodyR, eps))
+							if (MathAid.equalWithinEpsilon(r, bodyR, eps))
 								exists = true;
 						if (!exists)
 							continue;
@@ -1082,7 +1082,7 @@ public class Partial1DSpcMaker implements Operation {
 	
 	@Override
 	public void run() throws IOException {
-		String dateString = GadgetUtils.getTemporaryString();
+		String dateString = GadgetAid.getTemporaryString();
 		
 		reFyIDs = Arrays.stream(BasicIDFile.read(reFyIDPath, reFyPath)).filter(id -> id.getWaveformType().equals(WaveformType.SYN))
 				.collect(Collectors.toList()).toArray(new BasicID[0]);
@@ -1148,7 +1148,7 @@ public class Partial1DSpcMaker implements Operation {
 //		writeLog(filter.toString());
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());
-		idSet = DatasetUtils.globalCMTIDSet(workPath);
+		idSet = DatasetAid.globalCMTIDSet(workPath);
 		setPerturbationLocation();
 		phases = timewindowInformationSet.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
@@ -1158,10 +1158,10 @@ public class Partial1DSpcMaker implements Operation {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 
-		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
 		Set<EventFolder> timePartialEventDirs = new HashSet<>();
 		if (timePartialPath != null)
-			timePartialEventDirs = DatasetUtils.eventFolderSet(timePartialPath);
+			timePartialEventDirs = DatasetAid.eventFolderSet(timePartialPath);
 
 		// create ThreadPool
 		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
@@ -1303,7 +1303,7 @@ public class Partial1DSpcMaker implements Operation {
 		
 		System.err.println();
 		String endLine = Partial1DSpcMaker.class.getName() + " finished in "
-				+ GadgetUtils.toTimeString(System.nanoTime() - startTime);
+				+ GadgetAid.toTimeString(System.nanoTime() - startTime);
 		System.err.println(endLine);
 		writeLog(endLine);
 		writeLog(idPath + " " + datasetPath + " were created");
@@ -1345,14 +1345,14 @@ public class Partial1DSpcMaker implements Operation {
 	
 	private Set<SPCFileName> collectSHSPCs(Path spcFolder) throws IOException {
 		Set<SPCFileName> shSet = new HashSet<>();
-		SpcFileUtils.collectSpcFileName(spcFolder).stream()
+		SpcFileAid.collectSpcFileName(spcFolder).stream()
 				.filter(f -> f.getName().contains("PAR") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
 		return shSet;
 	}
 
 	private Set<SPCFileName> collectPSVSPCs(Path spcFolder) throws IOException {
 		Set<SPCFileName> psvSet = new HashSet<>();
-		SpcFileUtils.collectSpcFileName(spcFolder).stream()
+		SpcFileAid.collectSpcFileName(spcFolder).stream()
 				.filter(f -> f.getName().contains("PAR") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
 		return psvSet;
 	}

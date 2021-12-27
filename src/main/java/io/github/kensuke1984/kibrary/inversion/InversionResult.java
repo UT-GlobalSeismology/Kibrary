@@ -19,7 +19,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -321,7 +321,7 @@ public class InversionResult {
      * @return the Akaike Information criterion for the answer
      */
     public double aicOf(double a, InverseMethodEnum inverse, int n) {
-        return MathUtils.computeAIC(varianceOf(inverse, n), (int) (npts / a), n);
+        return MathAid.computeAIC(varianceOf(inverse, n), (int) (npts / a), n);
     }
 
     /**
@@ -1031,7 +1031,7 @@ public class InversionResult {
      * @return the Akaike Information criterion for the initial model. (k=0)
      */
     public double getInitialAIC(double a) {
-        return MathUtils.computeAIC(getInitialVariance(), (int) (npts / a), 0);
+        return MathAid.computeAIC(getInitialVariance(), (int) (npts / a), 0);
     }
 
     public void set_mul(double mul) {

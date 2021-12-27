@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.waveform.convert;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -130,7 +130,7 @@ public class LambdaMuToKappaMu {
 				partialsKappa.add(parKappa);
 		}
 		
-		String tmpString = GadgetUtils.getTemporaryString();
+		String tmpString = GadgetAid.getTemporaryString();
 		Path outID = Paths.get("partialID" + tmpString +".dat");
 		Path out = Paths.get("partial" + tmpString + ".dat");
 		

@@ -8,8 +8,8 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -68,7 +68,7 @@ public class Result implements Operation {
 		long startT = System.nanoTime();
 		result.run();
 		System.err.println(
-				Result.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - startT));
+				Result.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
 	
 //		 test of resampling method
 //		/*
@@ -124,7 +124,7 @@ public class Result implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(OneDPartialDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(OneDPartialDSMSetup.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan Result");
 			pw.println("##These are the properties for Result");
@@ -170,7 +170,7 @@ public class Result implements Operation {
 		set();
 		
 		try {
-			Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(workPath);
+			Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(workPath);
 			for (EventFolder eventFolder : eventFolderSet) {
 				Path resultFolder = eventFolder.toPath()
 						.resolve("SOLVER/" + meshName + "/Data_Postprocessing/SEISMOGRAMS");

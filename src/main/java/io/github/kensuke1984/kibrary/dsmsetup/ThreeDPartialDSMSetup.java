@@ -19,9 +19,9 @@ import org.apache.commons.io.FileUtils;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -93,7 +93,7 @@ public class ThreeDPartialDSMSetup implements Operation {
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(ThreeDPartialDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(ThreeDPartialDSMSetup.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan ThreeDPartialDSMSetup");
 			pw.println("##Path of a working folder (.)");
@@ -134,7 +134,7 @@ public class ThreeDPartialDSMSetup implements Operation {
 		System.err.println(ThreeDPartialDSMSetup.class.getName() + " is going.");
 		tpds.run();
 		System.err.println(ThreeDPartialDSMSetup.class.getName() + " finished in "
-				+ GadgetUtils.toTimeString(System.nanoTime() - start));
+				+ GadgetAid.toTimeString(System.nanoTime() - start));
 	}
 
 	private void checkAndPutDefaults() {
@@ -266,7 +266,7 @@ public class ThreeDPartialDSMSetup implements Operation {
 		if (!Files.exists(stationInformationPath))
 			throw new NoSuchFileException(stationInformationPath.toString());
 		readParameterPointInformation();
-		outputPath = workPath.resolve("threedPartial" + GadgetUtils.getTemporaryString());
+		outputPath = workPath.resolve("threedPartial" + GadgetAid.getTemporaryString());
 		Files.createDirectories(outputPath);
 
 		if (property != null)
@@ -279,7 +279,7 @@ public class ThreeDPartialDSMSetup implements Operation {
 		createPointInformationFile();
 
 		//
-		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
 
 		// reading station information
 		Set<Observer> stationSet = ObserverInformationFile.read(stationInformationPath);

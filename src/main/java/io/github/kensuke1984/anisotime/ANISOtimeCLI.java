@@ -1,7 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
@@ -78,7 +78,7 @@ final class ANISOtimeCLI {
     /**
      * String for a file name.
      */
-    private final String tmpStr = GadgetUtils.getTemporaryString();
+    private final String tmpStr = GadgetAid.getTemporaryString();
 
     /**
      * @param args arguments
@@ -289,10 +289,10 @@ final class ANISOtimeCLI {
             EpsGraphics epsGraphics = new EpsGraphics(phase.toString(), bos, 0, 0, panel.getWidth(), panel.getHeight(),
                     ColorMode.COLOR_RGB);
             panel.paintComponent(epsGraphics);
-            String rayp = MathUtils.roundToString(rayParameter, decimalPlaces);
-            String delt = MathUtils.roundToString(delta, decimalPlaces);
-            String tra = MathUtils.roundToString(time, decimalPlaces);
-            String depth = MathUtils.roundToString(structure.earthRadius() - eventR, decimalPlaces);
+            String rayp = MathAid.roundToString(rayParameter, decimalPlaces);
+            String delt = MathAid.roundToString(delta, decimalPlaces);
+            String tra = MathAid.roundToString(time, decimalPlaces);
+            String depth = MathAid.roundToString(structure.earthRadius() - eventR, decimalPlaces);
             String line = phase + ", Ray parameter: " + rayp + ", Depth[km]:" + depth + ", Epicentral distance[deg]: " +
                     delt + ", Travel time[s]: " + tra;
             int startInt = (int) panel.changeX(-line.length() / 2 * 6371 / 45);
@@ -414,7 +414,7 @@ final class ANISOtimeCLI {
     private void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
         out.println(phase.getDISPLAY_NAME() + " " +
                 IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
-                        .mapToObj(i -> MathUtils.roundToString(values[i], decimalPlace))
+                        .mapToObj(i -> MathAid.roundToString(values[i], decimalPlace))
                         .collect(Collectors.joining(" ")));
     }
     
@@ -438,14 +438,14 @@ final class ANISOtimeCLI {
     	double incident = Math.toDegrees(raypath.computeIncidentAngle(ppReceiver, Math.toDegrees(p), Earth.EARTH_RADIUS));
     	
     	out.printf(TAUP_FORMAT + "\n",
-    			MathUtils.roundToString(distance, decimalPlace),
-    			MathUtils.roundToString(depth, decimalPlace),
+    			MathAid.roundToString(distance, decimalPlace),
+    			MathAid.roundToString(depth, decimalPlace),
     			phase.getDISPLAY_NAME(),
-    			MathUtils.roundToString(time, decimalPlace),
-    			MathUtils.roundToString(p, decimalPlace),
-    			MathUtils.roundToString(takeoff, decimalPlace),
-    			MathUtils.roundToString(incident, decimalPlace),
-    			MathUtils.roundToString(targetDistance, decimalPlace),
+    			MathAid.roundToString(time, decimalPlace),
+    			MathAid.roundToString(p, decimalPlace),
+    			MathAid.roundToString(takeoff, decimalPlace),
+    			MathAid.roundToString(incident, decimalPlace),
+    			MathAid.roundToString(targetDistance, decimalPlace),
     			phase.getPHASENAME());
     }
 

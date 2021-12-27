@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -38,7 +38,7 @@ public class RotationWaveformVisual {
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		Path stackDir = Paths.get("stack" + GadgetUtils.getTemporaryString());
+		Path stackDir = Paths.get("stack" + GadgetAid.getTemporaryString());
 		Files.createDirectory(stackDir);
 		
 		double dt = 1./ ids[0].getSamplingHz();
@@ -48,7 +48,7 @@ public class RotationWaveformVisual {
 		List<BasicID> ids_R = new ArrayList<>();
 		for (BasicID idZ : ids_Z) {
 			BasicID idR = tmp_R.stream().filter(id -> id.getGlobalCMTID().equals(idZ.getGlobalCMTID()) && id.getObserver().equals(idZ.getObserver())
-					&& id.getWaveformType().equals(idZ.getWaveformType()) && MathUtils.equalWithinEpsilon(id.getStartTime(), idZ.getStartTime(), 0.1))
+					&& id.getWaveformType().equals(idZ.getWaveformType()) && MathAid.equalWithinEpsilon(id.getStartTime(), idZ.getStartTime(), 0.1))
 					.findFirst().get();
 			ids_R.add(idR);
 		}

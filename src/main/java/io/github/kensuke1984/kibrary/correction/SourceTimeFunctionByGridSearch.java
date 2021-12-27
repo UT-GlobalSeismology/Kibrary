@@ -5,8 +5,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -72,7 +72,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(SourceTimeFunctionByGridSearch.class.getName() 
-				+ GadgetUtils.getTemporaryString() + ".properties");
+				+ GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan SourceTimeFunctionByGridSearch");
 			pw.println("##Path of a working folder (.)");
@@ -240,13 +240,13 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		stfSearch.run();
 		System.err.println(
 				SourceTimeFunctionByGridSearch.class.getName() + " finished in " 
-			  + GadgetUtils.toTimeString(System.nanoTime() - start));
+			  + GadgetAid.toTimeString(System.nanoTime() - start));
 	}
 	
 	public void run() {
 		try {
 			Set<EventFolder> eventFolders 
-				= DatasetUtils.eventFolderSet(workPath);
+				= DatasetAid.eventFolderSet(workPath);
 			
 			Set<StaticCorrectionData> staticCorrections = new HashSet<>();
 			if (staticCorrectionFile != null)
@@ -254,7 +254,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			
 			Map<GlobalCMTID, double[]> outputMap = new HashMap<>();
 			Map<GlobalCMTID, Integer> nTraceMap = new HashMap<>();
-			String tmpString = GadgetUtils.getTemporaryString();
+			String tmpString = GadgetAid.getTemporaryString();
 			Path outputinfoPath = workPath.resolve("outputInfo" 
 					+ tmpString + ".astf.inf");
 			

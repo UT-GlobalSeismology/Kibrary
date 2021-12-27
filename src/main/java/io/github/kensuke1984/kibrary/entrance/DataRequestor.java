@@ -15,7 +15,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -58,7 +58,7 @@ public class DataRequestor implements Operation {
     private Set<GlobalCMTID> requestedEvents;
     private boolean send;
     private Properties property;
-    private String date = GadgetUtils.getTemporaryString();
+    private String date = GadgetAid.getTemporaryString();
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Property.generatePath(DataRequestor.class);
@@ -172,7 +172,7 @@ public class DataRequestor implements Operation {
         System.err.println(DataLobby.class.getName() + " is operating.");
         dr.run();
         System.err.println(DataLobby.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
@@ -181,7 +181,7 @@ public class DataRequestor implements Operation {
         System.out.println(requestedEvents.size() + " events are found.");
         System.out.println("Label contains \"" + date + "\"");
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
-        Path sent = workPath.resolve("sent" + GadgetUtils.getTemporaryString());
+        Path sent = workPath.resolve("sent" + GadgetAid.getTemporaryString());
         if (send) try {
             System.err.println("Sending requests in 5 sec.");
             System.err.println("Sent mails will be in " + sent);

@@ -22,8 +22,8 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
 
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -153,9 +153,9 @@ public final class ObserverInformationFile {
      * @throws IOException if an I/O error occurs
      */
     public static void createObserverInformationFile(Path workPath, OpenOption... options) throws IOException {
-        Path outPath = workPath.resolve("observer" + GadgetUtils.getTemporaryString() + ".inf");
+        Path outPath = workPath.resolve("observer" + GadgetAid.getTemporaryString() + ".inf");
 
-        Set<SACFileName> sacNameSet = DatasetUtils.sacFileNameSet(workPath);
+        Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(workPath);
         Set<Observer> observerSet = sacNameSet.stream().filter(sacname -> sacname.getComponent().equals(SACComponent.T)).map(sacName -> {
             try {
                 return sacName.readHeader();

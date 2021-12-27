@@ -20,9 +20,9 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class SpcFileUtils {
+public final class SpcFileAid {
 
-    private SpcFileUtils() {
+    private SpcFileAid() {
     }
 
     /**
@@ -135,7 +135,7 @@ public final class SpcFileUtils {
      */
     public static Map<GlobalCMTID, List<SPCFileName>> collectMapOfOrderedSHFpFileName(Path fpPath, String model) throws IOException {
         Map<GlobalCMTID, List<SPCFileName>> fpfileMap = new HashMap<>();
-        Set<EventFolder> events = DatasetUtils.eventFolderSet(fpPath);
+        Set<EventFolder> events = DatasetAid.eventFolderSet(fpPath);
         for (EventFolder event : events) {
             Path path = fpPath.resolve(event.getGlobalCMTID().toString()).resolve(model);
             List<SPCFileName> list = new ArrayList<>();
@@ -238,7 +238,7 @@ public final class SpcFileUtils {
      */
     public static Map<GlobalCMTID, List<SPCFileName>> collectMapOfOrderedPSVFpFileName(Path fpPath, String model) throws IOException {
         Map<GlobalCMTID, List<SPCFileName>> fpfileMap = new HashMap<>();
-        Set<EventFolder> events = DatasetUtils.eventFolderSet(fpPath);
+        Set<EventFolder> events = DatasetAid.eventFolderSet(fpPath);
         for (EventFolder event : events) {
             Path path = fpPath.resolve(event.getGlobalCMTID().toString()).resolve(model);
             List<SPCFileName> list = new ArrayList<>();

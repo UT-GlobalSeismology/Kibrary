@@ -8,7 +8,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 public class Subtractwindow {
 
@@ -26,7 +26,7 @@ public class Subtractwindow {
 				outWindows.add(window);
 		}
 
-		Path outputPath = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
+		Path outputPath = Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".dat");
 		TimewindowDataFile.write(outWindows, outputPath);
 	}
 

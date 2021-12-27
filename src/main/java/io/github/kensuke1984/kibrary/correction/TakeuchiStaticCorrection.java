@@ -4,8 +4,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -66,7 +66,7 @@ public class TakeuchiStaticCorrection implements Operation {
 
     public TakeuchiStaticCorrection(Properties property) throws IOException {
         this.property = (Properties) property.clone();
-        String date = GadgetUtils.getTemporaryString();
+        String date = GadgetAid.getTemporaryString();
         set();
         timewindow = TimewindowDataFile.read(timewindowInformationPath);
         outStaticCorrectionPath = workPath.resolve("takeuchiCorrection" + date + ".dat");
@@ -75,7 +75,7 @@ public class TakeuchiStaticCorrection implements Operation {
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath =
-                Paths.get(TakeuchiStaticCorrection.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+                Paths.get(TakeuchiStaticCorrection.class.getName() + GadgetAid.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan TakeuchiStaticCorrection");
             pw.println("##Path of a work folder (.)");
@@ -107,7 +107,7 @@ public class TakeuchiStaticCorrection implements Operation {
         System.err.println(TakeuchiStaticCorrection.class.getName() + " is going.");
         tsm.run();
         System.err.println(TakeuchiStaticCorrection.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - time));
+                GadgetAid.toTimeString(System.nanoTime() - time));
     }
 
     private void checkAndPutDefaults() {
@@ -140,7 +140,7 @@ public class TakeuchiStaticCorrection implements Operation {
     public void run() throws IOException {
         Set<SACFileName> nameSet;
         try {
-            nameSet = DatasetUtils.sacFileNameSet(obsPath);
+            nameSet = DatasetAid.sacFileNameSet(obsPath);
         } catch (Exception e3) {
             throw new RuntimeException(obsPath + " may have problems");
         }

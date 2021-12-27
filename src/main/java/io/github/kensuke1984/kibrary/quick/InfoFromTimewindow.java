@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -20,7 +20,7 @@ public class InfoFromTimewindow {
 
 	public static void main(String[] args) throws IOException {
 		Path timewindowpath = Paths.get(args[0]);
-		String tmpString = GadgetUtils.getTemporaryString();
+		String tmpString = GadgetAid.getTemporaryString();
 		Path stationFile = Paths.get("station" + tmpString + ".inf");
 		Path eventFile = Paths.get("event" + tmpString + ".inf");
 		

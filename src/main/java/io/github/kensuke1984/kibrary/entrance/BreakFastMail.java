@@ -9,7 +9,7 @@ import java.util.Objects;
 import org.apache.commons.mail.DefaultAuthenticator;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * BREQ_FAST request Mail
@@ -36,12 +36,12 @@ public class BreakFastMail {
 
     private static synchronized DefaultAuthenticator createAuthenticator() throws InterruptedException {
         return Objects.nonNull(authenticator) ? authenticator :
-                new DefaultAuthenticator(Environment.getGmail(), GadgetUtils.getPassword(Environment.getGmail()));
+                new DefaultAuthenticator(Environment.getGmail(), GadgetAid.getPassword(Environment.getGmail()));
     }
 
     private static void sendIris(String[] lines) throws Exception {
         if (Objects.isNull(authenticator)) authenticator = createAuthenticator();
-        GadgetUtils.sendGmail("Request" + GadgetUtils.getTemporaryString(), IRIS_EMAIL, lines, authenticator);
+        GadgetAid.sendGmail("Request" + GadgetAid.getTemporaryString(), IRIS_EMAIL, lines, authenticator);
     }
 
     /**

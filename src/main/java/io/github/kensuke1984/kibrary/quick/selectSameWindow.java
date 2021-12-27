@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,7 +30,7 @@ public class selectSameWindow {
 				selectedwindow.add(tmplist.get(0));
 		}
 		
-		Path outpath = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
+		Path outpath = Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".dat");
 		TimewindowDataFile.write(selectedwindow, outpath);
 		
 	}

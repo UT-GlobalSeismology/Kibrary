@@ -15,9 +15,9 @@ import java.util.function.Consumer;
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class ThreadUtils {
+public final class ThreadAid {
 
-    private ThreadUtils() {
+    private ThreadAid() {
     }
 
     public static ExecutorService createFixedThreadPool() {
@@ -62,7 +62,7 @@ public final class ThreadUtils {
         long startTime = System.nanoTime();
 
         ExecutorService exec = createFixedThreadPool();
-        for (EventFolder eventDirectory : DatasetUtils.eventFolderSet(workPath))
+        for (EventFolder eventDirectory : DatasetAid.eventFolderSet(workPath))
             exec.execute(() -> process.accept(eventDirectory));
         exec.shutdown();
         try {

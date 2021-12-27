@@ -19,10 +19,10 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -174,29 +174,29 @@ public class FilterDivider implements Operation {
         System.err.println(FilterDivider.class.getName() + " is operating.");
         divider.run();
         System.err.println(FilterDivider.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
         Set<EventFolder> eventDirs = new HashSet<>();
-        eventDirs.addAll(Files.exists(obsPath) ? DatasetUtils.eventFolderSet(obsPath) : Collections.emptySet());
-        eventDirs.addAll(Files.exists(synPath) ? DatasetUtils.eventFolderSet(synPath) : Collections.emptySet());
-        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
+        eventDirs.addAll(Files.exists(obsPath) ? DatasetAid.eventFolderSet(obsPath) : Collections.emptySet());
+        eventDirs.addAll(Files.exists(synPath) ? DatasetAid.eventFolderSet(synPath) : Collections.emptySet());
+        if (!DatasetAid.checkEventNum(eventDirs.size())) {
             return;
         }
 
-        outPath = workPath.resolve("filtered" + GadgetUtils.getTemporaryString());
+        outPath = workPath.resolve("filtered" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
-        ExecutorService es = ThreadUtils.createFixedThreadPool();
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
             System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "%");
-            ThreadUtils.sleep(100);
+            ThreadAid.sleep(100);
         }
         System.err.println("\rFiltering finished.");
     }

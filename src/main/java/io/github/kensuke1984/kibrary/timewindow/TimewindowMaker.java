@@ -27,8 +27,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -161,7 +161,7 @@ public class TimewindowMaker implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        String date = GadgetUtils.getTemporaryString();
+        String date = GadgetAid.getTemporaryString();
         outputPath = workPath.resolve("timewindow" + date + ".dat");
         invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
         timewindowSet = Collections.synchronizedSet(new HashSet<>());
@@ -204,14 +204,14 @@ public class TimewindowMaker implements Operation {
         System.err.println(TimewindowMaker.class.getName() + " is operating.");
         twm.run();
         System.err.println(TimewindowMaker.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
     public void run() throws IOException {
         System.out.println("Using exFrontShift = " + EX_FRONT_SHIFT);
         System.err.println("Invalid files, if any, will be listed in " + invalidList);
-        ThreadUtils.runEventProcess(workPath, eventDir -> {
+        ThreadAid.runEventProcess(workPath, eventDir -> {
             try {
                 eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
                         .forEach(sfn -> {

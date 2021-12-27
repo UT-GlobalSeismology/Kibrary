@@ -13,7 +13,7 @@ import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 public class SelectInBouncingRegion {
@@ -29,7 +29,7 @@ public class SelectInBouncingRegion {
 		try {
 			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 			Set<TimewindowData> selectedWindows = selectRegion(timewindows, lonmin, lonmax, latmin, latmax);
-			Path outpath = Paths.get("timewindows" + GadgetUtils.getTemporaryString() + ".dat");
+			Path outpath = Paths.get("timewindows" + GadgetAid.getTemporaryString() + ".dat");
 			TimewindowDataFile.write(selectedWindows, outpath);
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.inversion.addons.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveform.*;
@@ -77,7 +77,7 @@ public class CheckerBoardTest implements Operation {
 	}
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(CheckerBoardTest.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(CheckerBoardTest.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan CheckerBoardTest");
 			pw.println("##Path of a working folder (.)");
@@ -115,7 +115,7 @@ public class CheckerBoardTest implements Operation {
 		System.err.println(CheckerBoardTest.class.getName() + " is going.");
 		cbt.run();
 		System.err.println(
-				CheckerBoardTest.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - time));
+				CheckerBoardTest.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - time));
 	}
 	
 	private void checkAndPutDefaults() {
@@ -287,7 +287,7 @@ public class CheckerBoardTest implements Operation {
 		RealVector pseudoM = readPseudoM();
 		RealVector pseudoD = computePseudoD(pseudoM);
 		RealVector bornVec = pseudoD.add(getSynVector());
-		String dateStr = GadgetUtils.getTemporaryString();
+		String dateStr = GadgetAid.getTemporaryString();
 		Path outIDPath = workPath.resolve("pseudoID" + dateStr + ".dat");
 		Path outDataPath = workPath.resolve("pseudo" + dateStr + ".dat");
 

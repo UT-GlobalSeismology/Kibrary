@@ -43,8 +43,8 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -209,7 +209,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(ObservedSyntheticDatasetMaker_SpcTest.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(ObservedSyntheticDatasetMaker_SpcTest.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan ObservedSyntheticDatasetMaker");
 			pw.println("##Path of a working directory (.)");
@@ -337,7 +337,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		try {
 			List<double[]> ranges = new ArrayList<>();
 			
-			Set<SACFileName> sacfilenames = DatasetUtils.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+			Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
 			
 //			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
 			for (SACFileName name : sacfilenames) {
@@ -386,7 +386,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		System.err.println(ObservedSyntheticDatasetMaker_SpcTest.class.getName() + " is running.");
 		osdm.run();
 		System.err.println(ObservedSyntheticDatasetMaker_SpcTest.class.getName() + " finished in "
-				+ GadgetUtils.toTimeString(System.nanoTime() - startT));
+				+ GadgetAid.toTimeString(System.nanoTime() - startT));
 
 	}
 
@@ -430,7 +430,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 		}
 
 		// obsDirからイベントフォルダを指定
-		eventDirs = DatasetUtils.eventFolderSet(obsPath);
+		eventDirs = DatasetAid.eventFolderSet(obsPath);
 		
 		if (timewindowRefPath != null)
 			timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)
@@ -464,7 +464,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 			int n = Runtime.getRuntime().availableProcessors();
 			System.out.println("Running on " + n + " processors");
 			ExecutorService execs = Executors.newFixedThreadPool(n);
-			String dateStr = GadgetUtils.getTemporaryString();
+			String dateStr = GadgetAid.getTemporaryString();
 			Path waveIDPath = null;
 			Path waveformPath = null;
 			Path waveRefIDPath = null;

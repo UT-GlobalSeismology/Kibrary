@@ -30,8 +30,8 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -164,7 +164,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(ObservedSyntheticDatasetMaker_RND.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(ObservedSyntheticDatasetMaker_RND.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan ObservedSyntheticDatasetMaker");
 			pw.println("##Path of a working directory (.)");
@@ -258,7 +258,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	private void readPeriodRanges() {
 		try {
 			List<double[]> ranges = new ArrayList<>();
-			for (SACFileName name : DatasetUtils.sacFileNameSet(obsPath)) {
+			for (SACFileName name : DatasetAid.sacFileNameSet(obsPath)) {
 				if (!name.isOBS())
 					continue;
 				SACHeaderAccess header = name.readHeader();
@@ -300,7 +300,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 		System.err.println(ObservedSyntheticDatasetMaker_RND.class.getName() + " is running.");
 		osdm.run();
 		System.err.println(ObservedSyntheticDatasetMaker_RND.class.getName() + " finished in "
-				+ GadgetUtils.toTimeString(System.nanoTime() - startT));
+				+ GadgetAid.toTimeString(System.nanoTime() - startT));
 
 	}
 
@@ -310,7 +310,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 			staticCorrectionSet = StaticCorrectionDataFile.read(staticCorrectionPath);
 
 		// obsDirからイベントフォルダを指定
-		eventDirs = DatasetUtils.eventFolderSet(obsPath);
+		eventDirs = DatasetAid.eventFolderSet(obsPath);
 		timewindowInformationSet = TimewindowDataFile.read(timewindowPath);
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowData::getObserver)
 				.collect(Collectors.toSet());

@@ -22,9 +22,9 @@ import org.apache.commons.io.IOUtils;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -189,7 +189,7 @@ public class SyntheticDSMSetup implements Operation {
         System.err.println(SyntheticDSMSetup.class.getName() + " is operating.");
         sdsms.run();
         System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     /**
@@ -198,8 +198,8 @@ public class SyntheticDSMSetup implements Operation {
      */
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(obsPath);
-        if (!DatasetUtils.checkEventNum(eventDirs.size())) {
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
+        if (!DatasetAid.checkEventNum(eventDirs.size())) {
             return;
         }
 
@@ -301,7 +301,7 @@ public class SyntheticDSMSetup implements Operation {
             }
         }
 
-        Path outPath = workPath.resolve("synthetic" + GadgetUtils.getTemporaryString());
+        Path outPath = workPath.resolve("synthetic" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 

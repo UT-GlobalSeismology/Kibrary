@@ -2,7 +2,7 @@ package io.github.kensuke1984.anisotime;
 
 import javax.swing.*;
 
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -134,7 +134,7 @@ class EULA extends JDialog {
             System.err.println(EULA);
             System.err.println("If you accept the terms of the agreement, type \"yes\". (yes/No)");
             try {
-                String input = GadgetUtils.readInputLine();
+                String input = GadgetAid.readInputLine();
                 if (input.equals("yes") || input.equals("Yes"))
                     return true;
                 System.exit(71);

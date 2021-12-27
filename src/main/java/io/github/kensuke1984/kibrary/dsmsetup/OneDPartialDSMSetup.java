@@ -17,9 +17,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -74,12 +74,12 @@ public class OneDPartialDSMSetup implements Operation {
 		System.err.println(OneDPartialDSMSetup.class.getName() + " is going.");
 		opds.run();
 		System.err.println(OneDPartialDSMSetup.class.getName() + " finished in "
-				+ GadgetUtils.toTimeString(System.nanoTime() - start));
+				+ GadgetAid.toTimeString(System.nanoTime() - start));
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(OneDPartialDSMSetup.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+				.get(OneDPartialDSMSetup.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan OneDPartialDSMSetup");
 			pw.println("##These properties for SshDSMInformationFileMaker");
@@ -150,7 +150,7 @@ public class OneDPartialDSMSetup implements Operation {
 			tmpwindows = TimewindowDataFile.read(timewindowInformationPath);
 		final Set<TimewindowData> timewindows = tmpwindows;
 
-		Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
+		Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
 		PolynomialStructure ps = PolynomialStructure.PREM;
 		if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
 			ps = PolynomialStructure.PREM;
@@ -163,7 +163,7 @@ public class OneDPartialDSMSetup implements Operation {
 		}
 		else
 			ps = new PolynomialStructure(structurePath);
-		String temporaryString = GadgetUtils.getTemporaryString();
+		String temporaryString = GadgetAid.getTemporaryString();
 		Path output = workPath.resolve("oneDPartial" + temporaryString);
 		Files.createDirectories(output);
 		Set<SACComponent> useComponents = components;

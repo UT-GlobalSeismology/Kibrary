@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveform;
 
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -91,7 +91,7 @@ public final class PartialIDFile {
 			System.err.println("\rReading partial data ... 100.0 %");
 		}
 		if (chooser != null) ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
-		System.err.println("Partial data are read in " + GadgetUtils.toTimeString(System.nanoTime() - t));
+		System.err.println("Partial data are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
 		return ids;
 	}
 	
@@ -110,7 +110,7 @@ public final class PartialIDFile {
 					dis.skipBytes((cumulativeNPTS[partialIndexes[i+1]] - cumulativeNPTS[partialIndexes[i] + 1]) * 8);
 			}
 		}
-		System.err.println("Partial waveforms are read in " + GadgetUtils.toTimeString(System.nanoTime() - t));
+		System.err.println("Partial waveforms are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
 		return idsNoData;
 	}
 
@@ -171,7 +171,7 @@ public final class PartialIDFile {
 			IntStream.range(0, nid).parallel()
 				.forEach(i -> ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, phases, perturbationLocations));
 			System.err
-					.println(ids.length + " partial IDs are read in " + GadgetUtils.toTimeString(System.nanoTime() - t));
+					.println(ids.length + " partial IDs are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
 			return ids;
 		}
 	}

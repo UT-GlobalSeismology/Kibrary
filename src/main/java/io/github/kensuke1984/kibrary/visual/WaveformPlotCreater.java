@@ -20,9 +20,9 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -123,13 +123,13 @@ public class WaveformPlotCreater implements Operation {
        System.err.println(WaveformPlotCreater.class.getName() + " is operating.");
        wpc.run();
        System.err.println(WaveformPlotCreater.class.getName() + " finished in "
-               + GadgetUtils.toTimeString(System.nanoTime() - startTime));
+               + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }
 
    @Override
    public void run() throws IOException {
-       Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
-       if (!DatasetUtils.checkEventNum(eventDirs.size())) {
+       Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
+       if (!DatasetAid.checkEventNum(eventDirs.size())) {
            return;
        }
 

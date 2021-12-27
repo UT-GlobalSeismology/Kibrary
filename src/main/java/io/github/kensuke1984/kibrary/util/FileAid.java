@@ -30,7 +30,7 @@ import org.apache.commons.io.IOUtils;
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class FileUtils {
+public final class FileAid {
 
     /**
      * Moves a given file to a specified directory.

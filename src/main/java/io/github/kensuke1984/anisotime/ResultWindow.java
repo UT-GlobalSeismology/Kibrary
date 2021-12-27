@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -88,10 +88,10 @@ class ResultWindow extends javax.swing.JPanel {
      * @param travelTime         [s]
      */
     void addRow(double epicentralDistance, double depth, String phase, double travelTime, double rayparameter) {
-        String delta = MathUtils.roundToString(epicentralDistance, 2);
-        String depthS = MathUtils.roundToString(depth, 2);
-        String p = MathUtils.roundToString(rayparameter, 2);
-        String time = MathUtils.roundToString(travelTime, 2);
+        String delta = MathAid.roundToString(epicentralDistance, 2);
+        String depthS = MathAid.roundToString(depth, 2);
+        String p = MathAid.roundToString(rayparameter, 2);
+        String time = MathAid.roundToString(travelTime, 2);
         try {
             SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1.getModel()))
                     .addRow(new String[]{delta, depthS, phase, time, p}));

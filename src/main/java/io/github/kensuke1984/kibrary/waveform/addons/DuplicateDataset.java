@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -25,7 +25,7 @@ public class DuplicateDataset {
 		Path dataPath0 = Paths.get(args[1]);
 		Path idPath1 = Paths.get(args[2]);
 		Path dataPath1 = Paths.get(args[3]);
-		String temporaryString = GadgetUtils.getTemporaryString(); 
+		String temporaryString = GadgetAid.getTemporaryString(); 
 		Path idOutPath = Paths.get("waveformID" + temporaryString + ".dat");
 		Path dataOutPath = Paths.get("waveform" + temporaryString + ".dat");
 		

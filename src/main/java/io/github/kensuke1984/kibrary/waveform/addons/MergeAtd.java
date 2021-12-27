@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 public class MergeAtd {
 	public static void main(String[] args) throws IOException {
@@ -36,7 +36,7 @@ public class MergeAtd {
 			}
 		}
 		
-		Path outpath = Paths.get("atd" + GadgetUtils.getTemporaryString() + ".dat");
+		Path outpath = Paths.get("atd" + GadgetAid.getTemporaryString() + ".dat");
 		AtdFile.write(atdList, header.getWeightingTypes(), header.getFrequencyRanges()
 				, header.getPartialTypes(), header.getCorrectionTypes(), outpath);
 	}

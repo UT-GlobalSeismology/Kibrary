@@ -14,7 +14,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.EnumUtils;
 
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Main procedures in Kibrary
@@ -34,7 +34,7 @@ public interface Operation {
             }
             if (list.isEmpty()) throw new NoSuchFileException("No property file is found");
             System.err.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
-            String input = GadgetUtils.readInputLine();
+            String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
             return list.get(Integer.parseInt(input) - 1);
         }
@@ -49,7 +49,7 @@ public interface Operation {
         if (args.length == 0) {
             Manhattan.printList();
             System.err.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
-            String input = GadgetUtils.readInputLine();
+            String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(1);
             args = new String[]{Manhattan.valueOf(Integer.parseInt(input)).toString()};
         }

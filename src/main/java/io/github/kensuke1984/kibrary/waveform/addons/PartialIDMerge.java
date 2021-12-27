@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -37,7 +37,7 @@ class PartialIDMerge {
 		
 		PartialID[] src0 = PartialIDFile.read(src0ID, src0Data);
 		PartialID[] src1 = PartialIDFile.read(src1ID, src1Data);
-		String tmpstr = GadgetUtils.getTemporaryString();
+		String tmpstr = GadgetAid.getTemporaryString();
 		Path idPath = workingDir.resolve("partialID" + tmpstr + ".dat");
 		Path dataPath = workingDir.resolve("partial" + tmpstr + ".dat");
 		

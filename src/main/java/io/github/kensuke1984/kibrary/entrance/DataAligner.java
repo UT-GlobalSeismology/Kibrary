@@ -7,10 +7,10 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.ThreadUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
  * Constructs the dataset from downloaded mseed or seed files.
@@ -60,7 +60,7 @@ public class DataAligner {
         System.err.println(DataAligner.class.getName() + " is starting.");
         aligner.align();
         System.err.println(DataAligner.class.getName() + " finished in " +
-                GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
 
     }
 
@@ -75,9 +75,9 @@ public class DataAligner {
         Path workPath = Paths.get(".");
 
         // import event directories in working directory
-        Set<EventFolder> eventDirs = DatasetUtils.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
         int n_total = eventDirs.size();
-        if (!DatasetUtils.checkEventNum(n_total)) {
+        if (!DatasetAid.checkEventNum(n_total)) {
             return;
         }
 
@@ -111,12 +111,12 @@ public class DataAligner {
             }
         });
 
-        ExecutorService es = ThreadUtils.createFixedThreadPool();
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
-        System.err.println("Finishing up ...");
+        System.err.println("Straightening SAC files ...");
         while (!es.isTerminated()) {
-            ThreadUtils.sleep(100);
+            ThreadAid.sleep(100);
         }
     }
 

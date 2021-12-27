@@ -12,8 +12,8 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
@@ -220,7 +220,7 @@ public class LetMeInvert implements Operation {
 		if (PROPERTY.containsKey("outPath"))
 			outPath = getPath("outPath");
 		else
-			outPath = workPath.resolve(Paths.get("lmi" + GadgetUtils.getTemporaryString()));
+			outPath = workPath.resolve(Paths.get("lmi" + GadgetAid.getTemporaryString()));
 		stationInformationPath = getPath("stationInformationPath");
 		waveformIDPath = getPath("waveformIDPath");
 		waveformPath = getPath("waveformPath");
@@ -392,7 +392,7 @@ public class LetMeInvert implements Operation {
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(LetMeInvert.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(LetMeInvert.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan LetMeInvert");
 			pw.println("##These properties for LetMeInvert");
@@ -507,7 +507,7 @@ public class LetMeInvert implements Operation {
 	public LetMeInvert(Path workPath, Set<Observer> stationSet, ObservationEquation equation) throws IOException {
 		eq = equation;
 		this.stationSet = stationSet;
-		workPath.resolve("lmi" + GadgetUtils.getTemporaryString());
+		workPath.resolve("lmi" + GadgetAid.getTemporaryString());
 		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 	}
 
@@ -944,7 +944,7 @@ public class LetMeInvert implements Operation {
 			
 			boolean writeTMPata = false;
 			if (writeTMPata) {
-				String tempString = GadgetUtils.getTemporaryString();
+				String tempString = GadgetAid.getTemporaryString();
 				//write AtA for later use
 				Path outputPath = workPath.resolve("ata" + tempString + ".dat");
 				FrequencyRange frequencyRange = new FrequencyRange(1./ids[0].getMaxPeriod(), 1./ids[0].getMinPeriod());
@@ -1082,7 +1082,7 @@ public class LetMeInvert implements Operation {
 			for (int i = 1; i < cumulativeNPTS.length; i++)
 				cumulativeNPTS[i] = cumulativeNPTS[i-1] + partialIDsNoData[i-1].getNpts();
 			
-			String tempString = GadgetUtils.getTemporaryString();
+			String tempString = GadgetAid.getTemporaryString();
 			for (int istep = 0; istep < nStepsForLowMemoryMode; istep++) {
 				System.out.println("Step " + istep);
 				int startIndex = istep * nIDPerStep;
@@ -1626,7 +1626,7 @@ public class LetMeInvert implements Operation {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.err.println("Inversion is done in " + GadgetUtils.toTimeString(System.nanoTime() - start));
+		System.err.println("Inversion is done in " + GadgetAid.toTimeString(System.nanoTime() - start));
 	}
 	
     /**
@@ -2053,7 +2053,7 @@ public class LetMeInvert implements Operation {
 		long startT = System.nanoTime();
 		lmi.run();
 		System.err.println(
-				LetMeInvert.class.getName() + " finished in " + GadgetUtils.toTimeString(System.nanoTime() - startT));
+				LetMeInvert.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
 	}
 	
 	/**
@@ -2210,7 +2210,7 @@ public class LetMeInvert implements Operation {
 		double[] aic = new double[variance.length];
 		int independentN = (int) (eq.getDlength() / alpha);
 		for (int i = 0; i < aic.length; i++)
-			aic[i] = MathUtils.computeAIC(variance[i], independentN, i);
+			aic[i] = MathAid.computeAIC(variance[i], independentN, i);
 		return aic;
 	}
 

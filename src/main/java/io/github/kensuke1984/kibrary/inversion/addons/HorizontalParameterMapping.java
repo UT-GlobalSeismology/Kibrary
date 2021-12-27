@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.MathUtils;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -197,7 +197,7 @@ public class HorizontalParameterMapping {
 		for (int i = 0; i < radii.size(); i++) {
 			double r = radii.get(i);
 			for (int k = 0; k < originalUnknowns.length; k++) {
-				if (MathUtils.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
+				if (MathAid.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
 					for (int l = 0; l < positionOriginalToNewIndex.size(); l++) {
 						HorizontalPosition position = positions.get(l);
 						if (position.equals(originalUnknowns[k].getLocation().toHorizontalPosition())) {

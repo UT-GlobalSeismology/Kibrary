@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.quick;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -34,11 +34,11 @@ public class ExcludeTimewindow {
 	public static void main(String[] args) {
 		Path timewindowFile = Paths.get(args[0]);
 //		Path timewindowASCIIFile = Paths.get(args[1]);
-		Path newTimewindowFile = Paths.get("timewindow" + GadgetUtils.getTemporaryString() + ".dat");
+		Path newTimewindowFile = Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".dat");
 		
 //		Path timewindowFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s/timewindow_PPcP.dat");
 		
-		String tmpS = GadgetUtils.getTemporaryString();
+		String tmpS = GadgetAid.getTemporaryString();
 		Path newTimewindowFile1 = Paths.get("timewindow1_" + tmpS + ".dat");
 		Path newTimewindowFile2 = Paths.get("timewindow2_" + tmpS + ".dat");
 		

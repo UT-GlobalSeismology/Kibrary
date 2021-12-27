@@ -2,7 +2,7 @@ package io.github.kensuke1984.anisotime;
 
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 import java.io.Serializable;
 import java.util.*;
@@ -323,12 +323,12 @@ public class Phase implements Serializable {
         int numK = kPlace.size();
         int numI = iPlace.size();
         int numJ = jPlace.size();
-        double[][] pvRadii = GadgetUtils.makePatterns(numP, mantleBoundaries);
-        double[][] svRadii = GadgetUtils.makePatterns(numS, mantleBoundaries);
+        double[][] pvRadii = GadgetAid.makePatterns(numP, mantleBoundaries);
+        double[][] svRadii = GadgetAid.makePatterns(numS, mantleBoundaries);
         //TODO no checked
-        double[][] kvRadii = GadgetUtils.makePatterns(numK, outercoreBoundaries);
-        double[][] ivRadii = GadgetUtils.makePatterns(numI, innercoreBoundaries);
-        double[][] jvRadii = GadgetUtils.makePatterns(numJ, innercoreBoundaries);
+        double[][] kvRadii = GadgetAid.makePatterns(numK, outercoreBoundaries);
+        double[][] ivRadii = GadgetAid.makePatterns(numI, innercoreBoundaries);
+        double[][] jvRadii = GadgetAid.makePatterns(numJ, innercoreBoundaries);
         List<String> phaseList = new ArrayList<>();
         for (double[] pvRadius : pvRadii)
             for (double[] svRadius : svRadii)

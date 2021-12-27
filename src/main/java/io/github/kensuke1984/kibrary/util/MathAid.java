@@ -8,7 +8,7 @@ import org.apache.commons.math3.util.FastMath;
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class MathUtils {
+public final class MathAid {
 
     /**
      * @param variance variance

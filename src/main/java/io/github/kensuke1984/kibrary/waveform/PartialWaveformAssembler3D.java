@@ -34,10 +34,10 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
-import io.github.kensuke1984.kibrary.util.SpcFileUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -635,7 +635,7 @@ public class PartialWaveformAssembler3D implements Operation {
     private double dtheta;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(PartialWaveformAssembler3D.class.getName() + GadgetUtils.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(PartialWaveformAssembler3D.class.getName() + GadgetAid.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan PartialWaveformAssembler3D");
             pw.println("##Path of a working folder (.)");
@@ -792,7 +792,7 @@ public class PartialWaveformAssembler3D implements Operation {
     private void setLog() throws IOException {
         synchronized (PartialWaveformAssembler3D.class) {
             do {
-                dateString = GadgetUtils.getTemporaryString();
+                dateString = GadgetAid.getTemporaryString();
                 logPath = workPath.resolve("pdm" + dateString + ".log");
             } while (Files.exists(logPath));
             Files.createFile(logPath);
@@ -896,7 +896,7 @@ public class PartialWaveformAssembler3D implements Operation {
         // time partials for each event
         if (timePartialPath != null) {
             ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-            Set<EventFolder> timePartialEventDirs = DatasetUtils.eventFolderSet(timePartialPath);
+            Set<EventFolder> timePartialEventDirs = DatasetAid.eventFolderSet(timePartialPath);
             for (EventFolder eventDir : timePartialEventDirs) {
                 execs.execute(new WorkerTimePartial(eventDir));
                 System.out.println("Working for time partials for " + eventDir);
@@ -930,12 +930,12 @@ public class PartialWaveformAssembler3D implements Operation {
             List<SPCFileName> bpFiles = null;
             List<SPCFileName> bpFiles_PSV = null;
             if (mode.equals("SH"))
-                bpFiles = SpcFileUtils.collectOrderedSHSpcFileName(bpModelPath);
+                bpFiles = SpcFileAid.collectOrderedSHSpcFileName(bpModelPath);
             else if (mode.equals("PSV"))
-                bpFiles = SpcFileUtils.collectOrderedPSVSpcFileName(bpModelPath);
+                bpFiles = SpcFileAid.collectOrderedPSVSpcFileName(bpModelPath);
             else if (mode.equals("BOTH")) {
-                bpFiles = SpcFileUtils.collectOrderedSHSpcFileName(bpModelPath);
-                bpFiles_PSV = SpcFileUtils.collectOrderedPSVSpcFileName(bpModelPath);
+                bpFiles = SpcFileAid.collectOrderedSHSpcFileName(bpModelPath);
+                bpFiles_PSV = SpcFileAid.collectOrderedPSVSpcFileName(bpModelPath);
             }
             System.out.println(bpFiles.size() + " bpfiles are found");
 
@@ -1157,14 +1157,14 @@ public class PartialWaveformAssembler3D implements Operation {
         System.err.println(PartialWaveformAssembler3D.class.getName() + " is going..");
         pwa.run();
         System.err.println(PartialWaveformAssembler3D.class.getName() + " finished in "
-                + GadgetUtils.toTimeString(System.nanoTime() - startTime));
+                + GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     private void terminate() throws IOException {
         partialDataWriter.close();
         endTime = System.nanoTime();
         long nanoSeconds = endTime - startTime;
-        String endLine = "Everything is done in " + GadgetUtils.toTimeString(nanoSeconds) + ". Over n out! ";
+        String endLine = "Everything is done in " + GadgetAid.toTimeString(nanoSeconds) + ". Over n out! ";
         System.err.println(endLine);
         writeLog(endLine);
         writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");

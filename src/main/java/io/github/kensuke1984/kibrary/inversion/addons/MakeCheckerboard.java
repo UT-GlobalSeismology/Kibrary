@@ -14,7 +14,7 @@ import java.util.Map;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 public class MakeCheckerboard {
@@ -50,7 +50,7 @@ public class MakeCheckerboard {
 		double dv = 0.01;
 		PolynomialStructure structure 
 			= PolynomialStructure.PREM;
-		Path outDvFile = Paths.get("dv" + GadgetUtils.getTemporaryString() + ".inf");
+		Path outDvFile = Paths.get("dv" + GadgetAid.getTemporaryString() + ".inf");
 		
 		try {
 			BufferedReader reader = Files.newBufferedReader(horizontalSignFile);

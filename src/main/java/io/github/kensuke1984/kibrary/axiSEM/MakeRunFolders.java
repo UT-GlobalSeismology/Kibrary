@@ -24,8 +24,8 @@ import org.apache.commons.math3.util.FastMath;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetUtils;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -67,14 +67,14 @@ public class MakeRunFolders {
 			*/
 			
 			Path currentWorkingDir = Paths.get(System.getProperty("user.dir"));
-			Path syntheticFolder = currentWorkingDir.resolve("synthetic" + GadgetUtils.getTemporaryString());
+			Path syntheticFolder = currentWorkingDir.resolve("synthetic" + GadgetAid.getTemporaryString());
 			Path axiSEMFolder = Paths.get(args[0]);
 			Path axiSEMSolverFolder = axiSEMFolder.resolve("SOLVER");
 			
 			if (!Files.isDirectory(axiSEMSolverFolder))
 				throw new FileNotFoundException(axiSEMSolverFolder.toString());
 			
-			Set<EventFolder> eventFolderSet = DatasetUtils.eventFolderSet(currentWorkingDir);
+			Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(currentWorkingDir);
 			
 			Files.createDirectories(syntheticFolder);
 			

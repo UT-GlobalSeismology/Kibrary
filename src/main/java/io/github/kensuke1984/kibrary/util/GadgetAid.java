@@ -9,6 +9,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -33,7 +34,7 @@ import io.github.kensuke1984.kibrary.Environment;
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class GadgetUtils {
+public final class GadgetAid {
 
     /**
      * @param path      Path of the target
@@ -120,6 +121,19 @@ public final class GadgetUtils {
      */
     public static void println(Object... objs) {
         System.out.println(Arrays.stream(objs).map(Object::toString).collect(Collectors.joining(" ")));
+    }
+
+    /**
+     * Print a message into both a file and the standard error.
+     * @param pw (PrintWriter)
+     * @param output (String) message to print
+     *
+     * @author otsuru
+     * @since 2021/12/27
+     */
+    public static void dualPrintln(PrintWriter pw, String output) {
+        pw.println(output);
+        System.err.println(output);
     }
 
     /**

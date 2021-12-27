@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.GadgetUtils;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -359,7 +359,7 @@ public final class AtAFile {
 			
 			AtAEntry[][][][] ataEntries = create(bytes, weightingTypes, frequencyRanges, phases, unknownParameters);
 			System.err.println(
-					bytes.length + " AtA elements were found in " + GadgetUtils.toTimeString(System.nanoTime() - t));
+					bytes.length + " AtA elements were found in " + GadgetAid.toTimeString(System.nanoTime() - t));
 			return ataEntries;
 		}
 	}
