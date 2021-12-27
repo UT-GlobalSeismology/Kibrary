@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Merging of SAC files
@@ -26,17 +28,19 @@ class SegmentedSacMerger {
     /**
      * trash box for uneven files that are merged already マージに成功したファイルの行き先
      */
-    private Path unevenBoxPath;
+    private Path doneMergePath;
 
     /**
      * box for files that cannot be merged マージできなかったファイルの行き先
      */
-    private Path notMergedBoxPath;
+    private Path unMergedPath;
     /**
      * SacFileNameのリスト
      */
     private SacFileName[] sacFileNameList;
     private Set<SegmentedSacGroup> sacGroupSet = new HashSet<>();
+
+    private PrintWriter eliminatedWriter;
 
     /**
      *
@@ -45,10 +49,11 @@ class SegmentedSacMerger {
      * @param unMergedPath
      * @throws IOException
      */
-    SegmentedSacMerger(Path eventPath, Path doneMergePath, Path unMergedPath) throws IOException {
+    SegmentedSacMerger(Path eventPath, Path doneMergePath, Path unMergedPath, PrintWriter eliminatedWriter) throws IOException {
         this.eventPath = eventPath;
-        unevenBoxPath = doneMergePath;
-        notMergedBoxPath = unMergedPath;
+        this.doneMergePath = doneMergePath;
+        this.unMergedPath = unMergedPath;
+        this.eliminatedWriter = eliminatedWriter;
         listUpSacFiles();
     }
 
@@ -88,27 +93,27 @@ class SegmentedSacMerger {
         sacGroupSet.forEach(group -> {
             try {
                 if (!group.merge()) {
-                    System.err.println("!! failed to merge : " + eventPath.getFileName() + " - " + group.getRootSacFileName());
-                    group.move(notMergedBoxPath);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! failed to merge : " + eventPath.getFileName() + " - " + group.getRootSacFileName());
+                    group.move(unMergedPath);
                 }
             } catch (IOException e) {
                 // suppress IOException here so that we can output the group.getRootSacFileName()
-                System.err.println("!! failed to merge : " + eventPath.getFileName() + " - " + group.getRootSacFileName());
+                GadgetAid.dualPrintln(eliminatedWriter, "!! failed to merge : " + eventPath.getFileName() + " - " + group.getRootSacFileName());
                 e.printStackTrace();
-                group.move(notMergedBoxPath);
+                group.move(unMergedPath);
             }
         });
     }
 
     /**
-     * {@link #eventPath}内の {@link #sacFileNameList}のすべてを {@link #unevenBoxPath}
+     * {@link #eventPath}内の {@link #sacFileNameList}のすべてを {@link #doneMergePath}
      * にすてる
      */
     void move() {
         Arrays.stream(sacFileNameList).map(Object::toString).map(eventPath::resolve).filter(Files::exists)
                 .forEach(path -> {
                     try {
-                        FileAid.moveToDirectory(path, unevenBoxPath, true);
+                        FileAid.moveToDirectory(path, doneMergePath, true);
                     } catch (IOException e) {
                         // checked exceptions cannot be thrown here, so wrap it in unchecked exception
                         throw new UncheckedIOException(e);

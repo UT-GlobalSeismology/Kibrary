@@ -216,17 +216,17 @@ public class DataLobby implements Operation {
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 String mseedFileName = event + "." + GadgetAid.getTemporaryString() + ".mseed";
                 if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
-                    System.err.println("!! Data not found for " + event + ", skipping.");
+                    System.err.println("!!! Data not found for " + event + ", skipping.");
                     return;
                 }
 
                 // wait 2 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                System.err.println("++ Resting for 2 minutes ...");
+                System.err.println(" ~ Resting for 2 minutes ...");
                 ThreadAid.sleep(1000 * 60 * 2);
 
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
-                System.err.println("!! Download for " + event + " failed, skipping.");
+                System.err.println("!!! Download for " + event + " failed, skipping.");
                 e.printStackTrace();
             }
         });

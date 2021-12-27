@@ -113,11 +113,11 @@ class EventDataPreparer {
         URL url = new URL(urlString);
 
         try {
-            System.err.println("++ Downloading mseed file ...");
+            System.err.println(" ~ Downloading mseed file ...");
             Files.createDirectories(mseedSetPath);
             Path mseedPath = mseedSetPath.resolve(mseedFileName);
             double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println("++ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
+            System.err.println(" ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;
@@ -155,10 +155,10 @@ class EventDataPreparer {
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(mseedSetPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     flag = true;
-                    System.err.println("++ Opening " + mseedPath + " ...");
+                    System.err.println(" ~ Opening " + mseedPath + " ...");
                     // expand mseed file
                     if (!mseed2sac(mseedPath.getFileName().toString())) {
-                        System.err.println("!! mseed2sac for "+ mseedPath + " failed.");
+                        System.err.println("!!! mseed2sac for "+ mseedPath + " failed.");
                         return false;
                     }
                 }
@@ -168,7 +168,7 @@ class EventDataPreparer {
         if (flag) {
             return true;
         } else {
-            System.err.println("!! No mseed files found.");
+            System.err.println("!!! No mseed files found.");
             return false;
         }
     }
@@ -207,10 +207,10 @@ class EventDataPreparer {
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(seedSetPath, "*.seed")) {
                 for (Path seedPath : seedPaths) {
                     flag = true;
-                    System.err.println("++ Opening " + seedPath + " ...");
+                    System.err.println(" ~ Opening " + seedPath + " ...");
                     // expand seed file
                     if (!rdseed(seedPath.getFileName().toString())) {
-                        System.err.println("!! rdseed for "+ seedPath + " failed.");
+                        System.err.println("!!! rdseed for "+ seedPath + " failed.");
                         return false;
                     }
                 }
@@ -220,7 +220,7 @@ class EventDataPreparer {
         if (flag) {
             return true;
         } else {
-            System.err.println("!! No seed files found.");
+            System.err.println("!!! No seed files found.");
             return false;
         }
     }
@@ -332,7 +332,7 @@ class EventDataPreparer {
         }
 
         Files.createDirectories(stationSetPath);
-        System.err.println("++ Downloading XML files ...");
+        System.err.println(" ~ Downloading XML files ...");
 
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(mseedSetPath, "*.SAC")) {
             for (Path sacPath : sacPaths) {
@@ -391,7 +391,7 @@ class EventDataPreparer {
                 RespDataFile respData = new RespDataFile(network, station, location, channel);
                 if (!xml2resp(stationInfo, respData)) {
                     // if RESP file fails to be created, skip the SAC file
-                    System.err.println("!! xml2resp for "+ sacPath + " failed.");
+                    System.err.println("!!! xml2resp for "+ sacPath + " failed.");
                     continue;
                 }
 

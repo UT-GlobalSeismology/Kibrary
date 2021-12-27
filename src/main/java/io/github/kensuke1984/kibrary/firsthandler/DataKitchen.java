@@ -189,7 +189,7 @@ public class DataKitchen implements Operation {
             } catch (Exception e) {
                 // If there is something wrong, skip the event (suppress exceptions).
                 try {
-                    System.err.println(eventDir + " has problems. ");
+                    System.err.println("!!! " + eventDir + " has problems. ");
                     e.printStackTrace();
                 } catch (Exception e1) {
                     e1.printStackTrace();

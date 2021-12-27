@@ -106,7 +106,7 @@ public class DataAligner {
                 }
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
-                System.err.println("!! Operation for " + eventDir + " failed.");
+                System.err.println("!!! Operation for " + eventDir + " failed, skipping.");
                 e.printStackTrace();
             }
         });
@@ -116,9 +116,13 @@ public class DataAligner {
         es.shutdown();
         System.err.println("Straightening SAC files ...");
         while (!es.isTerminated()) {
+            System.err.print("\r " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
             ThreadAid.sleep(100);
         }
+        System.err.println("\r Finished handling all events.");
     }
+
+    private AtomicInteger processedFolders = new AtomicInteger(); // already processed
 
     private Runnable process(EventFolder eventDir) {
         return () -> {
@@ -130,8 +134,10 @@ public class DataAligner {
                     edp.configureFilesMseed();
                 }
             } catch (Exception e) {
-                System.err.println("Error on " + eventDir);
+                System.err.println("!!! Error on " + eventDir);
                 e.printStackTrace();
+            } finally {
+                processedFolders.incrementAndGet();
             }
         };
     }

@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +18,7 @@ import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -178,11 +180,16 @@ class EventProcessor implements Runnable {
     @Override
     public void run() {
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eliminatedLogPath))) {
-            eliminatedWriter = pw;
-
+        try {
             // create event directory
             Files.createDirectories(outputPath);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eliminatedLogPath, StandardOpenOption.CREATE_NEW))) {
+            eliminatedWriter = pw;
+
             // select, copy, and set up SAC files
             setupSacs();
             // merge segmented SAC files
@@ -236,7 +243,7 @@ class EventProcessor implements Runnable {
 
                 // check channel validity
                 if (!checkChannel(sacFile.getChannel())) {
-                    System.err.println("!! unsupported channel : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! unsupported channel : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
@@ -244,7 +251,7 @@ class EventProcessor implements Runnable {
                 // check location validity -> just display warning, but process the file nonetheless
                 // TODO: this may have to be modified or removed
                 if (!checkLocation(sacFile.getLocation())) {
-                    System.err.println("?? may be untrustworthy location : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    GadgetAid.dualPrintln(eliminatedWriter, "?? may be untrustworthy location : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     // continue; <- this file will not be skipped
                 }
@@ -272,7 +279,7 @@ class EventProcessor implements Runnable {
 
                 // reject stations at (0,0) <- these are most likely stations that do not have correct coordinates written in.
                 if (position.equals(new HorizontalPosition(0.0, 0.0))) {
-                    System.err.println("!! rejecting station at coordinate (0,0) : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! rejecting station at coordinate (0,0) : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
@@ -282,7 +289,7 @@ class EventProcessor implements Runnable {
                 // TODO: are there stations with downwards Z ?
                 if ((isVerticalChannel(sacFile.getChannel()) && MathAid.equalWithinEpsilon(inclination, 0, 0.01) == false)
                         || (!isVerticalChannel(sacFile.getChannel()) && MathAid.equalWithinEpsilon(inclination, 90, 0.01) == false)) {
-                    System.err.println("!! invalid inclination : " + event.getGlobalCMTID() + " - " + sacFile.toString());
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! invalid inclination : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
@@ -370,7 +377,7 @@ class EventProcessor implements Runnable {
      * @throws IOException
      */
     private void mergeSacSegments() throws IOException {
-        SegmentedSacMerger s = new SegmentedSacMerger(outputPath, doneMergePath, unMergedPath);
+        SegmentedSacMerger s = new SegmentedSacMerger(outputPath, doneMergePath, unMergedPath, eliminatedWriter);
         s.merge();
         s.move();
     }
@@ -397,8 +404,8 @@ class EventProcessor implements Runnable {
 
                 // check whether the file can be zero-padded
                 if (!sm.canInterpolate()) {
-                    System.err.println("!! unable to zero-pad : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(sacPath, unModifiedPath, true);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! unable to zero-pad : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
 
@@ -407,9 +414,9 @@ class EventProcessor implements Runnable {
 
                 // check whether the waveform has non-zero data
                 if (sm.isCompleteZero()) {
-                    System.err.println("!! waveform is 0 or NaN : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(sacPath, unModifiedPath, true);
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(sm.getModifiedPath(), unModifiedPath, true);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! waveform is 0 or NaN : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    FileAid.moveToDirectory(sacPath, unModifiedPath, true);
+                    FileAid.moveToDirectory(sm.getModifiedPath(), unModifiedPath, true);
                     continue;
                 }
 
@@ -420,7 +427,7 @@ class EventProcessor implements Runnable {
                 sm.rebuild();
 
                 // move SAC files after treatment into the merged folder
-                io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(sacPath, doneModifyPath, true);
+                FileAid.moveToDirectory(sacPath, doneModifyPath, true);
             }
         }
     }
@@ -453,26 +460,26 @@ class EventProcessor implements Runnable {
                 // If it fails, throw MOD files to trash
                 try {
                     if (!runEvalresp(headerMap, respPath)) {
-                        System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                        GadgetAid.dualPrintln(eliminatedWriter, "!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                         // throw MOD.* files which cannot produce SPECTRA to trash
-                        io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(modPath, invalidRespPath, true);
+                        FileAid.moveToDirectory(modPath, invalidRespPath, true);
                         continue;
                     }
                 } catch (IOException e) {
-                    System.err.println("!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                     e.printStackTrace();
                     // throw MOD.* files which cannot produce SPECTRA to trash
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(modPath, invalidRespPath, true);
+                    FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
                 }
 
                 // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
                 if (Files.exists(afterPath)) {
-                    System.err.println("!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw *.MOD files to duplicateComponentPath
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(modPath, duplicateComponentPath, true);
+                    FileAid.moveToDirectory(modPath, duplicateComponentPath, true);
                     // throw SPECTRA files to duplicateComponentPath
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(spectraPath, duplicateComponentPath, true);
+                    FileAid.moveToDirectory(spectraPath, duplicateComponentPath, true);
                     continue;
                 }
 
@@ -482,24 +489,24 @@ class EventProcessor implements Runnable {
                 try {
                     SacDeconvolution.compute(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
                 } catch (IOException e) {
-                    System.err.println("!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
                     e.printStackTrace();
                     // throw *.MOD files to trash
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(modPath, invalidRespPath, true);
+                    FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
                     // In case that outdated RESP file cannot produce any SPECTRA file,
                     // the existence condition is added (2021.08.21 kenji)
                     if(Files.exists(spectraPath)) {
-                        io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
+                        FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                     }
                     continue;
                 }
 
                 // move processed SPECTRA files to archive
-                io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(spectraPath, doneDeconvolvePath, true);
+                FileAid.moveToDirectory(spectraPath, doneDeconvolvePath, true);
 
                 // move processed MOD files to archive
-                io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(modPath, doneDeconvolvePath, true);
+                FileAid.moveToDirectory(modPath, doneDeconvolvePath, true);
             }
         }
 
@@ -554,18 +561,18 @@ class EventProcessor implements Runnable {
 
                 // throw away .X file if its pair .Y file does not exist
                 if (!Files.exists(yPath)) {
-                    System.err.println("!! pair .Y file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + xFile.toString());
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(xPath, unRotatedPath, true);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! pair .Y file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + xFile.toString());
+                    FileAid.moveToDirectory(xPath, unRotatedPath, true);
                     continue;
                 }
                 boolean rotated = SACUtil.rotate(xPath, yPath, rPath, tPath);
                 if (rotated) {
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(xPath, doneRotatePath, true);
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(yPath, doneRotatePath, true);
+                    FileAid.moveToDirectory(xPath, doneRotatePath, true);
+                    FileAid.moveToDirectory(yPath, doneRotatePath, true);
                 } else {
-                    System.err.println("!! rotate failed : " + event.getGlobalCMTID() + " - " + xFile.toString());
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(xPath, unRotatedPath, true);
-                    io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(yPath, unRotatedPath, true);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! rotate failed : " + event.getGlobalCMTID() + " - " + xFile.toString());
+                    FileAid.moveToDirectory(xPath, unRotatedPath, true);
+                    FileAid.moveToDirectory(yPath, unRotatedPath, true);
                 }
             }
         }
@@ -573,8 +580,8 @@ class EventProcessor implements Runnable {
         // If there are files (.Y) which had no pairs (.X), move them to trash
         try (DirectoryStream<Path> yPaths = Files.newDirectoryStream(outputPath, "*.Y")) {
             for (Path yPath : yPaths) {
-                System.err.println("!! pair .X file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + yPath.getFileName());
-                io.github.kensuke1984.kibrary.util.FileAid.moveToDirectory(yPath, unRotatedPath, true);
+                GadgetAid.dualPrintln(eliminatedWriter, "!! pair .X file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + yPath.getFileName());
+                FileAid.moveToDirectory(yPath, unRotatedPath, true);
             }
         }
     }
@@ -612,8 +619,6 @@ class EventProcessor implements Runnable {
         for (SacTriplet oneTriplet : sacTripletSet) {
             if (!oneTriplet.checkValidity()) {
                 throw new IllegalStateException("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
-                //oneTriplet.dismiss();
-                //oneTriplet.move(invalidTripletPath);
             }
         }
 
@@ -633,14 +638,14 @@ class EventProcessor implements Runnable {
 
                 // remove triplet that has less components, worst instruments, or larger location codes
                 if(oneTriplet.isInferiorTo(otherTriplet)) {
-                    System.err.println("!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
                             oneTriplet.getName() + " ( :: " + otherTriplet.getName() + " )");
                     oneTriplet.dismiss();
                     oneTriplet.move(duplicateInstrumentPath);
                     // there is no need to keep comparing anymore
                     break;
                 } else {
-                    System.err.println("!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
                             otherTriplet.getName() + " ( :: " + oneTriplet.getName() + " )");
                     otherTriplet.dismiss();
                     otherTriplet.move(duplicateInstrumentPath);
