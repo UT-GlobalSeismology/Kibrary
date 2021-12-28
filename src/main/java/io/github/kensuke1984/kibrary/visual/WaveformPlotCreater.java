@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -23,6 +24,7 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -59,6 +61,10 @@ public class WaveformPlotCreater implements Operation {
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
+    /**
+     * Events to work for. If this is empty, work for all events in workPath.
+     */
+    private Set<GlobalCMTID> tendEvents = new HashSet<>();
 
     private boolean splitComponents;
 
@@ -74,6 +80,8 @@ public class WaveformPlotCreater implements Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
+            pw.println("#tendEvents");
             pw.println("##(boolean) Whether to export individual files for each component (true)");
             pw.println("#splitComponents");
         }
@@ -92,6 +100,7 @@ public class WaveformPlotCreater implements Operation {
             throw new IllegalArgumentException("There is no information about basicIDPath.");
         if (!property.containsKey("basicPath"))
             throw new IllegalArgumentException("There is no information about basicPath.");
+        if (!property.containsKey("tendEvents")) property.setProperty("tendEvents", "");
         if (!property.containsKey("splitComponents")) property.setProperty("splitComponents", "true");
     }
 
@@ -108,6 +117,11 @@ public class WaveformPlotCreater implements Operation {
         basicPath = getPath("basicPath");
         if (!Files.exists(basicPath))
             throw new NoSuchFileException("The basic waveform file " + basicPath + " does not exist");
+
+        if (!property.getProperty("tendEvents").isEmpty()) {
+            tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)
+                    .collect(Collectors.toSet());
+        }
 
         splitComponents = Boolean.parseBoolean(property.getProperty("splitComponents"));
     }
@@ -128,14 +142,29 @@ public class WaveformPlotCreater implements Operation {
 
    @Override
    public void run() throws IOException {
-       Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
+       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+
+       // get all events included in basicIDs
+       Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+               .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       // eventDirs of events to be used
+       Set<EventFolder> eventDirs;
+       if (tendEvents.isEmpty()) {
+           eventDirs = allEvents.stream()
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       } else {
+           // choose only events that are included in tendEvents
+           eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       }
        if (!DatasetAid.checkEventNum(eventDirs.size())) {
            return;
        }
 
-       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
-
        for (EventFolder eventDir : eventDirs) {
+           // create event directory if it does not exist
+           Files.createDirectories(eventDir.toPath());
+
            if (splitComponents) {
                for (SACComponent component : components) {
                    BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
