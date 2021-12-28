@@ -26,7 +26,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * Event directories with a "sac" folder containing SAC files and a "resp" folder containing RESP files must be given as input.
  * Input SAC file names must be formatted (ex. "IU.MAJO.00.BH2.M.2014.202.14.44.00.000.SAC").
  * Output directory "processed*" will be created under the work path, and output event directories will be made under it.
- * Event if all data in an event directory are trashed, the empty event directory will be left.
+ * The log of trashed SAC files will be displayed in standard error and also written in log files under each event directory.
+ * Even if all data in an event directory are trashed, the empty event directory will be left.
  * In default settings, intermediate files created during this process will be deleted at the end.
  * If you want to see them, you have to explicitly specify to leave them.
  * <p>

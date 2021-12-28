@@ -214,6 +214,8 @@ public class FujiStaticCorrection implements Operation {
         while (!es.isTerminated()) {
             ThreadAid.sleep(1000);
         }
+        // this println() is for starting new line after writing "."s
+        System.err.println();
 
         System.err.println("Outputting in " + outputPath);
         StaticCorrectionDataFile.write(staticCorrectionSet, outputPath);
@@ -547,6 +549,7 @@ public class FujiStaticCorrection implements Operation {
                     }
                 }
             }
+            System.err.print(".");
         }
     }
 }

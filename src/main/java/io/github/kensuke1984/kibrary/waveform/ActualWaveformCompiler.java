@@ -469,12 +469,15 @@ public class ActualWaveformCompiler implements Operation {
            while (!es.isTerminated()){
                ThreadAid.sleep(1000);
            }
+           // this println() is for starting new line after writing "."s
+           System.err.println();
+
            envelopeWriter.close();
            hyWriter.close();
            spcAmpWriter.close();
            spcImWriter.close();
            spcReWriter.close();
-           System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
+           System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
        }
    }
 

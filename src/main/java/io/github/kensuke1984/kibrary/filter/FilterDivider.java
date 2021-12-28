@@ -194,11 +194,12 @@ public class FilterDivider implements Operation {
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
+        System.err.println("Filtering SAC files ...");
         while (!es.isTerminated()) {
-            System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "%");
+            System.err.print("\r " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
             ThreadAid.sleep(100);
         }
-        System.err.println("\rFiltering finished.");
+        System.err.println("\r Finished handling all events.");
     }
 
     private AtomicInteger processedFolders = new AtomicInteger(); // already processed

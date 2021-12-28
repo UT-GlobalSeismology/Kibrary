@@ -227,7 +227,10 @@ public class TimewindowMaker implements Operation {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            System.err.print(".");
         } , 10, TimeUnit.HOURS);
+        // this println() is for starting new line after writing "."s
+        System.err.println();
 
         if (timewindowSet.isEmpty()) {
             System.err.println("No timewindow is created.");
