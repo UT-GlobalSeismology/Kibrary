@@ -458,12 +458,19 @@ class EventProcessor implements Runnable {
 
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
 
-                // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
+                // on duplication of channel E&1 or N&2, choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
                 if (Files.exists(afterPath)) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! duplicate (1&E or 2&N) component : " + event.getGlobalCMTID() + " - " + afterName);
-                    // throw *.MOD files to duplicateComponentPath
-                    FileAid.moveToDirectory(modPath, duplicateComponentPath, true);
-                    continue;
+                    if (modFile.getComponent().equals("N") || modFile.getComponent().equals("E")) {
+                        GadgetAid.dualPrintln(eliminatedWriter, "!! duplicate (E&1 or N&2) component : " + event.getGlobalCMTID() + " - " + afterName);
+                        // throw the pre-existing .X or .Y to duplicateComponentPath (because that one should have been .1 or .2)
+                        FileAid.moveToDirectory(afterPath, duplicateComponentPath, true);
+                        // keep handling this current modFile
+                    } else {
+                        GadgetAid.dualPrintln(eliminatedWriter, "!! duplicate (E&1 or N&2) component : " + event.getGlobalCMTID() + " - " + afterName);
+                        // throw *.MOD files to duplicateComponentPath (because this one is .1 or .2)
+                        FileAid.moveToDirectory(modPath, duplicateComponentPath, true);
+                        continue;
+                    }
                 }
 
                 // run evalresp
