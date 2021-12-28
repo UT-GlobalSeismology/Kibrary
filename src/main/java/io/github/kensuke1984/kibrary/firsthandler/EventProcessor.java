@@ -265,14 +265,16 @@ class EventProcessor implements Runnable {
 
                 // check epicentral distance
                 if (distance < minDistance || maxDistance < distance) {
-                    //System.err.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
+                    // this is not written in standard error because it is too noisy
+                    eliminatedWriter.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
 
                 // check station coordinate
                 if (!position.isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude)) {
-                    //System.err.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString()); //too noisy
+                    // this is not written in standard error because it is too noisy
+                    eliminatedWriter.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
                 }
@@ -456,30 +458,35 @@ class EventProcessor implements Runnable {
 
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
 
+                // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
+                if (Files.exists(afterPath)) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! duplicate (1&E or 2&N) component : " + event.getGlobalCMTID() + " - " + afterName);
+                    // throw *.MOD files to duplicateComponentPath
+                    FileAid.moveToDirectory(modPath, duplicateComponentPath, true);
+                    continue;
+                }
+
                 // run evalresp
                 // If it fails, throw MOD files to trash
                 try {
                     if (!runEvalresp(headerMap, respPath)) {
-                        GadgetAid.dualPrintln(eliminatedWriter, "!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                        GadgetAid.dualPrintln(eliminatedWriter, "!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                         // throw MOD.* files which cannot produce SPECTRA to trash
                         FileAid.moveToDirectory(modPath, invalidRespPath, true);
                         continue;
                     }
                 } catch (IOException e) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! evalresp failed : " + event.getGlobalCMTID() + " - " + afterName);
                     e.printStackTrace();
                     // throw MOD.* files which cannot produce SPECTRA to trash
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
                 }
-
-                // duplication of channel E,N and 1,2  TODO: this should choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
-                if (Files.exists(afterPath)) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! duplicate channel : " + event.getGlobalCMTID() + " - " + afterName);
-                    // throw *.MOD files to duplicateComponentPath
-                    FileAid.moveToDirectory(modPath, duplicateComponentPath, true);
-                    // throw SPECTRA files to duplicateComponentPath
-                    FileAid.moveToDirectory(spectraPath, duplicateComponentPath, true);
+                // spectra file should be created by evalresp; if not, throw away the MOD file
+                if(!Files.exists(spectraPath)) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file not created : " + event.getGlobalCMTID() + " - " + afterName);
+                    // throw MOD.* files which cannot produce SPECTRA to trash
+                    FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     continue;
                 }
 
@@ -494,11 +501,7 @@ class EventProcessor implements Runnable {
                     // throw *.MOD files to trash
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
-                    // In case that outdated RESP file cannot produce any SPECTRA file,
-                    // the existence condition is added (2021.08.21 kenji)
-                    if(Files.exists(spectraPath)) {
-                        FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
-                    }
+                    FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                     continue;
                 }
 
