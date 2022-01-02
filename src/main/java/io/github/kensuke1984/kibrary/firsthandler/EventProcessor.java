@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
@@ -186,32 +187,42 @@ class EventProcessor implements Runnable {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        // This block (above) was seperated from the next block because the following BufferedWriter cannot be created
+        //  when the event directory does not yet exist.
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eliminatedLogPath, StandardOpenOption.CREATE_NEW))) {
             eliminatedWriter = pw;
 
-            // select, copy, and set up SAC files
-            setupSacs();
-            // merge segmented SAC files
-            mergeSacSegments();
-            // remove trend, zero-pad, and cut SAC files
-            modifySacs();
-            // instrumentation function deconvolution
-            deconvolveSacs();
-            // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
-            rotate();
-            // eliminating duplicate instruments and close stations
-            // this is done after everything else so that we don't lose usable data (ex. if we choose an unrotatable triplet)
-            duplicationElimination();
+            try {
+                // select, copy, and set up SAC files
+                setupSacs();
+                // merge segmented SAC files
+                mergeSacSegments();
+                // remove trend, zero-pad, and cut SAC files
+                modifySacs();
+                // instrumentation function deconvolution
+                deconvolveSacs();
+                // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
+                rotate();
+                // eliminating duplicate instruments and close stations
+                // this is done after everything else so that we don't lose usable data (ex. if we choose an unrotatable triplet)
+                duplicationElimination();
 
-            if (removeIntermediateFiles) removeIntermediateFiles();
+                if (removeIntermediateFiles) removeIntermediateFiles();
 
-            problem = check();
+                problem = check();
 
-            hasRun = true;
+                hasRun = true;
 
-            GadgetAid.dualPrintln(eliminatedWriter, "** " + event.getGlobalCMTID() + " finished");
+                GadgetAid.dualPrintln(eliminatedWriter, "** " + event.getGlobalCMTID() + " finished");
 
+            } catch (Exception e) {
+                // If anything wrong happens, export it in both standard error AND the log file.
+                // This is written inside the try-with-resources block because the PrintWriter will close after finishing its try block
+                e.printStackTrace();
+                eliminatedWriter.println(ExceptionUtils.getStackTrace(e));
+                return;
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -405,8 +416,15 @@ class EventProcessor implements Runnable {
                 SacModifier sm = new SacModifier(event, sacPath, byPDE);
 
                 // check whether the file can be zero-padded
-                if (!sm.canInterpolate()) {
+                if (!sm.canBeZeroPadded()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! unable to zero-pad : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    FileAid.moveToDirectory(sacPath, unModifiedPath, true);
+                    continue;
+                }
+
+                // check whether the file can be trimmed
+                if (!sm.canBeTrimmed()) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! unable to trim : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
@@ -426,7 +444,7 @@ class EventProcessor implements Runnable {
                 sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
-                sm.rebuild();
+                sm.trim();
 
                 // move SAC files after treatment into the merged folder
                 FileAid.moveToDirectory(sacPath, doneModifyPath, true);

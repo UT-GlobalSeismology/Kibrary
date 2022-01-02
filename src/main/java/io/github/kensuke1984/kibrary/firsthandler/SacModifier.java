@@ -41,6 +41,14 @@ class SacModifier {
      * sac start time when this instance is made
      */
     private LocalDateTime initialSacStartTime;
+    /**
+     * sac end time when this instance is made
+     */
+    private LocalDateTime initialSacEndTime;
+    /**
+     * event time
+     */
+    private LocalDateTime eventTime;
 
     /**
      * @param globalCMTData cmt data
@@ -56,36 +64,52 @@ class SacModifier {
         this.modifiedPath = sacPath.resolveSibling(modifiedFileName);
         this.event = globalCMTData;
         this.byPDE = byPDE;
-        setInitialSacStartTime();
+        eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
+        setInitialSacTimes();
     }
 
     /**
      * Sets {@link #initialSacStartTime}
      */
-    private void setInitialSacStartTime() {
+    private void setInitialSacTimes() {
         int year = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
         int jday = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
         int hour = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
         int min = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
         int sec = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
         int msec = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
+
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInNanos = (long) (b * 1000 * 1000 * 1000);
         initialSacStartTime =
                 LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(bInNanos);
+
+        double e = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
+        long eInNanos = (long) (e * 1000 * 1000 * 1000);
+        initialSacEndTime =
+                LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(eInNanos);
     }
 
     /**
-     * if the startTime of sac is after the event time, and the gap is bigger
-     * than taperTime, interpolation cannot be done. This method can be valid
-     * before {@link #interpolate()} because the method changes headers.
+     * If the startTime of this SAC is after the event time and the gap is bigger than taperTime,
+     * zero-padding cannot be done.
      *
      * @return (boolean) true if gap between sac starting time and event time is small enough
      * (smaller than {@link #taperTime})
      */
-    boolean canInterpolate() {
-        LocalDateTime eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
+    boolean canBeZeroPadded() {
+        // Sac start time in millisec - event time in millisec
         return eventTime.until(initialSacStartTime, ChronoUnit.MILLIS) < taperTime;
+    }
+
+    /**
+     * If the endTime of this SAC is before the event time, trimming will fail.
+     *
+     * @return (boolean) true if sac end time is after event time
+     */
+    boolean canBeTrimmed() {
+        // Sac end time in millisec - event time in millisec
+        return eventTime.until(initialSacEndTime, ChronoUnit.MILLIS) > 0.0;
     }
 
     /**
@@ -127,7 +151,7 @@ class SacModifier {
      * 補完の際、Sac開始の部分を幅 {@link #taperTime} でtaperをかけ、その前を０で補完する。 <br>
      * イベント時刻よりSac開始が早い場合、時刻の原点をイベント時刻にずらす。<br>
      * その後ヘッダーを更新する。その際、イベント情報も入力するので、震央距離も計算される。
-     * {@link #canInterpolate()} should be checked for before executing this method!
+     * {@link #canBeZeroPadded()} should be checked for before executing this method!
      *
      * @return (boolean) true if success
      * @throws IOException
@@ -137,7 +161,6 @@ class SacModifier {
         long bInMillis = Math.round(b * 1000);
         double e = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
         long eInMillis = Math.round(e * 1000);
-        LocalDateTime eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
 
         // read sacdata
         double[] sacdata = SACUtil.readSACData(modifiedPath);
@@ -150,7 +173,7 @@ class SacModifier {
         // if the sac startTime is after the event time, then interpolate the gap.
         // if the gap is bigger than tapertime then the SAC file is skipped.
         if (taperTime < timeGapInMillis) {
-            // this shall not happen, because this should be checked in canInterpolate()
+            // this shall not happen, because this should be checked in canBeZeroPadded()
             throw new IllegalStateException("Seismogram starts too late : "
                     + event.getGlobalCMTID() + " - " + modifiedPath.getFileName());
             //return false;
@@ -206,7 +229,7 @@ class SacModifier {
      *
      * @throws IOException if any
      */
-    void rebuild() throws IOException {
+    void trim() throws IOException {
 
         // nptsを元のSacfileのEでのポイントを超えない２の累乗ポイントにする
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modifiedPath);
