@@ -93,9 +93,10 @@ public class FilterDivider implements Operation {
     private int npts;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(FilterDivider.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan FilterDivider");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");

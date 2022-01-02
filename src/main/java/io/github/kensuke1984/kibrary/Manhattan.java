@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
+import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
@@ -68,6 +69,7 @@ public enum Manhattan {
     DataLobby(27, DataLobby.class), //
     WaveformPlotCreater(28, WaveformPlotCreater.class), //
     RecordSectionCreater(29, RecordSectionCreater.class), //
+    BasicIDMerge(30, BasicIDMerge.class), //
     ;
 
     private Class<? extends Operation> c;
@@ -79,7 +81,7 @@ public enum Manhattan {
     }
 
     public static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.c.getSimpleName() + " " + m.value));
+        Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.value + " " + m.c.getSimpleName()));
     }
 
     static Manhattan valueOf(int n) {

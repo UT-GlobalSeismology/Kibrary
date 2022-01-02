@@ -209,9 +209,10 @@ public class ActualWaveformCompiler implements Operation {
                     && s.getComponent() == t.getComponent();
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(ActualWaveformCompiler.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan ActualWaveformCompiler");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");

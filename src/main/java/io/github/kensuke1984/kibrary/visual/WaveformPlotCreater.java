@@ -69,10 +69,11 @@ public class WaveformPlotCreater implements Operation {
     private boolean splitComponents;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(WaveformPlotCreater.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan WaveformPlotCreater");
-            pw.println("##Path of a working directory. This must contain event directories with waveform txt files. (.)");
+            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("##Path of a working directory. (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components");

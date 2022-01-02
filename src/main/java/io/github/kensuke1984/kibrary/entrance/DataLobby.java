@@ -73,9 +73,10 @@ public class DataLobby implements Operation {
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(DataLobby.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan DataLobby");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
             pw.println("##Datacenter to send request, chosen from [IRIS, ORFEUS] (IRIS)");

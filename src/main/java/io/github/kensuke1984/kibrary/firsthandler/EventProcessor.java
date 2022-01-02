@@ -417,14 +417,14 @@ class EventProcessor implements Runnable {
 
                 // check whether the file can be zero-padded
                 if (!sm.canBeZeroPadded()) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! unable to zero-pad : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! start time is too late : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
 
                 // check whether the file can be trimmed
                 if (!sm.canBeTrimmed()) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! unable to trim : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! end time is before event time : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
