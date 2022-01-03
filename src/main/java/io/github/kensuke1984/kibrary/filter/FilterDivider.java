@@ -170,10 +170,10 @@ public class FilterDivider implements Operation {
      * @throws Exception if any
      */
     public static void main(String[] args) throws IOException {
-        FilterDivider divider = new FilterDivider(Property.parse(args));
+        FilterDivider operation = new FilterDivider(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(FilterDivider.class.getName() + " is operating.");
-        divider.run();
+        operation.run();
         System.err.println(FilterDivider.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
@@ -181,10 +181,16 @@ public class FilterDivider implements Operation {
     @Override
     public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
+
         Set<EventFolder> eventDirs = new HashSet<>();
         eventDirs.addAll(Files.exists(obsPath) ? DatasetAid.eventFolderSet(obsPath) : Collections.emptySet());
+        int obsNum = eventDirs.size();
+        System.err.println("Number of events in obsDir: " + obsNum);
         eventDirs.addAll(Files.exists(synPath) ? DatasetAid.eventFolderSet(synPath) : Collections.emptySet());
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        int totalNum = eventDirs.size();
+        System.err.println("Number of events in synDir: " + (totalNum - obsNum));
+        if (totalNum == 0) {
+            System.err.println("No events found.");
             return;
         }
 

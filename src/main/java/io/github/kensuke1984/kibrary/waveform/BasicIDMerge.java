@@ -25,8 +25,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Operation for merging pairs of basic ID files and basic waveform files.
+ *
  * @author otsuru
- * @since 2022/1/2
+ * @since 2022/1/2 Created based on the original BasicIDMerge which was in kibrary.waveform.addons.
  */
 public class BasicIDMerge implements Operation {
 

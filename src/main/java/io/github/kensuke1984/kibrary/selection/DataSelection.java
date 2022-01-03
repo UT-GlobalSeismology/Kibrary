@@ -274,10 +274,10 @@ public class DataSelection implements Operation {
      * @throws Exception if an I/O happens
      */
     public static void main(String[] args) throws IOException {
-        DataSelection ds = new DataSelection(Property.parse(args));
+        DataSelection operation = new DataSelection(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataSelection.class.getName() + " is operating.");
-        ds.run();
+        operation.run();
         System.err.println(DataSelection.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

@@ -163,10 +163,10 @@ public final class SPC_SAC implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        SPC_SAC ss = new SPC_SAC(Property.parse(args));
+        SPC_SAC operation = new SPC_SAC(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(SPC_SAC.class.getName() + " is operating.");
-        ss.run();
+        operation.run();
         System.err.println(SPC_SAC.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

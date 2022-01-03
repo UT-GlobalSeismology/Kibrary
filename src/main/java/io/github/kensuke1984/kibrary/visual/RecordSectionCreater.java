@@ -217,10 +217,10 @@ public class RecordSectionCreater implements Operation {
     * @throws Exception if any
     */
    public static void main(String[] args) throws IOException {
-       RecordSectionCreater rsc = new RecordSectionCreater(Property.parse(args));
+       RecordSectionCreater operation = new RecordSectionCreater(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(RecordSectionCreater.class.getName() + " is operating.");
-       rsc.run();
+       operation.run();
        System.err.println(RecordSectionCreater.class.getName() + " finished in "
                + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }

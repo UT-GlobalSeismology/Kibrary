@@ -133,10 +133,10 @@ public class WaveformPlotCreater implements Operation {
     * @throws Exception if any
     */
    public static void main(String[] args) throws IOException {
-       WaveformPlotCreater wpc = new WaveformPlotCreater(Property.parse(args));
+       WaveformPlotCreater operation = new WaveformPlotCreater(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(WaveformPlotCreater.class.getName() + " is operating.");
-       wpc.run();
+       operation.run();
        System.err.println(WaveformPlotCreater.class.getName() + " finished in "
                + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }

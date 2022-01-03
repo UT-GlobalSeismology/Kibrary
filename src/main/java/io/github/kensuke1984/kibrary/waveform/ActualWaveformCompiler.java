@@ -348,10 +348,10 @@ public class ActualWaveformCompiler implements Operation {
     * @throws Exception if any
     */
    public static void main(String[] args) throws IOException {
-       ActualWaveformCompiler awc = new ActualWaveformCompiler(Property.parse(args));
+       ActualWaveformCompiler operation = new ActualWaveformCompiler(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(ActualWaveformCompiler.class.getName() + " is operating.");
-       awc.run();
+       operation.run();
        System.err.println(ActualWaveformCompiler.class.getName() + " finished in "
                + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }

@@ -185,10 +185,10 @@ public class SyntheticDSMSetup implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        SyntheticDSMSetup sdsms = new SyntheticDSMSetup(Property.parse(args));
+        SyntheticDSMSetup operation = new SyntheticDSMSetup(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(SyntheticDSMSetup.class.getName() + " is operating.");
-        sdsms.run();
+        operation.run();
         System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

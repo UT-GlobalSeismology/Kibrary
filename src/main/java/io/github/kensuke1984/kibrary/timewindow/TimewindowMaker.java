@@ -200,10 +200,10 @@ public class TimewindowMaker implements Operation {
      * @throws Exception if any
      */
     public static void main(String[] args) throws IOException {
-        TimewindowMaker twm = new TimewindowMaker(Property.parse(args));
+        TimewindowMaker operation = new TimewindowMaker(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(TimewindowMaker.class.getName() + " is operating.");
-        twm.run();
+        operation.run();
         System.err.println(TimewindowMaker.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

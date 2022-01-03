@@ -165,10 +165,10 @@ public class DataKitchen implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        DataKitchen dk = new DataKitchen(Property.parse(args));
+        DataKitchen operation = new DataKitchen(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataKitchen.class.getName() + " is operating.");
-        dk.run();
+        operation.run();
         System.err.println(DataKitchen.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
