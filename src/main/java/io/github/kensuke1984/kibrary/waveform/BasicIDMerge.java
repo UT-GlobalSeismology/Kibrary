@@ -117,10 +117,10 @@ public class BasicIDMerge implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        BasicIDMerge bim = new BasicIDMerge(Property.parse(args));
+        BasicIDMerge operation = new BasicIDMerge(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(BasicIDMerge.class.getName() + " is operating.");
-        bim.run();
+        operation.run();
         System.err.println(BasicIDMerge.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
@@ -153,8 +153,8 @@ public class BasicIDMerge implements Operation {
         Set<Phase> phaseSet = new HashSet<>();
 
         basicIDs.forEach(id -> {
-            eventSet.add(id.getGlobalCMTID());
             observerSet.add(id.getObserver());
+            eventSet.add(id.getGlobalCMTID());
             boolean add = true;
             for (double[] periods : periodSet) {
                 if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
