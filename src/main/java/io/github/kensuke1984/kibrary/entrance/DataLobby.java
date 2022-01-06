@@ -91,7 +91,7 @@ public class DataLobby implements Operation {
             pw.println("#headAdjustment -10");
             pw.println("##Adjustment at the foot [min], must be integer and defined");
             pw.println("#footAdjustment 120");
-            pw.println("##The following parameters are for seismic events to be searched for.");
+            pw.println("##########The following parameters are for seismic events to be searched for.");
             pw.println("##Start date yyyy-mm-dd, must be defined");
             pw.println("#startDate 1990-01-01");
             pw.println("##End date yyyy-mm-dd, must be defined");

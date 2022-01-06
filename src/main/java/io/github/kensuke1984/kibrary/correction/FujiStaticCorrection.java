@@ -67,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class FujiStaticCorrection implements Operation {
 
     private final Properties property;
-    private Path timewindowInformationPath;
+    private Path timewindowFilePath;
     /**
      * the directory of observed data
      */
@@ -123,8 +123,8 @@ public class FujiStaticCorrection implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root directory containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##Path of a timewindow information file, must be set");
-            pw.println("#timewindowInformationPath timewindow.dat");
+            pw.println("##Path of a timewindow file, must be set");
+            pw.println("#timewindowFilePath timewindow.dat");
             pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
             pw.println("#convolved");
             pw.println("##(double) sacSamplingHz(20)");
@@ -155,8 +155,8 @@ public class FujiStaticCorrection implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
         if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
-        if (!property.containsKey("timewindowInformationPath"))
-            throw new IllegalArgumentException("No timewindow specified");
+        if (!property.containsKey("timewindowFilePath"))
+            throw new IllegalArgumentException("No timewindow file specified");
         if (!property.containsKey("convolved")) property.setProperty("convolved", "false");
         if (!property.containsKey("threshold")) property.setProperty("threshold", "0.2");
         if (!property.containsKey("searchRange")) property.setProperty("searchRange", "10");
@@ -169,8 +169,8 @@ public class FujiStaticCorrection implements Operation {
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
 
-        String date = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve("staticCorrection" + date + ".dat");
+        String dateStr = GadgetAid.getTemporaryString();
+        outputPath = workPath.resolve("staticCorrection" + dateStr + ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
@@ -179,9 +179,9 @@ public class FujiStaticCorrection implements Operation {
         if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
         synPath = getPath("synPath");
         if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
-        timewindowInformationPath = getPath("timewindowInformationPath");
-        if (!Files.exists(timewindowInformationPath))
-            throw new NoSuchFileException("The timewindow information " + timewindowInformationPath + " does not exist");
+        timewindowFilePath = getPath("timewindowFilePath");
+        if (!Files.exists(timewindowFilePath))
+            throw new NoSuchFileException("The timewindow file " + timewindowFilePath + " does not exist");
 
         convolved = Boolean.parseBoolean(property.getProperty("convolved"));
         sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
@@ -206,7 +206,7 @@ public class FujiStaticCorrection implements Operation {
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        timewindowInformation = TimewindowDataFile.read(timewindowInformationPath);
+        timewindowInformation = TimewindowDataFile.read(timewindowFilePath);
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file

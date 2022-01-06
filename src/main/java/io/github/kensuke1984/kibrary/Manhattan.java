@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
+import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -34,7 +35,7 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
 
 /**
- * The list of names of manhattan (operation)
+ * An enum where all {@link Operation}s in Kibrary should be assigned to.
  *
  * @author Kensuke Konishi
  * @version 0.0.5.3
@@ -70,6 +71,7 @@ public enum Manhattan {
     WaveformPlotCreater(28, WaveformPlotCreater.class), //
     RecordSectionCreater(29, RecordSectionCreater.class), //
     BasicIDMerge(30, BasicIDMerge.class), //
+    RaypathSelection(31, RaypathSelection.class), //
     ;
 
     private Class<? extends Operation> c;
@@ -84,6 +86,14 @@ public enum Manhattan {
         Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.value + " " + m.c.getSimpleName()));
     }
 
+    /**
+     * Returns a Manhattan given its corresponding number.
+     * Note that {@link #valueOf(String)}, which returns a Manhattan given a String of its name,
+     * is already defined automatically.
+     *
+     * @param n (int)
+     * @return
+     */
     static Manhattan valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
     }

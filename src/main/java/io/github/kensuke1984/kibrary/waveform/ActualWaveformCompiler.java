@@ -221,9 +221,9 @@ public class ActualWaveformCompiler implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##Path of a timewindow information file, must be defined");
+            pw.println("##Path of a timewindow file, must be defined");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a timewindow information file for a reference phase use to correct spectral amplitude, can be ignored");
+            pw.println("##Path of a timewindow file for a reference phase use to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a static correction file");
             pw.println("##If correctTime or correctAmplitude is true, the path must be defined.");
