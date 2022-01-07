@@ -24,20 +24,20 @@ public class Property_new extends Properties {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {
             try {
-                Manhattan.valueOf(args[0]).writeDefaultPropertiesFile();
+                Manhattan_new.valueOf(args[0]).writeDefaultPropertiesFile();
                 return;
             } catch (IllegalArgumentException iae) {
                 System.err.println(args[0] + " is not in Manhattan.");
                 System.err.println("Please choose one in:");
-                Manhattan.printList();
+                Manhattan_new.printList();
                 return;
             }
         } else {
-            Manhattan.printList();
-            System.err.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
+            Manhattan_new.printList();
+            System.err.print("For which one do you want to create a property file? [1-" + Manhattan_new.values().length + "] ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
-            Manhattan.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
+            Manhattan_new.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
         }
     }
 
