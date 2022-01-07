@@ -12,15 +12,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
@@ -64,9 +63,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.2.2
  * @author anselme modify amplitude ratio computation; modify align method to consider the peak value
  */
-public class FujiStaticCorrection implements Operation {
+public class FujiStaticCorrection extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     private Path timewindowFilePath;
     /**
      * the directory of observed data
@@ -110,9 +109,17 @@ public class FujiStaticCorrection implements Operation {
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<TimewindowData> timewindowInformation;
 
+    /**
+     * @param args
+     * @throws Exception if any
+     */
+    public static void main(String[] args) throws IOException {
+        writeDefaultPropertiesFile();
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
@@ -127,7 +134,7 @@ public class FujiStaticCorrection implements Operation {
             pw.println("#timewindowFilePath timewindow.dat");
             pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
             pw.println("#convolved");
-            pw.println("##(double) sacSamplingHz(20)");
+            pw.println("##(double) sacSamplingHz (20)");
             pw.println("#sacSamplingHz cant change now");
             pw.println("##(double) Threshold for peak finder (0.2)");
             pw.println("#threshold");
@@ -138,18 +145,32 @@ public class FujiStaticCorrection implements Operation {
         }
         System.err.println(outPath + " is created.");
     }
-/*
-    public FujiStaticCorrection(double sacSamplingHz, double threshold, double searchRange) {
-        this.sacSamplingHz = sacSamplingHz;
-        this.threshold = threshold;
-        this.searchRange = searchRange;
-    }
-*/
-    private FujiStaticCorrection(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
+
+    public FujiStaticCorrection(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
         set();
     }
 
+    private void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+
+        obsPath = property.parsePath("obsPath", "", true, workPath);
+        synPath = property.parsePath("synPath", "", true, workPath);
+        timewindowFilePath = property.parsePath("timewindowFilePath", null, true, workPath);
+
+        convolved = property.parseBoolean("convolved", "false");
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");// TODO
+        threshold = property.parseDouble("threshold", "0.2");
+        searchRange = property.parseDouble("searchRange", "10");
+        mediantime = property.parseBoolean("mediantime", "false");
+
+        String dateStr = GadgetAid.getTemporaryString();
+        outputPath = workPath.resolve("staticCorrection" + dateStr + ".dat");
+        staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -164,7 +185,7 @@ public class FujiStaticCorrection implements Operation {
         if (!property.containsKey("mediantime")) property.setProperty("mediantime", "false");
     }
 
-    private void set() throws IOException {
+    private void set_old() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
@@ -189,19 +210,7 @@ public class FujiStaticCorrection implements Operation {
         threshold = Double.parseDouble(property.getProperty("threshold"));
         mediantime = Boolean.parseBoolean(property.getProperty("mediantime"));
     }
-
-    /**
-     * @param args [parameter file name]
-     * @throws Exception if any
-     */
-    public static void main(String[] args) throws IOException {
-        FujiStaticCorrection operation = new FujiStaticCorrection(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(FujiStaticCorrection.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(FujiStaticCorrection.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() throws IOException {
@@ -444,7 +453,7 @@ public class FujiStaticCorrection implements Operation {
             if (minLimit < Math.abs(u[ipeak])) return ipeak;
         return maxPoint;
     }
-
+/*
     @Override
     public Path getWorkPath() {
         return workPath;
@@ -454,7 +463,7 @@ public class FujiStaticCorrection implements Operation {
     public Properties getProperties() {
         return (Properties) property.clone();
     }
-
+*/
     private class Worker implements Runnable {
         private EventFolder obsEventDir;
 

@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.axiSEM.Result;
-import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
@@ -46,7 +45,7 @@ public enum Manhattan {
     DataSelection(3, DataSelection.class), //
     FilterDivider(4, FilterDivider.class), //
     DataKitchen(5, DataKitchen.class), //
-    FujiStaticCorrection(6, FujiStaticCorrection.class), //
+//    FujiStaticCorrection(6, FujiStaticCorrection.class), //
     ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
     LetMeInvert(8, LetMeInvert.class), //
     ActualWaveformCompiler(9, ActualWaveformCompiler.class), //
@@ -96,6 +95,15 @@ public enum Manhattan {
      */
     static Manhattan valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
+    }
+
+    /**
+     * @return Class class of this Manhattan.
+     * @author otsuru
+     * @since 2022/1/7
+     */
+    public Class<? extends Operation> getOperation() {
+        return c;
     }
 
     /**
