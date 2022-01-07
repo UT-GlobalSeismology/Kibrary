@@ -97,10 +97,11 @@ public class RecordSectionCreater implements Operation {
     private double upperAzimuth;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(RecordSectionCreater.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan RecordSectionCreater");
-            pw.println("##Path of a working directory. This must contain event directories with waveform txt files. (.)");
+            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("##Path of a working directory. (.)");
             pw.println("#workPath");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
             pw.println("#tag");
@@ -131,13 +132,13 @@ public class RecordSectionCreater implements Operation {
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
             pw.println("##This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth");
-            pw.println("##(double) Lower limit of range of epicentral distance to be used [0:upperDistance) (0)");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance");
-            pw.println("##(double) Upper limit of range of epicentral distance to be used (lowerDistance:180] (180)");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
             pw.println("#upperDistance");
-            pw.println("##(double) Lower limit of range of azimuth to be used [-360:upperAzimuth) (0)");
+            pw.println("##(double) Lower limit of range of azimuth to be used [deg] [-360:upperAzimuth) (0)");
             pw.println("#lowerAzimuth");
-            pw.println("##(double) Upper limit of range of azimuth to be used (lowerAzimuth:360] (360)");
+            pw.println("##(double) Upper limit of range of azimuth to be used [deg] (lowerAzimuth:360] (360)");
             pw.println("#upperAzimuth");
         }
         System.err.println(outPath + " is created.");
@@ -170,8 +171,12 @@ public class RecordSectionCreater implements Operation {
         if (!property.containsKey("flipAzimuth")) property.setProperty("flipAzimuth", "false");
         if (!property.containsKey("lowerDistance")) property.setProperty("lowerDistance", "0");
         if (!property.containsKey("upperDistance")) property.setProperty("upperDistance", "180");
+        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
+            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
         if (!property.containsKey("lowerAzimuth")) property.setProperty("lowerAzimuth", "0");
         if (!property.containsKey("upperAzimuth")) property.setProperty("upperAzimuth", "360");
+        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
+            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
     }
 
     private void set() throws IOException {
@@ -216,10 +221,10 @@ public class RecordSectionCreater implements Operation {
     * @throws Exception if any
     */
    public static void main(String[] args) throws IOException {
-       RecordSectionCreater rsc = new RecordSectionCreater(Property.parse(args));
+       RecordSectionCreater operation = new RecordSectionCreater(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(RecordSectionCreater.class.getName() + " is operating.");
-       rsc.run();
+       operation.run();
        System.err.println(RecordSectionCreater.class.getName() + " finished in "
                + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }

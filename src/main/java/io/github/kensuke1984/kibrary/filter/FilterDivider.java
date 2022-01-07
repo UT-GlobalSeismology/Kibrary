@@ -93,9 +93,10 @@ public class FilterDivider implements Operation {
     private int npts;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(FilterDivider.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan FilterDivider");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");
@@ -169,10 +170,10 @@ public class FilterDivider implements Operation {
      * @throws Exception if any
      */
     public static void main(String[] args) throws IOException {
-        FilterDivider divider = new FilterDivider(Property.parse(args));
+        FilterDivider operation = new FilterDivider(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(FilterDivider.class.getName() + " is operating.");
-        divider.run();
+        operation.run();
         System.err.println(FilterDivider.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
@@ -180,10 +181,16 @@ public class FilterDivider implements Operation {
     @Override
     public void run() throws IOException {
         setFilter(lowFreq, highFreq, np);
+
         Set<EventFolder> eventDirs = new HashSet<>();
         eventDirs.addAll(Files.exists(obsPath) ? DatasetAid.eventFolderSet(obsPath) : Collections.emptySet());
+        int obsNum = eventDirs.size();
+        System.err.println("Number of events in obsDir: " + obsNum);
         eventDirs.addAll(Files.exists(synPath) ? DatasetAid.eventFolderSet(synPath) : Collections.emptySet());
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        int totalNum = eventDirs.size();
+        System.err.println("Number of events in synDir: " + (totalNum - obsNum));
+        if (totalNum == 0) {
+            System.err.println("No events found.");
             return;
         }
 

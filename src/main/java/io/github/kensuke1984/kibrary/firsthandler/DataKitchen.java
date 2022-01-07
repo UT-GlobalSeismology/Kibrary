@@ -75,9 +75,10 @@ public class DataKitchen implements Operation {
     private boolean removeIntermediateFile;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(DataKitchen.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan DataKitchen");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
             pw.println("##(String) The name of catalog to use from [cmt, pde]  (cmt)");
@@ -164,10 +165,10 @@ public class DataKitchen implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        DataKitchen dk = new DataKitchen(Property.parse(args));
+        DataKitchen operation = new DataKitchen(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataKitchen.class.getName() + " is operating.");
-        dk.run();
+        operation.run();
         System.err.println(DataKitchen.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

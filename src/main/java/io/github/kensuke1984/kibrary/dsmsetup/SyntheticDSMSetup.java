@@ -99,9 +99,10 @@ public class SyntheticDSMSetup implements Operation {
     private boolean specfemDataset;
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(SyntheticDSMSetup.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan SyntheticDSMSetup");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##SacComponents that observers must have to be used (Z R T)");
             pw.println("#components");
             pw.println("##Path of a work folder (.)");
@@ -184,10 +185,10 @@ public class SyntheticDSMSetup implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        SyntheticDSMSetup sdsms = new SyntheticDSMSetup(Property.parse(args));
+        SyntheticDSMSetup operation = new SyntheticDSMSetup(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(SyntheticDSMSetup.class.getName() + " is operating.");
-        sdsms.run();
+        operation.run();
         System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

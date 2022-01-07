@@ -1,9 +1,18 @@
-package io.github.kensuke1984.kibrary.aid;
+package io.github.kensuke1984.kibrary.util;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * This class was created to handle exceptions from threads that will not be caught.
+ * However, when using {@link ExecutorService#execute(Runnable)}, exceptions will be caught,
+ * so this class should be unneeded.
+ *
+ * @author otsuru
+ * @since 2021/11/12
+ * @deprecated until this becomes needed for some reason.
+ */
 public class UncaughtExceptionAid {
 
     public static class MyHandler implements Thread.UncaughtExceptionHandler {

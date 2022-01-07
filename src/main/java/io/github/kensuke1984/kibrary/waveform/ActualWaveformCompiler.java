@@ -209,9 +209,10 @@ public class ActualWaveformCompiler implements Operation {
                     && s.getComponent() == t.getComponent();
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(ActualWaveformCompiler.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan ActualWaveformCompiler");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory (.)");
             pw.println("#workPath");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
@@ -220,9 +221,9 @@ public class ActualWaveformCompiler implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##Path of a timewindow information file, must be defined");
+            pw.println("##Path of a timewindow file, must be defined");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a timewindow information file for a reference phase use to correct spectral amplitude, can be ignored");
+            pw.println("##Path of a timewindow file for a reference phase use to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a static correction file");
             pw.println("##If correctTime or correctAmplitude is true, the path must be defined.");
@@ -347,10 +348,10 @@ public class ActualWaveformCompiler implements Operation {
     * @throws Exception if any
     */
    public static void main(String[] args) throws IOException {
-       ActualWaveformCompiler awc = new ActualWaveformCompiler(Property.parse(args));
+       ActualWaveformCompiler operation = new ActualWaveformCompiler(Property.parse(args));
        long startTime = System.nanoTime();
        System.err.println(ActualWaveformCompiler.class.getName() + " is operating.");
-       awc.run();
+       operation.run();
        System.err.println(ActualWaveformCompiler.class.getName() + " finished in "
                + GadgetAid.toTimeString(System.nanoTime() - startTime));
    }

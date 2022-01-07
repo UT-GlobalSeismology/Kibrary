@@ -75,8 +75,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class DataSelection implements Operation {
 
     private final Properties property;
-    private Path timewindowInformationFilePath;
-    private Path staticCorrectionInformationFilePath;
+    /**
+     * Path of the input timewindow file
+     */
+    private Path timewindowFilePath;
+    private Path staticCorrectionFilePath;
     /**
      * the directory of observed data
      */
@@ -90,11 +93,11 @@ public class DataSelection implements Operation {
      */
     private Path workPath;
     /**
-     * Path of the information output file
+     * Path of the output information file
      */
     private Path infoOutputpath;
     /**
-     * Path of the timewindow output file
+     * Path of the output timewindow file
      */
     private Path outputGoodWindowPath;
     /**
@@ -156,9 +159,10 @@ public class DataSelection implements Operation {
                     && s.getComponent() == t.getComponent();
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(DataSelection.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan DataSelection");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
@@ -167,11 +171,11 @@ public class DataSelection implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##Path of a time window information file, must be defined");
-            pw.println("#timewindowInformationFilePath timewindow.dat");
+            pw.println("##Path of a timewindow file, must be defined");
+            pw.println("#timewindowFilePath timewindow.dat");
             pw.println("##Path of a static correction file");
             pw.println("##If you do not want to consider static correction, then comment out the next line.");
-            pw.println("#staticCorrectionInformationFilePath staticCorrection.dat");
+            pw.println("#staticCorrectionFilePath staticCorrection.dat");
             pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
             pw.println("#convolved");
             pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
@@ -209,8 +213,8 @@ public class DataSelection implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
         if (!property.containsKey("synPath")) property.setProperty("synPath", "");
-        if (!property.containsKey("timewindowInformationFilePath"))
-            throw new IllegalArgumentException("No timewindow specified");
+        if (!property.containsKey("timewindowFilePath"))
+            throw new IllegalArgumentException("No timewindow file specified");
         if (!property.containsKey("convolved")) property.setProperty("convolved", "true");
         if (!property.containsKey("maxStaticShift")) property.setProperty("maxStaticShift", "10.");
         if (!property.containsKey("minCorrelation")) property.setProperty("minCorrelation", "0");
@@ -242,13 +246,13 @@ public class DataSelection implements Operation {
         if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
         synPath = getPath("synPath");
         if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
-        timewindowInformationFilePath = getPath("timewindowInformationFilePath");
-        if (!Files.exists(timewindowInformationFilePath))
-            throw new NoSuchFileException("The timewindow information " + timewindowInformationFilePath + " does not exist");
-        if (property.containsKey("staticCorrectionInformationFilePath")) {
-            staticCorrectionInformationFilePath = getPath("staticCorrectionInformationFilePath");
-            if (!Files.exists(staticCorrectionInformationFilePath))
-                throw new NoSuchFileException("The static correction" + staticCorrectionInformationFilePath + " does not exist");
+        timewindowFilePath = getPath("timewindowFilePath");
+        if (!Files.exists(timewindowFilePath))
+            throw new NoSuchFileException("The timewindow file " + timewindowFilePath + " does not exist");
+        if (property.containsKey("staticCorrectionFilePath")) {
+            staticCorrectionFilePath = getPath("staticCorrectionFilePath");
+            if (!Files.exists(staticCorrectionFilePath))
+                throw new NoSuchFileException("The static correction file " + staticCorrectionFilePath + " does not exist");
         }
 
         convolved = Boolean.parseBoolean(property.getProperty("convolved"));
@@ -273,10 +277,10 @@ public class DataSelection implements Operation {
      * @throws Exception if an I/O happens
      */
     public static void main(String[] args) throws IOException {
-        DataSelection ds = new DataSelection(Property.parse(args));
+        DataSelection operation = new DataSelection(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataSelection.class.getName() + " is operating.");
-        ds.run();
+        operation.run();
         System.err.println(DataSelection.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
@@ -284,9 +288,9 @@ public class DataSelection implements Operation {
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowInformationFilePath);
-        staticCorrectionSet = (staticCorrectionInformationFilePath == null ? Collections.emptySet()
-                : StaticCorrectionDataFile.read(staticCorrectionInformationFilePath));
+        sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowFilePath);
+        staticCorrectionSet = (staticCorrectionFilePath == null ? Collections.emptySet()
+                : StaticCorrectionDataFile.read(staticCorrectionFilePath));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file

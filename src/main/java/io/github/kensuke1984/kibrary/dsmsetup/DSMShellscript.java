@@ -42,7 +42,7 @@ class DSMShellscript {
         this.workPath = workPath;
         this.mpi = mpi;
 
-        int nThreads = Runtime.getRuntime().availableProcessors();
+        int nThreads = Runtime.getRuntime().availableProcessors() - 1;
         if (mpi) {
             if (nThreads >= 32) {
                 nCore = 8;

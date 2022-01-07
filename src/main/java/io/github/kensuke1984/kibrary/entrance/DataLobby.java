@@ -73,9 +73,10 @@ public class DataLobby implements Operation {
 
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(DataLobby.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan DataLobby");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
             pw.println("##Datacenter to send request, chosen from [IRIS, ORFEUS] (IRIS)");
@@ -90,7 +91,7 @@ public class DataLobby implements Operation {
             pw.println("#headAdjustment -10");
             pw.println("##Adjustment at the foot [min], must be integer and defined");
             pw.println("#footAdjustment 120");
-            pw.println("##The following parameters are for seismic events to be searched for.");
+            pw.println("##########The following parameters are for seismic events to be searched for.");
             pw.println("##Start date yyyy-mm-dd, must be defined");
             pw.println("#startDate 1990-01-01");
             pw.println("##End date yyyy-mm-dd, must be defined");
@@ -182,10 +183,10 @@ public class DataLobby implements Operation {
      * @throws Exception file name
      */
     public static void main(String[] args) throws IOException {
-        DataLobby dl = new DataLobby(Property.parse(args));
+        DataLobby operation = new DataLobby(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(DataLobby.class.getName() + " is operating.");
-        dl.run();
+        operation.run();
         System.err.println(DataLobby.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }

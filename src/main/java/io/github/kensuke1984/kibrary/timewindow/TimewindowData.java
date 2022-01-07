@@ -20,10 +20,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author Kensuke Konishi
  * @version 0.1.3
  */
-/**
- * @author Anselme
- *
- */
 public class TimewindowData extends Timewindow {
 
     /**

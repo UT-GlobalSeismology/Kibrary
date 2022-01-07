@@ -92,9 +92,10 @@ public final class SPC_SAC implements Operation {
             readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(SPC_SAC.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan SPC_SAC");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
             pw.println("##SACComponents for write (Z R T)");
@@ -162,10 +163,10 @@ public final class SPC_SAC implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        SPC_SAC ss = new SPC_SAC(Property.parse(args));
+        SPC_SAC operation = new SPC_SAC(Property.parse(args));
         long startTime = System.nanoTime();
         System.err.println(SPC_SAC.class.getName() + " is operating.");
-        ss.run();
+        operation.run();
         System.err.println(SPC_SAC.class.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
