@@ -38,31 +38,19 @@ public class SensitivityKernelPlotCreater {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 4) {
-            System.out.println("USAGE:");
-            System.out.println("partialID path, partial path, phase, component, partial types");
-            System.out.println("If you want to select several components, split them by comma(,) like 'Z,T,R'");
-            System.out.println("If you want to select several partial types, split them by comma(,) like 'MU,LAMBDA'");
+            System.err.println("USAGE:");
+            System.err.println("partialID path, partial path, phase, component, partial types");
+            System.err.println("If you want to select several components, split them by comma(,) like 'Z,T,R'");
+            System.err.println("If you want to select several partial types, split them by comma(,) like 'MU,LAMBDA'");
         }
 
-        /**
-         * {@link Path} of a partial ID File
-         */
-        Path partialIDPath;
-        /**
-         * {@link Path} of a partial data File
-         */
-        Path partialPath;
-        PartialID[] partials;
 
-        Set<SACComponent> components;
-        Set<PartialType> partialTypes;
+        Path partialIDPath = Paths.get(args[0]);
+        Path partialPath = Paths.get(args[1]);
+        PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 
-        partialIDPath = Paths.get(args[0]);
-        partialPath = Paths.get(args[1]);
-        partials = PartialIDFile.read(partialIDPath, partialPath);
-
-        components = Arrays.stream(args[2].split(",")).map(SACComponent::valueOf).collect(Collectors.toSet());
-        partialTypes = Arrays.stream(args[3].split(",")).map(PartialType::valueOf).collect(Collectors.toSet());
+        Set<SACComponent> components = Arrays.stream(args[2].split(",")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        Set<PartialType> partialTypes = Arrays.stream(args[3].split(",")).map(PartialType::valueOf).collect(Collectors.toSet());
 
         Path dir0 = Paths.get("KernelTemporalVisual");
         Files.createDirectories(dir0);
