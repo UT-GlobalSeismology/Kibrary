@@ -45,7 +45,7 @@ public class LookAtFPspc {
 		Complex[][] spcs = new Complex[9][];
 		for(int i = 1; i <= 3; i++) {
 			for(int j = 1; j <= 3; j++) {
-				SPCTensorComponent comp = SPCTensorComponent.valueOfFP(i, j);
+				SPCTensorComponent comp = SPCTensorComponent.valueOf9Component(i, j);
 				spcs[3*(i-1)+j-1] = dsmOutput.getSpcBodyList().get(0).getSpcComponent(comp).getValueInFrequencyDomain();
 			}
 		}

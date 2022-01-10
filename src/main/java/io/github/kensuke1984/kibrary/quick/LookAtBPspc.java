@@ -43,15 +43,15 @@ public class LookAtBPspc {
 		System.out.println("Epicentral distance = " + distance);
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 		
-		SPCTensorComponent c1 = SPCTensorComponent.valueOfBP(1, 1, 2);
-		SPCTensorComponent c2 = SPCTensorComponent.valueOfBP(1, 2, 2);
-		SPCTensorComponent c3 = SPCTensorComponent.valueOfBP(1, 3, 2);
-		SPCTensorComponent c4 = SPCTensorComponent.valueOfBP(2, 1, 2);
-		SPCTensorComponent c5 = SPCTensorComponent.valueOfBP(2, 2, 2);
-		SPCTensorComponent c6 = SPCTensorComponent.valueOfBP(2, 3, 2);
-		SPCTensorComponent c7 = SPCTensorComponent.valueOfBP(3, 1, 2);
-		SPCTensorComponent c8 = SPCTensorComponent.valueOfBP(3, 2, 2);
-		SPCTensorComponent c9 = SPCTensorComponent.valueOfBP(3, 3, 2);
+		SPCTensorComponent c1 = SPCTensorComponent.valueOf27Conmponent(1, 1, 2);
+		SPCTensorComponent c2 = SPCTensorComponent.valueOf27Conmponent(1, 2, 2);
+		SPCTensorComponent c3 = SPCTensorComponent.valueOf27Conmponent(1, 3, 2);
+		SPCTensorComponent c4 = SPCTensorComponent.valueOf27Conmponent(2, 1, 2);
+		SPCTensorComponent c5 = SPCTensorComponent.valueOf27Conmponent(2, 2, 2);
+		SPCTensorComponent c6 = SPCTensorComponent.valueOf27Conmponent(2, 3, 2);
+		SPCTensorComponent c7 = SPCTensorComponent.valueOf27Conmponent(3, 1, 2);
+		SPCTensorComponent c8 = SPCTensorComponent.valueOf27Conmponent(3, 2, 2);
+		SPCTensorComponent c9 = SPCTensorComponent.valueOf27Conmponent(3, 3, 2);
 		
 //		SpcTensorComponent c1 = SpcTensorComponent.valueOfBP(1, 1, 3);
 //		SpcTensorComponent c2 = SpcTensorComponent.valueOfBP(1, 2, 3);

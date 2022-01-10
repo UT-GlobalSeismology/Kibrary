@@ -76,7 +76,7 @@ public class ThreeDPartialMaker {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp, bp))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        ignoreBodyR.forEach(System.out::println);
+        ignoreBodyR.forEach(System.err::println);
         this.fp = fp;
         this.bp = bp;
         this.bp2 = null;
@@ -105,7 +105,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
         if (!isGoodPairPermissive(fp, bp3)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        ignoreBodyR.forEach(System.out::println);
+        ignoreBodyR.forEach(System.err::println);
         this.fp = fp;
         this.fp2 = null;
         this.fp3 = null;
@@ -304,7 +304,7 @@ public class ThreeDPartialMaker {
 
         if (!isGoodPairPermissive(fp, bp)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        ignoreBodyR.forEach(System.out::println);
+        ignoreBodyR.forEach(System.err::println);
 
         this.bp2 = null;
         this.bp3 = null;
@@ -471,7 +471,7 @@ public class ThreeDPartialMaker {
         List<SPCBody> spcBodyList = new ArrayList<>(nbody);
         for (int ibody = 0; ibody < nbody; ibody++) {
             TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(ibody),
-                    bp.getSpcBodyList().get(ibody), type.getWeightingFactor(), angleForTensor);
+                    bp.getSpcBodyList().get(ibody), type.getWeightingFactor(), angleForTensor, true);
             // tensorcalc.setBP(angleBP);
             // tensorcalc.setFP(angleFP);
              System.out.println("angleForTensor " + angleForTensor);
@@ -612,16 +612,16 @@ public class ThreeDPartialMaker {
      */
     public double[] createPartialSerial(SACComponent component, int iBody, PartialType type) {
         // return array of zero for partials whose radius is too close to the BP or FP source
-    	// fp, bp is SPCFileAccess
+        // fp, bp is SPCFileAccess
         double bpR = bp.getBodyR()[iBody];
         double fpR = fp.getBodyR()[iBody];
         if (fpR != bpR)
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
-        long t1i = System.currentTimeMillis();
+//        long t1i = System.currentTimeMillis();
         Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
                 : computeTensorCulculusSerial(component, iBody, iBody, type);
-        long t1f = System.currentTimeMillis();
+//        long t1f = System.currentTimeMillis();
 //		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
 
         if (null != sourceTimeFunction)
@@ -630,12 +630,12 @@ public class ThreeDPartialMaker {
         //test tapper
         partial_frequency = rightTapper(partial_frequency); //TODO
 
-        long t2i = System.currentTimeMillis();
+//        long t2i = System.currentTimeMillis();
         Complex[] partial_time = toTimedomain(partial_frequency);
         double[] partialdouble = new double[npts];
         for (int j = 0; j < npts; j++)
             partialdouble[j] = partial_time[j].getReal();
-        long t2f = System.currentTimeMillis();
+//        long t2f = System.currentTimeMillis();
 //		System.out.println("iFFt finished in " + (t2f - t2i)*1e-3 + " s");
 //		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
         return partialdouble;
@@ -697,7 +697,7 @@ public class ThreeDPartialMaker {
      */
     private Complex[] computeTensorCulculus(SACComponent component, int iBody, PartialType type) {
         TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBody),
-                bp.getSpcBodyList().get(iBody), type.getWeightingFactor(), angleForTensor);
+                bp.getSpcBodyList().get(iBody), type.getWeightingFactor(), angleForTensor, true);
         return component == SACComponent.Z ? tensorcalc.calc(0)
                 : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
     }
@@ -736,7 +736,7 @@ public class ThreeDPartialMaker {
         }
 //		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
         TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
-                bpBody, type.getWeightingFactor(), angleForTensor);
+                bpBody, type.getWeightingFactor(), angleForTensor, true);
         return component == SACComponent.Z ? tensorcalc.calc(0)
                 : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
     }
@@ -773,10 +773,19 @@ public class ThreeDPartialMaker {
 //			System.out.println("DEBUG FP: " +  fpBody.getSpcComponents()[8].getValueInFrequencyDomain()[10]);
         }
 //		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
-        TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
-                bpBody, type.getWeightingFactor(), angleForTensor);
-        return component == SACComponent.Z ? tensorcalc.calcSerial(0)
-                : rotatePartial(tensorcalc.calcSerial(1), tensorcalc.calcSerial(2), component);
+        if (type.isDensity()) {
+            System.err.println("compute U Rho E");
+            double tlen = bp.tlen();
+            TensorCalculationURhoE tensorcalc = new TensorCalculationURhoE(fpBody, bpBody, angleForTensor, tlen);
+            return component == SACComponent.Z ? tensorcalc.calc(0)
+                    : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+        }
+        else {
+            TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
+                    bpBody, type.getWeightingFactor(), angleForTensor, false);
+            return component == SACComponent.Z ? tensorcalc.calc(0)
+                    : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+        }
     }
 
     /**
