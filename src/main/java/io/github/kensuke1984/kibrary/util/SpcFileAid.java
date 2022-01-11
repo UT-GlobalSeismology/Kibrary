@@ -89,7 +89,8 @@ public final class SpcFileAid {
      */
     public static List<SPCFileName> collectOrderedSHSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
-        List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("SH.spc")).collect(Collectors.toList());
+        //TODO apply for PF
+        List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("PB...SH.spc")).collect(Collectors.toList());
         int n = paths.size();
         int ndigits = 1;
         String formatter = null;
@@ -231,7 +232,8 @@ public final class SpcFileAid {
      */
     public static List<SPCFileName> collectOrderedPSVSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
-        List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("PSV.spc")).collect(Collectors.toList());
+        //TODO apply for PF
+        List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("PB...PSV.spc")).collect(Collectors.toList());
         int n = paths.size();
         int ndigits = 1;
         String formatter = null;

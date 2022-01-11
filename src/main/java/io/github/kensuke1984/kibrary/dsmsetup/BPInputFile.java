@@ -22,16 +22,16 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class BPInputFile extends DSMInputHeader {
 
-    private final String OUTPUT;
+    private final String output;
 
-    private final double[] RADII;
-    private final HorizontalPosition[] POSITIONS;
+    private final double[] radii;
+    private final HorizontalPosition[] positions;
     // private double sourceR;
-    private final Observer STATION;
-    private final PolynomialStructure STRUCTURE;
+    private final Observer observer;
+    private final PolynomialStructure structure;
 
     /**
-     * @param station              Information of station
+     * @param observer              Information of station
      * @param outputDir            the name of the write folder
      * @param structure            velocity structure
      * @param tlen                 must be a power of 2 / 10 (2<sup>n</sup>)/10
@@ -39,45 +39,45 @@ public class BPInputFile extends DSMInputHeader {
      * @param perturbationPointR   will be copied
      * @param perturbationPosition will be copied
      */
-    public BPInputFile(Observer station, String outputDir, PolynomialStructure structure, double tlen, int np,
+    public BPInputFile(Observer observer, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
         super(tlen, np);
-        STATION = station;
-        OUTPUT = outputDir;
-        STRUCTURE = structure;
-        RADII = perturbationPointR.clone();
-        POSITIONS = perturbationPosition.clone();
+        this.observer = observer;
+        output = outputDir;
+        this.structure = structure;
+        radii = perturbationPointR.clone();
+        positions = perturbationPosition.clone();
     }
 
-	public BPInputFile(String outputDir, PolynomialStructure structure, double tlen, int np,
-			double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
-		super(tlen, np);
-		STATION = null;
-		OUTPUT = outputDir;
-		STRUCTURE = structure;
-		RADII = perturbationPointR.clone();
-		POSITIONS = perturbationPosition.clone();
-	}
+    public BPInputFile(String outputDir, PolynomialStructure structure, double tlen, int np,
+            double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
+        super(tlen, np);
+        observer = null;
+        output = outputDir;
+        this.structure = structure;
+        radii = perturbationPointR.clone();
+        positions = perturbationPosition.clone();
+    }
 
     /**
      * @return name of the write folder
      */
     public String getOutputDir() {
-        return OUTPUT;
+        return output;
     }
 
     /**
      * @return radii for the perturbation points
      */
     public double[] getPerturbationPointDepth() {
-        return RADII.clone();
+        return radii.clone();
     }
 
     /**
      * @return structure to be used
      */
     public PolynomialStructure getStructure() {
-        return STRUCTURE;
+        return structure;
     }
 
     /**
@@ -95,26 +95,26 @@ public class BPInputFile extends DSMInputHeader {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            Arrays.stream(STRUCTURE.toPSVlines()).forEach(pw::println);
+            Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
             // source
-            HorizontalPosition stationPosition = STATION.getPosition();
+            HorizontalPosition stationPosition = observer.getPosition();
             pw.println("0 " + // BPINFOには震源深さいらない
                     stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
             // write info
             pw.println("c write directory");
-            pw.println(OUTPUT + "/");
-            pw.println(STATION.toString());
+            pw.println(output + "/");
+            pw.println(observer.toString());
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
-            pw.println(POSITIONS.length + " nsta");
-            Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+            pw.println(positions.length + " nsta");
+            Arrays.stream(positions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
             // radii for perturbation points
-            pw.println(RADII.length + " nr");
-            Arrays.stream(RADII).forEach(pw::println);
+            pw.println(radii.length + " nr");
+            Arrays.stream(radii).forEach(pw::println);
             pw.println("end");
         }
     }
@@ -130,34 +130,34 @@ public class BPInputFile extends DSMInputHeader {
      * @author anselme
      */
     public void writePSVBPCat(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options)
-    		throws IOException {
+            throws IOException {
 
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-			// header
-			String[] header = outputDSMHeader();
-			Arrays.stream(header).forEach(pw::println);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+            // header
+            String[] header = outputDSMHeader();
+            Arrays.stream(header).forEach(pw::println);
 
-			// structure
-			Arrays.stream(STRUCTURE.toPSVlines()).forEach(pw::println);
+            // structure
+            Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
-			// source
-			pw.println("0. 0. 0.");
+            // source
+            pw.println("0. 0. 0.");
 
-			// output info
-			pw.println("c output directory");
-			pw.println(OUTPUT + "/");
-			pw.println("340A_TA");
-			pw.println("c events and stations");
+            // output info
+            pw.println("c output directory");
+            pw.println(output + "/");
+            pw.println("340A_TA");
+            pw.println("c events and stations");
 
-			// catalogue epicentral distance sampling
-			pw.println(thetamin + " " + thetamax + " " + dtheta);
+            // catalogue epicentral distance sampling
+            pw.println(thetamin + " " + thetamax + " " + dtheta);
 
-			// radii for perturbation points
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
-			pw.println("end");
-		}
-	}
+            // radii for perturbation points
+            pw.println(radii.length + " nr");
+            Arrays.stream(radii).forEach(pw::println);
+            pw.println("end");
+        }
+    }
 
     /**
      * Write an information file for shbp
@@ -174,25 +174,25 @@ public class BPInputFile extends DSMInputHeader {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            Arrays.stream(STRUCTURE.toSHlines()).forEach(pw::println);
+            Arrays.stream(structure.toSHlines()).forEach(pw::println);
 
-            HorizontalPosition stationPosition = STATION.getPosition();
+            HorizontalPosition stationPosition = observer.getPosition();
             pw.println("0 " + // BPINFOには震源深さいらない
                     stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
             // write info
             pw.println("c write directory");
-            pw.println(OUTPUT + "/");
-            pw.println(STATION.toString());
+            pw.println(output + "/");
+            pw.println(observer.toString());
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
-            pw.println(POSITIONS.length + " nsta");
-            Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+            pw.println(positions.length + " nsta");
+            Arrays.stream(positions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
             // radii for perturbation points
-            pw.println(RADII.length + " nr");
-            Arrays.stream(RADII).forEach(pw::println);
+            pw.println(radii.length + " nr");
+            Arrays.stream(radii).forEach(pw::println);
             pw.println("end");
         }
     }
@@ -209,31 +209,31 @@ public class BPInputFile extends DSMInputHeader {
      */
     public void writeSHBPCat(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) throws IOException {
 
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-			// header
-			String[] header = outputDSMHeader();
-			Arrays.stream(header).forEach(pw::println);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+            // header
+            String[] header = outputDSMHeader();
+            Arrays.stream(header).forEach(pw::println);
 
-			// structure
-			Arrays.stream(STRUCTURE.toSHlines()).forEach(pw::println);
+            // structure
+            Arrays.stream(structure.toSHlines()).forEach(pw::println);
 
-			// source
-			pw.println("0. 0. 0.");
+            // source
+            pw.println("0. 0. 0.");
 
-			// output info
-			pw.println("c output directory");
-			pw.println(OUTPUT + "/");
-			pw.println("340A_TA");
-			pw.println("c events and stations");
+            // output info
+            pw.println("c output directory");
+            pw.println(output + "/");
+            pw.println("340A_TA");
+            pw.println("c events and stations");
 
-			// catalogue epicentral distance sampling
-			pw.println(thetamin + " " + thetamax + " " + dtheta);
+            // catalogue epicentral distance sampling
+            pw.println(thetamin + " " + thetamax + " " + dtheta);
 
-			// radii for perturbation points
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
-			pw.println("end");
-		}
-	}
+            // radii for perturbation points
+            pw.println(radii.length + " nr");
+            Arrays.stream(radii).forEach(pw::println);
+            pw.println("end");
+        }
+    }
 
 }

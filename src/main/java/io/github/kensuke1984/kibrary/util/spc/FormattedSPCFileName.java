@@ -141,9 +141,9 @@ public class FormattedSPCFileName extends SPCFileName {
         mode = getMode(fileName);
         sourceID = getEventID(fileName);
         stationCode = fileName.split("\\.")[0].split("_")[0];
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
-            networkCode = null;
-        else
+//        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+//            networkCode = null;
+//        else
             networkCode = fileName.split("\\.")[0].split("_")[1];
         x = getX(fileName);
         y = getY(fileName);

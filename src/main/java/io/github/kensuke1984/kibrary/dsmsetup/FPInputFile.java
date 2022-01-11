@@ -1,8 +1,5 @@
 package io.github.kensuke1984.kibrary.dsmsetup;
 
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -10,7 +7,9 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
 /**
  * Information file for computation of forward propagation.
@@ -23,11 +22,11 @@ import java.util.stream.IntStream;
  */
 public class FPInputFile extends DSMInputHeader {
 
-    private final GlobalCMTAccess EVENT;
-    private final HorizontalPosition[] POSITIONS;
-    private final double[] RADII;
-    private final PolynomialStructure STRUCTURE;
-    private final String OUTPUT;
+    private final GlobalCMTAccess event;
+    private final HorizontalPosition[] positions;
+    private final double[] radii;
+    private final PolynomialStructure structure;
+    private final String output;
 
     /**
      * @param event              source
@@ -41,11 +40,11 @@ public class FPInputFile extends DSMInputHeader {
     public FPInputFile(GlobalCMTAccess event, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationPointR, HorizontalPosition[] perturbationPoint) {
         super(tlen, np);
-        EVENT = event;
-        OUTPUT = outputDir;
-        STRUCTURE = structure;
-        POSITIONS = perturbationPoint.clone();
-        RADII = perturbationPointR.clone();
+        this.event = event;
+        output = outputDir;
+        this.structure = structure;
+        positions = perturbationPoint.clone();
+        radii = perturbationPointR.clone();
     }
 
     /**
@@ -63,33 +62,33 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            String[] structurePart = STRUCTURE.toSHlines();
+            String[] structurePart = structure.toSHlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(EVENT.getCmtLocation().getR() + " " + EVENT.getCmtLocation().getLatitude() + " " +
-                    EVENT.getCmtLocation().getLongitude());
-            double[] mt = EVENT.getCmt().getDSMmt();
+            pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " " +
+                    event.getCmtLocation().getLongitude());
+            double[] mt = event.getCmt().getDSMmt();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
 
             // write info
             pw.println("c write directory");
-            pw.println(OUTPUT + "/");
-            pw.println(EVENT);
+            pw.println(output + "/");
+            pw.println(event);
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
-            pw.println(POSITIONS.length + " nsta");
-            Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+            pw.println(positions.length + " nsta");
+            Arrays.stream(positions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
             // radii for perturbation points
-            pw.println(RADII.length + " nr");
-            Arrays.stream(RADII).forEach(pw::println);
+            pw.println(radii.length + " nr");
+            Arrays.stream(radii).forEach(pw::println);
             pw.println("end");
         }
     }
-    
+
     /**
      * write the information file for shfpcat (catalog)
      * @param outPath
@@ -101,45 +100,45 @@ public class FPInputFile extends DSMInputHeader {
      * @author anselme
      */
     public void writeSHFPCAT(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) throws IOException {
-		// if(true)return;
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
-			// header
-			String[] header = outputDSMHeader();
-			Arrays.stream(header).forEach(pw::println);
+        // if(true)return;
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+            // header
+            String[] header = outputDSMHeader();
+            Arrays.stream(header).forEach(pw::println);
 
-			// structure
-			String[] structurePart = STRUCTURE.toSHlines();
-			Arrays.stream(structurePart).forEach(pw::println);
+            // structure
+            String[] structurePart = structure.toSHlines();
+            Arrays.stream(structurePart).forEach(pw::println);
 
-			// source
-			pw.println(EVENT.getCmtLocation().getR() + " 0. 0.");
-			double[] mt = EVENT.getCmt().getDSMmt();
-			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
-					+ " Moment Tensor (1.e25 dyne cm)");
+            // source
+            pw.println(event.getCmtLocation().getR() + " 0. 0.");
+            double[] mt = event.getCmt().getDSMmt();
+            pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
 
-			// output info
-			pw.println("c output directory");
-			pw.println(OUTPUT + "/");
-			pw.println(EVENT.toString());
-			pw.println("c events and stations");
+            // output info
+            pw.println("c output directory");
+            pw.println(output + "/");
+            pw.println(event.toString());
+            pw.println("c events and stations");
 
-			// catalogue epicentral distance sampling
-			pw.println(thetamin + " " + thetamax + " " + dtheta);
+            // catalogue epicentral distance sampling
+            pw.println(thetamin + " " + thetamax + " " + dtheta);
 
-			// radii for perturbation points
+            // radii for perturbation points
 //			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
 //					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
 //			pw.println(RADII.length - nComment + " nr");
-			pw.println(RADII.length + " nr");
-			for (int i = 0; i < RADII.length; i++) {
+            pw.println(radii.length + " nr");
+            for (int i = 0; i < radii.length; i++) {
 //				if (commentPerturbationR[i])
 //					pw.println("c " + RADII[i]);
 //				else
-				pw.println(RADII[i]);
-			}
-			pw.println("end");
-		}
-	}
+                pw.println(radii[i]);
+            }
+            pw.println("end");
+        }
+    }
 
     /**
      * Write an information file for psvfp
@@ -156,33 +155,33 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            String[] structurePart = STRUCTURE.toPSVlines();
+            String[] structurePart = structure.toPSVlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(EVENT.getCmtLocation().getR() + " " + EVENT.getCmtLocation().getLatitude() + " " +
-                    EVENT.getCmtLocation().getLongitude());
-            double[] mt = EVENT.getCmt().getDSMmt();
+            pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " " +
+                    event.getCmtLocation().getLongitude());
+            double[] mt = event.getCmt().getDSMmt();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
 
             // write info
             pw.println("c write directory");
-            pw.println(OUTPUT + "/");
-            pw.println(EVENT);
+            pw.println(output + "/");
+            pw.println(event);
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
-            pw.println(POSITIONS.length + " nsta");
-            Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+            pw.println(positions.length + " nsta");
+            Arrays.stream(positions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
             // radii for perturbation points
-            pw.println(RADII.length + " nr");
-            Arrays.stream(RADII).forEach(pw::println);
+            pw.println(radii.length + " nr");
+            Arrays.stream(radii).forEach(pw::println);
             pw.println("end");
         }
     }
-    
+
     /**
      * write the information file for psvfpcat (catalog)
      * @param outPath
@@ -193,66 +192,66 @@ public class FPInputFile extends DSMInputHeader {
      * @throws IOException
      */
     public void writePSVFPCAT(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) throws IOException {
-		// if(true)return;
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
-			// header
-			String[] header = outputDSMHeader();
-			Arrays.stream(header).forEach(pw::println);
+        // if(true)return;
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+            // header
+            String[] header = outputDSMHeader();
+            Arrays.stream(header).forEach(pw::println);
 
-			// structure
-			String[] structurePart = STRUCTURE.toPSVlines();
-			Arrays.stream(structurePart).forEach(pw::println);
+            // structure
+            String[] structurePart = structure.toPSVlines();
+            Arrays.stream(structurePart).forEach(pw::println);
 
-			// source
-			pw.println(EVENT.getCmtLocation().getR() + " " + EVENT.getCmtLocation().getLatitude() + " "
-					+ EVENT.getCmtLocation().getLongitude());
-			double[] mt = EVENT.getCmt().getDSMmt();
-			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
-					+ " Moment Tensor (1.e25 dyne cm)");
+            // source
+            pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
+                    + event.getCmtLocation().getLongitude());
+            double[] mt = event.getCmt().getDSMmt();
+            pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
 
-			// output info
-			pw.println("c output directory");
-			pw.println(OUTPUT + "/");
-			pw.println(EVENT.toString());
-			pw.println("c events and stations");
-			
-			// catalogue epicentral distance sampling
-			pw.println(thetamin + " " + thetamax + " " + dtheta);
+            // output info
+            pw.println("c output directory");
+            pw.println(output + "/");
+            pw.println(event.toString());
+            pw.println("c events and stations");
 
-			// radii for perturbation points
+            // catalogue epicentral distance sampling
+            pw.println(thetamin + " " + thetamax + " " + dtheta);
+
+            // radii for perturbation points
 //			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
 //					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
 //			pw.println(RADII.length - nComment + " nr");
-			pw.println(RADII.length + " nr");
-			for (int i = 0; i < RADII.length; i++) {
+            pw.println(radii.length + " nr");
+            for (int i = 0; i < radii.length; i++) {
 //				if (commentPerturbationR[i])
 //					pw.println("c " + RADII[i]);
 //				else
-					pw.println(RADII[i]);
-			}
-			pw.println("end");
-		}
-	}
+                    pw.println(radii[i]);
+            }
+            pw.println("end");
+        }
+    }
 
     /**
      * @return name of the write folder
      */
     public String getOutputDir() {
-        return OUTPUT;
+        return output;
     }
 
     /**
      * @return radii for the perturbation points
      */
     public double[] getPerturbationPointDepth() {
-        return RADII.clone();
+        return radii.clone();
     }
 
     /**
      * @return structure to be used
      */
     public PolynomialStructure getStructure() {
-        return STRUCTURE;
+        return structure;
     }
-    
+
 }

@@ -159,14 +159,20 @@ public class SPCFile implements SPCFileAccess {
                 specFile.observerID = observerName;
             }
 
-            if (specFile.spcFileType.equals(SPCType.PB) || specFile.spcFileType.equals(SPCType.PF)
-                    || specFile.spcFileType.equals(SPCType.PBSHCAT)
-                    || specFile.spcFileType.equals(SPCType.PBPSVCAT)
-                    || specFile.spcFileType.equals(SPCType.PFSHCAT)
-                    || specFile.spcFileType.equals(SPCType.PFPSVCAT)
-                    || specFile.spcFileType.equals(SPCType.PFSHO)
-                    || specFile.spcFileType.equals(SPCType.UB)
-                    || specFile.spcFileType.equals(SPCType.UF))
+
+//            if (specFile.spcFileType.equals(SPCType.PB) || specFile.spcFileType.equals(SPCType.PF)
+//                    || specFile.spcFileType.equals(SPCType.PBSHCAT)
+//                   || specFile.spcFileType.equals(SPCType.PBPSVCAT)
+//                    || specFile.spcFileType.equals(SPCType.PFSHCAT)
+//                    || specFile.spcFileType.equals(SPCType.PFPSVCAT)
+//                    || specFile.spcFileType.equals(SPCType.PFSHO)
+//                    || specFile.spcFileType.equals(SPCType.UB)
+//                    || specFile.spcFileType.equals(SPCType.UF))
+                if (specFile.spcFileType.equals(SPCType.PBSHCAT)
+                        || specFile.spcFileType.equals(SPCType.PBPSVCAT)
+                        || specFile.spcFileType.equals(SPCType.PFSHCAT)
+                        || specFile.spcFileType.equals(SPCType.PFPSVCAT)
+                        || specFile.spcFileType.equals(SPCType.PFSHO))
                 specFile.networkCode = null;
             else
                 specFile.networkCode = spcFileName.getNetworkCode();
