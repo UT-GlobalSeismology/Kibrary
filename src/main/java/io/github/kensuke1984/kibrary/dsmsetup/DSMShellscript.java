@@ -151,13 +151,13 @@ class DSMShellscript {
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
             pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
             pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  for j in $(for k in BPinfo/0000*; do echo $k; done | sed -n $nstart,${nend}p)");
             pw.println("  do");
             pw.println("    cd $j");
             if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+                pw.println("    mpirun -n $Ncore $(which mpi-psvbp) < " + header + "_PSV.inf > runPSVBP.log &");
             } else {
-                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+                pw.println("    psvbp < " + header + "_PSV.inf > runPSVBP.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");
@@ -184,13 +184,13 @@ class DSMShellscript {
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
             pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
             pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  for j in $(for k in BPinfo/0000*; do echo $k; done | sed -n $nstart,${nend}p)");
             pw.println("  do");
             pw.println("    cd $j");
             if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+                pw.println("    mpirun -n $Ncore $(which mpi-shbp) < " + header + "_SH.inf > runSHBP.log &");
             } else {
-                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+                pw.println("    shbp < " + header + "_SH.inf > runSHBP.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");
@@ -217,13 +217,13 @@ class DSMShellscript {
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
             pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
             pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  for j in $(for k in FPinfo/*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
             pw.println("  do");
             pw.println("    cd $j");
             if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+                pw.println("    mpirun -n $Ncore $(which mpi-psvfp) < " + header + "_PSV.inf > runPSVFP.log &");
             } else {
-                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+                pw.println("    psvfp < " + header + "_PSV.inf > runPSVFP.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");
@@ -250,13 +250,13 @@ class DSMShellscript {
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
             pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
             pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  for j in $(for k in FPinfo/*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
             pw.println("  do");
             pw.println("    cd $j");
             if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+                pw.println("    mpirun -n $Ncore $(which mpi-shfp) < " + header + "_SH.inf > runSHFP.log &");
             } else {
-                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+                pw.println("    shfp < " + header + "_SH.inf > runSHFP.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");
