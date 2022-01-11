@@ -379,7 +379,7 @@ public class SyntheticDSMSetup implements Operation {
         }
 
         // output shellscripts for execution of tipsv and tish
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size());
+        DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
         shell.writePSV();
         shell.writeSH();
     }

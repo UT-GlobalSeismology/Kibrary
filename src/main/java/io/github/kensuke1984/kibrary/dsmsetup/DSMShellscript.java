@@ -14,6 +14,10 @@ import java.nio.file.Path;
 class DSMShellscript {
 
     private Path workPath;
+    /**
+     * Information file name is header_[psv,sh].inf
+     */
+    private String header;
     private boolean mpi;
     /**
      * Number of blocks of {nSimRun} events to operate for
@@ -38,9 +42,10 @@ class DSMShellscript {
      * @param mpi (boolean) Whether to use MPI
      * @param nEvents (int) Number of events to be processed
      */
-    public DSMShellscript(Path workPath, boolean mpi, int nEvents) {
+    public DSMShellscript(Path workPath, boolean mpi, int nEvents, String header) {
         this.workPath = workPath;
         this.mpi = mpi;
+        this.header = header;
 
         int nThreads = Runtime.getRuntime().availableProcessors() - 1;
         if (mpi) {
@@ -84,9 +89,9 @@ class DSMShellscript {
             pw.println("  do");
             pw.println("    cd $j");
             if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tipsv) < PREM_PSV.inf > runPSV.log &");
+                pw.println("    mpirun -n $Ncore $(which mpi-tipsv) < " + header + "_PSV.inf > runPSV.log &");
             } else {
-                pw.println("    tipsv < PREM_PSV.inf > runPSV.log &");
+                pw.println("    tipsv < " + header + "_PSV.inf > runPSV.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");
@@ -95,6 +100,7 @@ class DSMShellscript {
 
         }
     }
+
     /**
      * @throws IOException
      */
@@ -116,9 +122,141 @@ class DSMShellscript {
             pw.println("  do");
             pw.println("    cd $j");
             if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tish) < PREM_SH.inf > runSH.log &");
+                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
             } else {
-                pw.println("    tish < PREM_SH.inf > runSH.log &");
+                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+            }
+            pw.println("    cd ../");
+            pw.println("  done");
+            pw.println("  wait");
+            pw.println("done");
+
+        }
+    }
+
+    /**TODO
+     * @throws IOException
+     */
+    public void writePSVBP() throws IOException {
+        Path shPath = workPath.resolve("runBP_psv.sh");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("Nblock=" + nBlock);
+            pw.println("Nsimrun=" + nSimRun);
+            pw.println("Ncore=" + nCore);
+            pw.println();
+            pw.println("for i in $(seq 1 $Nblock)");
+            pw.println("do");
+            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
+            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
+            pw.println("  echo \"$nstart $nend\"");
+            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  do");
+            pw.println("    cd $j");
+            if (mpi) {
+                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+            } else {
+                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+            }
+            pw.println("    cd ../");
+            pw.println("  done");
+            pw.println("  wait");
+            pw.println("done");
+
+        }
+    }
+
+    /**
+     * @throws IOException
+     */
+    public void writeSHBP() throws IOException {
+        Path shPath = workPath.resolve("runBP_sh.sh");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("Nblock=" + nBlock);
+            pw.println("Nsimrun=" + nSimRun);
+            pw.println("Ncore=" + nCore);
+            pw.println();
+            pw.println("for i in $(seq 1 $Nblock)");
+            pw.println("do");
+            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
+            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
+            pw.println("  echo \"$nstart $nend\"");
+            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  do");
+            pw.println("    cd $j");
+            if (mpi) {
+                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+            } else {
+                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+            }
+            pw.println("    cd ../");
+            pw.println("  done");
+            pw.println("  wait");
+            pw.println("done");
+
+        }
+    }
+
+    /**
+     * @throws IOException
+     */
+    public void writePSVFP() throws IOException {
+        Path shPath = workPath.resolve("runFP_psv.sh");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("Nblock=" + nBlock);
+            pw.println("Nsimrun=" + nSimRun);
+            pw.println("Ncore=" + nCore);
+            pw.println();
+            pw.println("for i in $(seq 1 $Nblock)");
+            pw.println("do");
+            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
+            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
+            pw.println("  echo \"$nstart $nend\"");
+            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  do");
+            pw.println("    cd $j");
+            if (mpi) {
+                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+            } else {
+                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
+            }
+            pw.println("    cd ../");
+            pw.println("  done");
+            pw.println("  wait");
+            pw.println("done");
+
+        }
+    }
+
+    /**
+     * @throws IOException
+     */
+    public void writeSHFP() throws IOException {
+        Path shPath = workPath.resolve("runFP_sh.sh");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("Nblock=" + nBlock);
+            pw.println("Nsimrun=" + nSimRun);
+            pw.println("Ncore=" + nCore);
+            pw.println();
+            pw.println("for i in $(seq 1 $Nblock)");
+            pw.println("do");
+            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
+            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
+            pw.println("  echo \"$nstart $nend\"");
+            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  do");
+            pw.println("    cd $j");
+            if (mpi) {
+                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
+            } else {
+                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
             }
             pw.println("    cd ../");
             pw.println("  done");

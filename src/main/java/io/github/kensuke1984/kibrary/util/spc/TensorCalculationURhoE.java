@@ -136,7 +136,7 @@ public class TensorCalculationURhoE {
     private Complex[] calcCrossCorrelation(Complex[] u, Complex[] eta) {
         Complex[] c = new Complex[np + 1];
         for (int i = 0; i < np +1; i++)
-            c[i] = u[i].multiply(eta[i]).multiply(2.0 * Math.PI * i / tlen);
+            c[i] = u[i].multiply(eta[i]).multiply(Math.pow(2.0 * Math.PI * i / tlen, 2));
 //        Arrays.setAll(c, i -> u[i].multiply(eta[i]));
 //        Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
         return c;
