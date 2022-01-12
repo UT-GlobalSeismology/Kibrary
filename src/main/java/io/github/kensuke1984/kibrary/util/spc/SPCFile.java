@@ -101,6 +101,7 @@ public class SPCFile implements SPCFileAccess {
             int ncomp = dis.readInt();
             //System.err.println(np + " " + nbody + " " + ncomp);
 
+            System.err.println(ncomp); //TODO
             // ncomponents
             switch (ncomp) {
             case 0: // isotropic 1D partial par2 (lambda)
@@ -114,9 +115,11 @@ public class SPCFile implements SPCFileAccess {
             case 4:// forward propagation dislocation field. 4 is an identifier. The actual number of component is 3 (3 non-zero component).
                 specFile.nComponent = 3;
                 specFile.spcFileType = SPCType.UF;
+                break;
             case 5:// back propagation dialocation filed. 5 is an identifier. The actual number of component is 9 (9 non-zero component).
                 specFile.nComponent = 9;
                 specFile.spcFileType = SPCType.UB;
+                break;
             case 7: // back propagation PSV catalog. 7 is an identifier. The actual number of component is 27 (27 non-zero component).
 //				System.out.println("PBPSVCAT");
                 specFile.nComponent = 27;
@@ -147,7 +150,7 @@ public class SPCFile implements SPCFileAccess {
                 specFile.spcFileType = SPCType.PB;
                 break;
             default:
-                throw new RuntimeException("component can be only 3(synthetic), 7(bppsvcat), 8(bpshcat), 9(fp), 10(fpshcat), or 27(bp) right now");
+                throw new RuntimeException("component can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), 9(fp), 10(fpshcat), or 27(bp) right now");
             }
 
             if (observerName == null) {
@@ -257,6 +260,7 @@ public class SPCFile implements SPCFileAccess {
                 for (SPCBody body : specFile.spcBody) {
                     Complex[] u = new Complex[specFile.nComponent];
                     int ip = dis.readInt();
+
                     if (specFile.spcFileType.equals(SPCType.PBSHCAT)) {
                         for (int k = 0; k < specFile.nComponent; k++) {
                             if (SPCTensorComponent.isBPSHCATzero(k+1))
@@ -390,11 +394,21 @@ public class SPCFile implements SPCFileAccess {
         return getInstance(spcFileName, 0., null, null, null);
     }
 
+    /**
+     * (PB, PF, UB, UF) Return perturbation point code
+     * <p>
+     * (else) Return obsever code
+     */
     @Override
     public String getObserverID() {
         return observerID;
     }
 
+    /**
+     * (PB, PF, UB, UF) Return perturbation point code
+     * <p>
+     * (else) Return station code
+     */
     @Override
     public String getStationCode() {
         return stationCode;
@@ -405,6 +419,11 @@ public class SPCFile implements SPCFileAccess {
         return networkCode;
     }
 
+    /**
+     * (PB, UB) Return observer code (source of back propagate wave)
+     * <p>
+     * (else) Return source ID
+     */
     @Override
     public String getSourceID() {
         return sourceID;

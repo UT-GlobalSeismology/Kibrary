@@ -774,7 +774,6 @@ public class ThreeDPartialMaker {
         }
 //		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
         if (type.isDensity()) {
-            System.err.println("compute U Rho E");
             double tlen = bp.tlen();
             TensorCalculationURhoE tensorcalc = new TensorCalculationURhoE(fpBody, bpBody, angleForTensor, tlen);
             return component == SACComponent.Z ? tensorcalc.calc(0)
