@@ -109,10 +109,6 @@ public class FujiStaticCorrection extends Operation_new {
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<TimewindowData> timewindowInformation;
 
-    /**
-     * @param args
-     * @throws Exception if any
-     */
     public static void main(String[] args) throws IOException {
         writeDefaultPropertiesFile();
     }

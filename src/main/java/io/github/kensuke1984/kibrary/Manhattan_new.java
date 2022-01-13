@@ -12,7 +12,15 @@ import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
 public enum Manhattan_new {
+    // Environment 00
+    // Data download 10
+    // Synthetic  20
+    // Filtered 30
     FujiStaticCorrection(6, FujiStaticCorrection.class), //
+    // Compiled 40
+    // Partial 50
+    // Inversion 60
+    // Temporal 100
     ;
 
     private Class<? extends Operation_new> c;

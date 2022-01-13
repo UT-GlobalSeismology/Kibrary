@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,8 +21,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -49,9 +47,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-public final class SPC_SAC implements Operation {
+public final class SPC_SAC extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
@@ -83,7 +81,7 @@ public final class SPC_SAC implements Operation {
     /**
      * If it computes temporal partial or not.
      */
-    private boolean computesPartial;
+    private boolean computeTimePartial;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
@@ -91,9 +89,13 @@ public final class SPC_SAC implements Operation {
     private final List<String> stfcat =
             readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 
+    public static void main(String[] args) throws IOException {
+        writeDefaultPropertiesFile();
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
@@ -115,16 +117,30 @@ public final class SPC_SAC implements Operation {
             pw.println("##SamplingHz (20) !You can not change yet!");
             pw.println("#samplingHz");
             pw.println("##(boolean) If it is true, then temporal partial is computed. (false)");
-            pw.println("#timePartial");
+            pw.println("#computeTimePartial");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public SPC_SAC(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
+    public SPC_SAC(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
         set();
     }
+    private void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
+        psvPath = property.parsePath("psvPath", "", true, workPath);
+        shPath = property.parsePath("shPath", "", true, workPath);
+        modelName = property.parseString("modelName", "");
+
+        setSourceTimeFunction();
+
+        samplingHz = 20; // TODO
+        computeTimePartial = property.parseBoolean("computeTimePartial", "false");
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("psvPath")) property.setProperty("psvPath", "");
@@ -154,22 +170,10 @@ public final class SPC_SAC implements Operation {
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
         setSourceTimeFunction();
-        computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
+        computeTimePartial = Boolean.parseBoolean(property.getProperty("timePartial"));
         samplingHz = 20; // TODO
     }
-
-    /**
-     * @param args [parameter file name]
-     * @throws IOException if any
-     */
-    public static void main(String[] args) throws IOException {
-        SPC_SAC operation = new SPC_SAC(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(SPC_SAC.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(SPC_SAC.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() throws IOException {
@@ -249,19 +253,21 @@ public final class SPC_SAC implements Operation {
             }
         };
         sm.setComponents(components);
-        sm.setTemporalDifferentiation(computesPartial);
+        sm.setTemporalDifferentiation(computeTimePartial);
         sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
         return sm;
     }
 
 
-    private void setSourceTimeFunction() {
+    private void setSourceTimeFunction() throws IOException {
+        if (!property.containsKey("sourceTimeFunction")) property.setProperty("sourceTimeFunction", "0");
+
         String s = property.getProperty("sourceTimeFunction");
         if (s.length() == 1 && Character.isDigit(s.charAt(0)))
             sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
         else {
             sourceTimeFunction = -1;
-            sourceTimeFunctionPath = getPath("sourceTimeFunction");
+            sourceTimeFunctionPath = property.parsePath("sourceTimeFunction", null, true, workPath);
         }
         switch (sourceTimeFunction) {
             case -1:
@@ -422,16 +428,6 @@ public final class SPC_SAC implements Operation {
         if (psvFileName.getMode() == SPCMode.SH) return null;
         return new FormattedSPCFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
                 psvFileName.getName().replace("PSV.spc", "SH.spc")));
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
     }
 
 }
