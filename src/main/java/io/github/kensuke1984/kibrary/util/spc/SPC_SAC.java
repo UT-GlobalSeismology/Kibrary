@@ -59,7 +59,12 @@ public final class SPC_SAC extends Operation_new {
      */
     private Path outPath;
 
+    private boolean usePSV;
+    private Path psvPath;
+    private boolean useSH;
+    private Path shPath;
     private Path sourceTimeFunctionPath;
+
     /**
      * components to be computed
      */
@@ -76,8 +81,6 @@ public final class SPC_SAC extends Operation_new {
      * source time function. -1:Users, 0: none, 1: boxcar, 2: triangle
      */
     private int sourceTimeFunction;
-    private Path psvPath;
-    private Path shPath;
     /**
      * If it computes temporal partial or not.
      */
@@ -102,9 +105,12 @@ public final class SPC_SAC extends Operation_new {
             pw.println("#workPath");
             pw.println("##SACComponents for write (Z R T)");
             pw.println("#components");
-            pw.println("##In the following, if you do NOT want to use PSV or SH, set the one 'null'.");
+            pw.println("##(boolean) Whether to use PSV spectrums (true)");
+            pw.println("#usePSV");
             pw.println("##Path of a PSV folder (.)");
             pw.println("#psvPath");
+            pw.println("##(boolean) Whether to use SH spectrums (true)");
+            pw.println("#useSH");
             pw.println("##Path of an SH folder (.)");
             pw.println("#shPath");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
@@ -126,20 +132,64 @@ public final class SPC_SAC extends Operation_new {
         this.property = (Property_new) property.clone();
         set();
     }
+
     private void set() throws IOException {
         workPath = property.parsePath("workPath", "", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        psvPath = property.parsePath("psvPath", "", true, workPath);
-        shPath = property.parsePath("shPath", "", true, workPath);
+        usePSV = property.parseBoolean("usePSV", "true");
+        if (usePSV) psvPath = property.parsePath("psvPath", "", true, workPath);
+        useSH = property.parseBoolean("useSH", "true");
+        if (useSH) shPath = property.parsePath("shPath", "", true, workPath);
+
         modelName = property.parseString("modelName", "");
+        if (modelName.isEmpty()) setModelName();
 
         setSourceTimeFunction();
-
         samplingHz = 20; // TODO
         computeTimePartial = property.parseBoolean("computeTimePartial", "false");
     }
+
+    private void setModelName() throws IOException {
+        Set<EventFolder> eventFolders = new HashSet<>();
+        if (usePSV) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
+        if (useSH) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
+        Set<String> possibleNames =
+                eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
+                        .collect(Collectors.toSet());
+        if (possibleNames.size() != 1) throw new RuntimeException(
+                "There are no model folder in event folders or more than one folder. You must specify 'modelName' in the case.");
+
+        String modelName = possibleNames.iterator().next();
+        if (eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists))
+            this.modelName = modelName;
+        else throw new RuntimeException("There are some events without model folder " + modelName);
+    }
+
+    private void setSourceTimeFunction() throws IOException {
+        if (!property.containsKey("sourceTimeFunction")) property.setProperty("sourceTimeFunction", "0");
+
+        String s = property.getProperty("sourceTimeFunction");
+        if (s.length() == 1 && Character.isDigit(s.charAt(0)))
+            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
+        else {
+            sourceTimeFunction = -1;
+            sourceTimeFunctionPath = property.parsePath("sourceTimeFunction", null, true, workPath);
+        }
+        switch (sourceTimeFunction) {
+            case -1:
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 5:
+                return;
+            default:
+                throw new RuntimeException("Integer for source time function is invalid.");
+        }
+    }
+
 /*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
@@ -180,11 +230,11 @@ public final class SPC_SAC extends Operation_new {
         System.err.println("Model name is " + modelName);
         if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
 
-        if (psvPath != null && (psvSPCs = collectPSVSPCs()).isEmpty())
-            throw new FileNotFoundException("No PSV spector files are found.");
+        if (usePSV == true && (psvSPCs = collectPSVSPCs()).isEmpty())
+            throw new FileNotFoundException("No PSV spectrum files are found.");
 
-        if (shPath != null && (shSPCs = collectSHSPCs()).isEmpty())
-            throw new FileNotFoundException("No SH spector files are found.");
+        if (useSH == true && (shSPCs = collectSHSPCs()).isEmpty())
+            throw new FileNotFoundException("No SH spectrum files are found.");
 
         outPath = workPath.resolve("spcsac" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
@@ -194,7 +244,7 @@ public final class SPC_SAC extends Operation_new {
 
         int nSAC = 0;
         // single
-        if (psvPath == null || shPath == null) for (SPCFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
+        if (usePSV == false || useSH == false) for (SPCFileName spc : (usePSV == true ? psvSPCs : shSPCs)) {
             SPCFile one = SPCFile.getInstance(spc);
             // create event folder under outPath
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
@@ -258,29 +308,6 @@ public final class SPC_SAC extends Operation_new {
         return sm;
     }
 
-
-    private void setSourceTimeFunction() throws IOException {
-        if (!property.containsKey("sourceTimeFunction")) property.setProperty("sourceTimeFunction", "0");
-
-        String s = property.getProperty("sourceTimeFunction");
-        if (s.length() == 1 && Character.isDigit(s.charAt(0)))
-            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-        else {
-            sourceTimeFunction = -1;
-            sourceTimeFunctionPath = property.parsePath("sourceTimeFunction", null, true, workPath);
-        }
-        switch (sourceTimeFunction) {
-            case -1:
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 5:
-                return;
-            default:
-                throw new RuntimeException("Integer for source time function is invalid.");
-        }
-    }
 
     private void readUserSourceTimeFunctions() throws IOException {
         Set<GlobalCMTID> ids = DatasetAid.globalCMTIDSet(workPath);
@@ -384,22 +411,6 @@ public final class SPC_SAC extends Operation_new {
         System.err.println("STF catalogue: " +  STFcatalogue);
         return IOUtils.readLines(SPC_SAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
                     , Charset.defaultCharset());
-    }
-
-    private void setModelName() throws IOException {
-        Set<EventFolder> eventFolders = new HashSet<>();
-        if (psvPath != null) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
-        if (shPath != null) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
-        Set<String> possibleNames =
-                eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
-                        .collect(Collectors.toSet());
-        if (possibleNames.size() != 1) throw new RuntimeException(
-                "There are no model folder in event folders or more than one folder. You must specify 'modelName' in the case.");
-
-        String modelName = possibleNames.iterator().next();
-        if (eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists))
-            this.modelName = modelName;
-        else throw new RuntimeException("There are some events without model folder " + modelName);
     }
 
     private Set<SPCFileName> collectSHSPCs() throws IOException {

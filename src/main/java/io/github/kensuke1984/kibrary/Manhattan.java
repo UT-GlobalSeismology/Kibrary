@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
-import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
@@ -56,7 +55,6 @@ public enum Manhattan {
     Result(14, Result.class), //
     SecondHandler(15, SecondHandler.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
-    SPC_SAC(17, SPC_SAC.class), //
     OneDPartialDSMSetup(18, OneDPartialDSMSetup.class), //
     SyntheticDSMSetup(19, SyntheticDSMSetup.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //

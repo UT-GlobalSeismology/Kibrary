@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 
 /**
  * An enum where all {@link Operation_new}s in Kibrary should be assigned to.
@@ -15,6 +16,7 @@ public enum Manhattan_new {
     // Environment 00
     // Data download 10
     // Synthetic  20
+    SPC_SAC(17, SPC_SAC.class), //
     // Filtered 30
     FujiStaticCorrection(6, FujiStaticCorrection.class), //
     // Compiled 40
