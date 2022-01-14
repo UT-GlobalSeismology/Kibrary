@@ -7,6 +7,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.*;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -33,9 +34,10 @@ import java.util.stream.Stream;
  * however, no one knows which channel is used for extraction until you see the
  * intermediate files. If you want to see them, you have to leave the
  * intermediate files explicitly.
- *
- * @author Kensuke Konishi
- * @version 0.2.3
+ * <p>
+ * mseedに対応した (v0.3.1; 2021-08-24)
+ * @author Kensuke Konishi & Kenji Kawai
+ * @version 0.3.1
  */
 public class FirstHandler implements Operation {
     private double samplingHz;
@@ -129,20 +131,34 @@ public class FirstHandler implements Operation {
         Path ignoredSeedPath = outPath.resolve("ignoredSeeds");
 
         Set<Path> seedPaths = findSeedFiles();
-        System.err.println(seedPaths.size() + " seeds are found.");
-        if (seedPaths.isEmpty()) return;
-
+        Set<Path> mseedPaths = findMSeedFiles();
+        
+        if(seedPaths.isEmpty() && !mseedPaths.isEmpty()) {
+        	System.err.println(mseedPaths.size() + " mseeds are found.");
+        } else if (!seedPaths.isEmpty() && mseedPaths.isEmpty()) {
+        	System.err.println(seedPaths.size() + " seeds are found.");
+        } else {
+        	System.err.println(seedPaths.size() + " seeds and " + mseedPaths.size() + " mseeds are found.");
+        }
+        if (seedPaths.isEmpty() && mseedPaths.isEmpty()) return;
+        
         // creates environment (make write folder ...)
         Files.createDirectories(outPath);
         System.err.println("Output directory is " + outPath);
-
+        
+        // for debug... 
+//        for (Iterator<Path> itr = seedPaths.iterator(); itr.hasNext();) {
+//            System.out.println("hogehoge"+itr.next());//
+//       }
+        
+        // For seed files
         Set<SeedSAC> seedSacs = seedPaths.stream().map(seedPath -> {
-            try {
+           try {
                 return new SeedSAC(seedPath, outPath);
             } catch (Exception e) {
                 try {
                     System.err.println(seedPath + " has problems. " + e);
-                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true);
+                    Utilities.moveToDirectory(seedPath, ignoredSeedPath, true); //
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -164,6 +180,37 @@ public class FirstHandler implements Operation {
             e2.printStackTrace();
         }
 
+        
+        // For mseed files
+        Set<MseedSAC> mseedSacs = mseedPaths.stream().map(mseedPath -> {
+           try {
+                return new MseedSAC(mseedPath, outPath);
+            } catch (Exception e) {
+                try {
+                    System.err.println(mseedPath + " has problems. " + e);
+                    Utilities.moveToDirectory(mseedPath, ignoredSeedPath, true); //4debug
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        mseedSacs.forEach(mss -> mss.setRemoveIntermediateFiles(removeIntermediateFile));
+
+        int threadNum2 = Runtime.getRuntime().availableProcessors();
+        ExecutorService es2 = Executors.newFixedThreadPool(threadNum2);
+
+        mseedSacs.forEach(es2::submit); //TODO exception handling
+
+        es2.shutdown();
+        try {
+            while (!es2.isTerminated()) Thread.sleep(1000 * 5);
+        } catch (Exception e2) {
+            e2.printStackTrace();
+        }
+
+        
         for (SeedSAC seedSac : seedSacs)
             try {
                 if (seedSac == null) continue;
@@ -174,9 +221,28 @@ public class FirstHandler implements Operation {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        
+        for (MseedSAC mseedSac : mseedSacs)
+            try {
+                if (mseedSac == null) continue;
+                if (!mseedSac.hadRun()) Utilities.createLinkInDirectory(mseedSac.getSeedPath(), ignoredSeedPath, true);
+                else if (mseedSac.hasProblem())
+                    Utilities.createLinkInDirectory(mseedSac.getSeedPath(), badSeedPath, true);
+                else Utilities.createLinkInDirectory(mseedSac.getSeedPath(), goodSeedPath, true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+ 
+        
     }
 
-    private Set<Path> findSeedFiles() throws IOException {
+    private Set<Path> findMSeedFiles() throws IOException {
+        try (Stream<Path> workPathStream = Files.list(workPath)) {
+            return workPathStream.filter(path -> path.toString().endsWith(".mseed")).collect(Collectors.toSet());
+        }
+	}
+
+	private Set<Path> findSeedFiles() throws IOException {
         try (Stream<Path> workPathStream = Files.list(workPath)) {
             return workPathStream.filter(path -> path.toString().endsWith(".seed")).collect(Collectors.toSet());
         }
