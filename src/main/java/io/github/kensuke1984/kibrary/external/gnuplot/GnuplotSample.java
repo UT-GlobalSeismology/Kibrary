@@ -39,7 +39,7 @@ final class GnuplotSample {
         gnuplot.nextField();
 
         gnuplot.write();
-        if (!gnuplot.execute(Paths.get("."))) System.err.println("gnuplot failed!!");
+        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
 
     }
 

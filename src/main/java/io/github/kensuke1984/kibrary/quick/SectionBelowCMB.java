@@ -41,12 +41,17 @@ public class SectionBelowCMB {
      */
     public static void main(String[] args) throws IOException {
 
-        if (args.length != 3) return;
+        if (args.length != 3) {
+            throw new IllegalArgumentException("specify longitude, startTime, and npts");
+        }
 
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(Paths.get(""));
-
+        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+            return;
+        }
 
         for (EventFolder eventDir : eventDirs) {
+            System.err.println(eventDir.toString());
             section(eventDir, args[0], Double.parseDouble(args[1]), Integer.parseInt(args[2]));
         }
     }
@@ -56,8 +61,10 @@ public class SectionBelowCMB {
         // network code should correspond to longitude
         Set<SACFileName> sacfilenames = eventDir.sacFileSet().stream()
                 .filter(sac -> sac.getNetworkCode().equals(longitudeStr)).collect(Collectors.toSet());
+        System.err.println(sacfilenames.size() + " sac files found.");
 
         Path sectionEventPath = Paths.get("section").resolve(eventDir.getName());
+        System.err.println("Creating " + sectionEventPath);
         Files.createDirectories(sectionEventPath);
 
         String profileFileNameRoot = "profile_" + longitudeStr;
@@ -105,7 +112,7 @@ public class SectionBelowCMB {
         }
 
         profilePlot.write();
-        if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+        if (!profilePlot.execute()) System.err.println("gnuplot failed!!");
     }
 
     private static double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {

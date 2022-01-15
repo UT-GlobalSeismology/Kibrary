@@ -386,7 +386,7 @@ public class RecordSectionCreater implements Operation {
 
             if (createProfile) {
                 profilePlot.write();
-                if (!profilePlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+                if (!profilePlot.execute()) System.err.println("gnuplot failed!!");
             }
 
             if (createBinStack) {
@@ -399,7 +399,7 @@ public class RecordSectionCreater implements Operation {
                 }
 
                 binStackPlot.write();
-                if (!binStackPlot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+                if (!binStackPlot.execute()) System.err.println("gnuplot failed!!");
             }
 
         }

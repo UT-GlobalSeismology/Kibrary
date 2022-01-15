@@ -251,7 +251,7 @@ public class WaveformPlotCreater implements Operation {
         }
 
         gnuplot.write();
-        if (!gnuplot.execute(eventDir.toPath())) System.err.println("gnuplot failed!!");
+        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
     }
 
 

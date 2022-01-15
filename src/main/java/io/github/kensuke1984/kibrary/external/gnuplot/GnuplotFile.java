@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,10 +108,11 @@ public class GnuplotFile {
         pages.add(new GnuplotPage());
     }
 
-    public boolean execute(Path workPath) throws IOException {
+    public boolean execute() throws IOException {
         if (!ExternalProcess.isInPath("gnuplot")) throw new NoSuchFileException("No gnuplot in PATH.");
 
-        ExternalProcess xProcess = ExternalProcess.launch("gnuplot " + filePath.getFileName(), workPath);
+        ExternalProcess xProcess = ExternalProcess.launch("gnuplot " + filePath.getFileName(),
+                (filePath.getParent() != null ? filePath.getParent() : Paths.get("")));
         return xProcess.waitFor() == 0;
     }
 
