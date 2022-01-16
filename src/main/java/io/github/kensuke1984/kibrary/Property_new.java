@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -19,7 +20,15 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  */
 public class Property_new extends Properties {
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * Creates a new property file for an {@link Operation_new} listed in {@link Manhattan_new}.
+     *
+     * @param args  none to choose an operation <br>
+     *              [operation name] to work for that operation
+     * @throws IOException on failure of reading input
+     * @throws ReflectiveOperationException on failure to invoke method from {@link Manhattan_new}
+     */
+    public static void main(String[] args) throws IOException, ReflectiveOperationException {
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {

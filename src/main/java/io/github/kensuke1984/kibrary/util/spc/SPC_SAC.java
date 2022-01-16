@@ -92,8 +92,14 @@ public final class SPC_SAC extends Operation_new {
     private final List<String> stfcat =
             readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
     public static void main(String[] args) throws IOException {
-        writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -130,10 +136,10 @@ public final class SPC_SAC extends Operation_new {
 
     public SPC_SAC(Property_new property) throws IOException {
         this.property = (Property_new) property.clone();
-        set();
     }
 
-    private void set() throws IOException {
+    @Override
+    public void set() throws IOException {
         workPath = property.parsePath("workPath", "", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());

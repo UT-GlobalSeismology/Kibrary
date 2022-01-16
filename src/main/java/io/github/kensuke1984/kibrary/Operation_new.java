@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +22,18 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  */
 public abstract class Operation_new {
 
+    /**
+     * Runs an {@link Operation_new} using a {@link Property_new} file.
+     * The {@link Operation_new} must be listed in {@link Manhattan_new}.
+     *
+     * @param args  none to choose a property file <br>
+     *              [property file] to run an operation <br>
+     *               -l to show the list of operations
+     * @throws IOException if any
+     */
     public static void main(String[] args) throws IOException {
-        Property_new property = new Property_new();
 
+        Property_new property = new Property_new();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
         } else if (args.length == 0) {
@@ -43,12 +53,7 @@ public abstract class Operation_new {
             throw new IllegalArgumentException(manhattan + " is not a valid name of Manhattan.");
         }
 
-        try {
-            operate(property,  Manhattan_new.valueOf(manhattan));
-        } catch (Exception e) {
-            System.err.println("Could not run " + manhattan + " due to " + e.getCause());
-            e.printStackTrace();
-        }
+        operate(Manhattan_new.valueOf(manhattan).getOperation(), property);
 
     }
 
@@ -71,16 +76,91 @@ public abstract class Operation_new {
         }
     }
 
-    public static void operate(Property_new property, Manhattan_new manhattan) throws IOException, ReflectiveOperationException {
-        Constructor<? extends Operation_new> constructor = manhattan.getOperation().getConstructor(Property_new.class);
-        Operation_new operation = constructor.newInstance(property);
+    /**
+     * Method to be called from the main method of each class extending {@link Operation_new}.
+     * This operates the {@link Operation_new} that called this class,
+     * regardless of the 'manhattan' property written in the specified property file.
+     * This enables {@link Operation_new}s that are not listed in {@link Manhattan_new} to be operated.
+     *
+     * @param args [property file name]
+     * @throws IOException if the property file cannot be loaded
+     */
+    public static void mainFromSubclass(String[] args) throws IOException {
+
+        Property_new property = new Property_new();
+        if (1 < args.length) {
+            throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
+        } else if (args.length == 0) {
+            throw new IllegalArgumentException("A property file must be specified.");
+        } else {
+            property.load(Files.newBufferedReader(Paths.get(args[0])));
+        }
+
+        // get the fully-qualified class name of the Operation that has called this method
+        String operationClassName = Thread.currentThread().getStackTrace()[2].getClassName();
+        // get the Class instance of the Operation
+        Class<? extends Operation_new> operationClass;
+        try {
+            operationClass = Class.forName(operationClassName).asSubclass(Operation_new.class);
+        } catch (Exception e) {
+            System.err.println("Could not get " + operationClassName);
+            e.printStackTrace();
+            return;
+        }
+
+        operate(operationClass, property);
+
+    }
+
+    /**
+     * Operates an {@link Operation_new} with the specified {@link Property_new} file.
+     * @param operationClass Class that extends {@link Operation_new}
+     * @param property {@link Property_new} file
+     */
+    public static void operate(Class<? extends Operation_new> operationClass, Property_new property) {
+
+        // construct
+        Operation_new operation;
+        try {
+            Constructor<? extends Operation_new> constructor = operationClass.getConstructor(Property_new.class);
+            operation = constructor.newInstance(property);
+        } catch (InvocationTargetException e) {
+            System.err.println("Could not construct " + operationClass.getName() + " due to " + e.getCause());
+            e.printStackTrace();
+            return;
+        } catch (Exception e) {
+            System.err.println("Could not construct " + operationClass.getName());
+            e.printStackTrace();
+            return;
+        }
+
+        // set up
+        try {
+            operation.set();
+        } catch (Exception e) {
+            System.err.println("Could not set up " + operationClass.getName());
+            e.printStackTrace();
+            return;
+        }
 
         long startTime = System.nanoTime();
-        System.err.println(manhattan.getFullClassName() + " is operating.");
-        operation.run();
-        System.err.println(manhattan.getFullClassName() + " finished in " +
+        System.err.println(operationClass.getName() + " is operating.");
+
+        // run
+        try {
+            operation.run();
+        } catch (Exception e) {
+            //System.err.println("Could not run " + operationClass.getName());
+            e.printStackTrace();
+            return;
+        }
+
+        System.err.println(operationClass.getName() + " finished in " +
                 GadgetAid.toTimeString(System.nanoTime() - startTime));
+
     }
+
+    abstract public void set() throws IOException;
 
     abstract public void run() throws IOException;
 

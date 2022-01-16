@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
  * @since a long time ago
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
-public enum Manhattan_new {
+enum Manhattan_new {
     // Environment 00
     // Data download 10
     // Synthetic  20
@@ -33,7 +33,7 @@ public enum Manhattan_new {
         this.c = c;
     }
 
-    public static void printList() {
+    static void printList() {
         Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.value + " " + m.c.getSimpleName()));
     }
 
@@ -49,16 +49,11 @@ public enum Manhattan_new {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
     }
 
-    public Class<? extends Operation_new> getOperation() {
+    Class<? extends Operation_new> getOperation() {
         return c;
     }
 
-    public String getFullClassName() {
-        return c.getName();
-    }
-
-
-    public void writeDefaultPropertiesFile() throws ReflectiveOperationException {
+    void writeDefaultPropertiesFile() throws ReflectiveOperationException {
         c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
