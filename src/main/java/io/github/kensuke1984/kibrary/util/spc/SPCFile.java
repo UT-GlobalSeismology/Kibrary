@@ -97,12 +97,10 @@ public class SPCFile implements SPCFileAccess {
             int np = dis.readInt();
             // nbody
             int nbody = dis.readInt();
-
+            // ncomponents
             int ncomp = dis.readInt();
             //System.err.println(np + " " + nbody + " " + ncomp);
 
-            System.err.println(ncomp); //TODO
-            // ncomponents
             switch (ncomp) {
             case 0: // isotropic 1D partial par2 (lambda)
                 specFile.spcFileType = spcFileName.getFileType();
@@ -364,8 +362,9 @@ public class SPCFile implements SPCFileAccess {
                         }
                     }
                     else {
-                        for (int k = 0; k < specFile.nComponent; k++)
+                        for (int k = 0; k < specFile.nComponent; k++) {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
+                        }
                     }
                     body.add(ip, u);
                 }
