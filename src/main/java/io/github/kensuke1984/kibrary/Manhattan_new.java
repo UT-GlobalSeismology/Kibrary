@@ -7,6 +7,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 
 /**
  * An enum where all {@link Operation_new}s in Kibrary should be assigned to.
+ * <p>
+ * The value name set to this enum must be the same as its corresponding class name.
  *
  * @author otsuru
  * @since a long time ago

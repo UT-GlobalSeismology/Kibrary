@@ -70,6 +70,16 @@ public class Property_new extends Properties {
     }
 
     /**
+     * Outputs properties in a file.
+     * @param path
+     * @throws IOException
+     */
+    public void write(Path path) throws IOException {
+        String manhattan = (containsKey("manhattan") ? getProperty("manhattan") : "(unknown manhattan)");
+        store(Files.newBufferedWriter(path), "Properties for " + manhattan);
+    }
+
+    /**
      * Gets a pre-specified value, or sets a default value, and returns it in String.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.

@@ -33,6 +33,7 @@ public abstract class Operation_new {
      */
     public static void main(String[] args) throws IOException {
 
+        // load property file
         Property_new property = new Property_new();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
@@ -45,6 +46,7 @@ public abstract class Operation_new {
             property.load(Files.newBufferedReader(Paths.get(args[0])));
         }
 
+        // read manhattan
         if (!property.containsKey("manhattan")) {
             throw new IllegalArgumentException("'manhattan' is not set in " + args[0]);
         }
@@ -85,8 +87,9 @@ public abstract class Operation_new {
      * @param args [property file name]
      * @throws IOException if the property file cannot be loaded
      */
-    public static void mainFromSubclass(String[] args) throws IOException {
+    protected static void mainFromSubclass(String[] args) throws IOException {
 
+        // load property file
         Property_new property = new Property_new();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
@@ -107,6 +110,8 @@ public abstract class Operation_new {
             e.printStackTrace();
             return;
         }
+        // set manhattan as this operation class name
+        property.setProperty("manhattan", operationClass.getSimpleName());
 
         operate(operationClass, property);
 
