@@ -3,6 +3,9 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
+import io.github.kensuke1984.kibrary.filter.FilterDivider;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 
 /**
@@ -18,8 +21,11 @@ enum Manhattan_new {
     // Environment 00
     // Data download 10
     // Synthetic  20
+    SyntheticDSMSetup(19, SyntheticDSMSetup.class), //
     SPC_SAC(17, SPC_SAC.class), //
     // Filtered 30
+    FilterDivider(4, FilterDivider.class), //
+    TimewindowMaker(21, TimewindowMaker.class),//
     FujiStaticCorrection(6, FujiStaticCorrection.class), //
     // Compiled 40
     // Partial 50

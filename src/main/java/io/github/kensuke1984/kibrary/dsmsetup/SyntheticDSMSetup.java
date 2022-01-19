@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -19,8 +18,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -44,9 +43,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.
  */
-public class SyntheticDSMSetup implements Operation {
+public class SyntheticDSMSetup extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
@@ -78,8 +77,11 @@ public class SyntheticDSMSetup implements Operation {
      * structure file instead of PREM
      */
     private Path structurePath;
-    private Path timewindowPath;
+    /**
+     * Whether to use only events in a timewindow file
+     */
     private boolean usewindow;
+    private Path timewindowPath;
 
     private boolean mpi;
 
@@ -98,21 +100,31 @@ public class SyntheticDSMSetup implements Operation {
 
     private boolean specfemDataset;
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##SacComponents that observers must have to be used (Z R T)");
-            pw.println("#components");
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
+            pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
+            pw.println("#header");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("#components");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath");
-            pw.println("##Header for names of information files, header_[psv, sh].inf, (PREM)");
-            pw.println("#header");
-            pw.println("##Path of a structure file you want to use. ()");
-            pw.println("#structureFile");
+            pw.println("##Path of a structure file you want to use ()");
+            pw.println("#structurePath");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen");
             pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
@@ -127,16 +139,49 @@ public class SyntheticDSMSetup implements Operation {
             pw.println("#synMaxDistance");
             pw.println("##SPECFEM3D_GLOBE test dataset (false)");
             pw.println("#specfemDataset");
-            pw.println("#timewindowPath");
+            pw.println("##To use only events in a timewindow file, set its path");
+            pw.println("#timewindowPath NOT SUPPORTED YET");
         }
         System.err.println(outPath + " is created.");
     }
 
-    private SyntheticDSMSetup(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public SyntheticDSMSetup(Properties property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        header = property.parseString("header", "PREM").split("\\s+")[0];
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+
+        obsPath = property.parsePath("obsPath", "", true, workPath);
+
+        if (property.containsKey("structurePath")) {
+            structurePath = property.parsePath("structurePath", null, true, workPath);
+        } else {
+            structurePath = Paths.get("PREM");
+        }
+
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
+        mpi = property.parseBoolean("mpi", "true");
+
+        syntheticDataset = property.parseBoolean("syntheticDataset", "false");
+        synMinDistance = property.parseInt("synMinDistance", "1");
+        synMaxDistance = property.parseInt("synMaxDistance", "170");
+        specfemDataset = property.parseBoolean("specfemDataset", "false");
+
+        if (usewindow = property.containsKey("timewindowPath")) {
+            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        }
+
+        // write additional info
+        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
+
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
@@ -179,19 +224,7 @@ public class SyntheticDSMSetup implements Operation {
         usewindow = property.getProperty("timewindowPath") != "";
         timewindowPath = Paths.get(property.getProperty("timewindowPath"));
     }
-
-    /**
-     * @param args [parameter file name]
-     * @throws IOException if any
-     */
-    public static void main(String[] args) throws IOException {
-        SyntheticDSMSetup operation = new SyntheticDSMSetup(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(SyntheticDSMSetup.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(SyntheticDSMSetup.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     /**
      * @author Kensuke Konishi
@@ -207,7 +240,7 @@ public class SyntheticDSMSetup implements Operation {
         String modelName = structurePath.toString().trim().toUpperCase();
         PolynomialStructure ps = null;
 
-        //use only events in timewindow file
+        //use only events in timewindow file TODO
         if (usewindow) {
             Set<GlobalCMTID> idInWindow =
                     TimewindowDataFile.read(timewindowPath).stream()
@@ -307,7 +340,7 @@ public class SyntheticDSMSetup implements Operation {
         System.err.println("Output folder is " + outPath);
 
         if (property != null)
-            writeProperties(outPath.resolve("dsmifm.properties"));
+            property.write(outPath.resolve("dsmifm.properties"));
 
         //synthetic station set
         Set<Observer> synObserverSet = new HashSet<>();
@@ -384,13 +417,4 @@ public class SyntheticDSMSetup implements Operation {
         shell.writeSH();
     }
 
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
 }

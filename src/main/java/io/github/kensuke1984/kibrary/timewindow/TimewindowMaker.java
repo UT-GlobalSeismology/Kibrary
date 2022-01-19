@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -23,11 +22,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -58,11 +56,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.2.4
  * @author anselme add phase information, methods for corridor and MTZ inversion
  */
-public class TimewindowMaker implements Operation {
+public class TimewindowMaker extends Operation_new {
 
     private static final double EX_FRONT_SHIFT = 5.;
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
@@ -72,7 +70,7 @@ public class TimewindowMaker implements Operation {
      */
     private Path outputPath;
     /**
-     * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの
+     * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの TODO:本当？
      */
     private Path invalidList;
 
@@ -110,25 +108,35 @@ public class TimewindowMaker implements Operation {
     private double[][] catalogue_sS;
     private double[][] catalogue_pP;
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##(boolean) Whether or not to use major arc phases (false).");
-            pw.println("#majorArc");
+            pw.println("#majorArc ");
             pw.println("##TauPPhases to be included in timewindow, listed using spaces (S)");
-            pw.println("#usePhases");
+            pw.println("#usePhases ");
             pw.println("##TauPPhases not to be included in timewindow, listed using spaces ()");
-            pw.println("#exPhases");
+            pw.println("#exPhases ");
             pw.println("##(double) Time before first phase [sec]. If it is 10, then 10 s before arrival (0)");
-            pw.println("#frontShift");
+            pw.println("#frontShift ");
             pw.println("##(double) Time after last phase [sec]. If it is 60, then 60 s after arrival (0)");
-            pw.println("#rearShift");
+            pw.println("#rearShift ");
             pw.println("##(boolean) Corridor (false)");
             pw.println("#corridor ");
             pw.println("##(String) Model to compute travel times using TauP (prem)");
@@ -140,10 +148,31 @@ public class TimewindowMaker implements Operation {
     }
 
     public TimewindowMaker(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+
+        majorArc = property.parseBoolean("majorArc", "false");
+        usePhases = phaseSet(property.parseString("usePhases", "S"));
+        exPhases = phaseSet(property.parseString("exPhases", ""));
+        frontShift = property.parseDouble("frontShift", "0");
+        rearShift = property.parseDouble("rearShift", "0");
+        corridor = property.parseBoolean("corridor", "false");
+        model = property.parseString("model", "prem").trim().toLowerCase();
+        minLength = property.parseDouble("minLength", "0");
+
+        String catalogueName_sS =  "firstAppearance_sS." + model + ".catalogue";
+        String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";
+        catalogue_sS = readCatalogue(catalogueName_sS);
+        catalogue_pP = readCatalogue(catalogueName_pP);
+    }
+
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -187,25 +216,11 @@ public class TimewindowMaker implements Operation {
         catalogue_sS = readCatalogue(catalogueName_sS);
         catalogue_pP = readCatalogue(catalogueName_pP);
     }
+*/
 
     private static Set<Phase> phaseSet(String arg) {
-        return arg == null || arg.isEmpty() ? Collections.emptySet()
+        return (arg == null || arg.isEmpty()) ? Collections.emptySet()
                 : Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
-    }
-
-    /**
-     * Run must finish within 10 hours.
-     *
-     * @param args [parameter file name]
-     * @throws Exception if any
-     */
-    public static void main(String[] args) throws IOException {
-        TimewindowMaker operation = new TimewindowMaker(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(TimewindowMaker.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(TimewindowMaker.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
     }
 
     @Override
@@ -957,16 +972,6 @@ public class TimewindowMaker implements Operation {
             e.printStackTrace();
             return null;
         }
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
     }
 
 }

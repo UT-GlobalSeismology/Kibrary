@@ -146,6 +146,11 @@ public class Property_new extends Properties {
         return path;
     }
 
+    /**
+     * @param key (String) Name of key to check, must not be empty
+     * @param defaultValue (String) Value to set to the key if it is not yet specified.
+     *          Require a value to be specified by setting this null.
+     */
     private void checkAndPutDefault(String key, String defaultValue) {
         if (StringUtils.isEmpty(key)) {
             throw new IllegalArgumentException("Key is empty!");

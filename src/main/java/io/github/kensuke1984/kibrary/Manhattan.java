@@ -6,12 +6,10 @@ import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
-import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
-import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
@@ -20,7 +18,6 @@ import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
@@ -42,7 +39,6 @@ public enum Manhattan {
     CheckerBoardTest(1, CheckerBoardTest.class), //
     DataRequestor(2, DataRequestor.class), //
     DataSelection(3, DataSelection.class), //
-    FilterDivider(4, FilterDivider.class), //
     DataKitchen(5, DataKitchen.class), //
 //    FujiStaticCorrection(6, FujiStaticCorrection.class), //
     ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
@@ -56,9 +52,7 @@ public enum Manhattan {
     SecondHandler(15, SecondHandler.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
     OneDPartialDSMSetup(18, OneDPartialDSMSetup.class), //
-    SyntheticDSMSetup(19, SyntheticDSMSetup.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
-    TimewindowMaker(21, TimewindowMaker.class),//
     AtAMaker(22, AtAMaker.class),//
     LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class),//
     Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//

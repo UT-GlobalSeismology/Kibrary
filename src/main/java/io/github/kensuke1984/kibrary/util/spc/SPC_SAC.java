@@ -109,7 +109,7 @@ public final class SPC_SAC extends Operation_new {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##SACComponents for write (Z R T)");
+            pw.println("##SACComponents to be written, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##(boolean) Whether to use PSV spectrums (true)");
             pw.println("#usePSV");
