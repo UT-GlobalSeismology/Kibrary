@@ -3,18 +3,16 @@ package io.github.kensuke1984.kibrary.firsthandler;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -40,9 +38,9 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * @since 2021/09/14
  * @author otsuru
  */
-public class DataKitchen implements Operation {
+public class DataKitchen extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
@@ -74,9 +72,19 @@ public class DataKitchen implements Operation {
      */
     private boolean removeIntermediateFile;
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
@@ -106,11 +114,51 @@ public class DataKitchen implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public DataKitchen(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public DataKitchen(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+
+        switch (property.parseString("catalog", "cmt")) { // TODO
+            case "cmt":
+            case "CMT":
+                catalog = 0;
+                break;
+            case "pde":
+            case "PDE":
+                catalog = 0;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid catalog name.");
+        }
+        samplingHz = property.parseDouble("samplingHz", "20"); // TODO
+
+        minDistance = property.parseDouble("minDistance", "0");
+        maxDistance = property.parseDouble("maxDistance", "180");
+        if (minDistance < 0 || minDistance > maxDistance || 180 < maxDistance)
+            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
+
+        minLatitude = property.parseDouble("minLatitude", "-90");
+        maxLatitude = property.parseDouble("maxLatitude", "90");
+        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude)
+            throw new IllegalArgumentException("Latitude range " + minLatitude + " , " + maxLatitude + " is invalid.");
+
+        minLongitude = property.parseDouble("minLongitude", "-180");
+        maxLongitude = property.parseDouble("maxLongitude", "180");
+        if (minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude)
+            throw new IllegalArgumentException("Longitude range " + minLongitude + " , " + maxLongitude + " is invalid.");
+
+        coordinateGrid = property.parseDouble("coordinateGrid", "0.01");
+        if (coordinateGrid < 0)
+            throw new IllegalArgumentException("coordinateGrid must be non-negative.");
+
+        removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
+
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("catalog")) property.setProperty("catalog", "cmt");
@@ -159,19 +207,7 @@ public class DataKitchen implements Operation {
             throw new IllegalArgumentException("coordinateGrid must be non-negative.");
         removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
     }
-
-    /**
-     * @param args [parameter file name]
-     * @throws IOException if any
-     */
-    public static void main(String[] args) throws IOException {
-        DataKitchen operation = new DataKitchen(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(DataKitchen.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(DataKitchen.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() throws IOException {
@@ -228,16 +264,6 @@ public class DataKitchen implements Operation {
         if (success) {
             System.err.println(" Everything succeeded!");
         }
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
 }

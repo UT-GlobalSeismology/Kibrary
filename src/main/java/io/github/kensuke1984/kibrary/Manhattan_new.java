@@ -4,9 +4,12 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
+import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
+import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 
 /**
  * An enum where all {@link Operation_new}s in Kibrary should be assigned to.
@@ -20,6 +23,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 enum Manhattan_new {
     // Environment 00
     // Data download 10
+    DataLobby(27, DataLobby.class), //
+    DataKitchen(5, DataKitchen.class), //
     // Synthetic  20
     SyntheticDSMSetup(19, SyntheticDSMSetup.class), //
     SPC_SAC(17, SPC_SAC.class), //
@@ -28,6 +33,7 @@ enum Manhattan_new {
     TimewindowMaker(21, TimewindowMaker.class),//
     FujiStaticCorrection(6, FujiStaticCorrection.class), //
     // Compiled 40
+    RecordSectionCreater(29, RecordSectionCreater.class), //
     // Partial 50
     // Inversion 60
     // Temporal 100

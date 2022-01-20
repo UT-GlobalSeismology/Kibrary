@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.visual;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -12,21 +11,19 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -51,9 +48,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @author otsuru
  * @since 2021/12/11
  */
-public class RecordSectionCreater implements Operation {
+public class RecordSectionCreater extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
@@ -96,9 +93,19 @@ public class RecordSectionCreater implements Operation {
     private double lowerAzimuth;
     private double upperAzimuth;
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
@@ -111,7 +118,7 @@ public class RecordSectionCreater implements Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
-            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents");
             pw.println("##(boolean) Whether to create a profile (true)");
             pw.println("#createProfile");
@@ -144,11 +151,47 @@ public class RecordSectionCreater implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public RecordSectionCreater(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public RecordSectionCreater(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        tag = property.parseString("tag", "");
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+
+        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        basicPath = property.parsePath("basicPath", null, true, workPath);
+
+        if (property.containsKey("tendEvents")) {
+            tendEvents = Arrays.stream(property.parseString("tendEvents", null).split("\\s+")).map(GlobalCMTID::new)
+                    .collect(Collectors.toSet());
+        }
+
+        createProfile = property.parseBoolean("createProfile", "true");
+        createBinStack = property.parseBoolean("createBinStack", "false");
+        binWidth = property.parseDouble("binWidth", "1.0");
+        reductionSlowness = property.parseDouble("reductionSlowness", "0");
+        obsAmpStyle = AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
+        synAmpStyle = AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
+        ampScale = property.parseDouble("ampScale", "1.0");
+
+        byAzimuth = property.parseBoolean("byAzimuth", "false");
+        flipAzimuth = property.parseBoolean("flipAzimuth", "false");
+
+        lowerDistance = property.parseDouble("lowerDistance", "0");
+        upperDistance = property.parseDouble("upperDistance", "180");
+        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
+            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
+
+        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
+            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
         if (!property.containsKey("tag")) property.setProperty("tag", "");
@@ -214,20 +257,7 @@ public class RecordSectionCreater implements Operation {
         lowerAzimuth = Double.parseDouble(property.getProperty("lowerAzimuth"));
         upperAzimuth = Double.parseDouble(property.getProperty("upperAzimuth"));
     }
-
-   /**
-    *
-    * @param args [a property file name]
-    * @throws Exception if any
-    */
-   public static void main(String[] args) throws IOException {
-       RecordSectionCreater operation = new RecordSectionCreater(Property.parse(args));
-       long startTime = System.nanoTime();
-       System.err.println(RecordSectionCreater.class.getName() + " is operating.");
-       operation.run();
-       System.err.println(RecordSectionCreater.class.getName() + " finished in "
-               + GadgetAid.toTimeString(System.nanoTime() - startTime));
-   }
+*/
 
    @Override
    public void run() throws IOException {
@@ -274,16 +304,6 @@ public class RecordSectionCreater implements Operation {
            }
        }
    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
 
     private static enum AmpStyle {
         obsEach,

@@ -3,17 +3,15 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -35,9 +33,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * @since 2021/09/13
  * @author otsuru
  */
-public class DataLobby implements Operation {
+public class DataLobby extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path for the work folder
      */
@@ -72,9 +70,19 @@ public class DataLobby implements Operation {
     private Set<GlobalCMTID> requestedEvents;
 
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
@@ -116,11 +124,46 @@ public class DataLobby implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public DataLobby(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public DataLobby(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+
+        datacenter = property.parseString("datacenter", "IRIS");
+        networks = property.parseString("networks", null);
+        channels = property.parseString("channels", "BH?");
+        headAdjustment = property.parseInt("headAdjustment", null);
+        footAdjustment = property.parseInt("footAdjustment", null);
+
+        startDate = LocalDate.parse(property.parseString("startDate", null));
+        endDate = LocalDate.parse(property.parseString("endDate", null));
+        if (startDate.isAfter(endDate))
+            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
+
+        lowerMw = property.parseDouble("lowerMw", "5.5");
+        upperMw = property.parseDouble("upperMw", "7.3");
+        if (lowerMw > upperMw)
+            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
+
+        lowerDepth = property.parseDouble("lowerDepth", "100");
+        upperDepth = property.parseDouble("upperDepth", "700");
+        if (lowerDepth > upperDepth)
+            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
+
+        lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        upperLatitude = property.parseDouble("upperLatitude", "90");
+        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
+            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+
+        lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        upperLongitude = property.parseDouble("upperLongitude", "180");
+        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
+            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("datacenter")) property.setProperty("datacenter", "IRIS");
@@ -177,19 +220,7 @@ public class DataLobby implements Operation {
         if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
             throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
     }
-
-    /**
-     * @param args Request Mode: [parameter file name]
-     * @throws Exception file name
-     */
-    public static void main(String[] args) throws IOException {
-        DataLobby operation = new DataLobby(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(DataLobby.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(DataLobby.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() throws IOException {
@@ -241,16 +272,6 @@ public class DataLobby implements Operation {
         search.setMwRange(lowerMw, upperMw);
         search.setDepthRange(lowerDepth, upperDepth);
         return search.search();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
 }

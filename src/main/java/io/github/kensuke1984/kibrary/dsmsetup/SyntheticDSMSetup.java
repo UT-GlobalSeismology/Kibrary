@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -123,7 +122,7 @@ public class SyntheticDSMSetup extends Operation_new {
             pw.println("#components");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath");
-            pw.println("##Path of a structure file you want to use ()");
+            pw.println("##Path of a structure file you want to use. If this is unset, PREM will be used.");
             pw.println("#structurePath");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen");
@@ -145,7 +144,7 @@ public class SyntheticDSMSetup extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public SyntheticDSMSetup(Properties property) throws IOException {
+    public SyntheticDSMSetup(Property_new property) throws IOException {
         this.property = (Property_new) property.clone();
     }
 

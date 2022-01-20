@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -147,7 +146,7 @@ public class TimewindowMaker extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public TimewindowMaker(Properties property) throws IOException {
+    public TimewindowMaker(Property_new property) throws IOException {
         this.property = (Property_new) property.clone();
     }
 

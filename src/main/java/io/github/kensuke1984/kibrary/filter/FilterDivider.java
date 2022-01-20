@@ -9,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -138,7 +137,7 @@ public class FilterDivider extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public FilterDivider(Properties property) throws IOException {
+    public FilterDivider(Property_new property) throws IOException {
         this.property = (Property_new) property.clone();
     }
 
