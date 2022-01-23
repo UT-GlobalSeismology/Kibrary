@@ -48,6 +48,11 @@ public class FilterDivider extends Operation_new {
      */
     private Path outPath;
     /**
+     * components to be applied the filter
+     */
+    private Set<SACComponent> components;
+
+    /**
      * The root folder containing event folders which have observed SAC files to
      * be filtered
      */
@@ -65,10 +70,6 @@ public class FilterDivider extends Operation_new {
      */
     private double delta;
     /**
-     * components to be applied the filter
-     */
-    private Set<SACComponent> components;
-    /**
      * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}
      */
     private String filterType;
@@ -81,14 +82,13 @@ public class FilterDivider extends Operation_new {
      */
     private double highFreq;
     /**
-     * If backward computation is performed. true: zero-phase false: causal
-     */
-    private boolean backward;
-    /**
      * see Saito, n
      */
     private int np;
-
+    /**
+     * If backward computation is performed. true: zero-phase false: causal
+     */
+    private boolean backward;
     /**
      * SAC files with NPTS over this value will be slimmed.
      */
@@ -110,29 +110,28 @@ public class FilterDivider extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##Path of a root folder containing observed dataset (.)");
-            pw.println("#obsPath");
+            pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
-            pw.println("#synPath");
+            pw.println("#synPath ");
             pw.println("##DELTA in SAC files. The SAC files with other values of DELTA are to be ignored. (0.05)");
-            pw.println("#delta");
+            pw.println("#delta ");
             pw.println("##Filter type to be applied, from {lowpass, highpass, bandpass, bandstop} (bandpass)");
-            pw.println("#filterType");
+            pw.println("#filterType ");
             pw.println("##Lower limit of the frequency band [Hz] (0.005)");
-            pw.println("#lowFreq");
+            pw.println("#lowFreq ");
             pw.println("##Higher limit of the frequency band [Hz] (0.08)");
-            pw.println("#highFreq");
+            pw.println("#highFreq ");
             pw.println("##The value of NP for the filter (4)");
-            pw.println("#np");
-            pw.println("##If backward computation is performed. true: zero phase, false: causal  (true)");
-            pw.println("#backward");
+            pw.println("#np ");
+            pw.println("##If backward computation is performed. true: zero phase, false: causal (true)");
+            pw.println("#backward ");
             pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2");
-            pw.println(
-                    "##When this npts is set, SAC files are slimmed. SAC files with a value of NPTS over the set value are not slimmed.");
-            pw.println("#npts");
+            pw.println("## When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
+            pw.println("#npts ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -143,12 +142,12 @@ public class FilterDivider extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        obsPath = property.parsePath("obsPath", "", true, workPath);
-        synPath = property.parsePath("synPath", "", true, workPath);
+        obsPath = property.parsePath("obsPath", ".", true, workPath);
+        synPath = property.parsePath("synPath", ".", true, workPath);
 
         delta = property.parseDouble("delta", "0.05");
         filterType = property.parseString("filterType", "bandpass");

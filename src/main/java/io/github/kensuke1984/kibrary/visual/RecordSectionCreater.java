@@ -56,14 +56,6 @@ public class RecordSectionCreater extends Operation_new {
      */
     private Path workPath;
     /**
-     * {@link Path} of a basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * {@link Path} of a basic file
-     */
-    private Path basicPath;
-    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String tag;
@@ -71,6 +63,16 @@ public class RecordSectionCreater extends Operation_new {
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
+
+    /**
+     * {@link Path} of a basic ID file
+     */
+    private Path basicIDPath;
+    /**
+     * {@link Path} of a basic file
+     */
+    private Path basicPath;
+
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
@@ -109,44 +111,44 @@ public class RecordSectionCreater extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
-            pw.println("#tag");
+            pw.println("#tag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
-            pw.println("#tendEvents");
+            pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to create a profile (true)");
-            pw.println("#createProfile");
+            pw.println("#createProfile ");
             pw.println("##(boolean) Whether to create a binned stack (false)");
-            pw.println("#createBinStack");
+            pw.println("#createBinStack ");
             pw.println("##(double) The width of each bin [deg] (1.0)");
-            pw.println("#binWidth");
+            pw.println("#binWidth ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
-            pw.println("#reductionSlowness");
-            pw.println("##Method for standarization of observed waveform amplitude, from [obsEach,synEach,obsMean,synMean] (synEach)");
-            pw.println("#obsAmpStyle");
-            pw.println("##Method for standarization of synthetic waveform amplitude, from [obsEach,synEach,obsMean,synMean] (synEach)");
-            pw.println("#synAmpStyle");
+            pw.println("#reductionSlowness ");
+            pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
+            pw.println("#obsAmpStyle ");
+            pw.println("##Method for standarization of synthetic waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
+            pw.println("#synAmpStyle ");
             pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
-            pw.println("#ampScale");
+            pw.println("#ampScale ");
             pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
-            pw.println("#byAzimuth");
+            pw.println("#byAzimuth ");
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
-            pw.println("##This is effective when using south-to-north raypaths in byAzimuth mode.");
-            pw.println("#flipAzimuth");
+            pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("#flipAzimuth ");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
-            pw.println("#lowerDistance");
+            pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
-            pw.println("#upperDistance");
+            pw.println("#upperDistance ");
             pw.println("##(double) Lower limit of range of azimuth to be used [deg] [-360:upperAzimuth) (0)");
-            pw.println("#lowerAzimuth");
+            pw.println("#lowerAzimuth ");
             pw.println("##(double) Upper limit of range of azimuth to be used [deg] (lowerAzimuth:360] (360)");
-            pw.println("#upperAzimuth");
+            pw.println("#upperAzimuth ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -157,7 +159,7 @@ public class RecordSectionCreater extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         tag = property.parseString("tag", "");
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());

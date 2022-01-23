@@ -72,11 +72,20 @@ public class TimewindowMaker extends Operation_new {
      * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの TODO:本当？
      */
     private Path invalidList;
-
     /**
      * set of {@link SACComponent}
      */
     private Set<SACComponent> components;
+
+    private boolean majorArc;
+    /**
+     * 使いたいフェーズ
+     */
+    private Set<Phase> usePhases;
+    /**
+     * 省きたいフェーズ
+     */
+    private Set<Phase> exPhases;
     /**
      * how many seconds it shifts the starting time [s] phase到着からどれだけずらすか if the
      * value is 5(not -5), then basically, each timewindow starts 5 sec before
@@ -88,22 +97,14 @@ public class TimewindowMaker extends Operation_new {
      * secs after each usephase arrival
      */
     private double rearShift;
-    /**
-     * 省きたいフェーズ
-     */
-    private Set<Phase> exPhases;
-    /**
-     * 使いたいフェーズ
-     */
-    private Set<Phase> usePhases;
-    private Set<TimewindowData> timewindowSet;
+    private double minLength;
     /**
      * @author anselme
      */
     private boolean corridor;
-    private boolean majorArc;
-    private double minLength;
     private String model;
+
+    private Set<TimewindowData> timewindowSet;
     private double[][] catalogue_sS;
     private double[][] catalogue_pP;
 
@@ -126,22 +127,22 @@ public class TimewindowMaker extends Operation_new {
             pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##(boolean) Whether or not to use major arc phases (false).");
+            pw.println("##(boolean) Whether or not to use major arc phases (false)");
             pw.println("#majorArc ");
             pw.println("##TauPPhases to be included in timewindow, listed using spaces (S)");
             pw.println("#usePhases ");
-            pw.println("##TauPPhases not to be included in timewindow, listed using spaces ()");
+            pw.println("##TauPPhases not to be included in timewindow, listed using spaces, if any");
             pw.println("#exPhases ");
             pw.println("##(double) Time before first phase [sec]. If it is 10, then 10 s before arrival (0)");
             pw.println("#frontShift ");
             pw.println("##(double) Time after last phase [sec]. If it is 60, then 60 s after arrival (0)");
             pw.println("#rearShift ");
+            pw.println("##(double) Minimum length for the timewindows [sec] (0)");
+            pw.println("#minLength ");
             pw.println("##(boolean) Corridor (false)");
             pw.println("#corridor ");
             pw.println("##(String) Model to compute travel times using TauP (prem)");
             pw.println("#model ");
-            pw.println("##(double) Minimum length for the time windows in seconds (0)");
-            pw.println("#minLength ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -152,18 +153,18 @@ public class TimewindowMaker extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
         majorArc = property.parseBoolean("majorArc", "false");
         usePhases = phaseSet(property.parseString("usePhases", "S"));
-        exPhases = phaseSet(property.parseString("exPhases", ""));
+        exPhases = phaseSet(property.containsValue("exPhases") ? property.parseString("exPhases", null) : null);
         frontShift = property.parseDouble("frontShift", "0");
         rearShift = property.parseDouble("rearShift", "0");
+        minLength = property.parseDouble("minLength", "0");
         corridor = property.parseBoolean("corridor", "false");
         model = property.parseString("model", "prem").trim().toLowerCase();
-        minLength = property.parseDouble("minLength", "0");
 
         String catalogueName_sS =  "firstAppearance_sS." + model + ".catalogue";
         String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";

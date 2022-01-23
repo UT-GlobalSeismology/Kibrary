@@ -66,6 +66,19 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class FujiStaticCorrection extends Operation_new {
 
     private final Property_new property;
+    /**
+     * Path of the work folder
+     */
+    private Path workPath;
+    /**
+     * Path of the output file
+     */
+    private Path outputPath;
+    /**
+     * components for computation
+     */
+    private Set<SACComponent> components;
+
     private Path timewindowFilePath;
     /**
      * the directory of observed data
@@ -75,37 +88,25 @@ public class FujiStaticCorrection extends Operation_new {
      * the directory of synthetic data
      */
     private Path synPath;
-    /**
-     * Path of the work folder
-     */
-    private Path workPath;
-    /**
-     * Path of the output file
-     */
-    private Path outputPath;
 
-    /**
-     * components for computation
-     */
-    private Set<SACComponent> components;
     /**
      * コンボリューションされている波形かそうでないか （両方は無理）
      */
     private boolean convolved;
     /**
-     * range for search [s] ±searchRange
-     */
-    private double searchRange;
-    /**
      * sampling Hz [Hz] in sac files
      */
     private double sacSamplingHz;
-
-    private boolean mediantime;
     /**
      * シグナルとみなすかどうかの最大振幅から見ての比率
      */
     private double threshold;
+    /**
+     * range for search [s] ±searchRange
+     */
+    private double searchRange;
+    private boolean mediantime;
+
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<TimewindowData> timewindowInformation;
 
@@ -125,25 +126,25 @@ public class FujiStaticCorrection extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##Path of a root directory containing observed dataset (.)");
-            pw.println("#obsPath");
+            pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset (.)");
-            pw.println("#synPath");
+            pw.println("#synPath ");
             pw.println("##Path of a timewindow file, must be set");
             pw.println("#timewindowFilePath timewindow.dat");
             pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
-            pw.println("#convolved");
+            pw.println("#convolved ");
             pw.println("##(double) sacSamplingHz (20)");
             pw.println("#sacSamplingHz cant change now");
             pw.println("##(double) Threshold for peak finder (0.2)");
-            pw.println("#threshold");
+            pw.println("#threshold ");
             pw.println("##(double) searchRange [s] (10)");
-            pw.println("#searchRange");
+            pw.println("#searchRange ");
             pw.println("##(boolean) Use median time (false)");
-            pw.println("#mediantime");
+            pw.println("#mediantime ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -154,12 +155,12 @@ public class FujiStaticCorrection extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        obsPath = property.parsePath("obsPath", "", true, workPath);
-        synPath = property.parsePath("synPath", "", true, workPath);
+        obsPath = property.parsePath("obsPath", ".", true, workPath);
+        synPath = property.parsePath("synPath", ".", true, workPath);
         timewindowFilePath = property.parsePath("timewindowFilePath", null, true, workPath);
 
         convolved = property.parseBoolean("convolved", "false");

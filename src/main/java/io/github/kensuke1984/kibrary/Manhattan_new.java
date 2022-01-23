@@ -5,11 +5,14 @@ import java.util.Arrays;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
+import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
+import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
+import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 
 /**
  * An enum where all {@link Operation_new}s in Kibrary should be assigned to.
@@ -23,6 +26,7 @@ import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 enum Manhattan_new {
     // Environment 00
     // Data download 10
+    DataRequestor(2, DataRequestor.class), //
     DataLobby(27, DataLobby.class), //
     DataKitchen(5, DataKitchen.class), //
     // Synthetic  20
@@ -33,6 +37,8 @@ enum Manhattan_new {
     TimewindowMaker(21, TimewindowMaker.class),//
     FujiStaticCorrection(6, FujiStaticCorrection.class), //
     // Compiled 40
+    BasicIDMerge(30, BasicIDMerge.class), //
+    WaveformPlotCreater(28, WaveformPlotCreater.class), //
     RecordSectionCreater(29, RecordSectionCreater.class), //
     // Partial 50
     // Inversion 60

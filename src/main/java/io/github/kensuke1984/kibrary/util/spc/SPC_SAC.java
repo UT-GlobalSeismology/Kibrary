@@ -58,33 +58,34 @@ public final class SPC_SAC extends Operation_new {
      * Path of the output folder
      */
     private Path outPath;
+    /**
+     * components to be computed
+     */
+    private Set<SACComponent> components;
 
     private boolean usePSV;
     private Path psvPath;
     private boolean useSH;
     private Path shPath;
-    private Path sourceTimeFunctionPath;
 
-    /**
-     * components to be computed
-     */
-    private Set<SACComponent> components;
     /**
      * the name of a folder containing SPC files (e.g. PREM)（""）
      */
     private String modelName;
     /**
+     * source time function. -1:Users, 0: none, 1: boxcar, 2: triangle
+     */
+    private int sourceTimeFunction;
+    private Path sourceTimeFunctionPath;
+    /**
      * sampling Hz [Hz] must be 20 now.
      */
     private double samplingHz;
     /**
-     * source time function. -1:Users, 0: none, 1: boxcar, 2: triangle
-     */
-    private int sourceTimeFunction;
-    /**
      * If it computes temporal partial or not.
      */
     private boolean computeTimePartial;
+
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
@@ -108,28 +109,28 @@ public final class SPC_SAC extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SACComponents to be written, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##(boolean) Whether to use PSV spectrums (true)");
-            pw.println("#usePSV");
+            pw.println("#usePSV ");
             pw.println("##Path of a PSV folder (.)");
-            pw.println("#psvPath");
+            pw.println("#psvPath ");
             pw.println("##(boolean) Whether to use SH spectrums (true)");
-            pw.println("#useSH");
+            pw.println("#useSH ");
             pw.println("##Path of an SH folder (.)");
-            pw.println("#shPath");
+            pw.println("#shPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
-            pw.println("##If it is unset, then automatically set as the name of the folder in the eventDirs");
-            pw.println("## but the eventDirs can have only one folder inside and they must be the same.");
-            pw.println("#modelName");
-            pw.println("##Type of source time function; 0:none, 1:boxcar, 2:triangle. (0)");
-            pw.println("## or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
-            pw.println("#sourceTimeFunction");
+            pw.println("## If this is unset, then automatically set as the name of the folder in the eventDirs");
+            pw.println("##  but the eventDirs can have only one folder inside and they must be the same.");
+            pw.println("#modelName ");
+            pw.println("##Type of source time function from {0:none, 1:boxcar, 2:triangle} (0)");
+            pw.println("## or folder name containing *.stf if you want to use your own GLOBALCMTID.stf");
+            pw.println("#sourceTimeFunction ");
             pw.println("##SamplingHz (20) !You can not change yet!");
-            pw.println("#samplingHz");
-            pw.println("##(boolean) If it is true, then temporal partial is computed. (false)");
-            pw.println("#computeTimePartial");
+            pw.println("#samplingHz ");
+            pw.println("##(boolean) If it is true, then temporal partial is computed (false)");
+            pw.println("#computeTimePartial ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -140,17 +141,20 @@ public final class SPC_SAC extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
         usePSV = property.parseBoolean("usePSV", "true");
-        if (usePSV) psvPath = property.parsePath("psvPath", "", true, workPath);
+        if (usePSV) psvPath = property.parsePath("psvPath", ".", true, workPath);
         useSH = property.parseBoolean("useSH", "true");
-        if (useSH) shPath = property.parsePath("shPath", "", true, workPath);
+        if (useSH) shPath = property.parsePath("shPath", ".", true, workPath);
 
-        modelName = property.parseString("modelName", "");
-        if (modelName.isEmpty()) setModelName();
+        if (property.containsKey("modelName")) {
+            modelName = property.parseString("modelName", null);
+        } else {
+            setModelName();
+        }
 
         setSourceTimeFunction();
         samplingHz = 20; // TODO
@@ -174,11 +178,9 @@ public final class SPC_SAC extends Operation_new {
     }
 
     private void setSourceTimeFunction() throws IOException {
-        if (!property.containsKey("sourceTimeFunction")) property.setProperty("sourceTimeFunction", "0");
-
-        String s = property.getProperty("sourceTimeFunction");
+        String s = property.parseString("sourceTimeFunction", "0");
         if (s.length() == 1 && Character.isDigit(s.charAt(0)))
-            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
+            sourceTimeFunction = Integer.parseInt(s);
         else {
             sourceTimeFunction = -1;
             sourceTimeFunctionPath = property.parsePath("sourceTimeFunction", null, true, workPath);

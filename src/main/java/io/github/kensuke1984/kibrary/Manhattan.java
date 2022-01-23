@@ -7,7 +7,6 @@ import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
-import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
@@ -16,9 +15,7 @@ import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
-import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
-import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
@@ -34,7 +31,6 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
  */
 public enum Manhattan {
     CheckerBoardTest(1, CheckerBoardTest.class), //
-    DataRequestor(2, DataRequestor.class), //
     DataSelection(3, DataSelection.class), //
     ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
     LetMeInvert(8, LetMeInvert.class), //
@@ -53,8 +49,6 @@ public enum Manhattan {
     Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//
     Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
-    WaveformPlotCreater(28, WaveformPlotCreater.class), //
-    BasicIDMerge(30, BasicIDMerge.class), //
     RaypathSelection(31, RaypathSelection.class), //
     ;
 

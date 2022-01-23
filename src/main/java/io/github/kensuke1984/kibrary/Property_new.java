@@ -13,6 +13,8 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * The property file to set parameters for {@link Operation_new}s.
+ * <p>
+ * In property files, all keys must either have a non-empty value or be commented out. Keys with empty values shall not exist.
  *
  * @author otsuru
  * @since a long time ago
@@ -83,62 +85,62 @@ public class Property_new extends Properties {
      * Gets a pre-specified value, or sets a default value, and returns it in String.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
      * @return
      */
     public String parseString(String key, String defaltValue) {
-        checkAndPutDefault(key, defaltValue);
-        return getProperty(key);
+        return checkAndPutDefault(key, defaltValue);
     }
 
     /**
      * Gets a pre-specified value, or sets a default value, and returns it as boolean.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
      * @return
      */
     public boolean parseBoolean(String key, String defaltValue) {
-        checkAndPutDefault(key, defaltValue);
-        return Boolean.parseBoolean(getProperty(key));
+        return Boolean.parseBoolean(checkAndPutDefault(key, defaltValue));
     }
 
     /**
      * Gets a pre-specified value, or sets a default value, and returns it as int.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
      * @return
      */
     public int parseInt(String key, String defaltValue) {
-        checkAndPutDefault(key, defaltValue);
-        return Integer.parseInt(getProperty(key));
+        return Integer.parseInt(checkAndPutDefault(key, defaltValue));
     }
 
     /**
      * Gets a pre-specified value, or sets a default value, and returns it as double.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
      * @return
      */
     public double parseDouble(String key, String defaltValue) {
-        checkAndPutDefault(key, defaltValue);
-        return Double.parseDouble(getProperty(key));
+        return Double.parseDouble(checkAndPutDefault(key, defaltValue));
     }
 
     /**
      * Gets a pre-specified value, or sets a default value, and returns it as Path.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be ""; use "." for current path.
      * @param requireExisting (boolean) When true, checks whether the path exists
      * @param workPath
      * @return
      * @throws NoSuchFileException if the specified path does not exist
      */
     public Path parsePath(String key, String defaltValue, boolean requireExisting, Path workPath) throws NoSuchFileException {
-        checkAndPutDefault(key, defaltValue);
-        String pathString = getProperty(key).trim();
+        String pathString = checkAndPutDefault(key, defaltValue);
 
         Path path;
         if (pathString.startsWith("/")) path = Paths.get(pathString);
-        else path = workPath.resolve(pathString);
+        else path = workPath.resolve(pathString).normalize();
 
         if (requireExisting && (Files.exists(path) == false))
             throw new NoSuchFileException("The " + key +  " " + path + " does not exist");
@@ -149,12 +151,14 @@ public class Property_new extends Properties {
     /**
      * @param key (String) Name of key to check, must not be empty
      * @param defaultValue (String) Value to set to the key if it is not yet specified.
-     *          Require a value to be specified by setting this null.
+     *          Require a value to be specified by setting this null. This must not be "".
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed.
      */
-    private void checkAndPutDefault(String key, String defaultValue) {
+    private String checkAndPutDefault(String key, String defaultValue) {
         if (StringUtils.isEmpty(key)) {
             throw new IllegalArgumentException("Key is empty!");
         }
+
         if (!containsKey(key)) {
             if (defaultValue == null) {
                 throw new IllegalArgumentException(key + " must be specified.");
@@ -162,7 +166,12 @@ public class Property_new extends Properties {
                 setProperty(key, defaultValue);
             }
         }
-    }
 
+        String value = getProperty(key).trim();
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException(key + " must not be blank.");
+        }
+        return value;
+    }
 
 }

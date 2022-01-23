@@ -50,28 +50,18 @@ public class SyntheticDSMSetup extends Operation_new {
      */
     private Path workPath;
     /**
-     * The root folder containing event folders which have observed SAC files
+     * Information file name is header_[psv,sh].inf (default:PREM)
      */
-    private Path obsPath;
-
-    /**
-     * Number of steps in frequency domain.
-     * It must be a power of 2.
-     */
-    private int np;
-    /**
-     * Time length [s].
-     * It must be a power of 2 divided by 10.(2<sup>n</sup>/10)
-     */
-    private double tlen;
+    private String header;
     /**
      * components to be used
      */
     private Set<SACComponent> components;
+
     /**
-     * Information file name is header_[psv,sh].inf (default:PREM)
+     * The root folder containing event folders which have observed SAC files
      */
-    private String header;
+    private Path obsPath;
     /**
      * structure file instead of PREM
      */
@@ -82,6 +72,16 @@ public class SyntheticDSMSetup extends Operation_new {
     private boolean usewindow;
     private Path timewindowPath;
 
+    /**
+     * Time length [s].
+     * It must be a power of 2 divided by 10.(2<sup>n</sup>/10)
+     */
+    private double tlen;
+    /**
+     * Number of steps in frequency domain.
+     * It must be a power of 2.
+     */
+    private int np;
     private boolean mpi;
 
     /**
@@ -96,7 +96,6 @@ public class SyntheticDSMSetup extends Operation_new {
      * maximum epicentral distance of virtual observers
      */
     private int synMaxDistance;
-
     private boolean specfemDataset;
 
     /**
@@ -115,31 +114,31 @@ public class SyntheticDSMSetup extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
-            pw.println("#header");
+            pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##Path of a root folder containing observed dataset (.)");
-            pw.println("#obsPath");
+            pw.println("#obsPath ");
             pw.println("##Path of a structure file you want to use. If this is unset, PREM will be used.");
-            pw.println("#structurePath");
-            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
-            pw.println("#tlen");
-            pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
-            pw.println("#np");
-            pw.println("##(boolean) Whether to use MPI in the subsequent DSM calculations (true)");
-            pw.println("#mpi");
-            pw.println("##(boolean) If a virtual set of observers is to be created (false)");
-            pw.println("#syntheticDataset");
-            pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
-            pw.println("#synMinDistance");
-            pw.println("##Maximum epicentral distance of virtual observer, must be integer (170)");
-            pw.println("#synMaxDistance");
-            pw.println("##SPECFEM3D_GLOBE test dataset (false)");
-            pw.println("#specfemDataset");
+            pw.println("#structurePath ");
             pw.println("##To use only events in a timewindow file, set its path");
             pw.println("#timewindowPath NOT SUPPORTED YET");
+            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
+            pw.println("#np ");
+            pw.println("##(boolean) Whether to use MPI in the subsequent DSM calculations (true)");
+            pw.println("#mpi ");
+            pw.println("##(boolean) If a virtual set of observers is to be created (false)");
+            pw.println("#syntheticDataset ");
+            pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
+            pw.println("#synMinDistance ");
+            pw.println("##Maximum epicentral distance of virtual observer, must be integer (170)");
+            pw.println("#synMaxDistance ");
+            pw.println("##SPECFEM3D_GLOBE test dataset (false)");
+            pw.println("#specfemDataset ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -150,17 +149,19 @@ public class SyntheticDSMSetup extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         header = property.parseString("header", "PREM").split("\\s+")[0];
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        obsPath = property.parsePath("obsPath", "", true, workPath);
-
+        obsPath = property.parsePath("obsPath", ".", true, workPath);
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
             structurePath = Paths.get("PREM");
+        }
+        if (usewindow = property.containsKey("timewindowPath")) {  // This "=" is not a mistake, calm down.
+            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         }
 
         tlen = property.parseDouble("tlen", "3276.8");
@@ -170,11 +171,10 @@ public class SyntheticDSMSetup extends Operation_new {
         syntheticDataset = property.parseBoolean("syntheticDataset", "false");
         synMinDistance = property.parseInt("synMinDistance", "1");
         synMaxDistance = property.parseInt("synMaxDistance", "170");
-        specfemDataset = property.parseBoolean("specfemDataset", "false");
+        if (synMinDistance < 0 || synMinDistance > synMaxDistance || 360 < synMaxDistance)
+            throw new IllegalArgumentException("Distance range " + synMinDistance + " , " + synMaxDistance + " is invalid.");
 
-        if (usewindow = property.containsKey("timewindowPath")) {
-            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
-        }
+        specfemDataset = property.parseBoolean("specfemDataset", "false");
 
         // write additional info
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());

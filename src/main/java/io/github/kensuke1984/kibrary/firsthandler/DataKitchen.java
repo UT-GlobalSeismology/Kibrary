@@ -50,11 +50,11 @@ public class DataKitchen extends Operation_new {
      */
     private Path outPath;
 
-    private double samplingHz;
     /**
      * which catalog to use 0:CMT 1: PDE
      */
     private int catalog;
+    private double samplingHz;
 
     private double minDistance;
     private double maxDistance;
@@ -66,7 +66,6 @@ public class DataKitchen extends Operation_new {
      * threshold to judge which stations are in the same position [deg]
      */
     private double coordinateGrid;
-
     /**
      * if remove intermediate file
      */
@@ -88,8 +87,8 @@ public class DataKitchen extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
-            pw.println("#workPath");
-            pw.println("##(String) The name of catalog to use from [cmt, pde]  (cmt)");
+            pw.println("#workPath ");
+            pw.println("##The name of catalog to use from {cmt, pde}  (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling Hz, can not be changed now (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
@@ -98,15 +97,15 @@ public class DataKitchen extends Operation_new {
             pw.println("##Upper limit of epicentral distance range [deg] (minDistance:180] (180)");
             pw.println("#maxDistance 100");
             pw.println("##Lower limit of station latitude [deg] [-90:maxLatitude) (-90)");
-            pw.println("#minLatitude");
+            pw.println("#minLatitude ");
             pw.println("##Upper limit of station latitude [deg] (minLatitude:90] (90)");
-            pw.println("#maxLatitude");
+            pw.println("#maxLatitude ");
             pw.println("##Lower limit of station longitude [deg] [-180:maxLongitude) (-180)");
-            pw.println("#minLongitude");
+            pw.println("#minLongitude ");
             pw.println("##Upper limit of station longitude [deg] (minLongitude:360] (180)");
-            pw.println("#maxLongitude");
+            pw.println("#maxLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg] (0.01)"); // = about 1 km
-            pw.println("##If two stations are closer to each other than this threshold, one will be eliminated.");
+            pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid");
             pw.println("##(boolean) If this is true, remove intermediate files (true)");
             pw.println("#removeIntermediateFile");
@@ -120,7 +119,7 @@ public class DataKitchen extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":

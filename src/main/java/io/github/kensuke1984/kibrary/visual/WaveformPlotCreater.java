@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.visual;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -12,18 +11,16 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -40,15 +37,20 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @author otsuru
  * @since 2021/12/10
  */
-public class WaveformPlotCreater implements Operation {
+public class WaveformPlotCreater extends Operation_new {
 
     private static final int NUM_PER_PAGE = 12;
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * components to be included in the dataset
+     */
+    private Set<SACComponent> components;
+
     /**
      * {@link Path} of a basic ID file
      */
@@ -57,10 +59,7 @@ public class WaveformPlotCreater implements Operation {
      * {@link Path} of a basic waveform file
      */
     private Path basicPath;
-    /**
-     * components to be included in the dataset
-     */
-    private Set<SACComponent> components;
+
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
@@ -68,32 +67,57 @@ public class WaveformPlotCreater implements Operation {
 
     private boolean splitComponents;
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
-            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, set this blank.");
-            pw.println("#tendEvents");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
+            pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to export individual files for each component (true)");
-            pw.println("#splitComponents");
+            pw.println("#splitComponents ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public WaveformPlotCreater(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public WaveformPlotCreater(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+
+        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        basicPath = property.parsePath("basicPath", null, true, workPath);
+
+        if (property.containsKey("tendEvents")) {
+            tendEvents = Arrays.stream(property.parseString("tendEvents", null).split("\\s+")).map(GlobalCMTID::new)
+                    .collect(Collectors.toSet());
+        }
+        splitComponents = property.parseBoolean("splitComponents", "true");
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -126,20 +150,7 @@ public class WaveformPlotCreater implements Operation {
 
         splitComponents = Boolean.parseBoolean(property.getProperty("splitComponents"));
     }
-
-   /**
-    *
-    * @param args [a property file name]
-    * @throws Exception if any
-    */
-   public static void main(String[] args) throws IOException {
-       WaveformPlotCreater operation = new WaveformPlotCreater(Property.parse(args));
-       long startTime = System.nanoTime();
-       System.err.println(WaveformPlotCreater.class.getName() + " is operating.");
-       operation.run();
-       System.err.println(WaveformPlotCreater.class.getName() + " finished in "
-               + GadgetAid.toTimeString(System.nanoTime() - startTime));
-   }
+*/
 
    @Override
    public void run() throws IOException {
@@ -254,15 +265,5 @@ public class WaveformPlotCreater implements Operation {
         if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
     }
 
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
 
 }

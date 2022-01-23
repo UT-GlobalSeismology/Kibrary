@@ -86,14 +86,14 @@ public class DataLobby extends Operation_new {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
-            pw.println("#workPath");
-            pw.println("##Datacenter to send request, chosen from [IRIS, ORFEUS] (IRIS)");
-            pw.println("#datacenter");
+            pw.println("#workPath ");
+            pw.println("##Datacenter to send request, from {IRIS, ORFEUS} (IRIS)");
+            pw.println("#datacenter ");
             pw.println("##Network names for request, listed using commas, must be defined");
-            pw.println("##Wildcards (*, ?) are allowed. Virtual networks are currently not supported.");
-            pw.println("##Note that it will make a request for all stations in the networks.");
+            pw.println("## Wildcards (*, ?) are allowed. Virtual networks are currently not supported.");
+            pw.println("## Note that a request will be made for all stations in the networks.");
             pw.println("#networks II,IU");
-            pw.println("##Channels to be requested, listed using commas, from [BH?,HH?,BL?,HL?] (BH?)");
+            pw.println("##Channels to be requested, listed using commas, from {BH?,HH?,BL?,HL?} (BH?)");
             pw.println("#channels BH?,HH?,BL?,HL?");
             pw.println("##Adjustment at the head [min], must be integer and defined");
             pw.println("#headAdjustment -10");
@@ -105,21 +105,21 @@ public class DataLobby extends Operation_new {
             pw.println("##End date yyyy-mm-dd, must be defined");
             pw.println("#endDate 2019-12-31");
             pw.println("##Lower limit of Mw (5.5)");
-            pw.println("#lowerMw");
+            pw.println("#lowerMw ");
             pw.println("##Upper limit of Mw (7.3)");
-            pw.println("#upperMw");
-            pw.println("##Shallower limit of DEPTH (100)");
-            pw.println("#lowerDepth");
-            pw.println("##Deeper limit of DEPTH (700)");
-            pw.println("#upperDepth");
+            pw.println("#upperMw ");
+            pw.println("##Shallower limit of DEPTH [km] (100)");
+            pw.println("#lowerDepth ");
+            pw.println("##Deeper limit of DEPTH [km] (700)");
+            pw.println("#upperDepth ");
             pw.println("##Lower limit of latitude [deg] [-90:upperLatitude) (-90)");
-            pw.println("#lowerLatitude");
+            pw.println("#lowerLatitude ");
             pw.println("##Upper limit of latitude [deg] (lowerLatitude:90] (90)");
-            pw.println("#upperLatitude");
+            pw.println("#upperLatitude ");
             pw.println("##Lower limit of longitude [deg] [-180:upperLongitude) (-180)");
-            pw.println("#lowerLongitude");
+            pw.println("#lowerLongitude ");
             pw.println("##Upper limit of longitude [deg] (lowerLongitude:360] (180)");
-            pw.println("#upperLongitude");
+            pw.println("#upperLongitude ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -130,7 +130,7 @@ public class DataLobby extends Operation_new {
 
     @Override
     public void set() throws IOException {
-        workPath = property.parsePath("workPath", "", true, Paths.get(""));
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
         datacenter = property.parseString("datacenter", "IRIS");
         networks = property.parseString("networks", null);

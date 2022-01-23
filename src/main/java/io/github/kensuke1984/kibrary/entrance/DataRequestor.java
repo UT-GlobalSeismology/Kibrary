@@ -3,18 +3,16 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Properties;
 import java.util.Set;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -26,27 +24,27 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  *
  * @author Kensuke Konishi
  */
-public class DataRequestor implements Operation {
+public class DataRequestor extends Operation_new {
+
+    private final Property_new property;
+    /**
+     * Path for the work folder
+     */
+    private Path workPath;
 
     // private String label;
     // private String[] alternateMedia;
     private String[] networks;
-    private LocalDate startDate;
     private int headAdjustment;
     private int footAdjustment;
 
-    private Path workPath;
-
+    private LocalDate startDate;
     /**
      * including the date
      */
     private LocalDate endDate;
     private double lowerMw;
     private double upperMw;
-    private double lowerLatitude;
-    private double upperLatitude;
-    private double lowerLongitude;
-    private double upperLongitude;
     /**
      * not radius but distance from the surface
      */
@@ -55,57 +53,108 @@ public class DataRequestor implements Operation {
      * not radius but distance from the surface
      */
     private double upperDepth;
-    private Set<GlobalCMTID> requestedEvents;
+    private double lowerLatitude;
+    private double upperLatitude;
+    private double lowerLongitude;
+    private double upperLongitude;
     private boolean send;
-    private Properties property;
+
+    private Set<GlobalCMTID> requestedEvents;
     private String date = GadgetAid.getTemporaryString();
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Property.generatePath(DataRequestor.class);
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan DataRequestor");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##Network names for request, listed using spaces, must be defined");
-            pw.println("##Wildcards (*, ?) and virtual networks are allowed.");
-            pw.println("##Note that it will make a request for all stations in the networks.");
+            pw.println("## Wildcards (*, ?) and virtual networks are allowed.");
+            pw.println("## Note that it will make a request for all stations in the networks.");
             pw.println("#networks II IU _US-All");
             pw.println("##Adjustment at the head [min], must be integer and defined");
             pw.println("#headAdjustment -10");
             pw.println("##Adjustment at the foot [min], must be integer and defined");
             pw.println("#footAdjustment 120");
-            pw.println("##The following parameters are for seismic events to be searched for.");
+            pw.println("##########The following parameters are for seismic events to be searched for.");
             pw.println("##Start date yyyy-mm-dd, must be defined");
             pw.println("#startDate 1990-01-01");
             pw.println("##End date yyyy-mm-dd, must be defined");
             pw.println("#endDate 2019-12-31");
             pw.println("##Lower limit of Mw (5.5)");
-            pw.println("#lowerMw");
+            pw.println("#lowerMw ");
             pw.println("##Upper limit of Mw (7.3)");
-            pw.println("#upperMw");
+            pw.println("#upperMw ");
             pw.println("##Shallower limit of DEPTH (100)");
-            pw.println("#lowerDepth");
+            pw.println("#lowerDepth ");
             pw.println("##Deeper limit of DEPTH (700)");
-            pw.println("#upperDepth");
+            pw.println("#upperDepth ");
             pw.println("#Lower limit of latitude [deg] [-90:upperLatitude) (-90)");
-            pw.println("#lowerLatitude");
+            pw.println("#lowerLatitude ");
             pw.println("##Upper limit of latitude [deg] (lowerLatitude:90] (90)");
-            pw.println("#upperLatitude");
+            pw.println("#upperLatitude ");
             pw.println("##Lower limit of longitude [deg] [-180:upperLongitude) (-180)");
-            pw.println("#lowerLongitude");
+            pw.println("#lowerLongitude ");
             pw.println("##Upper limit of longitude [deg] (lowerLongitude:360] (180)");
-            pw.println("#upperLongitude");
-            pw.println("##(boolean) Whether you want to actually send the emails (false)");
-            pw.println("#send");
+            pw.println("#upperLongitude ");
+            pw.println("##(boolean) Whether to actually send the emails (false)");
+            pw.println("#send ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public DataRequestor(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public DataRequestor(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+
+        networks = property.parseString("networks", null).split("\\s+");
+
+        headAdjustment = property.parseInt("headAdjustment", null);
+        footAdjustment = property.parseInt("footAdjustment", null);
+
+        startDate = LocalDate.parse(property.parseString("startDate", null));
+        endDate = LocalDate.parse(property.parseString("endDate", null));
+        if (startDate.isAfter(endDate))
+            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
+
+        lowerMw = property.parseDouble("lowerMw", "5.5");
+        upperMw = property.parseDouble("upperMw", "7.3");
+        if (lowerMw > upperMw)
+            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
+
+        lowerDepth = property.parseDouble("lowerDepth", "100");
+        upperDepth = property.parseDouble("upperDepth", "700");
+        if (lowerDepth > upperDepth)
+            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
+
+        lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        upperLatitude = property.parseDouble("upperLatitude", "90");
+        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
+            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+
+        lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        upperLongitude = property.parseDouble("upperLongitude", "180");
+        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
+            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+
+        send = property.parseBoolean("send", "false");
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("networks"))
@@ -161,19 +210,7 @@ public class DataRequestor implements Operation {
 
         send = Boolean.parseBoolean(property.getProperty("send"));
     }
-
-    /**
-     * @param args Request Mode: [parameter file name]
-     * @throws Exception file name
-     */
-    public static void main(String[] args) throws IOException {
-        DataRequestor dr = new DataRequestor(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(DataLobby.class.getName() + " is operating.");
-        dr.run();
-        System.err.println(DataLobby.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() {
@@ -234,16 +271,6 @@ public class DataRequestor implements Operation {
         search.setMwRange(lowerMw, upperMw);
         search.setDepthRange(lowerDepth, upperDepth);
         return search.search();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
 }
