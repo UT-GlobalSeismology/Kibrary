@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.waveform;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -13,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,8 +24,8 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -76,9 +74,9 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * pass band written in SAC files.
  *
  */
-public class ActualWaveformCompiler implements Operation {
+public class ActualWaveformCompiler extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
@@ -87,31 +85,6 @@ public class ActualWaveformCompiler implements Operation {
      * Path of the output folder
      */
     private Path outPath;
-    /**
-     * {@link Path} of a root folder containing observed dataset
-     */
-    private Path obsPath;
-    /**
-     * {@link Path} of a root folder containing synthetic dataset
-     */
-    private Path synPath;
-    /**
-     * {@link Path} of a timewindow information file
-     */
-    private Path timewindowPath;
-    /**
-     * {@link Path} of a timewindow information file for a reference phase use to correct spectral amplitude
-     */
-    private Path timewindowRefPath;
-    /**
-     * {@link Path} of a static correction file
-     */
-    private Path staticCorrectionPath;
-    /**
-     * {@link Path} of time shifts due to the 3-D mantle
-     */
-    private Path mantleCorrectionPath;
-
     /**
      * components to be included in the dataset
      */
@@ -124,11 +97,28 @@ public class ActualWaveformCompiler implements Operation {
      * 切り出すサンプリングヘルツ
      */
     private double finalSamplingHz;
+
+    /**
+     * {@link Path} of a root folder containing observed dataset
+     */
+    private Path obsPath;
+    /**
+     * {@link Path} of a root folder containing synthetic dataset
+     */
+    private Path synPath;
     /**
      * if it is true, the dataset contains synthetic waveforms after
      * convolution
      */
     private boolean convolved;
+    /**
+     * {@link Path} of a timewindow information file
+     */
+    private Path timewindowPath;
+    /**
+     * {@link Path} of a timewindow information file for a reference phase use to correct spectral amplitude
+     */
+    private Path timewindowRefPath;
     /**
      * Whether to correct time
      */
@@ -138,10 +128,22 @@ public class ActualWaveformCompiler implements Operation {
      */
     private boolean correctAmplitude;
     /**
+     * {@link Path} of a static correction file
+     */
+    private Path staticCorrectionPath;
+    /**
      * [bool] time-shift data to correct for 3-D mantle
      */
     private boolean correctMantle;
+    /**
+     * {@link Path} of time shifts due to the 3-D mantle
+     */
+    private Path mantleCorrectionPath;
 
+    /**
+     * minimum epicentral distance
+     */
+    private double minDistance;
     /**
      * low frequency cut-off for spectrum data
      */
@@ -151,17 +153,13 @@ public class ActualWaveformCompiler implements Operation {
      */
     double highFreq;
     /**
-     * minimum epicentral distance
-     */
-    private double minDistance;
-    /**
      * [bool] add white noise to synthetics data (for synthetic tests)
      */
     private boolean addNoise;
     private double noisePower;
 
-    private Set<TimewindowData> timewindowInformationSet;
-    private Set<TimewindowData> timewindowRefInformationSet;
+    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimewindowData> refTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<StaticCorrectionData> mantleCorrectionSet;
     private Set<EventFolder> eventDirs;
@@ -183,6 +181,7 @@ public class ActualWaveformCompiler implements Operation {
     private WaveformDataWriter spcReWriter;
     private WaveformDataWriter spcImWriter;
     private WaveformDataWriter hyWriter;
+
     /**
      * number of OUTPUT pairs. (excluding ignored traces)
      */
@@ -208,57 +207,109 @@ public class ActualWaveformCompiler implements Operation {
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent();
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
-            pw.println("#components");
+            pw.println("#components ");
+            pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
+            pw.println("#sacSamplingHz the value will be ignored");
+            pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
+            pw.println("#finalSamplingHz ");
             pw.println("##Path of a root folder containing observed dataset (.)");
-            pw.println("#obsPath");
+            pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
-            pw.println("#synPath");
+            pw.println("#synPath ");
+            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("#convolved ");
             pw.println("##Path of a timewindow file, must be defined");
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a timewindow file for a reference phase use to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
-            pw.println("##Path of a static correction file");
-            pw.println("##If correctTime or correctAmplitude is true, the path must be defined.");
-            pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##Path of a mantle correction file");
-            pw.println("##If correctMantle is true, the path must be defined.");
-            pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved");
-            pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
-            pw.println("#sacSamplingHz the value will be ignored");
-            pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
-            pw.println("#finalSamplingHz");
             pw.println("##(boolean) Whether time should be corrected (false)");
-            pw.println("#correctTime");
+            pw.println("#correctTime ");
             pw.println("##(boolean) Whether amplitude should be corrected (false)");
-            pw.println("#correctAmplitude");
+            pw.println("#correctAmplitude ");
+            pw.println("##Path of a static correction file");
+            pw.println("## If correctTime or correctAmplitude is true, the path must be defined.");
+            pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(boolean) Whether mantle should be corrected for (false)");
-            pw.println("#correctMantle false");
-            pw.println("#minDistance");
-            pw.println("#lowFreq");
-            pw.println("#highFreq");
+            pw.println("#correctMantle ");
+            pw.println("##Path of a mantle correction file");
+            pw.println("## If correctMantle is true, the path must be defined.");
+            pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
+            pw.println("#minDistance "); // TODO: should not be done in this class?
+            pw.println("#lowFreq "); // TODO: add explanation
+            pw.println("#highFreq "); // TODO: add explanation
             pw.println("##(boolean) Whether to add noise for synthetic test (false)");
-            pw.println("#addNoise");
+            pw.println("#addNoise ");
             pw.println("##(boolean) Whether to add noise for synthetic test (false)");
-            pw.println("#noisePower");
+            pw.println("#noisePower ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public ActualWaveformCompiler(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public ActualWaveformCompiler(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
+        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
+        if (sacSamplingHz % finalSamplingHz != 0)
+            throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + sacSamplingHz);
+
+        obsPath = property.parsePath("obsPath", ".", true, workPath);
+        synPath = property.parsePath("synPath", ".", true, workPath);
+        convolved = property.parseBoolean("convolved", "true");
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        if (property.containsKey("timewindowRefPath")) {
+            timewindowRefPath = property.parsePath("timewindowRefPath", null, true, workPath);
+        }
+
+        correctTime = property.parseBoolean("correctTime", "false");
+        correctAmplitude = property.parseBoolean("correctAmplitude", "false");
+        if (correctTime || correctAmplitude) {
+            staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
+        }
+
+        correctMantle = property.parseBoolean("correctMantle", "false");
+        if (correctMantle) {
+            mantleCorrectionPath = property.parsePath("mantleCorrectionPath", null, true, workPath);
+        }
+
+        minDistance = property.parseDouble("minDistance", "0.");
+        lowFreq = property.parseDouble("lowFreq", "0.01");
+        highFreq = property.parseDouble("highFreq", "0.08");
+
+        addNoise = property.parseBoolean("addNoise", "false");
+        noisePower = property.parseDouble("noisePower", "1");
+        if (addNoise) {
+            System.err.println("Adding noise.");
+            System.err.println("Noise power: " + noisePower);
+        }
+
+        finalFreqSamplingHz = 8;
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -322,7 +373,7 @@ public class ActualWaveformCompiler implements Operation {
         convolved = Boolean.parseBoolean(property.getProperty("convolved"));
 
         // sacSamplingHz
-        // =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
+        // =Double.parseDouble(reader.getFirstValue("sacSamplingHz"));
         sacSamplingHz = 20;
         finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
         if (sacSamplingHz % finalSamplingHz != 0)
@@ -341,24 +392,11 @@ public class ActualWaveformCompiler implements Operation {
 
         finalFreqSamplingHz = 8;
     }
-
-    /**
-    *
-    * @param args [a property file name]
-    * @throws Exception if any
-    */
-   public static void main(String[] args) throws IOException {
-       ActualWaveformCompiler operation = new ActualWaveformCompiler(Property.parse(args));
-       long startTime = System.nanoTime();
-       System.err.println(ActualWaveformCompiler.class.getName() + " is operating.");
-       operation.run();
-       System.err.println(ActualWaveformCompiler.class.getName() + " finished in "
-               + GadgetAid.toTimeString(System.nanoTime() - startTime));
-   }
+*/
 
    @Override
    public void run() throws IOException {
-       timewindowInformationSet = TimewindowDataFile.read(timewindowPath)
+       sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
                .stream().filter(tw -> {
                    double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation()
                            .getEpicentralDistance(tw.getObserver().getPosition()));
@@ -370,7 +408,7 @@ public class ActualWaveformCompiler implements Operation {
        if (correctTime || correctAmplitude) {
            Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
            staticCorrectionSet = tmpset.stream()
-                   .filter(c -> timewindowInformationSet.parallelStream()
+                   .filter(c -> sourceTimewindowSet.parallelStream()
                            .map(t -> isPair_record.test(c, t)).distinct().collect(Collectors.toSet()).contains(true))
                    .collect(Collectors.toSet());
 
@@ -396,7 +434,7 @@ public class ActualWaveformCompiler implements Operation {
        eventDirs = DatasetAid.eventFolderSet(obsPath);
 
        if (timewindowRefPath != null)
-           timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)
+           refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
                .stream().filter(tw -> {
                    double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
                    if (distance < minDistance)
@@ -404,11 +442,11 @@ public class ActualWaveformCompiler implements Operation {
                    return true;
                }).collect(Collectors.toSet());
 
-       observerSet = timewindowInformationSet.stream().map(TimewindowData::getObserver)
+       observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver)
                .collect(Collectors.toSet());
-       eventSet = timewindowInformationSet.stream().map(TimewindowData::getGlobalCMTID)
+       eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
                .collect(Collectors.toSet());
-       phases = timewindowInformationSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
+       phases = sourceTimewindowSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
                .distinct().toArray(Phase[]::new);
 
        readPeriodRanges();
@@ -701,16 +739,6 @@ public class ActualWaveformCompiler implements Operation {
         return new Trace(tmp.getX(), uvec.mapMultiply(noisePower * normalize / uvec.getLInfNorm()).toArray());
     }
 
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
     /**
      * 与えられたイベントフォルダの観測波形と理論波形を書き込む 両方ともが存在しないと書き込まない
      */
@@ -775,7 +803,7 @@ public class ActualWaveformCompiler implements Operation {
                 }
 
                 // get timewindows
-                Set<TimewindowData> windows = timewindowInformationSet.stream()
+                Set<TimewindowData> windows = sourceTimewindowSet.stream()
                         .filter(info -> info.getObserver().equals(observer))
                         .filter(info -> info.getGlobalCMTID().equals(event))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
@@ -834,8 +862,8 @@ public class ActualWaveformCompiler implements Operation {
 
                     TimewindowData windowRef = null;
                     int nptsRef = 0;
-                    if (timewindowRefInformationSet != null) {
-                        List<TimewindowData> tmpwindows = timewindowRefInformationSet.stream().filter(tw ->
+                    if (refTimewindowSet != null) {
+                        List<TimewindowData> tmpwindows = refTimewindowSet.stream().filter(tw ->
                                 tw.getGlobalCMTID().equals(window.getGlobalCMTID())
                                 && tw.getObserver().equals(window.getObserver())
                                 && tw.getComponent().equals(window.getComponent())).collect(Collectors.toList());

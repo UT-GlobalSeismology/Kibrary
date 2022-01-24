@@ -4,7 +4,6 @@ package io.github.kensuke1984.kibrary.selection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiPredicate;
@@ -30,8 +28,8 @@ import org.apache.commons.math3.util.Precision;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
@@ -72,14 +70,34 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.1.2.1
  * @author anselme add additional selection critera
  */
-public class DataSelection implements Operation {
+public class DataSelection extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
-     * Path of the input timewindow file
+     * Path of the work folder
      */
-    private Path timewindowFilePath;
-    private Path staticCorrectionFilePath;
+    private Path workPath;
+    /**
+     * Path of the output information file
+     */
+    private Path outputInformationPath;
+    /**
+     * Path of the output timewindow file
+     */
+    private Path outputSelectedPath;
+    /**
+     * Name of the result file that will be made inside each event folder
+     */
+    private String eachEventResultFile;
+    /**
+     * components for computation
+     */
+    private Set<SACComponent> components;
+    /**
+     * sampling Hz [Hz] in sac files
+     */
+    private double sacSamplingHz;
+
     /**
      * the directory of observed data
      */
@@ -89,28 +107,19 @@ public class DataSelection implements Operation {
      */
     private Path synPath;
     /**
-     * Path of the work folder
-     */
-    private Path workPath;
-    /**
-     * Path of the output information file
-     */
-    private Path infoOutputpath;
-    /**
-     * Path of the output timewindow file
-     */
-    private Path outputGoodWindowPath;
-    /**
-     * Path of the result file that will be made inside each event folder
-     */
-    private String eachEventResultFile;
-
-    private Set<SACComponent> components;
-    /**
      * コンボリューションされている波形かそうでないか （両方は無理）
      */
     private boolean convolved;
-    private boolean excludeSurfaceWave;
+    /**
+     * Path of the input timewindow file
+     */
+    private Path timewindowPath;
+    private Path staticCorrectionPath;
+
+    /**
+     * Maximum of static correction shift
+     */
+    private double maxStaticShift;
     /**
      * Minimum correlation coefficients
      */
@@ -131,17 +140,14 @@ public class DataSelection implements Operation {
      * amplitude のしきい値
      */
     private double ratio;
-    /**
-     * Maximum of static correction shift
-     */
-    private double maxStaticShift;
     private double minSNratio;
-    //private double minDistance;
     private boolean SnScSnPair;
-    private Set<TimewindowData> sourceTimewindowInformationSet;
-    private Set<TimewindowData> goodTimewindowInformationSet;
-    private List<DataSelectionInformation> dataSelectionInfo;
+    private boolean excludeSurfaceWave;
+
+    private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
+    private List<DataSelectionInformation> selectionInformationList;
+    private Set<TimewindowData> goodTimewindowSet;
 
     /**
      * ID for static correction and time window information Default is station
@@ -158,56 +164,97 @@ public class DataSelection implements Operation {
             t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
                     && s.getComponent() == t.getComponent();
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
-            pw.println("#components");
-            pw.println("##Path of a root folder containing observed dataset (.)");
-            pw.println("#obsPath");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
-            pw.println("#synPath");
-            pw.println("##Path of a timewindow file, must be defined");
-            pw.println("#timewindowFilePath timewindow.dat");
-            pw.println("##Path of a static correction file");
-            pw.println("##If you do not want to consider static correction, then comment out the next line.");
-            pw.println("#staticCorrectionFilePath staticCorrection.dat");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved");
-            pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
-            pw.println("#maxStaticShift");
+            pw.println("#components ");
             pw.println("##(double) sacSamplingHz (20)");
             pw.println("#sacSamplingHz cant change now");
+            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("#obsPath ");
+            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("#synPath ");
+            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("#convolved ");
+            pw.println("##Path of a timewindow file, must be defined");
+            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a static correction file");
+            pw.println("## If you do not want to consider static correction, then comment out the next line.");
+            pw.println("#staticCorrectionPath staticCorrection.dat");
+            pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
+            pw.println("#maxStaticShift ");
             pw.println("##(double) minCorrelation (0)");
-            pw.println("#minCorrelation");
+            pw.println("#minCorrelation ");
             pw.println("##(double) maxCorrelation (1)");
-            pw.println("#maxCorrelation");
+            pw.println("#maxCorrelation ");
             pw.println("##(double) minVariance (0)");
-            pw.println("#minVariance");
+            pw.println("#minVariance ");
             pw.println("##(double) maxVariance (2)");
-            pw.println("#maxVariance");
+            pw.println("#maxVarianc e");
             pw.println("##(double) ratio (2)");
-            pw.println("#ratio");
+            pw.println("#ratio ");
             pw.println("##(double) minSNratio (0)");
-            pw.println("#minSNratio");
+            pw.println("#minSNratio ");
             pw.println("#(boolean) Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset (false)");
-            pw.println("#SnScSnPair false");
+            pw.println("#SnScSnPair ");
             pw.println("##(boolean) Whether to exclude surface wave (false)");
-            pw.println("#excludeSurfaceWave");
-            pw.println("#minDistance");
+            pw.println("#excludeSurfaceWave ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public DataSelection(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public DataSelection(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
+
+        obsPath = property.parsePath("obsPath", ".", true, workPath);
+        synPath = property.parsePath("synPath", ".", true, workPath);
+        convolved = property.parseBoolean("convolved", "true");
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        if (property.containsKey("staticCorrectionPath")) {
+            staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
+        }
+
+        maxStaticShift = property.parseDouble("maxStaticShift", "10.");
+        minCorrelation = property.parseDouble("minCorrelation", "0");
+        maxCorrelation = property.parseDouble("maxCorrelation", "1");
+        minVariance = property.parseDouble("minVariance", "0");
+        maxVariance = property.parseDouble("maxVariance", "2");
+        ratio = property.parseDouble("ratio", "2");
+        minSNratio = property.parseDouble("minSNratio", "0");
+        SnScSnPair = property.parseBoolean("SnScSnPair", "false");
+        excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
+
+        String dateStr = GadgetAid.getTemporaryString();
+        outputInformationPath = workPath.resolve("dataSelection" + dateStr + ".inf");
+        outputSelectedPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+        eachEventResultFile = "selectionResult" + dateStr + ".txt";
+        selectionInformationList = Collections.synchronizedList(new ArrayList<>());
+        goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -271,26 +318,13 @@ public class DataSelection implements Operation {
         // sacSamplingHz = 20;
 
     }
-
-    /**
-     * @param args [parameter file name]
-     * @throws Exception if an I/O happens
-     */
-    public static void main(String[] args) throws IOException {
-        DataSelection operation = new DataSelection(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(DataSelection.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(DataSelection.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
-
+*/
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        sourceTimewindowInformationSet = TimewindowDataFile.read(timewindowFilePath);
-        staticCorrectionSet = (staticCorrectionFilePath == null ? Collections.emptySet()
-                : StaticCorrectionDataFile.read(staticCorrectionFilePath));
+        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath);
+        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet()
+                : StaticCorrectionDataFile.read(staticCorrectionPath));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
@@ -302,13 +336,13 @@ public class DataSelection implements Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println("Outputting values of criteria in " + infoOutputpath);
+        System.err.println("Outputting values of criteria in " + outputInformationPath);
         System.err.println("Results are written in " + eachEventResultFile + " inside each event folder.");
-        DataSelectionInformationFile.write(dataSelectionInfo, infoOutputpath);
+        DataSelectionInformationFile.write(selectionInformationList, outputInformationPath);
 
-        System.err.println("Outputting selected timewindows in " + outputGoodWindowPath);
-        TimewindowDataFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
-        System.err.println(goodTimewindowInformationSet.size() + " timewindows were selected.");
+        System.err.println("Outputting selected timewindows in " + outputSelectedPath);
+        TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
+        System.err.println(goodTimewindowSet.size() + " timewindows were selected.");
     }
 
     /**
@@ -386,7 +420,7 @@ public class DataSelection implements Operation {
             writer.println(observer + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
                 + minRatio + " " + var + " " + cor + " " + SNratio);
 
-            dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
+            selectionInformationList.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
         }
 
         return isok;
@@ -433,16 +467,6 @@ public class DataSelection implements Operation {
         }
 
         return sac.createTrace().cutWindow(firstArrivalTime - 20 - len, firstArrivalTime - 20).getYVector().getNorm() / len;
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
     private class Worker implements Runnable {
@@ -554,7 +578,7 @@ public class DataSelection implements Operation {
                     */
 
                     // Pickup timewindows of obsName
-                    Set<TimewindowData> windowInformations = sourceTimewindowInformationSet
+                    Set<TimewindowData> windowInformations = sourceTimewindowSet
                             .stream().filter(info -> info.getObserver().equals(observer)
                                     && info.getGlobalCMTID().equals(event) && info.getComponent() == component)
                             .collect(Collectors.toSet());
@@ -622,7 +646,7 @@ public class DataSelection implements Operation {
                     if (SnScSnPair)
                         tmpGoodWindows = imposeSn_ScSnPair(tmpGoodWindows);
                     for (TimewindowData window : tmpGoodWindows)
-                        goodTimewindowInformationSet.add(window);
+                        goodTimewindowSet.add(window);
 
                 }
 

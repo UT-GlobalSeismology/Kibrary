@@ -8,10 +8,13 @@ import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
+import io.github.kensuke1984.kibrary.selection.DataSelection;
+import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
+import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 
 /**
@@ -26,20 +29,23 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 enum Manhattan_new {
     // Environment 00
     // Data download 10
-    DataRequestor(2, DataRequestor.class), //
-    DataLobby(27, DataLobby.class), //
-    DataKitchen(5, DataKitchen.class), //
+    DataRequestor(13, DataRequestor.class), //
+    DataLobby(14, DataLobby.class), //
+    DataKitchen(15, DataKitchen.class), //
     // Synthetic  20
-    SyntheticDSMSetup(19, SyntheticDSMSetup.class), //
-    SPC_SAC(17, SPC_SAC.class), //
+    SyntheticDSMSetup(20, SyntheticDSMSetup.class), //
+    SPC_SAC(21, SPC_SAC.class), //
     // Filtered 30
-    FilterDivider(4, FilterDivider.class), //
-    TimewindowMaker(21, TimewindowMaker.class),//
-    FujiStaticCorrection(6, FujiStaticCorrection.class), //
+    FilterDivider(30, FilterDivider.class), //
+    TimewindowMaker(31, TimewindowMaker.class),//
+    FujiStaticCorrection(32, FujiStaticCorrection.class), //
+    DataSelection(33, DataSelection.class), //
+    RaypathSelection(34, RaypathSelection.class), //
     // Compiled 40
-    BasicIDMerge(30, BasicIDMerge.class), //
-    WaveformPlotCreater(28, WaveformPlotCreater.class), //
-    RecordSectionCreater(29, RecordSectionCreater.class), //
+    ActualWaveformCompiler(40, ActualWaveformCompiler.class), //
+    BasicIDMerge(41, BasicIDMerge.class), //
+    WaveformPlotCreater(42, WaveformPlotCreater.class), //
+    RecordSectionCreater(43, RecordSectionCreater.class), //
     // Partial 50
     // Inversion 60
     // Temporal 100

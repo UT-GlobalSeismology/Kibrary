@@ -60,7 +60,7 @@ public class DataRequestor extends Operation_new {
     private boolean send;
 
     private Set<GlobalCMTID> requestedEvents;
-    private String date = GadgetAid.getTemporaryString();
+    private String dateStr = GadgetAid.getTemporaryString();
 
     /**
      * @param args  none to create a property file <br>
@@ -216,7 +216,7 @@ public class DataRequestor extends Operation_new {
     public void run() {
         requestedEvents = listEvents();
         System.out.println(requestedEvents.size() + " events are found.");
-        System.out.println("Label contains \"" + date + "\"");
+        System.out.println("Label contains \"" + dateStr + "\"");
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
         Path sent = workPath.resolve("sent" + GadgetAid.getTemporaryString());
         if (send) try {
@@ -261,7 +261,7 @@ public class DataRequestor extends Operation_new {
     public BreakFastMail createBreakFastMail(GlobalCMTID event) {
         Channel[] channels = Channel.listChannels(networks, event, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
                 footAdjustment);
-        return new BreakFastMail(event + "." + date, channels);
+        return new BreakFastMail(event + "." + dateStr, channels);
     }
 
     private Set<GlobalCMTID> listEvents() {

@@ -11,11 +11,8 @@ import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
-import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
-import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
-import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
@@ -31,10 +28,8 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
  */
 public enum Manhattan {
     CheckerBoardTest(1, CheckerBoardTest.class), //
-    DataSelection(3, DataSelection.class), //
     ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
     LetMeInvert(8, LetMeInvert.class), //
-    ActualWaveformCompiler(9, ActualWaveformCompiler.class), //
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PartialWaveformAssembler3D(11, PartialWaveformAssembler3D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
@@ -49,7 +44,6 @@ public enum Manhattan {
     Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//
     Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
-    RaypathSelection(31, RaypathSelection.class), //
     ;
 
     private Class<? extends Operation> c;

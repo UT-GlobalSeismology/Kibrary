@@ -3,18 +3,16 @@ package io.github.kensuke1984.kibrary.selection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_new;
+import io.github.kensuke1984.kibrary.Property_new;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -32,23 +30,27 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author otsuru
  * @since 2022/1/4
  */
-public class RaypathSelection implements Operation {
+public class RaypathSelection extends Operation_new {
 
-    private final Properties property;
+    private final Property_new property;
     /**
      * Path of the work folder
      */
     private Path workPath;
     /**
-     * Path of the input timewindow file
-     */
-    private Path timewindowFilePath;
-    /**
      * Path of the output timewindow file
      */
-    private Path selectedTimewindowFilePath;
-
+    private Path outputSelectedPath;
+    /**
+     * components for computation
+     */
     private Set<SACComponent> components;
+
+    /**
+     * Path of the input timewindow file
+     */
+    private Path timewindowPath;
+
     /**
      * Whether to eliminate certaion raypaths or to extract them
      */
@@ -75,9 +77,19 @@ public class RaypathSelection implements Operation {
     private double lowerAzimuth;
     private double upperAzimuth;
 
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation_new.mainFromSubclass(args);
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+        Path outPath = Property_new.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
@@ -85,7 +97,7 @@ public class RaypathSelection implements Operation {
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##Path of a timewindow file, must be defined");
-            pw.println("#timewindowFilePath timewindow.dat");
+            pw.println("#timewindowPath timewindow.dat");
             pw.println("##(boolean) Whether to eliminate the specified raypaths instead of extracting them (false)");
             pw.println("#eliminationMode");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");
@@ -124,11 +136,52 @@ public class RaypathSelection implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public RaypathSelection(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public RaypathSelection(Property_new property) throws IOException {
+        this.property = (Property_new) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        components = Arrays.stream(property.parseString("components", "Z R T")
+                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        eliminationMode = property.parseBoolean("eliminationMode", "false");
+
+        lowerEventDepth = property.parseDouble("lowerEventDepth", "0");
+        upperEventDepth = property.parseDouble("upperEventDepth", "1000");
+        if (lowerEventDepth > upperEventDepth)
+            throw new IllegalArgumentException("Event depth range " + lowerEventDepth + " , " + upperEventDepth + " is invalid.");
+        lowerEventLatitude = property.parseDouble("lowerEventLatitude", "-90");
+        upperEventLatitude = property.parseDouble("upperEventLatitude", "90");
+        if (lowerEventLatitude < -90 || lowerEventLatitude > upperEventLatitude || 90 < upperEventLatitude)
+            throw new IllegalArgumentException("Event latitude range " + lowerEventLatitude + " , " + upperEventLatitude + " is invalid.");
+        lowerEventLongitude = property.parseDouble("lowerEventLongitude", "-180");
+        upperEventLongitude = property.parseDouble("upperEventLongitude", "180");
+        if (lowerEventLongitude < -180 || lowerEventLongitude > upperEventLongitude || 360 < upperEventLongitude)
+            throw new IllegalArgumentException("Event longitude range " + lowerEventLongitude + " , " + upperEventLongitude + " is invalid.");
+        lowerObserverLatitude = property.parseDouble("lowerObserverLatitude", "-90");
+        upperObserverLatitude = property.parseDouble("upperObserverLatitude", "90");
+        if (lowerObserverLatitude < -90 || lowerObserverLatitude > upperObserverLatitude || 90 < upperObserverLatitude)
+            throw new IllegalArgumentException("Observer latitude range " + lowerObserverLatitude + " , " + upperObserverLatitude + " is invalid.");
+        lowerObserverLongitude = property.parseDouble("lowerObserverLongitude", "-180");
+        upperObserverLongitude = property.parseDouble("upperObserverLongitude", "180");
+        if (lowerObserverLongitude < -180 || lowerObserverLongitude > upperObserverLongitude || 360 < upperObserverLongitude)
+            throw new IllegalArgumentException("Observer longitude range " + lowerObserverLongitude + " , " + upperObserverLongitude + " is invalid.");
+        lowerDistance = property.parseDouble("lowerDistance", "0");
+        upperDistance = property.parseDouble("upperDistance", "180");
+        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
+            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
+        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
+            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+
+        String dateStr = GadgetAid.getTemporaryString();
+        outputSelectedPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -197,23 +250,11 @@ public class RaypathSelection implements Operation {
             throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
 
     }
-
-    /**
-     * @param args [parameter file name]
-     * @throws Exception if an I/O happens
-     */
-    public static void main(String[] args) throws IOException {
-        RaypathSelection operation = new RaypathSelection(Property.parse(args));
-        long startTime = System.nanoTime();
-        System.err.println(RaypathSelection.class.getName() + " is operating.");
-        operation.run();
-        System.err.println(RaypathSelection.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() throws IOException {
-        Set<TimewindowData> timewindowSet = TimewindowDataFile.read(timewindowFilePath);
+        Set<TimewindowData> timewindowSet = TimewindowDataFile.read(timewindowPath);
         Set<TimewindowData> selectedTimewindowSet = new HashSet<>();
 
         for (TimewindowData window : timewindowSet) {
@@ -256,19 +297,9 @@ public class RaypathSelection implements Operation {
             }
         }
 
-        System.err.println("Outputting selected timewindows in " + selectedTimewindowFilePath);
-        TimewindowDataFile.write(selectedTimewindowSet, selectedTimewindowFilePath);
+        System.err.println("Outputting selected timewindows in " + outputSelectedPath);
+        TimewindowDataFile.write(selectedTimewindowSet, outputSelectedPath);
         System.err.println(selectedTimewindowSet.size() + " timewindows were selected.");
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
 }

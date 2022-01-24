@@ -78,8 +78,12 @@ public class FujiStaticCorrection extends Operation_new {
      * components for computation
      */
     private Set<SACComponent> components;
+    /**
+     * sampling Hz [Hz] in sac files
+     */
+    private double sacSamplingHz;
 
-    private Path timewindowFilePath;
+    private Path timewindowPath;
     /**
      * the directory of observed data
      */
@@ -94,10 +98,6 @@ public class FujiStaticCorrection extends Operation_new {
      */
     private boolean convolved;
     /**
-     * sampling Hz [Hz] in sac files
-     */
-    private double sacSamplingHz;
-    /**
      * シグナルとみなすかどうかの最大振幅から見ての比率
      */
     private double threshold;
@@ -107,8 +107,8 @@ public class FujiStaticCorrection extends Operation_new {
     private double searchRange;
     private boolean mediantime;
 
+    private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private Set<TimewindowData> timewindowInformation;
 
     /**
      * @param args  none to create a property file <br>
@@ -129,16 +129,16 @@ public class FujiStaticCorrection extends Operation_new {
             pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
+            pw.println("##(double) sacSamplingHz (20)");
+            pw.println("#sacSamplingHz cant change now");
             pw.println("##Path of a root directory containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset (.)");
             pw.println("#synPath ");
-            pw.println("##Path of a timewindow file, must be set");
-            pw.println("#timewindowFilePath timewindow.dat");
             pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
             pw.println("#convolved ");
-            pw.println("##(double) sacSamplingHz (20)");
-            pw.println("#sacSamplingHz cant change now");
+            pw.println("##Path of a timewindow file, must be set");
+            pw.println("#timewindowPath timewindow.dat");
             pw.println("##(double) Threshold for peak finder (0.2)");
             pw.println("#threshold ");
             pw.println("##(double) searchRange [s] (10)");
@@ -158,13 +158,13 @@ public class FujiStaticCorrection extends Operation_new {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
 
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
-        timewindowFilePath = property.parsePath("timewindowFilePath", null, true, workPath);
-
         convolved = property.parseBoolean("convolved", "false");
-        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");// TODO
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");
         mediantime = property.parseBoolean("mediantime", "false");
@@ -218,7 +218,7 @@ public class FujiStaticCorrection extends Operation_new {
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        timewindowInformation = TimewindowDataFile.read(timewindowFilePath);
+        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath);
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
@@ -539,7 +539,7 @@ public class FujiStaticCorrection extends Operation_new {
                 }
 
                 // Pickup time windows of obsName
-                Set<TimewindowData> windows = timewindowInformation.stream()
+                Set<TimewindowData> windows = sourceTimewindowSet.stream()
                         .filter(info -> info.getObserver().equals(observer))
                         .filter(info -> info.getGlobalCMTID().equals(eventID))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
