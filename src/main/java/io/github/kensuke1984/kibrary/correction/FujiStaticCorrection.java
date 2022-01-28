@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
@@ -63,9 +63,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.2.2
  * @author anselme modify amplitude ratio computation; modify align method to consider the peak value
  */
-public class FujiStaticCorrection extends Operation_new {
+public class FujiStaticCorrection extends Operation {
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path of the work folder
      */
@@ -117,12 +117,12 @@ public class FujiStaticCorrection extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
@@ -149,8 +149,8 @@ public class FujiStaticCorrection extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public FujiStaticCorrection(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public FujiStaticCorrection(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override

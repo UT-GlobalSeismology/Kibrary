@@ -20,11 +20,11 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @since a long time ago
  * @version 2022/1/7 Recreated the original interface Operation into an abstract class.
  */
-public abstract class Operation_new {
+public abstract class Operation {
 
     /**
-     * Runs an {@link Operation_new} using a {@link Property_new} file.
-     * The {@link Operation_new} must be listed in {@link Manhattan_new}.
+     * Runs an {@link Operation} using a {@link Property} file.
+     * The {@link Operation} must be listed in {@link Manhattan}.
      *
      * @param args  none to choose a property file <br>
      *              [property file] to run an operation <br>
@@ -34,13 +34,13 @@ public abstract class Operation_new {
     public static void main(String[] args) throws IOException {
 
         // load property file
-        Property_new property = new Property_new();
+        Property property = new Property();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
         } else if (args.length == 0) {
             property.load(Files.newBufferedReader(findPath()));
         } else if (args[0].equals("-l")) {
-            Manhattan_new.printList();
+            Manhattan.printList();
             return;
         } else {
             property.load(Files.newBufferedReader(Paths.get(args[0])));
@@ -51,11 +51,11 @@ public abstract class Operation_new {
             throw new IllegalArgumentException("'manhattan' is not set in " + args[0]);
         }
         String manhattan = property.getProperty("manhattan");
-        if (!EnumUtils.isValidEnum(Manhattan_new.class, manhattan)) {
+        if (!EnumUtils.isValidEnum(Manhattan.class, manhattan)) {
             throw new IllegalArgumentException(manhattan + " is not a valid name of Manhattan.");
         }
 
-        operate(Manhattan_new.valueOf(manhattan).getOperation(), property);
+        operate(Manhattan.valueOf(manhattan).getOperation(), property);
 
     }
 
@@ -79,10 +79,10 @@ public abstract class Operation_new {
     }
 
     /**
-     * Method to be called from the main method of each class extending {@link Operation_new}.
-     * This operates the {@link Operation_new} that called this class,
+     * Method to be called from the main method of each class extending {@link Operation}.
+     * This operates the {@link Operation} that called this class,
      * regardless of the 'manhattan' property written in the specified property file.
-     * This enables {@link Operation_new}s that are not listed in {@link Manhattan_new} to be operated.
+     * This enables {@link Operation}s that are not listed in {@link Manhattan} to be operated.
      *
      * @param args [property file name]
      * @throws IOException if the property file cannot be loaded
@@ -90,7 +90,7 @@ public abstract class Operation_new {
     protected static void mainFromSubclass(String[] args) throws IOException {
 
         // load property file
-        Property_new property = new Property_new();
+        Property property = new Property();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
         } else if (args.length == 0) {
@@ -102,9 +102,9 @@ public abstract class Operation_new {
         // get the fully-qualified class name of the Operation that has called this method
         String operationClassName = Thread.currentThread().getStackTrace()[2].getClassName();
         // get the Class instance of the Operation
-        Class<? extends Operation_new> operationClass;
+        Class<? extends Operation> operationClass;
         try {
-            operationClass = Class.forName(operationClassName).asSubclass(Operation_new.class);
+            operationClass = Class.forName(operationClassName).asSubclass(Operation.class);
         } catch (Exception e) {
             System.err.println("Could not get " + operationClassName);
             e.printStackTrace();
@@ -118,16 +118,16 @@ public abstract class Operation_new {
     }
 
     /**
-     * Operates an {@link Operation_new} with the specified {@link Property_new} file.
-     * @param operationClass Class that extends {@link Operation_new}
-     * @param property {@link Property_new} file
+     * Operates an {@link Operation} with the specified {@link Property} file.
+     * @param operationClass Class that extends {@link Operation}
+     * @param property {@link Property} file
      */
-    public static void operate(Class<? extends Operation_new> operationClass, Property_new property) {
+    public static void operate(Class<? extends Operation> operationClass, Property property) {
 
         // construct
-        Operation_new operation;
+        Operation operation;
         try {
-            Constructor<? extends Operation_new> constructor = operationClass.getConstructor(Property_new.class);
+            Constructor<? extends Operation> constructor = operationClass.getConstructor(Property.class);
             operation = constructor.newInstance(property);
         } catch (InvocationTargetException e) {
             System.err.println("Could not construct " + operationClass.getName() + " due to " + e.getCause());

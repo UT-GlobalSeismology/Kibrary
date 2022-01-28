@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
- * The property file to set parameters for {@link Operation_new}s.
+ * The property file to set parameters for {@link Operation}s.
  * <p>
  * In property files, all keys must either have a non-empty value or be commented out. Keys with empty values shall not exist.
  *
@@ -20,35 +20,35 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @since a long time ago
  * @version 2022/1/7 Recreated the original Property to extend Properties instead of generating its instance.
  */
-public class Property_new extends Properties {
+public class Property extends Properties {
 
     /**
-     * Creates a new property file for an {@link Operation_new} listed in {@link Manhattan_new}.
+     * Creates a new property file for an {@link Operation} listed in {@link Manhattan}.
      *
      * @param args  none to choose an operation <br>
      *              [operation name] to work for that operation
      * @throws IOException on failure of reading input
-     * @throws ReflectiveOperationException on failure to invoke method from {@link Manhattan_new}
+     * @throws ReflectiveOperationException on failure to invoke method from {@link Manhattan}
      */
     public static void main(String[] args) throws IOException, ReflectiveOperationException {
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {
             try {
-                Manhattan_new.valueOf(args[0]).writeDefaultPropertiesFile();
+                Manhattan.valueOf(args[0]).writeDefaultPropertiesFile();
                 return;
             } catch (IllegalArgumentException iae) {
                 System.err.println(args[0] + " is not in Manhattan.");
                 System.err.println("Please choose one in:");
-                Manhattan_new.printList();
+                Manhattan.printList();
                 return;
             }
         } else {
-            Manhattan_new.printList();
-            System.err.print("For which one do you want to create a property file? [1-" + Manhattan_new.values().length + "] ");
+            Manhattan.printList();
+            System.err.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
-            Manhattan_new.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
+            Manhattan.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
         }
     }
 
@@ -67,7 +67,7 @@ public class Property_new extends Properties {
     /**
      * Creates a new empty instance.
      */
-    public Property_new() {
+    public Property() {
         super();
     }
 

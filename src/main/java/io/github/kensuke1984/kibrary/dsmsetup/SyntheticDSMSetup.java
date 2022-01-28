@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -42,9 +42,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.
  */
-public class SyntheticDSMSetup extends Operation_new {
+public class SyntheticDSMSetup extends Operation {
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path of the work folder
      */
@@ -105,12 +105,12 @@ public class SyntheticDSMSetup extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
@@ -143,8 +143,8 @@ public class SyntheticDSMSetup extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public SyntheticDSMSetup(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public SyntheticDSMSetup(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override

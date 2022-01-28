@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -55,11 +55,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.2.4
  * @author anselme add phase information, methods for corridor and MTZ inversion
  */
-public class TimewindowMaker extends Operation_new {
+public class TimewindowMaker extends Operation {
 
     private static final double EX_FRONT_SHIFT = 5.;
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path of the work folder
      */
@@ -115,12 +115,12 @@ public class TimewindowMaker extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
@@ -147,8 +147,8 @@ public class TimewindowMaker extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public TimewindowMaker(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public TimewindowMaker(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override

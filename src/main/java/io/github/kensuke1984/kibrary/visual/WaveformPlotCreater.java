@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
@@ -37,11 +37,11 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @author otsuru
  * @since 2021/12/10
  */
-public class WaveformPlotCreater extends Operation_new {
+public class WaveformPlotCreater extends Operation {
 
     private static final int NUM_PER_PAGE = 12;
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path of the work folder
      */
@@ -74,12 +74,12 @@ public class WaveformPlotCreater extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
@@ -98,8 +98,8 @@ public class WaveformPlotCreater extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public WaveformPlotCreater(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public WaveformPlotCreater(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override

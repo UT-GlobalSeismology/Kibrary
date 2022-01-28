@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 
 /**
- * An enum where all {@link Operation_new}s in Kibrary should be assigned to.
+ * An enum where all {@link Operation}s in Kibrary should be assigned to.
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
  * @since a long time ago
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
-enum Manhattan_new {
+enum Manhattan {
     // Environment 00
     // Data download 10
     DataRequestor(13, DataRequestor.class), //
@@ -51,10 +51,10 @@ enum Manhattan_new {
     // Temporal 100
     ;
 
-    private Class<? extends Operation_new> c;
+    private Class<? extends Operation> c;
     private int value;
 
-    Manhattan_new(int n, Class<? extends Operation_new> c) {
+    Manhattan(int n, Class<? extends Operation> c) {
         value = n;
         this.c = c;
     }
@@ -71,11 +71,11 @@ enum Manhattan_new {
      * @param n (int)
      * @return
      */
-    static Manhattan_new valueOf(int n) {
+    static Manhattan valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
     }
 
-    Class<? extends Operation_new> getOperation() {
+    Class<? extends Operation> getOperation() {
         return c;
     }
 

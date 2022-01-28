@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -47,9 +47,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-public final class SPC_SAC extends Operation_new {
+public final class SPC_SAC extends Operation {
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path of the work folder
      */
@@ -100,12 +100,12 @@ public final class SPC_SAC extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
@@ -135,8 +135,8 @@ public final class SPC_SAC extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public SPC_SAC(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public SPC_SAC(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override

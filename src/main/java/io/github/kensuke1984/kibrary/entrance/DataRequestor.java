@@ -11,8 +11,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Set;
 
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -24,9 +24,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  *
  * @author Kensuke Konishi
  */
-public class DataRequestor extends Operation_new {
+public class DataRequestor extends Operation {
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path for the work folder
      */
@@ -69,12 +69,12 @@ public class DataRequestor extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
@@ -114,8 +114,8 @@ public class DataRequestor extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public DataRequestor(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public DataRequestor(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override

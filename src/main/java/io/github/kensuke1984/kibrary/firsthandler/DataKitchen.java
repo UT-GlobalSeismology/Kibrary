@@ -11,8 +11,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation_new;
-import io.github.kensuke1984.kibrary.Property_new;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -38,9 +38,9 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * @since 2021/09/14
  * @author otsuru
  */
-public class DataKitchen extends Operation_new {
+public class DataKitchen extends Operation {
 
-    private final Property_new property;
+    private final Property property;
     /**
      * Path of the work folder
      */
@@ -78,12 +78,12 @@ public class DataKitchen extends Operation_new {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
-        else Operation_new.mainFromSubclass(args);
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property_new.generatePath(thisClass);
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
@@ -113,8 +113,8 @@ public class DataKitchen extends Operation_new {
         System.err.println(outPath + " is created.");
     }
 
-    public DataKitchen(Property_new property) throws IOException {
-        this.property = (Property_new) property.clone();
+    public DataKitchen(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
     @Override
