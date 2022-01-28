@@ -29,8 +29,8 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -85,7 +85,7 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  * @author Kensuke Konishi
  * 
  */
-public class Partial1DSpcMaker implements Operation {
+public class Partial1DSpcMaker implements Operation_old {
 	private boolean backward;
 
 	private Path psvPath;
@@ -1044,7 +1044,7 @@ public class Partial1DSpcMaker implements Operation {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		Partial1DSpcMaker pdm = new Partial1DSpcMaker(Property.parse(args));
+		Partial1DSpcMaker pdm = new Partial1DSpcMaker(Property_old.parse(args));
 
 		if (!Files.exists(pdm.timewindowPath))
 			throw new NoSuchFileException(pdm.timewindowPath.toString());

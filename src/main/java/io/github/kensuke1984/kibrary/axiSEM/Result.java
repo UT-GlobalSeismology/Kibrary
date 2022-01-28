@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.axiSEM;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -44,7 +44,7 @@ import org.apache.http.annotation.Experimental;
  * @author anpan
  * @version 0.1
  */
-public class Result implements Operation {
+public class Result implements Operation_old {
 	private String meshName;
 	private List<BasicID> basicIDs;
 	private double highFreq;
@@ -57,7 +57,7 @@ public class Result implements Operation {
 	public static void main(String[] args) throws IOException {
 		Properties property = new Properties();
 		if (args.length == 0)
-			property.load(Files.newBufferedReader(Operation.findPath()));
+			property.load(Files.newBufferedReader(Operation_old.findPath()));
 		else if (args.length == 1)
 			property.load(Files.newBufferedReader(Paths.get(args[0])));
 		else

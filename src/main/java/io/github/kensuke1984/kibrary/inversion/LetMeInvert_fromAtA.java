@@ -35,8 +35,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.DampingType;
@@ -78,7 +78,7 @@ import io.github.kensuke1984.kibrary.waveform.addons.ResidualVarianceFile;
  * @author Anselme Borgeaud
  * 
  */
-public class LetMeInvert_fromAtA implements Operation {
+public class LetMeInvert_fromAtA implements Operation_old {
 	/**
 	 * 観測波形、理論波形の入ったファイル (BINARY)
 	 */
@@ -941,7 +941,7 @@ public class LetMeInvert_fromAtA implements Operation {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		LetMeInvert_fromAtA lmi = new LetMeInvert_fromAtA(Property.parse(args));
+		LetMeInvert_fromAtA lmi = new LetMeInvert_fromAtA(Property_old.parse(args));
 		System.err.println(LetMeInvert_fromAtA.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();

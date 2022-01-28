@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
@@ -68,7 +68,7 @@ import org.jfree.util.ArrayUtilities;
  * @version 2.0.3.6
  * @author anselme added regularization, ...
  */
-public class LetMeInvert implements Operation {
+public class LetMeInvert implements Operation_old {
 	
     /**
      * path of waveform data
@@ -2048,7 +2048,7 @@ public class LetMeInvert implements Operation {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		LetMeInvert lmi = new LetMeInvert(Property.parse(args));
+		LetMeInvert lmi = new LetMeInvert(Property_old.parse(args));
 		System.err.println(LetMeInvert.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();

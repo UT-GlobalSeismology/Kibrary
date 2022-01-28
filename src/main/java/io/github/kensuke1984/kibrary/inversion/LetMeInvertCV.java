@@ -41,8 +41,8 @@ import org.apache.commons.math3.util.Precision;
 
 import org.jfree.util.ArrayUtilities;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
@@ -89,7 +89,7 @@ import opendap.servlet.GetAsciiHandler;
  * @author Kensuke Konishi
  * 
  */
-public class LetMeInvertCV implements Operation {
+public class LetMeInvertCV implements Operation_old {
 	/**
 	 * 観測波形、理論波形の入ったファイル (BINARY)
 	 */
@@ -2583,7 +2583,7 @@ public class LetMeInvertCV implements Operation {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		LetMeInvertCV lmi = new LetMeInvertCV(Property.parse(args));
+		LetMeInvertCV lmi = new LetMeInvertCV(Property_old.parse(args));
 		System.err.println(LetMeInvertCV.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();

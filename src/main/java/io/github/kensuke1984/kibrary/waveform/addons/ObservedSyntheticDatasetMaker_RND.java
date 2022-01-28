@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -78,7 +78,7 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  * @author Kensuke Konishi
  * 
  */
-public class ObservedSyntheticDatasetMaker_RND implements Operation {
+public class ObservedSyntheticDatasetMaker_RND implements Operation_old {
 
 	private Path workPath;
 	private Properties property;
@@ -289,7 +289,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	public static void main(String[] args) throws Exception {
 		Properties property = new Properties();
 		if (args.length == 0)
-			property.load(Files.newBufferedReader(Operation.findPath()));
+			property.load(Files.newBufferedReader(Operation_old.findPath()));
 		else if (args.length == 1)
 			property.load(Files.newBufferedReader(Paths.get(args[0])));
 		else

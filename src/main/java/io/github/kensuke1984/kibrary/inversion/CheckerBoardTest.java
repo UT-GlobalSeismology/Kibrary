@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
@@ -29,7 +29,7 @@ import java.util.*;
  * @author Kensuke Konishi
  * @version 0.2.2
  */
-public class CheckerBoardTest implements Operation {
+public class CheckerBoardTest implements Operation_old {
 
 	/**
 	 * Path of a {@link BasicIDFile} file (id part)
@@ -109,7 +109,7 @@ public class CheckerBoardTest implements Operation {
      * @throws Exception if any
      */
 	public static void main(String[] args) throws Exception {
-		Properties property = Property.parse(args);
+		Properties property = Property_old.parse(args);
 		CheckerBoardTest cbt = new CheckerBoardTest(property);
 		long time = System.nanoTime();
 		System.err.println(CheckerBoardTest.class.getName() + " is going.");

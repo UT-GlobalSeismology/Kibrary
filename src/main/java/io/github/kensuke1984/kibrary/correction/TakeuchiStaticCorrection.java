@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.correction;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @version 0.1.1.4
  * @see StaticCorrectionData
  */
-public class TakeuchiStaticCorrection implements Operation {
+public class TakeuchiStaticCorrection implements Operation_old {
     /**
      * components for computation
      */
@@ -102,7 +102,7 @@ public class TakeuchiStaticCorrection implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        TakeuchiStaticCorrection tsm = new TakeuchiStaticCorrection(Property.parse(args));
+        TakeuchiStaticCorrection tsm = new TakeuchiStaticCorrection(Property_old.parse(args));
         long time = System.nanoTime();
         System.err.println(TakeuchiStaticCorrection.class.getName() + " is going.");
         tsm.run();

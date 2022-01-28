@@ -26,8 +26,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -87,7 +87,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  *
  * @author Kensuke Konishi
  */
-public class PartialWaveformAssembler3D implements Operation {
+public class PartialWaveformAssembler3D implements Operation_old {
 
     private Set<SACComponent> components;
 
@@ -363,7 +363,7 @@ public class PartialWaveformAssembler3D implements Operation {
      *            [parameter file name]
      */
     public static void main(String[] args) throws IOException {
-        PartialWaveformAssembler3D pwa = new PartialWaveformAssembler3D(Property.parse(args));
+        PartialWaveformAssembler3D pwa = new PartialWaveformAssembler3D(Property_old.parse(args));
         long startTime = System.nanoTime();
 
         System.err.println(PartialWaveformAssembler3D.class.getName() + " is going..");

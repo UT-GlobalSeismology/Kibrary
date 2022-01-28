@@ -18,8 +18,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -37,7 +37,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 1.2.0.2
  * @author anselme add checks on event depth and networks, and allow multiple NPTS values
  */
-public class SecondHandler implements Consumer<EventFolder>, Operation {
+public class SecondHandler implements Consumer<EventFolder>, Operation_old {
 
 	/**
 	 * DELTA in SAC
@@ -91,7 +91,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
      * @throws Exception if any
      */
 	public static void main(String[] args) throws Exception {
-		SecondHandler s = new SecondHandler(Property.parse(args));
+		SecondHandler s = new SecondHandler(Property_old.parse(args));
 		System.err.println(SecondHandler.class.getName() + " is going");
 		long time = System.nanoTime();
 		s.run();

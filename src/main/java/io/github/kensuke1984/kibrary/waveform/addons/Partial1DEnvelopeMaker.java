@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -78,7 +78,7 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  * @author Kensuke Konishi
  * 
  */
-public class Partial1DEnvelopeMaker implements Operation {
+public class Partial1DEnvelopeMaker implements Operation_old {
 	private boolean backward;
 
 	private Path psvPath;
@@ -957,7 +957,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		Partial1DEnvelopeMaker pdm = new Partial1DEnvelopeMaker(Property.parse(args));
+		Partial1DEnvelopeMaker pdm = new Partial1DEnvelopeMaker(Property_old.parse(args));
 
 		if (!Files.exists(pdm.timewindowPath))
 			throw new NoSuchFileException(pdm.timewindowPath.toString());

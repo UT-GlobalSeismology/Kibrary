@@ -21,12 +21,12 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
 
 /**
- * An enum where all {@link Operation}s in Kibrary should be assigned to.
+ * An enum where all {@link Operation_old}s in Kibrary should be assigned to.
  *
  * @author Kensuke Konishi
  * @version 0.0.5.3
  */
-public enum Manhattan {
+public enum Manhattan_old {
     CheckerBoardTest(1, CheckerBoardTest.class), //
     ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
     LetMeInvert(8, LetMeInvert.class), //
@@ -46,10 +46,10 @@ public enum Manhattan {
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
     ;
 
-    private Class<? extends Operation> c;
+    private Class<? extends Operation_old> c;
     private int value;
 
-    Manhattan(int n, Class<? extends Operation> c) {
+    Manhattan_old(int n, Class<? extends Operation_old> c) {
         value = n;
         this.c = c;
     }
@@ -66,7 +66,7 @@ public enum Manhattan {
      * @param n (int)
      * @return
      */
-    static Manhattan valueOf(int n) {
+    static Manhattan_old valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
     }
 
@@ -75,7 +75,7 @@ public enum Manhattan {
      * @author otsuru
      * @since 2022/1/7
      */
-    public Class<? extends Operation> getOperation() {
+    public Class<? extends Operation_old> getOperation() {
         return c;
     }
 

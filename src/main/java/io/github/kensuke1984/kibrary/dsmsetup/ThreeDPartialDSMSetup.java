@@ -16,8 +16,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
  * @version 0.2.2.1
  * @author anselme add content for catalog
  */
-public class ThreeDPartialDSMSetup implements Operation {
+public class ThreeDPartialDSMSetup implements Operation_old {
 
     /**
      * np default: 1024
@@ -201,7 +201,7 @@ public class ThreeDPartialDSMSetup implements Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws Exception {
-        ThreeDPartialDSMSetup tpds = new ThreeDPartialDSMSetup(Property.parse(args));
+        ThreeDPartialDSMSetup tpds = new ThreeDPartialDSMSetup(Property_old.parse(args));
         long start = System.nanoTime();
         System.err.println(ThreeDPartialDSMSetup.class.getName() + " is going.");
         tpds.run();

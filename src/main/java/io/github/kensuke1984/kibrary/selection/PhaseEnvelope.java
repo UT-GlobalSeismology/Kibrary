@@ -31,7 +31,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -91,7 +91,7 @@ import org.jfree.ui.TextAnchor;
  * @version 1.0
  * 
  */
-public class PhaseEnvelope implements Operation {
+public class PhaseEnvelope implements Operation_old {
 	
 	private Properties property;
 	
@@ -206,7 +206,7 @@ public class PhaseEnvelope implements Operation {
 	public static void main(String[] args) throws Exception {
 		Properties property = new Properties();
 		if (args.length == 0)
-			property.load(Files.newBufferedReader(Operation.findPath()));
+			property.load(Files.newBufferedReader(Operation_old.findPath()));
 		else if (args.length == 1)
 			property.load(Files.newBufferedReader(Paths.get(args[0])));
 		else

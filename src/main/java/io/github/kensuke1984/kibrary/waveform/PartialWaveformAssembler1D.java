@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -72,7 +72,7 @@ import io.github.kensuke1984.kibrary.util.spc.VSConversion;
  * @author Kensuke Konishi
  *
  */
-public class PartialWaveformAssembler1D implements Operation {
+public class PartialWaveformAssembler1D implements Operation_old {
 	private boolean backward;
 
 	private Path psvPath;
@@ -951,7 +951,7 @@ public class PartialWaveformAssembler1D implements Operation {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		PartialWaveformAssembler1D pwa = new PartialWaveformAssembler1D(Property.parse(args));
+		PartialWaveformAssembler1D pwa = new PartialWaveformAssembler1D(Property_old.parse(args));
 
 		if (!Files.exists(pwa.timewindowPath))
 			throw new NoSuchFileException(pwa.timewindowPath.toString());

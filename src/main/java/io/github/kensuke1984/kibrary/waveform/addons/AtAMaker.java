@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
@@ -78,7 +78,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
-public class AtAMaker implements Operation {
+public class AtAMaker implements Operation_old {
 	private Properties PROPERTY;
 	
 	private Path workPath;
@@ -421,7 +421,7 @@ public class AtAMaker implements Operation {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		AtAMaker atam = new AtAMaker(Property.parse(args));
+		AtAMaker atam = new AtAMaker(Property_old.parse(args));
 		long startTime = System.nanoTime();
 
 		System.out.println(AtAMaker.class.getName() + " is going..");

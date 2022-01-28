@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.correction;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -42,7 +42,7 @@ import org.apache.commons.math3.linear.RealVector;
  * @version 0.0.1
  *
  */
-public class SourceTimeFunctionByGridSearch implements Operation {
+public class SourceTimeFunctionByGridSearch implements Operation_old {
 	private Path workPath;
 	private double deltaHalfDuration;
 	private double minHalfDuration;
@@ -233,7 +233,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	public static void main(String[] args) throws IOException {
 		
 		SourceTimeFunctionByGridSearch stfSearch =
-				new SourceTimeFunctionByGridSearch(Property.parse(args));
+				new SourceTimeFunctionByGridSearch(Property_old.parse(args));
 		long start = System.nanoTime();
 		System.err.println(SourceTimeFunctionByGridSearch.class.getName() 
 				+ " is going");

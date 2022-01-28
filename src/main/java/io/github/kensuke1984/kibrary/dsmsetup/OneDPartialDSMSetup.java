@@ -13,8 +13,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author Kensuke Konishi
  * @version 0.1.3
  */
-public class OneDPartialDSMSetup implements Operation {
+public class OneDPartialDSMSetup implements Operation_old {
 
 	private Properties property;
 	/**
@@ -69,7 +69,7 @@ public class OneDPartialDSMSetup implements Operation {
      * @throws Exception if any
      */
 	public static void main(String[] args) throws Exception {
-		OneDPartialDSMSetup opds = new OneDPartialDSMSetup(Property.parse(args));
+		OneDPartialDSMSetup opds = new OneDPartialDSMSetup(Property_old.parse(args));
 		long start = System.nanoTime();
 		System.err.println(OneDPartialDSMSetup.class.getName() + " is going.");
 		opds.run();

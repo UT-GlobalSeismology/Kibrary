@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @author Kensuke Konishi
  * @version 0.0.6.1
  */
-public interface Operation {
+public interface Operation_old {
 
     static Path findPath() throws IOException {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("."), "*.properties")) {
@@ -47,30 +47,30 @@ public interface Operation {
      */
     static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            Manhattan.printList();
-            System.err.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
+            Manhattan_old.printList();
+            System.err.print("Which one do you want to operate? [1-" + Manhattan_old.values().length + "] ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(1);
-            args = new String[]{Manhattan.valueOf(Integer.parseInt(input)).toString()};
+            args = new String[]{Manhattan_old.valueOf(Integer.parseInt(input)).toString()};
         }
 
         if (args[0].equals("-l")) {
-            Manhattan.printList();
+            Manhattan_old.printList();
             return;
         }
 
         String[] arguments = Arrays.stream(args).skip(1).toArray(String[]::new);
 
-        if (EnumUtils.isValidEnum(Manhattan.class, args[0])) Manhattan.valueOf(args[0]).invokeMain(arguments);
+        if (EnumUtils.isValidEnum(Manhattan_old.class, args[0])) Manhattan_old.valueOf(args[0]).invokeMain(arguments);
         else {
             Properties prop = new Properties();
             prop.load(Files.newBufferedReader(Paths.get(args[0])));
             if (!prop.containsKey("manhattan")) throw new RuntimeException("'manhattan' is not set in " + args[0]);
             String manhattan = prop.getProperty("manhattan");
-            if (!EnumUtils.isValidEnum(Manhattan.class, manhattan))
+            if (!EnumUtils.isValidEnum(Manhattan_old.class, manhattan))
                 throw new RuntimeException(manhattan + " is not a valid name of Manhattan.");
             try {
-                Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
+                Manhattan_old.valueOf(manhattan).invokeMain(new String[]{args[0]});
             } catch (Exception e) {
                 System.err.println("Could not run " + manhattan + " due to " + e.getCause());
                 e.printStackTrace();

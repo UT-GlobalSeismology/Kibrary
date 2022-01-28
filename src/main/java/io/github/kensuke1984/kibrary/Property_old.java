@@ -14,31 +14,31 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @author Kensuke Konishi
  * @version 0.0.5
  */
-public class Property {
+public class Property_old {
 
     public static void main(String[] args) throws Exception {
         if (1 < args.length) throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         if (args.length == 1) {
             try {
-                Manhattan.valueOf(args[0]).writeDefaultPropertiesFile();
+                Manhattan_old.valueOf(args[0]).writeDefaultPropertiesFile();
                 return;
             } catch (IllegalArgumentException iae) {
                 System.err.println(args[0] + " is not in Manhattan.");
                 System.err.println("Please choose one in:");
-                Manhattan.printList();
+                Manhattan_old.printList();
                 return;
             }
         }
-        Manhattan.printList();
-        System.err.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
+        Manhattan_old.printList();
+        System.err.print("For which one do you want to create a property file? [1-" + Manhattan_old.values().length + "] ");
         String input = GadgetAid.readInputLine();
         if (input.isEmpty()) System.exit(1);
-        Manhattan.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
+        Manhattan_old.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
     }
 
     public static Properties parse(String[] args) throws IOException {
         Properties property = new Properties();
-        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
+        if (args.length == 0) property.load(Files.newBufferedReader(Operation_old.findPath()));
         else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
         else throw new IllegalArgumentException("Too many arguments. There should be 0 or 1 ( = property file name)");
         return property;
@@ -56,6 +56,6 @@ public class Property {
         return Paths.get(classInstance.getSimpleName() + GadgetAid.getTemporaryString() + ".properties");
     }
 
-    private Property() {
+    private Property_old() {
     }
 }

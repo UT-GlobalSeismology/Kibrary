@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  * @version 0.1.2
  * @author anselme add methods to draw raypaths inside D''
  */
-public class RaypathDistribution implements Operation {
+public class RaypathDistribution implements Operation_old {
 
 	/**
 	 * draw Path Mode; 0: don't draw, 1: quick draw, 2: detailed draw
@@ -103,7 +103,7 @@ public class RaypathDistribution implements Operation {
      * @throws IOException if any
      */
 	public static void main(String[] args) throws IOException {
-		Properties property = Property.parse(args);
+		Properties property = Property_old.parse(args);
 		long start = System.nanoTime();
 		RaypathDistribution rd = new RaypathDistribution(property);
 		System.out.println(RaypathDistribution.class.getName() + " is going.");
