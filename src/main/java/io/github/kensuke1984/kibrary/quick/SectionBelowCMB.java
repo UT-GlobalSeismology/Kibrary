@@ -31,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  */
 public class SectionBelowCMB {
 
-    private static double sacSamplingHz = 20;
-    private static double finalSamplingHz = 1;
+    private static double sacSamplingHz = 2.5;
+    private static double finalSamplingHz = 2.5;
     private static final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
 
     /**
@@ -100,7 +100,7 @@ public class SectionBelowCMB {
             try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
                 for (int j = 0; j < synData.length; j++) {
-                    double synTime = startTime + j * finalSamplingHz;
+                    double synTime = startTime + j / finalSamplingHz;
                     pwTrace.println(synTime + " " + synData[j]);
                 }
             }
