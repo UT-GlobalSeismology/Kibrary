@@ -141,7 +141,9 @@ public class FormattedSPCFileName extends SPCFileName {
         mode = getMode(fileName);
         sourceID = getEventID(fileName);
         stationCode = fileName.split("\\.")[0].split("_")[0];
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
+                || fileType.equals(SPCType.UB)
+                || fileType.equals(SPCType.UF))
             networkCode = null;
         else
             networkCode = fileName.split("\\.")[0].split("_")[1];
@@ -167,16 +169,35 @@ public class FormattedSPCFileName extends SPCFileName {
         return mode;
     }
 
+    /**
+     * (PB, UB) Return observer code (source of back propagate wave)
+     * <p>
+     * (else) Return source ID
+     */
     @Override
     public String getSourceID() {
         return sourceID;
     }
 
+    /**
+     * (PB, PF, UB, UF) Return perturbation point code
+     * <p>
+     * (else) Return obsever code
+     */
     @Override
     public String getObserverID() {
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
+                || fileType.equals(SPCType.UB)
+                || fileType.equals(SPCType.UF))
+            return stationCode;
         return stationCode + "_" + networkCode;
     }
 
+    /**
+     * (PB, PF, UB, UF) Return perturbation point code
+     * <p>
+     * (else) Return station code
+     */
     @Override
     public String getStationCode() {
         return stationCode;
@@ -184,8 +205,10 @@ public class FormattedSPCFileName extends SPCFileName {
 
     @Override
     public String getNetworkCode() {
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
-            throw new RuntimeException("PB and PF waveforms have no network");
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
+                || fileType.equals(SPCType.UB)
+                || fileType.equals(SPCType.UF))
+            throw new RuntimeException("PB, PF, UB, and UF waveforms have no network");
         return networkCode;
     }
 
