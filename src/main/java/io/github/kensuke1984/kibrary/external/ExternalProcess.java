@@ -75,7 +75,7 @@ public class ExternalProcess {
      * New {@link InputStreamThread}s are started to read the standard output and standard error.
      * @param process (Process)
      */
-    ExternalProcess(Process process) {
+    protected ExternalProcess(Process process) {
         this.process = process;
         standardInputStream = process.getOutputStream();
         standardOutputThread = new InputStreamThread(process.getInputStream());
