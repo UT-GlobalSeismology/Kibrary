@@ -8,7 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -105,6 +107,106 @@ public class PolynomialStructure implements Serializable {
             GadgetAid.println(r1, getRhoAt(r1), getVpvAt(r1), getVphAt(r1), getVsvAt(r1), getVshAt(r1), getEtaAt(r1),
                     getQmuAt(r1), getQkappaAt(r1));
         }
+    }
+
+    /**
+     * @param modelName
+     * @return
+     *
+     * @author otsuru
+     * @since 2022/2/5 moved from inside run() in SyntheticDSMSetup
+     */
+    public static PolynomialStructure of(String modelName) {
+        PolynomialStructure ps = null;
+
+        // PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
+        if (!modelName.contains("/") && modelName.contains("_")) {
+            System.err.println("Using " + modelName + ". Adding perturbations");
+            String[] ss = modelName.split("_");
+            modelName = ss[0];
+            String[] range = ss[1].split("-");
+            double r1 = Double.parseDouble(range[0]);
+            double r2 = Double.parseDouble(range[1]);
+            Map<String, Double> quantityPercentMap = new HashMap<>();
+            for (int i = 2; i < ss.length; i++) {
+                String[] quantity_percent = ss[i].split("-");
+                double percent = quantity_percent[1].startsWith("M") ? -1 * Double.parseDouble(quantity_percent[1].substring(1)) / 100.
+                        : Double.parseDouble(quantity_percent[1]) / 100.;
+                quantityPercentMap.put(quantity_percent[0], percent);
+            }
+            if (modelName.equals("MIASP91")) {
+                ps = PolynomialStructure.MIASP91;
+                for (String quantity : quantityPercentMap.keySet()) {
+                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+                    if (quantity.equals("RHO"))
+                        ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+                    else if (quantity.equals("VS"))
+                        ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+                }
+            }
+            else if (modelName.equals("PREM")) {
+                ps = PolynomialStructure.PREM;
+                for (String quantity : quantityPercentMap.keySet()) {
+                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+                    if (quantity.equals("RHO"))
+                        ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+                    else if (quantity.equals("VS"))
+                        ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+                }
+            }
+            else if (modelName.equals("AK135")) {
+                ps = PolynomialStructure.AK135;
+                for (String quantity : quantityPercentMap.keySet()) {
+                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+                    if (quantity.equals("RHO"))
+                        ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+                    else if (quantity.equals("VS"))
+                        ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+                }
+            }
+            else
+                throw new RuntimeException("Model not implemented yet");
+        }
+        else {
+            switch (modelName) {
+            case "PREM":
+                System.err.println("Using PREM");
+                ps = PolynomialStructure.PREM;
+                break;
+            case "AK135":
+                System.err.println("Using AK135");
+                ps = PolynomialStructure.AK135;
+                break;
+            case "AK135-ELASTIC":
+                System.err.println("Using AK135 elastic");
+                ps = PolynomialStructure.AK135_elastic;
+                break;
+            case "MIASP91":
+                System.err.println("Using MIASP91");
+                ps = PolynomialStructure.MIASP91;
+                break;
+            case "IPREM":
+                System.err.println("Using IPREM");
+                ps = PolynomialStructure.ISO_PREM;
+                break;
+            case "TNASNA":
+                System.err.println("Using TNASNA");
+                ps = PolynomialStructure.TNASNA;
+                break;
+            case "TBL50":
+                System.err.println("Using TBL50");
+                ps = PolynomialStructure.TBL50;
+                break;
+            case "MAK135":
+                System.err.println("Using MAK135");
+                ps = PolynomialStructure.MAK135;
+                break;
+            default:
+                throw new RuntimeException("Model not implemented yet");
+            }
+        }
+
+        return ps;
     }
 
     private PolynomialStructure() {
@@ -471,6 +573,7 @@ public class PolynomialStructure implements Serializable {
         InformationFileReader reader = new InformationFileReader(structurePath);
         readLines(reader.getNonCommentLines());
         isDefault = false;
+        System.err.println(structurePath + " read in.");
     }
 
     public void readStructureFile(List<String> lines) throws IOException {

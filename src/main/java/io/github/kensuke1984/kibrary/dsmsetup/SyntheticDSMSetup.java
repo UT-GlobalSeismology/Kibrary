@@ -8,9 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -68,6 +66,7 @@ public class SyntheticDSMSetup extends Operation {
      * structure file instead of PREM
      */
     private Path structurePath;
+    private String structureName;
     /**
      * Whether to use only events in a timewindow file
      */
@@ -126,8 +125,10 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#components ");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a structure file you want to use. If this is unset, PREM will be used.");
+            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
+            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("#structureName ");
             pw.println("##To use only events in a timewindow file, set its path");
             pw.println("#timewindowPath NOT SUPPORTED YET");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
@@ -163,7 +164,7 @@ public class SyntheticDSMSetup extends Operation {
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
-            structurePath = Paths.get("PREM");
+            structureName = property.parseString("structureName", "PREM");
         }
         if (usewindow = property.containsKey("timewindowPath")) {  // This "=" is not a mistake, calm down.
             timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
@@ -241,8 +242,12 @@ public class SyntheticDSMSetup extends Operation {
             return;
         }
 
-        String modelName = structurePath.toString().trim().toUpperCase();
-        PolynomialStructure ps = null;
+        PolynomialStructure structure = null;
+        if (structurePath != null) {
+            structure = new PolynomialStructure(structurePath);
+        } else {
+            structure = PolynomialStructure.of(structureName);
+        }
 
         //use only events in timewindow file TODO
         if (usewindow) {
@@ -251,93 +256,6 @@ public class SyntheticDSMSetup extends Operation {
                     .map(tw -> tw.getGlobalCMTID()).collect(Collectors.toSet());
         }
 
-        // PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
-        if (!modelName.contains("/") && modelName.contains("_")) {
-            System.err.println("Using " + modelName + ". Adding perturbations");
-            String[] ss = modelName.split("_");
-            modelName = ss[0];
-            String[] range = ss[1].split("-");
-            double r1 = Double.parseDouble(range[0]);
-            double r2 = Double.parseDouble(range[1]);
-            Map<String, Double> quantityPercentMap = new HashMap<>();
-            for (int i = 2; i < ss.length; i++) {
-                String[] quantity_percent = ss[i].split("-");
-                double percent = quantity_percent[1].startsWith("M") ? -1 * Double.parseDouble(quantity_percent[1].substring(1)) / 100.
-                        : Double.parseDouble(quantity_percent[1]) / 100.;
-                quantityPercentMap.put(quantity_percent[0], percent);
-            }
-            if (modelName.equals("MIASP91")) {
-                ps = PolynomialStructure.MIASP91;
-                for (String quantity : quantityPercentMap.keySet()) {
-                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
-                    if (quantity.equals("RHO"))
-                        ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
-                    else if (quantity.equals("VS"))
-                        ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
-                }
-            }
-            else if (modelName.equals("PREM")) {
-                ps = PolynomialStructure.PREM;
-                for (String quantity : quantityPercentMap.keySet()) {
-                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
-                    if (quantity.equals("RHO"))
-                        ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
-                    else if (quantity.equals("VS"))
-                        ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
-                }
-            }
-            else if (modelName.equals("AK135")) {
-                ps = PolynomialStructure.AK135;
-                for (String quantity : quantityPercentMap.keySet()) {
-                    System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
-                    if (quantity.equals("RHO"))
-                        ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
-                    else if (quantity.equals("VS"))
-                        ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
-                }
-            }
-            else
-                throw new RuntimeException("Model not implemented yet");
-        }
-        else {
-            switch (modelName) {
-            case "PREM":
-                System.err.println("Using PREM");
-                ps = PolynomialStructure.PREM;
-                break;
-            case "AK135":
-                System.err.println("Using AK135");
-                ps = PolynomialStructure.AK135;
-                break;
-            case "AK135-ELASTIC":
-                System.err.println("Using AK135 elastic");
-                ps = PolynomialStructure.AK135_elastic;
-                break;
-            case "MIASP91":
-                System.err.println("Using MIASP91");
-                ps = PolynomialStructure.MIASP91;
-                break;
-            case "IPREM":
-                System.err.println("Using IPREM");
-                ps = PolynomialStructure.ISO_PREM;
-                break;
-            case "TNASNA":
-                System.err.println("Using TNASNA");
-                ps = PolynomialStructure.TNASNA;
-                break;
-            case "TBL50":
-                System.err.println("Using TBL50");
-                ps = PolynomialStructure.TBL50;
-                break;
-            case "MAK135":
-                System.err.println("Using MAK135");
-                ps = PolynomialStructure.MAK135;
-                break;
-            default:
-                System.err.println("Using " + structurePath);
-                ps = new PolynomialStructure(structurePath);
-            }
-        }
 
         Path outPath = workPath.resolve("synthetic" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
@@ -366,7 +284,7 @@ public class SyntheticDSMSetup extends Operation {
             try {
                 GlobalCMTAccess id = new GlobalCMTID("060994A").getEvent();
                 Path eventOut = outPath.resolve(id.toString());
-                SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, id, specfemObserverSet, header, tlen, np);
+                SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, id, specfemObserverSet, header, tlen, np);
                 Files.createDirectories(eventOut.resolve(header));
                 info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                 info.writeSH(eventOut.resolve(header + "_SH.inf"));
@@ -400,7 +318,7 @@ public class SyntheticDSMSetup extends Operation {
                 Path eventOut = outPath.resolve(eventDir.toString());
 
                 if (eventDir.getGlobalCMTID().getEvent() != null) {
-                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(ps, eventDir.getGlobalCMTID().getEvent(), observers, header, tlen, np);
+                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, eventDir.getGlobalCMTID().getEvent(), observers, header, tlen, np);
                     Files.createDirectories(eventOut.resolve(header));
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));

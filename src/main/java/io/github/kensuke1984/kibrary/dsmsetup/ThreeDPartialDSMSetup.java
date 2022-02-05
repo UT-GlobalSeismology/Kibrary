@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
@@ -51,24 +52,25 @@ public class ThreeDPartialDSMSetup extends Operation {
     /**
      * Information file name is header_[psv,sh].inf
      */
-    protected String header;
+    private String header;
 
     /**
      * information file of events.
      */
-    protected Path eventPath;
+    private Path eventPath;
     /**
      * information file of observers.
      */
-    protected Path observerPath;
+    private Path observerPath;
     /**
      * information file of locations of pertubation points.
      */
-    protected Path perturbationPath;
+    private Path perturbationPath;
     /**
      * structure file instead of PREM
      */
     private Path structurePath;
+    private String structureName;
 
     /**
      * Time length [s].
@@ -92,11 +94,6 @@ public class ThreeDPartialDSMSetup extends Operation {
     private double thetamin;
     private double thetamax;
     private double dtheta;
-
-    /**
-     * a structure to be used the default is PREM.
-     */
-    protected PolynomialStructure ps;
 
     /**
      * locations of perturbation points
@@ -135,8 +132,10 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#observerPath observer.inf");
             pw.println("##Path of an information file for locations of perturbation point, must be set");
             pw.println("#perturbationPath perturbation.inf");
-            pw.println("##Path of a structure file you want to use. If this is unset, PREM will be used.");
+            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
+            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("#structureName ");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen ");
             pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
@@ -168,7 +167,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
-            structurePath = Paths.get("PREM");
+            structureName = property.parseString("structureName", "PREM");
         }
 
         tlen = property.parseDouble("tlen", "3276.8");
@@ -186,6 +185,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             dtheta = tmpthetainfo[2];
         }
 
+        // additional info
+        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
 /*
     private void checkAndPutDefaults() {
@@ -261,6 +262,21 @@ public class ThreeDPartialDSMSetup extends Operation {
     public void run() throws IOException {
         readParameterPointInformation();
 
+        // read event information
+        Set<GlobalCMTID> eventSet = EventInformationFile.read(eventPath);
+        System.err.println("Number of events read in: " + eventSet.size());
+
+        // read observer information
+        Set<Observer> observerSet = ObserverInformationFile.read(observerPath);
+        System.err.println("Number of observers read in: " + observerSet.size());
+
+        PolynomialStructure structure = null;
+        if (structurePath != null) {
+            structure = new PolynomialStructure(structurePath);
+        } else {
+            structure = PolynomialStructure.of(structureName);
+        }
+
         outPath = workPath.resolve("threeDPartial" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
@@ -273,12 +289,6 @@ public class ThreeDPartialDSMSetup extends Operation {
         Path fpCatPath = outPath.resolve("FPcat");
         Path bpCatPath = outPath.resolve("BPcat");
         createPointInformationFile();
-
-        //
-        Set<GlobalCMTID> eventSet = EventInformationFile.read(eventPath);
-
-        // reading station information
-        Set<Observer> observerSet = ObserverInformationFile.read(observerPath);
 
         // System.exit(0);
         // //////////////////////////////////////
@@ -302,7 +312,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
                     for (int i = 0; i < 6; i++) {
                         event.setCMT(mts[i]);
-                        FPInputFile fp = new FPInputFile(event, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+                        FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationR, perturbationPointPositions);
                         Path infPath = fpPath.resolve(event.toString() + "_mt" + i);
                         Files.createDirectories(infPath.resolve(header));
                         fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
@@ -310,7 +320,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                     }
                 }
                 else {
-                    FPInputFile fp = new FPInputFile(event, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+                    FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationR, perturbationPointPositions);
                     Path infPath = fpPath.resolve(event.toString());
                     Files.createDirectories(infPath.resolve(header));
                     fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
@@ -332,10 +342,10 @@ public class ThreeDPartialDSMSetup extends Operation {
         shellFP.write(SPCType.PF, SPCMode.PSV);
         shellFP.write(SPCType.PF, SPCMode.SH);
 
-        System.err.println("Making information files for the stations (bp) ...");
+        System.err.println("Making information files for the observers (bp) ...");
         for (Observer observer : observerSet) {
             // System.out.println(str);
-            BPInputFile bp = new BPInputFile(observer.getPosition(), header, ps, tlen, np, perturbationR, perturbationPointPositions);
+            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationR, perturbationPointPositions);
             Path infPath = bpPath.resolve(observer.getPosition().toCode());
             // infDir.mkdir();
             // System.out.println(infDir.getPath()+" was made");
@@ -344,7 +354,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
         }
         if (catalogue) {
-            BPInputFile bp = new BPInputFile(header, ps, tlen, np, perturbationR, perturbationPointPositions);
+            BPInputFile bp = new BPInputFile(header, structure, tlen, np, perturbationR, perturbationPointPositions);
             Path catInfPath = bpCatPath;
             Files.createDirectories(catInfPath.resolve(header));
             bp.writeSHBPCat(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
