@@ -13,7 +13,6 @@ import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
-import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
 import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
@@ -29,7 +28,6 @@ public enum Manhattan_old {
     CheckerBoardTest(1, CheckerBoardTest.class), //
     LetMeInvert(8, LetMeInvert.class), //
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
-    PartialWaveformAssembler3D(11, PartialWaveformAssembler3D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
     RaypathDistribution(13, RaypathDistribution.class), //
     Result(14, Result.class), //

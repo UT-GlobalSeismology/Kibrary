@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
+import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 
 /**
  * An enum where all {@link Operation}s in Kibrary should be assigned to.
@@ -49,6 +50,7 @@ enum Manhattan {
     RecordSectionCreater(43, RecordSectionCreater.class), //
     // Partial 50
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class), //
+    PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class), //
     // Inversion 60
     // Temporal 100
     ;
