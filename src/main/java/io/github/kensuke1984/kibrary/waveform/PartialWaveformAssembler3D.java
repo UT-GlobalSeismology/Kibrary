@@ -418,8 +418,8 @@ public class PartialWaveformAssembler3D implements Operation_old {
         }
 
         for (Observer observer : observerSet) {
-            Path bp0000Path = bpPath.resolve("0000" + observer.toString());
-            Path bpModelPath = bp0000Path.resolve(modelName);
+            Path bpObserverPath = bpPath.resolve(observer.getPosition().toCode());
+            Path bpModelPath = bpObserverPath.resolve(modelName);
 
             // Set of global cmt IDs for the components and station in the timewindow.
             Set<GlobalCMTID> idSet = timewindowInformation.stream()
@@ -547,7 +547,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
                 partialDataWriter.flush();
                 System.err.println();
                 writeLog(touchedSet.size() + " events are processed");
-                writeLog(bpnum++ + "th " + bp0000Path + " was done ");
+                writeLog(bpnum++ + "th " + bpObserverPath + " for " + observer + " was done ");
             }
         }
         terminate();
@@ -1058,15 +1058,15 @@ public class PartialWaveformAssembler3D implements Operation_old {
         }
 
         boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
-        boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve("0000" + observer)));
+        boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve(observer.getPosition().toCode())));
         if (!fpExistence) {
             idSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
                 .forEach(id -> System.err.println(id));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
         if (!bpExistence) {
-            observerSet.stream().filter(station -> !Files.exists(bpPath.resolve("0000" + station)))
-                .forEach(sta -> System.err.println(sta));
+            observerSet.stream().filter(observer -> !Files.exists(bpPath.resolve(observer.getPosition().toCode())))
+                .forEach(observer -> System.err.println(observer));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
         writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()

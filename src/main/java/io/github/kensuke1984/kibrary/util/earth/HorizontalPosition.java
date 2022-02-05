@@ -310,5 +310,16 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         return latitude.toString() + " " + longitude.toString();
     }
 
+    /**
+     * Turn the position value into a short String code.
+     * Begins with latitude: 1 letter ("P" for positive or "M" for negative)
+     * followed by 2 + {@value Latitude#PRECISION} digits,
+     * then longitude: 1 letter ("N" for -100 and under, "M" for under 0, "P" for under 100, "Q" for 100 and above)
+     * followed by 2 + {@value Longitude#PRECISION} digits.
+     * @return (String) code
+     */
+    public String toCode() {
+        return latitude.toCode() + longitude.toCode();
+    }
 
 }

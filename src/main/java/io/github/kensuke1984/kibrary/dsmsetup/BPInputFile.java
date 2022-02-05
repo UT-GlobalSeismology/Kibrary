@@ -7,12 +7,12 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 
 /**
  * Information file for computation of back propagation.
+ * The source is the observer, and the receivers are the perturbation points.
  * <p>
  * This class is <b>immutable</b>
  *
@@ -24,39 +24,48 @@ public class BPInputFile extends DSMInputHeader {
 
     private final String output;
 
-    private final double[] radii;
-    private final HorizontalPosition[] positions;
+    /**
+     * Radii of the perturbation points
+     */
+    private final double[] receiverRadii;
+    /**
+     * Position of the perturbation points
+     */
+    private final HorizontalPosition[] receiverPositions;
     // private double sourceR;
-    private final Observer observer;
+    /**
+     * Position of the observer
+     */
+    private final HorizontalPosition sourcePosition;
     private final PolynomialStructure structure;
 
     /**
-     * @param observer              Information of station
+     * @param observer              Information of observer
      * @param outputDir            the name of the write folder
      * @param structure            velocity structure
      * @param tlen                 must be a power of 2 / 10 (2<sup>n</sup>)/10
      * @param np                   must be a power of 2 (2<sup>n</sup>)
-     * @param perturbationPointR   will be copied
-     * @param perturbationPosition will be copied
+     * @param perturbationRadii   will be copied
+     * @param perturbationPositions will be copied
      */
-    public BPInputFile(Observer observer, String outputDir, PolynomialStructure structure, double tlen, int np,
-                  double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
+    public BPInputFile(HorizontalPosition observerPositon, String outputDir, PolynomialStructure structure, double tlen, int np,
+                  double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
-        this.observer = observer;
-        output = outputDir;
+        this.sourcePosition = observerPositon;
+        this.output = outputDir;
         this.structure = structure;
-        radii = perturbationPointR.clone();
-        positions = perturbationPosition.clone();
+        this.receiverRadii = perturbationRadii.clone();
+        this.receiverPositions = perturbationPositions.clone();
     }
 
     public BPInputFile(String outputDir, PolynomialStructure structure, double tlen, int np,
-            double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
+            double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
-        observer = null;
-        output = outputDir;
+        this.sourcePosition = null;
+        this.output = outputDir;
         this.structure = structure;
-        radii = perturbationPointR.clone();
-        positions = perturbationPosition.clone();
+        this.receiverRadii = perturbationRadii.clone();
+        this.receiverPositions = perturbationPositions.clone();
     }
 
     /**
@@ -70,7 +79,7 @@ public class BPInputFile extends DSMInputHeader {
      * @return radii for the perturbation points
      */
     public double[] getPerturbationPointDepth() {
-        return radii.clone();
+        return receiverRadii.clone();
     }
 
     /**
@@ -98,23 +107,22 @@ public class BPInputFile extends DSMInputHeader {
             Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
             // source
-            HorizontalPosition stationPosition = observer.getPosition();
             pw.println("0 " + // BPINFOには震源深さいらない
-                    stationPosition.getLatitude() + " " + stationPosition.getLongitude());
+                    sourcePosition.getLatitude() + " " + sourcePosition.getLongitude());
 
             // write info
             pw.println("c write directory");
             pw.println(output + "/");
-            pw.println(observer.toString());
+            pw.println(sourcePosition.toCode());
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
-            pw.println(positions.length + " nsta");
-            Arrays.stream(positions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+            pw.println(receiverPositions.length + " nsta");
+            Arrays.stream(receiverPositions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
             // radii for perturbation points
-            pw.println(radii.length + " nr");
-            Arrays.stream(radii).forEach(pw::println);
+            pw.println(receiverRadii.length + " nr");
+            Arrays.stream(receiverRadii).forEach(pw::println);
             pw.println("end");
         }
     }
@@ -153,8 +161,8 @@ public class BPInputFile extends DSMInputHeader {
             pw.println(thetamin + " " + thetamax + " " + dtheta);
 
             // radii for perturbation points
-            pw.println(radii.length + " nr");
-            Arrays.stream(radii).forEach(pw::println);
+            pw.println(receiverRadii.length + " nr");
+            Arrays.stream(receiverRadii).forEach(pw::println);
             pw.println("end");
         }
     }
@@ -176,23 +184,23 @@ public class BPInputFile extends DSMInputHeader {
             // structure
             Arrays.stream(structure.toSHlines()).forEach(pw::println);
 
-            HorizontalPosition stationPosition = observer.getPosition();
+            // source
             pw.println("0 " + // BPINFOには震源深さいらない
-                    stationPosition.getLatitude() + " " + stationPosition.getLongitude());
+                    sourcePosition.getLatitude() + " " + sourcePosition.getLongitude());
 
             // write info
             pw.println("c write directory");
             pw.println(output + "/");
-            pw.println(observer.toString());
+            pw.println(sourcePosition.toCode());
             pw.println("c events and stations");
 
             // horizontal positions for perturbation points
-            pw.println(positions.length + " nsta");
-            Arrays.stream(positions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+            pw.println(receiverPositions.length + " nsta");
+            Arrays.stream(receiverPositions).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
             // radii for perturbation points
-            pw.println(radii.length + " nr");
-            Arrays.stream(radii).forEach(pw::println);
+            pw.println(receiverRadii.length + " nr");
+            Arrays.stream(receiverRadii).forEach(pw::println);
             pw.println("end");
         }
     }
@@ -230,8 +238,8 @@ public class BPInputFile extends DSMInputHeader {
             pw.println(thetamin + " " + thetamax + " " + dtheta);
 
             // radii for perturbation points
-            pw.println(radii.length + " nr");
-            Arrays.stream(radii).forEach(pw::println);
+            pw.println(receiverRadii.length + " nr");
+            Arrays.stream(receiverRadii).forEach(pw::println);
             pw.println("end");
         }
     }

@@ -286,8 +286,8 @@ public class ThreeDPartialDSMSetup implements Operation_old {
         System.err.println("making information files for the stations(bp)");
         for (Observer observer : observerSet) {
             // System.out.println(str);
-            BPInputFile bp = new BPInputFile(observer, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-            Path infPath = bpPath.resolve("0000" + observer);
+            BPInputFile bp = new BPInputFile(observer.getPosition(), header, ps, tlen, np, perturbationR, perturbationPointPositions);
+            Path infPath = bpPath.resolve(observer.getPosition().toCode());
             // infDir.mkdir();
             // System.out.println(infDir.getPath()+" was made");
             Files.createDirectories(infPath.resolve(header));

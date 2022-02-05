@@ -55,19 +55,44 @@ public final class MathAid {
     }
 
     /**
-     * Transforms a value to a padded String.
+     * Transforms a value (double) to a padded String.
      * The left side is padded with spaces and the right with "0"s.
      *
      * @param value (double) The value to turn into a String
      * @param nInteger (int) The number of digits for the integer part, including the minus sign but excluding the decimal point.
      * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point.
+     * @param headLetter (String) The letter to pad at the head (i.e. " ", "0", ...)
      * @return (String) The padded String form of the value
      *
      * @since 2021/11/26
      * @author otsuru
      */
-    public static String padToString(double value, int nInteger, int nDecimal) {
-        String format = "%" + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
+    public static String padToString(double value, int nInteger, int nDecimal, String headLetter) {
+        String format;
+        if (headLetter == " ")
+            format = "%" + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
+        else
+            format = "%" + headLetter + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
+        return String.format(format, value);
+    }
+    /**
+     * Transforms a value (int) to a padded String.
+     * The left side is padded with spaces and the right with "0"s.
+     *
+     * @param value (int) The value to turn into a String
+     * @param nInteger (int) The number of digits for the integer part, including the minus sign.
+     * @param headLetter (String) The letter to pad at the head (i.e. " ", "0", ...)
+     * @return (String) The padded String form of the value
+     *
+     * @since 2022/2/4
+     * @author otsuru
+     */
+    public static String padToString(int value, int nInteger, String headLetter) {
+        String format;
+        if (headLetter == " ")
+            format = "%" + nInteger + "d";
+        else
+            format = "%" + headLetter + nInteger + "d";
         return String.format(format, value);
     }
 

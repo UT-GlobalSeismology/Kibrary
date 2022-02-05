@@ -134,8 +134,24 @@ class Latitude implements Comparable<Latitude> {
      */
     @Override
     public String toString() {
-        return MathAid.padToString(geographicLatitude, 3, PRECISION);
+        return MathAid.padToString(geographicLatitude, 3, PRECISION, " ");
         //String format = "%" + (4 + PRECISION) + "." + PRECISION + "f";
         //return String.format(format, geographicLatitude);
+    }
+
+    /**
+     * Turn the latitude value into a short String code.
+     * 1 letter ("P" for positive or "M" for negative) followed by 2 + {@value #PRECISION} digits.
+     * @return (String) code
+     */
+    public String toCode() {
+        String sign;
+        if (geographicLatitude >= 0) sign = "P";
+        else sign = "M";
+
+        double absolute = Math.abs(geographicLatitude);
+        int number = (int) Math.round(absolute * Math.pow(10, PRECISION));
+
+        return sign + MathAid.padToString(number, 2 + PRECISION, "0");
     }
 }

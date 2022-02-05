@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
 /**
  * Information file for computation of forward propagation.
+ * The source is the event, and the receivers are the perturbation points.
  * <p>
  * This class is <b>immutable</b>
  *
@@ -34,17 +35,17 @@ public class FPInputFile extends DSMInputHeader {
      * @param structure          structure
      * @param tlen               [s] must be a power of 2 (2<sup>n</sup>)/10
      * @param np                 must be a power of 2 (2<sup>n</sup>)
-     * @param perturbationPointR will be copied
-     * @param perturbationPoint  will be copied
+     * @param perturbationRadii will be copied
+     * @param perturbationPositions  will be copied
      */
     public FPInputFile(GlobalCMTAccess event, String outputDir, PolynomialStructure structure, double tlen, int np,
-                  double[] perturbationPointR, HorizontalPosition[] perturbationPoint) {
+                  double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
         this.event = event;
         output = outputDir;
         this.structure = structure;
-        positions = perturbationPoint.clone();
-        radii = perturbationPointR.clone();
+        positions = perturbationPositions.clone();
+        radii = perturbationRadii.clone();
     }
 
     /**

@@ -187,7 +187,7 @@ public class FullPosition extends HorizontalPosition {
 
     @Override
     public String toString() {
-        return super.toString() + " " + MathAid.padToString(R, 4, R_PRECISION);
+        return super.toString() + " " + MathAid.padToString(R, 4, R_PRECISION, " ");
     }
 
 }
