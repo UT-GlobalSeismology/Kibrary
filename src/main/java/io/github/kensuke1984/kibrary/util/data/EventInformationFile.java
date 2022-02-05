@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,12 +26,17 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * File containing information of events.
  * <p>
  * Each line: globalCMTID, latitude, longitude, radius.
+ * <p>
+ * Only the globalCMTID is the part used to convey data;
+ * the rest of the information is just for the users to see.
  *
  * @author ???
+ * @since a long time ago
  */
 public class EventInformationFile {
 
     /**
+     * Writes an event information file given a set of GlobalCMTIDs.
      * @param eventSet Set of events
      * @param outPath  of write file
      * @param options  for write
@@ -42,6 +49,28 @@ public class EventInformationFile {
                 pw.println(event.toPaddedString() + " " + event.getEvent().getCmtLocation());
             });
         }
+    }
+
+    /**
+     * Reads an event information file. Only the GlobalCMTID is read in; other information are ignored.
+     * @param infoPath of event information file
+     * @return (<b>unmodifiable</b>) Set of events
+     * @throws IOException if an I/O error occurs
+     *
+     * @author otsuru
+     * @since 2022/2/5
+     */
+    public static Set<GlobalCMTID> read(Path infoPath) throws IOException {
+        Set<GlobalCMTID> eventSet = new HashSet<>();
+        try (BufferedReader br = Files.newBufferedReader(infoPath)) {
+            br.lines().map(String::trim).filter(line -> !line.startsWith("#")).forEach(line -> {
+                String[] parts = line.split("\\s+");
+                GlobalCMTID event = new GlobalCMTID(parts[0]);
+                if (!eventSet.add(event))
+                    throw new RuntimeException("There is duplication of " + event + " in " + infoPath + ".");
+            });
+        }
+        return Collections.unmodifiableSet(eventSet);
     }
 
     /**

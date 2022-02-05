@@ -32,6 +32,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * File containing information of observers.
  * <p>
  * Each line: station code, network code, latitude, longitude.
+ * <p>
+ * Only the station, network, latitude, and longitude are the parts used to convey data;
+ * the rest of the information is just for the users to see.
  *
  * @author Kensuke Konishi
  * @version 0.2.0.4
@@ -42,6 +45,7 @@ public final class ObserverInformationFile {
     }
 
     /**
+     * Writes an observer information file given a set of Observers.
      * @param observerSet Set of observers
      * @param outPath     of write file
      * @param options     for write
@@ -57,6 +61,8 @@ public final class ObserverInformationFile {
     }
 
     /**
+     * Reads an observer information file.
+     * Only the station, network, latitude, and longitude is read in; other information are ignored.
      * @param infoPath of station information file
      * @return (<b>unmodifiable</b>) Set of stations
      * @throws IOException if an I/O error occurs

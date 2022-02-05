@@ -6,7 +6,6 @@ import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
-import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
@@ -28,7 +27,6 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
  */
 public enum Manhattan_old {
     CheckerBoardTest(1, CheckerBoardTest.class), //
-    ThreeDPartialDSMSetup(7, ThreeDPartialDSMSetup.class), //
     LetMeInvert(8, LetMeInvert.class), //
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PartialWaveformAssembler3D(11, PartialWaveformAssembler3D.class), //

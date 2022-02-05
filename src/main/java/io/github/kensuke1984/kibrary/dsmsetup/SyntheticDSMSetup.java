@@ -29,6 +29,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * Operation that makes DSM input files to be used in tish and tipsv,
@@ -82,6 +84,9 @@ public class SyntheticDSMSetup extends Operation {
      * It must be a power of 2.
      */
     private int np;
+    /**
+     * Whether to use MPI-version of DSM in shellscript file
+     */
     private boolean mpi;
 
     /**
@@ -339,7 +344,7 @@ public class SyntheticDSMSetup extends Operation {
         System.err.println("Output folder is " + outPath);
 
         if (property != null)
-            property.write(outPath.resolve("dsmifm.properties"));
+            property.write(outPath.resolve("syndsm.properties"));
 
         //synthetic station set
         Set<Observer> synObserverSet = new HashSet<>();
@@ -412,8 +417,8 @@ public class SyntheticDSMSetup extends Operation {
 
         // output shellscripts for execution of tipsv and tish
         DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
-        shell.writePSV();
-        shell.writeSH();
+        shell.write(SPCType.SYNTHETIC, SPCMode.PSV);
+        shell.write(SPCType.SYNTHETIC, SPCMode.SH);
     }
 
 }

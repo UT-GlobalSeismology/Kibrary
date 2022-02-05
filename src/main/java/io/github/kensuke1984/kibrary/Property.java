@@ -86,7 +86,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed
      */
     public String parseString(String key, String defaltValue) {
         return checkAndPutDefault(key, defaltValue);
@@ -97,7 +97,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (boolean) value to the correcponding key
      */
     public boolean parseBoolean(String key, String defaltValue) {
         return Boolean.parseBoolean(checkAndPutDefault(key, defaltValue));
@@ -108,7 +108,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (int) value to the correcponding key
      */
     public int parseInt(String key, String defaltValue) {
         return Integer.parseInt(checkAndPutDefault(key, defaltValue));
@@ -119,7 +119,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (double) value to the correcponding key
      */
     public double parseDouble(String key, String defaltValue) {
         return Double.parseDouble(checkAndPutDefault(key, defaltValue));
@@ -131,8 +131,8 @@ public class Property extends Properties {
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be ""; use "." for current path.
      * @param requireExisting (boolean) When true, checks whether the path exists
-     * @param workPath
-     * @return
+     * @param workPath (Path) The value of the key will be resolved under this workPath
+     * @return (Path) Path of the value to the correcponding key, resolved under workPath
      * @throws NoSuchFileException if the specified path does not exist
      */
     public Path parsePath(String key, String defaltValue, boolean requireExisting, Path workPath) throws NoSuchFileException {
@@ -152,7 +152,7 @@ public class Property extends Properties {
      * @param key (String) Name of key to check, must not be empty
      * @param defaultValue (String) Value to set to the key if it is not yet specified.
      *          Require a value to be specified by setting this null. This must not be "".
-     * @return (String) value to the correcponding key, with subsequent spaces trimmed.
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed
      */
     private String checkAndPutDefault(String key, String defaultValue) {
         if (StringUtils.isEmpty(key)) {

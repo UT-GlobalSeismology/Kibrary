@@ -3,30 +3,29 @@ package io.github.kensuke1984.kibrary.dsmsetup;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
-import io.github.kensuke1984.kibrary.Operation_old;
-import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
-import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * This class makes information files for <br>
@@ -38,36 +37,67 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
  * @version 0.2.2.1
  * @author anselme add content for catalog
  */
-public class ThreeDPartialDSMSetup implements Operation_old {
+public class ThreeDPartialDSMSetup extends Operation {
 
+    private final Property property;
     /**
-     * np default: 1024
+     * Path of the work folder
      */
-    protected int np;
+    private Path workPath;
     /**
-     * tlen default:3276.8
+     * Path of the output folder
      */
-    protected double tlen;
-    /**
-     * information file of locations of pertubation points.
-     */
-    protected Path locationsPath;
-    /**
-     * a structure to be used the default is PREM.
-     */
-    protected PolynomialStructure ps;
+    private Path outPath;
     /**
      * Information file name is header_[psv,sh].inf
      */
     protected String header;
-    protected Path stationInformationPath;
-    /**
-     * work folder
-     */
-    private Path workPath;
-    private Properties property;
 
+    /**
+     * information file of events.
+     */
+    protected Path eventPath;
+    /**
+     * information file of observers.
+     */
+    protected Path observerPath;
+    /**
+     * information file of locations of pertubation points.
+     */
+    protected Path perturbationPath;
+    /**
+     * structure file instead of PREM
+     */
+    private Path structurePath;
+
+    /**
+     * Time length [s].
+     * It must be a power of 2 divided by 10.(2<sup>n</sup>/10)
+     */
+    private double tlen;
+    /**
+     * Number of steps in frequency domain.
+     * It must be a power of 2.
+     */
+    private int np;
+    /**
+     * Whether to use MPI-version of DSM in shellscript file
+     */
     private boolean mpi;
+    private boolean jointCMT;
+    private boolean catalogue;
+    /**
+     * epicentral distances for catalog
+     */
+    private double thetamin;
+    private double thetamax;
+    private double dtheta;
+
+    /**
+     * a structure to be used the default is PREM.
+     */
+    protected PolynomialStructure ps;
+
     /**
      * locations of perturbation points
      *
@@ -78,53 +108,86 @@ public class ThreeDPartialDSMSetup implements Operation_old {
      * 3605, 3655, 3705, 3755, 3805, 3855} Sorted. No duplication.
      */
     private double[] perturbationR;
-    private Path outPath;
 
-    private boolean jointCMT;
-    private boolean catalogue;
+
     /**
-     * epicentral distances for catalog
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
      */
-    private double thetamin;
-    private double thetamax;
-    private double dtheta;
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
+    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(ThreeDPartialDSMSetup.class.getSimpleName() + GadgetAid.getTemporaryString() + ".properties");
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan ThreeDPartialDSMSetup");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
+            pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
+            pw.println("#header ");
+            pw.println("##Path of an event information file, must be set");
+            pw.println("#eventPath event.inf");
+            pw.println("##Path of an observer information file, must be set");
+            pw.println("#observerPath observer.inf");
             pw.println("##Path of an information file for locations of perturbation point, must be set");
-            pw.println("#locationsPath pointLocations.inf");
-            pw.println("##Path of a station information file, must be set");
-            pw.println("#stationInformationPath station.inf");
-            pw.println("##header for names of information files 'header'_[PSV, SH].inf (PREM)");
-            pw.println("#header");
-            pw.println("##int np must be a power of 2, must be set");
-            pw.println("#np 512");
-            pw.println("##double tlen must be a power of 2/10, must be set");
-            pw.println("#tlen 3276.8");
+            pw.println("#perturbationPath perturbation.inf");
+            pw.println("##Path of a structure file you want to use. If this is unset, PREM will be used.");
+            pw.println("#structurePath ");
+            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
+            pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM calculations (true)");
-            pw.println("#mpi");
-            pw.println("##polynomial structure file (can be blank)");
-            pw.println("##if so or it doesn't exist model is an initial PREM");
-            pw.println("#structureFile ");
-            pw.println("##Boolean compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
+            pw.println("#mpi ");
+            pw.println("##(boolean) Whether to compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
             pw.println("#jointCMT ");
-            pw.println("##Boolean wavefield catalogue (false)");
-            pw.println("#catalogue");
+            pw.println("##(boolean) Wavefield catalogue mode (false)");
+            pw.println("#catalogue ");
             pw.println("##Catalogue distance range: thetamin thetamax dtheta");
-            pw.println("#thetaRange");
+            pw.println("#thetaRange ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public ThreeDPartialDSMSetup(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public ThreeDPartialDSMSetup(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        header = property.parseString("header", "PREM").split("\\s+")[0];
+
+        eventPath = property.parsePath("eventPath", null, true, workPath);
+        observerPath = property.parsePath("observerPath", null, true, workPath);
+        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
+        if (property.containsKey("structurePath")) {
+            structurePath = property.parsePath("structurePath", null, true, workPath);
+        } else {
+            structurePath = Paths.get("PREM");
+        }
+
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
+        mpi = property.parseBoolean("mpi", "true");
+
+        jointCMT = property.parseBoolean("jointCMT", "false");
+
+        catalogue = property.parseBoolean("catalogue", "false");
+        if (catalogue) {
+            double[] tmpthetainfo = Stream.of(property.parseString("thetaRange", null).split("\\s+"))
+                    .mapToDouble(Double::parseDouble).toArray();
+            thetamin = tmpthetainfo[0];
+            thetamax = tmpthetainfo[1];
+            dtheta = tmpthetainfo[2];
+        }
+
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath"))
             property.setProperty("workPath", "");
@@ -154,9 +217,9 @@ public class ThreeDPartialDSMSetup implements Operation_old {
         if (!Files.exists(workPath))
             throw new RuntimeException("The workPath: " + workPath + " does not exist");
 
-        locationsPath = getPath("locationsPath");
+        perturbationPath = getPath("locationsPath");
 
-        stationInformationPath = getPath("stationInformationPath");
+        observerPath = getPath("stationInformationPath");
         // str = reader.getValues("partialTypes");
         np = Integer.parseInt(property.getProperty("np"));
         tlen = Double.parseDouble(property.getProperty("tlen"));
@@ -192,36 +255,18 @@ public class ThreeDPartialDSMSetup implements Operation_old {
             dtheta = tmpthetainfo[2];
         }
     }
-
-       /**
-     * With static members, make two information files for back- and forward
-     * propagation.
-     *
-     * @param args [parameter file name]
-     * @throws IOException if any
-     */
-    public static void main(String[] args) throws Exception {
-        ThreeDPartialDSMSetup tpds = new ThreeDPartialDSMSetup(Property_old.parse(args));
-        long start = System.nanoTime();
-        System.err.println(ThreeDPartialDSMSetup.class.getName() + " is going.");
-        tpds.run();
-        System.err.println(ThreeDPartialDSMSetup.class.getName() + " finished in "
-                + GadgetAid.toTimeString(System.nanoTime() - start));
-    }
+*/
 
     @Override
-    public void run() throws Exception {
-        // ///
-        if (!Files.exists(workPath))
-            throw new NoSuchFileException(workPath.toString());
-        if (!Files.exists(stationInformationPath))
-            throw new NoSuchFileException(stationInformationPath.toString());
+    public void run() throws IOException {
         readParameterPointInformation();
+
         outPath = workPath.resolve("threeDPartial" + GadgetAid.getTemporaryString());
         Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
         if (property != null)
-            writeProperties(outPath.resolve("ifm.properties"));
+            property.write(outPath.resolve("threeddsm.properties"));
 
         Path bpPath = outPath.resolve("BPinfo");
         Path fpPath = outPath.resolve("FPinfo");
@@ -230,18 +275,18 @@ public class ThreeDPartialDSMSetup implements Operation_old {
         createPointInformationFile();
 
         //
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
+        Set<GlobalCMTID> eventSet = EventInformationFile.read(eventPath);
 
         // reading station information
-        Set<Observer> observerSet = ObserverInformationFile.read(stationInformationPath);
+        Set<Observer> observerSet = ObserverInformationFile.read(observerPath);
 
         // System.exit(0);
         // //////////////////////////////////////
-        System.err.println("making information files for the events(fp)");
-        for (EventFolder eventDir : eventDirs) {
+        System.err.println("Making information files for the events (fp) ...");
+        for (GlobalCMTID eventID : eventSet) {
             GlobalCMTAccess event;
             try {
-                event = eventDir.getGlobalCMTID().getEvent();
+                event = eventID.getEvent();
 
                 // joint CMT inversion
                 if (jointCMT) {
@@ -278,12 +323,16 @@ public class ThreeDPartialDSMSetup implements Operation_old {
                          fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
                     }
                 }
-            } catch (RuntimeException e) {
+            } catch (RuntimeException e) {  // TODO: is this needed?
                 System.err.println(e.getMessage());
             }
         }
+        // output shellscripts for execution of psvfp and shfp
+        DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
+        shellFP.write(SPCType.PF, SPCMode.PSV);
+        shellFP.write(SPCType.PF, SPCMode.SH);
 
-        System.err.println("making information files for the stations(bp)");
+        System.err.println("Making information files for the stations (bp) ...");
         for (Observer observer : observerSet) {
             // System.out.println(str);
             BPInputFile bp = new BPInputFile(observer.getPosition(), header, ps, tlen, np, perturbationR, perturbationPointPositions);
@@ -301,6 +350,10 @@ public class ThreeDPartialDSMSetup implements Operation_old {
             bp.writeSHBPCat(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
             bp.writePSVBPCat(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
         }
+        // output shellscripts for execution of psvbp and shbp
+        DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
+        shellBP.write(SPCType.PB, SPCMode.PSV);
+        shellBP.write(SPCType.PB, SPCMode.SH);
 
         // TODO
         if (fpPath.toFile().delete() && bpPath.toFile().delete()) {
@@ -310,15 +363,9 @@ public class ThreeDPartialDSMSetup implements Operation_old {
         } else {
             // FileUtils.moveFileToDirectory(getParameterPath().toFile(),
             // outputPath.toFile(), false);
-            FileUtils.copyFileToDirectory(locationsPath.toFile(), outPath.toFile(), false);
+            FileUtils.copyFileToDirectory(perturbationPath.toFile(), outPath.toFile(), false);
         }
 
-        // output shellscripts for execution of tipsv and tish
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
-        shell.writePSVBP();
-        shell.writeSHBP();
-        shell.writePSVFP();
-        shell.writeSHFP();
     }
 
     /**
@@ -335,7 +382,7 @@ public class ThreeDPartialDSMSetup implements Operation_old {
      * latm lonm
      */
     private void readParameterPointInformation() throws IOException {
-        InformationFileReader reader = new InformationFileReader(locationsPath);
+        InformationFileReader reader = new InformationFileReader(perturbationPath);
         perturbationR = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).sorted().distinct()
                 .toArray();
 
@@ -365,16 +412,6 @@ public class ThreeDPartialDSMSetup implements Operation_old {
                     ppw.println(perturbationPointPositions[i] + " " + aPerturbationR);
             }
         }
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
 }

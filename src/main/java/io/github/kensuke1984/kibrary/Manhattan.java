@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
+import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
@@ -47,6 +48,7 @@ enum Manhattan {
     WaveformPlotCreater(42, WaveformPlotCreater.class), //
     RecordSectionCreater(43, RecordSectionCreater.class), //
     // Partial 50
+    ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class), //
     // Inversion 60
     // Temporal 100
     ;
