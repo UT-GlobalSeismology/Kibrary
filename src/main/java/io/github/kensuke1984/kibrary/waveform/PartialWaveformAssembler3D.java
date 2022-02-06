@@ -250,7 +250,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#backward ");
             pw.println("##File for Qstructure (if no file, then PREM)");
             pw.println("#qinf ");
-            pw.println("##path of the time partials directory, must be set if PartialType containes TIME_SOURCE or TIME_RECEIVER");
+            pw.println("##path of the time partials directory, must be set if PartialType contains TIME_SOURCE or TIME_RECEIVER");
             pw.println("#timePartialPath ");
         }
         System.err.println(outPath + " is created.");
@@ -270,8 +270,8 @@ public class PartialWaveformAssembler3D extends Operation {
         if (partialSamplingHz % finalSamplingHz != 0)
             throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
 
-        fpPath = property.parsePath("fpPath", null, true, workPath);
-        bpPath = property.parsePath("bpPath", null, true, workPath);
+        fpPath = property.parsePath("fpPath", "FPinfo", true, workPath);
+        bpPath = property.parsePath("bpPath", "BPinfo", true, workPath);
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
 
         mode = property.parseString("mode", "SH").toUpperCase();
@@ -668,7 +668,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     continue;
                 }
             }
-            System.out.print(".");
+            System.err.print(".");
 //
         }
 
@@ -680,7 +680,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 return;
             }
 
-            System.out.println(sacname + " (time partials)");
+            System.err.println(sacname + " (time partials)");
 
             SACFileAccess sacdata = sacname.read();
             Observer station = sacdata.getObserver();
@@ -693,8 +693,8 @@ public class PartialWaveformAssembler3D extends Operation {
 
                 if (tw.isEmpty()) {
                     tmpTws.forEach(window -> {
-                        System.out.println(window);
-                        System.out.println(window.getObserver().getPosition());
+                        System.err.println(window);
+                        System.err.println(window.getObserver().getPosition());
                     });
                     System.err.println(station.getPosition());
                     System.err.println("Ignoring empty timewindow " + sacname + " " + station);
@@ -887,7 +887,7 @@ public class PartialWaveformAssembler3D extends Operation {
 //			for (int i = 0; i < perturbationRs.length; i++)
 //				perturbationRs[i] = perturbationLocations[i].getR();
 
-            String observerName = bp.getSourceID();
+            String observerSourceCode = bp.getSourceID();
             if (!station.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
                 throw new RuntimeException("There may be a station with the same name but other networks.");
 
@@ -899,10 +899,10 @@ public class PartialWaveformAssembler3D extends Operation {
 
             // Pickup timewindows
             Set<TimewindowData> timewindowList = timewindowInformation.stream()
-                    .filter(info -> info.getObserver().toString().equals(observerName))
+                    .filter(info -> info.getObserver().getPosition().toCode().equals(observerSourceCode))
                     .filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
 
-            System.err.println(id + " " + timewindowList.size() + " " + observerName);
+//            System.err.println(id + " " + timewindowList.size() + " " + observerSourceCode);
 
             // timewindow情報のないときスキップ
             if (timewindowList.isEmpty())
@@ -1033,7 +1033,7 @@ public class PartialWaveformAssembler3D extends Operation {
         synchronized (PartialWaveformAssembler3D.class) {
             do {
                 dateString = GadgetAid.getTemporaryString();
-                outPath = workPath.resolve("convolved" + dateString);
+                outPath = workPath.resolve("assembled" + dateString);
                 logPath = outPath.resolve("pdm" + dateString + ".log");
                 if (!Files.exists(outPath))
                     Files.createDirectories(outPath);
