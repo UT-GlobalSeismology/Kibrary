@@ -296,8 +296,7 @@ public class RecordSectionCreater extends Operation {
                String fileNameRoot;
                if (tag.isEmpty()) {
                    fileNameRoot = eventDir.toString() + "_" + component.toString();
-               }
-               else {
+               } else {
                    fileNameRoot = tag + "_" + eventDir.toString() + "_" + component.toString();
                }
 

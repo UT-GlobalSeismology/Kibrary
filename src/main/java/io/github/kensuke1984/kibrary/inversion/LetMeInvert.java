@@ -5,17 +5,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -33,8 +30,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.Operation_old;
-import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
@@ -72,19 +69,30 @@ import io.github.kensuke1984.kibrary.waveform.addons.AtdFile;
  * @version 2.0.3.6
  * @author anselme added regularization, ...
  */
-public class LetMeInvert implements Operation_old {
+public class LetMeInvert extends Operation {
 
-    private Properties PROPERTY;
+    private final Property property;
+    /**
+     * Path of the work folder
+     */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
+     * Path of the output folder
+     */
     private Path outPath;
+
+    /**
+     * path of basic ID file
+     */
+    protected Path basicIDPath;
     /**
      * path of waveform data
      */
-    protected Path waveformPath;
-    /**
-     * Path of unknown parameter file
-     */
-    protected Path unknownParameterListPath;
+    protected Path basicPath;
     /**
      * path of partial ID file
      */
@@ -94,13 +102,19 @@ public class LetMeInvert implements Operation_old {
      */
     protected Path partialPath;
     /**
-     * path of basic ID file
+     * Path of unknown parameter file
      */
-    protected Path waveformIDPath;
+    protected Path unknownParameterListPath;
     /**
-     * path of station file
+     * path of observer file
      */
-    protected Path stationInformationPath;
+    protected Path observerInformationPath;
+
+    private Path spcAmpPath;
+    private Path spcAmpIDPath;
+    private Path partialSpcPath;
+    private Path partialSpcIDPath;
+
     /**
      * Solvers for equation
      */
@@ -109,27 +123,18 @@ public class LetMeInvert implements Operation_old {
      * α for AIC 独立データ数:n/α
      */
     protected double[] alpha;
-    private ObservationEquation eq;
-    private Set<Observer> stationSet;
-
-    private ObservationEquation eqA, eqB;
-    Path spcAmpPath;
-    Path spcAmpIDPath;
-    Path partialSpcPath;
-    Path partialSpcIDPath;
-
     protected WeightingType weightingType;
-    protected boolean time_source, time_receiver;
     protected double gamma;
+    protected boolean time_source, time_receiver;
+    private String[] phases;
+    private Path verticalMappingPath;
     private CombinationType combinationType;
     private Map<PartialType, Integer[]> nUnknowns;
-    private Path verticalMapping;
-    private String[] phases;
-    private List<DataSelectionInformation> selectionInfo;
+    protected Path dataSelectionInformationPath;
     private boolean modelCovariance;
     private double cm0, cmH, cmV;
+    private boolean regularizationMuQ;
     private double lambdaQ, lambdaMU, gammaQ, gammaMU, lambda00, gamma00, lambdaVp, gammaVp;
-    private double correlationScaling;
     private double minDistance;
     private double maxDistance;
     private double minMw;
@@ -137,47 +142,63 @@ public class LetMeInvert implements Operation_old {
     private UnknownParameterWeightType unknownParameterWeightType;
     private boolean jackknife;
     private int nRealisation;
-    private boolean checkerboard;
-    private Path checkerboardPerturbationPath;
-    private double scale_freq_ata;
-    private boolean regularizationMuQ;
     private boolean conditioner;
     private boolean lowMemoryCost;
     private int nStepsForLowMemoryMode;
     private boolean usePrecomputedAtA;
     private Path[] precomputedAtAPath;
     private Path[] precomputedAtdPath;
+    private boolean checkerboard;
+    private Path checkerboardPerturbationPath;
     private boolean trimWindow;
     private double trimPoint;
     private boolean keepBefore;
-    private boolean assumeRratio;
-    private List<EventCluster> clusters;
+    private boolean correct3DFocusing;
+    private boolean applyEventAmpCorr;
+    private double scale_freq_ata;
+    private Map<PartialType, Double> dataErrorMap;
     private Path eventClusterPath;
     private int[] azimuthIndex;
     private int[] clusterIndex;
-    private boolean applyEventAmpCorr;
-    private boolean correct3DFocusing;
-    private double mul;
-    private Map<PartialType, Double> dataErrorMap;
 
+
+    private Set<Observer> stationSet;
+    private List<DataSelectionInformation> selectionInfo;
+    private ObservationEquation eq;
+    private ObservationEquation eqA, eqB;
+    private double mul;
+
+    private List<EventCluster> clusters;
+
+
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
+    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(LetMeInvert.class.getName() + GadgetAid.getTemporaryString() + ".properties");
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan LetMeInvert");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)"); //TODO unneeded?
-            pw.println("#outPath");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##Path of a basic ID file, must be set");
-            pw.println("#waveformIDPath actualID.dat"); //TODO rename
+            pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#waveformPath actual.dat");
+            pw.println("#basicPath actual.dat");
             pw.println("##Path of a spcAmpID file");
             pw.println("#spcAmpIDPath ");
             pw.println("##Path of a spcAmp file");
             pw.println("#spcAmpPath ");
-            pw.println("##Path of a partial id file, must be set");
+            pw.println("##Path of a partial ID file, must be set");
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
@@ -189,13 +210,13 @@ public class LetMeInvert implements Operation_old {
             pw.println("#unknownParameterListPath unknowns.inf");
             pw.println("##Path of an observer information file, must be set");
             pw.println("#observerInformationPath observer.inf");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
+            pw.println("#inverseMethods ");
             pw.println("##(double[]) alpha it self, if it is set, compute aic for each alpha.");
             pw.println("#alpha ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG SVD)"); //TODO CG
-            pw.println("#inverseMethods ");
             pw.println("##weighting, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weighting ");
-            pw.println("##(double) Gamma, must be set only if TAKEUCHIKOBAYASHI weigthing is used");
+            pw.println("##(double) Gamma, must be set only if TAKEUCHIKOBAYASHI or FINAL weighting is used");
             pw.println("#gamma 30.");
             pw.println("##(boolean) time_source (false). Time partial for the source"); //TODO ???
             pw.println("#time_source");
@@ -204,12 +225,12 @@ public class LetMeInvert implements Operation_old {
             pw.println("##Phases to use, listed using spaces. To use all phases, leave this blank.");
             pw.println("#phases ");
             pw.println("##???"); //TODO
-            pw.println("#verticalMapping");
+            pw.println("#verticalMappingPath");
             pw.println("##CombinationType to combine 1-D pixels or voxels (null)");
             pw.println("#combinationType");
             pw.println("#nUnknowns PAR2 9 9 PARQ 9 9");
-            pw.println("##DataSelectionInformationFile (leave blank if not needed)");
-            pw.println("#DataSelectionInformationFile");
+            pw.println("##DataSelectionInformationFile path (leave blank if not needed)");
+            pw.println("#dataSelectionInformationPath ");
             pw.println("##(boolean) modelCovariance (false)");
             pw.println("#modelCovariance ");
             pw.println("##double cm0");
@@ -228,17 +249,16 @@ public class LetMeInvert implements Operation_old {
             pw.println("#gammaQ");
             pw.println("##double gammaMU (0.03)");
             pw.println("#gammaMU");
-            pw.println("##double correlationScaling (1.)");
-            pw.println("#correlationScaling");
-            pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
+            pw.println("##If wish to select distance range: min distance [deg] of the data to be used in the inversion (0)");
             pw.println("#minDistance ");
-            pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
+            pw.println("##If wish to select distance range: max distance [deg] of the data to be used in the inversion (360)");
             pw.println("#maxDistance ");
-            pw.println("#unknownParameterWeightType");
             pw.println("##minimum Mw (0.)");
             pw.println("#minMw");
             pw.println("##maximum Mw (10.)");
             pw.println("#maxMw");
+            pw.println("##???"); //TODO
+            pw.println("#unknownParameterWeightType");
             pw.println("##Perform a jackknife test (false)");
             pw.println("#jackknife");
             pw.println("##Number of jackknife inversions");
@@ -264,6 +284,10 @@ public class LetMeInvert implements Operation_old {
         System.err.println(outPath + " is created.");
     }
 
+    public LetMeInvert(Property property) throws IOException {
+        this.property = (Property) property.clone();
+    }
+/*
     public LetMeInvert(Properties property) throws IOException {
         this.PROPERTY = (Properties) property.clone();
         set();
@@ -278,124 +302,50 @@ public class LetMeInvert implements Operation_old {
         workPath.resolve("lmi" + GadgetAid.getTemporaryString());
         inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
     }
+*/
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        tag = property.parseString("tag", "");
 
-    /**
-     * @param args
-     *            [parameter file name]
-     * @throws IOException
-     *             if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        LetMeInvert lmi = new LetMeInvert(Property_old.parse(args));
-        System.err.println(LetMeInvert.class.getName() + " is running.");
-        long startT = System.nanoTime();
-        lmi.run();
-        System.err.println(
-                LetMeInvert.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
-    }
+        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        basicPath = property.parsePath("basicPath", null, true, workPath);
+        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
+        partialPath = property.parsePath("partialPath", null, true, workPath);
+        unknownParameterListPath = property.parsePath("unknownParameterListPath", null, true, workPath);
+        observerInformationPath = property.parsePath("observerInformationPath", null, true, workPath);
 
-    private void checkAndPutDefaults() {
-        if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
-        if (!PROPERTY.containsKey("stationInformationPath"))
-            throw new IllegalArgumentException("There is no information about stationInformationPath.");
-        if (!PROPERTY.containsKey("waveformIDPath"))
-            throw new IllegalArgumentException("There is no information about 'waveformIDPath'.");
-        if (!PROPERTY.containsKey("waveformPath"))
-            throw new IllegalArgumentException("There is no information about 'waveformPath'.");
-        if (!PROPERTY.containsKey("partialIDPath"))
-            throw new IllegalArgumentException("There is no information about 'partialIDPath'.");
-        if (!PROPERTY.containsKey("partialPath"))
-            throw new IllegalArgumentException("There is no information about 'partialPath'.");
-        if (!PROPERTY.containsKey("inverseMethods")) PROPERTY.setProperty("inverseMethods", "CG SVD");
-        if (!PROPERTY.containsKey("weighting")) PROPERTY.setProperty("weighting", "RECIPROCAL");
-        if (!PROPERTY.containsKey("time_source")) PROPERTY.setProperty("time_source", "false");
-        if (!PROPERTY.containsKey("time_receiver")) PROPERTY.setProperty("time_receiver", "false");
-        if (!PROPERTY.containsKey("modelCovariance")) PROPERTY.setProperty("modelCovariance", "false");
-        if (!PROPERTY.containsKey("lambdaQ")) PROPERTY.setProperty("lambdaQ", "0.3");
-        if (!PROPERTY.containsKey("lambdaMU")) PROPERTY.setProperty("lambdaMU", "0.03");
-        if (!PROPERTY.containsKey("gammaQ")) PROPERTY.setProperty("gammaQ", "0.3");
-        if (!PROPERTY.containsKey("gammaMU")) PROPERTY.setProperty("gammaMU", "0.03");
-        if (!PROPERTY.containsKey("correlationScaling")) PROPERTY.setProperty("correlationScaling", "1.");
-        if (!PROPERTY.containsKey("minDistance")) PROPERTY.setProperty("minDistance", "0.");
-        if (!PROPERTY.containsKey("maxDistance")) PROPERTY.setProperty("maxDistance", "360.");
-        if (!PROPERTY.containsKey("minMw")) PROPERTY.setProperty("minMw", "0.");
-        if (!PROPERTY.containsKey("maxMw")) PROPERTY.setProperty("maxMw", "10.");
-        if (!PROPERTY.containsKey("jackknife"))
-            PROPERTY.setProperty("jackknife", "false");
-        if (!PROPERTY.containsKey("conditioner"))
-            PROPERTY.setProperty("conditioner", "false");
-        if (!PROPERTY.containsKey("lowMemoryCost"))
-            PROPERTY.setProperty("lowMemoryCost", "false");
-        if (!PROPERTY.containsKey("nStepsForLowMemoryMode"))
-            PROPERTY.setProperty("nStepsForLowMemoryMode", "10");
-        if (!PROPERTY.containsKey("usePrecomputedAtA"))
-            PROPERTY.setProperty("usePrecomputedAtA", "false");
-        if (!PROPERTY.containsKey("checkerboard"))
-            PROPERTY.setProperty("checkerboard", "false");
-        if (!PROPERTY.containsKey("trimWindow"))
-            PROPERTY.setProperty("trimWindow", "false");
-        if (!PROPERTY.containsKey("regularizationMuQ"))
-            PROPERTY.setProperty("regularizationMuQ", "false");
-        if (!PROPERTY.containsKey("scale_freq_ata"))
-            PROPERTY.setProperty("scale_freq_ata", "1.");
-        if (!PROPERTY.containsKey("applyEventAmpCorr"))
-            PROPERTY.setProperty("applyEventAmpCorr", "false");
-        if (!PROPERTY.containsKey("correct3DFocusing"))
-            PROPERTY.setProperty("correct3DFocusing", "false");
+        if (property.containsKey("spcAmpIDPath")) spcAmpIDPath = property.parsePath("spcAmpIDPath", null, true, workPath);
+        if (property.containsKey("spcAmpPath")) spcAmpPath = property.parsePath("spcAmpPath", null, true, workPath);
+        if (property.containsKey("partialSpcIDPath")) partialSpcIDPath = property.parsePath("partialSpcIDPath", null, true, workPath);
+        if (property.containsKey("partialSpcPath")) partialSpcPath = property.parsePath("partialSpcPath", null, true, workPath);
 
-        // additional unused info
-        PROPERTY.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
-//		PROPERTY.setProperty("STF catalogue", GlobalCMTCatalog.);
-    }
-
-    private void set() {
-        checkAndPutDefaults();
-        workPath = Paths.get(PROPERTY.getProperty("workPath"));
-        if (!Files.exists(workPath))
-            throw new RuntimeException("The workPath: " + workPath + " does not exist");
-        if (PROPERTY.containsKey("outPath"))
-            outPath = getPath("outPath");
-        else
-            outPath = workPath.resolve(Paths.get("lmi" + GadgetAid.getTemporaryString()));
-        stationInformationPath = getPath("stationInformationPath");
-        waveformIDPath = getPath("waveformIDPath");
-        waveformPath = getPath("waveformPath");
-        partialPath = getPath("partialPath");
-        partialIDPath = getPath("partialIDPath");
-        unknownParameterListPath = getPath("unknownParameterListPath");
-        if (PROPERTY.containsKey("alpha"))
-            alpha = Arrays.stream(PROPERTY.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
-                    .toArray();
-        inverseMethods = Arrays.stream(PROPERTY.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
+        inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        inverseMethods.stream().forEach(method -> System.out.println(method));
-        weightingType = WeightingType.valueOf(PROPERTY.getProperty("weighting"));
-        time_source = Boolean.parseBoolean(PROPERTY.getProperty("time_source"));
-        time_receiver = Boolean.parseBoolean(PROPERTY.getProperty("time_receiver"));
+        inverseMethods.stream().forEach(method -> System.out.println(method)); //TODO move somewhere else?
+        if (property.containsKey("alpha"))
+            alpha = Arrays.stream(property.parseStringArray("alpha", null)).mapToDouble(Double::parseDouble).toArray();
+
+        weightingType = WeightingType.valueOf(property.parseString("weighting", "RECIPROCAL"));
         if (weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI) || weightingType.equals(WeightingType.FINAL)) {
-            if (!PROPERTY.containsKey("gamma"))
-                throw new RuntimeException("gamma must be set in oreder to use TAKEUCHIKOBAYASHI or FINAL weighting scheme");
-            gamma = Double.parseDouble(PROPERTY.getProperty("gamma"));
+            gamma = property.parseDouble("gamma", null);
         }
-        if (!PROPERTY.containsKey("phases"))
-            phases = null;
-        else
-            phases = Arrays.stream(PROPERTY.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
-        //
-        if (!PROPERTY.containsKey("combinationType"))
-            combinationType = null;
-        else
-            combinationType = CombinationType.valueOf(PROPERTY.getProperty("combinationType"));
-        //
-        if (!PROPERTY.containsKey("nUnknowns"))
+        time_source = property.parseBoolean("time_source", "false");
+        time_receiver = property.parseBoolean("time_receiver", "false");
+        if (property.containsKey("phases"))
+            phases = property.parseStringArray("phases", null);
+        if (property.containsKey("verticalMapping"))
+            verticalMappingPath = property.parsePath("verticalMappingPath", null, true, workPath);
+
+        if (property.containsKey("combinationType"))
+            combinationType = CombinationType.valueOf(property.parseString("combinationType", null));
+        if (!property.containsKey("nUnknowns")) {
             nUnknowns = null;
-        else if (combinationType == null) {
-            throw new RuntimeException("Error: a combinationType "
-                    + "must be specified when nUnknowns is specified");
-        }
-        else {
+        } else if (combinationType == null) {
+            throw new RuntimeException("Error: a combinationType must be specified when nUnknowns is specified");
+        } else {
             nUnknowns = new HashMap<>();
-            String[] args = PROPERTY.getProperty("nUnknowns").trim().split("\\s+");
+            String[] args = property.parseStringArray("nUnknowns", null);
             if (combinationType.equals(CombinationType.CORRIDOR_TRIANGLE)
                     || combinationType.equals(CombinationType.CORRIDOR_BOXCAR)) {
                 if (args.length % 3 != 0)
@@ -421,112 +371,80 @@ public class LetMeInvert implements Operation_old {
                 throw new IllegalArgumentException("Error: unknown combinationType " + combinationType);
             }
         }
-        if (PROPERTY.containsKey("DataSelectionInformationFile")) {
-            System.out.println("Using dataSelectionInformationFile " + PROPERTY.getProperty("DataSelectionInformationFile"));
-            try {
-                selectionInfo = DataSelectionInformationFile.read(Paths.get(PROPERTY.getProperty("DataSelectionInformationFile")));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else
-            selectionInfo = null;
 
-        modelCovariance = Boolean.valueOf(PROPERTY.getProperty("modelCovariance"));
+        if (property.containsKey("dataSelectionInformationPath"))
+            dataSelectionInformationPath = property.parsePath("dataSelectionInformationPath", null, true, workPath);
 
+        modelCovariance = property.parseBoolean("modelCovariance", "false");
         if (modelCovariance) {
-            if (!PROPERTY.containsKey("cm0"))
-                throw new RuntimeException("cm0 must be set when modelCovariance=true");
-            if (!PROPERTY.containsKey("cmH"))
-                throw new RuntimeException("cmH must be set when modelCovariance=true");
-            if (!PROPERTY.containsKey("cmV"))
-                throw new RuntimeException("cmV must be set when modelCovariance=true");
-
-            cm0 = Double.parseDouble(PROPERTY.getProperty("cm0"));
-            cmH = Double.parseDouble(PROPERTY.getProperty("cmH"));
-            cmV = Double.parseDouble(PROPERTY.getProperty("cmV"));
+            cm0 = property.parseDouble("cm0", null);
+            cmH = property.parseDouble("cmH", null);
+            cmV = property.parseDouble("cmV", null);
         }
-
-        regularizationMuQ = Boolean.parseBoolean(PROPERTY.getProperty("regularizationMuQ"));
+        regularizationMuQ = property.parseBoolean("regularizationMuQ", "false");
         if (regularizationMuQ) {
-            lambdaQ = Double.valueOf(PROPERTY.getProperty("lambdaQ"));
-            lambdaMU = Double.valueOf(PROPERTY.getProperty("lambdaMU"));
-            lambda00 = Double.valueOf(PROPERTY.getProperty("lambda00"));
-            lambdaVp = Double.valueOf(PROPERTY.getProperty("lambdaVp"));
-            gammaQ = Double.valueOf(PROPERTY.getProperty("gammaQ"));
-            gammaMU = Double.valueOf(PROPERTY.getProperty("gammaMU"));
-            gamma00 = Double.valueOf(PROPERTY.getProperty("gamma00"));
-            gammaVp = Double.valueOf(PROPERTY.getProperty("gammaVp"));
+            lambdaQ = property.parseDouble("lambdaQ", "0.3");
+            lambdaMU = property.parseDouble("lambdaMU", "0.03");
+            lambda00 = property.parseDouble("lambda00", null);
+            lambdaVp = property.parseDouble("lambdaVp", null);
+            gammaQ = property.parseDouble("gammaQ", "0.3");
+            gammaMU = property.parseDouble("gammaMU", "0.03");
+            gamma00 = property.parseDouble("gamma00", null);
+            gammaVp = property.parseDouble("gammaVp", null);
         }
 
-        correlationScaling = Double.valueOf(PROPERTY.getProperty("correlationScaling"));
-        minDistance = Double.parseDouble(PROPERTY.getProperty("minDistance"));
-        maxDistance = Double.parseDouble(PROPERTY.getProperty("maxDistance"));
-        if (PROPERTY.getProperty("unknownParameterWeightType") == null)
-            unknownParameterWeightType = null;
-        else {
-            unknownParameterWeightType = UnknownParameterWeightType.valueOf(PROPERTY.getProperty("unknownParameterWeightType"));
-            System.out.println("--->Weighting unkown parameters using type " + unknownParameterWeightType);
+        minDistance = property.parseDouble("minDistance", "0.");
+        maxDistance = property.parseDouble("maxDistance", "360.");
+        minMw = property.parseDouble("minMw", "0.");
+        maxMw = property.parseDouble("maxMw", "10.");
+        if (property.containsKey("unknownParameterWeightType")) {
+            unknownParameterWeightType = UnknownParameterWeightType.valueOf(property.parseString("unknownParameterWeightType", null));
+            System.out.println("--->Weighting unkown parameters using type " + unknownParameterWeightType); //TODO move somewhere else?
         }
-        minMw = Double.parseDouble(PROPERTY.getProperty("minMw"));
-        maxMw = Double.parseDouble(PROPERTY.getProperty("maxMw"));
 
-        verticalMapping = PROPERTY.containsKey("verticalMapping") ? Paths.get(PROPERTY.getProperty("verticalMapping")) : null;
-
-        jackknife = Boolean.parseBoolean(PROPERTY.getProperty("jackknife"));
+        jackknife = property.parseBoolean("jackknife", "false");
         if (jackknife)
-            nRealisation = Integer.parseInt(PROPERTY.getProperty("nRealisation"));
+            nRealisation = property.parseInt("nRealisation", null);
+        conditioner = property.parseBoolean("conditioner", "false");
+        lowMemoryCost = property.parseBoolean("lowMemoryCost", "false");
+        nStepsForLowMemoryMode = property.parseInt("nStepsForLowMemoryMode", "10");
 
-        conditioner = Boolean.parseBoolean(PROPERTY.getProperty("conditioner"));
-
-        lowMemoryCost = Boolean.parseBoolean(PROPERTY.getProperty("lowMemoryCost"));
-
-        nStepsForLowMemoryMode = Integer.parseInt(PROPERTY.getProperty("nStepsForLowMemoryMode"));
-
-        usePrecomputedAtA = Boolean.parseBoolean(PROPERTY.getProperty("usePrecomputedAtA"));
+        usePrecomputedAtA = property.parseBoolean("usePrecomputedAtA", "false");
         if (usePrecomputedAtA) {
-            precomputedAtdPath = Stream.of(PROPERTY.getProperty("precomputedAtdPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
-            precomputedAtAPath = Stream.of(PROPERTY.getProperty("precomputedAtAPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
+            precomputedAtdPath = Stream.of(property.parseStringArray("precomputedAtdPath", null)).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
+            precomputedAtAPath = Stream.of(property.parseStringArray("precomputedAtAPath", null)).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
         }
-
-        checkerboard = Boolean.parseBoolean(PROPERTY.getProperty("checkerboard"));
+        checkerboard = property.parseBoolean("checkerboard", "false"); //TODO: suppose this is done in PseudoWaveformGenerator
         if (checkerboard)
-            checkerboardPerturbationPath = Paths.get(PROPERTY.getProperty("checkerboardPerturbationPath"));
-
-        trimWindow = Boolean.parseBoolean(PROPERTY.getProperty("trimWindow"));
+            checkerboardPerturbationPath = property.parsePath("checkerboardPerturbationPath", null, true, workPath);
+        trimWindow = property.parseBoolean("trimWindow", "false");
         if (trimWindow) {
-            trimPoint = Double.parseDouble(PROPERTY.getProperty("trimPoint"));
-            keepBefore = Boolean.parseBoolean(PROPERTY.getProperty("keepBefore"));
+            trimPoint = property.parseDouble("trimPoint", null);
+            keepBefore = property.parseBoolean("keepBefore", null);
         }
+        correct3DFocusing = property.parseBoolean("correct3DFocusing", "false");
+        applyEventAmpCorr = property.parseBoolean("applyEventAmpCorr", "false");
 
-        if (PROPERTY.containsKey("eventClusterPath")) {
-            eventClusterPath = Paths.get(PROPERTY.getProperty("eventClusterPath"));
-            clusterIndex = Arrays.stream(PROPERTY.getProperty("clusterIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
-            azimuthIndex = Arrays.stream(PROPERTY.getProperty("azimuthIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
+
+        //TODO: the following are not yet in default property file
+        scale_freq_ata = property.parseDouble("scale_freq_ata", "1.");
+        dataErrorMap = null;
+        if (property.containsKey("eventClusterPath")) {
+            eventClusterPath = property.parsePath("eventClusterPath", null, true, workPath);
+            clusterIndex = Arrays.stream(property.parseStringArray("clusterIndex", null)).mapToInt(Integer::parseInt).toArray();
+            azimuthIndex = Arrays.stream(property.parseStringArray("azimuthIndex", null)).mapToInt(Integer::parseInt).toArray();
             System.out.println("Using cluster file with clusterIndex=" + clusterIndex[0] + " and azimuthIndex=" + azimuthIndex[0]);
         }
 
-        try {
-            partialSpcPath = getPath("partialSpcPath");
-            partialSpcIDPath = getPath("partialSpcIDPath");
 
-            spcAmpPath = getPath("spcAmpPath");
-            spcAmpIDPath = getPath("spcAmpIDPath");
-        } catch (Exception e) {
+        // additional unused info
+        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
 
-        }
-
-        scale_freq_ata = Double.parseDouble(PROPERTY.getProperty("scale_freq_ata"));
-
-        dataErrorMap = null;
-
-        applyEventAmpCorr = Boolean.parseBoolean(PROPERTY.getProperty("applyEventAmpCorr"));
-
-        correct3DFocusing = Boolean.parseBoolean(PROPERTY.getProperty("correct3DFocusing"));
+        setEquation();
     }
 
     private void setEquation() throws IOException {
-        BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
+        BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
 
         BasicID[] spcIds = null;
         if (spcAmpIDPath != null)
@@ -538,6 +456,11 @@ public class LetMeInvert implements Operation_old {
         // set unknown parameter
         System.err.println("setting up unknown parameter set");
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
+
+        if (dataSelectionInformationPath != null) {
+            System.out.println("Using dataSelectionInformationFile " + dataSelectionInformationPath);
+            selectionInfo = DataSelectionInformationFile.read(dataSelectionInformationPath);
+        }
 
         Predicate<BasicID> chooser = null;
 
@@ -896,14 +819,14 @@ public class LetMeInvert implements Operation_old {
 
             if (modelCovariance) {
                 if (inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT) || inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED))
-                    eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMapping, false);
+                    eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMappingPath, false);
                 else
-                    eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMapping);
+                    eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMappingPath);
             }
             else {
                 if (inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT) || inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED))
                     eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
-                            unknownParameterWeightType, verticalMapping, false);
+                            unknownParameterWeightType, verticalMappingPath, false);
                 else {
                     eq = new ObservationEquation(partialIDs, parameterList, dVector);
 
@@ -1447,7 +1370,7 @@ public class LetMeInvert implements Operation_old {
         // // ステーションの情報の読み込み
         System.err.print("reading station Information");
         if (stationSet == null)
-            stationSet = ObserverInformationFile.read(stationInformationPath);
+            stationSet = ObserverInformationFile.read(observerInformationPath);
         System.err.println(" done");
         Dvector dVector = eq.getDVector();
         Callable<Void> output = () -> {
@@ -1476,16 +1399,17 @@ public class LetMeInvert implements Operation_old {
     }
 
     @Override
-    public void run() {
-        try {
-            System.err.println("The output folder: " + outPath);
-            Files.createDirectory(outPath);
-            if (PROPERTY != null)
-                writeProperties(outPath.resolve("lmi.properties"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Can not create " + outPath);
+    public void run() throws IOException {
+        if (tag.isEmpty()) {
+            outPath = workPath.resolve("lmi" + GadgetAid.getTemporaryString());
+        } else {
+            outPath = workPath.resolve("lmi_" + tag + GadgetAid.getTemporaryString());
         }
+        Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
+
+        if (property != null)
+            property.write(outPath.resolve("lmi.properties"));
 
         long start = System.nanoTime();
 
@@ -2094,44 +2018,6 @@ public class LetMeInvert implements Operation_old {
         }
     }
 
-    private boolean canGO() {
-        boolean cango = true;
-        if (Files.exists(outPath)) {
-            new FileAlreadyExistsException(outPath.toString()).printStackTrace();
-            cango = false;
-        }
-        if (!Files.exists(partialIDPath)) {
-            new NoSuchFileException(partialIDPath.toString()).printStackTrace();
-            cango = false;
-        }
-        if (!Files.exists(partialPath)) {
-            cango = false;
-            new NoSuchFileException(partialPath.toString()).printStackTrace();
-        }
-        if (!Files.exists(stationInformationPath)) {
-            new NoSuchFileException(stationInformationPath.toString()).printStackTrace();
-            cango = false;
-        }
-        if (!Files.exists(unknownParameterListPath)) {
-            new NoSuchFileException(unknownParameterListPath.toString()).printStackTrace();
-            cango = false;
-        }
-        if (!Files.exists(waveformPath)) {
-            new NoSuchFileException(waveformPath.toString()).printStackTrace();
-            cango = false;
-        }
-        if (!Files.exists(waveformIDPath)) {
-            new NoSuchFileException(waveformIDPath.toString()).printStackTrace();
-            cango = false;
-        }
-        if (!Files.exists(workPath)) {
-            new NoSuchFileException(workPath.toString()).printStackTrace();
-            cango = false;
-        }
-
-        return cango;
-    }
-
     /**
      * station と 震源の位置関係の出力
      *
@@ -2164,16 +2050,6 @@ public class LetMeInvert implements Operation_old {
      */
     private RealVector readCheckerboardPerturbationVector() throws IOException {
         return new ArrayRealVector(Files.readAllLines(checkerboardPerturbationPath).stream().mapToDouble(s -> Double.parseDouble(s.trim())).toArray());
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) PROPERTY.clone();
     }
 
 }

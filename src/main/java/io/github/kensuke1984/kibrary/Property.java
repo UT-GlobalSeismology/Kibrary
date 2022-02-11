@@ -93,6 +93,17 @@ public class Property extends Properties {
     }
 
     /**
+     * Gets a pre-specified value, or sets a default value, and returns it in String[].
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (String[]) array of value to the correcponding key, with subsequent spaces trimmed, split at spaces
+     */
+    public String[] parseStringArray(String key, String defaltValue) {
+        return checkAndPutDefault(key, defaltValue).split("\\s+");
+    }
+
+    /**
      * Gets a pre-specified value, or sets a default value, and returns it as boolean.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.

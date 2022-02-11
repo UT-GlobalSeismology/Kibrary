@@ -8,7 +8,6 @@ import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
-import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
@@ -26,7 +25,6 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
  */
 public enum Manhattan_old {
     CheckerBoardTest(1, CheckerBoardTest.class), //
-    LetMeInvert(8, LetMeInvert.class), //
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
     RaypathDistribution(13, RaypathDistribution.class), //

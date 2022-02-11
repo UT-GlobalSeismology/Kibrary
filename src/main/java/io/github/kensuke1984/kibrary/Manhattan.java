@@ -9,6 +9,7 @@ import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
+import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -52,6 +53,7 @@ enum Manhattan {
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class), //
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class), //
     // Inversion 60
+    LetMeInvert(60, LetMeInvert.class), //
     // Temporal 100
     ;
 
