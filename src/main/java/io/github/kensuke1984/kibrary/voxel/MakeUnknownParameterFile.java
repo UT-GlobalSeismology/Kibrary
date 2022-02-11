@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.voxel;
 
 import java.io.IOException;
 import java.nio.file.Files;

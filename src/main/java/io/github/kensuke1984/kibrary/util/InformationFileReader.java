@@ -31,7 +31,7 @@ public class InformationFileReader {
     /**
      * the number of lines already read
      */
-    private int readlineNum;
+    private int readlineNum = 0;
 
     /**
      * @param args [information file name]
@@ -94,7 +94,7 @@ public class InformationFileReader {
      * @return if there are lines to read
      */
     public boolean hasNext() {
-        return readlineNum == linesNum;
+        return readlineNum < linesNum;
     }
 
     /**

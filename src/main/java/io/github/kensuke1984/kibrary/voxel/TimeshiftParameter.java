@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.voxel;
 
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * sideにイベントか観測点名を入れる
  *
  * @author Kensuke Konishi
+ * @deprecated is it? (2022/2/11)
  */
 public class TimeshiftParameter implements UnknownParameter {
 
@@ -54,17 +55,17 @@ public class TimeshiftParameter implements UnknownParameter {
     public PartialType getPartialType() {
         return PartialType.TIME_SOURCE; // TODO re-write it is PartialType.TIME
     }
-    
+
     @Override
     public FullPosition getLocation() {
-    	// TODO Auto-generated method stub
-    	return null;
+        // TODO Auto-generated method stub
+        return null;
     }
-    
+
     @Override
     public byte[] getBytes() {
-    	// TODO Auto-generated method stub
-    	return null;
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

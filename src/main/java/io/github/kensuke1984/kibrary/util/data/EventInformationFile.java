@@ -20,6 +20,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -62,13 +63,12 @@ public class EventInformationFile {
      */
     public static Set<GlobalCMTID> read(Path infoPath) throws IOException {
         Set<GlobalCMTID> eventSet = new HashSet<>();
-        try (BufferedReader br = Files.newBufferedReader(infoPath)) {
-            br.lines().map(String::trim).filter(line -> !line.startsWith("#")).forEach(line -> {
-                String[] parts = line.split("\\s+");
-                GlobalCMTID event = new GlobalCMTID(parts[0]);
-                if (!eventSet.add(event))
-                    throw new RuntimeException("There is duplication of " + event + " in " + infoPath + ".");
-            });
+        InformationFileReader reader = new InformationFileReader(infoPath);
+        while(reader.hasNext()) {
+            String[] parts = reader.next().split("\\s+");
+            GlobalCMTID event = new GlobalCMTID(parts[0]);
+            if (!eventSet.add(event))
+                throw new RuntimeException("There is duplication of " + event + " in " + infoPath + ".");
         }
         return Collections.unmodifiableSet(eventSet);
     }

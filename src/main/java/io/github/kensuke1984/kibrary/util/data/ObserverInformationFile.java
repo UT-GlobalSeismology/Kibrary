@@ -24,6 +24,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -69,15 +70,14 @@ public final class ObserverInformationFile {
      */
     public static Set<Observer> read(Path infoPath) throws IOException {
         Set<Observer> observerSet = new HashSet<>();
-        try (BufferedReader br = Files.newBufferedReader(infoPath)) {
-            br.lines().map(String::trim).filter(line -> !line.startsWith("#")).forEach(line -> {
-                String[] parts = line.split("\\s+");
-                HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),
-                        Double.parseDouble(parts[3]));
-                Observer observer = new Observer(parts[0], parts[1], hp);
-                if (!observerSet.add(observer))
-                    throw new RuntimeException("There is duplication of " + observer + " in " + infoPath + ".");
-            });
+        InformationFileReader reader = new InformationFileReader(infoPath);
+        while(reader.hasNext()) {
+            String[] parts = reader.next().split("\\s+");
+            HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),
+                    Double.parseDouble(parts[3]));
+            Observer observer = new Observer(parts[0], parts[1], hp);
+            if (!observerSet.add(observer))
+                throw new RuntimeException("There is duplication of " + observer + " in " + infoPath + ".");
         }
 
         // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
