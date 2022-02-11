@@ -74,6 +74,9 @@ import io.github.kensuke1984.kibrary.waveform.addons.AtdFile;
  */
 public class LetMeInvert implements Operation_old {
 
+    private Properties PROPERTY;
+    private Path workPath;
+    private Path outPath;
     /**
      * path of waveform data
      */
@@ -107,9 +110,6 @@ public class LetMeInvert implements Operation_old {
      */
     protected double[] alpha;
     private ObservationEquation eq;
-    private Properties PROPERTY;
-    private Path workPath;
-    private Path outPath;
     private Set<Observer> stationSet;
 
     private ObservationEquation eqA, eqB;
@@ -135,7 +135,6 @@ public class LetMeInvert implements Operation_old {
     private double minMw;
     private double maxMw;
     private UnknownParameterWeightType unknownParameterWeightType;
-    private boolean linaInversion;
     private boolean jackknife;
     private int nRealisation;
     private boolean checkerboard;
@@ -160,6 +159,140 @@ public class LetMeInvert implements Operation_old {
     private boolean correct3DFocusing;
     private double mul;
     private Map<PartialType, Double> dataErrorMap;
+
+
+    public static void writeDefaultPropertiesFile() throws IOException {
+        Path outPath = Paths.get(LetMeInvert.class.getName() + GadgetAid.getTemporaryString() + ".properties");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+            pw.println("manhattan LetMeInvert");
+            pw.println("##Path of a work folder (.)");
+            pw.println("#workPath ");
+            pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)"); //TODO unneeded?
+            pw.println("#outPath");
+            pw.println("##Path of a basic ID file, must be set");
+            pw.println("#waveformIDPath actualID.dat"); //TODO rename
+            pw.println("##Path of a basic waveform file, must be set");
+            pw.println("#waveformPath actual.dat");
+            pw.println("##Path of a spcAmpID file");
+            pw.println("#spcAmpIDPath ");
+            pw.println("##Path of a spcAmp file");
+            pw.println("#spcAmpPath ");
+            pw.println("##Path of a partial id file, must be set");
+            pw.println("#partialIDPath partialID.dat");
+            pw.println("##Path of a partial waveform file, must be set");
+            pw.println("#partialPath partial.dat");
+            pw.println("##Path of a partial spc id file");
+            pw.println("#partialSpcIDPath ");
+            pw.println("##Path of a partial spc waveform file");
+            pw.println("#partialSpcPath ");
+            pw.println("##Path of an unknown parameter list file, must be set");
+            pw.println("#unknownParameterListPath unknowns.inf");
+            pw.println("##Path of an observer information file, must be set");
+            pw.println("#observerInformationPath observer.inf");
+            pw.println("##(double[]) alpha it self, if it is set, compute aic for each alpha.");
+            pw.println("#alpha ");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG SVD)"); //TODO CG
+            pw.println("#inverseMethods ");
+            pw.println("##weighting, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
+            pw.println("#weighting ");
+            pw.println("##(double) Gamma, must be set only if TAKEUCHIKOBAYASHI weigthing is used");
+            pw.println("#gamma 30.");
+            pw.println("##(boolean) time_source (false). Time partial for the source"); //TODO ???
+            pw.println("#time_source");
+            pw.println("##boolean time_receiver (false). Time partial for the receiver");
+            pw.println("#time_receiver");
+            pw.println("##Phases to use, listed using spaces. To use all phases, leave this blank.");
+            pw.println("#phases ");
+            pw.println("##???"); //TODO
+            pw.println("#verticalMapping");
+            pw.println("##CombinationType to combine 1-D pixels or voxels (null)");
+            pw.println("#combinationType");
+            pw.println("#nUnknowns PAR2 9 9 PARQ 9 9");
+            pw.println("##DataSelectionInformationFile (leave blank if not needed)");
+            pw.println("#DataSelectionInformationFile");
+            pw.println("##(boolean) modelCovariance (false)");
+            pw.println("#modelCovariance ");
+            pw.println("##double cm0");
+            pw.println("#cm0");
+            pw.println("##double cmH");
+            pw.println("#cmH");
+            pw.println("##double cmV");
+            pw.println("#cmV");
+            pw.println("##boolean regularizationMuQ (false)");
+            pw.println("#regularizationMuQ");
+            pw.println("##double lambdaQ (0.3)");
+            pw.println("#lambdaQ");
+            pw.println("##double lambdaMU (0.03)");
+            pw.println("#lambdaMU");
+            pw.println("##double gammaQ (0.3)");
+            pw.println("#gammaQ");
+            pw.println("##double gammaMU (0.03)");
+            pw.println("#gammaMU");
+            pw.println("##double correlationScaling (1.)");
+            pw.println("#correlationScaling");
+            pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
+            pw.println("#minDistance ");
+            pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
+            pw.println("#maxDistance ");
+            pw.println("#unknownParameterWeightType");
+            pw.println("##minimum Mw (0.)");
+            pw.println("#minMw");
+            pw.println("##maximum Mw (10.)");
+            pw.println("#maxMw");
+            pw.println("##Perform a jackknife test (false)");
+            pw.println("#jackknife");
+            pw.println("##Number of jackknife inversions");
+            pw.println("#nRealisation 300");
+            pw.println("##conditioner for preconditioned CG (false)");
+            pw.println("#conditioner");
+            pw.println("##build AtA iteratively for low memory cost (false)");
+            pw.println("#lowMemoryCost");
+            pw.println("#nStepsForLowMemoryMode");
+            pw.println("#usePrecomputedAtA");
+            pw.println("#precomputedAtAPath");
+            pw.println("#precomputedAtdPath");
+            pw.println("##Perform checkerboard test (false)");
+            pw.println("#checkerboard");
+            pw.println("#checkerboardPerturbationPath");
+            pw.println("##Trim timewindows (false)");
+            pw.println("#trimWindow");
+            pw.println("#trimPoint");
+            pw.println("#keepBefore");
+            pw.println("#correct3DFocusing");
+            pw.println("#applyEventAmpCorr");
+        }
+        System.err.println(outPath + " is created.");
+    }
+
+    public LetMeInvert(Properties property) throws IOException {
+        this.PROPERTY = (Properties) property.clone();
+        set();
+        if (!canGO())
+            throw new RuntimeException();
+        setEquation();
+    }
+
+    public LetMeInvert(Path workPath, Set<Observer> stationSet, ObservationEquation equation) throws IOException {
+        eq = equation;
+        this.stationSet = stationSet;
+        workPath.resolve("lmi" + GadgetAid.getTemporaryString());
+        inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
+    }
+
+    /**
+     * @param args
+     *            [parameter file name]
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        LetMeInvert lmi = new LetMeInvert(Property_old.parse(args));
+        System.err.println(LetMeInvert.class.getName() + " is running.");
+        long startT = System.nanoTime();
+        lmi.run();
+        System.err.println(
+                LetMeInvert.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
+    }
 
     private void checkAndPutDefaults() {
         if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
@@ -187,7 +320,6 @@ public class LetMeInvert implements Operation_old {
         if (!PROPERTY.containsKey("maxDistance")) PROPERTY.setProperty("maxDistance", "360.");
         if (!PROPERTY.containsKey("minMw")) PROPERTY.setProperty("minMw", "0.");
         if (!PROPERTY.containsKey("maxMw")) PROPERTY.setProperty("maxMw", "10.");
-        if (!PROPERTY.containsKey("linaInversion")) PROPERTY.setProperty("linaInversion", "false");
         if (!PROPERTY.containsKey("jackknife"))
             PROPERTY.setProperty("jackknife", "false");
         if (!PROPERTY.containsKey("conditioner"))
@@ -339,8 +471,6 @@ public class LetMeInvert implements Operation_old {
         minMw = Double.parseDouble(PROPERTY.getProperty("minMw"));
         maxMw = Double.parseDouble(PROPERTY.getProperty("maxMw"));
 
-        linaInversion = Boolean.parseBoolean(PROPERTY.getProperty("linaInversion"));
-
         verticalMapping = PROPERTY.containsKey("verticalMapping") ? Paths.get(PROPERTY.getProperty("verticalMapping")) : null;
 
         jackknife = Boolean.parseBoolean(PROPERTY.getProperty("jackknife"));
@@ -395,126 +525,6 @@ public class LetMeInvert implements Operation_old {
         correct3DFocusing = Boolean.parseBoolean(PROPERTY.getProperty("correct3DFocusing"));
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(LetMeInvert.class.getName() + GadgetAid.getTemporaryString() + ".properties");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan LetMeInvert");
-            pw.println("##These properties for LetMeInvert");
-            pw.println("##Path of a work folder (.)");
-            pw.println("#workPath");
-            pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
-            pw.println("#outPath");
-            pw.println("##Path of a waveID file, must be set");
-            pw.println("#waveformIDPath waveID.dat");
-            pw.println("##Path of a waveform file, must be set");
-            pw.println("#waveformPath waveform.dat");
-            pw.println("##Path of a spcAmpID file");
-            pw.println("#spcAmpIDPath ");
-            pw.println("##Path of a spcAmp file");
-            pw.println("#spcAmpPath ");
-            pw.println("##Path of a partial id file, must be set");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file must be set");
-            pw.println("#partialPath partial.dat");
-            pw.println("##Path of a partial spc id file");
-            pw.println("#partialSpcIDPath ");
-            pw.println("##Path of a partial spc waveform file");
-            pw.println("#partialSpcPath ");
-            pw.println("##Path of a unknown parameter list file, must be set");
-            pw.println("#unknownParameterListPath unknowns.inf");
-            pw.println("##Path of a station information file, must be set");
-            pw.println("#stationInformationPath station.inf");
-            pw.println("##double[] alpha it self, if it is set, compute aic for each alpha.");
-            pw.println("#alpha");
-            pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
-            pw.println("#inverseMethods");
-            pw.println("##int weighting (RECIPROCAL); LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
-            pw.println("#weighting RECIPROCAL");
-            pw.println("##double gamma. Must be set only if TAKEUCHIKOBAYASHI weigthing is used");
-            pw.println("#gamma 30.");
-            pw.println("##boolean time_source (false). Time partial for the source");
-            pw.println("#time_source");
-            pw.println("##boolean time_receiver (false). Time partial for the receiver");
-            pw.println("#time_receiver");
-            pw.println("##Use phases (blank = all phases)");
-            pw.println("#phases");
-            pw.println("#verticalMapping");
-            pw.println("##CombinationType to combine 1-D pixels or voxels (null)");
-            pw.println("#combinationType");
-            pw.println("#nUnknowns PAR2 9 9 PARQ 9 9");
-            pw.println("##DataSelectionInformationFile (leave blank if not needed)");
-            pw.println("#DataSelectionInformationFile");
-            pw.println("##boolean modelCovariance (false)");
-            pw.println("#modelCovariance");
-            pw.println("##double cm0");
-            pw.println("#cm0");
-            pw.println("##double cmH");
-            pw.println("#cmH");
-            pw.println("##double cmV");
-            pw.println("#cmV");
-            pw.println("##boolean regularizationMuQ (false)");
-            pw.println("#regularizationMuQ");
-            pw.println("##double lambdaQ (0.3)");
-            pw.println("#lambdaQ");
-            pw.println("##double lambdaMU (0.03)");
-            pw.println("#lambdaMU");
-            pw.println("##double gammaQ (0.3)");
-            pw.println("#gammaQ");
-            pw.println("##double gammaMU (0.03)");
-            pw.println("#gammaMU");
-            pw.println("##double correlationScaling (1.)");
-            pw.println("#correlationScaling");
-            pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
-            pw.println("#minDistance ");
-            pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
-            pw.println("#maxDistance ");
-            pw.println("#unknownParameterWeightType");
-            pw.println("##minimum Mw (0.)");
-            pw.println("#minMw");
-            pw.println("##maximum Mw (10.)");
-            pw.println("#maxMw");
-            pw.println("##Set parameters for inversion for Yamaya et al. CMT paper (false)");
-            pw.println("#linaInversion");
-            pw.println("##Perform a jacknife test (false)");
-            pw.println("#jackknife");
-            pw.println("##Number of jacknife inversions");
-            pw.println("#nRealisation 300");
-            pw.println("##conditioner for preconditioned CG (false)");
-            pw.println("#conditioner");
-            pw.println("##build AtA iteratively for low memory cost (false)");
-            pw.println("#lowMemoryCost");
-            pw.println("#nStepsForLowMemoryMode");
-            pw.println("#usePrecomputedAtA");
-            pw.println("#precomputedAtAPath");
-            pw.println("#precomputedAtdPath");
-            pw.println("##Perform checkerboard test (false)");
-            pw.println("#checkerboard");
-            pw.println("#checkerboardPerturbationPath");
-            pw.println("##Trim timewindows (false)");
-            pw.println("#trimWindow");
-            pw.println("#trimPoint");
-            pw.println("#keepBefore");
-            pw.println("#correct3DFocusing");
-            pw.println("#applyEventAmpCorr");
-        }
-        System.err.println(outPath + " is created.");
-    }
-
-    public LetMeInvert(Properties property) throws IOException {
-        this.PROPERTY = (Properties) property.clone();
-        set();
-        if (!canGO())
-            throw new RuntimeException();
-        setEquation();
-    }
-
-    public LetMeInvert(Path workPath, Set<Observer> stationSet, ObservationEquation equation) throws IOException {
-        eq = equation;
-        this.stationSet = stationSet;
-        workPath.resolve("lmi" + GadgetAid.getTemporaryString());
-        inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
-    }
-
     private void setEquation() throws IOException {
         BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
 
@@ -546,63 +556,7 @@ public class LetMeInvert implements Operation_old {
                     return false;
                 }
             };
-        }
-        else if (linaInversion) {
-//			System.out.println("Setting chooser for Yamaya et al. CMT paper");
-            System.out.println("Setting chooser for well defined events");
-            System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
-
-//			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
-//					,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
-//					,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
-//					,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
-//					,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
-//					,"201208020938A","201203050746A","200512232147A"})
-//					.map(GlobalCMTID::new)
-//					.collect(Collectors.toSet()); // LCMT
-//			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","200506021056A","201409241116A"
-//					,"200511171926A","200809031125A","200711180540A","201302221201A","201009130715A","201509281528A"
-//					,"201205280507A","200707211534A","201005241618A","200705251747A","201502111857A","201203050746A"})
-//					.map(GlobalCMTID::new)
-//					.collect(Collectors.toSet()); // MTZ Carib
-
-//			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"031704A","062003D","200503211243A","200506021056A","200511171926A","200608250044A"
-//					,"200609220232A","200611130126A","200705251747A","200707120523A","200707211327A","200707211534A","200711180540A","200808262100A","200809031125A"
-//					,"200810122055A","200907120612A","200909050358A","200909301903A","200911141944A","201001280804A","201005241618A","201009130715A","201101010956A"
-//					,"201104170158A","201106080306A","201109021347A","201111221848A","201203050746A","201205280507A","201206020752A","201208020938A","201302221201A"
-//					,"201409241116A","201502021049A","201502111857A","201509281528A","201511260545A"})
-//					.map(GlobalCMTID::new)
-//					.collect(Collectors.toSet()); // D" Carib P and S joint inversion
-
-            Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"031704A","200503211243A","200506021056A","200511171926A","200608250044A"
-                    ,"200609220232A","200611130126A","200705251747A","200707120523A","200707211327A","200707211534A","200711180540A","200808262100A","200809031125A"
-                    ,"200909050358A","200909301903A","200911141944A","201001280804A","201005241618A","201009130715A","201101010956A"
-                    ,"201104170158A","201106080306A","201111221848A","201203050746A","201205280507A","201206020752A","201208020938A","201302221201A"
-                    ,"201409241116A","201502021049A","201502111857A","201509281528A","201511260545A"})
-                    .map(GlobalCMTID::new)
-                    .collect(Collectors.toSet()); // D" Carib P and S joint inversion
-
-            System.out.println("Using " + wellDefinedEvent.size() + " well defined events");
-
-            chooser = id -> {
-                if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
-                    return false;
-                double distance = id.getGlobalCMTID().getEvent()
-                        .getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
-                        * 180. / Math.PI;
-                if (distance < minDistance || distance > maxDistance)
-                    return false;
-                double mw = id.getGlobalCMTID().getEvent()
-                        .getCmt().getMw();
-                if (mw < minMw || mw > maxMw) {
-                    System.out.println(mw);
-                    return false;
-                }
-
-                return true;
-            };
-        }
-        else if (eventClusterPath != null) {
+        } else if (eventClusterPath != null) {
             List<List<EventCluster>> thisCluster = new ArrayList<>();
             for (int i = 0; i < clusterIndex.length; i++) {
                 final int ifinal = i;
@@ -643,82 +597,9 @@ public class LetMeInvert implements Operation_old {
                     return false;
                 }
 
-                //TODO
-                if (id.getObserver().getStation().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-                    || id.getObserver().getStation().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
-                    || id.getGlobalCMTID().equals(new GlobalCMTID("201608041415A"))
-                    || id.getGlobalCMTID().equals(new GlobalCMTID("201702181210A"))
-                    || id.getObserver().getStation().equals("MONP2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("RRX") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("BC3") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("TPNV") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("VOG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("TPFO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("E39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-                    || id.getObserver().getStation().equals("F43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-                    || id.getObserver().getStation().equals("E47A") && id.getGlobalCMTID().equals(new GlobalCMTID("201404180746A"))
-                    || id.getObserver().getStation().equals("G42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-                    || id.getObserver().getStation().equals("E45A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-                    || id.getObserver().getStation().equals("COWI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("SFIN") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-                    || id.getObserver().getStation().equals("P43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-                    || id.getObserver().getStation().equals("SUSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("KSCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("ECSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("LBNH") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("PKME") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("GLMI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("LONY") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("M50A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-                    || id.getObserver().getStation().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-                    || id.getObserver().getStation().equals("Q44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-                    || id.getObserver().getStation().equals("K35A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-                    || id.getObserver().getStation().equals("SS67") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-                    || id.getObserver().getStation().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-
-                    || id.getObserver().getStation().equals("SM28") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-
-                    || id.getObserver().getStation().equals("RSSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("MDND") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("BOZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("BW06") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("K22A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
-                    || id.getObserver().getStation().equals("WUAZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("SRU") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("R11A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("DUG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("CMB") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("NEE2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("GSC") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-                    || id.getObserver().getStation().equals("GMR") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-
-                    || id.getObserver().getStation().equals("SS77") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-                    || id.getObserver().getStation().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-                    || id.getObserver().getStation().equals("J38A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
-                    || id.getObserver().getStation().equals("K36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-
-                    || id.getObserver().getStation().equals("V03C") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
-                    || id.getObserver().getStation().equals("H17A") && id.getGlobalCMTID().equals(new GlobalCMTID("201405140338A"))
-
-                    || id.getObserver().getStation().equals("EYMN") && id.getGlobalCMTID().equals(new GlobalCMTID("200503211243A"))
-
-                    || id.getObserver().getStation().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-                    || id.getObserver().getStation().equals("T19A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-                    || id.getObserver().getStation().equals("S21A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-
-//					|| id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-                )
-                    return false;
-
                 return true;
             };
-        }
-        else {
+        } else {
             System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
             chooser = id -> {
                 double distance = id.getGlobalCMTID().getEvent()
@@ -2043,21 +1924,6 @@ public class LetMeInvert implements Operation_old {
                 deltaM.setEntry(k, deltaM.getEntry(k) * m.getEntry(k));
             inverseProblem.setANS(i, deltaM);
         }
-    }
-
-    /**
-     * @param args
-     *            [parameter file name]
-     * @throws IOException
-     *             if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        LetMeInvert lmi = new LetMeInvert(Property_old.parse(args));
-        System.err.println(LetMeInvert.class.getName() + " is running.");
-        long startT = System.nanoTime();
-        lmi.run();
-        System.err.println(
-                LetMeInvert.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
     }
 
     /**
