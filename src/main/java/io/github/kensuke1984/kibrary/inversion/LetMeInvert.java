@@ -47,7 +47,6 @@ import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
@@ -107,10 +106,6 @@ public class LetMeInvert extends Operation {
      * Path of unknown parameter file
      */
     protected Path unknownParameterListPath;
-    /**
-     * path of observer file
-     */
-    protected Path observerInformationPath;
 
     private Path spcAmpPath;
     private Path spcAmpIDPath;
@@ -164,7 +159,6 @@ public class LetMeInvert extends Operation {
     private int[] clusterIndex;
 
 
-    private Set<Observer> stationSet;
     private List<DataSelectionInformation> selectionInfo;
     private ObservationEquation eq;
     private ObservationEquation eqA, eqB;
@@ -210,8 +204,6 @@ public class LetMeInvert extends Operation {
             pw.println("#partialSpcPath ");
             pw.println("##Path of an unknown parameter list file, must be set");
             pw.println("#unknownParameterListPath unknowns.inf");
-            pw.println("##Path of an observer information file, must be set");
-            pw.println("#observerInformationPath observer.inf");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) alpha it self, if it is set, compute aic for each alpha.");
@@ -315,7 +307,6 @@ public class LetMeInvert extends Operation {
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterListPath = property.parsePath("unknownParameterListPath", null, true, workPath);
-        observerInformationPath = property.parsePath("observerInformationPath", null, true, workPath);
 
         if (property.containsKey("spcAmpIDPath")) spcAmpIDPath = property.parsePath("spcAmpIDPath", null, true, workPath);
         if (property.containsKey("spcAmpPath")) spcAmpPath = property.parsePath("spcAmpPath", null, true, workPath);
@@ -681,7 +672,7 @@ public class LetMeInvert extends Operation {
         System.err.println("Going with weghting " + weightingType);
         Dvector dVector =  null;
         Dvector dVectorSpc = null;
-        boolean atLeastThreeRecordsPerStation = time_receiver || time_source;
+        boolean atLeastThreeRecordsPerStation = time_receiver || time_source; //TODO: unused inside Dvector?
         double[] weighting = null;
         List<UnknownParameter> parameterForStructure = new ArrayList<>();
         switch (weightingType) {
@@ -1369,14 +1360,9 @@ public class LetMeInvert extends Operation {
      * Output information of observation equation
      */
     private Future<Void> output() throws IOException {
-        // // ステーションの情報の読み込み
-        System.err.print("reading station Information");
-        if (stationSet == null)
-            stationSet = ObserverInformationFile.read(observerInformationPath);
-        System.err.println(" done");
         Dvector dVector = eq.getDVector();
         Callable<Void> output = () -> {
-            outputDistribution(outPath.resolve("stationEventDistribution.inf"));
+            outputDistribution(outPath.resolve("observerEventDistribution.inf"));
             dVector.outOrder(outPath);
             dVector.outPhases(outPath);
             outEachTrace(outPath.resolve("trace"));
@@ -1413,8 +1399,6 @@ public class LetMeInvert extends Operation {
         if (property != null)
             property.write(outPath.resolve("lmi.properties"));
 
-        long start = System.nanoTime();
-
         // 観測方程式
         Future<Void> future;
         try {
@@ -1431,13 +1415,9 @@ public class LetMeInvert extends Operation {
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-        try {
-            if (!inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT) && !inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED))
-                eq.outputSensitivity(outPath.resolve("sensitivity.inf"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.err.println("Inversion is done in " + GadgetAid.toTimeString(System.nanoTime() - start));
+
+        if (!inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT) && !inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED))
+            eq.outputSensitivity(outPath.resolve("sensitivity.inf"));
     }
 
     /**
@@ -1462,17 +1442,17 @@ public class LetMeInvert extends Operation {
         Files.createDirectories(outPath);
 
         Path eventPath = outPath.resolve("eventVariance.inf");
-        Path stationPath = outPath.resolve("stationVariance.inf");
+        Path observerPath = outPath.resolve("observerVariance.inf");
         try (PrintWriter pwEvent = new PrintWriter(Files.newBufferedWriter(eventPath));
-                PrintWriter pwStation = new PrintWriter(Files.newBufferedWriter(stationPath))) {
+                PrintWriter pwObserver = new PrintWriter(Files.newBufferedWriter(observerPath))) {
             pwEvent.println("#id latitude longitude radius variance");
             d.getEventVariance().entrySet().forEach(entry -> {
                 pwEvent.println(
                         entry.getKey() + " " + entry.getKey().getEvent().getCmtLocation() + " " + entry.getValue());
             });
-            pwStation.println("#name network latitude longitude variance");
+            pwObserver.println("#station network latitude longitude variance");
             d.getStationVariance().entrySet().forEach(entry -> {
-                pwStation.println(entry.getKey() + " " + entry.getKey().getNetwork() + " "
+                pwObserver.println(entry.getKey().getStation() + " " + entry.getKey().getNetwork() + " "
                         + entry.getKey().getPosition() + " " + entry.getValue());
             });
 
@@ -1517,7 +1497,7 @@ public class LetMeInvert extends Operation {
             for (int i = 0; i < d.getNTimeWindow(); i++) {
                 double variance = delVec[i].dotProduct(delVec[i]) / obsVec[i].dotProduct(obsVec[i]);
                 double correlation = obsVec[i].dotProduct(synVec[i]) / obsVec[i].getNorm() / synVec[i].getNorm();
-                pw1.println(i + " " + obsIDs[i].getObserver() + " " + obsIDs[i].getObserver().getNetwork() + " "
+                pw1.println(i + " " + obsIDs[i].getObserver().getStation() + " " + obsIDs[i].getObserver().getNetwork() + " "
                         + obsIDs[i].getGlobalCMTID() + " " + variance + " " + correlation);
             }
         }
@@ -1526,9 +1506,9 @@ public class LetMeInvert extends Operation {
                     + "." + i + ".txt";
 
             HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
-            HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-            double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-            double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+            HorizontalPosition observerPos = obsIDs[i].getObserver().getPosition();
+            double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(observerPos)), 2);
+            double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(observerPos)), 2);
             Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
             // eventFolder.mkdir();
             Path plotPath = eventFolder.resolve("recordOBS.plt");
@@ -1614,9 +1594,9 @@ public class LetMeInvert extends Operation {
             Path plotFile = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/record.plt");
             Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
             HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
-            HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-            double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-            double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+            HorizontalPosition observerPos = obsIDs[i].getObserver().getPosition();
+            double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(observerPos)), 2);
+            double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(observerPos)), 2);
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
                     PrintWriter plotW = new PrintWriter(
                             Files.newBufferedWriter(plotFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
@@ -2021,7 +2001,7 @@ public class LetMeInvert extends Operation {
     }
 
     /**
-     * station と 震源の位置関係の出力
+     * Output distribution of events and observers.
      *
      * @param outPath {@link File} for write
      * @throws IOException if an I/O error occurs
@@ -2030,15 +2010,15 @@ public class LetMeInvert extends Operation {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             BasicID[] obsIDs = eq.getDVector().getObsIDs();
-            pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
+            pw.println("#observer(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
             Arrays.stream(obsIDs).forEach(id -> {
                 GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
-                Observer station = id.getObserver();
+                Observer observer = id.getObserver();
                 double epicentralDistance = Math
-                        .toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
-                double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
+                        .toDegrees(observer.getPosition().getEpicentralDistance(event.getCmtLocation()));
+                double azimuth = Math.toDegrees(observer.getPosition().getAzimuth(event.getCmtLocation()));
                 pw.println(
-                        station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
+                        observer + " " + observer.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
                                 + " " + Precision.round(epicentralDistance, 2) + " " + Precision.round(azimuth, 2));
             });
 

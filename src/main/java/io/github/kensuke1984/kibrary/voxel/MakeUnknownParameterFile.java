@@ -80,18 +80,12 @@ public class MakeUnknownParameterFile {
     public static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
         double r = point.getR();
         if (r <= 0) {
-            System.out.println("location has no R information or invalid R:" + r);
-                }
+            System.err.println("location has no R information or invalid R: " + r);
+        }
         double latitude = point.getLatitude();// 地理緯度
         double longitude = point.getLongitude();
-        FullPosition tmpLoc = point.toFullPosition(r - 0.5 * dr);
-        // tmpLoc.setR(r - 0.5 * dr);
-        double startA = Earth.getExtendedShaft(tmpLoc);
-        tmpLoc = tmpLoc.toFullPosition(r + 0.5 * dr);
-        double endA = Earth.getExtendedShaft(tmpLoc);
-        r = Earth.getExtendedShaft(point);
-//		 System.out.println(startA + " " + endA);
-//		 System.exit(0);
+        double startA = Earth.getExtendedShaft(point.toFullPosition(r - 0.5 * dr));
+        double endA = Earth.getExtendedShaft(point.toFullPosition(r + 0.5 * dr));
         double v = Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
                 longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
 
