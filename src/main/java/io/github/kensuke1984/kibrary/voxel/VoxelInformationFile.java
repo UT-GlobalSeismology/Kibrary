@@ -7,9 +7,12 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -93,8 +96,22 @@ public class VoxelInformationFile {
      * Get horizontal position information. They are not sorted. There may be duplication.
      * @return
      */
-    public HorizontalPosition[] getPositions() {
+    public HorizontalPosition[] getHorizontalPositions() {
         return voxelPositions;
+    }
+
+    /**
+     * Get set of full position information.
+     * @return
+     */
+    public Set<FullPosition> fullPositionSet() {
+        Set<FullPosition> voxelSet = new HashSet<>();
+        for (HorizontalPosition position : voxelPositions) {
+            for (double radius : voxelRadii) {
+                voxelSet.add(position.toFullPosition(radius));
+            }
+        }
+        return voxelSet;
     }
 
 }

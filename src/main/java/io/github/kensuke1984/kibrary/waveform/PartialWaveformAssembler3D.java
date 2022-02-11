@@ -52,6 +52,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
+import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
  *
@@ -142,9 +143,9 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Path timewindowPath;
     /**
-     * Information file about locations of perturbation points.
+     * Information file about voxels for perturbations
      */
-    private Path perturbationPath;
+    private Path voxelPath;
     /**
      * set of partial type for computation
      */
@@ -232,8 +233,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#sourceTimeFunction ");
             pw.println("##Path of a time window file, must be set");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Perturbation file path, must be set");
-            pw.println("#perturbationPath perturbationPoint.inf");
+            pw.println("##Voxel file path, must be set");
+            pw.println("#voxelPath voxel.inf");
             pw.println("##PartialTypes to compute for, listed using spaces (MU)");
             pw.println("#partialTypes ");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
@@ -290,7 +291,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         setSourceTimeFunction();
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
-        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
         partialTypes = Arrays.stream(property.parseString("partialTypes", "MU").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
 
@@ -548,7 +549,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     SPCFileAccess bp_PSV = null;
                     if (mode.equals("BOTH"))
                         bp_PSV = bpName_PSV.read();
-                    String pointName = bp.getStationCode();
+                    String pointName = bp.getObserverID();
 
                     // At each fp model folder, read fp files corresponding to bp file
 //    				if (!jointCMT)
@@ -674,7 +675,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
             Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
-                    .filter(info -> info.getObserver().getStation().equals(sacname.getStationCode()))
+                    .filter(info -> info.getObserver().getStation().equals(sacname.getStationCode())) //TODO this may not get unique observer
                     .collect(Collectors.toSet());
             if (tmpTws.size() == 0) {
                 return;
@@ -772,7 +773,7 @@ public class PartialWaveformAssembler3D extends Operation {
         private SPCFileName fpname_other;
         private SPCFileAccess fp;
         private SPCFileAccess fp_other;
-        private Observer station;
+        private Observer observer;
         private GlobalCMTID id;
         private String mode;
         private PartialType type;
@@ -802,20 +803,20 @@ public class PartialWaveformAssembler3D extends Operation {
          * @param fp
          * @param bpFile
          */
-        private PartialComputation(SPCFileAccess bp, Observer station, SPCFileName fpFile, PartialType type) {
+        private PartialComputation(SPCFileAccess bp, Observer observer, SPCFileName fpFile, PartialType type) {
             checkMode(bp, fpFile);
-            this.station = station;
+            this.observer = observer;
 //			fpname = fpFile;
             id = new GlobalCMTID(fpFile.getSourceID());
             this.type = type;
         }
 
-        private PartialComputation(SPCFileAccess bp_SH, SPCFileAccess bp_PSV, Observer station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV, PartialType type) {
+        private PartialComputation(SPCFileAccess bp_SH, SPCFileAccess bp_PSV, Observer observer, SPCFileName fpFile_SH, SPCFileName fpFile_PSV, PartialType type) {
             this.bp = bp_PSV;
             fpname = fpFile_PSV;
             bp_other = bp_SH;
             fpname_other = fpFile_SH;
-            this.station = station;
+            this.observer = observer;
             mode = "BOTH";
 //			fpname = fpFile;
             id = new GlobalCMTID(fpname.getSourceID());
@@ -888,11 +889,11 @@ public class PartialWaveformAssembler3D extends Operation {
 //				perturbationRs[i] = perturbationLocations[i].getR();
 
             String observerSourceCode = bp.getSourceID();
-            if (!station.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
+            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
                 throw new RuntimeException("There may be a station with the same name but other networks.");
 
             if (bp.tlen() != tlen || bp.np() != np)
-                throw new RuntimeException("BP for " + station + " has invalid tlen or np: " + tlen + " " + bp.tlen() + " " + np + " " + bp.np());
+                throw new RuntimeException("BP for " + observer + " has invalid tlen or np: " + tlen + " " + bp.tlen() + " " + np + " " + bp.np());
             GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
 
             touchedSet.add(id);
@@ -1011,7 +1012,7 @@ public class PartialWaveformAssembler3D extends Operation {
                             }
                             //
 
-                            PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
+                            PartialID pid = new PartialID(observer, id, component, finalSamplingHz, info.getStartTime(),
                                     cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
                                     cutU);
 //							System.err.println(pid.getPerturbationLocation());
@@ -1135,12 +1136,8 @@ public class PartialWaveformAssembler3D extends Operation {
 
     private void readPerturbationPoints() throws IOException {
         System.err.println("Reading perutbation points");
-        try (Stream<String> lines = Files.lines(perturbationPath)) {
-            perturbationLocationSet = lines.map(line -> line.split("\\s+"))
-                    .map(parts -> new FullPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]),
-                            Double.parseDouble(parts[2])))
-                    .collect(Collectors.toSet());
-        }
+        perturbationLocationSet = new VoxelInformationFile(voxelPath).fullPositionSet();
+
         if (timePartialPath != null) {
             if (observerSet.isEmpty() || idSet.isEmpty())
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
@@ -1148,7 +1145,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
             idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
         }
-        writeLog(perturbationLocationSet.size() + " perturbation points are found in " + perturbationPath);
+        writeLog(perturbationLocationSet.size() + " perturbation points are found in " + voxelPath);
     }
 
 

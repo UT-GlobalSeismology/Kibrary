@@ -63,7 +63,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     /**
      * information file of locations of pertubation points.
      */
-    private Path perturbationPath;
+    private Path voxelPath;
     /**
      * structure file instead of PREM
      */
@@ -97,12 +97,12 @@ public class ThreeDPartialDSMSetup extends Operation {
      * locations of perturbation points
      *
      */
-    private HorizontalPosition[] perturbationPointPositions;
+    private HorizontalPosition[] perturbationPositions;
     /**
      * Radii of perturbation points default values are double[]{3505, 3555,
      * 3605, 3655, 3705, 3755, 3805, 3855} Sorted. No duplication.
      */
-    private double[] perturbationR;
+    private double[] perturbationRadii;
 
 
     /**
@@ -128,8 +128,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#eventPath event.inf");
             pw.println("##Path of an observer information file, must be set");
             pw.println("#observerPath observer.inf");
-            pw.println("##Path of an information file for locations of perturbation point, must be set");
-            pw.println("#perturbationPath perturbation.inf");
+            pw.println("##Path of a voxel information file for perturbation points, must be set");
+            pw.println("#voxelPath voxel.inf");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
@@ -161,7 +161,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
         observerPath = property.parsePath("observerPath", null, true, workPath);
-        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
@@ -258,7 +258,10 @@ public class ThreeDPartialDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        readParameterPointInformation();
+        // read voxel information
+        VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
+        perturbationRadii = vif.getRadii();
+        perturbationPositions = vif.getHorizontalPositions();
 
         // read event information
         Set<GlobalCMTID> eventSet = EventInformationFile.read(eventPath);
@@ -310,7 +313,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
                     for (int i = 0; i < 6; i++) {
                         event.setCMT(mts[i]);
-                        FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationR, perturbationPointPositions);
+                        FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationRadii, perturbationPositions);
                         Path infPath = fpPath.resolve(event.toString() + "_mt" + i);
                         Files.createDirectories(infPath.resolve(header));
                         fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
@@ -318,7 +321,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                     }
                 }
                 else {
-                    FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationR, perturbationPointPositions);
+                    FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationRadii, perturbationPositions);
                     Path infPath = fpPath.resolve(event.toString());
                     Files.createDirectories(infPath.resolve(header));
                     fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
@@ -343,7 +346,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         System.err.println("Making information files for the observers (bp) ...");
         for (Observer observer : observerSet) {
             // System.out.println(str);
-            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationR, perturbationPointPositions);
+            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationRadii, perturbationPositions);
             Path infPath = bpPath.resolve(observer.getPosition().toCode());
             // infDir.mkdir();
             // System.out.println(infDir.getPath()+" was made");
@@ -352,7 +355,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
         }
         if (catalogue) {
-            BPInputFile bp = new BPInputFile(header, structure, tlen, np, perturbationR, perturbationPointPositions);
+            BPInputFile bp = new BPInputFile(header, structure, tlen, np, perturbationRadii, perturbationPositions);
             Path catInfPath = bpCatPath;
             Files.createDirectories(catInfPath.resolve(header));
             bp.writeSHBPCat(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
@@ -371,33 +374,24 @@ public class ThreeDPartialDSMSetup extends Operation {
         } else {
             // FileUtils.moveFileToDirectory(getParameterPath().toFile(),
             // outputPath.toFile(), false);
-            FileUtils.copyFileToDirectory(perturbationPath.toFile(), outPath.toFile(), false);
+            FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
         }
 
-    }
-
-    /**
-     * Reads a file describing locations
-     */
-    private void readParameterPointInformation() throws IOException {
-        VoxelInformationFile vif = new VoxelInformationFile(perturbationPath);
-        perturbationR = vif.getRadii();
-        perturbationPointPositions = vif.getPositions();
     }
 
     /**
      * Creates files, horizontalPoint.inf and information perturbationPoint
      */
     private void createPointInformationFile() throws IOException {
-        Path horizontalPointPath = outPath.resolve("horizontalPoint.inf");
-        Path perturbationPointPath = outPath.resolve("perturbationPoint.inf");
+        Path horizontalPointPath = outPath.resolve("voxelPointCode.inf");
+        Path perturbationPointPath = outPath.resolve("perturbationPoint.inf"); //TODO unneeded?
         try (PrintWriter hpw = new PrintWriter(Files.newBufferedWriter(horizontalPointPath));
                 PrintWriter ppw = new PrintWriter(Files.newBufferedWriter(perturbationPointPath))) {
-            int figure = String.valueOf(perturbationPointPositions.length).length();
-            for (int i = 0; i < perturbationPointPositions.length; i++) {
-                hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + perturbationPointPositions[i]);
-                for (double aPerturbationR : perturbationR)
-                    ppw.println(perturbationPointPositions[i] + " " + aPerturbationR);
+            int figure = String.valueOf(perturbationPositions.length).length();
+            for (int i = 0; i < perturbationPositions.length; i++) {
+                hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + perturbationPositions[i]);
+                for (double aPerturbationR : perturbationRadii)
+                    ppw.println(perturbationPositions[i] + " " + aPerturbationR);
             }
         }
     }
