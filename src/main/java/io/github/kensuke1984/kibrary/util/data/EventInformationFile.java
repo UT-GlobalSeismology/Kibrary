@@ -63,7 +63,7 @@ public class EventInformationFile {
      */
     public static Set<GlobalCMTID> read(Path infoPath) throws IOException {
         Set<GlobalCMTID> eventSet = new HashSet<>();
-        InformationFileReader reader = new InformationFileReader(infoPath);
+        InformationFileReader reader = new InformationFileReader(infoPath, true);
         while(reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             GlobalCMTID event = new GlobalCMTID(parts[0]);

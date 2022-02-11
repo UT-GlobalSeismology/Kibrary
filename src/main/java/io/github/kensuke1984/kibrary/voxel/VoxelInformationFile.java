@@ -69,7 +69,7 @@ public class VoxelInformationFile {
      * @throws IOException
      */
     public VoxelInformationFile(Path filePath) throws IOException {
-        InformationFileReader reader = new InformationFileReader(filePath);
+        InformationFileReader reader = new InformationFileReader(filePath, true);
         voxelRadii = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).sorted().distinct()
                 .toArray();
 

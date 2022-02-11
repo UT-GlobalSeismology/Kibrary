@@ -571,14 +571,14 @@ public class PolynomialStructure implements Serializable {
      * @param structurePath {@link Path} of a structureFile
      */
     private void readStructureFile(Path structurePath) throws IOException {
-        InformationFileReader reader = new InformationFileReader(structurePath);
+        InformationFileReader reader = new InformationFileReader(structurePath, false);
         readLines(reader.getNonCommentLines());
         isDefault = false;
         System.err.println(structurePath + " read in.");
     }
 
     public void readStructureFile(List<String> lines) throws IOException {
-        InformationFileReader reader = new InformationFileReader(lines);
+        InformationFileReader reader = new InformationFileReader(lines, false);
         readLines(reader.getNonCommentLines());
         isDefault = false;
     }

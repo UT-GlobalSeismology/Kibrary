@@ -43,7 +43,7 @@ public class UnknownParameterFile {
      */
     public static List<UnknownParameter> read(Path path) throws IOException {
         List<UnknownParameter> pars = new ArrayList<>();
-        InformationFileReader reader = new InformationFileReader(path);
+        InformationFileReader reader = new InformationFileReader(path, true);
         while(reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             PartialType type = PartialType.valueOf(parts[0]);

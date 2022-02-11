@@ -70,7 +70,7 @@ public final class ObserverInformationFile {
      */
     public static Set<Observer> read(Path infoPath) throws IOException {
         Set<Observer> observerSet = new HashSet<>();
-        InformationFileReader reader = new InformationFileReader(infoPath);
+        InformationFileReader reader = new InformationFileReader(infoPath, true);
         while(reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),

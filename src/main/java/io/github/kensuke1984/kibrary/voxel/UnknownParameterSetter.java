@@ -15,7 +15,12 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
-public class MakeUnknownParameterFile {
+/**
+ * @author ???
+ * @since a long time ago
+ * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile
+ */
+public class UnknownParameterSetter {
 
     public static void main(String[] args) {
         // each line: partial latitude, partial longitude, partial depth
