@@ -6,9 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -27,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
+import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
  * This class makes information files for <br>
@@ -380,31 +378,11 @@ public class ThreeDPartialDSMSetup extends Operation {
 
     /**
      * Reads a file describing locations
-     * <p>
-     * The file should be as below: <br>
-     * r1 r2 r3..... rn (Radii cannot have duplicate values, they will be
-     * sorted)<br>
-     * lat1 lon1<br>
-     * lat2 lon2<br>
-     * .<br>
-     * .<br>
-     * .<br>
-     * latm lonm
      */
     private void readParameterPointInformation() throws IOException {
-        InformationFileReader reader = new InformationFileReader(perturbationPath);
-        perturbationR = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).sorted().distinct()
-                .toArray();
-
-        List<HorizontalPosition> positionList = new ArrayList<>();
-        String line;
-        while ((line = reader.next()) != null) {
-            String[] part = line.split("\\s+");
-            HorizontalPosition position = new HorizontalPosition(Double.parseDouble(part[0]),
-                    Double.parseDouble(part[1]));
-            positionList.add(position);
-        }
-        perturbationPointPositions = positionList.toArray(new HorizontalPosition[0]);
+        VoxelInformationFile vif = new VoxelInformationFile(perturbationPath);
+        perturbationR = vif.getRadii();
+        perturbationPointPositions = vif.getPositions();
     }
 
     /**

@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 
 /**
