@@ -291,9 +291,10 @@ public class ThreeDPartialDSMSetup extends Operation {
         Path bpCatPath = outPath.resolve("BPcat");
         createPointInformationFile();
 
-        // System.exit(0);
-        // //////////////////////////////////////
+
+        // FP
         System.err.println("Making information files for the events (fp) ...");
+        int n = 0;
         for (GlobalCMTID eventID : eventSet) {
             GlobalCMTAccess event;
             try {
@@ -334,26 +335,37 @@ public class ThreeDPartialDSMSetup extends Operation {
                          fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
                     }
                 }
+                n++;
             } catch (RuntimeException e) {  // TODO: is this needed?
                 System.err.println(e.getMessage());
             }
         }
+        System.err.println(n + " sources created in " + fpPath);
         // output shellscripts for execution of psvfp and shfp
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
         shellFP.write(SPCType.PF, SPCMode.PSV);
         shellFP.write(SPCType.PF, SPCMode.SH);
 
+        // BP
         System.err.println("Making information files for the observers (bp) ...");
+        n = 0;
         for (Observer observer : observerSet) {
             // System.out.println(str);
             BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationRadii, perturbationPositions);
             Path infPath = bpPath.resolve(observer.getPosition().toCode());
-            // infDir.mkdir();
-            // System.out.println(infDir.getPath()+" was made");
+
+            // In case observers with same position but different name exist
+            if (Files.exists(infPath)) {
+                System.err.println(" " + infPath + " already exist, skipping.");
+                continue;
+            }
+
             Files.createDirectories(infPath.resolve(header));
             bp.writeSHBP(infPath.resolve(header + "_SH.inf"));
             bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
+            n++;
         }
+        System.err.println(n + " sources created in " + bpPath);
         if (catalogue) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, perturbationRadii, perturbationPositions);
             Path catInfPath = bpCatPath;

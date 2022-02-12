@@ -477,7 +477,10 @@ public class PartialWaveformAssembler3D extends Operation {
             System.err.println();
         }
 
+        int num = 0;
         for (Observer observer : observerSet) {
+            System.err.println("Working for " + observer.toString() + " " + ++num + "/" + observerSet.size());
+
             Path bpObserverPath = bpPath.resolve(observer.getPosition().toCode());
             Path bpModelPath = bpObserverPath.resolve(modelName);
 
@@ -534,7 +537,6 @@ public class PartialWaveformAssembler3D extends Operation {
 //                fpPathList = collectFP_jointCMT(idSet);
 //            }
 
-                int donebp = 0;
                 // create ThreadPool for each bpFiles in bpFolder
                 ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
                 for (int i = 0; i < bpNames.size(); i++) {
@@ -543,7 +545,6 @@ public class PartialWaveformAssembler3D extends Operation {
                     if (mode.equals("BOTH"))
                         bpName_PSV = bpNames_PSV.get(i);
 
-                    System.err.println("Working for " + bpName.getName() + " " + ++donebp + "/" + bpNames.size());
                     // 摂動点の名前
                     SPCFileAccess bp = bpName.read();
                     SPCFileAccess bp_PSV = null;
@@ -1019,7 +1020,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
                             try {
                                 partialDataWriter.addPartialID(pid);
-                                System.err.print(".");
+                                //System.err.print(".");
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -1050,7 +1051,7 @@ public class PartialWaveformAssembler3D extends Operation {
         Path idPath = outPath.resolve("partialID" + dateString + ".dat");
         Path datasetPath = outPath.resolve("partial" + dateString + ".dat");
 
-        partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, idSet, periodRanges,
+        partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
                 phases, perturbationLocationSet);
         writeLog("Creating " + idPath + " " + datasetPath);
         System.err.println("Creating " + idPath + " " + datasetPath);
@@ -1060,7 +1061,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
     // TODO
     private Set<Observer> observerSet;
-    private Set<GlobalCMTID> idSet;
+    private Set<GlobalCMTID> eventSet;
     private double[][] periodRanges;
     private Phase[] phases;
     private Set<FullPosition> perturbationLocationSet;
@@ -1074,16 +1075,16 @@ public class PartialWaveformAssembler3D extends Operation {
         // タイムウインドウの情報を読み取る。
         System.err.println("Reading timewindow information");
         timewindowInformation = TimewindowDataFile.read(timewindowPath);
-        idSet = new HashSet<>();
+        eventSet = new HashSet<>();
         observerSet = new HashSet<>();
         timewindowInformation.forEach(t -> {
-            idSet.add(t.getGlobalCMTID());
+            eventSet.add(t.getGlobalCMTID());
             observerSet.add(t.getObserver());
         });
         phases = timewindowInformation.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
                 .distinct().toArray(Phase[]::new);
 
-        // TODO
+        // TODO should be unneeded
         if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
             System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
             Map<String, List<Observer>> nameToObserver = new HashMap<>();
@@ -1104,13 +1105,12 @@ public class PartialWaveformAssembler3D extends Operation {
                     sta.stream().forEach(s -> System.out.println(s));
                 }
             });
-            throw new RuntimeException("Station duplication");
         }
 
-        boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
+        boolean fpExistence = eventSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
         boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve(observer.getPosition().toCode())));
         if (!fpExistence) {
-            idSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
+            eventSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
                 .forEach(id -> System.err.println(id));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
@@ -1119,7 +1119,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 .forEach(observer -> System.err.println(observer));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
-        writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()
+        writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + eventSet.size()
                 + " events and " + observerSet.size() + " stations.");
     }
 
@@ -1139,11 +1139,11 @@ public class PartialWaveformAssembler3D extends Operation {
         perturbationLocationSet = new VoxelInformationFile(voxelPath).fullPositionSet();
 
         if (timePartialPath != null) {
-            if (observerSet.isEmpty() || idSet.isEmpty())
+            if (observerSet.isEmpty() || eventSet.isEmpty())
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
             observerSet.forEach(observer -> perturbationLocationSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
+            eventSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
         }
         writeLog(perturbationLocationSet.size() + " perturbation points are found in " + voxelPath);
     }
@@ -1166,7 +1166,7 @@ public class PartialWaveformAssembler3D extends Operation {
             return;
         }
         userSourceTimeFunctions = new HashMap<>();
-        idSet.forEach(id -> {
+        eventSet.forEach(id -> {
             double halfDuration = id.getEvent().getHalfDuration();
             SourceTimeFunction stf;
             switch (sourceTimeFunction) {
@@ -1296,9 +1296,6 @@ public class PartialWaveformAssembler3D extends Operation {
 
     private Path logPath;
 
-    private long startTime = System.nanoTime();
-    private long endTime;
-
     private boolean jointCMT;
 
     /*
@@ -1347,7 +1344,7 @@ public class PartialWaveformAssembler3D extends Operation {
      * @throws IOException
      */
     private void readSourceTimeFunctions() throws IOException {
-        userSourceTimeFunctions = idSet.stream().collect(Collectors.toMap(id -> id, id -> {
+        userSourceTimeFunctions = eventSet.stream().collect(Collectors.toMap(id -> id, id -> {
             try {
                 Path sourceTimeFunctionPath = this.sourceTimeFunctionPath.resolve(id + ".stf");
                 return SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath);
@@ -1360,11 +1357,6 @@ public class PartialWaveformAssembler3D extends Operation {
 
     private void terminate() throws IOException {
         partialDataWriter.close();
-        endTime = System.nanoTime();
-        long nanoSeconds = endTime - startTime;
-        String endLine = "Everything is done in " + GadgetAid.toTimeString(nanoSeconds) + ". Over n out! ";
-        System.err.println(endLine);
-        writeLog(endLine);
         writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");
     }
 
