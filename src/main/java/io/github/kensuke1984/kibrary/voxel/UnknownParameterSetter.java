@@ -34,10 +34,15 @@ public class UnknownParameterSetter {
         }
 
         Path voxelPath = Paths.get(args[0]);
+
         // partial types
+        System.err.println("Working for:");
         int nType = args.length - 1;
         PartialType[] types = new PartialType[nType];
-        for (int i = 0; i < nType; i++) types[i] = PartialType.valueOf(args[i+1]);
+        for (int i = 0; i < nType; i++) {
+            types[i] = PartialType.valueOf(args[i+1]);
+            System.err.println(" " + types[i]);
+        }
 
         output(voxelPath, types);
 
@@ -56,6 +61,8 @@ public class UnknownParameterSetter {
             throw new IllegalArgumentException("The number of layers and radii does not match.");
 
         List<UnknownParameter> parameterList = new ArrayList<>();
+        int numFinished = 0;
+        int numTotal = positions.length * radii.length;
         for (HorizontalPosition position : positions) {
             for (int i = 0; i < radii.length; i++) {
                 FullPosition pointPosition = position.toFullPosition(radii[i]);
@@ -64,8 +71,11 @@ public class UnknownParameterSetter {
                     Physical3DParameter parameter = new Physical3DParameter(type, pointPosition, volume);
                     parameterList.add(parameter);
                 }
+                numFinished++;
             }
+            System.err.print("\rFinished " + numFinished + " of " + numTotal + " voxels");
         }
+        System.err.println("\rFinished working for all " + numTotal + " voxels.");
 
         Path outputPath = Paths.get("unknowns" + GadgetAid.getTemporaryString() + ".inf");
         System.err.println("Outputting in "+ outputPath);

@@ -27,15 +27,15 @@ public class InformationFileReader {
     /**
      * indicators for comment lines
      */
-    private char[] commentOutFlag;
+    private final char[] commentOutFlag;
     /**
      * lines in the given file
      */
-    private List<String> lines;
+    private final List<String> lines;
     /**
      * the number of total lines
      */
-    private int linesNum;
+    private final int linesNum;
     /**
      * the number of lines already read
      */

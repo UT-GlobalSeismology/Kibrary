@@ -111,6 +111,7 @@ public class VoxelInformationFile {
         }
         voxelPositions = positionList.toArray(new HorizontalPosition[0]);
 
+        System.err.println((voxelRadii.length * voxelPositions.length) + " voxels read in.");
     }
 
     /**
