@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
+import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 
 /**
@@ -52,6 +53,7 @@ enum Manhattan {
     // Partial 50
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class), //
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class), //
+    PartialIDMerge(52, PartialIDMerge.class), //
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class), //
     // Temporal 100

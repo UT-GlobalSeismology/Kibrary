@@ -1,88 +1,78 @@
 package io.github.kensuke1984.kibrary.voxel;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
+ * Create unknown parameter file.
  * @author ???
  * @since a long time ago
  * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile
  */
 public class UnknownParameterSetter {
 
-    public static void main(String[] args) {
-        // each line: partial latitude, partial longitude, partial depth
-        // number of line = number of voxels
-        Path perturbationPointPath = Paths.get(args[0]);
-        // each line: perturbation depth, thickness (in the vertical direction)
-        // number of line = number of depth layers
-        Path perturbationLayerPath = Paths.get(args[1]);
-        // voxel size in degree
-        double voxelSize = Double.parseDouble(args[2]);
-        // partial types
-        int nType = args.length - 3;
-        PartialType[] types = new PartialType[nType];
-        for (int i = 0; i < nType; i++) types[i] = PartialType.valueOf(args[i+3]);
-
-        try {
-            // read perturbation points lat lon r
-            List<FullPosition> perturbations = Files.readAllLines(perturbationPointPath)
-                    .stream().map(s -> new FullPosition(Double.parseDouble(s.trim().split(" ")[0])
-                            ,Double.parseDouble(s.trim().split(" ")[1])
-                            ,Double.parseDouble(s.trim().split(" ")[2])))
-                    .collect(Collectors.toList());
-
-            // read layer thickness
-            Map<Double, Double> layerMap = new HashMap<>();
-            Files.readAllLines(perturbationLayerPath).stream().forEach(s -> {
-                Double r = Double.parseDouble(s.trim().split(" ")[0]);
-                Double d = Double.parseDouble(s.trim().split(" ")[1]);
-                layerMap.put(r, d);
-            });
-
-            // create unknowns file
-            Path unknownPath = Paths.get("unknowns" + GadgetAid.getTemporaryString() + ".inf");
-            Files.deleteIfExists(unknownPath);
-            Files.createFile(unknownPath);
-
-//			int nDigit = (int) Math.log10(perturbations.size()) + 1;
-            for (PartialType type : types) {
-                for (int i = 0; i < perturbations.size(); i++) {
-                    FullPosition perturbation = perturbations.get(i);
-                    double dR = 0;
-                    try {
-                         dR = layerMap.get(perturbation.getR());
-                    } catch (NullPointerException e) {
-                        System.err.format("Ignoring radius %.4f%n", perturbation.getR());
-                        continue;
-                    }
-                    double volume = getVolume(perturbation, dR, voxelSize, voxelSize);
-                    Files.write(unknownPath, String.format("%s %.8f %.8f %.8f %.8f\n"
-                            , type.toString()
-                            , perturbation.getLatitude()
-                            , perturbation.getLongitude()
-                            , perturbation.getR()
-                            , volume).getBytes(), StandardOpenOption.APPEND);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    /**
+     * Create unknown parameter file.
+     * @param args [option]
+     *      [voxelPath  partialTypes...]
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.err.println("Usage:");
+            System.err.println(" [voxelPath  partialTypes...] : creates unknown parameter file");
+            return;
         }
+
+        Path voxelPath = Paths.get(args[0]);
+        // partial types
+        int nType = args.length - 1;
+        PartialType[] types = new PartialType[nType];
+        for (int i = 0; i < nType; i++) types[i] = PartialType.valueOf(args[i+1]);
+
+        output(voxelPath, types);
+
     }
 
-    public static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
+    private static void output(Path voxelPath, PartialType[] types) throws IOException {
+        // read voxel information
+        VoxelInformationFile file = new VoxelInformationFile(voxelPath);
+        double[] layerThicknesses = file.getThicknesses();
+        double[] radii = file.getRadii();
+        double dLatitude = file.getSpacingLatitude();
+        double dLongitude = file.getSpacingLongitude();
+        HorizontalPosition[] positions = file.getHorizontalPositions();
+
+        if (layerThicknesses.length != radii.length)
+            throw new IllegalArgumentException("The number of layers and radii does not match.");
+
+        List<UnknownParameter> parameterList = new ArrayList<>();
+        for (HorizontalPosition position : positions) {
+            for (int i = 0; i < radii.length; i++) {
+                FullPosition pointPosition = position.toFullPosition(radii[i]);
+                double volume = getVolume(pointPosition, layerThicknesses[i], dLatitude, dLongitude);
+                for (PartialType type : types) {
+                    Physical3DParameter parameter = new Physical3DParameter(type, pointPosition, volume);
+                    parameterList.add(parameter);
+                }
+            }
+        }
+
+        Path outputPath = Paths.get("unknowns" + GadgetAid.getTemporaryString() + ".inf");
+        System.err.println("Outputting in "+ outputPath);
+        UnknownParameterFile.write(outputPath, parameterList);
+    }
+
+    private static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
         double r = point.getR();
         if (r <= 0) {
             System.err.println("location has no R information or invalid R: " + r);
