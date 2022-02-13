@@ -157,7 +157,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        header = property.parseString("header", "PREM").split("\\s+")[0];
+        header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
         observerPath = property.parsePath("observerPath", null, true, workPath);
@@ -176,7 +176,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         catalogue = property.parseBoolean("catalogue", "false");
         if (catalogue) {
-            double[] tmpthetainfo = Stream.of(property.parseString("thetaRange", null).split("\\s+"))
+            double[] tmpthetainfo = Stream.of(property.parseStringArray("thetaRange", null))
                     .mapToDouble(Double::parseDouble).toArray();
             thetamin = tmpthetainfo[0];
             thetamax = tmpthetainfo[1];

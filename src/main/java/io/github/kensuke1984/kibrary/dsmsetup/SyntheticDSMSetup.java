@@ -157,8 +157,8 @@ public class SyntheticDSMSetup extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         header = property.parseString("header", "PREM").split("\\s+")[0];
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         if (property.containsKey("structurePath")) {

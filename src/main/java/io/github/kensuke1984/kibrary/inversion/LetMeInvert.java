@@ -300,7 +300,7 @@ public class LetMeInvert extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        tag = property.parseString("tag", "");
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);

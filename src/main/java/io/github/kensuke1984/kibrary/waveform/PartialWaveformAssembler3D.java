@@ -264,8 +264,8 @@ public class PartialWaveformAssembler3D extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
         finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
         if (partialSamplingHz % finalSamplingHz != 0)
@@ -282,7 +282,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         catalogue = property.parseBoolean("catalogue", "false");
         if (catalogue) {
-            double[] tmpthetainfo = Stream.of(property.parseString("thetaRange", null).split("\\s+"))
+            double[] tmpthetainfo = Stream.of(property.parseStringArray("thetaRange", null))
                     .mapToDouble(Double::parseDouble).toArray();
             thetamin = tmpthetainfo[0];
             thetamax = tmpthetainfo[1];
@@ -292,7 +292,7 @@ public class PartialWaveformAssembler3D extends Operation {
         setSourceTimeFunction();
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
-        partialTypes = Arrays.stream(property.parseString("partialTypes", "MU").split("\\s+")).map(PartialType::valueOf)
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
 
         tlen = property.parseDouble("tlen", "3276.8");
@@ -606,7 +606,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     }
                  }
                 partialDataWriter.flush();
-                System.err.println();
+                //System.err.println();
                 writeLog(touchedSet.size() + " events are processed");
                 writeLog(bpnum++ + "th " + bpObserverPath + " for " + observer + " was done ");
             }

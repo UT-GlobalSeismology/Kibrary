@@ -93,6 +93,20 @@ public class Property extends Properties {
     }
 
     /**
+     * Gets a pre-specified value, or sets a default value, and returns it in String.
+     * The value is checked so that it includes no spaces. To be used especially for keys that will become file names.
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed
+     */
+    public String parseStringSingle(String key, String defaltValue) {
+        String string = checkAndPutDefault(key, defaltValue);
+        if (string.split("\\s+").length != 1) throw new IllegalArgumentException(key + " must not include spaces.");
+        return string;
+    }
+
+    /**
      * Gets a pre-specified value, or sets a default value, and returns it in String[].
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.

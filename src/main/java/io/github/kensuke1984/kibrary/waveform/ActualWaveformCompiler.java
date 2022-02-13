@@ -270,8 +270,8 @@ public class ActualWaveformCompiler extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
         finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
         if (sacSamplingHz % finalSamplingHz != 0)
