@@ -474,6 +474,8 @@ class EventProcessor implements Runnable {
                 Path respPath = inputRespSetPath.resolve(respFile.getRespFile());
                 Path spectraPath = outputPath.resolve(respFile.getSpectraFile());
 
+                boolean isNaN = false;
+
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
 
                 // on duplication of channel E&1 or N&2, choose E,N over 1,2 (otherwise, E&2 or 1&N may survive)
@@ -519,7 +521,7 @@ class EventProcessor implements Runnable {
 
                 // execute deconvolution
                 try {
-                    SacDeconvolution.compute(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
+                    SacDeconvolution.compute(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ, isNaN);
                 } catch (IOException e) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! deconvolution failed : " + event.getGlobalCMTID() + " - " + afterName);
                     e.printStackTrace();
@@ -528,6 +530,12 @@ class EventProcessor implements Runnable {
                     // throw SPECTRA files to trash
                     FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                     continue;
+                }
+
+                if(isNaN) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file contains NAN : " + event.getGlobalCMTID() + " - " + afterName);
+                    FileAid.moveToDirectory(modPath, invalidRespPath, true);
+                    FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                 }
 
                 // move processed SPECTRA files to archive
