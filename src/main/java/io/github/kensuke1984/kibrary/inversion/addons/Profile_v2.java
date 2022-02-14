@@ -1,15 +1,15 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -126,15 +126,15 @@ public class Profile_v2 {
 			
 			double dt = 1. / obsList.get(0).getSamplingHz();
 			
-			Map<Station, Double> stationSynVariance = new HashMap<>();
-			Map<Station, Double> stationBornVariance = new HashMap<>();
-			Map<Station, Double> stationObsNorm = new HashMap<>();
+			Map<Observer, Double> stationSynVariance = new HashMap<>();
+			Map<Observer, Double> stationBornVariance = new HashMap<>();
+			Map<Observer, Double> stationObsNorm = new HashMap<>();
 //			obsList.stream().map(id -> id.getStation()).distinct().forEach(station -> {
 //				stationSynVariance.put(station, 0.);
 //				stationBornVariance.put(station, 0.);
 //				stationObsNorm.put(station, 0.);
 //			});
-			for (Station station : ir.stationSet()) {
+			for (Observer station : ir.stationSet()) {
 				stationSynVariance.put(station, 0.);
 				stationBornVariance.put(station, 0.);
 				stationObsNorm.put(station, 0.);
@@ -197,7 +197,7 @@ public class Profile_v2 {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
 								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"black\",\\\n"
@@ -238,7 +238,7 @@ public class Profile_v2 {
 							totalBornVariance[0] += tmpBornVariance;
 							totalObsNorm[0] += tmpObsNorm;
 							
-							Station sta = id.getStation();
+							Observer sta = id.getObserver();
 							try {
 								stationSynVariance.put(sta, stationSynVariance.get(sta) + tmpSynVariance);
 								stationBornVariance.put(sta, stationBornVariance.get(sta) + tmpBornVariance);
@@ -314,9 +314,9 @@ public class Profile_v2 {
 					RealVector synVector = ir.syntheticOf(id).getYVector();
 					RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int i = (int) distance;
 					int j = (int) (azimuth / 10);
 					
@@ -462,11 +462,11 @@ public class Profile_v2 {
 			pw1 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("stationVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 			pw1.println("# Station synVariance bornVariance varianceReduction;(syn - born)");
 			
-			for (Station sta : stationObsNorm.keySet()) {
+			for (Observer sta : stationObsNorm.keySet()) {
 				try {
 				double bornVariance = stationBornVariance.get(sta) / stationObsNorm.get(sta);
 				double synVariance = stationSynVariance.get(sta) / stationObsNorm.get(sta);
-				pw1.println(sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() 
+				pw1.println(sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() 
 						+ " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
 				} catch (NullPointerException e) {
 					System.err.println(sta + " " + sta.getPosition());

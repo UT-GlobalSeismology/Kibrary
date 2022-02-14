@@ -1,7 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 
 import java.io.IOException;
 import java.nio.file.Files;

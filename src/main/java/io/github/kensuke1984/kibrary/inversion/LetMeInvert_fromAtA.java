@@ -35,10 +35,10 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
-import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
+import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.DampingType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
 import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D_deprec;
@@ -46,26 +46,27 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtAEntry;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtAFile;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtdEntry;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtdFile;
-import io.github.kensuke1984.kibrary.waveformdata.addons.ResidualVarianceFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveform.addons.AtAEntry;
+import io.github.kensuke1984.kibrary.waveform.addons.AtAFile;
+import io.github.kensuke1984.kibrary.waveform.addons.AtdEntry;
+import io.github.kensuke1984.kibrary.waveform.addons.AtdFile;
+import io.github.kensuke1984.kibrary.waveform.addons.ResidualVarianceFile;
 
 /**
  * 
@@ -77,7 +78,7 @@ import io.github.kensuke1984.kibrary.waveformdata.addons.ResidualVarianceFile;
  * @author Anselme Borgeaud
  * 
  */
-public class LetMeInvert_fromAtA implements Operation {
+public class LetMeInvert_fromAtA implements Operation_old {
 	/**
 	 * 観測波形、理論波形の入ったファイル (BINARY)
 	 */
@@ -271,7 +272,7 @@ public class LetMeInvert_fromAtA implements Operation {
 	private boolean applyRadialWeight;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan LetMeInvert");
 			pw.println("##These properties for LetMeInvert");
@@ -703,7 +704,7 @@ public class LetMeInvert_fromAtA implements Operation {
 							e.printStackTrace();
 						}
 						
-						System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
+						System.err.println("Inversion is done in " + GadgetAid.toTimeString(System.nanoTime() - start));
 					}
 				}
 			}
@@ -780,16 +781,16 @@ public class LetMeInvert_fromAtA implements Operation {
 			for (int i = 0; i < d.getNTimeWindow(); i++) {
 				double variance = delVec[i].dotProduct(delVec[i]) / obsVec[i].dotProduct(obsVec[i]);
 				double correlation = obsVec[i].dotProduct(synVec[i]) / obsVec[i].getNorm() / synVec[i].getNorm();
-				pw1.println(i + " " + obsIDs[i].getStation() + " " + obsIDs[i].getStation().getNetwork() + " "
+				pw1.println(i + " " + obsIDs[i].getObserver() + " " + obsIDs[i].getObserver().getNetwork() + " "
 						+ obsIDs[i].getGlobalCMTID() + " " + variance + " " + correlation);
 			}
 		}
 		for (int i = 0; i < d.getNTimeWindow(); i++) {
-			String name = obsIDs[i].getStation() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
+			String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
 					+ "." + i + ".txt";
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
-			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
+			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
@@ -810,20 +811,20 @@ public class LetMeInvert_fromAtA implements Operation {
 							Files.newBufferedWriter(plotPath4, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
 				if (i < (d.getNTimeWindow() - 1)) {
-					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
-					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
+					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\", \\");
+					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\", \\");
 					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\", \\");
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\", \\");
 				} else {
 
-					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
-					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
+					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\"");
+					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getObserver() + "\"");
 					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\"");
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getObserver() + "\"");
 				}
 //				double maxObs = obsVec[i].getLInfNorm();
 				double obsStart = obsIDs[i].getStartTime();
@@ -875,12 +876,12 @@ public class LetMeInvert_fromAtA implements Operation {
 		BasicID[] obsIDs = eq[iweight][ifreq][iphase][icorr].getDVector().getObsIDs();
 		BasicID[] synIDs = eq[iweight][ifreq][iphase][icorr].getDVector().getSynIDs();
 		for (int i = 0; i < nTimeWindow; i++) {
-			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getStation() + "."
+			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getObserver() + "."
 					+ obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
 			Path plotFile = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/record.plt");
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
-			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
+			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
@@ -889,9 +890,9 @@ public class LetMeInvert_fromAtA implements Operation {
 					PrintWriter plotWa = new PrintWriter(
 							Files.newBufferedWriter(plotFilea, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
-				plotW.println("\"" + out.getFileName() + "\" u 2:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation()
+				plotW.println("\"" + out.getFileName() + "\" u 2:($3+" + gcarc + ") ti\"" + obsIDs[i].getObserver()
 						+ "\", \\");
-				plotWa.println("\"" + out.getFileName() + "\" u 2:($3+" + azimuth + ") ti\"" + obsIDs[i].getStation()
+				plotWa.println("\"" + out.getFileName() + "\" u 2:($3+" + azimuth + ") ti\"" + obsIDs[i].getObserver()
 						+ "\", \\");
 				pw.println("#syntime synthetic+");
 				for (int j = 0; j < vectors[i].getDimension(); j++) {
@@ -940,12 +941,12 @@ public class LetMeInvert_fromAtA implements Operation {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		LetMeInvert_fromAtA lmi = new LetMeInvert_fromAtA(Property.parse(args));
+		LetMeInvert_fromAtA lmi = new LetMeInvert_fromAtA(Property_old.parse(args));
 		System.err.println(LetMeInvert_fromAtA.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();
 		System.err.println(
-				LetMeInvert_fromAtA.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				LetMeInvert_fromAtA.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
 	}
 
 	/**
@@ -1033,7 +1034,7 @@ public class LetMeInvert_fromAtA implements Operation {
 //		int independentN = (int) (eq[iweight][ifreq][iphase].getDlength() / alpha);
 		int independentN = (int) (npts / alpha);
 		for (int i = 0; i < aic.length; i++)
-			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
+			aic[i] = MathAid.computeAIC(variance[i], independentN, i);
 		return aic;
 	}
 
@@ -1096,8 +1097,8 @@ public class LetMeInvert_fromAtA implements Operation {
 			BasicID[] obsIDs = eq[iweight][ifreq][iphase][icorr].getDVector().getObsIDs();
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
-				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-				Station station = id.getStation();
+				GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
+				Observer station = id.getObserver();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
@@ -1109,7 +1110,7 @@ public class LetMeInvert_fromAtA implements Operation {
 		}
 	}
 
-	private Set<Station> stationSet;
+	private Set<Observer> stationSet;
 
 	@Override
 	public Path getWorkPath() {

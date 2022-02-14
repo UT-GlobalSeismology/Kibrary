@@ -11,10 +11,10 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 public class SelectInBouncingRegion {
 
@@ -27,26 +27,26 @@ public class SelectInBouncingRegion {
 		double latmax = 12;
 		
 		try {
-			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
-			Set<TimewindowInformation> selectedWindows = selectRegion(timewindows, lonmin, lonmax, latmin, latmax);
-			Path outpath = Paths.get("timewindows" + Utilities.getTemporaryString() + ".dat");
-			TimewindowInformationFile.write(selectedWindows, outpath);
+			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+			Set<TimewindowData> selectedWindows = selectRegion(timewindows, lonmin, lonmax, latmin, latmax);
+			Path outpath = Paths.get("timewindows" + GadgetAid.getTemporaryString() + ".dat");
+			TimewindowDataFile.write(selectedWindows, outpath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 	}
 	
-	public static Set<TimewindowInformation> selectRegion(Set<TimewindowInformation> timewindows, double lonmin, double lonmax, double latmin, double latmax) {
-		Set<TimewindowInformation> selectedWindows = new HashSet<>();
+	public static Set<TimewindowData> selectRegion(Set<TimewindowData> timewindows, double lonmin, double lonmax, double latmin, double latmax) {
+		Set<TimewindowData> selectedWindows = new HashSet<>();
 		try {
 			TauP_Time timetool = new TauP_Time("prem");
 			timetool.parsePhaseList("ScS");
-			for (TimewindowInformation window : timewindows) {
-				Location eloc = window.getGlobalCMTID().getEvent().getCmtLocation();
+			for (TimewindowData window : timewindows) {
+				FullPosition eloc = window.getGlobalCMTID().getEvent().getCmtLocation();
 				timetool.setSourceDepth(6371. - eloc.getR());
-				double distance = Math.toDegrees(eloc.getEpicentralDistance(window.getStation().getPosition()));
-				double azimuth = Math.toDegrees(eloc.getAzimuth(window.getStation().getPosition()));
+				double distance = Math.toDegrees(eloc.getEpicentralDistance(window.getObserver().getPosition()));
+				double azimuth = Math.toDegrees(eloc.getAzimuth(window.getObserver().getPosition()));
 				timetool.calculate(distance);
 				TimeDist timedist = Arrays.stream(timetool.getArrival(0).getPierce()).filter(td -> Math.abs(td.getDepth() - 2891) < 1e-3).findFirst().get();
 				if (Math.abs(timedist.getDepth() - 2891) > 0.5)

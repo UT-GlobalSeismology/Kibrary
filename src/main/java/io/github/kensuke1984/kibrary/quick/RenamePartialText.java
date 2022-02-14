@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class RenamePartialText {
 	
 	private static String searchTxtName(BasicID id, Path inversionDir) {
 		File rootDir = inversionDir.resolve("partial/" + id.getGlobalCMTID().toString()).toFile();
-		String rootFileName = id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
+		String rootFileName = id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "."; 
 		File[] files = rootDir.listFiles(file -> file.getName().startsWith(rootFileName));
 		if (files.length != 1)
@@ -45,7 +45,7 @@ public class RenamePartialText {
 	}
 	
 	private static String getTxtName(BasicID id, int idIndex) {
-		return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
+		return id.getGlobalCMTID() + "/" + id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "." + idIndex + ".txt";
 	}
 

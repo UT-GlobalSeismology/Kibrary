@@ -1,13 +1,13 @@
 package io.github.kensuke1984.kibrary.util.statistics;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -23,7 +23,7 @@ import java.util.List;
 
 public class HistogramAzimuth {
 	
-	public HistogramAzimuth(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered, double minAz, double maxAz) {
+	public HistogramAzimuth(BasicID[] basicIDs, Set<Observer> stationSet, double interval, boolean centered, double minAz, double maxAz) {
 		this.interval = interval;
 		this.numberOfRecords = new int[(int) (360 / interval)];
 		
@@ -41,7 +41,7 @@ public class HistogramAzimuth {
 			tmpLat = 0;
 			tmpLon = 0;
 		}
-		this.averageLoc = new Location(tmpLat, tmpLon, 0.);
+		this.averageLoc = new FullPosition(tmpLat, tmpLon, 0.);
 		
 //		Set<String> networkSet = Stream.of(new String[] {"CU", "IU", "II"})
 //				.collect(Collectors.toSet());
@@ -49,8 +49,8 @@ public class HistogramAzimuth {
 		try (Stream<BasicID> idStream = Stream.of(basicIDs);) {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 			.forEach(id -> {
-				Station station = stationSet.stream().filter(s->s.equals(id.getStation())).findAny().get();
-				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
+				Observer station = stationSet.stream().filter(s->s.equals(id.getObserver())).findAny().get();
+				FullPosition cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
 				
 				// do not consider the following ids
 //				if (cmtLocation.getLongitude() > -80)
@@ -82,7 +82,7 @@ public class HistogramAzimuth {
 		this.medianValue = basicIDs.length/2.;
 	}
 	
-	public HistogramAzimuth(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered) {
+	public HistogramAzimuth(BasicID[] basicIDs, Set<Observer> stationSet, double interval, boolean centered) {
 		this(basicIDs, stationSet, interval, centered, 0, 360);
 	}
 	
@@ -98,10 +98,10 @@ public class HistogramAzimuth {
 		Path outPath = root.resolve("azimuthHistogram.txt");
 		Path scriptPath = root.resolve("azimuthHistogram.plt");
 		
-		Set<Station> stationSet = new HashSet<>();
+		Set<Observer> stationSet = new HashSet<>();
 		
 		for (int i=0; i < basicIDs.length; i++) {
-				stationSet.add(basicIDs[i].getStation());
+				stationSet.add(basicIDs[i].getObserver());
 		}
 		
 		List<BasicID> idList = new ArrayList<>();
@@ -114,7 +114,7 @@ public class HistogramAzimuth {
 		
 		// divide events in three groups
 				List<BasicID> idList1 = idList.stream().filter(id -> {
-					Location loc = id.getGlobalCMTID().getEvent().getCmtLocation();
+					FullPosition loc = id.getGlobalCMTID().getEvent().getCmtLocation();
 					double lat = loc.getLatitude();
 					double lon = loc.getLongitude();
 					if (lat < 10.)
@@ -124,7 +124,7 @@ public class HistogramAzimuth {
 				}).collect(Collectors.toList());
 				
 				List<BasicID> idList2 = idList.stream().filter(id -> {
-					Location loc = id.getGlobalCMTID().getEvent().getCmtLocation();
+					FullPosition loc = id.getGlobalCMTID().getEvent().getCmtLocation();
 					double lat = loc.getLatitude();
 					double lon = loc.getLongitude();
 					if (lat >= 10. && lon < -80.)
@@ -134,7 +134,7 @@ public class HistogramAzimuth {
 				}).collect(Collectors.toList());
 				
 				List<BasicID> idList3 = idList.stream().filter(id -> {
-					Location loc = id.getGlobalCMTID().getEvent().getCmtLocation();
+					FullPosition loc = id.getGlobalCMTID().getEvent().getCmtLocation();
 					double lat = loc.getLatitude();
 					double lon = loc.getLongitude();
 					if (lat >= 10. && lon >= -80.)
@@ -211,7 +211,7 @@ public class HistogramAzimuth {
 
 //	}
 	
-	public Location getAverageLoc() {
+	public FullPosition getAverageLoc() {
 		return averageLoc;
 	}
 	
@@ -245,7 +245,7 @@ public class HistogramAzimuth {
 	private double interval;
 	private int[] numberOfRecords;
 	private int maxValue;
-	private Location averageLoc;
+	private FullPosition averageLoc;
 	private double mean;
 	private double medianValue;
 }

@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.util.statistics;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
-import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -28,8 +28,8 @@ public class AmplitudePolarDistribution {
 		Path staticCorrectionPath = Paths.get(args[0]);
 		Path timewindowPath = Paths.get(args[1]);
 		
-		Set<StaticCorrection> takeuchiCorrections = StaticCorrectionFile.read(staticCorrectionPath);
-		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+		Set<StaticCorrectionData> takeuchiCorrections = StaticCorrectionDataFile.read(staticCorrectionPath);
+		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 		
 		Path outpath = Paths.get("amplitudePolarDistribution.txt");
 		
@@ -47,16 +47,16 @@ public class AmplitudePolarDistribution {
 		
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			pw.println("#azimuth amplitude_ratio upper_mantle_ratio lower_mantle_ratio");
-			for (StaticCorrection correction : takeuchiCorrections) {
-				double azimuth = correction.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(correction.getStation().getPosition())
+			for (StaticCorrectionData correction : takeuchiCorrections) {
+				double azimuth = correction.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(correction.getObserver().getPosition())
 						* 180. / Math.PI;
 				
 				GlobalCMTID id = correction.getGlobalCMTID();
-				Station station = correction.getStation();
+				Observer station = correction.getObserver();
 				SACComponent component = correction.getComponent();
 				double startTime = correction.getSynStartTime();
-				Set<TimewindowInformation> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
-						&& tw.getStation().equals(station)
+				Set<TimewindowData> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
+						&& tw.getObserver().equals(station)
 						&& tw.getComponent() == component
 						&& tw.getStartTime() == startTime)
 						.collect(Collectors.toSet());

@@ -17,12 +17,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import edu.sc.seis.TauP.SphericalCoords;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 public class EventCluster {
 	
@@ -67,21 +67,21 @@ public class EventCluster {
 		
 		Path waveformIDPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/waveformID_ScS_ext_70deg_semucbCorr_ampCorr_4hz.dat");
 		BasicID[] waveformIDs = BasicIDFile.read(waveformIDPath);
-		Map<Station, Set<Integer>> stationClusterMap = new HashMap<>();
-		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getStation(), new HashSet<>()));
+		Map<Observer, Set<Integer>> stationClusterMap = new HashMap<>();
+		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getObserver(), new HashSet<>()));
 		Arrays.stream(waveformIDs).forEach(id -> {
 			int index = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get().getIndex();
-			Set<Integer> tmpset = stationClusterMap.get(id.getStation());
+			Set<Integer> tmpset = stationClusterMap.get(id.getObserver());
 			tmpset.add(index);
-			stationClusterMap.replace(id.getStation(), tmpset);
+			stationClusterMap.replace(id.getObserver(), tmpset);
 		});
 		outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/stationCluster.inf");
 		PrintWriter pw = new PrintWriter(outpath.toFile());
-		for (Station sta : stationClusterMap.keySet()) {
+		for (Observer sta : stationClusterMap.keySet()) {
 			String istring = "";
 			for (int i : stationClusterMap.get(sta))
 				istring += i + " ";
-			pw.println(sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
+			pw.println(sta.getStation() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
 		}
 		pw.close();
 	}
@@ -270,7 +270,7 @@ public class EventCluster {
 		pw.close();
 	}
 	
-	public static void printRecordInformation(List<EventCluster> clusters, Set<TimewindowInformation> timewindows) {
+	public static void printRecordInformation(List<EventCluster> clusters, Set<TimewindowData> timewindows) {
 		AtomicInteger idmax = new AtomicInteger(); 
 		clusters.stream().map(c -> c.getIndex()).forEach(i ->  {
 			if (idmax.get() < i) idmax.set(i);
@@ -285,10 +285,10 @@ public class EventCluster {
 			}
 			Set<GlobalCMTID> tmpids = clusters.stream().filter(c -> c.getIndex() == ifinal).map(c -> c.getID())
 					.collect(Collectors.toSet());
-			Set<TimewindowInformation> tmpwindows = timewindows.stream().filter(tw -> tmpids.contains(tw.getGlobalCMTID())).collect(Collectors.toSet());
+			Set<TimewindowData> tmpwindows = timewindows.stream().filter(tw -> tmpids.contains(tw.getGlobalCMTID())).collect(Collectors.toSet());
 			for (int iaz = 0; iaz < tmpc.getAzimuthSlices().size(); iaz++) {
 				int n = 0;
-				for (TimewindowInformation window : tmpwindows) {
+				for (TimewindowData window : tmpwindows) {
 					if (window.getAzimuthDegree() >= tmpc.getAzimuthBound(iaz)[0] 
 							&& window.getAzimuthDegree() < tmpc.getAzimuthBound(iaz)[1])
 						n++;

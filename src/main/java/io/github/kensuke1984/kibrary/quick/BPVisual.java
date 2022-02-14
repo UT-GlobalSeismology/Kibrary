@@ -1,18 +1,18 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
-import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,7 +30,7 @@ public class BPVisual {
 	final int samplingHz = 20;
 	
 	private Path timewindowPath;
-	private Set<TimewindowInformation> timewindows;
+	private Set<TimewindowData> timewindows;
 	private Path workingDir;
 	
 	private int ext;
@@ -47,7 +47,7 @@ public class BPVisual {
 	public BPVisual(Path timewindowPath, Path workingDir, double partialSamplingHz, double finalSamplingHz
 			, double minFreq, double maxFreq, int filterNp) throws IOException {
 		this.timewindowPath = timewindowPath;
-		this.timewindows = TimewindowInformationFile.read(timewindowPath);
+		this.timewindows = TimewindowDataFile.read(timewindowPath);
 		this.workingDir = workingDir;
 		
 		this.partialSamplingHz = partialSamplingHz;
@@ -67,8 +67,8 @@ public class BPVisual {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 		
-		for (SPCFile spcName : Utilities.collectSpcFileName(Paths.get("."))) {
-			DSMOutput bpSpc = spcName.read();
+		for (SPCFileName spcName : SpcFileAid.collectSpcFileName(Paths.get("."))) {
+			SPCFileAccess bpSpc = spcName.read();
 			
 			HorizontalPosition obsPos = bpSpc.getObserverPosition();
 			double[] bodyR = bpSpc.getBodyR();
@@ -83,8 +83,8 @@ public class BPVisual {
 				for (int j = 0; j < spcComponents.length; j++) {
 					double[] bpserie = spcComponents[j].getTimeseries();
 					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
-					for (TimewindowInformation info : timewindows) {
-						Station station = info.getStation();
+					for (TimewindowData info : timewindows) {
+						Observer station = info.getObserver();
 						GlobalCMTID event = info.getGlobalCMTID();
 						
 						Complex[] u = cutPartial(bpserie, info);
@@ -92,7 +92,7 @@ public class BPVisual {
 						double[] cutU = sampleOutput(u, info);
 						
 						Phases phases = new Phases(info.getPhases());
-						Path outpath = workingDir.resolve(station.getName() + "." 
+						Path outpath = workingDir.resolve(station.getStation() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".txt");
 //						Files.deleteIfExists(outpath);
@@ -102,7 +102,7 @@ public class BPVisual {
 								pw.println(String.format("%.16e", y));
 						}
 						
-						Path outpath2 = workingDir.resolve(station.getName() + "." 
+						Path outpath2 = workingDir.resolve(station.getStation() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".spectrum.txt");
 						try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath2, StandardOpenOption.CREATE_NEW))) {
@@ -138,7 +138,7 @@ public class BPVisual {
 	 * @param property
 	 * @return
 	 */
-	private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation) {
+	private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
 		int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
 		// cutstartが振り切れた場合0 からにする
 		if (cutstart < 0)
@@ -150,7 +150,7 @@ public class BPVisual {
 		return cut;
 	}
 
-	private double[] sampleOutput(Complex[] u, TimewindowInformation timewindowInformation) {
+	private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation) {
 		// 書きだすための波形
 		int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
 				* finalSamplingHz);

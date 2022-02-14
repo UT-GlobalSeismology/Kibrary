@@ -4,7 +4,7 @@ import org.apache.commons.math3.util.Precision;
 
 /**
  * Time window starting and ending time.<br>
- * <b>Those are round off to the 3rd decimal place.</b>
+ * <b>They are round off to the 3rd decimal place.</b>
  * <p>
  * This class is <b>IMMUTABLE</b>
  * </p>
@@ -90,16 +90,16 @@ public class Timewindow implements Comparable<Timewindow> {
         return new Timewindow(newStart, newEnd);
     }
 
-	public double getStartTime() {
-		return startTime;
-	}
+    public double getStartTime() {
+        return startTime;
+    }
 
-	public double getEndTime() {
-		return endTime;
-	}
-	
-	public double getLength() {
-		return endTime - startTime;
-	}
+    public double getEndTime() {
+        return endTime;
+    }
+
+    public double getLength() {
+        return endTime - startTime;
+    }
 
 }

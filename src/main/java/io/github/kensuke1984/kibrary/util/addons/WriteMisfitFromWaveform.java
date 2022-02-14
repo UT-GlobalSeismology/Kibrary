@@ -9,8 +9,8 @@ import java.util.List;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 public class WriteMisfitFromWaveform {
 
@@ -27,14 +27,14 @@ public class WriteMisfitFromWaveform {
 			pw.println("station network lat lon event component phase region amp var CC");
 			
 			for (int i = 0; i < ids.length; i+=2) {
-				if (!ids[i].getStation().equals(ids[i+1].getStation()) || ! ids[i].getGlobalCMTID().equals(ids[i+1].getGlobalCMTID())) {
+				if (!ids[i].getObserver().equals(ids[i+1].getObserver()) || ! ids[i].getGlobalCMTID().equals(ids[i+1].getGlobalCMTID())) {
 //					throw new RuntimeException(ids[i] + "\n" + ids[i+1]);
 					System.err.println(ids[i] + "\n" + ids[i+1]);
 					continue;
 				}
 				
 				double distance = Math.toDegrees(ids[i].getGlobalCMTID().getEvent().getCmtLocation()
-						.getEpicentralDistance(ids[i].getStation().getPosition()));
+						.getEpicentralDistance(ids[i].getObserver().getPosition()));
 				if (distance < 70 || distance > 79)
 					continue;
 				
@@ -53,7 +53,7 @@ public class WriteMisfitFromWaveform {
 				if (region == null)
 					continue;
 				
-				pw.println(ids[i].getStation().getName() + " " + ids[i].getStation().getNetwork() + " " + ids[i].getStation().getPosition()
+				pw.println(ids[i].getObserver().getStation() + " " + ids[i].getObserver().getNetwork() + " " + ids[i].getObserver().getPosition()
 						+ " " + ids[i].getGlobalCMTID() + " " + ids[i].getSacComponent() + " " + new Phases(ids[i].getPhases()) + " " + region
 						+ " " + ratio + " " + var + " " + cc);
 			}
@@ -64,7 +64,7 @@ public class WriteMisfitFromWaveform {
 	
 	private static String regionName(BasicID id, List<EventCluster> clusters) {
 		EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get();
-		double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+		double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 		int iaz = -1;
 //		if (azimuth < 180)
 //			azimuth += 360;

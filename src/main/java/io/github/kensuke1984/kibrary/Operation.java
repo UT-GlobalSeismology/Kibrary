@@ -1,24 +1,65 @@
 package io.github.kensuke1984.kibrary;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.EnumUtils;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
- * Main procedures in Kibrary
- *
- * @author Kensuke Konishi
- * @version 0.0.6.1
+ * Parent class of all operations in Kibrary that are executed given a property file.
+ * @author otsuru
+ * @since a long time ago
+ * @version 2022/1/7 Recreated the original interface Operation into an abstract class.
  */
-public interface Operation {
+public abstract class Operation {
 
-    static Path findPath() throws IOException {
+    /**
+     * Runs an {@link Operation} using a {@link Property} file.
+     * The {@link Operation} must be listed in {@link Manhattan}.
+     *
+     * @param args  none to choose a property file <br>
+     *              [property file] to run an operation <br>
+     *               -l to show the list of operations
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+
+        // load property file
+        Property property = new Property();
+        if (1 < args.length) {
+            throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
+        } else if (args.length == 0) {
+            property.load(Files.newBufferedReader(findPath()));
+        } else if (args[0].equals("-l")) {
+            Manhattan.printList();
+            return;
+        } else {
+            property.load(Files.newBufferedReader(Paths.get(args[0])));
+        }
+
+        // read manhattan
+        if (!property.containsKey("manhattan")) {
+            throw new IllegalArgumentException("'manhattan' is not set in " + args[0]);
+        }
+        String manhattan = property.getProperty("manhattan");
+        if (!EnumUtils.isValidEnum(Manhattan.class, manhattan)) {
+            throw new IllegalArgumentException(manhattan + " is not a valid name of Manhattan.");
+        }
+
+        operate(Manhattan.valueOf(manhattan).getOperation(), property);
+
+    }
+
+    private static Path findPath() throws IOException {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("."), "*.properties")) {
             List<Path> list = new ArrayList<>();
             int i = 1;
@@ -26,73 +67,107 @@ public interface Operation {
                 System.err.println(i++ + ": " + path);
                 list.add(path);
             }
-            if (list.isEmpty()) throw new NoSuchFileException("No property file is found");
+            if (list.isEmpty()) {
+                System.err.println("No property file is found");
+                System.exit(9);
+            }
             System.err.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
-            String input = Utilities.readInputLine();
+            String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
             return list.get(Integer.parseInt(input) - 1);
         }
     }
 
     /**
-     * @param args [a name of procedure] (a property file) <br>
-     *             -l to show the list of procedures
-     * @throws Exception if any
+     * Method to be called from the main method of each class extending {@link Operation}.
+     * This operates the {@link Operation} that called this class,
+     * regardless of the 'manhattan' property written in the specified property file.
+     * This enables {@link Operation}s that are not listed in {@link Manhattan} to be operated.
+     *
+     * @param args [property file name]
+     * @throws IOException if the property file cannot be loaded
      */
-    static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            Manhattan.printList();
-            System.err.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
-            String input = Utilities.readInputLine();
-            if (input.isEmpty()) System.exit(1);
-            args = new String[]{Manhattan.valueOf(Integer.parseInt(input)).toString()};
+    protected static void mainFromSubclass(String[] args) throws IOException {
+
+        // load property file
+        Property property = new Property();
+        if (1 < args.length) {
+            throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
+        } else if (args.length == 0) {
+            throw new IllegalArgumentException("A property file must be specified.");
+        } else {
+            property.load(Files.newBufferedReader(Paths.get(args[0])));
         }
 
-        if (args[0].equals("-l")) {
-            Manhattan.printList();
+        // get the fully-qualified class name of the Operation that has called this method
+        String operationClassName = Thread.currentThread().getStackTrace()[2].getClassName();
+        // get the Class instance of the Operation
+        Class<? extends Operation> operationClass;
+        try {
+            operationClass = Class.forName(operationClassName).asSubclass(Operation.class);
+        } catch (Exception e) {
+            System.err.println("Could not get " + operationClassName);
+            e.printStackTrace();
+            return;
+        }
+        // set manhattan as this operation class name
+        property.setProperty("manhattan", operationClass.getSimpleName());
+
+        operate(operationClass, property);
+
+    }
+
+    /**
+     * Operates an {@link Operation} with the specified {@link Property} file.
+     * @param operationClass Class that extends {@link Operation}
+     * @param property {@link Property} file
+     */
+    public static void operate(Class<? extends Operation> operationClass, Property property) {
+
+        // construct
+        Operation operation;
+        try {
+            Constructor<? extends Operation> constructor = operationClass.getConstructor(Property.class);
+            operation = constructor.newInstance(property);
+        } catch (InvocationTargetException e) {
+            System.err.println("Could not construct " + operationClass.getName() + " due to " + e.getCause());
+            e.printStackTrace();
+            return;
+        } catch (Exception e) {
+            System.err.println("Could not construct " + operationClass.getName());
+            e.printStackTrace();
             return;
         }
 
-        String[] arguments = Arrays.stream(args).skip(1).toArray(String[]::new);
-
-        if (EnumUtils.isValidEnum(Manhattan.class, args[0])) Manhattan.valueOf(args[0]).invokeMain(arguments);
-        else {
-            Properties prop = new Properties();
-            prop.load(Files.newBufferedReader(Paths.get(args[0])));
-            if (!prop.containsKey("manhattan")) throw new RuntimeException("'manhattan' is not set in " + args[0]);
-            String manhattan = prop.getProperty("manhattan");
-            if (!EnumUtils.isValidEnum(Manhattan.class, manhattan))
-                throw new RuntimeException(manhattan + " is not a valid name of Manhattan.");
-            try {
-                Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
-            } catch (Exception e) {
-                System.err.println("Could not run " + manhattan + " due to " + e.getCause());
-            }
+        // set up
+        try {
+            operation.set();
+        } catch (Exception e) {
+            System.err.println("Could not set up " + operationClass.getName());
+            e.printStackTrace();
+            return;
         }
+
+        long startTime = System.nanoTime();
+        System.err.println(operationClass.getName() + " is operating.");
+
+        // run
+        try {
+            operation.run();
+        } catch (Exception e) {
+            //System.err.println("Could not run " + operationClass.getName());
+            e.printStackTrace();
+            return;
+        }
+
+        System.err.println(operationClass.getName() + " finished in " +
+                GadgetAid.toTimeString(System.nanoTime() - startTime));
+
     }
 
-    Path getWorkPath();
+    abstract public void set() throws IOException;
 
-    Properties getProperties();
+    abstract public void run() throws IOException;
 
-    /**
-     * This method creates a file for the properties as the path.
-     *
-     * @param path    a path for the file (should be *.properties)
-     * @param options if any
-     * @throws IOException if any
-     */
-    default void writeProperties(Path path, OpenOption... options) throws IOException {
-        Properties p = getProperties();
-        p.setProperty("manhattan", getClass().getSimpleName());
-        p.store(Files.newBufferedWriter(path, options), "This properties for " + getClass().getName());
-    }
 
-    default Path getPath(String key) {
-        String path = getProperties().getProperty(key).trim();
-        if (path.startsWith("/")) return Paths.get(path);
-        return getWorkPath().resolve(path);
-    }
-
-    void run() throws Exception;
 }

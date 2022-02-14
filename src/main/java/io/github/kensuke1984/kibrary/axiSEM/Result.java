@@ -1,20 +1,21 @@
 package io.github.kensuke1984.kibrary.axiSEM;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
-import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.Operation_old;
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
+import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,7 +44,7 @@ import org.apache.http.annotation.Experimental;
  * @author anpan
  * @version 0.1
  */
-public class Result implements Operation {
+public class Result implements Operation_old {
 	private String meshName;
 	private List<BasicID> basicIDs;
 	private double highFreq;
@@ -56,7 +57,7 @@ public class Result implements Operation {
 	public static void main(String[] args) throws IOException {
 		Properties property = new Properties();
 		if (args.length == 0)
-			property.load(Files.newBufferedReader(Operation.findPath()));
+			property.load(Files.newBufferedReader(Operation_old.findPath()));
 		else if (args.length == 1)
 			property.load(Files.newBufferedReader(Paths.get(args[0])));
 		else
@@ -67,7 +68,7 @@ public class Result implements Operation {
 		long startT = System.nanoTime();
 		result.run();
 		System.err.println(
-				Result.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				Result.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - startT));
 	
 //		 test of resampling method
 //		/*
@@ -123,7 +124,7 @@ public class Result implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(SshDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+				.get(OneDPartialDSMSetup.class.getName() + GadgetAid.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan Result");
 			pw.println("##These are the properties for Result");
@@ -169,7 +170,7 @@ public class Result implements Operation {
 		set();
 		
 		try {
-			Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workPath);
+			Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(workPath);
 			for (EventFolder eventFolder : eventFolderSet) {
 				Path resultFolder = eventFolder.toPath()
 						.resolve("SOLVER/" + meshName + "/Data_Postprocessing/SEISMOGRAMS");
@@ -177,7 +178,7 @@ public class Result implements Operation {
 				
 				// get stations
 				Path stationFile = solverFolder.resolve("station.inf");
-				Set<Station> stationSet = new HashSet<>();
+				Set<Observer> stationSet = new HashSet<>();
 				BufferedReader readerStation = Files.newBufferedReader(stationFile);
 				String line = null;
 				while ((line = readerStation.readLine()) != null) {
@@ -186,8 +187,8 @@ public class Result implements Operation {
 					String network = s[1];
 					double latitude = Double.parseDouble(s[2]);
 					double longitude = Double.parseDouble(s[3]);
-					Station station = new Station(stationName
-							, new HorizontalPosition(latitude, longitude), network);
+					Observer station = new Observer(stationName
+							, network, new HorizontalPosition(latitude, longitude));
 					stationSet.add(station);
 				}
 				
@@ -263,11 +264,11 @@ public class Result implements Operation {
 					// get this file's station
 					String thisStationName = file.getName().split("_")[0];
 					String thisNetwork = file.getName().split("_")[1];
-					Station station = null;
-					for (Station sta : stationSet) {
-						if (sta.getName().equals(thisStationName) 
+					Observer station = null;
+					for (Observer sta : stationSet) {
+						if (sta.getStation().equals(thisStationName) 
 								&& sta.getNetwork().equals(thisNetwork)) {
-							station = new Station(sta);
+							station = new Observer(sta);
 							break;
 						}
 					}

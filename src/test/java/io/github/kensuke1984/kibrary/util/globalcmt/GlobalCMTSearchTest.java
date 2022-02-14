@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -35,21 +35,21 @@ class GlobalCMTSearchTest {
                 Integer.parseInt(time[0]), Integer.parseInt(time[1]), Integer.parseInt(time[2]));
     }
 
-    private static Location toLocation(String line) {
+    private static FullPosition toLocation(String line) {
         String[] parts = line.split("\\s");
-        return new Location(Double.parseDouble(parts[5]), Double.parseDouble(parts[6]),
+        return new FullPosition(Double.parseDouble(parts[5]), Double.parseDouble(parts[6]),
                 6371 - Double.parseDouble(parts[4]));
     }
 
-    private static boolean closeEnough(Location loc1, Location loc2) {
+    private static boolean closeEnough(FullPosition loc1, FullPosition loc2) {
         return Math.abs(loc1.getR() - loc2.getR()) < 30 && Math.abs(loc1.getLatitude() - loc2.getLatitude()) < 30 &&
                 Math.abs(loc1.getLongitude() - loc2.getLongitude()) < 30;
 //return true;
     }
 
-    private static GlobalCMTID findGlobalCMTID(LocalDateTime time, Location eventLoc) {
+    private static GlobalCMTID findGlobalCMTID(LocalDateTime time, FullPosition eventLoc) {
         GlobalCMTSearch globalCMTSearch = new GlobalCMTSearch(time.toLocalDate());
-        Predicate<GlobalCMTData> predicate = d -> {
+        Predicate<GlobalCMTAccess> predicate = d -> {
             if (d.getCMTTime().toLocalDate().getDayOfYear() != time.getDayOfYear() ||
                     d.getCMTTime().getYear() != time.getYear()) {
                 return false;

@@ -10,21 +10,21 @@ import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType
 import io.github.kensuke1984.kibrary.inversion.addons.WeightUnknownParameter;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.MatrixComputation;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
 import io.github.kensuke1984.kibrary.math.Matrix;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtAEntry;
-import io.github.kensuke1984.kibrary.waveformdata.addons.AtdEntry;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.addons.AtAEntry;
+import io.github.kensuke1984.kibrary.waveform.addons.AtdEntry;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -458,7 +458,7 @@ public class ObservationEquation {
 //		System.out.println(count.get()+" "+ DVECTOR.getNTimeWindow() * PARAMETER_LIST.size()+" "+PARAMETER_LIST.size());
         if (count.get() != DVECTOR.getNTimeWindow() * PARAMETER_LIST.size())
             throw new RuntimeException("Input partials are not enough.");
-        System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println("A is read and built in " + GadgetAid.toTimeString(System.nanoTime() - t));
     }
 	
     /**
@@ -499,7 +499,7 @@ public class ObservationEquation {
 			if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == DVECTOR.getNTimeWindow() * nn)
 				return;
 			int column = whatNumber(id.getPartialType(), id.getPerturbationLocation(),
-					id.getStation(), id.getGlobalCMTID(), id.getPhases());
+					id.getObserver(), id.getGlobalCMTID(), id.getPhases());
 			if (column < 0) {
 //				System.out.println("Unknown not found in file for " + id.getPerturbationLocation());
 				return;
@@ -548,10 +548,10 @@ public class ObservationEquation {
 		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != DVECTOR.getNTimeWindow() * nn ) {
 			System.out.println("Printing BasicIDs that are not in the partialID set...");
 			Set<id_station> idStationSet 
-				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getStation()))
+				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getObserver()))
 					.distinct().collect(Collectors.toSet());
 			Stream.of(DVECTOR.getObsIDs()).forEach(id -> {
-				id_station idStation = new id_station(id.getGlobalCMTID(), id.getStation());
+				id_station idStation = new id_station(id.getGlobalCMTID(), id.getObserver());
 				if (!idStationSet.contains(idStation)) {
 					System.out.println(id);
 				}
@@ -560,7 +560,7 @@ public class ObservationEquation {
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
 					DVECTOR.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + " + n + ")");  
 		}
-		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
+		System.err.println("A is read and built in " + GadgetAid.toTimeString(System.nanoTime() - t));
 		
 		// Normalize time partials
 		Map<UnknownParameter, Double> timeWeightsMap = new HashMap<>();
@@ -751,7 +751,7 @@ public class ObservationEquation {
      * @param location to look for
      * @return i, m<sub>i</sub> = type, parameterが何番目にあるか なければ-1
      */
-	private int whatNumber(PartialType type, Location location, Station station, GlobalCMTID id, Phase[] phases) {
+	private int whatNumber(PartialType type, FullPosition location, Observer station, GlobalCMTID id, Phase[] phases) {
 		for (int i = 0; i < PARAMETER_LIST.size(); i++) {
 			if (PARAMETER_LIST.get(i).getPartialType() != type)
 				continue;
@@ -895,7 +895,7 @@ public class ObservationEquation {
 			int start = DVECTOR.getStartPoints(i);
 			double synStartTime = id.getStartTime();
 			Path outPath = eventPath.resolve(
-					id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
+					id.getObserver() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
 				pw.println("#syntime par0 par1, .. parN");
 				for (int k = 0; k < id.getNpts(); k++) {
@@ -1090,9 +1090,9 @@ public class ObservationEquation {
     
     private class id_station {
 		private GlobalCMTID id;
-		private Station station;
+		private Observer station;
 		
-		public id_station(GlobalCMTID id, Station station) {
+		public id_station(GlobalCMTID id, Observer station) {
 			this.id = id;
 			this.station = station;
 		}

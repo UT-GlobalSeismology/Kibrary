@@ -5,12 +5,12 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import ucar.ma2.Array;
 import ucar.ma2.Index;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 
 public class GYPSUM {
 	

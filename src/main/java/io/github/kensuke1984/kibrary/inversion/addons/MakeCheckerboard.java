@@ -11,11 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 public class MakeCheckerboard {
 
@@ -50,7 +50,7 @@ public class MakeCheckerboard {
 		double dv = 0.01;
 		PolynomialStructure structure 
 			= PolynomialStructure.PREM;
-		Path outDvFile = Paths.get("dv" + Utilities.getTemporaryString() + ".inf");
+		Path outDvFile = Paths.get("dv" + GadgetAid.getTemporaryString() + ".inf");
 		
 		try {
 			BufferedReader reader = Files.newBufferedReader(horizontalSignFile);
@@ -78,7 +78,7 @@ public class MakeCheckerboard {
 				= UnknownParameterFile.read(parameterPath);
 			BufferedWriter writer = Files.newBufferedWriter(outDvFile);
 			for (int i = 0; i < unknowns.size(); i ++) {
-				Location loc = (Location) unknowns.get(i)
+				FullPosition loc = (FullPosition) unknowns.get(i)
 						.getLocation();
 				double dmu = dMU(dv, loc.getR(), structure);
 //				double dKappa = dKappa(dv, loc.getR(), structure);

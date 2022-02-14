@@ -1,7 +1,9 @@
 package io.github.kensuke1984.anisotime;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+
 import org.apache.commons.cli.UnrecognizedOptionException;
 
 import javax.swing.*;
@@ -102,10 +104,10 @@ final class ANISOtime {
 
     private static void downloadManual() throws IOException, NoSuchAlgorithmException, URISyntaxException {
         Path localPath = Environment.KIBRARY_SHARE.resolve(Paths.get("user_guide.pdf"));
-        Path path = Utilities.download(new URL(USER_GUIDE_URL));
+        Path path = FileAid.download(new URL(USER_GUIDE_URL));
         if (Files.exists(localPath)) {
-            String localSum = Utilities.checksum(localPath, "SHA-256");
-            String cloudSum = Utilities.checksum(path, "SHA-256");
+            String localSum = GadgetAid.checksum(localPath, "SHA-256");
+            String cloudSum = GadgetAid.checksum(path, "SHA-256");
             if (localSum.equals(cloudSum)) return;
         }
         Files.createDirectories(localPath.getParent());
@@ -126,10 +128,10 @@ final class ANISOtime {
     private static void downloadANISOtime() throws IOException, NoSuchAlgorithmException, URISyntaxException {
         Path localPath = Paths.get(ANISOtime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         if (Files.isDirectory(localPath) || localPath.getFileName().toString().contains("kibrary")) return;
-        String localSum = Utilities.checksum(localPath, "SHA-256");
-        Path path = Utilities.download(
+        String localSum = GadgetAid.checksum(localPath, "SHA-256");
+        Path path = FileAid.download(
                 new URL(System.getProperty("os.name").contains("Windows") ? WINDOWS_SCRIPT_URL : UNIX_SCRIPT_URL));
-        String cloudSum = Utilities.checksum(path, "SHA-256");
+        String cloudSum = GadgetAid.checksum(path, "SHA-256");
         if (localSum.equals(cloudSum)) return;
         Files.move(path, localPath.resolveSibling("latest_anisotime"), StandardCopyOption.REPLACE_EXISTING);
         String updateMsg = "ANISOtime update in progress.  Please relaunch ANISOtime if it doesn't restart automatically.";

@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.external.gmt;
 
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * クロスセクションの地表面でのパス

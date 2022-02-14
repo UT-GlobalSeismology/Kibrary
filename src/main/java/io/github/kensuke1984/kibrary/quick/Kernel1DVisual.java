@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -41,13 +41,13 @@ public class Kernel1DVisual {
 				
 				double[] data = partial.getData();
 				double samplingHz = partial.getSamplingHz();
-				double distance = partial.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(partial.getStation().getPosition())
+				double distance = partial.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(partial.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (samplingHz != 1.)
 					throw new RuntimeException("SamplingHz != 1 not yet supported");
 				double t0 = partial.getStartTime();
 				
-				Path filePath2 = dir11.resolve(partial.getStation()
+				Path filePath2 = dir11.resolve(partial.getObserver()
 						+ "_" + new Phases(partial.getPhases()).toString()
 						+ "_" + (int) partial.getPerturbationLocation().getR()
 						+ "_" + partial.getPartialType()

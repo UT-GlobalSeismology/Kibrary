@@ -1,7 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -10,6 +8,8 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * 摂動点情報 ポイント名に対するLocation XY?? lat lon
