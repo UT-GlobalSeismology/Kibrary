@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -154,6 +155,11 @@ public class TimewindowMaker extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        String date = GadgetAid.getTemporaryString();
+        outputPath = workPath.resolve("timewindow" + date + ".dat");
+        invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
+        timewindowSet = Collections.synchronizedSet(new HashSet<>());
+
         components = Arrays.stream(property.parseString("components", "Z R T")
                 .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
 
