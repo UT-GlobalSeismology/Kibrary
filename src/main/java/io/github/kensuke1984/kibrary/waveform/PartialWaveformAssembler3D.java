@@ -1036,7 +1036,7 @@ public class PartialWaveformAssembler3D extends Operation {
             do {
                 dateString = GadgetAid.getTemporaryString();
                 outPath = workPath.resolve("assembled" + dateString);
-                logPath = outPath.resolve("pdm" + dateString + ".log");
+                logPath = outPath.resolve("assembler" + dateString + ".log");
                 if (!Files.exists(outPath))
                     Files.createDirectories(outPath);
                 System.err.println("Output directory is " + outPath);

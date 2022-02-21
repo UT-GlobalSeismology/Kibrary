@@ -356,7 +356,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
             // In case observers with same position but different name exist
             if (Files.exists(infPath)) {
-                System.err.println(" " + infPath + " already exist, skipping.");
+                System.err.println(" " + observer.toString() + " : " + infPath + " already exists, skipping.");
                 continue;
             }
 

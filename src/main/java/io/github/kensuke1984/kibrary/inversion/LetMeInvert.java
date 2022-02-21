@@ -1388,7 +1388,7 @@ public class LetMeInvert extends Operation {
 
     @Override
     public void run() throws IOException {
-        if (tag.isEmpty()) {
+        if (tag == null) {
             outPath = workPath.resolve("lmi" + GadgetAid.getTemporaryString());
         } else {
             outPath = workPath.resolve("lmi_" + tag + GadgetAid.getTemporaryString());
