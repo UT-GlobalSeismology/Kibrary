@@ -12,15 +12,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation_old;
-import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.inversion.Dvector;
@@ -42,91 +41,110 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * @since version 0.2.2
  * @version 2022/2/23 Moved & renamed from kibrary.inversion.CheckerBoardTest
  */
-public class PseudoWaveformGenerator implements Operation_old {
+public class PseudoWaveformGenerator extends Operation {
+
+    private final Property property;
+    /**
+     * Path of the work folder
+     */
+    private Path workPath;
 
     /**
      * Path of a {@link BasicIDFile} file (id part)
      */
-    protected Path waveIDPath;
+    private Path basicIDPath;
     /**
      * Path of a {@link BasicIDFile} file (data part)
      */
-    protected Path waveformPath;
-    /**
-     * Path for the file ({@link UnknownParameterFile})
-     */
-    protected Path unknownParameterListPath;
+    private Path basicPath;
     /**
      * Path of the partialID
      */
-    protected Path partialIDPath;
+    private Path partialIDPath;
     /**
      * Path of the partial data
      */
-    protected Path partialWaveformPath;
-    protected boolean iterate;
-    protected boolean noise;
-    protected double noisePower;
+    private Path partialPath;
+    /**
+     * Path for the file ({@link UnknownParameterFile})
+     */
+    private Path unknownParameterPath;
     /**
      * Path of a txt file containing psudoM
      */
-    protected Path inputDataPath;
+    private Path inputDataPath;
+
+    private boolean iterate;
+    private boolean noise;
+    private double noisePower;
+
     private ObservationEquation eq;
-    private Properties property;
-    private Path workPath;
+    private Set<GlobalCMTID> eventSet = new HashSet<>();
     private Set<Observer> observerSet = new HashSet<>();
     private double[][] ranges;
     private Phase[] phases;
-    private Set<GlobalCMTID> idSet = new HashSet<>();
 
-    public PseudoWaveformGenerator(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
-        read();
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(PseudoWaveformGenerator.class.getName() + GadgetAid.getTemporaryString() + ".properties");
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan CheckerBoardTest");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
-            pw.println("##Path of a waveID file, must be defined");
-            pw.println("#waveIDPath id.dat");
-            pw.println("##Path of a waveform file, must be defined");
-            pw.println("#waveformPath waveform.dat");
-            pw.println("##Path of a partial id file, must be defined");
+            pw.println("#workPath ");
+            pw.println("##Path of a basic ID file, must be defined");
+            pw.println("#basicIDPath actualID.dat");
+            pw.println("##Path of a basic waveform file, must be defined");
+            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a partial ID file, must be defined");
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be defined");
-            pw.println("#partialWaveformPath partial.dat");
+            pw.println("#partialPath partial.dat");
             pw.println("##Path of an unknown parameter list file, must be defined");
-            pw.println("#unknownParameterListPath unknowns.inf");
+            pw.println("#unknownParameterPath unknowns.inf");
             pw.println("##Path of an input data list file, must be defined");
             pw.println("#inputDataPath input.inf");
-            pw.println("##boolean If this is for Iterate (false)");
-            pw.println("#iterate");
-            pw.println("##boolean if it adds noise (false)");
-            pw.println("#noise");
-            pw.println("##noise power (1000)");
-            pw.println("#noisePower");
+            pw.println("##(boolean) Whether this is for Iterate (false)");
+            pw.println("#iterate ");
+            pw.println("##(boolean) Whether to add noise (false)");
+            pw.println("#noise ");
+            pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
+            pw.println("#noisePower ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    /**
-     * @param args [a property file name]
-     * @throws Exception if any
-     */
-    public static void main(String[] args) throws Exception {
-        Properties property = Property_old.parse(args);
-        PseudoWaveformGenerator cbt = new PseudoWaveformGenerator(property);
-        long time = System.nanoTime();
-        System.err.println(PseudoWaveformGenerator.class.getName() + " is going.");
-        cbt.run();
-        System.err.println(
-                PseudoWaveformGenerator.class.getName() + " finished in " + GadgetAid.toTimeString(System.nanoTime() - time));
+    public PseudoWaveformGenerator(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+
+        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        basicPath = property.parsePath("basicPath", null, true, workPath);
+        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
+        partialPath = property.parsePath("partialPath", null, true, workPath);
+        unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
+        inputDataPath = property.parsePath("inputDataPath", null, true, workPath);
+
+        iterate = property.parseBoolean("iterate", "false");
+        noise = property.parseBoolean("noise", "false");
+        if (noise) {
+            noisePower = property.parseDouble("noisePower", "1000");
+        }
+    }
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
@@ -154,9 +172,10 @@ public class PseudoWaveformGenerator implements Operation_old {
             noisePower = Double.parseDouble(property.getProperty("noisePower"));
         iterate = Boolean.parseBoolean(property.getProperty("iterate"));
     }
-
+*/
     @Override
-    public void run() throws Exception {
+    public void run() throws IOException {
+        read();
         readIDs();
         RealVector pseudoM = readPseudoM();
         RealVector pseudoD = computePseudoD(pseudoM);
@@ -170,12 +189,20 @@ public class PseudoWaveformGenerator implements Operation_old {
         else output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
     }
 
+    private void read() throws IOException {
+        BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+        Dvector dVector = new Dvector(ids, id -> true, WeightingType.RECIPROCAL);
+        PartialID[] pids = PartialIDFile.read(partialIDPath, partialPath);
+        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
+        eq = new ObservationEquation(pids, parameterList, dVector, false, false, null, null, null, null);
+    }
+
     private void readIDs() {
         List<double[]> ranges = new ArrayList<>();
         Set<Phase> tmpPhases = new HashSet<>();
         for (BasicID id : eq.getDVector().getObsIDs()) {
             observerSet.add(id.getObserver());
-            idSet.add(id.getGlobalCMTID());
+            eventSet.add(id.getGlobalCMTID());
             for (Phase phase : id.getPhases())
                 tmpPhases.add(phase);
             double[] range = new double[] { id.getMinPeriod(), id.getMaxPeriod() };
@@ -193,14 +220,6 @@ public class PseudoWaveformGenerator implements Operation_old {
         phases = tmpPhases.toArray(phases);
     }
 
-    private void read() throws IOException {
-        BasicID[] ids = BasicIDFile.read(waveIDPath, waveformPath);
-        Dvector dVector = new Dvector(ids, id -> true, WeightingType.RECIPROCAL);
-        PartialID[] pids = PartialIDFile.read(partialIDPath, partialWaveformPath);
-        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
-        eq = new ObservationEquation(pids, parameterList, dVector, false, false, null, null, null, null);
-    }
-
     /**
      * 読み込んだデータセットに対してボルン波形を観測波形として 理論波形を理論波形として書き込む（上書きではない）
      *
@@ -216,7 +235,7 @@ public class PseudoWaveformGenerator implements Operation_old {
         Dvector dVector = eq.getDVector();
         RealVector[] bornPart = dVector.separate(bornVec);
         System.err.println("outputting " + outIDPath + " " + outDataPath);
-        try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, observerSet, idSet, ranges, phases)) {
+        try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, observerSet, eventSet, ranges, phases)) {
             BasicID[] obsIDs = dVector.getObsIDs();
             BasicID[] synIDs = dVector.getSynIDs();
             for (int i = 0; i < dVector.getNTimeWindow(); i++) {
@@ -242,7 +261,7 @@ public class PseudoWaveformGenerator implements Operation_old {
         Dvector dVector = eq.getDVector();
         RealVector[] bornPart = dVector.separate(bornVec);
         System.err.println("outputting " + outIDPath + " " + outDataPath);
-        try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, observerSet, idSet, ranges, phases)) {
+        try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, observerSet, eventSet, ranges, phases)) {
             BasicID[] obsIDs = dVector.getObsIDs();
             BasicID[] synIDs = dVector.getSynIDs();
             for (int i = 0; i < dVector.getNTimeWindow(); i++) {
@@ -298,16 +317,6 @@ public class PseudoWaveformGenerator implements Operation_old {
         }
         // pseudoD = pseudoD.add(randomD);
         return dVector.combine(noiseV);
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
     }
 
 }

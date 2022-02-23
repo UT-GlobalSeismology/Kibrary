@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
+import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
 /**
  * An enum where all {@link Operation}s in Kibrary should be assigned to.
@@ -56,6 +57,7 @@ enum Manhattan {
     PartialIDMerge(52, PartialIDMerge.class), //
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class), //
+    PseudoWaveformGenerator(65, PseudoWaveformGenerator.class), //
     // Temporal 100
     ;
 
