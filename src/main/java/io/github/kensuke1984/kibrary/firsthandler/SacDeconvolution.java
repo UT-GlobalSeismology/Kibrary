@@ -30,6 +30,18 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  */
 class SacDeconvolution {
 
+    private final Path sourcePath;
+    private final Path spectraPath;
+    private final Path outputPath;
+
+    private final double minFreq;
+    private final double maxFreq;
+
+    /**
+     * true: sretraFile contain NaN, false: spectraFile in NOT contain NaN
+     */
+    private boolean isNaN = false;
+
     /**
      * 0: taper なし, 1: sine taper, 2: cosine taper TODO
      */
@@ -49,21 +61,25 @@ class SacDeconvolution {
      */
     private static FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
-    private SacDeconvolution() {
-    }
-
     /**
-     * @param sourceSacPath 元になるSacFile
+     * @param sourcePath 元になるSacFile
      * @param spectraPath   evalrespにより作成したスペクトルファイル
-     * @param outputSacPath 装置関数を外したSacFile
+     * @param outputPath 装置関数を外したSacFile
      * @param minFreq       minimum frequency
      * @param maxFreq       maximum frequency
-     * @param isNaN         spectra file contains NAN
      */
-    static void compute(Path sourceSacPath, Path spectraPath, Path outputSacPath, double minFreq, double maxFreq, boolean isNaN)
+    SacDeconvolution(Path sourceSacPath, Path spectraPath, Path outputSacPath, double minFreq, double maxFreq) {
+        sourcePath = sourceSacPath;
+        this.spectraPath = spectraPath;
+        outputPath = outputSacPath;
+        this.minFreq = minFreq;
+        this.maxFreq = maxFreq;
+    }
+
+    void compute()
             throws IOException {
-        Map<SACHeaderEnum, String> sacHeader = SACUtil.readHeader(sourceSacPath);
-        double[] wavedata = SACUtil.readSACData(sourceSacPath);
+        Map<SACHeaderEnum, String> sacHeader = SACUtil.readHeader(sourcePath);
+        double[] wavedata = SACUtil.readSACData(sourcePath);
 
         int npts = Integer.parseInt(sacHeader.get(SACHeaderEnum.NPTS));
 
@@ -76,10 +92,11 @@ class SacDeconvolution {
 
         Complex[] resp = new Complex[npts];
         double[] freq = new double[npts];
-        readResponseFile(spectraPath, freq, resp, isNaN);
+        readResponseFile(spectraPath, freq, resp);
 
-        if (isNaN)
+        if (isNaN) {
             return;
+        }
 
         // cut frequencyセット
         double cutfreq = 0.01;
@@ -98,7 +115,7 @@ class SacDeconvolution {
 
         Arrays.parallelSetAll(wavedata, i -> finalComplexWave[i].getReal());
 
-        SACUtil.writeSAC(outputSacPath, sacHeader, wavedata);
+        SACUtil.writeSAC(outputPath, sacHeader, wavedata);
 
     }
 
@@ -163,19 +180,38 @@ class SacDeconvolution {
      * @param spectorPath path for the file
      * @param freq        frequency data
      * @param resp        response data
-     * @param isNaN       file contains NAN
+     * @param isNaN       file contains NAN or file is empty
      */
-    private static void readResponseFile(Path spectorPath, double[] freq, Complex[] resp, boolean isNaN) throws IOException {
+    private void readResponseFile(Path spectorPath, double[] freq, Complex[] resp) throws IOException {
         List<String> lines = Files.readAllLines(spectorPath);
+
+        if (lines.size() <= 0) {
+            isNaN = true;
+        }
+
         for (int i = 0; i < lines.size(); i++) {
             String[] parts = lines.get(i).split("\\s+");
-            if (parts[0].equals("-NAN") || parts[1].equals("-NAN") || parts[2].equals("-NAN")) {
+
+            try {
+                freq[i] = Double.parseDouble(parts[0]);
+                resp[i] = new Complex(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+            } catch (NumberFormatException e) {
                 isNaN = true;
                 break;
             }
-            freq[i] = Double.parseDouble(parts[0]);
-            resp[i] = new Complex(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+
+            if (resp[i] == null || resp[i].isNaN()) {
+                isNaN = true;
+                break;
+            }
         }
+    }
+
+    /*
+     * @return (boolean) spectra file contain NaN
+     */
+    boolean isNaN() {
+        return isNaN;
     }
 
 }
