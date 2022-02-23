@@ -7,10 +7,10 @@ import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
-import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
+import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
  * @version 0.0.5.3
  */
 public enum Manhattan_old {
-    CheckerBoardTest(1, CheckerBoardTest.class), //
+    CheckerBoardTest(1, PseudoWaveformGenerator.class), //
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
     RaypathDistribution(13, RaypathDistribution.class), //
