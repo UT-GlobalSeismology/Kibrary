@@ -70,9 +70,9 @@ public class PseudoWaveformGenerator extends Operation {
      */
     private Path unknownParameterPath;
     /**
-     * Path of a txt file containing psudoM
+     * Path of a model file containing psudoM
      */
-    private Path inputDataPath;
+    private Path modelPath;
 
     private boolean iterate;
     private boolean noise;
@@ -111,8 +111,8 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("#partialPath partial.dat");
             pw.println("##Path of an unknown parameter list file, must be defined");
             pw.println("#unknownParameterPath unknowns.inf");
-            pw.println("##Path of an input data list file, must be defined");
-            pw.println("#inputDataPath input.inf");
+            pw.println("##Path of a model file, must be defined");
+            pw.println("#modelPath model.inf");
             pw.println("##(boolean) Whether this is for Iterate (false)");
             pw.println("#iterate ");
             pw.println("##(boolean) Whether to add noise (false)");
@@ -136,7 +136,7 @@ public class PseudoWaveformGenerator extends Operation {
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
-        inputDataPath = property.parsePath("inputDataPath", null, true, workPath);
+        modelPath = property.parsePath("modelPath", null, true, workPath);
 
         iterate = property.parseBoolean("iterate", "false");
         noise = property.parseBoolean("noise", "false");
@@ -280,7 +280,7 @@ public class PseudoWaveformGenerator extends Operation {
      * Reads pseudoM
      */
     private RealVector readPseudoM() throws IOException {
-        List<String> lines = Files.readAllLines(inputDataPath);
+        List<String> lines = Files.readAllLines(modelPath);
         if (lines.size() != eq.getMlength())
             throw new RuntimeException("input model length is wrong");
         double[] pseudoM = lines.stream().mapToDouble(Double::parseDouble).toArray();

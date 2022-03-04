@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
@@ -19,6 +20,15 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  */
 public class CheckerboardMaker {
 
+    private Path voxelPath;
+    private double amplitude;
+    private boolean flipSign;
+    private PolynomialStructure prem;
+
+    String dateStr;
+
+    List<Double> perturbationList = new ArrayList<>();
+    List<Double> radiusList = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
@@ -28,9 +38,22 @@ public class CheckerboardMaker {
         Path voxelPath = Paths.get(args[0]);
         double amplitude = Double.parseDouble(args[1]);
         boolean flipSign = Boolean.parseBoolean(args[2]);
+        PolynomialStructure prem = PolynomialStructure.PREM;
 
-//        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);
+        CheckerboardMaker cm = new CheckerboardMaker(voxelPath, amplitude, flipSign, prem);
+        cm.velocityCheckerboard();
+        cm.writeModel();
+    }
 
+    public CheckerboardMaker(Path voxelPath, double amplitude, boolean flipSign, PolynomialStructure prem) {
+        this.voxelPath = voxelPath;
+        this.amplitude = amplitude;
+        this.flipSign = flipSign;
+        this.prem = prem;
+        dateStr = GadgetAid.getTemporaryString();
+    }
+
+    private void velocityCheckerboard() throws IOException {
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         //double[] layerThicknesses = file.getThicknesses();
@@ -39,7 +62,6 @@ public class CheckerboardMaker {
         double dLongitude = file.getSpacingLongitude();
         HorizontalPosition[] positions = file.getHorizontalPositions();
 
-        List<Double> perturbations = new ArrayList<>();
         HorizontalPosition referencePosition = positions[0];
         for (HorizontalPosition position : positions) {
             for (int i = 0; i < radii.length; i++) {
@@ -47,19 +69,42 @@ public class CheckerboardMaker {
                         + (position.getLongitude() - referencePosition.getLongitude()) / dLongitude) + i;
 
                 if ((numDiff % 2 == 1) ^ flipSign) { // ^ is XOR
-                    perturbations.add(-amplitude);
+                    perturbationList.add(-amplitude);
                 } else {
-                    perturbations.add(amplitude);
+                    perturbationList.add(amplitude);
                 }
+                radiusList.add(radii[i]);
             }
         }
 
-        Path outputPath = Paths.get("model" + GadgetAid.getTemporaryString() + ".inf");
-        System.err.println("Outputting in " + outputPath);
+        Path velPath = Paths.get("velocity" + dateStr + ".inf");
+        System.err.println("Outputting velocity perturbations in " + velPath);
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            perturbations.forEach(pw::println);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(velPath))) {
+            perturbationList.forEach(pw::println);
         }
 
     }
+
+    private void writeModel() throws IOException {
+        Path modelPath = Paths.get("model" + dateStr + ".inf");
+        System.err.println("Outputting modulus perturbations in " + modelPath);
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(modelPath))) {
+            for (int i = 0; i < perturbationList.size(); i++) {
+                pw.println(VdashToDeltaMu(perturbationList.get(i), radiusList.get(i)));
+            }
+        }
+    }
+
+    private double VdashToDeltaMu(double deltaVs, double radius){
+        double v = prem.getVshAt(radius);
+        double rho = prem.getRhoAt(radius);
+        double vDash = (1 + deltaVs * 0.01) * v;
+        double deltaMu = (rho * vDash * vDash) - prem.computeMu(radius);
+        return deltaMu;
+    }
+
+
+
 }
