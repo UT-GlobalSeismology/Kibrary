@@ -311,8 +311,8 @@ public class ModelCovarianceMatrix {
 			List<Integer> tmpI = new ArrayList<>();
 			List<Double> tmpV = new ArrayList<>();
 			for (int j = 0; j < n ; j++) {
-				FullPosition loci = parameters.get(i).getLocation();
-				FullPosition locj = parameters.get(j).getLocation();
+				FullPosition loci = parameters.get(i).getPosition();
+				FullPosition locj = parameters.get(j).getPosition();
 				double delta = Math.toDegrees(loci.getEpicentralDistance(locj));
 				double dr = Math.abs(loci.getR() - locj.getR());
 				double cmH = 0;

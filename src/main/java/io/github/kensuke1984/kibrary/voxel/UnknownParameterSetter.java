@@ -57,9 +57,6 @@ public class UnknownParameterSetter {
         double dLongitude = file.getSpacingLongitude();
         HorizontalPosition[] positions = file.getHorizontalPositions();
 
-        if (layerThicknesses.length != radii.length)
-            throw new IllegalArgumentException("The number of layers and radii does not match.");
-
         List<UnknownParameter> parameterList = new ArrayList<>();
         int numFinished = 0;
         int numTotal = positions.length * radii.length;

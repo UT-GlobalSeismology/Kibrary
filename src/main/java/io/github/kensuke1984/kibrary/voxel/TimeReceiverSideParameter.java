@@ -93,7 +93,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
     }
 
     @Override
-    public FullPosition getLocation() {
+    public FullPosition getPosition() {
         return pointLocation;
     }
 

@@ -83,15 +83,15 @@ public class ResampleGrid {
 		Path parameterPath = Paths.get(args[0]);
 		try {
 			List<UnknownParameter> parameterstmp = UnknownParameterFile.read(parameterPath);
-			double r0 = parameterstmp.stream().map(u -> u.getLocation().getR()).findFirst().get();
+			double r0 = parameterstmp.stream().map(u -> u.getPosition().getR()).findFirst().get();
 			PartialType type = parameterstmp.stream().map(UnknownParameter::getPartialType).findFirst().get();
 			List<UnknownParameter> parameters = parameterstmp.stream()
-					.filter(u -> u.getLocation().getR() == r0
+					.filter(u -> u.getPosition().getR() == r0
 							&& u.getPartialType().equals(type))
 					.collect(Collectors.toList());
 //			List<UnknownParameter> parameters = parameterstmp;
 			
-			double dl = parameterstmp.stream().mapToDouble(p -> Math.abs(p.getLocation().getLatitude() - parameterstmp.get(0).getLocation().getLatitude())).distinct().sorted().toArray()[1];
+			double dl = parameterstmp.stream().mapToDouble(p -> Math.abs(p.getPosition().getLatitude() - parameterstmp.get(0).getPosition().getLatitude())).distinct().sorted().toArray()[1];
 			
 //			double dlon = 5.;
 //			double dlat = 5.;
@@ -209,7 +209,7 @@ public class ResampleGrid {
 		List<UnknownParameter> resampled = new ArrayList<>();
 		
 		for (UnknownParameter p : parameters) {
-			FullPosition loc = p.getLocation();
+			FullPosition loc = p.getPosition();
 			double lat = loc.getLatitude();
 			double lon = loc.getLongitude();
 			double r = loc.getR();
@@ -248,7 +248,7 @@ public class ResampleGrid {
 	}
 	
 	public List<HorizontalPosition> getResampledPositions() {
-		return resampledUnknowns.stream().map(u -> u.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		return resampledUnknowns.stream().map(u -> u.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
 	}
 	
 	public double getNewDlat() {

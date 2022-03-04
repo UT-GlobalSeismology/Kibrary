@@ -82,7 +82,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
     }
 
     @Override
-    public FullPosition getLocation() {
+    public FullPosition getPosition() {
         return pointLocation;
     }
 

@@ -975,11 +975,11 @@ public class ObservationEquation {
 			List<UnknownParameter> unknownForStructure = PARAMETER_LIST.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 			for (UnknownParameter unknown : unknownForStructure) {
-				double lat = unknown.getLocation().getLatitude();
-				double lon = unknown.getLocation().getLongitude();
+				double lat = unknown.getPosition().getLatitude();
+				double lon = unknown.getPosition().getLongitude();
 				if (lon < 0)
 					lon += 360.;
-				double r = unknown.getLocation().getR();
+				double r = unknown.getPosition().getR();
 				pw.println(unknown.getPartialType() + " " + lat + " " + lon + " " + r + " " + sMap.get(unknown));
 			}
 		} catch (IOException e) {

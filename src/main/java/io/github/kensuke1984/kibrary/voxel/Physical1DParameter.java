@@ -69,7 +69,7 @@ public class Physical1DParameter implements UnknownParameter {
     }
 
     @Override
-    public FullPosition getLocation() {
+    public FullPosition getPosition() {
         return new FullPosition(0., 0., perturbationR);
     }
 

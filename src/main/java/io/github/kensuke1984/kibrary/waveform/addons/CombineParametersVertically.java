@@ -56,7 +56,7 @@ public class CombineParametersVertically {
 			Set<GlobalCMTID> globalCMTIDSet = Stream.of(partials).parallel().map(par -> par.getGlobalCMTID()).collect(Collectors.toSet());
 			
 			double[][] periodRanges = new double[][] {{partials[0].getMinPeriod(), partials[0].getMaxPeriod()}};
-			Set<FullPosition> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getLocation()).collect(Collectors.toSet());
+			Set<FullPosition> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getPosition()).collect(Collectors.toSet());
 			
 //			Phase[] phases = new Phase[] {Phase.ScS, Phase.S};
 //			Phase[] phases = new Phase[] {Phase.PcP, Phase.P};
@@ -96,7 +96,7 @@ public class CombineParametersVertically {
 	//							System.out.println("------\n" + unknown.getLocation());
 	//							stationPartials.stream().forEach(par -> System.out.println(par.getPerturbationLocation()));
 								
-								PartialID tmpID = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getLocation())
+								PartialID tmpID = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getPosition())
 										&& par.getPartialType().equals(unknown.getPartialType())).findFirst().get();
 								dataVector = dataVector.add(new ArrayRealVector(tmpID.getData()).mapMultiply(weight));
 								
@@ -105,7 +105,7 @@ public class CombineParametersVertically {
 							
 							PartialID tmpPartial = new PartialID(refID.getObserver(), refID.getGlobalCMTID(), refID.getSacComponent(), refID.getSamplingHz()
 									, refID.getStartTime(), refID.getNpts(), refID.getMinPeriod(), refID.getMaxPeriod(), refID.getPhases(), refID.getStartByte()
-									, refID.isConvolute(), newUnknowns[inew].getLocation(), newUnknowns[inew].getPartialType(), dataVector.toArray());
+									, refID.isConvolute(), newUnknowns[inew].getPosition(), newUnknowns[inew].getPartialType(), dataVector.toArray());
 							try {
 								writer.addPartialID(tmpPartial);
 							} catch (IOException e) {

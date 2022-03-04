@@ -31,7 +31,7 @@ public class SelectLocalVoxel {
 		
 		for (UnknownParameter p : parameterList) {
 			int bit = 0;
-			if (contains(p.getLocation(), lowerLeftPoint, upperRightPoint, minDepth, maxDepth))
+			if (contains(p.getPosition(), lowerLeftPoint, upperRightPoint, minDepth, maxDepth))
 				bit = 1;
 			pw.println(bit);
 		}

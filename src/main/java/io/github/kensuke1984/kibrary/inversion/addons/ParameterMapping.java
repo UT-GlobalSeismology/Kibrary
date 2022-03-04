@@ -89,7 +89,7 @@ public class ParameterMapping {
 		
 		this.input = null;
 		
-		List<Double> tmpRs = Stream.of(originalUnknowns).map(p -> p.getLocation().getR()).distinct().collect(Collectors.toList());
+		List<Double> tmpRs = Stream.of(originalUnknowns).map(p -> p.getPosition().getR()).distinct().collect(Collectors.toList());
 		Collections.sort(tmpRs);
 		
 		this.newRadii = new double[tmpRs.size()];
@@ -166,7 +166,7 @@ public class ParameterMapping {
 //		}
 		//----
 		
-		List<HorizontalPosition> horizontalPoints = originalUnknownList.stream().map(p -> p.getLocation().toHorizontalPosition())
+		List<HorizontalPosition> horizontalPoints = originalUnknownList.stream().map(p -> p.getPosition().toHorizontalPosition())
 			.distinct().collect(Collectors.toList());
 		
 		int nNewUnknown = horizontalPoints.size() * iNewUnknown * typeIndex.size();
@@ -175,10 +175,10 @@ public class ParameterMapping {
 		for (int i = 0; i < horizontalPoints.size(); i++) {
 			HorizontalPosition horizontalPoint = horizontalPoints.get(i);
 			for (int k = 0; k < originalUnknowns.length; k++) {
-				if (originalUnknowns[k].getLocation().toHorizontalPosition().equals(horizontalPoint)) {
+				if (originalUnknowns[k].getPosition().toHorizontalPosition().equals(horizontalPoint)) {
 					for (int l = 0; l < radiiOriginalToNewIndex.size(); l++) {
 						double r = radii.get(l);
-						if (MathAid.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
+						if (MathAid.equalWithinEpsilon(originalUnknowns[k].getPosition().getR(), r, eps)) {
 							iOriginalToNew[k] = radiiOriginalToNewIndex.get(l) * horizontalPoints.size() + i 
 									+ typeIndex.get(originalUnknowns[k].getPartialType()) * nNewUnknown / typeIndex.size();
 						}
@@ -253,14 +253,14 @@ public class ParameterMapping {
 			double weight = 0;
 			for (int j = 0; j < iNewToOriginal[i].length; j++) {
 				UnknownParameter unknown = originalUnknowns[iNewToOriginal[i][j]];
-				rmean += unknown.getLocation().getR();
+				rmean += unknown.getPosition().getR();
 				weight += unknown.getWeighting();
 			}
 			rmean /= iNewToOriginal[i].length;
 			
 			UnknownParameter refUnknown = originalUnknowns[iNewToOriginal[i][0]];
 			PartialType type = refUnknown.getPartialType();
-			FullPosition location = refUnknown.getLocation().toFullPosition(rmean);
+			FullPosition location = refUnknown.getPosition().toFullPosition(rmean);
 			UnknownParameter newUnknown = new Physical3DParameter(type, location, weight);
 			unknowns[i] = newUnknown;
 		}

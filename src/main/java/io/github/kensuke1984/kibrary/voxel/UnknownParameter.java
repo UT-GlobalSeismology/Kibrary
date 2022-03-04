@@ -28,7 +28,7 @@ public interface UnknownParameter {
      */
     public PartialType getPartialType();
 
-    public FullPosition getLocation();
+    public FullPosition getPosition();
 
     public byte[] getBytes();
 

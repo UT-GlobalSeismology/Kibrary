@@ -216,7 +216,7 @@ public final class AtdFile {
 		
 		List<AtdEntry> atdEntries = new ArrayList<>();
 		for (int i = 0; i < unknowns.length; i++) {
-			AtdEntry entry = new AtdEntry(weightingType, frequencyRange, phases, correctionType, unknowns[i].getPartialType(), unknowns[i].getLocation(), atd.getEntry(i));
+			AtdEntry entry = new AtdEntry(weightingType, frequencyRange, phases, correctionType, unknowns[i].getPartialType(), unknowns[i].getPosition(), atd.getEntry(i));
 			atdEntries.add(entry);
 		}
 		

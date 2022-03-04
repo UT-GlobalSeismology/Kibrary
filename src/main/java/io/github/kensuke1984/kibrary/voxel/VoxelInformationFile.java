@@ -98,6 +98,9 @@ public class VoxelInformationFile {
 
         voxelRadii = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 
+        if (layerThicknesses.length != voxelRadii.length)
+            throw new IllegalArgumentException("The number of layers and radii does not match.");
+
         String[] part = reader.next().split("\\s+");
         dLatitude = Double.parseDouble(part[0]);
         dLongitude = Double.parseDouble(part[1]);

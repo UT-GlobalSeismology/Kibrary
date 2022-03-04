@@ -224,9 +224,9 @@ public class ThreeDParameterMapping {
 				UnknownParameter unknown = originalUnknowns[iNewToOriginal[i][j]];
 //				latmean += unknown.getLocation().getLatitude();
 //				lonmean += unknown.getLocation().getLongitude();
-				lats.add(unknown.getLocation().getLatitude());
-				lons.add(unknown.getLocation().getLongitude());
-				rmean += unknown.getLocation().getR();
+				lats.add(unknown.getPosition().getLatitude());
+				lons.add(unknown.getPosition().getLongitude());
+				rmean += unknown.getPosition().getR();
 				weight += unknown.getWeighting();
 			}
 //			latmean /= iNewToOriginal[i].length;

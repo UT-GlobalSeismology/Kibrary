@@ -162,7 +162,7 @@ public class VelocityField3D_deprec {
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 		List<UnknownParameter> originalUnknowns = ir.getOriginalUnknownParameterList();
 		TriangleRadialSpline trs = null;
-		List<HorizontalPosition> horizontalPoints = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition())
+		List<HorizontalPosition> horizontalPoints = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition())
 				.distinct().collect(Collectors.toList());
 		if (partialCombination.equals("trs")) {
 			Map<PartialType, Integer[]> nNewParameter = trs.parseNParameters(unknowns);
@@ -189,7 +189,7 @@ public class VelocityField3D_deprec {
 					Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 					Map<FullPosition, Double> locAnswerMap = new HashMap<>();
-					answerMap.forEach((m, v) -> locAnswerMap.put(m.getLocation(), v));
+					answerMap.forEach((m, v) -> locAnswerMap.put(m.getPosition(), v));
 					Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 					answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
 					Map<UnknownParameter, Double> velocities = null;
@@ -216,9 +216,9 @@ public class VelocityField3D_deprec {
 						for (double r : rs)
 							perturbationRs[count++] = r;
 						for (UnknownParameter unknown : perturbations.keySet())
-							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+							perturbationMap.put(unknown.getPosition(), perturbations.get(unknown));
 						for (UnknownParameter unknown : perturbations_toAK135.keySet())
-							perturbationMap_toAK135.put(unknown.getLocation(), perturbations_toAK135.get(unknown));
+							perturbationMap_toAK135.put(unknown.getPosition(), perturbations_toAK135.get(unknown));
 						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
 						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 2., perturbationRs);
 						extendedPerturbationMap_toAK135 = extendedPerturbationMap(perturbationMap_toAK135, 2., perturbationRs);
@@ -307,7 +307,7 @@ public class VelocityField3D_deprec {
 						//---------------
 						else {
 							for (UnknownParameter m : unknowns) {
-								FullPosition loc = (FullPosition) m.getLocation();
+								FullPosition loc = (FullPosition) m.getPosition();
 								double perturbation = perturbations.get(m);
 								pw.println(loc + " " + perturbation);
 							}
@@ -336,7 +336,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter m : answerMap.keySet()) {
 			if (m.getPartialType().isTimePartial())
 				continue;
-			FullPosition loc = (FullPosition) m.getLocation();
+			FullPosition loc = (FullPosition) m.getPosition();
 			double r = loc.getR();
 			double dR = layerMap.get(r);
 			double rmin = r - dR / 2.;
@@ -354,7 +354,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter m : parameterOrder) {
 			if (m.getPartialType().isTimePartial())
 				continue;
-			FullPosition loc = (FullPosition) m.getLocation();
+			FullPosition loc = (FullPosition) m.getPosition();
 			double r = loc.getR();
 			double dR = 0;
 			try {
@@ -390,7 +390,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter m : parameterOrder) {
 			if (m.getPartialType().isTimePartial())
 				continue;
-			FullPosition loc = (FullPosition) m.getLocation();
+			FullPosition loc = (FullPosition) m.getPosition();
 			double r = loc.getR();
 			double dR = 0;
 			try {
@@ -430,9 +430,9 @@ public class VelocityField3D_deprec {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
-			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
-			velocities[i][0] = toQ(answerMap.get(m), m.getLocation().getR(), rmin, rmax, structure, amplifyPerturbation);
+			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
+			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			velocities[i][0] = toQ(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
 		}
@@ -611,7 +611,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter p : newParameters.stream()
 				.filter(unknown -> !unknown.getPartialType().isTimePartial()
 						&& unknown.getPartialType().equals(type)).collect(Collectors.toList())) {
-			double rp = p.getLocation().getR();
+			double rp = p.getPosition().getR();
 			double w = p.getWeighting();
 			double value = answerMap.get(p);
 			if (rp - w/2. < r && rp + w/2. >= r) {
@@ -812,7 +812,7 @@ public class VelocityField3D_deprec {
 					perturbationRs[count++] = r;
 				Map<FullPosition, Double> perturbationMap = new HashMap<>();
 				for (UnknownParameter unknown : perturbations.keySet())
-					perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+					perturbationMap.put(unknown.getPosition(), perturbations.get(unknown));
 				zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
 				extendedPerturbationMap = extendedPerturbationMap(perturbationMap, deltaDegree, perturbationRs);
 				extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, deltaDegree, perturbationRs);

@@ -79,7 +79,7 @@ public class MakeCheckerboard {
 			BufferedWriter writer = Files.newBufferedWriter(outDvFile);
 			for (int i = 0; i < unknowns.size(); i ++) {
 				FullPosition loc = (FullPosition) unknowns.get(i)
-						.getLocation();
+						.getPosition();
 				double dmu = dMU(dv, loc.getR(), structure);
 //				double dKappa = dKappa(dv, loc.getR(), structure);
 //				double dLambda2mu = dLambda2mu(dv, loc.getR(), structure);

@@ -57,7 +57,7 @@ public class TimeshiftParameter implements UnknownParameter {
     }
 
     @Override
-    public FullPosition getLocation() {
+    public FullPosition getPosition() {
         // TODO Auto-generated method stub
         return null;
     }

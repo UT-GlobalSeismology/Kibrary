@@ -87,7 +87,7 @@ public class Physical3DParameter implements UnknownParameter {
     }
 
     @Override
-    public FullPosition getLocation() {
+    public FullPosition getPosition() {
         return pointLocation;
     }
 

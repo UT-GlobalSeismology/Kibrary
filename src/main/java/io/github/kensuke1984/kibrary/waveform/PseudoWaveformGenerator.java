@@ -177,16 +177,20 @@ public class PseudoWaveformGenerator extends Operation {
     public void run() throws IOException {
         read();
         readIDs();
+
+        //compute
         RealVector pseudoM = readPseudoM();
         RealVector pseudoD = computePseudoD(pseudoM);
         RealVector bornVec = pseudoD.add(getSynVector());
+
         String dateStr = GadgetAid.getTemporaryString();
-        Path outIDPath = workPath.resolve("pseudoID" + dateStr + ".dat");
-        Path outDataPath = workPath.resolve("pseudo" + dateStr + ".dat");
+        Path pseudoIDPath = workPath.resolve("pseudoID" + dateStr + ".dat");
+        Path pseudoPath = workPath.resolve("pseudo" + dateStr + ".dat");
+        System.err.println("Outputting in " + pseudoIDPath + " , " + pseudoPath);
 
         if (noise) bornVec = bornVec.add(computeRandomNoise());
-        if (iterate) output4Iterate(outIDPath, outDataPath, bornVec);
-        else output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
+        if (iterate) output4Iterate(pseudoIDPath, pseudoPath, bornVec);
+        else output4ChekeBoardTest(pseudoIDPath, pseudoPath, bornVec);
     }
 
     private void read() throws IOException {

@@ -63,14 +63,14 @@ public class Tradeoff {
 			
 			List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownPath);
 			
-			List<Double> perturbationRs = parameterList.stream().map(p -> p.getLocation().getR())
+			List<Double> perturbationRs = parameterList.stream().map(p -> p.getPosition().getR())
 					.distinct().collect(Collectors.toList());
 			Collections.sort(perturbationRs);
 			Collections.reverse(perturbationRs);
 			
 			List<UnknownParameter> orderedParameterList = new ArrayList<>();
 			perturbationRs.stream().forEachOrdered(pR -> {
-				parameterList.stream().filter(p -> p.getLocation().getR() == pR)
+				parameterList.stream().filter(p -> p.getPosition().getR() == pR)
 					.forEachOrdered(p -> orderedParameterList.add(p));
 			});
 			
@@ -129,10 +129,10 @@ public class Tradeoff {
 			Path correlationFile = root.resolve(String.format("correlation_%.0f.txt", layer1R));
 			try (BufferedWriter writer = Files.newBufferedWriter(correlationFile)) {
 				for (int i = 0; i < unknownGrid[0].length; i++)
-					writer.write(unknownGrid[0][i].getLocation().toString() + " ");
+					writer.write(unknownGrid[0][i].getPosition().toString() + " ");
 				writer.write("\n");
 				for (int j = 0; j < correlations[0].length; j++) {
-					writer.write(unknownGrid[1][j].getLocation().toString() + " ");
+					writer.write(unknownGrid[1][j].getPosition().toString() + " ");
 					for (int i = 0; i < correlations.length; i++) {
 						writer.write(String.format("%.8f", correlations[i][j]) + " ");
 					}
@@ -150,7 +150,7 @@ public class Tradeoff {
 	public Tradeoff(RealMatrix AtA, List<UnknownParameter> parameterList) {
 		this.ata = AtA;
 		this.parameters = parameterList;
-		this.paramOrderedLocs = parameterList.stream().map(p -> p.getLocation())
+		this.paramOrderedLocs = parameterList.stream().map(p -> p.getPosition())
 				.collect(Collectors.toList()).toArray(new FullPosition[0]);
 	}
 	
@@ -347,10 +347,10 @@ public class Tradeoff {
 	}
 	
 	private double[][] computeForLayer(double layer1R, double layer2Rmin, double layer2Rmax, List<Double> orderedR) {
-		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getLocation().getR() == layer1R)
+		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getPosition().getR() == layer1R)
 				.boxed().collect(Collectors.toList());
 		List<Integer> indexLayer2 = IntStream.range(0, parameters.size()).filter(i -> {
-			double pR = parameters.get(i).getLocation().getR();
+			double pR = parameters.get(i).getPosition().getR();
 			if (pR >= layer2Rmin && pR <= layer2Rmax)
 				return true;
 			else
@@ -374,10 +374,10 @@ public class Tradeoff {
 	}
 	
 	private UnknownParameter[][] unknownsForLayer(double layer1R, double layer2Rmin, double layer2Rmax, List<Double> orderedR) {
-		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getLocation().getR() == layer1R)
+		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getPosition().getR() == layer1R)
 				.boxed().collect(Collectors.toList());
 		List<Integer> indexLayer2 = IntStream.range(0, parameters.size()).filter(i -> {
-			double pR = parameters.get(i).getLocation().getR();
+			double pR = parameters.get(i).getPosition().getR();
 			if (pR >= layer2Rmin && pR <= layer2Rmax)
 				return true;
 			else

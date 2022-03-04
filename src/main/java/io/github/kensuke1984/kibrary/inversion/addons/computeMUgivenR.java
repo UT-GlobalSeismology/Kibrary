@@ -72,7 +72,7 @@ public class computeMUgivenR {
 		for (UnknownParameter u : ir.getUnknownParameterList()) {
 			if (u.getPartialType().equals(PartialType.MU)) {
 				System.out.println(u);
-				double r = u.getLocation().getR();
+				double r = u.getPosition().getR();
 				double depth = 6371. - r;
 				double Rsp1 = rKRDH16.get(depth);
 				double Rsp2 = rMLBD00.get(depth);

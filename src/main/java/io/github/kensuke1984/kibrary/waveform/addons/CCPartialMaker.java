@@ -175,7 +175,7 @@ public class CCPartialMaker {
 					pw = new PrintWriter(outpath.toFile());
 					for (int iunk = 0; iunk < ccParIJ.size(); iunk++) {
 						Trace partialCorr = ccParIJ.get(iunk).trace;
-						FullPosition loc = ccParIJ.get(iunk).unknownParameter.getLocation();
+						FullPosition loc = ccParIJ.get(iunk).unknownParameter.getPosition();
 						PartialType type = ccParIJ.get(iunk).unknownParameter.getPartialType();
 						pw.print(type + " " + loc + " ");
 						for (int it = 0; it < partialCorr.getLength(); it++) {

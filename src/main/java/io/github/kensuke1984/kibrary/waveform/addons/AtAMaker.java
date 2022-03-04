@@ -351,8 +351,8 @@ public class AtAMaker implements Operation_old {
 		numberOfBuffers = Integer.parseInt(PROPERTY.getProperty("numberOfBuffers"));
 		
 			List<UnknownParameter> targetUnknowns = UnknownParameterFile.read(unknownParameterPath);
-			List<Double> lats = targetUnknowns.stream().map(p -> p.getLocation().getLatitude()).distinct().collect(Collectors.toList());
-			List<Double> lons = targetUnknowns.stream().map(p -> p.getLocation().getLatitude()).distinct().collect(Collectors.toList());
+			List<Double> lats = targetUnknowns.stream().map(p -> p.getPosition().getLatitude()).distinct().collect(Collectors.toList());
+			List<Double> lons = targetUnknowns.stream().map(p -> p.getPosition().getLatitude()).distinct().collect(Collectors.toList());
 			Collections.sort(lats);
 			Collections.sort(lons);
 			double dlat = Math.abs(lats.get(1) - lats.get(0));
@@ -362,9 +362,9 @@ public class AtAMaker implements Operation_old {
 			if (resamplingRate >= 1) {
 				ResampleGrid sampler = new ResampleGrid(targetUnknowns, dlat, dlon, resamplingRate);
 				originalUnknownParameters = sampler.getResampledUnkowns().toArray(new UnknownParameter[0]);
-				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
+				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
 						.collect(Collectors.toList());
-				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
+				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
 						.collect(Collectors.toSet());
 				
 				if (verticalMappingFile == null) throw new RuntimeException("Please set a verticalMappingFile");
@@ -375,9 +375,9 @@ public class AtAMaker implements Operation_old {
 			}
 			else if (verticalMappingFile != null && horizontalMappingFile != null) {
 				originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
-				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
+				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
 						.collect(Collectors.toList());
-				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
+				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
 						.collect(Collectors.toSet());
 				System.out.println("Using 3-D mapping with " + verticalMappingFile + " " + horizontalMappingFile);
 				threedMapping = new ThreeDParameterMapping(horizontalMappingFile, verticalMappingFile, originalUnknownParameters);
@@ -390,9 +390,9 @@ public class AtAMaker implements Operation_old {
 				newUnknownParameters = mapping.getUnknowns();
 				horizontalMapping = null;
 				threedMapping = null;
-				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
+				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
 						.collect(Collectors.toSet());
-				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
+				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
 						.collect(Collectors.toList());
 			}
 //		else {
@@ -792,7 +792,7 @@ public class AtAMaker implements Operation_old {
 							atdEntries[i][iweight][ifreq][iphase] = new AtdEntry[correctionTypes.length];
 							for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
 								atdEntries[i][iweight][ifreq][iphase][icorr] = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-									, usedPhases[iphase], correctionTypes[icorr], originalUnknownParameters[i].getPartialType(), originalUnknownParameters[i].getLocation(), 0.);
+									, usedPhases[iphase], correctionTypes[icorr], originalUnknownParameters[i].getPartialType(), originalUnknownParameters[i].getPosition(), 0.);
 							}
 						}
 					}
@@ -839,7 +839,7 @@ public class AtAMaker implements Operation_old {
 		for (Phases ps : usedPhases)
 			ps.toSet().stream().forEach(p -> tmpPhases.add(p));
 		Phase[] phaseArray = tmpPhases.toArray(new Phase[0]);
-		Set<FullPosition> perturbationPoints = Stream.of(newUnknownParameters).map(p -> p.getLocation()).collect(Collectors.toSet());
+		Set<FullPosition> perturbationPoints = Stream.of(newUnknownParameters).map(p -> p.getPosition()).collect(Collectors.toSet());
 		writers = new WaveformDataWriter[frequencyRanges.length];
 		for (int i=0; i < frequencyRanges.length; i++) {
 			double[][] periodRanges = new double[][] { {1./frequencyRanges[i].getMaxFreq(), 1./frequencyRanges[i].getMinFreq()} };
@@ -1214,7 +1214,7 @@ public class AtAMaker implements Operation_old {
 						PrintWriter pw = new PrintWriter(outpath.toFile());
 						for (int i = 0; i < nOriginalUnknown; i++) {
 							double[] partialCorr = partialCorrs[i][iweight][ifreq][ista][jsta];
-							FullPosition loc = originalUnknownParameters[i].getLocation();
+							FullPosition loc = originalUnknownParameters[i].getPosition();
 							PartialType type = originalUnknownParameters[i].getPartialType();
 							pw.print(type + " " + loc + " ");
 							for (int it = 0; it < partialCorr.length; it++) {
@@ -1268,7 +1268,7 @@ public class AtAMaker implements Operation_old {
 									
 									PartialID partialID = new PartialID(window.getObserver(), window.getGlobalCMTID(), window.getComponent()
 											, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
-											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getLocation()
+											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getPosition()
 											, type, partiali);
 									
 									writers[ifreq].addPartialID(partialID);
@@ -1308,7 +1308,7 @@ public class AtAMaker implements Operation_old {
 									
 									PartialID partialID = new PartialID(window.getObserver(), window.getGlobalCMTID(), window.getComponent()
 											, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
-											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getLocation()
+											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getPosition()
 											, newUnknownParameters[iunknown].getPartialType(), partiali);
 									
 									writers[ifreq].addPartialID(partialID);
@@ -1595,7 +1595,7 @@ public class AtAMaker implements Operation_old {
 	private int getParameterIndex(FullPosition loc, PartialType type) {
 		int i = 0;
 		for (UnknownParameter p : originalUnknownParameters) {
-			if (p.getLocation().equals(loc) && p.getPartialType().equals(type))
+			if (p.getPosition().equals(loc) && p.getPartialType().equals(type))
 				return i;
 			i++;
 		}
@@ -1605,7 +1605,7 @@ public class AtAMaker implements Operation_old {
 	private int getParameterIndex1D(double radius, PartialType type) {
 		int i = 0;
 		for (UnknownParameter p : originalUnknownParameters) {
-			if (p.getLocation().getR() == radius && p.getPartialType().equals(type))
+			if (p.getPosition().getR() == radius && p.getPartialType().equals(type))
 				return i;
 			i++;
 		}
