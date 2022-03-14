@@ -77,7 +77,7 @@ public final class MathAid {
     }
     /**
      * Transforms a value (int) to a padded String.
-     * The left side is padded with spaces and the right with "0"s.
+     * The left side is padded with the specified letter.
      *
      * @param value (int) The value to turn into a String
      * @param nInteger (int) The number of digits for the integer part, including the minus sign.
