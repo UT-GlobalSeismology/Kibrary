@@ -95,6 +95,13 @@ public class FullPosition extends HorizontalPosition {
     }
 
     /**
+     * @return [km] depth (not radius)
+     */
+    public double getDepth() {
+        return Precision.round(6371 - R, R_PRECISION); //TODO: consider ellipticity of Earth
+    }
+
+    /**
      * @return {@link RThetaPhi} of this
      */
     public RThetaPhi getRThetaPhi() {
