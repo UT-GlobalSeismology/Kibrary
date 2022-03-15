@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 public class CheckerboardMaker {
 
     private Path voxelPath;
-    private double amplitude;
+    private double percentVs;
     private boolean flipSign;
     private PolynomialStructure prem;
 
@@ -32,22 +32,22 @@ public class CheckerboardMaker {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
-            System.err.println("Usage: voxelInformationFile(Path) amplitude(double) flipSign(boolean)");
+            System.err.println("Usage: voxelInformationFile(Path) percentVs(double) flipSign(boolean)");
         }
 
         Path voxelPath = Paths.get(args[0]);
-        double amplitude = Double.parseDouble(args[1]);
+        double percentVs = Double.parseDouble(args[1]);
         boolean flipSign = Boolean.parseBoolean(args[2]);
         PolynomialStructure prem = PolynomialStructure.PREM;
 
-        CheckerboardMaker cm = new CheckerboardMaker(voxelPath, amplitude, flipSign, prem);
+        CheckerboardMaker cm = new CheckerboardMaker(voxelPath, percentVs, flipSign, prem);
         cm.velocityCheckerboard();
         cm.writeModel();
     }
 
-    public CheckerboardMaker(Path voxelPath, double amplitude, boolean flipSign, PolynomialStructure prem) {
+    public CheckerboardMaker(Path voxelPath, double percentVs, boolean flipSign, PolynomialStructure prem) {
         this.voxelPath = voxelPath;
-        this.amplitude = amplitude;
+        this.percentVs = percentVs;
         this.flipSign = flipSign;
         this.prem = prem;
         dateStr = GadgetAid.getTemporaryString();
@@ -69,9 +69,9 @@ public class CheckerboardMaker {
                         + (position.getLongitude() - referencePosition.getLongitude()) / dLongitude) + i;
 
                 if ((numDiff % 2 == 1) ^ flipSign) { // ^ is XOR
-                    perturbationList.add(-amplitude);
+                    perturbationList.add(-percentVs);
                 } else {
-                    perturbationList.add(amplitude);
+                    perturbationList.add(percentVs);
                 }
                 radiusList.add(radii[i]);
             }
