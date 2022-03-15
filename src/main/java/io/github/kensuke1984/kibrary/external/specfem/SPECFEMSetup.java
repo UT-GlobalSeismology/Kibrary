@@ -54,6 +54,10 @@ public class SPECFEMSetup {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(inPath);
         if (!DatasetAid.checkEventNum(eventDirs.size())) {
             return;
+        } else if (eventDirs.size() >= 10000) {
+            // only 4 digits can be used for the run**** folder names
+            System.err.println("The number of events must be less than 10000. Aborting.");
+            return;
         }
 
         outPath = workPath.resolve("specfem" + GadgetAid.getTemporaryString());
@@ -61,17 +65,46 @@ public class SPECFEMSetup {
         System.err.println("Output folder is " + outPath);
 
         if (eventDirs.size() == 1) {
-            //TODO
+            // this loop is only done once; loop is written here to extract eventDir from Set<EventFolder>
+            for (EventFolder eventDir : eventDirs) {
+                createRunDirectory(outPath, eventDir);
+            }
+
+            System.err.println();
+            System.err.println("Instructions for running SPECFEM:");
+            System.err.println("1. Copy the contents of " + outPath + "/DATA/ into specfem*/DATA/");
+            System.err.println("2. Run the mesher");
+            System.err.println("3. Run the solver");
+            System.err.println();
+
         } else {
             int i = 1;
             for (EventFolder eventDir : eventDirs) {
-                createRunDirectory(i++, eventDir);
+                Path runPath = outPath.resolve("run" + MathAid.padToString(i++, 4, "0"));
+                createRunDirectory(runPath, eventDir);
             }
+
+            System.err.println();
+            System.err.println("Instructions for running SPECFEM:");
+            System.err.println("1. Run the mesher as usual");
+            System.err.println("2. Copy the contents of " + outPath + " into specfem*/");
+            System.err.println("3. Copy DATABASES_MPI/ (the one in the root folder, not in the run0001 to run**** folders),");
+            System.err.println("    which has been filled with mesh informations from the run of the mesher in 1., into run0001/ .");
+            System.err.println("    Folders run0002/DATABASES_MPI/ to run****/DATABASES_MPI/ can be left empty.");
+            System.err.println("4. Copy the following files inside OUTPUT_FILES to run0001/OUTPUT_FILES :");
+            System.err.println("    - addressing.txt");
+            System.err.println("    - output_mesher.txt");
+            System.err.println("    - values_from_mesher.h");
+            System.err.println("5. In DATA/Par_file, set:");
+            System.err.println("    NUMBER_OF_SIMULTANEOUS_RUNS = " + eventDirs.size());
+            System.err.println("    BROADCAST_SAME_MESH_AND_MODEL = .true.");
+            System.err.println("    USE_FAILSAFE_MECHANISM = .true.");
+            System.err.println("6. Run the solver");
+            System.err.println();
         }
     }
 
-    private void createRunDirectory(int runNum, EventFolder eventDir) throws IOException {
-        Path runPath = outPath.resolve("run" + MathAid.padToString(runNum, 4, "0"));
+    private void createRunDirectory(Path runPath, EventFolder eventDir) throws IOException {
         Path dataPath = runPath.resolve("DATA");
 
         Files.createDirectories(dataPath);
@@ -120,7 +153,7 @@ public class SPECFEMSetup {
         }
     }
     private void generateStationFile(Set<Observer> observerSet, Path dataPath) throws IOException {
-        Path stationPath = dataPath.resolve("STATION");
+        Path stationPath = dataPath.resolve("STATIONS");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stationPath))) {
             observerSet.forEach(observer -> pw.println(observer.getPaddedInfoString() + "  0.0  0.0"));
         }
