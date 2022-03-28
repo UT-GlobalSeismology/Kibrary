@@ -22,6 +22,7 @@ public class PPMFileMaker {
     public static void main(String[] args) throws IOException {
         if (args.length < 4) {
             System.err.println("Usage: percentVs dLatitude dLongitude radii...");
+            return;
         }
 
         Path workPath = Paths.get("");
@@ -77,9 +78,9 @@ public class PPMFileMaker {
                         double latitude = dLatitude * (k+0.5) - 90;
 */
                 for (int j = 0; j < numLongitude; j++) {
-                    double longitude = dLongitude * (j) - 180;
+                    double longitude = dLongitude * (j+0.25) - 180;
                     for (int k = 0; k < numLatitude - 1; k++) {
-                        double latitude = dLatitude * (k+1) - 90;
+                        double latitude = dLatitude * (k+0.25) - 90;
 
                         int numDiff = i + j + k;
                         double value = percentVs * (((numDiff % 2 == 1) ^ flipSign) ? 1 : -1); // ^ is XOR

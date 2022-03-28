@@ -36,6 +36,7 @@ public class SPECFEMSetup {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
+            System.err.println("Usage: inPath workPath");
             return;
         }
         Path inPath = Paths.get(args[0]);
@@ -86,6 +87,8 @@ public class SPECFEMSetup {
 
             System.err.println();
             System.err.println("Instructions for running SPECFEM:");
+            System.err.println();
+            System.err.println("Pattern A");
             System.err.println("1. Run the mesher as usual");
             System.err.println("2. Copy the contents of " + outPath + " into specfem*/");
             System.err.println("3. Copy DATABASES_MPI/ (the one in the root folder, not in the run0001 to run**** folders),");
@@ -99,7 +102,20 @@ public class SPECFEMSetup {
             System.err.println("    NUMBER_OF_SIMULTANEOUS_RUNS = " + eventDirs.size());
             System.err.println("    BROADCAST_SAME_MESH_AND_MODEL = .true.");
             System.err.println("    USE_FAILSAFE_MECHANISM = .true.");
-            System.err.println("6. Run the solver");
+            System.err.println("6. Run the solver, with " + eventDirs.size() + " times the original nuber of cores.");
+            System.err.println();
+            System.err.println("Pattern B");
+            System.err.println("1. Copy the contents of " + outPath + " into specfem*/");
+            System.err.println("2. In DATA/Par_file, set:");
+            System.err.println("    NUMBER_OF_SIMULTANEOUS_RUNS = " + eventDirs.size());
+            System.err.println("    BROADCAST_SAME_MESH_AND_MODEL = .true.");
+            System.err.println("    USE_FAILSAFE_MECHANISM = .true.");
+            System.err.println("3. Run the mesher, with " + eventDirs.size() + " times the original nuber of cores.");
+            System.err.println("4. Copy the following files inside OUTPUT_FILES to run0001/OUTPUT_FILES :");
+            System.err.println("    - addressing.txt");
+            System.err.println("    - output_mesher.txt");
+            System.err.println("    - values_from_mesher.h");
+            System.err.println("5. Run the solver, with " + eventDirs.size() + " times the original nuber of cores.");
             System.err.println();
         }
     }
@@ -144,12 +160,12 @@ public class SPECFEMSetup {
             pw.println("latitude: " + latitude);
             pw.println("longitude: " + longitude);
             pw.println("depth: " + depth);
-            pw.println("Mrr: " + mt[0] + "e+25");
-            pw.println("Mtt: " + mt[3] + "e+25");
-            pw.println("Mpp: " + mt[5] + "e+25");
-            pw.println("Mrt: " + mt[1] + "e+25");
-            pw.println("Mrp: " + mt[2] + "e+25");
-            pw.println("Mtp: " + mt[4] + "e+25");
+            pw.println("Mrr: " + String.format("%e", mt[0] * 1e25));
+            pw.println("Mtt: " + String.format("%e", mt[3] * 1e25));
+            pw.println("Mpp: " + String.format("%e", mt[5] * 1e25));
+            pw.println("Mrt: " + String.format("%e", mt[1] * 1e25));
+            pw.println("Mrp: " + String.format("%e", mt[2] * 1e25));
+            pw.println("Mtp: " + String.format("%e", mt[4] * 1e25));
         }
     }
     private void generateStationFile(Set<Observer> observerSet, Path dataPath) throws IOException {
