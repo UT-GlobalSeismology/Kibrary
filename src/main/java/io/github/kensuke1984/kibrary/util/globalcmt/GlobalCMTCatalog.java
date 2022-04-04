@@ -33,9 +33,13 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public final class GlobalCMTCatalog {
 
-    private final static Set<NDK> NDKs;
-    private final static Path SHARE_DIR_PATH = Environment.KIBRARY_HOME.resolve("share");
-    private final static Path CATALOG_PATH = SHARE_DIR_PATH.resolve("globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
+    /**
+     * The (symbolic link of) catalog to be referenced.
+     * This is set as package private so that {@link GlobalCMTCatalogUpdate} can access this.
+     */
+    static final Path CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
+
+    private static final Set<NDK> NDKs;
 
     static {
         Set<NDK> readSet = readCatalog();
@@ -55,7 +59,7 @@ public final class GlobalCMTCatalog {
             } catch (Exception e) {
                 System.err.println("A catalog filename?");
                 try (BufferedReader br = new BufferedReader(
-                        new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+                        new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
                     path = br.readLine().trim();
                     if (!path.startsWith("/")) path = System.getProperty("user.dir") + "/" + path;
                 } catch (Exception e2) {
@@ -71,7 +75,9 @@ public final class GlobalCMTCatalog {
 
     private static Set<NDK> readCatalog() {
         try {
-            if (!Files.exists(CATALOG_PATH)) downloadCatalog(); // if the symbolic link or its target does not exist
+            // if the symbolic link or its target does not exist, download the default catalog
+            if (!Files.exists(CATALOG_PATH)) downloadCatalog();
+
             List<String> lines = Files.readAllLines(CATALOG_PATH);
             if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog is broken.");
             return IntStream.range(0, lines.size() / 5).mapToObj(
@@ -86,17 +92,18 @@ public final class GlobalCMTCatalog {
     }
 
     private static void downloadCatalog() throws IOException {
-        Path defaultPath = SHARE_DIR_PATH.resolve("default.catalog");
+        Path defaultPath = Environment.KIBRARY_SHARE.resolve("globalcmt_default.catalog");
 
         if (!Files.exists(defaultPath)) {
             System.err.println("Downloading default catalog ...");
             Utilities.download(new URL("https://bit.ly/3bl0Ly9"), defaultPath, false);
         }
 
-        // set symbolic link
+        //~set symbolic link~//
+        // checks whether the symbolic link itself exists, regardless of the existence of its target
         if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-            // checks whether the symbolic link itself exists, regardless of the existence of its target
-            Files.delete(CATALOG_PATH); //delete symbolic link if it exists
+            // delete symbolic link if it exists
+            Files.delete(CATALOG_PATH);
         }
         Files.createSymbolicLink(CATALOG_PATH, defaultPath);
         System.err.println("Default catalog is activated.");
@@ -137,7 +144,7 @@ public final class GlobalCMTCatalog {
     }
 
     public static Path getCatalogPath() {
-    	return CATALOG_PATH;
+        return CATALOG_PATH;
     }
 
 }

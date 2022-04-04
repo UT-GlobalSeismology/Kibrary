@@ -20,19 +20,14 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public final class GlobalCMTCatalogUpdate {
 
-    private final static Path SHARE_DIR_PATH = Environment.KIBRARY_HOME.resolve("share");
-    private final static Path CATALOG_PATH = SHARE_DIR_PATH.resolve("globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
-
-    private GlobalCMTCatalogUpdate() {
-    }
 
     private static void downloadCatalog(String update) throws IOException {
         String catalogName = "jan76_" + update + ".ndk";
-        Path catalogPath = SHARE_DIR_PATH.resolve(catalogName);
+        Path catalogPath = Environment.KIBRARY_SHARE.resolve(catalogName);
 
-        // Download
+        //~Download~//
         if (Files.exists(catalogPath)) {
-            System.err.println("Catalog " + catalogName + " already exists.");
+            System.err.println("Catalog " + catalogName + " already exists; skipping download.");
         }
         else {
             System.err.println("Downloading catalog " + catalogName + " ...");
@@ -42,22 +37,23 @@ public final class GlobalCMTCatalogUpdate {
                 Utilities.download(new URL(catalogUrl), catalogPath, false);
             } catch(IOException e) {
                 if(Files.exists(catalogPath)) {
-                    Files.delete(catalogPath); // delete the trash that may be made
+                    // delete the trash that may be made
+                    Files.delete(catalogPath);
                 }
+                // If download fails, IOException will be thrown here. Symbolic link will not be changed.
                 throw e;
             }
-            // If download fails, IOException will be thrown here. Symbolic link will not be changed.
         }
 
-        // Activate (change target of symbolic link)
-        if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-            // checks whether the symbolic link itself exists, regardless of the existence of its target
-            Files.delete(CATALOG_PATH);
+        //~Activate (change target of symbolic link)~//
+        // check whether the symbolic link itself exists, regardless of the existence of its target
+        if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            // delete the symbolic link, not its target
+            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
         }
-        Files.createSymbolicLink(CATALOG_PATH, catalogPath);
+        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, catalogPath);
 
-        System.err.println("Catalog is set to " + catalogName);
-        System.err.println("Catalog update finished :)");
+        System.err.println("The referenced catalog is set to " + catalogName);
 
     }
 
