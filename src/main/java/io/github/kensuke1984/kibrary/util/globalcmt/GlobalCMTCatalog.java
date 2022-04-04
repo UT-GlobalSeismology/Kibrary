@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
@@ -42,12 +41,40 @@ public final class GlobalCMTCatalog {
     private static final Set<NDK> NDKs;
 
     static {
-        Set<NDK> readSet = readCatalog();
-        if (null == readSet) readSet = read(selectCatalogFile());
-        NDKs = Collections.unmodifiableSet(readSet);
+        // if an activated catalog does not exist, download the default catalog
+        if (!Files.exists(CATALOG_PATH)) downloadCatalog();
+
+        // read the activated catalog
+        Set<NDK> readNDKSet = readCatalog(CATALOG_PATH, true);
+        // if the activated catalog cannot be read, ask for another catalog
+        if (null == readNDKSet) readNDKSet = readCatalog(selectCatalogFile(), false);
+
+        // set NDK set
+        NDKs = Collections.unmodifiableSet(readNDKSet);
     }
 
-    private GlobalCMTCatalog() {
+    private static void downloadCatalog() {
+        Path defaultPath = Environment.KIBRARY_SHARE.resolve("globalcmt_default.catalog");
+
+        try {
+            // download default catalog if it does not already exist; otherwise, skip download
+            if (!Files.exists(defaultPath)) {
+                System.err.println("Downloading default catalog ...");
+                FileAid.download(new URL("https://bit.ly/3bl0Ly9"), defaultPath, false);
+            }
+
+            //~set symbolic link~//
+            // check whether the symbolic link itself exists, regardless of the existence of its target
+            if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+                // delete symbolic link if it exists
+                Files.delete(CATALOG_PATH);
+            }
+            Files.createSymbolicLink(CATALOG_PATH, defaultPath);
+            System.err.println("Default catalog is activated.");
+        } catch (Exception e) {
+            // even if download fails, there is a chance that another catalog can be selected, so suppress exception here
+            e.printStackTrace();
+        }
     }
 
     private static Path selectCatalogFile() {
@@ -73,57 +100,34 @@ public final class GlobalCMTCatalog {
         return catalogFile;
     }
 
-    private static Set<NDK> readCatalog() {
+    /**
+     * Reads catalog file and returns NDKs inside.
+     *
+     * @param catalogPath path of a catalog
+     * @param allowNull (boolean) whether null is allowed to be returned
+     * @return NDKs in catalogFile
+     */
+    static Set<NDK> readCatalog(Path catalogPath, boolean allowNull) {
         try {
-            // if the symbolic link or its target does not exist, download the default catalog
-            if (!Files.exists(CATALOG_PATH)) downloadCatalog();
-
-            List<String> lines = Files.readAllLines(CATALOG_PATH);
-            if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog is broken.");
+            List<String> lines = Files.readAllLines(catalogPath);
+            if (lines.size() % 5 != 0) throw new Exception(catalogPath + " is broken or invalid.");
             return IntStream.range(0, lines.size() / 5).mapToObj(
                     i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
                             lines.get(i * 5 + 4))).collect(Collectors.toSet());
         } catch (NullPointerException e) {
-            return null;
+            if (allowNull) {
+                return null;
+            }
+            else {
+                throw new RuntimeException(e);
+            }
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static void downloadCatalog() throws IOException {
-        Path defaultPath = Environment.KIBRARY_SHARE.resolve("globalcmt_default.catalog");
-
-        if (!Files.exists(defaultPath)) {
-            System.err.println("Downloading default catalog ...");
-            FileAid.download(new URL("https://bit.ly/3bl0Ly9"), defaultPath, false);
-        }
-
-        //~set symbolic link~//
-        // checks whether the symbolic link itself exists, regardless of the existence of its target
-        if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-            // delete symbolic link if it exists
-            Files.delete(CATALOG_PATH);
-        }
-        Files.createSymbolicLink(CATALOG_PATH, defaultPath);
-        System.err.println("Default catalog is activated.");
-    }
-
-    /**
-     * read catalogFile and returns NDKs inside.
-     *
-     * @param catalogPath path of a catalog
-     * @return NDKs in catalogFile
-     */
-    static Set<NDK> read(Path catalogPath) {
-        try {
-            List<String> lines = Files.readAllLines(catalogPath);
-            if (lines.size() % 5 != 0) throw new Exception(catalogPath + " is invalid.");
-            return IntStream.range(0, lines.size() / 5).mapToObj(
-                    i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
-                            lines.get(i * 5 + 4))).collect(Collectors.toSet());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            if (allowNull) {
+                e.printStackTrace();
+                return null;
+            } else {
+                throw new RuntimeException(e);
+            }
         }
     }
 

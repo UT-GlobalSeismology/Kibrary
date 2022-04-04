@@ -7,7 +7,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
  * Updating the catalog of global CMT solutions.
@@ -20,6 +20,23 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public final class GlobalCMTCatalogUpdate {
 
+    /**
+     * @param args [month and year of update]<br>
+     *             Should take the form mmmYY,
+     *             where mmm is the first three letters of the name of the month,
+     *             and YY is the lower two digits of the year.
+     * @throws IOException if any
+     */
+    public static void main(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException(
+                "Usage:[month and year of update] Should take the form mmmYY, where mmm is the first three letters of the name of the month, and YY is the lower two digits of the year.");
+        try {
+            downloadCatalog(args[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private static void downloadCatalog(String update) throws IOException {
         String catalogName = "jan76_" + update + ".ndk";
@@ -34,7 +51,7 @@ public final class GlobalCMTCatalogUpdate {
 
             String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
             try {
-                Utilities.download(new URL(catalogUrl), catalogPath, false);
+                FileAid.download(new URL(catalogUrl), catalogPath, false);
             } catch(IOException e) {
                 if(Files.exists(catalogPath)) {
                     // delete the trash that may be made
@@ -57,31 +74,5 @@ public final class GlobalCMTCatalogUpdate {
 
     }
 
-//    private static void linkCatalog() throws IOException {
-//        Path backupPath = SHARE_DIR_PATH.resolve("backup");
-//        Files.createDirectories(backupPath);
-
-//        if (Files.exists(CATALOG_PATH)) {
-//           Utilities.moveToDirectory(CATALOG_PATH, backupPath, true, StandardCopyOption.REPLACE_EXISTING);
-//        }
-//    }
-
-    /**
-     * @param args [month and year of update]<br>
-     *             Should take the form mmmYY,
-     *             where mmm is the first three letters of the name of the month,
-     *             and YY is the lower two digits of the year.
-     * @throws IOException if any
-     */
-    public static void main(String[] args) {
-        if (args.length != 1) throw new IllegalArgumentException(
-                "Usage:[month and year of update] Should take the form mmmYY, where mmm is the first three letters of the name of the month, and YY is the lower two digits of the year.");
-        try {
-            downloadCatalog(args[0]);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 }
 
