@@ -4,11 +4,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
  * They are classes that can be run with only a few arguments.
  * <p>
+ * Classes assigned here must contain methods usage() and run().
  * The value name set to this enum must be the same as its corresponding class name.
  *
  * @author otsuru
@@ -16,6 +18,7 @@ import io.github.kensuke1984.kibrary.entrance.DataAligner;
  */
 enum Brooklyn {
     // Environment 00
+    GlobalCMTCatalogUpdate(1, GlobalCMTCatalogUpdate.class),
     // Data download 10
     DataAligner(13, DataAligner.class), //
     ;

@@ -1,13 +1,20 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Updating the catalog of global CMT solutions.
@@ -16,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  * The active version of the catalog will be set to the one specified.
  *
  * @author Keisuke Otsuru
- * @version 0.0.1
+ * @since 2021/8/25
  */
 public final class GlobalCMTCatalogUpdate {
 
@@ -28,14 +35,31 @@ public final class GlobalCMTCatalogUpdate {
      * @throws IOException if any
      */
     public static void main(String[] args) {
-        if (args.length != 1) throw new IllegalArgumentException(
-                "Usage:[month and year of update] Should take the form mmmYY, where mmm is the first three letters of the name of the month, and YY is the lower two digits of the year.");
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
+        }
+    }
+
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage: [month and year of update]");
+        usageList.add(" Should take the form mmmYY,");
+        usageList.add("  where mmm is the first three letters of the name of the month,");
+        usageList.add("  and YY is the lower two digits of the year.");
+        return usageList;
+    }
+
+    public static void run(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
         try {
             downloadCatalog(args[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     private static void downloadCatalog(String update) throws IOException {
@@ -45,8 +69,7 @@ public final class GlobalCMTCatalogUpdate {
         //~Download~//
         if (Files.exists(catalogPath)) {
             System.err.println("Catalog " + catalogName + " already exists; skipping download.");
-        }
-        else {
+        } else {
             System.err.println("Downloading catalog " + catalogName + " ...");
 
             String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
@@ -62,6 +85,9 @@ public final class GlobalCMTCatalogUpdate {
             }
         }
 
+        //~Fix errors in downloaded catalog~//
+        fixCatalog(catalogPath);
+
         //~Activate (change target of symbolic link)~//
         // check whether the symbolic link itself exists, regardless of the existence of its target
         if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
@@ -72,6 +98,48 @@ public final class GlobalCMTCatalogUpdate {
 
         System.err.println("The referenced catalog is set to " + catalogName);
 
+    }
+
+    private static void fixCatalog(Path catalogPath) throws IOException {
+        List<String> lines = Files.readAllLines(catalogPath);
+        if (lines.size() % 5 != 0) throw new IllegalStateException(catalogPath + " is broken or invalid.");
+
+        for (int n = 0; n < lines.size() / 5; n++) {
+
+            //~fix errors where a space between 2 numbers is missing~//
+            String centroidLine = lines.get(n * 5 + 2);
+            if (centroidLine.split("\\s+")[1].split("\\.").length == 3) {
+                // get position of first decimal
+                int firstDecimal = centroidLine.indexOf(".");
+                // add a space 2 letters after the decimal
+                StringBuilder fixer = new StringBuilder(centroidLine);
+                fixer.insert(firstDecimal + 2, " ");
+                // overwrite the line
+                lines.set(n * 5 + 2, fixer.toString());
+            }
+
+            //~fix errors where "60.0" seconds exists~//
+            String hypocenterLine = lines.get(n * 5);
+            String[] timeStrings = hypocenterLine.split("\\s+")[2].split(":");
+            if (MathAid.equalWithinEpsilon(Double.parseDouble(timeStrings[2]), 60.0, 0.001)) {
+                // calculate correct time
+                LocalTime time = LocalTime.parse(timeStrings[0] + ":" + timeStrings[1] + ":00");
+                time = time.plusMinutes(1);
+                String fixedTimeString = time.format(DateTimeFormatter.ISO_LOCAL_TIME);
+                // get position of first colon
+                int firstColon = hypocenterLine.indexOf(":");
+                // fix time in line
+                StringBuilder fixer = new StringBuilder(hypocenterLine);
+                fixer.replace(firstColon - 2, firstColon + 6, fixedTimeString);
+                // overwrite the line
+                lines.set(n * 5, fixer.toString());
+            }
+        }
+
+        // overwrite existing file
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(catalogPath, StandardOpenOption.TRUNCATE_EXISTING))) {
+            lines.forEach(pw::println);
+        }
     }
 
 }
