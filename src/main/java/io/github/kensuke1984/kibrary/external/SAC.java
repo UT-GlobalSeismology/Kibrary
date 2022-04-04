@@ -16,11 +16,11 @@ public class SAC extends ExternalProcess implements Closeable {
     /**
      * Input for SAC
      */
-    private final PrintWriter STANDARD_INPUT;
+    private final PrintWriter standardInput;
 
     private SAC(Process process) {
         super(process);
-        STANDARD_INPUT = new PrintWriter(super.standardInput);
+        standardInput = new PrintWriter(super.standardInputStream);
     }
 
     /**
@@ -35,27 +35,21 @@ public class SAC extends ExternalProcess implements Closeable {
     /**
      * Make an order to SAC
      *
-     * @param line command line for SAC
+     * @param line (String) Command line for SAC
      */
     public void inputCMD(String line) {
-        synchronized (super.standardInput) {
-            STANDARD_INPUT.println(line);
-            STANDARD_INPUT.flush();
+        synchronized (super.standardInputStream) {
+            standardInput.println(line);
+            standardInput.flush();
         }
     }
 
     @Override
     public void close() {
-        try {
-            STANDARD_INPUT.println("q");
-            STANDARD_INPUT.flush();
-            STANDARD_INPUT.close();
-            process.waitFor();
-            standardOutput.join();
-            standardError.join();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        standardInput.println("q");
+        standardInput.flush();
+        standardInput.close();
+        super.waitFor();
     }
 
 }

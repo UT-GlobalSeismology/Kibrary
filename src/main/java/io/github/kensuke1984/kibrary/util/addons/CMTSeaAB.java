@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.BufferedReader;

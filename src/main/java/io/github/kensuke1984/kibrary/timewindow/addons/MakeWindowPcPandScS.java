@@ -15,35 +15,36 @@ import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 public class MakeWindowPcPandScS {
 
-	private Set<TimewindowInformation> infoSetPcP;
+	private Set<TimewindowData> infoSetPcP;
 	
-	private Set<TimewindowInformation> infoSetSelectedPcP;
+	private Set<TimewindowData> infoSetSelectedPcP;
 	
-	private Set<TimewindowInformation> infoSetStrictSelectedPcP;
+	private Set<TimewindowData> infoSetStrictSelectedPcP;
 	
-	private Set<TimewindowInformation> infoSetScS;
+	private Set<TimewindowData> infoSetScS;
 	
-	private Set<TimewindowInformation> infoSetSelectedScS;
+	private Set<TimewindowData> infoSetSelectedScS;
 	
-	private Set<TimewindowInformation> infoSetP;
+	private Set<TimewindowData> infoSetP;
 	
-	private Set<TimewindowInformation> infoSetS;
+	private Set<TimewindowData> infoSetS;
 	
 	private Path workdir;
 	
@@ -97,33 +98,33 @@ public class MakeWindowPcPandScS {
 			e.printStackTrace();
 		}
 		
-		String temp = Utilities.getTemporaryString();
+		String temp = GadgetAid.getTemporaryString();
 		
 		Path outpath = workdir.resolve("timewindow_PcP" + ".dat");
 		if (makewindow.infoSetPcP.size() > 0)
-			TimewindowInformationFile.write(makewindow.infoSetPcP, outpath);
+			TimewindowDataFile.write(makewindow.infoSetPcP, outpath);
 		
 		Path outpathScS = workdir.resolve("timewindow_ScS" + ".dat");
 		if (makewindow.infoSetScS.size() > 0)
-			TimewindowInformationFile.write(makewindow.infoSetScS, outpathScS);
+			TimewindowDataFile.write(makewindow.infoSetScS, outpathScS);
 		
 		Path outpathSelected = workdir.resolve("selectedTimewindow_PcP" + ".dat");
 		if (makewindow.infoSetSelectedPcP.size() > 0)
-			TimewindowInformationFile.write(makewindow.infoSetSelectedPcP, outpathSelected);
+			TimewindowDataFile.write(makewindow.infoSetSelectedPcP, outpathSelected);
 		
 		Path outpathSelectedStrict = workdir.resolve("selectedStricTimewindow_PcP" + ".dat");
 		if (makewindow.infoSetSelectedPcP.size() > 0)
-			TimewindowInformationFile.write(makewindow.infoSetStrictSelectedPcP, outpathSelectedStrict);
+			TimewindowDataFile.write(makewindow.infoSetStrictSelectedPcP, outpathSelectedStrict);
 		
 		Path outpathSelecetdScS = workdir.resolve("selectedTimewindow_ScS" + ".dat");
 		if (makewindow.infoSetSelectedScS.size() > 0)
-			TimewindowInformationFile.write(makewindow.infoSetSelectedScS, outpathSelecetdScS);
+			TimewindowDataFile.write(makewindow.infoSetSelectedScS, outpathSelecetdScS);
 		
 		Path outpathP = workdir.resolve("timewindow_P.dat");
-		TimewindowInformationFile.write(makewindow.infoSetP, outpathP);
+		TimewindowDataFile.write(makewindow.infoSetP, outpathP);
 		
 		Path outpathS = workdir.resolve("timewindow_S.dat");
-		TimewindowInformationFile.write(makewindow.infoSetS, outpathS);
+		TimewindowDataFile.write(makewindow.infoSetS, outpathS);
 	}
 	
 	public void run() throws IOException, TauModelException {
@@ -133,7 +134,7 @@ public class MakeWindowPcPandScS {
 //		try {
 //		Utilities.runEventProcess(workdir, eventFolder -> {
 		
-		for (EventFolder eventFolder : Utilities.eventFolderSet(workdir)) {
+		for (EventFolder eventFolder : DatasetAid.eventFolderSet(workdir)) {
 			System.out.println(eventFolder);
 			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR());
 			
@@ -143,7 +144,7 @@ public class MakeWindowPcPandScS {
 //			for (SACFileName obsName : obsNames) {
 			try {
 			eventFolder.sacFileSet().stream().filter(sfn -> sfn.isOBS() && sfn.getComponent().equals(SACComponent.Z)).forEach(obsName -> {
-				SACHeaderData obsHeader = null;
+				SACHeaderAccess obsHeader = null;
 				try {
 					obsHeader = obsName.readHeader();
 				} catch (IOException e) {
@@ -185,10 +186,10 @@ public class MakeWindowPcPandScS {
 				if (timesS - timeScS < 12)
 					return;
 				
-				SACData synData = null;
-				SACData obsData = null;
-				SACData obsData_T = null;
-				SACData synData_T = null;
+				SACFileAccess synData = null;
+				SACFileAccess obsData = null;
+				SACFileAccess obsData_T = null;
+				SACFileAccess synData_T = null;
 				try {
 					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("sc"))).read();
 					obsData = obsName.read();
@@ -248,13 +249,13 @@ public class MakeWindowPcPandScS {
 						return;
 				}
 				
-				TimewindowInformation timewindow_S = new TimewindowInformation(timeS - 15, timeS + 40,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+				TimewindowData timewindow_S = new TimewindowData(timeS - 15, timeS + 40,
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.T, new Phase[] {Phase.S});
 				infoSetS.add(timewindow_S);
 				
-				TimewindowInformation timewindow_P = new TimewindowInformation(timeP - 5, timeP + 20,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+				TimewindowData timewindow_P = new TimewindowData(timeP - 5, timeP + 20,
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.Z, new Phase[] {Phase.P});
 				infoSetP.add(timewindow_P);
 				
@@ -313,12 +314,12 @@ public class MakeWindowPcPandScS {
 					addPcPstrict = addPcP && signalNoiseRatioPcP > minSNratio;
 				}
 				
-				TimewindowInformation timewindow_ScS = new TimewindowInformation(startTime_ScS, endTime_ScS,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+				TimewindowData timewindow_ScS = new TimewindowData(startTime_ScS, endTime_ScS,
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.T, new Phase[] {Phase.ScS});
 				
-				TimewindowInformation timewindow_PcP = new TimewindowInformation(startTime_PcP, endTime_PcP,
-						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+				TimewindowData timewindow_PcP = new TimewindowData(startTime_PcP, endTime_PcP,
+						obsHeader.getObserver(), obsHeader.getGlobalCMTID(),
 						SACComponent.Z, new Phase[] {Phase.PcP});
 				
 				if (addPcP)
@@ -341,7 +342,7 @@ public class MakeWindowPcPandScS {
 //		}
 	}
 	
-	public Set<TimewindowInformation> getInfoSetPcP() {
+	public Set<TimewindowData> getInfoSetPcP() {
 		return infoSetPcP;
 	}
 

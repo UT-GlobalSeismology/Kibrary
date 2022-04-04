@@ -2,14 +2,14 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Matrix;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;

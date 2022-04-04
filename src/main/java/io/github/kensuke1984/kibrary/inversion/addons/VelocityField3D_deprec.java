@@ -1,13 +1,13 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -162,7 +162,7 @@ public class VelocityField3D_deprec {
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 		List<UnknownParameter> originalUnknowns = ir.getOriginalUnknownParameterList();
 		TriangleRadialSpline trs = null;
-		List<HorizontalPosition> horizontalPoints = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition())
+		List<HorizontalPosition> horizontalPoints = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition())
 				.distinct().collect(Collectors.toList());
 		if (partialCombination.equals("trs")) {
 			Map<PartialType, Integer[]> nNewParameter = trs.parseNParameters(unknowns);
@@ -188,20 +188,20 @@ public class VelocityField3D_deprec {
 					Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");
 					Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
-					Map<Location, Double> locAnswerMap = new HashMap<>();
-					answerMap.forEach((m, v) -> locAnswerMap.put(m.getLocation(), v));
+					Map<FullPosition, Double> locAnswerMap = new HashMap<>();
+					answerMap.forEach((m, v) -> locAnswerMap.put(m.getPosition(), v));
 					Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 					answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
 					Map<UnknownParameter, Double> velocities = null;
 					Map<UnknownParameter, Double> zeroVelocities = null;
 					Map<UnknownParameter, Double> perturbations = null;
 					Map<UnknownParameter, Double> perturbations_toAK135 = null;
-					Map<Location, Double> extendedPerturbationMap = null;
-					Map<Location, Double> zeroMeanPerturbationMap = null;
-					Map<Location, Double> extendedZeroMeanPerturbationMap = null;
-					Map<Location, Double> perturbationMap = new HashMap<>();
-					Map<Location, Double> perturbationMap_toAK135 = new HashMap<>();
-					Map<Location, Double> extendedPerturbationMap_toAK135 = null;
+					Map<FullPosition, Double> extendedPerturbationMap = null;
+					Map<FullPosition, Double> zeroMeanPerturbationMap = null;
+					Map<FullPosition, Double> extendedZeroMeanPerturbationMap = null;
+					Map<FullPosition, Double> perturbationMap = new HashMap<>();
+					Map<FullPosition, Double> perturbationMap_toAK135 = new HashMap<>();
+					Map<FullPosition, Double> extendedPerturbationMap_toAK135 = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					double[][] profile1D = null;
@@ -216,9 +216,9 @@ public class VelocityField3D_deprec {
 						for (double r : rs)
 							perturbationRs[count++] = r;
 						for (UnknownParameter unknown : perturbations.keySet())
-							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+							perturbationMap.put(unknown.getPosition(), perturbations.get(unknown));
 						for (UnknownParameter unknown : perturbations_toAK135.keySet())
-							perturbationMap_toAK135.put(unknown.getLocation(), perturbations_toAK135.get(unknown));
+							perturbationMap_toAK135.put(unknown.getPosition(), perturbations_toAK135.get(unknown));
 						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
 						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 2., perturbationRs);
 						extendedPerturbationMap_toAK135 = extendedPerturbationMap(perturbationMap_toAK135, 2., perturbationRs);
@@ -250,13 +250,13 @@ public class VelocityField3D_deprec {
 						}
 						//---------------
 						if (trs == null) {
-							for (Location loc : extendedPerturbationMap.keySet()) {
+							for (FullPosition loc : extendedPerturbationMap.keySet()) {
 								double perturbation = extendedPerturbationMap.get(loc);
 								double zeroMeanPerturbation = extendedZeroMeanPerturbationMap.get(loc);
 								double perturbation_toAK135 = extendedPerturbationMap_toAK135.get(loc);
 								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation + " " + perturbation_toAK135);
 							}
-							for (Location loc : perturbationMap.keySet()) {
+							for (FullPosition loc : perturbationMap.keySet()) {
 								double perturbation = perturbationMap.get(loc);
 								double zeroMeanPerturbation = zeroMeanPerturbationMap.get(loc);
 								double perturbation_toAK135 = extendedPerturbationMap_toAK135.get(loc);
@@ -284,7 +284,7 @@ public class VelocityField3D_deprec {
 											+ "_" + inverse.simple() + i + ".txt");
 									PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outpath3, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 									for (double r : perturbationRs) {
-										Location loc = p.toLocation(r);
+										FullPosition loc = p.toFullPosition(r);
 										double d = layerMap.get(r);
 										double dmu = locAnswerMap.get(loc);
 										double r1 = r - d/2.;
@@ -307,7 +307,7 @@ public class VelocityField3D_deprec {
 						//---------------
 						else {
 							for (UnknownParameter m : unknowns) {
-								Location loc = (Location) m.getLocation();
+								FullPosition loc = (FullPosition) m.getPosition();
 								double perturbation = perturbations.get(m);
 								pw.println(loc + " " + perturbation);
 							}
@@ -336,7 +336,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter m : answerMap.keySet()) {
 			if (m.getPartialType().isTimePartial())
 				continue;
-			Location loc = (Location) m.getLocation();
+			FullPosition loc = (FullPosition) m.getPosition();
 			double r = loc.getR();
 			double dR = layerMap.get(r);
 			double rmin = r - dR / 2.;
@@ -354,7 +354,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter m : parameterOrder) {
 			if (m.getPartialType().isTimePartial())
 				continue;
-			Location loc = (Location) m.getLocation();
+			FullPosition loc = (FullPosition) m.getPosition();
 			double r = loc.getR();
 			double dR = 0;
 			try {
@@ -390,7 +390,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter m : parameterOrder) {
 			if (m.getPartialType().isTimePartial())
 				continue;
-			Location loc = (Location) m.getLocation();
+			FullPosition loc = (FullPosition) m.getPosition();
 			double r = loc.getR();
 			double dR = 0;
 			try {
@@ -430,9 +430,9 @@ public class VelocityField3D_deprec {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
-			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
-			velocities[i][0] = toQ(answerMap.get(m), m.getLocation().getR(), rmin, rmax, structure, amplifyPerturbation);
+			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
+			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			velocities[i][0] = toQ(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
 		}
@@ -611,7 +611,7 @@ public class VelocityField3D_deprec {
 		for (UnknownParameter p : newParameters.stream()
 				.filter(unknown -> !unknown.getPartialType().isTimePartial()
 						&& unknown.getPartialType().equals(type)).collect(Collectors.toList())) {
-			double rp = p.getLocation().getR();
+			double rp = p.getPosition().getR();
 			double w = p.getWeighting();
 			double value = answerMap.get(p);
 			if (rp - w/2. < r && rp + w/2. >= r) {
@@ -633,18 +633,18 @@ public class VelocityField3D_deprec {
 		return res;
 	}
 	
-	public static Map<Location, Double> zeroMeanMap(Map<Location, Double> perturbationMap, double[] perturbationRs) {
-		Map<Location, Double> map = new HashMap<>();
-		Set<Location> locations = perturbationMap.keySet();
+	public static Map<FullPosition, Double> zeroMeanMap(Map<FullPosition, Double> perturbationMap, double[] perturbationRs) {
+		Map<FullPosition, Double> map = new HashMap<>();
+		Set<FullPosition> locations = perturbationMap.keySet();
 		for (double r : perturbationRs) {
-			Set<Location> tmpLocations = locations.stream().filter(loc -> loc.getR() == r)
+			Set<FullPosition> tmpLocations = locations.stream().filter(loc -> loc.getR() == r)
 				.collect(Collectors.toSet());
 			double average = 0.;
-			for (Location tmploc : tmpLocations)
+			for (FullPosition tmploc : tmpLocations)
 				average += perturbationMap.get(tmploc);
 			average /= tmpLocations.size();
 			
-			for (Location tmploc : tmpLocations) {
+			for (FullPosition tmploc : tmpLocations) {
 				double tmpPerturbation = perturbationMap.get(tmploc)
 						- average;
 				map.put(tmploc, tmpPerturbation);
@@ -653,15 +653,15 @@ public class VelocityField3D_deprec {
 		return map;
 	}
 	
-	public static double[][] average1DProfile(Map<Location, Double> perturbationMap, double[] perturbationRs) {
+	public static double[][] average1DProfile(Map<FullPosition, Double> perturbationMap, double[] perturbationRs) {
 		double[][] profile = new double[perturbationRs.length][2];
-		Set<Location> locations = perturbationMap.keySet();
+		Set<FullPosition> locations = perturbationMap.keySet();
 		for (int i = 0; i < perturbationRs.length; i++) {
 			double r = perturbationRs[i];
-			Set<Location> tmpLocations = locations.stream().filter(loc -> loc.getR() == r)
+			Set<FullPosition> tmpLocations = locations.stream().filter(loc -> loc.getR() == r)
 				.collect(Collectors.toSet());
 			double average = 0.;
-			for (Location tmploc : tmpLocations)
+			for (FullPosition tmploc : tmpLocations)
 				average += perturbationMap.get(tmploc);
 			average /= tmpLocations.size();
 			
@@ -671,15 +671,15 @@ public class VelocityField3D_deprec {
 		return profile;
 	}
 	
-	public static Map<Location, Double> extendedPerturbationMap(Map<Location, Double> perturbationMap, double dL, double[] perturbationRs) {
-		Map<Location, Double> extended = new HashMap<>();
+	public static Map<FullPosition, Double> extendedPerturbationMap(Map<FullPosition, Double> perturbationMap, double dL, double[] perturbationRs) {
+		Map<FullPosition, Double> extended = new HashMap<>();
 		double minLat = 1e3;
 		double maxLat = -1e3;
 		double minLon = 1e3;
 		double maxLon = -1e3;
 		
-		Set<Location> locations = perturbationMap.keySet();
-		for (Location loci : locations) {
+		Set<FullPosition> locations = perturbationMap.keySet();
+		for (FullPosition loci : locations) {
 			double dvs = perturbationMap.get(loci);
 			extended.put(loci, dvs);
 			
@@ -692,21 +692,21 @@ public class VelocityField3D_deprec {
 			if (loci.getLongitude() > maxLon)
 				maxLon = loci.getLongitude();
 			
-			Location[] additionalLocs = new Location[] {new Location(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())};
+			FullPosition[] additionalLocs = new FullPosition[] {new FullPosition(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())};
 			
-			Set<Location> thisRLocations = locations.stream()
+			Set<FullPosition> thisRLocations = locations.stream()
 					.filter(loc -> loc.getR() == loci.getR()).collect(Collectors.toSet());
 			boolean[] isAdds = new boolean[additionalLocs.length];
 			for (int j = 0; j < isAdds.length; j++)
 				isAdds[j] = true;
-			for (Location loc : thisRLocations) {
+			for (FullPosition loc : thisRLocations) {
 				for (int k = 0; k < additionalLocs.length; k++) {
 					if (loc.equals(additionalLocs[k]))
 						isAdds[k] = false;
@@ -729,7 +729,7 @@ public class VelocityField3D_deprec {
 				for (int j=0; j < nLat; j++) {
 					double lon = minLon + (i - 1) * dL;
 					double lat = minLat + (j - 1) * dL;
-					Location loc = new Location(lat, lon, r);
+					FullPosition loc = new FullPosition(lat, lon, r);
 					if (!extended.containsKey(loc))
 						extended.put(loc, Double.NaN);
 				}
@@ -800,9 +800,9 @@ public class VelocityField3D_deprec {
 				Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 				answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
 				Map<UnknownParameter, Double> perturbations = null;
-				Map<Location, Double> extendedPerturbationMap = null;
-				Map<Location, Double> zeroMeanPerturbationMap = null;
-				Map<Location, Double> extendedZeroMeanPerturbationMap = null;
+				Map<FullPosition, Double> extendedPerturbationMap = null;
+				Map<FullPosition, Double> zeroMeanPerturbationMap = null;
+				Map<FullPosition, Double> extendedZeroMeanPerturbationMap = null;
 				
 				perturbations = toPerturbation(answerMap, layerMap, unknowns, structure, 1.);
 				Set<Double> rs = layerMap.keySet();
@@ -810,15 +810,15 @@ public class VelocityField3D_deprec {
 				int count = 0;
 				for (double r : rs)
 					perturbationRs[count++] = r;
-				Map<Location, Double> perturbationMap = new HashMap<>();
+				Map<FullPosition, Double> perturbationMap = new HashMap<>();
 				for (UnknownParameter unknown : perturbations.keySet())
-					perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+					perturbationMap.put(unknown.getPosition(), perturbations.get(unknown));
 				zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
 				extendedPerturbationMap = extendedPerturbationMap(perturbationMap, deltaDegree, perturbationRs);
 				extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, deltaDegree, perturbationRs);
 				
 				PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-				for (Location loc : extendedPerturbationMap.keySet()) {
+				for (FullPosition loc : extendedPerturbationMap.keySet()) {
 					double perturbation = extendedPerturbationMap.get(loc);
 					double zeroMeanPerturbation = extendedZeroMeanPerturbationMap.get(loc);
 					pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);

@@ -31,7 +31,7 @@ public enum SPCTensorComponent {
     SPCTensorComponent(int n) {
         value = n;
     }
-    
+
     /**
      * back propagate のETAri,sのコンポーネントを返す it returns rtp when i=1 r=2 s=3
      *
@@ -40,7 +40,7 @@ public enum SPCTensorComponent {
      * @param s 1, 2, 3
      * @return SPCTensorComponent for the input i r s
      */
-    public static SPCTensorComponent valueOfBP(int i, int r, int s) {
+    public static SPCTensorComponent valueOf27Conmponent(int i, int r, int s) {
         if (i < 1 || 3 < i || r < 1 || 3 < r || s < 1 || 3 < s) throw new IllegalArgumentException(
                 "Input (i, r, s) = (" + i + ", " + r + ", " + s + ") must be 1, 2 or 3.");
         return Arrays.stream(values())
@@ -51,12 +51,16 @@ public enum SPCTensorComponent {
 
     /**
      * forward propagate のUp,qのコンポーネントを返す p=1, q=2の時 rtを返す
+     * <p>
+     * or
+     * <p>
+     * back propagate のETAjiのコンポーネントを返す i=1, j=2の時 rtを返す
      *
      * @param p 1, 2, 3
      * @param q 1, 2, 3
      * @return SPCTensorComponent for the input p q
      */
-    public static SPCTensorComponent valueOfFP(int p, int q) {
+    public static SPCTensorComponent valueOf9Component(int p, int q) {
         if (p < 1 || 3 < p || q < 1 || 3 < q)
             throw new IllegalArgumentException("Input (p, q) = (" + p + ", " + q + ") must be 1, 2 or 3.");
         return Arrays.stream(values()).filter(stc -> stc.value == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
@@ -66,32 +70,32 @@ public enum SPCTensorComponent {
     public int valueOf() {
         return value;
     }
-    
-	/**
-	 * @param n
-	 * @return
-	 * @author anselme
-	 */
-	public static boolean isBPSHCATzero(int n) {
-		if (n < 1 || n > 27)
-			throw new IndexOutOfBoundsException("Error: index of component for BP should be between 1-27");
-		if (n >= 10 && n <= 27)
-			return false;
-		else
-			return true;
-	}
-	
-	/**
-	 * @param n
-	 * @return
-	 * @author anselme
-	 */
-	public static boolean isFPSHzero(int n) {
-		if (n < 1 || n > 9)
-			throw new IndexOutOfBoundsException("Error: index of component for FP should be between 1-9");
-		if (n == 1)
-			return true;
-		else return false;
-	}
+
+    /**
+     * @param n
+     * @return
+     * @author anselme
+     */
+    public static boolean isBPSHCATzero(int n) {
+        if (n < 1 || n > 27)
+            throw new IndexOutOfBoundsException("Error: index of component for BP should be between 1-27");
+        if (n >= 10 && n <= 27)
+            return false;
+        else
+            return true;
+    }
+
+    /**
+     * @param n
+     * @return
+     * @author anselme
+     */
+    public static boolean isFPSHzero(int n) {
+        if (n < 1 || n > 9)
+            throw new IndexOutOfBoundsException("Error: index of component for FP should be between 1-9");
+        if (n == 1)
+            return true;
+        else return false;
+    }
 
 }

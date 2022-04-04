@@ -3,12 +3,13 @@ package io.github.kensuke1984.kibrary.external;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
 /**
- * ExternalProcess
+ * A class that executes an external process.
+ * {@link InputStreamThread} is used to read the standard output and standard error.
+ * The buffer of the output must be kept reading, or else, the process will freeze when the buffer becomes full.
  * <p>
  * Bit bucket is /dev/null and nul for unix and windows system, respectively.
  *
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
  * @version 0.1.1
  */
 public class ExternalProcess {
-    final static File bitBucket; // TODO check in Windows
+    static final File bitBucket; // TODO check in Windows
 
     static {
         bitBucket = System.getProperty("os.name").contains("Windows") ? new File("null") : new File("/dev/null");
@@ -24,39 +25,23 @@ public class ExternalProcess {
     }
 
     /**
-     * {@link Stream} for standard write
+     * {@link Stream} for standard write (Output of the process, input for this program)
      */
-    protected final InputStreamThread standardOutput;
+    protected final InputStreamThread standardOutputThread;
     /**
-     * {@link Stream} for standard error
+     * {@link Stream} for standard error (Output of the process, input for this program)
      */
-    protected final InputStreamThread standardError;
+    protected final InputStreamThread standardErrorThread;
     /**
-     * connected to standard input
+     * connected to standard input (Input of the process, output for this program)
      */
-    protected final OutputStream standardInput;
+    protected final OutputStream standardInputStream;
 
     protected Process process;
 
-    ExternalProcess(Process process) {
-        this.process = process;
-        standardOutput = new InputStreamThread(process.getInputStream());
-        standardError = new InputStreamThread(process.getErrorStream());
-        standardError.start();
-        standardOutput.start();
-        standardInput = process.getOutputStream();
-    }
-
-    public static ExternalProcess launch(String... command) throws IOException {
-        ProcessBuilder builder = new ProcessBuilder(command);
-        return new ExternalProcess(builder.start());
-    }
-
-    public static ExternalProcess launch(List<String> command) throws IOException {
-        return new ExternalProcess(new ProcessBuilder(command).start());
-    }
 
     /**
+     * Checks whether an executable exists in PATH.
      * This method uses /usr/bin/which
      *
      * @param executable to look for
@@ -67,41 +52,76 @@ public class ExternalProcess {
         try {
             return check.start().waitFor() == 0;
         } catch (InterruptedException | IOException e) {
+            // Here, exceptions can be suppressed because they are used just to check whether the executable is in PATH.
             e.printStackTrace();
             return false;
         }
     }
 
     /**
-     * @return {@link OutputStream} connected to a standard input to the process
+     * Starts executing a command using ExternalProcess, and returns that instance.
+     * @param command (String) The command to be executed, using spaces to separate words
+     * @param workpath (Path) Path of the working directory of the command
+     * @return (ExternalProcess)
+     * @throws IOException
      */
-    public OutputStream getStandardInput() {
-        return standardInput;
+    public static ExternalProcess launch(String command, Path workpath) throws IOException {
+        ProcessBuilder builder = new ProcessBuilder(command.split("\\s"));
+        builder.directory(workpath.toFile());
+        return new ExternalProcess(builder.start());
     }
 
     /**
-     * @return {@link InputStreamThread} connected to a standard write to the
-     * process
+     * New {@link InputStreamThread}s are started to read the standard output and standard error.
+     * @param process (Process)
      */
-    public InputStreamThread getStandardOutput() {
-        return standardOutput;
+    protected ExternalProcess(Process process) {
+        this.process = process;
+        standardInputStream = process.getOutputStream();
+        standardOutputThread = new InputStreamThread(process.getInputStream());
+        standardErrorThread = new InputStreamThread(process.getErrorStream());
+        // By calling start(), the threads are activated and their run() methods are executed.
+        standardOutputThread.start();
+        standardErrorThread.start();
     }
 
     /**
-     * @return {@link InputStreamThread} connected to a standard error to the
-     * process
+     * @return {@link OutputStream} connected to the standard input to the process
      */
-    public InputStreamThread getStandardError() {
-        return standardError;
+    public OutputStream getStandardInputStream() {
+        return standardInputStream;
     }
 
+    /**
+     * @return {@link InputStreamThread} connected from the standard write of the process
+     */
+    public InputStreamThread getStandardOutputThread() {
+        return standardOutputThread;
+    }
+
+    /**
+     * @return {@link InputStreamThread} connected from the standard error of the process
+     */
+    public InputStreamThread getStandardErrorThread() {
+        return standardErrorThread;
+    }
+
+    /**
+     * Waits until everything is finished.
+     * @return (int) The exit code of the process. 0 is returned in case of success.
+     */
     public int waitFor() {
         try {
-            int process = this.process.waitFor();
-            standardError.join();
-            standardOutput.join();
-            return process;
-        } catch (Exception e) {
+            int exit = this.process.waitFor();
+            standardErrorThread.join();
+            standardOutputThread.join();
+            return exit;
+        } catch (InterruptedException e) {
+            // InterruptedException means that someone wants the current thread to stop,
+            // but the 'interrupted' flag is reset when InterruptedException is thrown in sleep(),
+            // so the flag should be set back up.
+            // Then, throw RuntimeException to halt the program.
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

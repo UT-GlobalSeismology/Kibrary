@@ -5,8 +5,8 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -66,10 +66,10 @@ public class FiniteDifferencePartial {
 					Files.createDirectories(dir1);
 				
 				String endstring = obsIds[i].isConvolute() ? "sc" : "s";
-				String outname = obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
+				String outname = obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
 				String outfile = dir1 + "/" + outname;
-				String outfile2 = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent() + endstring;
-				String outfile3 = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent();
+				String outfile2 = dir1 + "/" + obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent() + endstring;
+				String outfile3 = dir1 + "/" + obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent();
 				
 				PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outfile)));
 				PrintWriter pw2 = new PrintWriter(new BufferedWriter(new FileWriter(outfile2)));
@@ -89,11 +89,11 @@ public class FiniteDifferencePartial {
 				pw2.close();
 				pw3.close();
 				
-				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obsIds[i].getStation().getPosition()))
+				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obsIds[i].getObserver().getPosition()))
 						/ daz);
 				int icomp = obsIds[i].getSacComponent().valueOf();
 				double max = new ArrayRealVector(obs).subtract(new ArrayRealVector(syn)).getLInfNorm() * 0.167;
-				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsIds[i].getStation().getPosition()));
+				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsIds[i].getObserver().getPosition()));
 				azimuthPlotString[iaz][icomp-1] += String.format("'%s' u 1:($2/%.4e+%.3f) w l lc rgb 'black' lt 1 lw .5 noti,\\\n", outname, max, distance);
 			}
 			

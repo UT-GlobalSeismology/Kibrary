@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -39,14 +39,14 @@ public class PartialVisual {
 //			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211327A")))
 //				continue;
 			
-			Location loc = partial.getPerturbationLocation();
+			FullPosition loc = partial.getPerturbationLocation();
 //			Path outpath = Paths.get(String.format("%.1f-%.1f/%s.%s.%s.%.0f.%d.txt", partial.getMinPeriod(), partial.getMaxPeriod()
 //					, partial.getStation().toString(), partial.getGlobalCMTID().toString(), partial.getSacComponent().toString(), loc.getR(), (int) partial.getStartTime()));
 			
 			Phases phases = new Phases(partial.getPhases());
 			
 			Path dir = Paths.get(String.format("%.1f-%.1f", partial.getMinPeriod(), partial.getMaxPeriod()));
-			Path outpath =  dir.resolve(partial.getStation().getName() + "." 
+			Path outpath =  dir.resolve(partial.getObserver().getStation() + "." 
 					+ partial.getGlobalCMTID() + "." + partial.getSacComponent() + "."
 					+ (int) (loc.getLatitude()*100) + "."
 					+ (int) (loc.getLongitude()*100) + "." + (int) (loc.getR()*100) + "." + partial.getPartialType() + "."

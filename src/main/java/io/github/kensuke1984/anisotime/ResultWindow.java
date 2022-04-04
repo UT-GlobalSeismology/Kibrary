@@ -1,10 +1,11 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+
+import io.github.kensuke1984.kibrary.util.MathAid;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -87,10 +88,10 @@ class ResultWindow extends javax.swing.JPanel {
      * @param travelTime         [s]
      */
     void addRow(double epicentralDistance, double depth, String phase, double travelTime, double rayparameter) {
-        String delta = Utilities.fixDecimalPlaces(2, epicentralDistance);
-        String depthS = Utilities.fixDecimalPlaces(2, depth);
-        String p = Utilities.fixDecimalPlaces(2, rayparameter);
-        String time = Utilities.fixDecimalPlaces(2, travelTime);
+        String delta = MathAid.roundToString(epicentralDistance, 2);
+        String depthS = MathAid.roundToString(depth, 2);
+        String p = MathAid.roundToString(rayparameter, 2);
+        String time = MathAid.roundToString(travelTime, 2);
         try {
             SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1.getModel()))
                     .addRow(new String[]{delta, depthS, phase, time, p}));

@@ -13,10 +13,10 @@ import java.util.stream.IntStream;
 
 import edu.sc.seis.TauP.TauModel;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * <p>
@@ -67,12 +67,12 @@ public final class TauPPierceReader {
 	 * @return travel times for the phase if there is multiplication, all values
 	 *         will be returned
 	 */
-	public static List<Info> getPierceInfo(Location eventLocation, HorizontalPosition stationPosition, String model, Phase... phases) {
+	public static List<Info> getPierceInfo(FullPosition eventLocation, HorizontalPosition stationPosition, String model, Phase... phases) {
 		Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
 		return toPhase(operateTauPPierce(eventLocation, stationPosition, phaseSet, model));
 	}
 	
-	public static List<Info> getPierceInfo(Location eventLocation, HorizontalPosition stationPosition, String model, double pierceDepth, Phase... phases) {
+	public static List<Info> getPierceInfo(FullPosition eventLocation, HorizontalPosition stationPosition, String model, double pierceDepth, Phase... phases) {
 		Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
 		return toPhase(operateTauPPierce(eventLocation, stationPosition, phaseSet, model, pierceDepth), pierceDepth);
 	}
@@ -86,7 +86,7 @@ public final class TauPPierceReader {
 	 *            set of seismic phase.
 	 * @return {@link Set} of TauPPhases.
 	 */
-	public static List<Info> getPierceInfo(Location eventLocation, HorizontalPosition stationPosition, String model, Set<Phase> phaseSet) {
+	public static List<Info> getPierceInfo(FullPosition eventLocation, HorizontalPosition stationPosition, String model, Set<Phase> phaseSet) {
 		return toPhase(operateTauPPierce(eventLocation, stationPosition, phaseSet, model));
 	}
 	
@@ -98,7 +98,7 @@ public final class TauPPierceReader {
 	 * @param phase
 	 * @return result lines
 	 */
-	private static List<String> operateTauPPierce(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phase, String model, double pierceDepth) {
+	private static List<String> operateTauPPierce(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phase, String model, double pierceDepth) {
 		String[] cmd = makeCMD(eventLocation, stationPosition, phase, model, pierceDepth);
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.redirectError(ExternalProcess.bitBucket);
@@ -122,7 +122,7 @@ public final class TauPPierceReader {
 		}
 	}
 	
-	private static List<String> operateTauPPierce(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phase, String model) {
+	private static List<String> operateTauPPierce(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phase, String model) {
 		String[] cmd = makeCMD(eventLocation, stationPosition, phase, model);
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.redirectError(ExternalProcess.bitBucket);
@@ -146,7 +146,7 @@ public final class TauPPierceReader {
 		}
 	}
 	
-	private static List<String> operateTauPPierce(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phase) {
+	private static List<String> operateTauPPierce(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phase) {
 		return operateTauPPierce(eventLocation, stationPosition, phase);
 	}
 
@@ -193,11 +193,11 @@ public final class TauPPierceReader {
 	 *            phase set
 	 * @return command
 	 */
-	private static String[] makeCMD(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phases) {
+	private static String[] makeCMD(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phases) {
 		return makeCMD(eventLocation, stationPosition, phases, "prem");
 	}
 	
-	private static String[] makeCMD(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model) {
+	private static String[] makeCMD(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 //		System.out.println(phase);
 		if (!(phase.trim().equals("ScS") || phase.trim().equals("PcP")))
@@ -212,7 +212,7 @@ public final class TauPPierceReader {
 		return cmd.split("\\s+");
 	}
 	
-	private static String[] makeCMD(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model, double pierceDepth) {
+	private static String[] makeCMD(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model, double pierceDepth) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 //		System.out.println(phase);
 		if (!(phase.trim().equals("ScS") || phase.trim().equals("PcP")))
@@ -231,9 +231,9 @@ public final class TauPPierceReader {
 		private Phase phase;
 		private double travelTime;
 		private double distance;
-		private Location turningPoint;
-		private Location leavePoint;
-		private Location enterPoint;
+		private FullPosition turningPoint;
+		private FullPosition leavePoint;
+		private FullPosition enterPoint;
 		
 		public Info(String[] lines, double pierceDepth) {
 //			if (lines.length != 2)
@@ -262,26 +262,26 @@ public final class TauPPierceReader {
 			phase = Phase.create(parts0[1], false);
 			travelTime = Double.parseDouble(parts0[3]);
 			distance = Double.parseDouble(parts0[6]);
-			turningPoint = new Location(Double.parseDouble(parts2[3])
+			turningPoint = new FullPosition(Double.parseDouble(parts2[3])
 					,Double.parseDouble(parts2[4])
 					,6371. - Double.parseDouble(parts2[1]));
-			enterPoint = new Location(Double.parseDouble(parts1[3])
+			enterPoint = new FullPosition(Double.parseDouble(parts1[3])
 					,Double.parseDouble(parts1[4])
 					,6371. - Double.parseDouble(parts1[1]));
-			leavePoint = new Location(Double.parseDouble(parts3[3])
+			leavePoint = new FullPosition(Double.parseDouble(parts3[3])
 					,Double.parseDouble(parts3[4])
 					,6371. - Double.parseDouble(parts3[1]));
 		}
 		
 		private void parseOutputS(String[] lines, double pierceDepth) {
-			Location[] enterPoints = new Location[6];
-			Location[] leavePoints = new Location[6];
+			FullPosition[] enterPoints = new FullPosition[6];
+			FullPosition[] leavePoints = new FullPosition[6];
 			double[] rayparams = new double[6];
 			int count = -1;
 			int iMinRayParam = -1;
 			double minRayParam = Double.MIN_VALUE;
 			boolean foundEnterPoint = false;
-			Location previousLoc = new Location(0, 0, 7000);
+			FullPosition previousLoc = new FullPosition(0, 0, 7000);
 			for (String line : lines) {
 				if (line.startsWith(">")) {
 					foundEnterPoint = false;
@@ -300,13 +300,13 @@ public final class TauPPierceReader {
 //						System.out.println(tmp);
 					double[] s = Arrays.stream(line.trim().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 					double depth = s[1];
-					if (Utilities.equalWithinEpsilon(depth, pierceDepth, 1.)) {
+					if (MathAid.equalWithinEpsilon(depth, pierceDepth, 1.)) {
 						if (!foundEnterPoint) {
-							enterPoints[count] = new Location(s[3], s[4], Earth.EARTH_RADIUS - depth);
+							enterPoints[count] = new FullPosition(s[3], s[4], Earth.EARTH_RADIUS - depth);
 							foundEnterPoint = true;
 						}
 						else
-							leavePoints[count] = new Location(s[3], s[4], Earth.EARTH_RADIUS - depth);
+							leavePoints[count] = new FullPosition(s[3], s[4], Earth.EARTH_RADIUS - depth);
 					}
 					if (previousLoc.getR() > depth) {
 						turningPoint = previousLoc;
@@ -332,15 +332,15 @@ public final class TauPPierceReader {
 			return distance;
 		}
 		
-		public Location getTurningPoint() {
+		public FullPosition getTurningPoint() {
 			return turningPoint;
 		}
 		
-		public Location getEnterPoint() {
+		public FullPosition getEnterPoint() {
 			return enterPoint;
 		}
 		
-		public Location getLeavePoint() {
+		public FullPosition getLeavePoint() {
 			return leavePoint;
 		}
 	}

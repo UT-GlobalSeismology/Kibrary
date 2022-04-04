@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.specfem;
 
-import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
-import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.BufferedWriter;
@@ -34,7 +34,7 @@ public class MakeRunFolder {
 			if (!Files.isDirectory(specfemRoot))
 				throw new FileNotFoundException(specfemRoot.toString());
 			
-			List<EventFolder> eventFolderSet = Utilities.eventFolderSet(eventFolderPath)
+			List<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(eventFolderPath)
 					.stream().collect(Collectors.toList());
 			
 			AtomicInteger iatom = new AtomicInteger(1);
@@ -72,10 +72,10 @@ public class MakeRunFolder {
 					String s = cmtSolutionString(id);
 					Files.write(eventFile, s.getBytes());
 					
-					Set<Station> stationSet = new HashSet<>();
+					Set<Observer> stationSet = new HashSet<>();
 					eventFolder.sacFileSet().parallelStream().forEach(sac -> {
 						try {
-							stationSet.add(sac.read().getStation());
+							stationSet.add(sac.read().getObserver());
 						} catch (IOException e) {
 							System.err.format("IOException: %s%n", e);
 						}
@@ -84,9 +84,9 @@ public class MakeRunFolder {
 					// write STATIONS file
 					Path stationFile = dataFolderPath.resolve("STATIONS");
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
-						for (Station sta : stationSet) {
+						for (Observer sta : stationSet) {
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
-								, sta.getName()
+								, sta.getStation()
 								, sta.getNetwork()
 								, sta.getPosition().getLatitude()
 								, sta.getPosition().getLongitude())
@@ -106,7 +106,7 @@ public class MakeRunFolder {
 	}
 
 	public static String cmtSolutionString(GlobalCMTID id) {
-		GlobalCMTData idData = id.getEvent();
+		GlobalCMTAccess idData = id.getEvent();
 		LocalDateTime pdeTime = idData.getPDETime();
 		MomentTensor mt = idData.getCmt();
 		double pow = Math.pow(10, mt.getMtExp());

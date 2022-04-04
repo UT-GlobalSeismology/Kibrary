@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -83,15 +83,15 @@ public class ResampleGrid {
 		Path parameterPath = Paths.get(args[0]);
 		try {
 			List<UnknownParameter> parameterstmp = UnknownParameterFile.read(parameterPath);
-			double r0 = parameterstmp.stream().map(u -> u.getLocation().getR()).findFirst().get();
+			double r0 = parameterstmp.stream().map(u -> u.getPosition().getR()).findFirst().get();
 			PartialType type = parameterstmp.stream().map(UnknownParameter::getPartialType).findFirst().get();
 			List<UnknownParameter> parameters = parameterstmp.stream()
-					.filter(u -> u.getLocation().getR() == r0
+					.filter(u -> u.getPosition().getR() == r0
 							&& u.getPartialType().equals(type))
 					.collect(Collectors.toList());
 //			List<UnknownParameter> parameters = parameterstmp;
 			
-			double dl = parameterstmp.stream().mapToDouble(p -> Math.abs(p.getLocation().getLatitude() - parameterstmp.get(0).getLocation().getLatitude())).distinct().sorted().toArray()[1];
+			double dl = parameterstmp.stream().mapToDouble(p -> Math.abs(p.getPosition().getLatitude() - parameterstmp.get(0).getPosition().getLatitude())).distinct().sorted().toArray()[1];
 			
 //			double dlon = 5.;
 //			double dlat = 5.;
@@ -209,14 +209,14 @@ public class ResampleGrid {
 		List<UnknownParameter> resampled = new ArrayList<>();
 		
 		for (UnknownParameter p : parameters) {
-			Location loc = p.getLocation();
+			FullPosition loc = p.getPosition();
 			double lat = loc.getLatitude();
 			double lon = loc.getLongitude();
 			double r = loc.getR();
-			Location loc1 = new Location(lat - dlat/4., lon - dlon/4., r);
-			Location loc2 = new Location(lat - dlat/4., lon + dlon /4., r);
-			Location loc3 = new Location(lat + dlat/4., lon - dlon /4., r);
-			Location loc4 = new Location(lat + dlat/4., lon + dlon /4., r);
+			FullPosition loc1 = new FullPosition(lat - dlat/4., lon - dlon/4., r);
+			FullPosition loc2 = new FullPosition(lat - dlat/4., lon + dlon /4., r);
+			FullPosition loc3 = new FullPosition(lat + dlat/4., lon - dlon /4., r);
+			FullPosition loc4 = new FullPosition(lat + dlat/4., lon + dlon /4., r);
 			
 			resampled.add(new Physical3DParameter(p.getPartialType(), loc1, p.getWeighting() / 4.));
 			resampled.add(new Physical3DParameter(p.getPartialType(), loc2, p.getWeighting() / 4.));
@@ -248,7 +248,7 @@ public class ResampleGrid {
 	}
 	
 	public List<HorizontalPosition> getResampledPositions() {
-		return resampledUnknowns.stream().map(u -> u.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		return resampledUnknowns.stream().map(u -> u.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
 	}
 	
 	public double getNewDlat() {

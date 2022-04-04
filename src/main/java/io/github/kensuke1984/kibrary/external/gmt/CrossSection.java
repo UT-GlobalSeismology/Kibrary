@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * 中心点　距離（中心点からの面の広がり）　azimuth r など から、断面を作る
@@ -21,7 +21,7 @@ public class CrossSection extends CrossSectionLine {
     /**
      * 断面上の点の位置
      */
-    private Location[] locations;
+    private FullPosition[] locations;
 
 
     /**
@@ -35,13 +35,13 @@ public class CrossSection extends CrossSectionLine {
                         double[] r) {
         super(centerLocation, theta, azimuth, deltaTheta);
         HorizontalPosition[] positions = getPositions();
-        locations = new Location[r.length * positions.length];
+        locations = new FullPosition[r.length * positions.length];
         double[] tmpThetaX = thetaX;
         thetaX = new double[r.length * positions.length];
 //		System.exit(0);
         for (int i = 0; i < positions.length; i++) {
             for (int j = 0; j < r.length; j++) {
-                locations[i * r.length + j] = positions[i].toLocation(r[j]);
+                locations[i * r.length + j] = positions[i].toFullPosition(r[j]);
 //				System.out.println(locations[i*r.length+j]);
                 thetaX[i * r.length + j] = tmpThetaX[i];
             }
@@ -65,7 +65,7 @@ public class CrossSection extends CrossSectionLine {
         return r;
     }
 
-    public Location[] getLocations() {
+    public FullPosition[] getLocations() {
         return locations;
     }
 

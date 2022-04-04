@@ -1,13 +1,13 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 
 /**
  * @author Kensuke Konishi

@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -81,7 +81,7 @@ public class WeightUnknownParameter {
 					weights.put(unknown, 1.);
 				else {
 					double weight = 1.;
-					double r = unknown.getLocation().getR();
+					double r = unknown.getPosition().getR();
 					if (r >= 5700 && r < 5750) {
 						weight = 1.7;
 					}
@@ -104,7 +104,7 @@ public class WeightUnknownParameter {
 					weight = Math.sqrt(weight);
 					
 //					TODO find the corresponding unknown (with the good weight)
-					UnknownParameter unknown = unknowns.stream().filter(tmp -> tmp.getLocation().equals(p.getLocation()) 
+					UnknownParameter unknown = unknowns.stream().filter(tmp -> tmp.getPosition().equals(p.getPosition()) 
 							&& tmp.getPartialType().equals(p.getPartialType())).findFirst().get();
 					weights.put(unknown, weight);
 				}
@@ -127,7 +127,7 @@ public class WeightUnknownParameter {
 			double sensitivity = Double.parseDouble(ss[4]);
 			PartialType type = PartialType.valueOf(ss[0]);
 			
-			UnknownParameter p = new Physical3DParameter(type, new Location(lat, lon, r), 1.);
+			UnknownParameter p = new Physical3DParameter(type, new FullPosition(lat, lon, r), 1.);
 			sensitivityMap.put(p, sensitivity);
 		}
 		br.close();

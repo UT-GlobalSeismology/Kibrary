@@ -5,53 +5,53 @@ import java.nio.file.Paths;
 
 import org.apache.commons.math3.complex.Complex;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
-import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
-import io.github.kensuke1984.kibrary.util.spc.Spectrum;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 
 public class LookAtBPspc {
 
 	public static void main(String[] args) throws IOException {
-		SPCFile spcName = new FormattedSPCFile(Paths.get(args[0]));
+		SPCFileName spcName = new FormattedSPCFileName(Paths.get(args[0]));
 		
-		DSMOutput dsmOutput = null;
+		SPCFileAccess dsmOutput = null;
 		if (args.length == 1)
 			dsmOutput = spcName.read();
 		else if (args.length == 2) {
 			double phi = Double.parseDouble(args[1]);
 			System.out.println("Phi = " + phi);
-			dsmOutput = Spectrum.getInstance(spcName, phi);
+			dsmOutput = SPCFile.getInstance(spcName, phi);
 		}
 		
 		print(dsmOutput);
 	}
 	
-	public static void print(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverID();
-		String netwkName = dsmOutput.getObserverNetwork();
+	public static void print(SPCFileAccess dsmOutput) {
+		String obsName = dsmOutput.getStationCode();
+		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
-		Location sourceLocation = dsmOutput.getSourceLocation();
+		FullPosition sourceLocation = dsmOutput.getSourceLocation();
 		
 		double distance = sourceLocation.getEpicentralDistance(observerPosition) * 180. / Math.PI;
 		
 		System.out.println("Epicentral distance = " + distance);
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 		
-		SPCTensorComponent c1 = SPCTensorComponent.valueOfBP(1, 1, 2);
-		SPCTensorComponent c2 = SPCTensorComponent.valueOfBP(1, 2, 2);
-		SPCTensorComponent c3 = SPCTensorComponent.valueOfBP(1, 3, 2);
-		SPCTensorComponent c4 = SPCTensorComponent.valueOfBP(2, 1, 2);
-		SPCTensorComponent c5 = SPCTensorComponent.valueOfBP(2, 2, 2);
-		SPCTensorComponent c6 = SPCTensorComponent.valueOfBP(2, 3, 2);
-		SPCTensorComponent c7 = SPCTensorComponent.valueOfBP(3, 1, 2);
-		SPCTensorComponent c8 = SPCTensorComponent.valueOfBP(3, 2, 2);
-		SPCTensorComponent c9 = SPCTensorComponent.valueOfBP(3, 3, 2);
+		SPCTensorComponent c1 = SPCTensorComponent.valueOf27Conmponent(1, 1, 2);
+		SPCTensorComponent c2 = SPCTensorComponent.valueOf27Conmponent(1, 2, 2);
+		SPCTensorComponent c3 = SPCTensorComponent.valueOf27Conmponent(1, 3, 2);
+		SPCTensorComponent c4 = SPCTensorComponent.valueOf27Conmponent(2, 1, 2);
+		SPCTensorComponent c5 = SPCTensorComponent.valueOf27Conmponent(2, 2, 2);
+		SPCTensorComponent c6 = SPCTensorComponent.valueOf27Conmponent(2, 3, 2);
+		SPCTensorComponent c7 = SPCTensorComponent.valueOf27Conmponent(3, 1, 2);
+		SPCTensorComponent c8 = SPCTensorComponent.valueOf27Conmponent(3, 2, 2);
+		SPCTensorComponent c9 = SPCTensorComponent.valueOf27Conmponent(3, 3, 2);
 		
 //		SpcTensorComponent c1 = SpcTensorComponent.valueOfBP(1, 1, 3);
 //		SpcTensorComponent c2 = SpcTensorComponent.valueOfBP(1, 2, 3);
@@ -82,12 +82,12 @@ public class LookAtBPspc {
 		}
 	}
 	
-	public static void printHeader(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverID();
-		String netwkName = dsmOutput.getObserverNetwork();
+	public static void printHeader(SPCFileAccess dsmOutput) {
+		String obsName = dsmOutput.getStationCode();
+		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
-		Location sourceLocation = dsmOutput.getSourceLocation();
+		FullPosition sourceLocation = dsmOutput.getSourceLocation();
 		
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 	}

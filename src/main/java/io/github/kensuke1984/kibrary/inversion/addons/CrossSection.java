@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.external.gmt.CrossSectionLine;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class CrossSection {
 
@@ -43,8 +43,8 @@ public class CrossSection {
 		maxSearchRange = 250;
 		System.out.println("Maximum search range in vertical direction = " + maxSearchRange + " km");
 		
-		Location[] locations = readWavefieldPoints(file);
-		Location[] finalLocations = locations;
+		FullPosition[] locations = readWavefieldPoints(file);
+		FullPosition[] finalLocations = locations;
 		double[] values = readWavefieldValues(file);
 //		double[] values_zeromean = readWavefieldValues_zeromean(file);
 		double[] rs = readRs(fileR);
@@ -66,7 +66,7 @@ public class CrossSection {
 		
 		System.out.println("Using range (lon1,lon2,lat1,lat2) = " + lonMin + " " + lonMax + " " + latMin + " " + latMax);
 		
-		Map<Location, Double> valueOfLocation = new HashMap<>();
+		Map<FullPosition, Double> valueOfLocation = new HashMap<>();
 		for (int i = 0; i < locations.length; i++) {
 			double lon = locations[i].getLongitude();
 			double lat = locations[i].getLatitude();
@@ -77,7 +77,7 @@ public class CrossSection {
 			}
 		}
 		
-		locations = valueOfLocation.keySet().toArray(new Location[valueOfLocation.size()]);
+		locations = valueOfLocation.keySet().toArray(new FullPosition[valueOfLocation.size()]);
 		
 		System.out.println(valueOfLocation.size() + " points");
 //		Map<Location, Double> valueOfLocation = IntStream.range(0, locations.length)
@@ -90,13 +90,13 @@ public class CrossSection {
 		if (resampleHorizontal) {
 			valueOfLocation = resampleHorizontal(valueOfLocation, dL);
 //			valueOfLocation_zeromean = resampleHorizontal(valueOfLocation_zeromean, dL);
-			locations = valueOfLocation.keySet().stream().collect(Collectors.toSet()).toArray(new Location[0]);
+			locations = valueOfLocation.keySet().stream().collect(Collectors.toSet()).toArray(new FullPosition[0]);
 		}
 		
 		HorizontalPosition startPos = extremities[0];
 		HorizontalPosition endPos = extremities[1];
-		Location centerLocation = startPos.getMidpoint(endPos)
-				.toLocation(Earth.EARTH_RADIUS);
+		FullPosition centerLocation = startPos.getMidpoint(endPos)
+				.toFullPosition(Earth.EARTH_RADIUS);
 		double azimuth = centerLocation.getAzimuth(endPos);
 //		double theta = 20. * Math.PI/180.;
 		double theta = centerLocation.getEpicentralDistance(endPos) + Math.toRadians(0.);
@@ -139,8 +139,8 @@ public class CrossSection {
 		
 		
 		System.out.println(">Computing crosssection");
-		Location[] crossSectionLocations 
-			= new Location[positions.length * rs.length];
+		FullPosition[] crossSectionLocations 
+			= new FullPosition[positions.length * rs.length];
 		double[] crossSectionValues
 			= new double[positions.length * rs.length];
 		double[] crossSectionValues_zeromean
@@ -152,8 +152,8 @@ public class CrossSection {
 		for (int k = 0; k < positions.length; k++) {
 			HorizontalPosition position = positions[k];
 			for (int i = 0; i < rs.length; i++) {
-				Location location = position.toLocation(rs[i]);
-				Location[] nearPoints 
+				FullPosition location = position.toFullPosition(rs[i]);
+				FullPosition[] nearPoints 
 					= comp.getNearest4(locations, location, maxSearchRange);
 //					= comp.getNearest(locations, location);
 //				System.out.println(nearPoints[0] + " " + location);
@@ -240,14 +240,14 @@ public class CrossSection {
 		}
 	}
 	
-	private static Location[] readWavefieldPoints(Path file) {
-		List<Location> locs = new ArrayList<>();
+	private static FullPosition[] readWavefieldPoints(Path file) {
+		List<FullPosition> locs = new ArrayList<>();
 		try {
 			BufferedReader reader = Files.newBufferedReader(file);
 			String line = null;
 			while ((line = reader.readLine()) != null) {
 				String[] ss = line.split("\\s+");
-				Location loc = new Location(Double.parseDouble(ss[0])
+				FullPosition loc = new FullPosition(Double.parseDouble(ss[0])
 						, Double.parseDouble(ss[1])
 						, Double.parseDouble(ss[2]));
 				locs.add(loc);
@@ -255,7 +255,7 @@ public class CrossSection {
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);
 		}
-		return locs.toArray(new Location[0]);
+		return locs.toArray(new FullPosition[0]);
 	}
 
 	private static double[] readWavefieldValues(Path file) {
@@ -360,44 +360,44 @@ public class CrossSection {
 		return positions;
 	}
 	
-	private static Map<Location, Double> resampleHorizontal(Map<Location, Double> perturbationMap, double dL) {
+	private static Map<FullPosition, Double> resampleHorizontal(Map<FullPosition, Double> perturbationMap, double dL) {
 		Complementation comp = new Complementation();
 		
-		Map<Location, Double> extended = new HashMap<>();
+		Map<FullPosition, Double> extended = new HashMap<>();
 		
-		Set<Location> locations = perturbationMap.keySet();
-		for (Location loci : locations) {
+		Set<FullPosition> locations = perturbationMap.keySet();
+		for (FullPosition loci : locations) {
 			double dvs = perturbationMap.get(loci);
 			extended.put(loci, dvs);
 			
 			
-			Location[] additionalLocs = new Location[] {new Location(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() + 2*dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() + 2*dL, loci.getLongitude() + dL, loci.getR())
-			, new Location(loci.getLatitude() + 2*dL, loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() + 2*dL, loci.getR())
-			, new Location(loci.getLatitude() + dL, loci.getLongitude() - 2*dL, loci.getR())
-			, new Location(loci.getLatitude(), loci.getLongitude() + 2*dL, loci.getR())
-			, new Location(loci.getLatitude(), loci.getLongitude() - 2*dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() + 2*dL, loci.getR())
-			, new Location(loci.getLatitude() - dL, loci.getLongitude() - 2*dL, loci.getR())
-			, new Location(loci.getLatitude() - 2*dL, loci.getLongitude() - dL, loci.getR())
-			, new Location(loci.getLatitude() - 2*dL, loci.getLongitude(), loci.getR())
-			, new Location(loci.getLatitude() - 2*dL, loci.getLongitude() + dL, loci.getR())};
+			FullPosition[] additionalLocs = new FullPosition[] {new FullPosition(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + 2*dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() + 2*dL, loci.getLongitude() + dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + 2*dL, loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() + 2*dL, loci.getR())
+			, new FullPosition(loci.getLatitude() + dL, loci.getLongitude() - 2*dL, loci.getR())
+			, new FullPosition(loci.getLatitude(), loci.getLongitude() + 2*dL, loci.getR())
+			, new FullPosition(loci.getLatitude(), loci.getLongitude() - 2*dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() + 2*dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - dL, loci.getLongitude() - 2*dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - 2*dL, loci.getLongitude() - dL, loci.getR())
+			, new FullPosition(loci.getLatitude() - 2*dL, loci.getLongitude(), loci.getR())
+			, new FullPosition(loci.getLatitude() - 2*dL, loci.getLongitude() + dL, loci.getR())};
 			
-			Set<Location> thisRLocations = locations.stream()
+			Set<FullPosition> thisRLocations = locations.stream()
 					.filter(loc -> loc.getR() == loci.getR()).collect(Collectors.toSet());
 			boolean[] isAdds = new boolean[additionalLocs.length];
 			for (int j = 0; j < isAdds.length; j++)
 				isAdds[j] = true;
-			for (Location loc : thisRLocations) {
+			for (FullPosition loc : thisRLocations) {
 				for (int k = 0; k < additionalLocs.length; k++) {
 					if (loc.equals(additionalLocs[k]))
 						isAdds[k] = false;
@@ -416,7 +416,7 @@ public class CrossSection {
 		double minLon = 1e3;
 		double maxLon = -1e3;
 		
-		for (Location loci : extended.keySet()) {
+		for (FullPosition loci : extended.keySet()) {
 			if (loci.getLatitude() < minLat)
 				minLat = loci.getLatitude();
 			if (loci.getLongitude() < minLon)
@@ -444,17 +444,17 @@ public class CrossSection {
 		List<Double> radii = locations.stream().map(loc -> loc.getR()).distinct().collect(Collectors.toList());
 		Collections.sort(radii);
 		
-		Map<Location, Double> resampled = new HashMap<>();
+		Map<FullPosition, Double> resampled = new HashMap<>();
 		
 		for (double r : radii) {
-			Location[] thisRLocations = locations.stream()
-					.filter(loc -> loc.getR() == r).collect(Collectors.toSet()).toArray(new Location[0]);
+			FullPosition[] thisRLocations = locations.stream()
+					.filter(loc -> loc.getR() == r).collect(Collectors.toSet()).toArray(new FullPosition[0]);
 			for (HorizontalPosition pos : newPositions) {
-				Location location = pos.toLocation(r);
-				Location[] nearest = comp.getNearest4(thisRLocations, location);
+				FullPosition location = pos.toFullPosition(r);
+				FullPosition[] nearest = comp.getNearest4(thisRLocations, location);
 				double[] values = new double[nearest.length];
 				for (int i = 0; i < nearest.length; i++) {
-					Location loc = nearest[i];
+					FullPosition loc = nearest[i];
 					values[i] = extended.get(loc);
 				}
 				double value = comp.complement(nearest, values, location);
@@ -475,16 +475,16 @@ public class CrossSection {
 	private static class Worker implements Runnable {
 		HorizontalPosition[] positions;
 		double[] rs;
-		Location[] locations;
-		Map<Location, Double> valueOfLocation;
+		FullPosition[] locations;
+		Map<FullPosition, Double> valueOfLocation;
 		double[] thetaX;
-		Location[] crossSectionLocations;
+		FullPosition[] crossSectionLocations;
 		double[] crossSectionValues;
 		double[] crossSectionThetaX;
 		
 		public Worker(HorizontalPosition[] positions
-				, double[] rs, Location[] locations
-				, Map<Location, Double> valueOfLocation
+				, double[] rs, FullPosition[] locations
+				, Map<FullPosition, Double> valueOfLocation
 				, double[] thetaX) {
 			this.positions = positions;
 			this.rs = rs;
@@ -492,7 +492,7 @@ public class CrossSection {
 			this.valueOfLocation = valueOfLocation;
 			this.thetaX = thetaX;
 			crossSectionLocations 
-				= new Location[positions.length * rs.length];
+				= new FullPosition[positions.length * rs.length];
 			crossSectionValues
 				= new double[positions.length * rs.length];
 			crossSectionThetaX 
@@ -505,8 +505,8 @@ public class CrossSection {
 			for (int k = 0; k < positions.length; k++) {
 				HorizontalPosition position = positions[k];
 				for (int i = 0; i < rs.length; i++) {
-					Location location = position.toLocation(rs[i]);
-					Location[] nearPoints 
+					FullPosition location = position.toFullPosition(rs[i]);
+					FullPosition[] nearPoints 
 						= comp.getNearest4(locations, location);
 					double[] nearPointsValue = new double[4];
 					for (int j = 0; j < 4; j++)
@@ -530,7 +530,7 @@ public class CrossSection {
 			return this.crossSectionValues;
 		}
 		
-		public Location[] getCrossSectionLocations() {
+		public FullPosition[] getCrossSectionLocations() {
 			return this.crossSectionLocations;
 		}
 	}

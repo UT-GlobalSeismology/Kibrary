@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,20 +18,20 @@ public class selectSameWindow {
 		Path targetwindowPath = Paths.get(args[0]);
 		Path otherwindowPath = Paths.get(args[1]);
 		
-		Set<TimewindowInformation> targetwindows = TimewindowInformationFile.read(targetwindowPath);
-		Set<TimewindowInformation> otherwindows = TimewindowInformationFile.read(otherwindowPath);
+		Set<TimewindowData> targetwindows = TimewindowDataFile.read(targetwindowPath);
+		Set<TimewindowData> otherwindows = TimewindowDataFile.read(otherwindowPath);
 		
-		Set<TimewindowInformation> selectedwindow = new HashSet<>();
+		Set<TimewindowData> selectedwindow = new HashSet<>();
 		
-		for (TimewindowInformation window : targetwindows) {
-			List<TimewindowInformation> tmplist = otherwindows.stream().parallel().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
-					&& tw.getStation().equals(window.getStation())).collect(Collectors.toList());
+		for (TimewindowData window : targetwindows) {
+			List<TimewindowData> tmplist = otherwindows.stream().parallel().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
+					&& tw.getObserver().equals(window.getObserver())).collect(Collectors.toList());
 			if (tmplist.size() == 1)
 				selectedwindow.add(tmplist.get(0));
 		}
 		
-		Path outpath = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
-		TimewindowInformationFile.write(selectedwindow, outpath);
+		Path outpath = Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".dat");
+		TimewindowDataFile.write(selectedwindow, outpath);
 		
 	}
 

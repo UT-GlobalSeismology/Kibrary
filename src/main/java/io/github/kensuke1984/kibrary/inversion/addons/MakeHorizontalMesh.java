@@ -8,10 +8,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 public class MakeHorizontalMesh {
@@ -25,9 +25,9 @@ public class MakeHorizontalMesh {
 			Path stationFile = Paths.get(args[0]);
 			dl = Double.parseDouble(args[1]);
 		
-			Set<Station> stations = StationInformationFile.read(stationFile);
+			Set<Observer> stations = ObserverInformationFile.read(stationFile);
 		
-			Set<GlobalCMTID> events = Utilities.eventFolderSet(workdir).stream().map(event -> event.getGlobalCMTID()).collect(Collectors.toSet());
+			Set<GlobalCMTID> events = DatasetAid.eventFolderSet(workdir).stream().map(event -> event.getGlobalCMTID()).collect(Collectors.toSet());
 		
 			double lonborder = 10.;
 			double latborder = 0;
@@ -61,7 +61,7 @@ public class MakeHorizontalMesh {
 		pw.close();
 	}
 	
-	private static double[] getBounds(Set<Station> stations, Set<GlobalCMTID> events, double lonborder, double latborder) {
+	private static double[] getBounds(Set<Observer> stations, Set<GlobalCMTID> events, double lonborder, double latborder) {
 		double[] bounds = new double[] {Double.MAX_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MIN_VALUE};
 		Stream.concat(stations.stream().map(s -> s.getPosition()), events.stream().map(e -> e.getEvent().getCmtLocation().toHorizontalPosition()))
 			.forEach(pos -> {

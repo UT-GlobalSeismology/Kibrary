@@ -10,12 +10,11 @@ import java.util.Set;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauPException;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.Trace;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
@@ -25,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class Pick {
 
     public static void main(String[] args) throws IOException, TauModelException, TauPException {
-        for (SACFileName name : Utilities
+        for (SACFileName name : DatasetAid
                 .sacFileNameSet(Paths.get("/home/kensuke/secondDisk/CentralAmerica/obs/divide"))) {
             System.out.println(name);
 //            pickSMaxMin(name);
@@ -35,8 +34,8 @@ public class Pick {
 
 
     private static void pickSMaxMin(SACFileName name) throws IOException {
-        SACHeaderData synHeader = name.readHeader();
-        SACData data = name.read();
+        SACHeaderAccess synHeader = name.readHeader();
+        SACFileAccess data = name.read();
         double start = synHeader.getValue(SACHeaderEnum.T0) - 20;
         double end = synHeader.getValue(SACHeaderEnum.T1) + 20;
         Trace trace = data.createTrace().cutWindow(start, end);
@@ -62,7 +61,7 @@ public class Pick {
 
     private static void pickSScS(Path sacPath) throws IOException, TauPException, TauModelException {
         SACFileName name = new SACFileName(sacPath);
-        SACData data = name.read();
+        SACFileAccess data = name.read();
         Path trash = Paths.get("/home/kensuke/secondDisk/CentralAmerica/premsyn/divide/trash");
         double eventR = 6371 - data.getValue(SACHeaderEnum.EVDP);
         double gcarc = data.getValue(SACHeaderEnum.GCARC);

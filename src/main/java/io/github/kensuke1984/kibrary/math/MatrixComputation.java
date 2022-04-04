@@ -1,11 +1,12 @@
 package io.github.kensuke1984.kibrary.math;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 import java.util.stream.IntStream;
 
@@ -30,7 +31,7 @@ public class MatrixComputation {
                 ata.setEntry(j, i, value);
             });
         });
-        System.err.println(", it took " + Utilities.toTimeString(System.nanoTime() - start));
+        System.err.println(", it took " + GadgetAid.toTimeString(System.nanoTime() - start));
         return ata;
     }
 
@@ -71,7 +72,7 @@ public class MatrixComputation {
         Matrix ab = new Matrix(m, n);
         IntStream.range(0, m).parallel().forEach(i -> IntStream.range(0, n).parallel()
                 .forEach(j -> ab.setEntry(i, j, computeMultiplication(i, j, former, latter))));
-        System.err.println(", it took " + Utilities.toTimeString(System.nanoTime() - start));
+        System.err.println(", it took " + GadgetAid.toTimeString(System.nanoTime() - start));
         return ab;
     }
 

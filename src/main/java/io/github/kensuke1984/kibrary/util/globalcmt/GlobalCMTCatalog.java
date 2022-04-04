@@ -19,7 +19,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
  * Catalog of global CMT solutions.
@@ -96,7 +96,7 @@ public final class GlobalCMTCatalog {
 
         if (!Files.exists(defaultPath)) {
             System.err.println("Downloading default catalog ...");
-            Utilities.download(new URL("https://bit.ly/3bl0Ly9"), defaultPath, false);
+            FileAid.download(new URL("https://bit.ly/3bl0Ly9"), defaultPath, false);
         }
 
         //~set symbolic link~//

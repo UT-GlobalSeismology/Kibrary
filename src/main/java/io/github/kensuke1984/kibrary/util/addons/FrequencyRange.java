@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 public class FrequencyRange {
 	private double minFreq;
@@ -28,9 +28,9 @@ public class FrequencyRange {
 	        return false;
 	    }
 	    final FrequencyRange other = (FrequencyRange) obj;
-	    if (!Utilities.equalWithinEpsilon(minFreq, other.minFreq, eps))
+	    if (!MathAid.equalWithinEpsilon(minFreq, other.minFreq, eps))
 	    	return false;
-	    if (!Utilities.equalWithinEpsilon(maxFreq, other.maxFreq, eps))
+	    if (!MathAid.equalWithinEpsilon(maxFreq, other.maxFreq, eps))
 	    	return false;
 	    return true;
 	}

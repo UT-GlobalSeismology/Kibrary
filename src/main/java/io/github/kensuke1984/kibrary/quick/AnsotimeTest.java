@@ -11,7 +11,7 @@ public class AnsotimeTest {
 	public static void main(String[] args) {
 		Path structurePath = Paths.get("/Users/Anselme/Dropbox/Kenji/anisoTimePaper/homogeneousmedia/homo.poly");
 		try {
-			io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure dsmStructure = new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(structurePath);
+			io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure dsmStructure = new io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure(structurePath);
 			PolynomialStructure structure = new PolynomialStructure(dsmStructure);
 			
 		} catch (IOException e) {

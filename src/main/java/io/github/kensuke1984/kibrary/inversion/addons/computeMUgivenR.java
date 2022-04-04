@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -72,7 +72,7 @@ public class computeMUgivenR {
 		for (UnknownParameter u : ir.getUnknownParameterList()) {
 			if (u.getPartialType().equals(PartialType.MU)) {
 				System.out.println(u);
-				double r = u.getLocation().getR();
+				double r = u.getPosition().getR();
 				double depth = 6371. - r;
 				double Rsp1 = rKRDH16.get(depth);
 				double Rsp2 = rMLBD00.get(depth);

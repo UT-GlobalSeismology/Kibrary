@@ -10,7 +10,7 @@ import java.io.IOException;
  * @version 2.0.1.1.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-class SACHeader implements SACHeaderData, Cloneable {
+class SACHeader implements SACHeaderAccess, Cloneable {
 
     private double delta = -12345;
     private double depmin = -12345;

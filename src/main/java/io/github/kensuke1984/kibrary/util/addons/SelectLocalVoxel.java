@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.math.geometry.ConvexPolygon;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,12 +26,12 @@ public class SelectLocalVoxel {
 		
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);
 		
-		Path outpath = Paths.get("maskSelectUnknown" + Utilities.getTemporaryString() + ".inf");
+		Path outpath = Paths.get("maskSelectUnknown" + GadgetAid.getTemporaryString() + ".inf");
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		
 		for (UnknownParameter p : parameterList) {
 			int bit = 0;
-			if (contains(p.getLocation(), lowerLeftPoint, upperRightPoint, minDepth, maxDepth))
+			if (contains(p.getPosition(), lowerLeftPoint, upperRightPoint, minDepth, maxDepth))
 				bit = 1;
 			pw.println(bit);
 		}
@@ -39,7 +39,7 @@ public class SelectLocalVoxel {
 		pw.close();
 	}
 	
-	public static boolean contains(Location l, HorizontalPosition lowerLeftPoint, HorizontalPosition upperRightPoint, double minDepth, double maxDepth) {
+	public static boolean contains(FullPosition l, HorizontalPosition lowerLeftPoint, HorizontalPosition upperRightPoint, double minDepth, double maxDepth) {
 		double depth = 6371. - l.getR();
 		if (depth < minDepth || depth > maxDepth)
 			return false;

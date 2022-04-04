@@ -2,15 +2,15 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -63,14 +63,14 @@ public class Tradeoff {
 			
 			List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownPath);
 			
-			List<Double> perturbationRs = parameterList.stream().map(p -> p.getLocation().getR())
+			List<Double> perturbationRs = parameterList.stream().map(p -> p.getPosition().getR())
 					.distinct().collect(Collectors.toList());
 			Collections.sort(perturbationRs);
 			Collections.reverse(perturbationRs);
 			
 			List<UnknownParameter> orderedParameterList = new ArrayList<>();
 			perturbationRs.stream().forEachOrdered(pR -> {
-				parameterList.stream().filter(p -> p.getLocation().getR() == pR)
+				parameterList.stream().filter(p -> p.getPosition().getR() == pR)
 					.forEachOrdered(p -> orderedParameterList.add(p));
 			});
 			
@@ -93,7 +93,7 @@ public class Tradeoff {
 //			Dvector dVector = new Dvector(waveforms);
 			
 			Predicate<BasicID> chooser = id -> {
-				double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+				double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
 				if (distance < minDistance)
 					return false;
 				return true;
@@ -129,10 +129,10 @@ public class Tradeoff {
 			Path correlationFile = root.resolve(String.format("correlation_%.0f.txt", layer1R));
 			try (BufferedWriter writer = Files.newBufferedWriter(correlationFile)) {
 				for (int i = 0; i < unknownGrid[0].length; i++)
-					writer.write(unknownGrid[0][i].getLocation().toString() + " ");
+					writer.write(unknownGrid[0][i].getPosition().toString() + " ");
 				writer.write("\n");
 				for (int j = 0; j < correlations[0].length; j++) {
-					writer.write(unknownGrid[1][j].getLocation().toString() + " ");
+					writer.write(unknownGrid[1][j].getPosition().toString() + " ");
 					for (int i = 0; i < correlations.length; i++) {
 						writer.write(String.format("%.8f", correlations[i][j]) + " ");
 					}
@@ -150,39 +150,39 @@ public class Tradeoff {
 	public Tradeoff(RealMatrix AtA, List<UnknownParameter> parameterList) {
 		this.ata = AtA;
 		this.parameters = parameterList;
-		this.paramOrderedLocs = parameterList.stream().map(p -> p.getLocation())
-				.collect(Collectors.toList()).toArray(new Location[0]);
+		this.paramOrderedLocs = parameterList.stream().map(p -> p.getPosition())
+				.collect(Collectors.toList()).toArray(new FullPosition[0]);
 	}
 	
-	public double[] verticalToLateralCorrelation(Location[] voxelLocs) {
+	public double[] verticalToLateralCorrelation(FullPosition[] voxelLocs) {
 		return IntStream.range(0, voxelLocs.length)
 				.mapToDouble(i -> verticalToLateralCorrelation(voxelLocs[i]))
 				.toArray();
 	}
 	
-	public double[] verticalCorrelation(Location[] voxelLocs) {
+	public double[] verticalCorrelation(FullPosition[] voxelLocs) {
 		return IntStream.range(0, voxelLocs.length)
 				.mapToDouble(i -> verticalCorrelation(voxelLocs[i]))
 				.toArray();
 	}
 	
-	public double[] verticalCorrelation2(Location[] voxelLocs) {
+	public double[] verticalCorrelation2(FullPosition[] voxelLocs) {
 		return IntStream.range(0, voxelLocs.length)
 				.mapToDouble(i -> verticalCorrelation2(voxelLocs[i]))
 				.toArray();
 	}
 	
-	public double[] lateralCorrelation(Location[] voxelLocs) {
+	public double[] lateralCorrelation(FullPosition[] voxelLocs) {
 		return IntStream.range(0, voxelLocs.length)
 				.mapToDouble(i -> lateralCorrelation(voxelLocs[i]))
 				.toArray();
 	}
 	
-	public double verticalToLateralCorrelation(Location voxelLoc) {
+	public double verticalToLateralCorrelation(FullPosition voxelLoc) {
 		return verticalCorrelation(voxelLoc) / lateralCorrelation(voxelLoc);
 	}
 	
-	public double verticalCorrelation(Location voxelLoc) {
+	public double verticalCorrelation(FullPosition voxelLoc) {
 		double corr = 0;
 		int[] index = getIndexOf2Vertical(voxelLoc);
 		int ivoxel = getIndexOf(voxelLoc);
@@ -194,7 +194,7 @@ public class Tradeoff {
 		return corr / index.length;
 	}
 	
-	public double verticalCorrelation2(Location voxelLoc) {
+	public double verticalCorrelation2(FullPosition voxelLoc) {
 		double corr = 0;
 		int[] index = getIndexOf2Vertical2(voxelLoc);
 		int ivoxel = getIndexOf(voxelLoc);
@@ -206,7 +206,7 @@ public class Tradeoff {
 		return corr / index.length;
 	}
 	
-	public double lateralCorrelation(Location voxelLoc) {
+	public double lateralCorrelation(FullPosition voxelLoc) {
 		double corr = 0;
 		int[] index = getIndexOf4Lateral(voxelLoc);
 		int ivoxel = getIndexOf(voxelLoc);
@@ -218,28 +218,28 @@ public class Tradeoff {
 		return corr / index.length;
 	}
 	
-	public static Location[] readPartialLocation(Path parPath) {
+	public static FullPosition[] readPartialLocation(Path parPath) {
 		try {
 			return Files.readAllLines(parPath).stream()
 					.map(Tradeoff::toLocation)
-					.toArray(n -> new Location[n]);
+					.toArray(n -> new FullPosition[n]);
 		} catch (Exception e) {
 			throw new RuntimeException("par file has problems");
 		}
 	}
 	
-	private static Location toLocation(String line) {
+	private static FullPosition toLocation(String line) {
 		String[] parts = line.split("\\s+");
-		return new Location(Double.parseDouble(parts[1]),
+		return new FullPosition(Double.parseDouble(parts[1]),
 				Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
 	}
 	
-	private int[] getIndexOf4Lateral(Location voxelLoc) throws OutOfRangeException {
+	private int[] getIndexOf4Lateral(FullPosition voxelLoc) throws OutOfRangeException {
 		int[] tmp = new int[4];
 		
 		int j = 0;
 		for (int i=0; i < this.paramOrderedLocs.length; i++) {
-			Location loci = this.paramOrderedLocs[i];
+			FullPosition loci = this.paramOrderedLocs[i];
 				if (isLateralNeighbor(voxelLoc, loci)) {
 					tmp[j] = i;
 					j++;
@@ -255,12 +255,12 @@ public class Tradeoff {
 		return index;
 	}
 	
-	private int[] getIndexOf2Vertical(Location voxelLoc) throws OutOfRangeException {
+	private int[] getIndexOf2Vertical(FullPosition voxelLoc) throws OutOfRangeException {
 		int[] tmp = new int[2];
 		
 		int j = 0;
 		for (int i=0; i < this.paramOrderedLocs.length; i++) {
-			Location loci = this.paramOrderedLocs[i];
+			FullPosition loci = this.paramOrderedLocs[i];
 			if (isVerticalNeighbor(voxelLoc, loci)) {
 				tmp[j] = i;
 				j++;
@@ -276,12 +276,12 @@ public class Tradeoff {
 		return index;
 	}
 	
-	private int[] getIndexOf2Vertical2(Location voxelLoc) throws OutOfRangeException {
+	private int[] getIndexOf2Vertical2(FullPosition voxelLoc) throws OutOfRangeException {
 		int[] tmp = new int[2];
 		
 		int j = 0;
 		for (int i=0; i < this.paramOrderedLocs.length; i++) {
-			Location loci = this.paramOrderedLocs[i];
+			FullPosition loci = this.paramOrderedLocs[i];
 			if (isVerticalSecondNeighbor(voxelLoc, loci)) {
 				tmp[j] = i;
 				j++;
@@ -297,7 +297,7 @@ public class Tradeoff {
 		return index;
 	}
 	
-	private boolean isLateralNeighbor(Location loc, Location o) {
+	private boolean isLateralNeighbor(FullPosition loc, FullPosition o) {
 		boolean res = false;
 		if (loc.getR() == o.getR()) {
 			if (o.getLongitude() == loc.getLongitude() + dL && o.getLatitude() == loc.getLatitude())
@@ -312,7 +312,7 @@ public class Tradeoff {
 		return res;
 	}
 	
-	private boolean isVerticalNeighbor(Location loc, Location o) {
+	private boolean isVerticalNeighbor(FullPosition loc, FullPosition o) {
 		boolean res = false;
 		if (loc.getLongitude() == o.getLongitude() && loc.getLatitude() == o.getLatitude()) {
 			if (o.getR() == loc.getR() + dR)
@@ -323,7 +323,7 @@ public class Tradeoff {
 		return res;
 	}
 	
-	private boolean isVerticalSecondNeighbor(Location loc, Location o) {
+	private boolean isVerticalSecondNeighbor(FullPosition loc, FullPosition o) {
 		boolean res = false;
 		if (loc.getLongitude() == o.getLongitude() && loc.getLatitude() == o.getLatitude()) {
 			if (o.getR() == loc.getR() + 2 * dR)
@@ -334,7 +334,7 @@ public class Tradeoff {
 		return res;
 	}
 	
-	private int getIndexOf(Location voxelLoc) throws OutOfRangeException {
+	private int getIndexOf(FullPosition voxelLoc) throws OutOfRangeException {
 		int index = -1;
 		
 		for (int i=0; i < this.paramOrderedLocs.length; i++)
@@ -347,10 +347,10 @@ public class Tradeoff {
 	}
 	
 	private double[][] computeForLayer(double layer1R, double layer2Rmin, double layer2Rmax, List<Double> orderedR) {
-		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getLocation().getR() == layer1R)
+		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getPosition().getR() == layer1R)
 				.boxed().collect(Collectors.toList());
 		List<Integer> indexLayer2 = IntStream.range(0, parameters.size()).filter(i -> {
-			double pR = parameters.get(i).getLocation().getR();
+			double pR = parameters.get(i).getPosition().getR();
 			if (pR >= layer2Rmin && pR <= layer2Rmax)
 				return true;
 			else
@@ -374,10 +374,10 @@ public class Tradeoff {
 	}
 	
 	private UnknownParameter[][] unknownsForLayer(double layer1R, double layer2Rmin, double layer2Rmax, List<Double> orderedR) {
-		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getLocation().getR() == layer1R)
+		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getPosition().getR() == layer1R)
 				.boxed().collect(Collectors.toList());
 		List<Integer> indexLayer2 = IntStream.range(0, parameters.size()).filter(i -> {
-			double pR = parameters.get(i).getLocation().getR();
+			double pR = parameters.get(i).getPosition().getR();
 			if (pR >= layer2Rmin && pR <= layer2Rmax)
 				return true;
 			else
@@ -395,7 +395,7 @@ public class Tradeoff {
 		return unknowns;
 	}
 	
-	private Location[] paramOrderedLocs;
+	private FullPosition[] paramOrderedLocs;
 	private RealMatrix ata;
 	private List<UnknownParameter> parameters;
 	private double dR;

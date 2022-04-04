@@ -15,11 +15,11 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 
 public class NoiseInformation {
@@ -36,24 +36,24 @@ public class NoiseInformation {
 		List<BasicID> noises = Stream.of(BasicIDFile.read(spcNoiseIDPath, spcNoisePath))
 				.filter(noise -> noise.getWaveformType().equals(WaveformType.OBS)).collect(Collectors.toList());
 		
-		Set<StaticCorrection> snratios = new HashSet<>();
+		Set<StaticCorrectionData> snratios = new HashSet<>();
 		for (BasicID waveform : waveforms) {
 			if (waveform.getWaveformType().equals(WaveformType.OBS)) {
 				BasicID noise = noises.parallelStream().filter(n ->
 					n.getGlobalCMTID().equals(waveform.getGlobalCMTID())
-					&& n.getStation().equals(waveform.getStation())
+					&& n.getObserver().equals(waveform.getObserver())
 					&& n.getSacComponent().equals(waveform.getSacComponent()))
 				.findFirst().get();
 				
 				double snratio = signalNoiseRatio(noise, waveform);
-				StaticCorrection ratiodata = new StaticCorrection(
-						waveform.getStation(), waveform.getGlobalCMTID(),
+				StaticCorrectionData ratiodata = new StaticCorrectionData(
+						waveform.getObserver(), waveform.getGlobalCMTID(),
 						waveform.getSacComponent(), 0, 0, snratio, waveform.getPhases());
 				snratios.add(ratiodata);
 			}
 		}
 		
-		StaticCorrectionFile.write(snratios, outpath);
+		StaticCorrectionDataFile.write(snratios, outpath);
 				
 	}
 	

@@ -1,7 +1,5 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -14,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 
 
 public class make1DCheckerboard {

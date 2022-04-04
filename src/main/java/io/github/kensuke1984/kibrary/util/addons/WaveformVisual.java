@@ -1,13 +1,13 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,7 +32,7 @@ public class WaveformVisual {
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		String tmpString = Utilities.getTemporaryString();
+		String tmpString = GadgetAid.getTemporaryString();
 		
 		Path stackDir = Paths.get("stack" + tmpString);
 		Path profileDir = Paths.get("profile" + tmpString);
@@ -67,11 +67,11 @@ public class WaveformVisual {
 				double[][][] obsAzimuthSectionStack = new double[nEd][360][0];
 				double[][][] synAzimuthSectionStack = new double[nEd][360][0];
 				
-				List<List<Station>> stationAzimuthList = new ArrayList<>();
+				List<List<Observer>> stationAzimuthList = new ArrayList<>();
 				for (int i = 0; i < nAz; i++)
 					stationAzimuthList.add(new ArrayList<>());
 				
-				List<List<Station>> stationDistanceList = new ArrayList<>();
+				List<List<Observer>> stationDistanceList = new ArrayList<>();
 				for (int i = 0; i < nEd; i++)
 					stationDistanceList.add(new ArrayList<>());
 				
@@ -113,11 +113,11 @@ public class WaveformVisual {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
-					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
 					int k = (int) distance;
 					int ked = (int) (distance / dEd);
 					
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
 					int kaz = (int) (azimuth / dAz);
 					int kazsec = (int) (azimuth);
 					
@@ -126,12 +126,12 @@ public class WaveformVisual {
 						obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], id.getData());
 						obsAzimuthSectionStack[ked][kazsec] = add(obsAzimuthSectionStack[ked][kazsec], id.getData());
 						
-						List<Station> tmpList = stationAzimuthList.get(kaz);
-						tmpList.add(id.getStation());
+						List<Observer> tmpList = stationAzimuthList.get(kaz);
+						tmpList.add(id.getObserver());
 						stationAzimuthList.set(kaz, tmpList);
 						
 						tmpList = stationDistanceList.get(ked);
-						tmpList.add(id.getStation());
+						tmpList.add(id.getObserver());
 						stationDistanceList.set(ked, tmpList);
 					}
 					if (id.getWaveformType().equals(WaveformType.SYN)) {
@@ -140,7 +140,7 @@ public class WaveformVisual {
 						synAzimuthSectionStack[ked][kazsec] = add(synAzimuthSectionStack[ked][kazsec], id.getData());
 					}
 					
-					String filename = id.getStation() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
+					String filename = id.getObserver() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
 					Path outpath = profileEventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
 					Trace trace = id.getTrace();
@@ -307,7 +307,7 @@ public class WaveformVisual {
 		}
 	}
 	
-	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, String name, int id) throws IOException {
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Observer> stations, String name, int id) throws IOException {
 		Path outpath = rootpath.resolve("plot_map_" + event + "_" + name + id + ".gmt");
 		String outpathps = "map_" + event + "_az" + name + id + ".ps";
 		PrintWriter pw = new PrintWriter(outpath.toFile());
@@ -326,12 +326,12 @@ public class WaveformVisual {
 		ss += "gmt psxy -Rg -JW4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
 		double evLat = event.getEvent().getCmtLocation().getLatitude();
 		double evLon = event.getEvent().getCmtLocation().getLongitude();
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		
 		ss += "gmt psxy -R -J -Si0.11 -P -Groyalblue -Wthinnest,black -K -O >> $outputps <<END\n";
-		for (Station station : stations)
+		for (Observer station : stations)
 			ss += String.format("%.2f %.2f\n", station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";
 		

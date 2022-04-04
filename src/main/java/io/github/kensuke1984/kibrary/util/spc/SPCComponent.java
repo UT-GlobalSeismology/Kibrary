@@ -1,16 +1,17 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+
 import java.util.Arrays;
 
 /**
- * Data for one element in one {@link SPCBody} in a {@link Spectrum}
+ * Data for one element in one {@link SPCBody} in a {@link SPCFile}
  *
  * @author Kensuke Konishi
  * @version 0.1.6

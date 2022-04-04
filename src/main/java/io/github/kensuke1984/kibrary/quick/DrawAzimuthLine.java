@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import edu.sc.seis.TauP.SphericalCoords;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class DrawAzimuthLine {
 
