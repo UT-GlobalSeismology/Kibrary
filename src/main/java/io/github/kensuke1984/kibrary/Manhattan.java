@@ -70,7 +70,7 @@ enum Manhattan {
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.value + " " + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + " " + m.c.getSimpleName()));
     }
 
     /**

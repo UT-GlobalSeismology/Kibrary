@@ -15,7 +15,8 @@ import org.apache.commons.lang3.EnumUtils;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
- * Parent class of all operations in Kibrary that are executed given a property file.
+ * Parent class of all operations in Kibrary that are executed given a {@link Property} file.
+ *
  * @author otsuru
  * @since a long time ago
  * @version 2022/1/7 Recreated the original interface Operation into an abstract class.
@@ -33,7 +34,7 @@ public abstract class Operation {
      */
     public static void main(String[] args) throws IOException {
 
-        // load property file
+        //~load property file~//
         Property property = new Property();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
@@ -46,7 +47,7 @@ public abstract class Operation {
             property.load(Files.newBufferedReader(Paths.get(args[0])));
         }
 
-        // read manhattan
+        //~read manhattan~//
         if (!property.containsKey("manhattan")) {
             throw new IllegalArgumentException("'manhattan' is not set in " + args[0]);
         }
@@ -55,6 +56,7 @@ public abstract class Operation {
             throw new IllegalArgumentException(manhattan + " is not a valid name of Manhattan.");
         }
 
+        //~operate manhattan~//
         operate(Manhattan.valueOf(manhattan).getOperation(), property);
 
     }
@@ -64,14 +66,14 @@ public abstract class Operation {
             List<Path> list = new ArrayList<>();
             int i = 1;
             for (Path path : stream) {
-                System.err.println(i++ + ": " + path);
+                System.out.println(i++ + ": " + path);
                 list.add(path);
             }
             if (list.isEmpty()) {
-                System.err.println("No property file is found");
+                System.out.println("No property file is found");
                 System.exit(9);
             }
-            System.err.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
+            System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
             return list.get(Integer.parseInt(input) - 1);
@@ -89,7 +91,7 @@ public abstract class Operation {
      */
     protected static void mainFromSubclass(String[] args) throws IOException {
 
-        // load property file
+        //~load property file~//
         Property property = new Property();
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
@@ -99,6 +101,7 @@ public abstract class Operation {
             property.load(Files.newBufferedReader(Paths.get(args[0])));
         }
 
+        //~get the Operation class~//
         // get the fully-qualified class name of the Operation that has called this method
         String operationClassName = Thread.currentThread().getStackTrace()[2].getClassName();
         // get the Class instance of the Operation
@@ -113,6 +116,7 @@ public abstract class Operation {
         // set manhattan as this operation class name
         property.setProperty("manhattan", operationClass.getSimpleName());
 
+        //~run the Operation class~//
         operate(operationClass, property);
 
     }
@@ -124,7 +128,7 @@ public abstract class Operation {
      */
     public static void operate(Class<? extends Operation> operationClass, Property property) {
 
-        // construct
+        //~construct~//
         Operation operation;
         try {
             Constructor<? extends Operation> constructor = operationClass.getConstructor(Property.class);
@@ -139,7 +143,7 @@ public abstract class Operation {
             return;
         }
 
-        // set up
+        //~set parameters~//
         try {
             operation.set();
         } catch (Exception e) {
@@ -151,11 +155,10 @@ public abstract class Operation {
         long startTime = System.nanoTime();
         System.err.println(operationClass.getName() + " is operating.");
 
-        // run
+        //~run~//
         try {
             operation.run();
         } catch (Exception e) {
-            //System.err.println("Could not run " + operationClass.getName());
             e.printStackTrace();
             return;
         }

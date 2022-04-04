@@ -31,25 +31,30 @@ public class Property extends Properties {
      * @throws ReflectiveOperationException on failure to invoke method from {@link Manhattan}
      */
     public static void main(String[] args) throws IOException, ReflectiveOperationException {
+
+        //~get manhattan~//
+        Manhattan manhattan;
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {
             try {
-                Manhattan.valueOf(args[0]).writeDefaultPropertiesFile();
-                return;
+                manhattan = Manhattan.valueOf(args[0]);
             } catch (IllegalArgumentException iae) {
-                System.err.println(args[0] + " is not in Manhattan.");
-                System.err.println("Please choose one in:");
+                System.out.println(args[0] + " is not a Manhattan.");
+                System.out.println("Please choose one in:");
                 Manhattan.printList();
                 return;
             }
         } else {
             Manhattan.printList();
-            System.err.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
+            System.out.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
-            Manhattan.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
+            manhattan = Manhattan.valueOf(Integer.parseInt(input));
         }
+
+        //~output file~//
+        manhattan.writeDefaultPropertiesFile();
     }
 
     /**
