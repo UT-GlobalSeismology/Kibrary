@@ -37,7 +37,7 @@ public class Summon {
             }
         } else {
             Brooklyn.printList();
-            System.out.print("Which one do you want to summon? [1-" + Brooklyn.values().length + "] : ");
+            System.out.print("Which one do you want to summon? [" + Brooklyn.numRange() + "] : ");
             String valInput = GadgetAid.readInputLine();
             if (valInput.isEmpty()) System.exit(9);
             brooklyn = Brooklyn.valueOf(Integer.parseInt(valInput));

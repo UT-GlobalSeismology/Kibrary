@@ -35,6 +35,13 @@ enum Brooklyn {
         Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + " " + m.c.getSimpleName()));
     }
 
+    static String numRange() {
+        Brooklyn[] all = values();
+        int min = Arrays.stream(all).mapToInt(m -> m.value).min().getAsInt();
+        int max = Arrays.stream(all).mapToInt(m -> m.value).max().getAsInt();
+        return min + "-" + max;
+    }
+
     /**
      * Returns a Brooklyn given its corresponding number.
      * Note that {@link #valueOf(String)}, which returns a Brooklyn given a String of its name,

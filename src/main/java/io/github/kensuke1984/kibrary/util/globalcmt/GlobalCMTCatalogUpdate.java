@@ -56,14 +56,14 @@ public final class GlobalCMTCatalogUpdate {
     public static void run(String[] args) {
         if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
         try {
-            downloadCatalog(args[0]);
+            switchCatalog(args[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void downloadCatalog(String update) throws IOException {
-        String catalogName = "jan76_" + update + ".ndk";
+    private static void switchCatalog(String version) throws IOException {
+        String catalogName = "jan76_" + version + ".ndk";
         Path catalogPath = Environment.KIBRARY_SHARE.resolve(catalogName);
 
         //~Download~//

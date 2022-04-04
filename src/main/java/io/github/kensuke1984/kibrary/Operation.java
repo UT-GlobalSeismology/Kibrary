@@ -73,7 +73,7 @@ public abstract class Operation {
                 System.out.println("No property file is found");
                 System.exit(9);
             }
-            System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
+            System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "] : ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
             return list.get(Integer.parseInt(input) - 1);

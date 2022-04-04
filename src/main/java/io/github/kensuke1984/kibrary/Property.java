@@ -47,7 +47,7 @@ public class Property extends Properties {
             }
         } else {
             Manhattan.printList();
-            System.out.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
+            System.out.print("For which one do you want to create a property file? [" + Manhattan.numRange() + "] : ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
             manhattan = Manhattan.valueOf(Integer.parseInt(input));
