@@ -36,7 +36,7 @@ public final class GlobalCMTCatalog {
      * The (symbolic link of) catalog to be referenced.
      * This is set as package private so that {@link GlobalCMTCatalogUpdate} can access this.
      */
-    static final Path CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
+    static final Path CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("globalcmt.catalog");
 
     private static final Set<NDK> NDKs;
 

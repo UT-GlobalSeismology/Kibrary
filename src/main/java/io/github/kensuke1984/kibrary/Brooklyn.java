@@ -11,6 +11,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
  * They are classes that can be run with only a few arguments.
  * <p>
  * Classes assigned here must contain methods usage() and run().
+ * If no arguments are needed, usage() should return null.
+ * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
  * @author otsuru
@@ -18,7 +20,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
  */
 enum Brooklyn {
     // Environment 00
-    GlobalCMTCatalogUpdate(1, GlobalCMTCatalogUpdate.class),
+    Environment(1, Environment.class),
+    GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
     // Data download 10
     DataAligner(13, DataAligner.class), //
     ;
@@ -58,14 +61,22 @@ enum Brooklyn {
         return c.getName();
     }
 
-    void displayUsage() throws ReflectiveOperationException {
+    boolean displayUsage() throws ReflectiveOperationException {
         @SuppressWarnings("unchecked")
         List<String> usageList = (List<String>) c.getMethod("usage", (Class<?>[]) null).invoke(null, (Object[]) null);
+        if (null == usageList) return false;
+
         usageList.forEach(System.out::println);
+        return true;
     }
 
     void summon(String[] args) throws ReflectiveOperationException {
-        c.getMethod("run", String[].class).invoke(null, (Object) args);
+        // when no argument is entered
+        if (args.length == 1 && args[0].isEmpty()) {
+            c.getMethod("run", String[].class).invoke(null, (Object) new String[0]);
+        } else {
+            c.getMethod("run", String[].class).invoke(null, (Object) args);
+        }
     }
 
 }

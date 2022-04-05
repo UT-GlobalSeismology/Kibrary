@@ -57,7 +57,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
  * guide</a>
  */
-final public class NDK implements GlobalCMTAccess {
+public final class NDK implements GlobalCMTAccess {
 
     private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
     /**
@@ -216,7 +216,6 @@ final public class NDK implements GlobalCMTAccess {
         parts = lines[0].split("\\s+");
         ndk.hypocenterReferenceCatalog = parts[0];
         ndk.referenceDateTime = parseDateTime(parts[1], parts[2]);
-        // System.out.println(referenceCalendar.get(Calendar.DAY_OF_YEAR));
         ndk.hypocenterLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
                 6371 - Double.parseDouble(parts[5]));
         ndk.mb = Double.parseDouble(parts[6]);

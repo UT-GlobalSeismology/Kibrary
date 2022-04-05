@@ -52,10 +52,11 @@ public class DataAligner {
     public static List<String> usage() {
         List<String> usageList = new ArrayList<>();
         usageList.add("Usage:");
-        usageList.add(" [-s] : operate for seed files");
-        usageList.add(" [-m datacenter] : operate for mseed files, and download from the specified datacenter");
-        usageList.add("   Choose datacenter from IRIS, ORFEUS.");
-        usageList.add(" You must specify one option or the other.");
+        usageList.add(" 1. -m datacenter");
+        usageList.add("  -m : operate for mseed files, and download from the specified datacenter");
+        usageList.add("  datacenter : name of datacenter to download from, chosen from {IRIS, ORFEUS}.");
+        usageList.add(" 2. -s");
+        usageList.add("  -s : operate for seed files");
         return usageList;
     }
 

@@ -21,6 +21,9 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * The specified version of the catalog will be downloaded if it does not already exist.
  * The active version of the catalog will be set to the one specified.
+ * <p>
+ * Available versions of catalogs can be checked at
+ * <a href="https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/">https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/</a>.
  *
  * @author Keisuke Otsuru
  * @since 2021/8/25
@@ -46,10 +49,10 @@ public final class GlobalCMTCatalogUpdate {
 
     public static List<String> usage() {
         List<String> usageList = new ArrayList<>();
-        usageList.add("Usage: [month and year of update]");
-        usageList.add(" Should take the form mmmYY,");
-        usageList.add("  where mmm is the first three letters of the name of the month,");
-        usageList.add("  and YY is the lower two digits of the year.");
+        usageList.add("Usage: mmmYY");
+        usageList.add("  mmmYY : month and year the version of the catalog is up to,");
+        usageList.add("    where mmm is the first three letters of the name of the month (lower case),");
+        usageList.add("    and YY is the lower two digits of the year.");
         return usageList;
     }
 
@@ -57,7 +60,7 @@ public final class GlobalCMTCatalogUpdate {
         if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
         try {
             switchCatalog(args[0]);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

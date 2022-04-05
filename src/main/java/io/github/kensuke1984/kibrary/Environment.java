@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -16,10 +17,10 @@ import java.util.Properties;
  * @version 0.1.5
  */
 public class Environment {
-    public final static Path KIBRARY_HOME;
-    public final static Path KIBRARY_SHARE;
-    public final static Path KIBRARY_BIN;
-    public final static Path PROPERTY_FILE;
+    public static final Path KIBRARY_HOME;
+    public static final Path KIBRARY_SHARE;
+    public static final Path KIBRARY_BIN;
+    public static final Path PROPERTY_FILE;
     private static final Properties PROPERTY = new Properties();
     private static final Properties DEFAULT_PROPERTY = new Properties();
 
@@ -114,7 +115,15 @@ public class Environment {
      * @param args will be ignored
      */
     public static void main(String[] args) {
-//		System.getProperties().keySet().forEach(System.out::println);
+        run(args);
+    }
+
+    public static List<String> usage() {
+        return null;
+    }
+
+    public static void run(String[] args) {
+//      System.getProperties().keySet().forEach(System.out::println);
         System.out.println("OS: " + System.getProperty("os.name"));
         System.out.println("User name: " + getUserName());
         System.out.println("Language: " + System.getProperty("user.language"));
@@ -126,8 +135,5 @@ public class Environment {
         System.out.println("Java Runtime version: " + System.getProperty("java.runtime.version"));
         System.out.println("Available processor: " + Runtime.getRuntime().availableProcessors());
         System.out.println("Max memory[GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
-    }
-
-    private Environment() {
     }
 }

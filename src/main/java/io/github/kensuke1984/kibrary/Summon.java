@@ -44,9 +44,11 @@ public class Summon {
         }
 
         //~get arguments~//
-        brooklyn.displayUsage();
-        System.out.print("Enter arguments : ");
-        String[] argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+        String[] argsInput = {""};
+        if (brooklyn.displayUsage()) {
+            System.out.print("Enter arguments : ");
+            argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+        }
 
         //~run brooklyn~//
         System.err.println(brooklyn.getClassName() + " is running.");
