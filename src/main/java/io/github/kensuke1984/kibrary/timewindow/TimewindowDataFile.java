@@ -10,10 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -77,7 +80,6 @@ public final class TimewindowDataFile {
 
     private TimewindowDataFile() {
     }
-
 
     /**
      * Output TimeWindowInformation in binary format
@@ -231,22 +233,49 @@ public final class TimewindowDataFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage: [timewindowFile]");
+        usageList.add("  timewindowFile : Path of timewindow file to read");
+        return usageList;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
+    public static void run(String[] args) throws IOException {
         Set<TimewindowData> set;
+
         if (args.length == 1) {
             set = TimewindowDataFile.read(Paths.get(args[0]));
-        } else {
+        } else if (args.length == 0) {
             String s = "";
             Path f;
             do {
                 s = JOptionPane.showInputDialog("file?", s);
-                if (s == null || s.isEmpty())
-                    return;
+                if (s == null || s.isEmpty()) return;
                 f = Paths.get(s);
             } while (!Files.exists(f) || Files.isDirectory(f));
             set = TimewindowDataFile.read(f);
+        } else {
+            throw new IllegalArgumentException("Too many arguments");
         }
 
         set.stream().sorted().forEach(tw -> {System.out.println(tw.toString());});
-
     }
 }

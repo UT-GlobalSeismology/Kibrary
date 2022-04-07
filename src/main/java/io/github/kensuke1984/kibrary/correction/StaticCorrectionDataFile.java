@@ -10,10 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,6 +27,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -215,14 +218,49 @@ public final class StaticCorrectionDataFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
-        Set<StaticCorrectionData> scf;
-        if (args.length != 0)
-            scf = StaticCorrectionDataFile.read(Paths.get(args[0]));
-        else {
-            String s = JOptionPane.showInputDialog("file?");
-            if (s == null || s.isEmpty()) return;
-            scf = StaticCorrectionDataFile.read(Paths.get(s));
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
         }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage: [correctionFile]");
+        usageList.add("  correctionFile : Path of correction file to read");
+        return usageList;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
+    public static void run(String[] args) throws IOException {
+        Set<StaticCorrectionData> scf;
+
+        if (args.length == 1) {
+            scf = StaticCorrectionDataFile.read(Paths.get(args[0]));
+        } else if (args.length == 0) {
+            String s = "";
+            Path f;
+            do {
+                s = JOptionPane.showInputDialog("file?", s);
+                if (s == null || s.isEmpty()) return;
+                f = Paths.get(s);
+            } while (!Files.exists(f) || Files.isDirectory(f));
+            scf = StaticCorrectionDataFile.read(Paths.get(s));
+        } else {
+            throw new IllegalArgumentException("Too many arguments");
+        }
+
         scf.stream().sorted().forEach(corr -> {
             double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
                     .getAzimuth(corr.getObserver().getPosition()));

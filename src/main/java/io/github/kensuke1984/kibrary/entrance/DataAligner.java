@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -49,6 +50,10 @@ public class DataAligner {
         }
     }
 
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
     public static List<String> usage() {
         List<String> usageList = new ArrayList<>();
         usageList.add("Usage:");
@@ -60,6 +65,11 @@ public class DataAligner {
         return usageList;
     }
 
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
     public static void run(String[] args) throws IOException {
         boolean forSeed = false;
         String datacenter = "";

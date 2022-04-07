@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -267,6 +268,37 @@ public final class BasicIDFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage: [correctionFile]");
+        usageList.add(" 1. -i basicIDFile");
+        usageList.add(" 2. -w basicIDFile basicFile");
+        usageList.add("  -i : export content of basic ID file in standard output");
+        usageList.add("  -w : export waveforms in event directories under current path");
+        usageList.add("  basicIDFile : Path of basic ID file to read");
+        usageList.add("  basicFile : Path of basic waveform file to read");
+        return usageList;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
+    public static void run(String[] args) throws IOException {
 
         if (args.length == 2 && args[0].equals("-i")) {
             BasicID[] ids = read(Paths.get(args[1]));
@@ -275,11 +307,8 @@ public final class BasicIDFile {
             BasicID[] ids = read(Paths.get(args[1]), Paths.get(args[2]));
             outputWaveforms(ids);
         } else {
-            System.err.println("Usage:");
-            System.err.println(" [-i IDFile] : exports ID file in standard output");
-            System.err.println(" [-w IDFile WaveformFile] : exports waveforms in event directories under current path");
+            throw new IllegalArgumentException("Invalid arguments");
         }
-
     }
 
     /**

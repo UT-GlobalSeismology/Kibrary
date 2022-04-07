@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -37,7 +38,7 @@ public final class GlobalCMTCatalogUpdate {
      *             and YY is the lower two digits of the year.
      * @throws IOException if any
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try {
             run(args);
         } catch (IllegalArgumentException e) {
@@ -47,6 +48,10 @@ public final class GlobalCMTCatalogUpdate {
         }
     }
 
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
     public static List<String> usage() {
         List<String> usageList = new ArrayList<>();
         usageList.add("Usage: mmmYY");
@@ -56,13 +61,14 @@ public final class GlobalCMTCatalogUpdate {
         return usageList;
     }
 
-    public static void run(String[] args) {
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
+    public static void run(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
-        try {
-            switchCatalog(args[0]);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        switchCatalog(args[0]);
     }
 
     private static void switchCatalog(String version) throws IOException {

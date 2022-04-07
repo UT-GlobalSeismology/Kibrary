@@ -118,10 +118,18 @@ public class Environment {
         run(args);
     }
 
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
     public static List<String> usage() {
         return null;
     }
 
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     */
     public static void run(String[] args) {
 //      System.getProperties().keySet().forEach(System.out::println);
         System.out.println("OS: " + System.getProperty("os.name"));

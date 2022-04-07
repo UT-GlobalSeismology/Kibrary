@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -54,8 +55,11 @@ public class Summon {
         System.err.println(brooklyn.getClassName() + " is running.");
         try {
             brooklyn.summon(argsInput);
+        } catch (InvocationTargetException e) {
+            System.err.println("InvocationTargetException caused by");
+            e.getCause().printStackTrace();
+            return;
         } catch (Exception e) {
-            System.err.println("Could not run " + brooklyn + " due to " + e.getCause());
             e.printStackTrace();
             return;
         }

@@ -1,10 +1,13 @@
 package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -13,6 +16,7 @@ import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
 
 import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
@@ -23,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  *
  * @author Kensuke Konishi
  */
-final class DataTransfer {
+public final class DataTransfer {
 
     /**
      * user PATH in IRIS
@@ -38,31 +42,46 @@ final class DataTransfer {
      * @param args [option] [tag]<br>
      *             If option -c, then check the number of files in the server,
      *             else FTP [date string] to get seed files(*.seed) in
-     *             (/pub/userdata/`USERNAME`/) with the `tag`. If "*" (you might
-     *             need "\*"), then get all seed files in the folder. <br>
+     *             (/pub/userdata/`USERNAME`/) with the `tag`.
+     *             If "-a", then get all seed files in the folder. <br>
      */
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("Usage:");
-            System.err.println(" [-c] : check the number of files prepared at server.");
-            System.err.println(" [tag] : download files that contain the specified string");
-            System.err.println(" [*] (may need be \\*) : download all files at server");
-            System.err.println(" You must specify one of these options.");
-            return;
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
         }
-
-        long startTime = System.nanoTime();
-        System.err.println(DataTransfer.class.getName() + " is starting.");
-
-        Path outPath = Paths.get("seedsTransferredAt" + GadgetAid.getTemporaryString());
-        get(args[0], outPath);
-
-        System.err.println(DataTransfer.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-
     }
 
-    private static void get(String date, Path outPath) {
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage:");
+        usageList.add(" 1. -c");
+        usageList.add("  -c : check the number of files prepared at server");
+        usageList.add(" 2. tag");
+        usageList.add("  tag : download files that contain the specified string");
+        usageList.add(" 3. -a");
+        usageList.add("  -a : download all files at server");
+        return usageList;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
+    public static void run(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
+        get(args[0]);
+    }
+
+    private static void get(String date) {
 
         // create an FTPClient
         FTPClient ftpclient = new FTPClient();
@@ -81,7 +100,7 @@ final class DataTransfer {
             // ftpclient.changeWorkingDirectory(userPath);
 
             // read existing files
-            FTPFileFilter fff = file -> date.equals("*") || date.equals("-c") ? file.getName().endsWith("seed") :
+            FTPFileFilter fff = file -> date.equals("-a") || date.equals("-c") ? file.getName().endsWith("seed") :
                     file.getName().endsWith("seed") && file.getName().contains(date);
             FTPFile[] ffiles = ftpclient.listFiles(IRIS_USER_PATH, fff);
             System.err.println(ffiles.length + " seed files are found in the server.");
@@ -94,8 +113,10 @@ final class DataTransfer {
             Thread.sleep(10 * 1000);
 
             // download
+            Path outPath = Paths.get("transferred" + GadgetAid.getTemporaryString());
             Files.createDirectories(outPath);
             System.err.println("Output folder is " + outPath);
+
             for (FTPFile ffile : ffiles) {
 
                 // get event ID and create event directory

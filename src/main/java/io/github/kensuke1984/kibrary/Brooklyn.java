@@ -3,8 +3,12 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
+import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
@@ -23,7 +27,17 @@ enum Brooklyn {
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
     // Data download 10
-    DataAligner(13, DataAligner.class), //
+    DataTransfer(12, DataTransfer.class),
+    DataAligner(13, DataAligner.class),
+    // Synthetic  20
+    // Filtered 30
+    TimewindowDataFile(31, TimewindowDataFile.class),
+    StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
+    // Compiled 40
+    BasicIDFile(40, BasicIDFile.class),
+    // Partial 50
+    // Inversion 60
+    // Temporal 100
     ;
 
     private Class<?> c;
