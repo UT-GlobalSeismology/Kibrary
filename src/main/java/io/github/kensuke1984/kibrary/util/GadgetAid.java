@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.swing.JOptionPane;
+
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.SimpleEmail;
@@ -107,11 +110,50 @@ public final class GadgetAid {
         }
 
     /**
-     * @return string read by standard input (System.in)
+     * Reads input from standard input.
+     * @return (String) Value read from standard input (System.in)
      * @throws IOException if any
      */
     public static String readInputLine() throws IOException {
-        return new BufferedReader(new InputStreamReader(System.in)).readLine();
+        String s;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
+            s = br.readLine().trim();
+        }
+        return s;
+    }
+
+    /**
+     * Reads input from user. Attempt for input dialog is made first; when it fails, standard input is used.
+     * @param message (String) Message for user
+     * @param initialValue (String) Initial value to show in input field
+     * @return (String) Input from user, trimmed
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2022/4/8
+     */
+    public static String readInputDialogOrLine(String message, String initialValue) throws IOException {
+        String string;
+        try {
+            string = JOptionPane.showInputDialog(message, initialValue);
+        } catch (Exception e) {
+            System.err.println(message + " : ");
+            string = GadgetAid.readInputLine();
+        }
+        return string;
+    }
+
+    /**
+     * Reads input from user. Attempt for input dialog is made first; when it fails, standard input is used.
+     * @param message (String) Message for user
+     * @return (String) Input from user, trimmed
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2022/4/8
+     */
+    public static String readInputDialogOrLine(String message) throws IOException {
+        return readInputDialogOrLine(message, "");
     }
 
     /**

@@ -22,12 +22,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -244,23 +243,26 @@ public final class StaticCorrectionDataFile {
      * @throws IOException
      */
     public static void run(String[] args) throws IOException {
-        Set<StaticCorrectionData> scf;
+        Path filePath;
 
         if (args.length == 1) {
-            scf = StaticCorrectionDataFile.read(Paths.get(args[0]));
+            filePath = Paths.get(args[0]);
+            if (!Files.exists(filePath) || Files.isDirectory(filePath)) {
+                System.err.println(filePath + " does not exist or is a directory.");
+                return;
+            }
         } else if (args.length == 0) {
-            String s = "";
-            Path f;
+            String pathString = "";
             do {
-                s = JOptionPane.showInputDialog("file?", s);
-                if (s == null || s.isEmpty()) return;
-                f = Paths.get(s);
-            } while (!Files.exists(f) || Files.isDirectory(f));
-            scf = StaticCorrectionDataFile.read(Paths.get(s));
+                pathString = GadgetAid.readInputDialogOrLine("File?", pathString);
+                if (pathString == null || pathString.isEmpty()) return;
+                filePath = Paths.get(pathString);
+            } while (!Files.exists(filePath) || Files.isDirectory(filePath));
         } else {
             throw new IllegalArgumentException("Too many arguments");
         }
 
+        Set<StaticCorrectionData> scf = StaticCorrectionDataFile.read(filePath);
         scf.stream().sorted().forEach(corr -> {
             double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
                     .getAzimuth(corr.getObserver().getPosition()));

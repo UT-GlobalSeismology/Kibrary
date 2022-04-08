@@ -7,6 +7,8 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
@@ -26,6 +28,8 @@ enum Brooklyn {
     // Environment 00
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
+    EventInformationFile(5, EventInformationFile.class),
+    ObserverInformationFile(6, ObserverInformationFile.class),
     // Data download 10
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),

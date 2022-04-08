@@ -1,8 +1,6 @@
 package io.github.kensuke1984.kibrary.util.data;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -18,10 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.JOptionPane;
-
-import org.apache.commons.io.input.CloseShieldInputStream;
-
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -107,47 +102,59 @@ public final class ObserverInformationFile {
     }
 
     /**
-     * Reads observer information from SAC files in event directories under a working directory,
+     * Reads observer information from SAC files in event directories under an input directory,
      * and creates an observer information file under the working directory.
      *
-     * @param args [working directory to collect observers from]
+     * @param args [input directory to collect observers from]
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
-        if (0 < args.length) {
-            String path = args[0];
-            if (!path.startsWith("/"))
-                path = System.getProperty("user.dir") + "/" + path;
-            Path f = Paths.get(path);
-            if (Files.exists(f) && Files.isDirectory(f))
-                createObserverInformationFile(f);
-            else
-                System.err.println(f + " does not exist or is not a directory.");
-        } else {
-            Path workPath;
-            String path = "";
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return usage
+     */
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage: [datasetFolder]");
+        usageList.add("  datasetFolder : Path of dataset folder containing event folders");
+        return usageList;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param args
+     * @throws IOException
+     */
+    public static void run(String[] args) throws IOException {
+        Path inPath;
+
+        if (args.length == 1) {
+            inPath = Paths.get(args[0]);
+            if (!Files.exists(inPath) || !Files.isDirectory(inPath)) {
+                System.err.println(inPath + " does not exist or is not a directory.");
+                return;
+            }
+        } else if (args.length == 0){
+            String pathString = "";
             do {
-                try {
-                    path = JOptionPane.showInputDialog("Working folder?", path);
-                } catch (Exception e) {
-                    System.err.println("Working folder?");
-                    try (BufferedReader br = new BufferedReader(
-                            new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
-                        path = br.readLine().trim();
-                        if (!path.startsWith("/"))
-                            path = System.getProperty("user.dir") + "/" + path;
-                    } catch (Exception e2) {
-                        e2.printStackTrace();
-                        throw new RuntimeException();
-                    }
-                }
-                if (path == null || path.isEmpty()) return;
-                workPath = Paths.get(path);
-                if (!Files.isDirectory(workPath)) continue;
-            } while (!Files.exists(workPath) || !Files.isDirectory(workPath));
-            createObserverInformationFile(workPath);
+                pathString = GadgetAid.readInputDialogOrLine("Input folder?", pathString);
+                if (pathString == null || pathString.isEmpty()) return;
+                inPath = Paths.get(pathString);
+            } while (!Files.exists(inPath) || !Files.isDirectory(inPath));
+        } else {
+            throw new IllegalArgumentException("Too many arguments");
         }
 
+        createObserverInformationFile(inPath);
     }
 
     /**
@@ -158,10 +165,10 @@ public final class ObserverInformationFile {
      * @param options  for write
      * @throws IOException if an I/O error occurs
      */
-    public static void createObserverInformationFile(Path workPath, OpenOption... options) throws IOException {
-        Path outPath = workPath.resolve("observer" + GadgetAid.getTemporaryString() + ".inf");
+    private static void createObserverInformationFile(Path inPath) throws IOException {
+        Path outPath = Paths.get("observer" + GadgetAid.getTemporaryString() + ".inf");
 
-        Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(workPath);
+        Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(inPath);
         Set<Observer> observerSet = sacNameSet.stream().filter(sacname -> sacname.getComponent().equals(SACComponent.T)).map(sacName -> {
             try {
                 return sacName.readHeader();
@@ -194,7 +201,7 @@ public final class ObserverInformationFile {
             });
         }
 
-        write(observerSet, outPath, options);
+        write(observerSet, outPath);
     }
 
 }

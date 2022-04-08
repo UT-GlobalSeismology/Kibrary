@@ -21,8 +21,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 
@@ -259,23 +257,26 @@ public final class TimewindowDataFile {
      * @throws IOException
      */
     public static void run(String[] args) throws IOException {
-        Set<TimewindowData> set;
+        Path filePath;
 
         if (args.length == 1) {
-            set = TimewindowDataFile.read(Paths.get(args[0]));
+            filePath = Paths.get(args[0]);
+            if (!Files.exists(filePath) || Files.isDirectory(filePath)) {
+                System.err.println(filePath + " does not exist or is a directory.");
+                return;
+            }
         } else if (args.length == 0) {
-            String s = "";
-            Path f;
+            String pathString = "";
             do {
-                s = JOptionPane.showInputDialog("file?", s);
-                if (s == null || s.isEmpty()) return;
-                f = Paths.get(s);
-            } while (!Files.exists(f) || Files.isDirectory(f));
-            set = TimewindowDataFile.read(f);
+                pathString = GadgetAid.readInputDialogOrLine("File?", pathString);
+                if (pathString == null || pathString.isEmpty()) return;
+                filePath = Paths.get(pathString);
+            } while (!Files.exists(filePath) || Files.isDirectory(filePath));
         } else {
             throw new IllegalArgumentException("Too many arguments");
         }
 
+        Set<TimewindowData> set = TimewindowDataFile.read(filePath);
         set.stream().sorted().forEach(tw -> {System.out.println(tw.toString());});
     }
 }
