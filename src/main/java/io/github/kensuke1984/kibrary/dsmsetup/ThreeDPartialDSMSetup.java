@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;

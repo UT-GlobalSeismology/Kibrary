@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  */
 enum Brooklyn {
     // Environment 00
+    About(0, About.class),
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
     EventInformationFile(5, EventInformationFile.class),

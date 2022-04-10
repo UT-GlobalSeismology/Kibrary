@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 
 /**

@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 public class ComputeVelocityForIteration {
 

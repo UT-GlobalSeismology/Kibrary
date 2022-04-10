@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**

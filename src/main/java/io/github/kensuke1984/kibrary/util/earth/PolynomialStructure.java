@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.dsmsetup;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
+import io.github.kensuke1984.kibrary.dsmsetup.TransverselyIsotropicParameter;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -35,7 +36,8 @@ import io.github.kensuke1984.kibrary.util.data.Trace;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, anselme
- * @version 0.2.10
+ * @since version 0.2.10
+ * @version 2022/2/10 moved from dsmsetup
  */
 public class PolynomialStructure implements Serializable {
 

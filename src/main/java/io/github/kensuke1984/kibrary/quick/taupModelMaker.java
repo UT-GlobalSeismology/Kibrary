@@ -8,10 +8,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D_deprec;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 public class taupModelMaker {
 

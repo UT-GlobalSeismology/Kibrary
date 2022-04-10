@@ -7,7 +7,7 @@ import java.nio.file.StandardOpenOption;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 public class StructureConversion {
 	private PolynomialStructure structure;

@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
  * @author Kensuke Konishi

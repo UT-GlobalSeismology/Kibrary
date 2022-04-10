@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
