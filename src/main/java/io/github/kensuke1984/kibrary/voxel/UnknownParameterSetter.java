@@ -76,7 +76,7 @@ public class UnknownParameterSetter {
 
         Path outputPath = Paths.get("unknowns" + GadgetAid.getTemporaryString() + ".inf");
         System.err.println("Outputting in "+ outputPath);
-        UnknownParameterFile.write(outputPath, parameterList);
+        UnknownParameterFile.write(parameterList, outputPath);
     }
 
     private static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {

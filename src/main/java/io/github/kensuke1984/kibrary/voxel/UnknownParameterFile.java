@@ -101,12 +101,12 @@ public class UnknownParameterFile {
     }
 
     /**
-     * @param outPath       for write
      * @param parameterList List of unknown parameters
+     * @param outPath       for write
      * @param options       for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(Path outPath, List<UnknownParameter> parameterList, OpenOption... options)
+    public static void write(List<UnknownParameter> parameterList, Path outPath, OpenOption... options)
             throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
             parameterList.forEach(pw::println);
