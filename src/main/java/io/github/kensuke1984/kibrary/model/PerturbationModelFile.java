@@ -7,7 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 
 /**
  * @author otsuru
@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  */
 public class PerturbationModelFile {
 
-    public static void writeAbsoluteForType(PartialType type, PerturbationModel model, Path outPath, OpenOption... options)
+    public static void writeAbsoluteForType(ParameterType type, PerturbationModel model, Path outPath, OpenOption... options)
             throws IOException {
 
         List<PerturbationVoxel> voxels = model.getVoxels();
@@ -27,7 +27,7 @@ public class PerturbationModelFile {
         }
     }
 
-    public static void writePercentForType(PartialType type, PerturbationModel model, Path outPath, OpenOption... options)
+    public static void writePercentForType(ParameterType type, PerturbationModel model, Path outPath, OpenOption... options)
             throws IOException {
 
         List<PerturbationVoxel> voxels = model.getVoxels();

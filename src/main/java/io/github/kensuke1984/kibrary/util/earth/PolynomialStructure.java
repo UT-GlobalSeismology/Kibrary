@@ -872,6 +872,87 @@ public class PolynomialStructure implements Serializable {
         return Math.sqrt((2 * computeL(r) + computeN(r)) / 3 / getRhoAt(r));
     }
 
+    /**
+     * Get value of various parameters.
+     * They are calculated as follows:
+     * <ul>
+     * <li> A = &rho;V<sub>PH</sub><sup>2</sup> </li>
+     * <li> C = &rho;V<sub>PV</sub><sup>2</sup> </li>
+     * <li> F = &eta;(A-2*L) </li>
+     * <li> L = &rho;V<sub>SV</sub><sup>2</sup> </li>
+     * <li> N = &rho;V<sub>SH</sub><sup>2</sup> </li>
+     * <li> &xi; = N/L </li>
+     * <li> Vs = (2L+N)/(3&rho;)  (effective isotropic shear wave velocity)</li>
+     * <li> &mu; = Vs * Vs * &rho; </li>
+     * <li> &lambda; = Vp * Vp * &rho; - 2 &mu; </li>
+     * <li> &kappa; = &lambda; + 2/3 &mu; (bulk modulus) </li>
+     * <li> Vb = sqrt(&kappa; / &rho;) </li>
+     * </ul>
+     * @param type (ParameterType) the type of parameter to obtain
+     * @param r (double) radius [km]
+     * @return
+     *
+     * @author otsuru
+     * @since 2022//4/11
+     */
+    public double getAtRadius(ParameterType type, double r) {
+        switch(type) {
+        case RHO:
+            return rho[zoneOf(r)].value(toX(r));
+        // TI
+        case Vpv:
+            return vpv[zoneOf(r)].value(toX(r));
+        case Vph:
+            return vph[zoneOf(r)].value(toX(r));
+        case Vsv:
+            return vsv[zoneOf(r)].value(toX(r));
+        case Vsh:
+            return vsh[zoneOf(r)].value(toX(r));
+        case ETA:
+            return eta[zoneOf(r)].value(toX(r));
+        case A:
+            double vph = getAtRadius(ParameterType.Vph, r);
+            return getAtRadius(ParameterType.RHO, r) * vph * vph;
+        case C:
+            double vpv = getAtRadius(ParameterType.Vpv, r);
+            return getAtRadius(ParameterType.RHO, r) * vpv * vpv;
+        case F:
+            return getAtRadius(ParameterType.ETA, r) * (getAtRadius(ParameterType.A, r) - 2 * getAtRadius(ParameterType.L, r));
+        case L:
+            double vsv = getAtRadius(ParameterType.Vsv, r);
+            return getAtRadius(ParameterType.RHO, r) * vsv * vsv;
+        case N:
+            double vsh = getAtRadius(ParameterType.Vsh, r);
+            return getAtRadius(ParameterType.RHO, r) * vsh * vsh;
+        case XI:
+            return getAtRadius(ParameterType.N, r) / getAtRadius(ParameterType.L, r);
+        // iso
+        case Vp:
+            return getAtRadius(ParameterType.Vph, r); //TODO is this OK?
+        case Vs:
+            return Math.sqrt((2 * getAtRadius(ParameterType.L, r) + getAtRadius(ParameterType.N, r)) / 3 / getAtRadius(ParameterType.RHO, r)); //TODO where does this come from?
+        case Vb:
+            return Math.sqrt(getAtRadius(ParameterType.KAPPA, r) / getAtRadius(ParameterType.RHO, r));
+        case LAMBDA:
+            return getAtRadius(ParameterType.LAMBDAplus2MU, r) - 2 * getAtRadius(ParameterType.MU, r);
+        case MU:
+            double vs = getAtRadius(ParameterType.Vs, r);
+            return getAtRadius(ParameterType.RHO, r) * vs * vs;
+        case LAMBDAplus2MU:
+            double vp = getAtRadius(ParameterType.Vp, r);
+            return getAtRadius(ParameterType.RHO, r) * vp * vp;
+        case KAPPA:
+            return getAtRadius(ParameterType.LAMBDA, r) + 2./3. * getAtRadius(ParameterType.MU, r);
+        // Q
+        case Qmu:
+            return qMu[zoneOf(r)];
+        case Qkappa:
+            return qKappa[zoneOf(r)];
+        default:
+            throw new IllegalArgumentException("Illegal parameter type");
+        }
+    }
+
     public double getTransverselyIsotropicValue(TransverselyIsotropicParameter ti, double r) {
         switch (ti) {
         case A:

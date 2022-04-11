@@ -6,8 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -33,7 +33,7 @@ public class VelocityModelMapper {
             double[] answers = readAnswer(answerPath);
             PerturbationModel model = new PerturbationModel(unknowns, answers, PolynomialStructure.PREM);
 
-            PerturbationModelFile.writePercentForType(PartialType.Vs, model, outputPercentPath);
+            PerturbationModelFile.writePercentForType(ParameterType.Vs, model, outputPercentPath);
         }
     }
 
