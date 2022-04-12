@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
+import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -57,6 +58,7 @@ enum Manhattan {
     PartialIDMerge(52, PartialIDMerge.class), //
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class), //
+    VelocityModelMapper(62, VelocityModelMapper.class),
     PseudoWaveformGenerator(65, PseudoWaveformGenerator.class), //
     // Temporal 100
     ;
