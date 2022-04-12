@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import io.github.kensuke1984.kibrary.dsmsetup.TransverselyIsotropicParameter;
+import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -773,7 +774,8 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km] radius
      * @return the parameter A under TI approx.
-     */
+      * @deprecated use {@link #getMediumAt(double)}
+    */
     public double computeA(double r) {
         double vph = getVphAt(r);
         return getRhoAt(r) * vph * vph;
@@ -784,6 +786,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km] radius
      * @return the parameter C under TI approximation.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeC(double r) {
         double vpv = getVpvAt(r);
@@ -795,6 +798,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km]
      * @return the parameter F under TI approx.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeF(double r) {
         return computeEta(r) * (computeA(r) - 2 * computeL(r));
@@ -805,6 +809,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km]
      * @return the parameter L under TI approx.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeL(double r) {
         double vsv = getVsvAt(r);
@@ -816,6 +821,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km]
      * @return the parameter N under TI approx.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeN(double r) {
         double v = getVshAt(r);
@@ -830,6 +836,7 @@ public class PolynomialStructure implements Serializable {
      * @param r
      *            [km] radius
      * @return &xi; (N/L)
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeXi(double r) {
         return computeN(r) / computeL(r);
@@ -838,6 +845,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param r [km] radius
      * @return &mu; computed by Vs * Vs * &rho;
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeMu(double r) {
         double v = computeVs(r);
@@ -847,6 +855,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param r
      * @return &kappa; bulk modulus
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeKappa(double r) {
         return computeLambda(r) + 2./3. * computeMu(r);
@@ -855,6 +864,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param r [km] radius
      * @return &lambda; computed by Vs * Vs * &rho;
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeLambda(double r) {
         double v = getVphAt(r);
@@ -867,9 +877,31 @@ public class PolynomialStructure implements Serializable {
      * @param r
      *            [km] radius
      * @return effective isotropic shear wave velocity
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeVs(double r) {
         return Math.sqrt((2 * computeL(r) + computeN(r)) / 3 / getRhoAt(r));
+    }
+
+    /**
+     * Get elastic medium at a given radius.
+     * @param r
+     * @return
+     *
+     * @author otsuru
+     * @since 2022/4/11
+     */
+    public ElasticMedium getMediumAt(double r) {
+        ElasticMedium medium = new ElasticMedium();
+        medium.set(ParameterType.RHO, rho[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vpv, vpv[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vph, vph[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vsv, vsv[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vsh, vsh[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.ETA, eta[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Qmu, qMu[zoneOf(r)]);
+        medium.set(ParameterType.Qkappa, qKappa[zoneOf(r)]);
+        return medium;
     }
 
     /**
@@ -893,7 +925,7 @@ public class PolynomialStructure implements Serializable {
      * @return
      *
      * @author otsuru
-     * @since 2022//4/11
+     * @since 2022/4/11
      */
     public double getAtRadius(ParameterType type, double r) {
         switch(type) {
@@ -910,7 +942,7 @@ public class PolynomialStructure implements Serializable {
             return vsh[zoneOf(r)].value(toX(r));
         case ETA:
             return eta[zoneOf(r)].value(toX(r));
-        case A:
+/*        case A:
             double vph = getAtRadius(ParameterType.Vph, r);
             return getAtRadius(ParameterType.RHO, r) * vph * vph;
         case C:
@@ -943,13 +975,15 @@ public class PolynomialStructure implements Serializable {
             return getAtRadius(ParameterType.RHO, r) * vp * vp;
         case KAPPA:
             return getAtRadius(ParameterType.LAMBDA, r) + 2./3. * getAtRadius(ParameterType.MU, r);
+*/
         // Q
         case Qmu:
             return qMu[zoneOf(r)];
         case Qkappa:
             return qKappa[zoneOf(r)];
         default:
-            throw new IllegalArgumentException("Illegal parameter type");
+            return getMediumAt(r).get(type);
+//            throw new IllegalArgumentException("Illegal parameter type");
         }
     }
 

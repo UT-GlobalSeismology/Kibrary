@@ -42,8 +42,44 @@ public enum ParameterType {
         }
     }
 
+    public static boolean isTIVelocity(ParameterType type) {
+        switch (type) {
+        case Vpv:
+        case Vph:
+        case Vsv:
+        case Vsh:
+        case ETA:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    public static boolean isTIModulus(ParameterType type) {
+        switch (type) {
+        case A:
+        case C:
+        case F:
+        case L:
+        case N:
+        case XI:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     public static ParameterType of(PartialType type) {
         switch (type) {
+        case RHO: return RHO;
+        case A: return A;
+        case C: return C;
+        case F: return F;
+        case L: return L;
+        case N: return N;
+        case LAMBDA: return LAMBDA;
+        case MU: return MU;
+
         default:
             throw new IllegalArgumentException("Illegal partial type");
         }

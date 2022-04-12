@@ -12,41 +12,37 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 class PerturbationVoxel {
 
     private final FullPosition position;
-    private final PolynomialStructure oneDStructure;
-    private final ElasticMedium medium;
+    private final ElasticMedium initialMedium;
+    private final ElasticMedium perturbedMedium;
 
     PerturbationVoxel(FullPosition position, PolynomialStructure oneDStructure) {
         this.position = position;
-        this.oneDStructure = oneDStructure;
-        this.medium = new ElasticMedium();
+        this.initialMedium = oneDStructure.getMediumAt(position.getR());
+        this.perturbedMedium = new ElasticMedium();
     }
 
     void setDelta(ParameterType type, double perturbation) {
-        double radius = position.getR();
-        double absolute = oneDStructure.getAtRadius(type, radius) + perturbation;
-        medium.set(type, absolute);
+        double absolute = initialMedium.get(type) + perturbation;
+        perturbedMedium.set(type, absolute);
     }
 
     void setDefaultIfUndefined(ParameterType type) {
-        if (!medium.isDefined(type)) {
-            double radius = position.getR();
-            double def = oneDStructure.getAtRadius(type, radius);
-            medium.set(type, def);
+        if (!perturbedMedium.isDefined(type)) {
+            double def = initialMedium.get(type);
+            perturbedMedium.set(type, def);
         }
     }
 
     double getDelta(ParameterType type) {
-        double radius = position.getR();
-        return medium.get(type) - oneDStructure.getAtRadius(type, radius);
+        return perturbedMedium.get(type) - initialMedium.get(type);
     }
 
     double getAbsolute(ParameterType type) {
-        return medium.get(type);
+        return perturbedMedium.get(type);
     }
 
     double getPercent(ParameterType type) {
-        double radius = position.getR();
-        return (medium.get(type) / oneDStructure.getAtRadius(type, radius) - 1.) * 100;
+        return (perturbedMedium.get(type) / initialMedium.get(type) - 1.) * 100;
     }
 
     FullPosition getPosition() {

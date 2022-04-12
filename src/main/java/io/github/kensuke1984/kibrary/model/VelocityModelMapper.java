@@ -24,9 +24,9 @@ public class VelocityModelMapper {
             Path homedir = Paths.get(args[1]);
             Path unknownsPath = homedir.resolve("unknownParameterOrder.inf");
             Path ansHome = homedir.resolve("CG"+k);
-            Path answerPath = ansHome.resolve("CG"+k+".txt"); // 4のファイル
+            Path answerPath = ansHome.resolve("CG"+k+".txt");
 
-            Path outputPercentPath = ansHome.resolve("vsPercent"+k+".dat");
+            Path outputPercentPath = ansHome.resolve("vsPercent"+k+".lst");
 
 
             List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownsPath);
