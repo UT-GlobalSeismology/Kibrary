@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -14,11 +15,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.swing.JOptionPane;
+import javax.swing.text.Utilities;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.FileAid;
+
 
 /**
  * Catalog of global CMT solutions.
@@ -33,7 +35,8 @@ import io.github.kensuke1984.kibrary.util.FileAid;
 public final class GlobalCMTCatalog {
 
     private final static Set<NDK> NDKs;
-    private final static Path CATALOG_PATH = Environment.KIBRARY_HOME.resolve("share/globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
+    private final static Path SHARE_DIR_PATH = Environment.KIBRARY_HOME.resolve("share");
+    private final static Path CATALOG_PATH = SHARE_DIR_PATH.resolve("globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
 
     static {
         Set<NDK> readSet = readCatalog();
@@ -69,7 +72,7 @@ public final class GlobalCMTCatalog {
 
     private static Set<NDK> readCatalog() {
         try {
-            if (!Files.exists(CATALOG_PATH)) downloadCatalog();
+            if (!Files.exists(CATALOG_PATH)) downloadCatalog(); // if the symbolic link or its target does not exist
             List<String> lines = Files.readAllLines(CATALOG_PATH);
             if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog is broken.");
             return IntStream.range(0, lines.size() / 5).mapToObj(
@@ -84,7 +87,21 @@ public final class GlobalCMTCatalog {
     }
 
     private static void downloadCatalog() throws IOException {
-        FileAid.download(new URL("https://bit.ly/3bl0Ly9"), CATALOG_PATH, false);
+
+        Path defaultPath = SHARE_DIR_PATH.resolve("default.catalog");
+
+        if (!Files.exists(defaultPath)) {
+            System.err.println("Downloading default catalog ...");
+            Utilities.download(new URL("https://bit.ly/3bl0Ly9"), defaultPath, false);
+        }
+
+        // set symbolic link
+        if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            // checks whether the symbolic link itself exists, regardless of the existence of its target
+            Files.delete(CATALOG_PATH); //delete symbolic link if it exists
+        }
+        Files.createSymbolicLink(CATALOG_PATH, defaultPath);
+        System.err.println("Default catalog is activated.");
     }
 
     /**
