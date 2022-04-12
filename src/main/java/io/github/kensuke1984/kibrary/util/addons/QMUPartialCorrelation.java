@@ -2,9 +2,9 @@ package io.github.kensuke1984.kibrary.util.addons;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -44,16 +44,16 @@ public class QMUPartialCorrelation {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			for (int i = 0; i < unknowns.size(); i++) {
 				UnknownParameter iPar = unknowns.get(i);
-				double iloc = iPar.getLocation().getR();
+				double iloc = iPar.getPosition().getR();
 				if (!iPar.getPartialType().equals(PartialType.PAR2))
 					continue;
 				for (int j = 0; j < unknowns.size(); j++) {
 					UnknownParameter jPar = unknowns.get(j);
-					double jloc = jPar.getLocation().getR();
+					double jloc = jPar.getPosition().getR();
 					if (jPar.getPartialType().equals(PartialType.PARQ)
 							&& iloc == jloc) {
 						double dot = ata.getEntry(i, j) / Math.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
-						double depth = iPar.getLocation().getR();
+						double depth = iPar.getPosition().getR();
 						
 						pw.println(depth + " " + dot);
 						break;

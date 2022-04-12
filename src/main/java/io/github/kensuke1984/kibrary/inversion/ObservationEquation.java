@@ -4,8 +4,6 @@ import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
 import io.github.kensuke1984.kibrary.inversion.addons.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.Sensitivity;
-import io.github.kensuke1984.kibrary.inversion.addons.TimeReceiverSideParameter;
-import io.github.kensuke1984.kibrary.inversion.addons.TimeSourceSideParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightUnknownParameter;
 import io.github.kensuke1984.anisotime.Phase;
@@ -21,6 +19,11 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical1DParameter;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.TimeReceiverSideParameter;
+import io.github.kensuke1984.kibrary.voxel.TimeSourceSideParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAEntry;
@@ -972,11 +975,11 @@ public class ObservationEquation {
 			List<UnknownParameter> unknownForStructure = PARAMETER_LIST.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 			for (UnknownParameter unknown : unknownForStructure) {
-				double lat = unknown.getLocation().getLatitude();
-				double lon = unknown.getLocation().getLongitude();
+				double lat = unknown.getPosition().getLatitude();
+				double lon = unknown.getPosition().getLongitude();
 				if (lon < 0)
 					lon += 360.;
-				double r = unknown.getLocation().getR();
+				double r = unknown.getPosition().getR();
 				pw.println(unknown.getPartialType() + " " + lat + " " + lon + " " + r + " " + sMap.get(unknown));
 			}
 		} catch (IOException e) {

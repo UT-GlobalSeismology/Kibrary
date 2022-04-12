@@ -159,10 +159,8 @@ public class TimewindowMaker extends Operation {
         outputPath = workPath.resolve("timewindow" + date + ".dat");
         invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
         timewindowSet = Collections.synchronizedSet(new HashSet<>());
-
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
-
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
         majorArc = property.parseBoolean("majorArc", "false");
         usePhases = phaseSet(property.parseString("usePhases", "S"));
         exPhases = phaseSet(property.containsValue("exPhases") ? property.parseString("exPhases", null) : null);
@@ -170,7 +168,7 @@ public class TimewindowMaker extends Operation {
         rearShift = property.parseDouble("rearShift", "0");
         minLength = property.parseDouble("minLength", "0");
         corridor = property.parseBoolean("corridor", "false");
-        model = property.parseString("model", "prem").trim().toLowerCase();
+        model = property.parseString("model", "prem").toLowerCase();
 
         String catalogueName_sS =  "firstAppearance_sS." + model + ".catalogue";
         String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";

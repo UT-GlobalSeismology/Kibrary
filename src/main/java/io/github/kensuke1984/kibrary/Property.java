@@ -31,25 +31,30 @@ public class Property extends Properties {
      * @throws ReflectiveOperationException on failure to invoke method from {@link Manhattan}
      */
     public static void main(String[] args) throws IOException, ReflectiveOperationException {
+
+        //~get manhattan~//
+        Manhattan manhattan;
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {
             try {
-                Manhattan.valueOf(args[0]).writeDefaultPropertiesFile();
-                return;
+                manhattan = Manhattan.valueOf(args[0]);
             } catch (IllegalArgumentException iae) {
-                System.err.println(args[0] + " is not in Manhattan.");
-                System.err.println("Please choose one in:");
+                System.out.println(args[0] + " is not a Manhattan.");
+                System.out.println("Please choose one in:");
                 Manhattan.printList();
                 return;
             }
         } else {
             Manhattan.printList();
-            System.err.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
+            System.out.print("For which one do you want to create a property file? [" + Manhattan.numRange() + "] : ");
             String input = GadgetAid.readInputLine();
             if (input.isEmpty()) System.exit(9);
-            Manhattan.valueOf(Integer.parseInt(input)).writeDefaultPropertiesFile();
+            manhattan = Manhattan.valueOf(Integer.parseInt(input));
         }
+
+        //~output file~//
+        manhattan.writeDefaultPropertiesFile();
     }
 
     /**
@@ -86,10 +91,35 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed
      */
     public String parseString(String key, String defaltValue) {
         return checkAndPutDefault(key, defaltValue);
+    }
+
+    /**
+     * Gets a pre-specified value, or sets a default value, and returns it in String.
+     * The value is checked so that it includes no spaces. To be used especially for keys that will become file names.
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed
+     */
+    public String parseStringSingle(String key, String defaltValue) {
+        String string = checkAndPutDefault(key, defaltValue);
+        if (string.split("\\s+").length != 1) throw new IllegalArgumentException(key + " must not include spaces.");
+        return string;
+    }
+
+    /**
+     * Gets a pre-specified value, or sets a default value, and returns it in String[].
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (String[]) array of value to the correcponding key, with subsequent spaces trimmed, split at spaces
+     */
+    public String[] parseStringArray(String key, String defaltValue) {
+        return checkAndPutDefault(key, defaltValue).split("\\s+");
     }
 
     /**
@@ -97,7 +127,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (boolean) value to the correcponding key
      */
     public boolean parseBoolean(String key, String defaltValue) {
         return Boolean.parseBoolean(checkAndPutDefault(key, defaltValue));
@@ -108,7 +138,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (int) value to the correcponding key
      */
     public int parseInt(String key, String defaltValue) {
         return Integer.parseInt(checkAndPutDefault(key, defaltValue));
@@ -119,7 +149,7 @@ public class Property extends Properties {
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return
+     * @return (double) value to the correcponding key
      */
     public double parseDouble(String key, String defaltValue) {
         return Double.parseDouble(checkAndPutDefault(key, defaltValue));
@@ -131,8 +161,8 @@ public class Property extends Properties {
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be ""; use "." for current path.
      * @param requireExisting (boolean) When true, checks whether the path exists
-     * @param workPath
-     * @return
+     * @param workPath (Path) The value of the key will be resolved under this workPath
+     * @return (Path) Path of the value to the correcponding key, resolved under workPath
      * @throws NoSuchFileException if the specified path does not exist
      */
     public Path parsePath(String key, String defaltValue, boolean requireExisting, Path workPath) throws NoSuchFileException {
@@ -152,7 +182,7 @@ public class Property extends Properties {
      * @param key (String) Name of key to check, must not be empty
      * @param defaultValue (String) Value to set to the key if it is not yet specified.
      *          Require a value to be specified by setting this null. This must not be "".
-     * @return (String) value to the correcponding key, with subsequent spaces trimmed.
+     * @return (String) value to the correcponding key, with subsequent spaces trimmed
      */
     private String checkAndPutDefault(String key, String defaultValue) {
         if (StringUtils.isEmpty(key)) {

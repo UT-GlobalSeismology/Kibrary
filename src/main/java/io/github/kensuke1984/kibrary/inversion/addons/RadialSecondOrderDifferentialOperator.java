@@ -10,10 +10,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 public class RadialSecondOrderDifferentialOperator {
 

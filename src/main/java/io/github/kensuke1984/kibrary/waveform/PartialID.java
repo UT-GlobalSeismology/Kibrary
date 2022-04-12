@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * =Contents of information for one ID=<br>
  * Name of station<br>
  * Name of network<br>
- * Horizontal position of station (latitude longitude)<br>
+ * Horizontal position of observer (latitude longitude)<br>
  * Global CMT ID<br>
  * Component (ZRT)<br>
  * Period minimum and maximum<br>
@@ -50,30 +50,30 @@ public class PartialID extends BasicID {
      */
     protected final PartialType PARTIAL_TYPE;
 
-	@Override
-	public String toString() {
-		String partialString = observer.getStation() + " " + observer.getNetwork() + " " + event + " " + COMPONENT + " " + SAMPLINGHZ + " "
-				+ START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " ";
-		for (int i = 0; i < PHASES.length - 1; i++)
-			partialString += PHASES[i] + ",";
-		partialString += PHASES[PHASES.length - 1];
-		partialString += " " + START_BYTE + " " + CONVOLUTE + " "
-				+ POINT_LOCATION + " " + PARTIAL_TYPE;
-		return partialString;
-	}
+    @Override
+    public String toString() {
+        String partialString = observer.getStation() + " " + observer.getNetwork() + " " + event + " " + COMPONENT + " " + SAMPLINGHZ + " "
+                + START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " ";
+        for (int i = 0; i < PHASES.length - 1; i++)
+            partialString += PHASES[i] + ",";
+        partialString += PHASES[PHASES.length - 1];
+        partialString += " " + START_BYTE + " " + CONVOLUTE + " "
+                + POINT_LOCATION + " " + PARTIAL_TYPE;
+        return partialString;
+    }
 
     public FullPosition getPerturbationLocation() {
         return POINT_LOCATION;
     }
-	
-	public PartialID(Observer station, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
-			double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
-			FullPosition perturbationLocation, PartialType partialType, double... waveformData) {
-		super(WaveformType.PARTIAL, samplingHz, startTime, npts, station, eventID, sacComponent, minPeriod, maxPeriod,
-				phases, startByte, isConvolved, waveformData);
-		PARTIAL_TYPE = partialType;
-		POINT_LOCATION = perturbationLocation;
-	}
+
+    public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
+            double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
+            FullPosition perturbationLocation, PartialType partialType, double... waveformData) {
+        super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
+                phases, startByte, isConvolved, waveformData);
+        PARTIAL_TYPE = partialType;
+        POINT_LOCATION = perturbationLocation;
+    }
 
 
     public PartialType getPartialType() {
@@ -107,10 +107,10 @@ public class PartialID extends BasicID {
      * @param data to be set
      * @return {@link PartialID} with the input data
      */
-	@Override
-	public PartialID setData(double[] data) {
-		return new PartialID(observer, event, COMPONENT, SAMPLINGHZ, START_TIME, data.length, MIN_PERIOD, MAX_PERIOD,
-				PHASES, START_BYTE, CONVOLUTE, POINT_LOCATION, PARTIAL_TYPE, data);
-	}
+    @Override
+    public PartialID setData(double[] data) {
+        return new PartialID(observer, event, COMPONENT, SAMPLINGHZ, START_TIME, data.length, MIN_PERIOD, MAX_PERIOD,
+                PHASES, START_BYTE, CONVOLUTE, POINT_LOCATION, PARTIAL_TYPE, data);
+    }
 
 }

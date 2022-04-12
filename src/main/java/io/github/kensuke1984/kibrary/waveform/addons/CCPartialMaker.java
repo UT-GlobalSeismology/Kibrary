@@ -21,13 +21,13 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -175,7 +175,7 @@ public class CCPartialMaker {
 					pw = new PrintWriter(outpath.toFile());
 					for (int iunk = 0; iunk < ccParIJ.size(); iunk++) {
 						Trace partialCorr = ccParIJ.get(iunk).trace;
-						FullPosition loc = ccParIJ.get(iunk).unknownParameter.getLocation();
+						FullPosition loc = ccParIJ.get(iunk).unknownParameter.getPosition();
 						PartialType type = ccParIJ.get(iunk).unknownParameter.getPartialType();
 						pw.print(type + " " + loc + " ");
 						for (int it = 0; it < partialCorr.getLength(); it++) {

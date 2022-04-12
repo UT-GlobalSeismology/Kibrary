@@ -3,13 +3,14 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
@@ -39,6 +40,27 @@ public class DataAligner {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
+        try {
+            run(args);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.err.println("-----");
+            usage().forEach(System.err::println);
+        }
+    }
+
+    public static List<String> usage() {
+        List<String> usageList = new ArrayList<>();
+        usageList.add("Usage:");
+        usageList.add(" 1. -m datacenter");
+        usageList.add("  -m : operate for mseed files, and download from the specified datacenter");
+        usageList.add("  datacenter : name of datacenter to download from, chosen from {IRIS, ORFEUS}.");
+        usageList.add(" 2. -s");
+        usageList.add("  -s : operate for seed files");
+        return usageList;
+    }
+
+    public static void run(String[] args) throws IOException {
         boolean forSeed = false;
         String datacenter = "";
 
@@ -47,21 +69,11 @@ public class DataAligner {
         } else if (args.length == 2 && args[0].equals("-m")) {
             datacenter = args[1];
         } else {
-            System.err.println("Usage:");
-            System.err.println(" [-s] : operate for seed files");
-            System.err.println(" [-m datacenter] : operate for mseed files, and download from the specified datacenter");
-            System.err.println("   Choose datacenter from IRIS, ORFEUS.");
-            System.err.println("You must specify one option or the other.");
-            return;
+            throw new IllegalArgumentException("Invalid arguments.");
         }
 
         DataAligner aligner = new DataAligner(forSeed, datacenter);
-        long startTime = System.nanoTime();
-        System.err.println(DataAligner.class.getName() + " is starting.");
         aligner.align();
-        System.err.println(DataAligner.class.getName() + " finished in " +
-                GadgetAid.toTimeString(System.nanoTime() - startTime));
-
     }
 
     private DataAligner(boolean forSeed, String datacenter) {

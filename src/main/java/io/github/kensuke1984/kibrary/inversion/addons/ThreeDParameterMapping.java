@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -224,9 +224,9 @@ public class ThreeDParameterMapping {
 				UnknownParameter unknown = originalUnknowns[iNewToOriginal[i][j]];
 //				latmean += unknown.getLocation().getLatitude();
 //				lonmean += unknown.getLocation().getLongitude();
-				lats.add(unknown.getLocation().getLatitude());
-				lons.add(unknown.getLocation().getLongitude());
-				rmean += unknown.getLocation().getR();
+				lats.add(unknown.getPosition().getLatitude());
+				lons.add(unknown.getPosition().getLongitude());
+				rmean += unknown.getPosition().getR();
 				weight += unknown.getWeighting();
 			}
 //			latmean /= iNewToOriginal[i].length;

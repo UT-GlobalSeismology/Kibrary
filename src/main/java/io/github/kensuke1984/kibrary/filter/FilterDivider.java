@@ -143,8 +143,8 @@ public class FilterDivider extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);

@@ -70,6 +70,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -1459,7 +1461,7 @@ public class LetMeInvertCV implements Operation_old {
 	private void applyConditionner() {
 		RealVector m = new ArrayRealVector(eq.getMlength());
 		
-		Set<Double> rs = eq.getParameterList().stream().map(p -> p.getLocation().getR()).collect(Collectors.toSet());
+		Set<Double> rs = eq.getParameterList().stream().map(p -> p.getPosition().getR()).collect(Collectors.toSet());
 		Set<PartialType> types = eq.getParameterList().stream().map(p -> p.getPartialType()).collect(Collectors.toSet());
 		
 		System.out.print("Applying conditionner with partial types ");
@@ -1475,7 +1477,7 @@ public class LetMeInvertCV implements Operation_old {
 				double mr = 0;
 				for (int ip = 0; ip < m.getDimension(); ip++)
 					if (eq.getParameterList().get(ip).getPartialType().equals(type))
-						if (eq.getParameterList().get(ip).getLocation().getR() == r) {
+						if (eq.getParameterList().get(ip).getPosition().getR() == r) {
 //								mr += eq.getAtA().getEntry(ip, ip);
 							mr += diagonalOfAtA.getEntry(ip);
 						}
@@ -1488,7 +1490,7 @@ public class LetMeInvertCV implements Operation_old {
 				
 				for (int ip = 0; ip < m.getDimension(); ip++)
 					if (eq.getParameterList().get(ip).getPartialType().equals(type))
-						if (eq.getParameterList().get(ip).getLocation().getR() == r)
+						if (eq.getParameterList().get(ip).getPosition().getR() == r)
 							m.setEntry(ip, mr);
 			}
 		}
@@ -1737,7 +1739,7 @@ public class LetMeInvertCV implements Operation_old {
 	private void applyConditionnerAll() {
 		RealVector m = new ArrayRealVector(eq.getMlength());
 		
-		Set<Double> rs = eq.getParameterList().stream().map(p -> p.getLocation().getR()).collect(Collectors.toSet());
+		Set<Double> rs = eq.getParameterList().stream().map(p -> p.getPosition().getR()).collect(Collectors.toSet());
 		Set<PartialType> types = eq.getParameterList().stream().map(p -> p.getPartialType()).collect(Collectors.toSet());
 		
 		System.out.print("Applying conditionner with partial types ");
@@ -1755,13 +1757,13 @@ public class LetMeInvertCV implements Operation_old {
 				
 				for (int ip = 0; ip < m.getDimension(); ip++)
 					if (eq.getParameterList().get(ip).getPartialType().equals(type))
-						if (eq.getParameterList().get(ip).getLocation().getR() == r)
+						if (eq.getParameterList().get(ip).getPosition().getR() == r)
 							if (diagonalOfAtA.getEntry(ip) > maxSensitivityR)
 								maxSensitivityR = diagonalOfAtA.getEntry(ip);
 				
 				for (int ip = 0; ip < m.getDimension(); ip++)
 					if (eq.getParameterList().get(ip).getPartialType().equals(type))
-						if (eq.getParameterList().get(ip).getLocation().getR() == r) {
+						if (eq.getParameterList().get(ip).getPosition().getR() == r) {
 							double alphai = Math.pow(maxSensitivityR / diagonalOfAtA.getEntry(ip), npow);
 							if (alphai > 2.)
 								alphai = 2.;
@@ -1774,7 +1776,7 @@ public class LetMeInvertCV implements Operation_old {
 				
 				for (int ip = 0; ip < m.getDimension(); ip++)
 					if (eq.getParameterList().get(ip).getPartialType().equals(type))
-						if (eq.getParameterList().get(ip).getLocation().getR() == r) {
+						if (eq.getParameterList().get(ip).getPosition().getR() == r) {
 							double alphai = m.getEntry(ip);
 							m.setEntry(ip, mr * Math.pow(alphai, npow));
 						}
@@ -1816,7 +1818,7 @@ public class LetMeInvertCV implements Operation_old {
 		for (PartialType type : types)
 			for (int ip = 0; ip < m.getDimension(); ip++)
 				if (eq.getParameterList().get(ip).getPartialType().equals(type))
-					if (eq.getParameterList().get(ip).getLocation().getR() == 3830)
+					if (eq.getParameterList().get(ip).getPosition().getR() == 3830)
 						m.setEntry(ip, m.getEntry(ip)*.5);
 		
 		eq.applyConditioner(m);

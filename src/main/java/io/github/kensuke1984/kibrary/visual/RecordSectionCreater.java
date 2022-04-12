@@ -160,15 +160,15 @@ public class RecordSectionCreater extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        tag = property.parseString("tag", "");
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
-            tendEvents = Arrays.stream(property.parseString("tendEvents", null).split("\\s+")).map(GlobalCMTID::new)
+            tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                     .collect(Collectors.toSet());
         }
 
@@ -294,10 +294,9 @@ public class RecordSectionCreater extends Operation {
                        //.collect(Collectors.toList()).toArray(new BasicID[0]);
 
                String fileNameRoot;
-               if (tag.isEmpty()) {
+               if (tag == null) {
                    fileNameRoot = eventDir.toString() + "_" + component.toString();
-               }
-               else {
+               } else {
                    fileNameRoot = tag + "_" + eventDir.toString() + "_" + component.toString();
                }
 
@@ -488,12 +487,12 @@ public class RecordSectionCreater extends Operation {
             String obsUsingString;
             String synUsingString;
             if (!byAzimuth) {
-                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2),
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
                         "graph", 1.01, "first", distance);
                 obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, distance);
                 synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, distance);
             } else {
-                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2),
+                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
                         "graph", 1.01, "first", azimuth);
                 obsUsingString = String.format("($3-%.3f*%.2f):($2/%.3e+%.2f) ", reductionSlowness, distance, obsAmp, azimuth);
                 synUsingString = String.format("($3-%.3f*%.2f):($4/%.3e+%.2f) ", reductionSlowness, distance, synAmp, azimuth);

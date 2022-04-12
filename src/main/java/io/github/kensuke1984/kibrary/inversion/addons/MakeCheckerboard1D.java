@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 public class MakeCheckerboard1D {
 
@@ -69,7 +69,7 @@ public class MakeCheckerboard1D {
 			BufferedWriter writer = Files.newBufferedWriter(outDvFile);
 			for (int i = 0; i < unknowns.size(); i ++) {
 				FullPosition loc = (FullPosition) unknowns.get(i)
-						.getLocation();
+						.getPosition();
 				double dmu = dMU(dv, loc.getR(), structure);
 //				double dKappa = dKappa(dv, loc.getR(), structure);
 //				double dLambda2mu = dLambda2mu(dv, loc.getR(), structure);

@@ -142,8 +142,8 @@ public final class SPC_SAC extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         usePSV = property.parseBoolean("usePSV", "true");
         if (usePSV) psvPath = property.parsePath("psvPath", ".", true, workPath);

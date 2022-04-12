@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,8 +25,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation_old;
-import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -53,6 +52,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
+import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
  *
@@ -87,71 +87,21 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  *
  * @author Kensuke Konishi
  */
-public class PartialWaveformAssembler3D implements Operation_old {
+public class PartialWaveformAssembler3D extends Operation {
 
-    private Set<SACComponent> components;
-
+    private final Property property;
     /**
-     * time length (DSM parameter)
+     * Path of the work folder
      */
-    private double tlen;
-
-    /**
-     * step of frequency domain (DSM parameter)
-     */
-    private int np;
-
-    /**
-     * BPinfo このフォルダの直下に 0000????を置く
-     */
-    private Path bpPath;
-    /**
-     * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
-     */
-    private Path fpPath;
-
-    /**
-     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
-     */
-    private String modelName;
-
-    /**
-     * タイムウインドウ情報のファイル
-     */
-    private Path timewindowPath;
-    /**
-     * Information file about locations of perturbation points.
-     */
-    private Path perturbationPath;
-
-    /**
-     * set of partial type for computation
-     */
-    private Set<PartialType> partialTypes;
-
-    /**
-     * bandpassの最小周波数（Hz）
-     */
-    private double minFreq;
-
-    /**
-     * bandpassの最大周波数（Hz）
-     */
-    private double maxFreq;
-
-    private int filterNp;
-
-    private Properties property;
-
     private Path workPath;
-
     /**
      * output directory Path
      */
     private Path outPath;
-
-    private Path timePartialPath;
-
+    /**
+     * components to be used
+     */
+    private Set<SACComponent> components;
     /**
      * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
      */
@@ -163,9 +113,23 @@ public class PartialWaveformAssembler3D implements Operation_old {
     private double finalSamplingHz;
 
     /**
-     * structure for Q partial
+     * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
      */
-    private PolynomialStructure structure;
+    private Path fpPath;
+    /**
+     * BPinfo このフォルダの直下に 観測点をソースとしたフォルダ（BP）を置く
+     */
+    private Path bpPath;
+    /**
+     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+     */
+    private String modelName;
+    private String mode;
+    private boolean catalogue;
+    private double thetamin;
+    private double thetamax;
+    private double dtheta;
+
     /**
      * 0:none, 1:boxcar, 2:triangle.
      */
@@ -174,91 +138,200 @@ public class PartialWaveformAssembler3D implements Operation_old {
      * The folder contains source time functions.
      */
     private Path sourceTimeFunctionPath;
+    /**
+     * タイムウインドウ情報のファイル
+     */
+    private Path timewindowPath;
+    /**
+     * Information file about voxels for perturbations
+     */
+    private Path voxelPath;
+    /**
+     * set of partial type for computation
+     */
+    private Set<PartialType> partialTypes;
+
+    /**
+     * time length (DSM parameter)
+     */
+    private double tlen;
+
+    /**
+     * step of frequency domain (DSM parameter)
+     */
+    private int np;
+    /**
+     * bandpassの最小周波数（Hz）
+     */
+    private double minFreq;
+
+    /**
+     * bandpassの最大周波数（Hz）
+     */
+    private double maxFreq;
+    /**
+     * see Saito, n
+     */
+    private int filterNp;
+    private boolean backward;
+    /**
+     * structure for Q partial
+     */
+    private PolynomialStructure structure;
+    private Path timePartialPath;
 
     private ButterworthFilter filter;
-
     /**
      * バンドパスを安定させるためwindowを左右に ext = max period(s) ずつ伸ばす
      */
     private int ext;
-
     /**
      * sacdataを何ポイントおきに取り出すか
      */
     private int step;
-
     private Set<TimewindowData> timewindowInformation;
-
     private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
-    private boolean backward;
 
-    private String mode;
-
-    private boolean catalogue;
-
-    private double thetamin;
-    private double thetamax;
-    private double dtheta;
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
+    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(PartialWaveformAssembler3D.class.getSimpleName() + GadgetAid.getTemporaryString() + ".properties");
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan PartialWaveformAssembler3D");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
+            pw.println("#workPath ");
             pw.println("##SacComponents to be used (Z R T)");
-            pw.println("#components");
-            pw.println("##Path of a back propagate spc folder (BPinfo)");
-            pw.println("#bpPath");
+            pw.println("#components ");
+            pw.println("##(double) Sac sampling Hz (20)");
+            pw.println("#partialSamplingHz cant change now");
+            pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
+            pw.println("#finalSamplingHz ");
             pw.println("##Path of a forward propagate spc folder (FPinfo)");
-            pw.println("#fpPath");
-            pw.println("##Boolean interpolate fp and bp from a catalogue (false)");
-            pw.println("#catalogue");
-            pw.println("##Theta- range and sampling for the BP catalog in the format: thetamin thetamax thetasampling. (1. 50. 2e-2)");
-            pw.println("#thetaRange");
-            pw.println("##Mode: PSV, SH, BOTH (SH)");
-            pw.println("#mode");
-            pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
-            pw.println("#modelName");
-            pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle, 3: asymmetric triangle (user catalog), 4: coming soon, 5: symmetric triangle (user catalog). (0)");
-            pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
-            pw.println("#sourceTimeFunction");
+            pw.println("#fpPath ");
+            pw.println("##Path of a back propagate spc folder (BPinfo)");
+            pw.println("#bpPath ");
+            pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
+            pw.println("#modelName ");
+            pw.println("##The mode of spc files that have been calculated, from {PSV, SH, BOTH} (SH)");
+            pw.println("#mode ");
+            pw.println("##(boolean) Whether to interpolate fp and bp from a catalogue (false)");
+            pw.println("#catalogue ");
+            pw.println("##Theta- range and sampling for the BP catalog in the format: thetamin thetamax dtheta. (1. 50. 2e-2)");
+            pw.println("#thetaRange ");
+            pw.println("##Type of source time function from {0:none, 1:boxcar, 2:triangle, 3: asymmetric triangle (user catalog), 4: coming soon, 5: symmetric triangle (user catalog)} (0)");
+            pw.println("## or folder name containing *.stf if you want to use your own GLOBALCMTID.stf");
+            pw.println("#sourceTimeFunction ");
             pw.println("##Path of a time window file, must be set");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##PartialType[] compute types (MU)");
-            pw.println("#partialTypes");
-            pw.println("##double time length DSM parameter tlen, must be set");
-            pw.println("#tlen 6553.6");
-            pw.println("##int step of frequency domain DSM parameter np, must be set");
-            pw.println("#np 1024");
-            pw.println("##double minimum value of passband (0.005)");
-            pw.println("#minFreq");
-            pw.println("##double maximum value of passband (0.08)");
-            pw.println("#maxFreq");
-            pw.println("##The value of np for the filter (4)");
-            pw.println("#filterNp");
+            pw.println("##Voxel file path, must be set");
+            pw.println("#voxelPath voxel.inf");
+            pw.println("##PartialTypes to compute for, listed using spaces (MU)");
+            pw.println("#partialTypes ");
+            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
+            pw.println("#np ");
+            pw.println("##(double) Minimum value of passband (0.005)");
+            pw.println("#minFreq ");
+            pw.println("##(double) Maximum value of passband (0.08)");
+            pw.println("#maxFreq ");
+            pw.println("##(int) The value of np for the filter (4)");
+            pw.println("#filterNp ");
             pw.println("##Filter if backward filtering is applied (false)");
-            pw.println("#backward");
-            pw.println("#double (20)");
-            pw.println("#partialSamplingHz cant change now");
-            pw.println("##double SamplingHz in output dataset (1)");
-            pw.println("#finalSamplingHz");
-            pw.println("##perturbationPath, must be set");
-            pw.println("#perturbationPath perturbationPoint.inf");
+            pw.println("#backward ");
             pw.println("##File for Qstructure (if no file, then PREM)");
-            pw.println("#qinf");
-            pw.println("##path of the time partials directory, must be set if PartialType containes TIME_SOURCE or TIME_RECEIVER");
-            pw.println("#timePartialPath");
+            pw.println("#qinf ");
+            pw.println("##path of the time partials directory, must be set if PartialType contains TIME_SOURCE or TIME_RECEIVER");
+            pw.println("#timePartialPath ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public PartialWaveformAssembler3D(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    public PartialWaveformAssembler3D(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
+        partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
+        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
+        if (partialSamplingHz % finalSamplingHz != 0)
+            throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
+
+        fpPath = property.parsePath("fpPath", "FPinfo", true, workPath);
+        bpPath = property.parsePath("bpPath", "BPinfo", true, workPath);
+        modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
+
+        mode = property.parseString("mode", "SH").toUpperCase();
+        if ((mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")) == false)
+                throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
+        System.err.println("Using mode " + mode);
+
+        catalogue = property.parseBoolean("catalogue", "false");
+        if (catalogue) {
+            double[] tmpthetainfo = Stream.of(property.parseStringArray("thetaRange", null))
+                    .mapToDouble(Double::parseDouble).toArray();
+            thetamin = tmpthetainfo[0];
+            thetamax = tmpthetainfo[1];
+            dtheta = tmpthetainfo[2];
+        }
+
+        setSourceTimeFunction();
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
+                .collect(Collectors.toSet());
+
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
+        maxFreq = property.parseDouble("maxFreq", "0.08");
+        minFreq = property.parseDouble("minFreq", "0.005");
+        filterNp = property.parseInt("filterNp", "4");
+        backward = property.parseBoolean("backward", "false");
+
+        if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
+            timePartialPath = property.parsePath("timePartialPath", null, true, workPath);
+        }
+        if (property.containsKey("qinf")) {
+            structure = new PolynomialStructure(property.parsePath("qinf", null, true, workPath));
+        }
+    }
+
+    private void setSourceTimeFunction() throws IOException {
+        String s = property.parseString("sourceTimeFunction", "0");
+        if (s.length() == 1 && Character.isDigit(s.charAt(0)))
+            sourceTimeFunction = Integer.parseInt(s);
+        else {
+            sourceTimeFunction = -1;
+            sourceTimeFunctionPath = property.parsePath("sourceTimeFunction", null, true, workPath);
+        }
+        switch (sourceTimeFunction) {
+            case -1:
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 5:
+                return;
+            default:
+                throw new RuntimeException("Integer for source time function is invalid.");
+        }
+    }
+
+/*
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath"))
             property.setProperty("workPath", "");
@@ -357,20 +430,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
             dtheta = tmpthetainfo[2];
         }
     }
-
-    /**
-     * @param args
-     *            [parameter file name]
-     */
-    public static void main(String[] args) throws IOException {
-        PartialWaveformAssembler3D pwa = new PartialWaveformAssembler3D(Property_old.parse(args));
-        long startTime = System.nanoTime();
-
-        System.err.println(PartialWaveformAssembler3D.class.getName() + " is going..");
-        pwa.run();
-        System.err.println(PartialWaveformAssembler3D.class.getName() + " finished in "
-                + GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
+*/
 
     @Override
     public void run() throws IOException {
@@ -417,9 +477,12 @@ public class PartialWaveformAssembler3D implements Operation_old {
             System.err.println();
         }
 
+        int num = 0;
         for (Observer observer : observerSet) {
-            Path bp0000Path = bpPath.resolve("0000" + observer.toString());
-            Path bpModelPath = bp0000Path.resolve(modelName);
+            System.err.println("Working for " + observer.toString() + " " + ++num + "/" + observerSet.size());
+
+            Path bpObserverPath = bpPath.resolve(observer.getPosition().toCode());
+            Path bpModelPath = bpObserverPath.resolve(modelName);
 
             // Set of global cmt IDs for the components and station in the timewindow.
             Set<GlobalCMTID> idSet = timewindowInformation.stream()
@@ -474,7 +537,6 @@ public class PartialWaveformAssembler3D implements Operation_old {
 //                fpPathList = collectFP_jointCMT(idSet);
 //            }
 
-                int donebp = 0;
                 // create ThreadPool for each bpFiles in bpFolder
                 ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
                 for (int i = 0; i < bpNames.size(); i++) {
@@ -483,13 +545,12 @@ public class PartialWaveformAssembler3D implements Operation_old {
                     if (mode.equals("BOTH"))
                         bpName_PSV = bpNames_PSV.get(i);
 
-                    System.err.println("Working for " + bpName.getName() + " " + ++donebp + "/" + bpNames.size());
                     // 摂動点の名前
                     SPCFileAccess bp = bpName.read();
                     SPCFileAccess bp_PSV = null;
                     if (mode.equals("BOTH"))
                         bp_PSV = bpName_PSV.read();
-                    String pointName = bp.getStationCode();
+                    String pointName = bp.getObserverID();
 
                     // At each fp model folder, read fp files corresponding to bp file
 //    				if (!jointCMT)
@@ -545,9 +606,9 @@ public class PartialWaveformAssembler3D implements Operation_old {
                     }
                  }
                 partialDataWriter.flush();
-                System.err.println();
+                //System.err.println();
                 writeLog(touchedSet.size() + " events are processed");
-                writeLog(bpnum++ + "th " + bp0000Path + " was done ");
+                writeLog(bpnum++ + "th " + bpObserverPath + " for " + observer + " was done ");
             }
         }
         terminate();
@@ -609,19 +670,19 @@ public class PartialWaveformAssembler3D implements Operation_old {
                     continue;
                 }
             }
-            System.out.print(".");
+            System.err.print(".");
 //
         }
 
         private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
             Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
-                    .filter(info -> info.getObserver().getStation().equals(sacname.getStationCode()))
+                    .filter(info -> info.getObserver().getStation().equals(sacname.getStationCode())) //TODO this may not get unique observer
                     .collect(Collectors.toSet());
             if (tmpTws.size() == 0) {
                 return;
             }
 
-            System.out.println(sacname + " (time partials)");
+            System.err.println(sacname + " (time partials)");
 
             SACFileAccess sacdata = sacname.read();
             Observer station = sacdata.getObserver();
@@ -634,8 +695,8 @@ public class PartialWaveformAssembler3D implements Operation_old {
 
                 if (tw.isEmpty()) {
                     tmpTws.forEach(window -> {
-                        System.out.println(window);
-                        System.out.println(window.getObserver().getPosition());
+                        System.err.println(window);
+                        System.err.println(window.getObserver().getPosition());
                     });
                     System.err.println(station.getPosition());
                     System.err.println("Ignoring empty timewindow " + sacname + " " + station);
@@ -713,7 +774,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
         private SPCFileName fpname_other;
         private SPCFileAccess fp;
         private SPCFileAccess fp_other;
-        private Observer station;
+        private Observer observer;
         private GlobalCMTID id;
         private String mode;
         private PartialType type;
@@ -743,20 +804,20 @@ public class PartialWaveformAssembler3D implements Operation_old {
          * @param fp
          * @param bpFile
          */
-        private PartialComputation(SPCFileAccess bp, Observer station, SPCFileName fpFile, PartialType type) {
+        private PartialComputation(SPCFileAccess bp, Observer observer, SPCFileName fpFile, PartialType type) {
             checkMode(bp, fpFile);
-            this.station = station;
+            this.observer = observer;
 //			fpname = fpFile;
             id = new GlobalCMTID(fpFile.getSourceID());
             this.type = type;
         }
 
-        private PartialComputation(SPCFileAccess bp_SH, SPCFileAccess bp_PSV, Observer station, SPCFileName fpFile_SH, SPCFileName fpFile_PSV, PartialType type) {
+        private PartialComputation(SPCFileAccess bp_SH, SPCFileAccess bp_PSV, Observer observer, SPCFileName fpFile_SH, SPCFileName fpFile_PSV, PartialType type) {
             this.bp = bp_PSV;
             fpname = fpFile_PSV;
             bp_other = bp_SH;
             fpname_other = fpFile_SH;
-            this.station = station;
+            this.observer = observer;
             mode = "BOTH";
 //			fpname = fpFile;
             id = new GlobalCMTID(fpname.getSourceID());
@@ -828,22 +889,22 @@ public class PartialWaveformAssembler3D implements Operation_old {
 //			for (int i = 0; i < perturbationRs.length; i++)
 //				perturbationRs[i] = perturbationLocations[i].getR();
 
-            String observerName = bp.getSourceID();
-            if (!station.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
+            String observerSourceCode = bp.getSourceID();
+            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
                 throw new RuntimeException("There may be a station with the same name but other networks.");
 
             if (bp.tlen() != tlen || bp.np() != np)
-                throw new RuntimeException("BP for " + station + " has invalid tlen or np: " + tlen + " " + bp.tlen() + " " + np + " " + bp.np());
+                throw new RuntimeException("BP for " + observer + " has invalid tlen or np: " + tlen + " " + bp.tlen() + " " + np + " " + bp.np());
             GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
 
             touchedSet.add(id);
 
             // Pickup timewindows
             Set<TimewindowData> timewindowList = timewindowInformation.stream()
-                    .filter(info -> info.getObserver().toString().equals(observerName))
+                    .filter(info -> info.getObserver().getPosition().toCode().equals(observerSourceCode))
                     .filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
 
-            System.err.println(id + " " + timewindowList.size() + " " + observerName);
+//            System.err.println(id + " " + timewindowList.size() + " " + observerSourceCode);
 
             // timewindow情報のないときスキップ
             if (timewindowList.isEmpty())
@@ -952,14 +1013,14 @@ public class PartialWaveformAssembler3D implements Operation_old {
                             }
                             //
 
-                            PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
+                            PartialID pid = new PartialID(observer, id, component, finalSamplingHz, info.getStartTime(),
                                     cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
                                     cutU);
 //							System.err.println(pid.getPerturbationLocation());
 
                             try {
                                 partialDataWriter.addPartialID(pid);
-                                System.err.print(".");
+                                //System.err.print(".");
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -970,22 +1031,12 @@ public class PartialWaveformAssembler3D implements Operation_old {
     }
 
 
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
     private void setOutput() throws IOException {
         synchronized (PartialWaveformAssembler3D.class) {
             do {
                 dateString = GadgetAid.getTemporaryString();
-                outPath = workPath.resolve("convolved" + dateString);
-                logPath = outPath.resolve("pdm" + dateString + ".log");
+                outPath = workPath.resolve("assembled" + dateString);
+                logPath = outPath.resolve("assembler" + dateString + ".log");
                 if (!Files.exists(outPath))
                     Files.createDirectories(outPath);
                 System.err.println("Output directory is " + outPath);
@@ -1000,7 +1051,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
         Path idPath = outPath.resolve("partialID" + dateString + ".dat");
         Path datasetPath = outPath.resolve("partial" + dateString + ".dat");
 
-        partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, idSet, periodRanges,
+        partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
                 phases, perturbationLocationSet);
         writeLog("Creating " + idPath + " " + datasetPath);
         System.err.println("Creating " + idPath + " " + datasetPath);
@@ -1010,7 +1061,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
 
     // TODO
     private Set<Observer> observerSet;
-    private Set<GlobalCMTID> idSet;
+    private Set<GlobalCMTID> eventSet;
     private double[][] periodRanges;
     private Phase[] phases;
     private Set<FullPosition> perturbationLocationSet;
@@ -1024,16 +1075,16 @@ public class PartialWaveformAssembler3D implements Operation_old {
         // タイムウインドウの情報を読み取る。
         System.err.println("Reading timewindow information");
         timewindowInformation = TimewindowDataFile.read(timewindowPath);
-        idSet = new HashSet<>();
+        eventSet = new HashSet<>();
         observerSet = new HashSet<>();
         timewindowInformation.forEach(t -> {
-            idSet.add(t.getGlobalCMTID());
+            eventSet.add(t.getGlobalCMTID());
             observerSet.add(t.getObserver());
         });
         phases = timewindowInformation.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
                 .distinct().toArray(Phase[]::new);
 
-        // TODO
+        // TODO should be unneeded
         if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
             System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
             Map<String, List<Observer>> nameToObserver = new HashMap<>();
@@ -1054,22 +1105,21 @@ public class PartialWaveformAssembler3D implements Operation_old {
                     sta.stream().forEach(s -> System.out.println(s));
                 }
             });
-            throw new RuntimeException("Station duplication");
         }
 
-        boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
-        boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve("0000" + observer)));
+        boolean fpExistence = eventSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
+        boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve(observer.getPosition().toCode())));
         if (!fpExistence) {
-            idSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
+            eventSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
                 .forEach(id -> System.err.println(id));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
         if (!bpExistence) {
-            observerSet.stream().filter(station -> !Files.exists(bpPath.resolve("0000" + station)))
-                .forEach(sta -> System.err.println(sta));
+            observerSet.stream().filter(observer -> !Files.exists(bpPath.resolve(observer.getPosition().toCode())))
+                .forEach(observer -> System.err.println(observer));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
-        writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()
+        writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + eventSet.size()
                 + " events and " + observerSet.size() + " stations.");
     }
 
@@ -1086,20 +1136,16 @@ public class PartialWaveformAssembler3D implements Operation_old {
 
     private void readPerturbationPoints() throws IOException {
         System.err.println("Reading perutbation points");
-        try (Stream<String> lines = Files.lines(perturbationPath)) {
-            perturbationLocationSet = lines.map(line -> line.split("\\s+"))
-                    .map(parts -> new FullPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]),
-                            Double.parseDouble(parts[2])))
-                    .collect(Collectors.toSet());
-        }
+        perturbationLocationSet = new VoxelInformationFile(voxelPath).fullPositionSet();
+
         if (timePartialPath != null) {
-            if (observerSet.isEmpty() || idSet.isEmpty())
+            if (observerSet.isEmpty() || eventSet.isEmpty())
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
             observerSet.forEach(observer -> perturbationLocationSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
+            eventSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
         }
-        writeLog(perturbationLocationSet.size() + " perturbation points are found in " + perturbationPath);
+        writeLog(perturbationLocationSet.size() + " perturbation points are found in " + voxelPath);
     }
 
 
@@ -1120,7 +1166,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
             return;
         }
         userSourceTimeFunctions = new HashMap<>();
-        idSet.forEach(id -> {
+        eventSet.forEach(id -> {
             double halfDuration = id.getEvent().getHalfDuration();
             SourceTimeFunction stf;
             switch (sourceTimeFunction) {
@@ -1250,9 +1296,6 @@ public class PartialWaveformAssembler3D implements Operation_old {
 
     private Path logPath;
 
-    private long startTime = System.nanoTime();
-    private long endTime;
-
     private boolean jointCMT;
 
     /*
@@ -1301,7 +1344,7 @@ public class PartialWaveformAssembler3D implements Operation_old {
      * @throws IOException
      */
     private void readSourceTimeFunctions() throws IOException {
-        userSourceTimeFunctions = idSet.stream().collect(Collectors.toMap(id -> id, id -> {
+        userSourceTimeFunctions = eventSet.stream().collect(Collectors.toMap(id -> id, id -> {
             try {
                 Path sourceTimeFunctionPath = this.sourceTimeFunctionPath.resolve(id + ".stf");
                 return SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath);
@@ -1314,11 +1357,6 @@ public class PartialWaveformAssembler3D implements Operation_old {
 
     private void terminate() throws IOException {
         partialDataWriter.close();
-        endTime = System.nanoTime();
-        long nanoSeconds = endTime - startTime;
-        String endLine = "Everything is done in " + GadgetAid.toTimeString(nanoSeconds) + ". Over n out! ";
-        System.err.println(endLine);
-        writeLog(endLine);
         writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");
     }
 

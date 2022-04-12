@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.math.geometry.ConvexPolygon;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -31,7 +31,7 @@ public class SelectLocalVoxel {
 		
 		for (UnknownParameter p : parameterList) {
 			int bit = 0;
-			if (contains(p.getLocation(), lowerLeftPoint, upperRightPoint, minDepth, maxDepth))
+			if (contains(p.getPosition(), lowerLeftPoint, upperRightPoint, minDepth, maxDepth))
 				bit = 1;
 			pw.println(bit);
 		}

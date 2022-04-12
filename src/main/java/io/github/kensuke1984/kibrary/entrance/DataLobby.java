@@ -132,9 +132,9 @@ public class DataLobby extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
-        datacenter = property.parseString("datacenter", "IRIS");
-        networks = property.parseString("networks", null);
-        channels = property.parseString("channels", "BH?");
+        datacenter = property.parseStringSingle("datacenter", "IRIS");
+        networks = property.parseStringSingle("networks", null);
+        channels = property.parseStringSingle("channels", "BH?");
         headAdjustment = property.parseInt("headAdjustment", null);
         footAdjustment = property.parseInt("footAdjustment", null);
 

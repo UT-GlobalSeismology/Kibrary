@@ -1,9 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
-
-import io.github.kensuke1984.kibrary.util.earth.Earth;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-
-import org.apache.commons.io.FileUtils;
+package io.github.kensuke1984.kibrary.voxel;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -12,9 +7,19 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.apache.commons.io.FileUtils;
+
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
  * 深さを含んだ実際にインバージョンで求める摂動点情報
@@ -25,6 +30,7 @@ import java.util.concurrent.Executors;
  *
  * @author Kensuke Konishi
  * @version 0.1.3
+ * @deprecated before 2022/2/11
  */
 public class PerturbationPoint extends HorizontalPoint {
 

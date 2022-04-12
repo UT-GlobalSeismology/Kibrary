@@ -107,7 +107,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
      * @return {@link GlobalCMTAccess} written in catalogFile
      */
     public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
-        return new HashSet<>(GlobalCMTCatalog.read(catalogFile));
+        return new HashSet<>(GlobalCMTCatalog.readCatalog(catalogFile, false));
     }
 
     /**

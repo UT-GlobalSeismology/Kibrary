@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.voxel;
 
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -16,20 +16,20 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  */
 public interface UnknownParameter {
 
-	/**
-	 * Weighting may be a width of a layer or volume of voxel and so on...
-	 * 
-	 * @return weighting for this parameter
-	 */
-	public double getWeighting();
-	
-	/**
-	 * @return {@link PartialType} of a parameter
-	 */
-	public PartialType getPartialType();
-	
-	public FullPosition getLocation();
-	
-	public byte[] getBytes();
+    /**
+     * Weighting may be a width of a layer or volume of voxel and so on...
+     *
+     * @return weighting for this parameter
+     */
+    public double getWeighting();
+
+    /**
+     * @return {@link PartialType} of a parameter
+     */
+    public PartialType getPartialType();
+
+    public FullPosition getPosition();
+
+    public byte[] getBytes();
 
 }

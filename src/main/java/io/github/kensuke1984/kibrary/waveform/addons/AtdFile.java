@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
@@ -15,6 +14,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -216,7 +216,7 @@ public final class AtdFile {
 		
 		List<AtdEntry> atdEntries = new ArrayList<>();
 		for (int i = 0; i < unknowns.length; i++) {
-			AtdEntry entry = new AtdEntry(weightingType, frequencyRange, phases, correctionType, unknowns[i].getPartialType(), unknowns[i].getLocation(), atd.getEntry(i));
+			AtdEntry entry = new AtdEntry(weightingType, frequencyRange, phases, correctionType, unknowns[i].getPartialType(), unknowns[i].getPosition(), atd.getEntry(i));
 			atdEntries.add(entry);
 		}
 		

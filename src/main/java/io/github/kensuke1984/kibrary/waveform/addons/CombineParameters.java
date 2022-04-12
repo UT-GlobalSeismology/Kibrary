@@ -1,14 +1,14 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.addons.HorizontalParameterMapping;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
@@ -54,7 +54,7 @@ public class CombineParameters {
 			Set<GlobalCMTID> globalCMTIDSet = Stream.of(partials).parallel().map(par -> par.getGlobalCMTID()).collect(Collectors.toSet());
 			
 			double[][] periodRanges = new double[][] {{partials[0].getMinPeriod(), partials[0].getMaxPeriod()}};
-			Set<FullPosition> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getLocation()).collect(Collectors.toSet());
+			Set<FullPosition> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getPosition()).collect(Collectors.toSet());
 			
 //			Phase[] phases = new Phase[] {Phase.ScS, Phase.S};
 //			Phase[] phases = new Phase[] {Phase.PcP, Phase.P};
@@ -92,7 +92,7 @@ public class CombineParameters {
 								
 								double weight = 1.;
 								
-								List<PartialID> tmpIDList = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getLocation())
+								List<PartialID> tmpIDList = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getPosition())
 										&& par.getPartialType().equals(unknown.getPartialType())).collect(Collectors.toList());
 								if (tmpIDList.size() != 1)
 									throw new RuntimeException("Found more than one partialID " + tmpIDList.size());
@@ -105,7 +105,7 @@ public class CombineParameters {
 							
 							PartialID tmpPartial = new PartialID(refID.getObserver(), refID.getGlobalCMTID(), refID.getSacComponent(), refID.getSamplingHz()
 									, refID.getStartTime(), refID.getNpts(), refID.getMinPeriod(), refID.getMaxPeriod(), refID.getPhases(), refID.getStartByte()
-									, refID.isConvolute(), newUnknowns[inew].getLocation(), newUnknowns[inew].getPartialType(), dataVector.toArray());
+									, refID.isConvolute(), newUnknowns[inew].getPosition(), newUnknowns[inew].getPartialType(), dataVector.toArray());
 							try {
 								writer.addPartialID(tmpPartial);
 							} catch (IOException e) {

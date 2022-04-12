@@ -5,6 +5,9 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
+
 /**
  * Class for automatically generating shellscript files to execute TIPSV and TISH.
  *
@@ -20,7 +23,7 @@ class DSMShellscript {
     private String header;
     private boolean mpi;
     /**
-     * Number of blocks of {nSimRun} events to operate for
+     * Number of blocks of {nSimRun} sources to operate for
      */
     private int nBlock;
     /**
@@ -35,14 +38,14 @@ class DSMShellscript {
     /**
      * Set parameters.
      * Number of cores that will run simultaneously = nSimRun * nCore.
-     * Number of events that will be processed = nBlock * nSimRun.
+     * Number of sources that will be processed = nBlock * nSimRun.
      * If MPI is not used, nCore is ignored.
      *
      * @param workPath
      * @param mpi (boolean) Whether to use MPI
-     * @param nEvents (int) Number of events to be processed
+     * @param nSources (int) Number of sources to be processed
      */
-    public DSMShellscript(Path workPath, boolean mpi, int nEvents, String header) {
+    public DSMShellscript(Path workPath, boolean mpi, int nSources, String header) {
         this.workPath = workPath;
         this.mpi = mpi;
         this.header = header;
@@ -63,51 +66,54 @@ class DSMShellscript {
         // Number of cores that will run simultaneously = nSimRun * nCore. Remainders will not be used.
         nSimRun = nThreads / nCore;
 
-        // Number of events that will be processed = nBlock * nSimRun.
-        nBlock = nEvents / nSimRun + 1;
-    }
-
-
-    /**
-     * @throws IOException
-     */
-    public void writePSV() throws IOException {
-        Path psvPath = workPath.resolve("runDSM_psv.sh");
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath))) {
-            pw.println("#!/bin/sh");
-            pw.println("Nblock=" + nBlock);
-            pw.println("Nsimrun=" + nSimRun);
-            pw.println("Ncore=" + nCore);
-            pw.println();
-            pw.println("for i in $(seq 1 $Nblock)");
-            pw.println("do");
-            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
-            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
-            pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
-            pw.println("  do");
-            pw.println("    cd $j");
-            if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tipsv) < " + header + "_PSV.inf > runPSV.log &");
-            } else {
-                pw.println("    tipsv < " + header + "_PSV.inf > runPSV.log &");
-            }
-            pw.println("    cd ../");
-            pw.println("  done");
-            pw.println("  wait");
-            pw.println("done");
-
-        }
+        // Number of sources that will be processed = nBlock * nSimRun.
+        nBlock = nSources / nSimRun + 1;
     }
 
     /**
+     * Writes a shellscript file to execute DSM.
+     * @param type ({@link SPCType}) SYNTHETIC, PF, or PB
+     * @param mode ({@link SPCMode}) PSV or SH
      * @throws IOException
+     *
+     * @author otsuru
+     * @since 2022/2/5
      */
-    public void writeSH() throws IOException {
-        Path shPath = workPath.resolve("runDSM_sh.sh");
+    public void write(SPCType type, SPCMode mode) throws IOException {
+        String fileNameRoot;
+        String enterFolder;
+        String exitFolder;
+        String programName;
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
+        switch (type) {
+        case SYNTHETIC:
+            fileNameRoot = "runDSM_" + mode;
+            enterFolder = "./*[A-Z]";
+            exitFolder = "../";
+            programName = (mode == SPCMode.PSV ? "tipsv" : "tish");
+            break;
+        case PF:
+            fileNameRoot = "runFP_" + mode;
+            enterFolder = "./FPinfo/*[A-Z]";
+            exitFolder = "../../";
+            programName = (mode == SPCMode.PSV ? "psvfp" : "shfp");
+            break;
+        case PB:
+            fileNameRoot = "runBP_" + mode;
+            enterFolder = "./BPinfo/[M-Q]*";
+            exitFolder = "../../";
+            programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
+            break;
+        default:
+            throw new IllegalArgumentException("This SPCType is not supproted yet.");
+        }
+
+        String programString;
+        if (mpi) programString = "mpirun -n $Ncore $(which mpi-" + programName + ")";
+        else programString = programName;
+
+        Path shellPath = workPath.resolve(fileNameRoot + ".sh");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shellPath))) {
             pw.println("#!/bin/sh");
             pw.println("Nblock=" + nBlock);
             pw.println("Nsimrun=" + nSimRun);
@@ -118,151 +124,16 @@ class DSMShellscript {
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
             pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
             pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in ./*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  for j in $(for k in " + enterFolder + "; do echo $k; done | sed -n $nstart,${nend}p)");
             pw.println("  do");
             pw.println("    cd $j");
-            if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-tish) < " + header + "_SH.inf > runSH.log &");
-            } else {
-                pw.println("    tish < " + header + "_SH.inf > runSH.log &");
-            }
-            pw.println("    cd ../");
+            pw.println("    " + programString + " < " + header + "_" + mode + ".inf > " + fileNameRoot + ".log &");
+            pw.println("    cd " + exitFolder);
             pw.println("  done");
             pw.println("  wait");
             pw.println("done");
-
         }
     }
 
-    /**TODO
-     * @throws IOException
-     */
-    public void writePSVBP() throws IOException {
-        Path shPath = workPath.resolve("runBP_psv.sh");
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
-            pw.println("#!/bin/sh");
-            pw.println("Nblock=" + nBlock);
-            pw.println("Nsimrun=" + nSimRun);
-            pw.println("Ncore=" + nCore);
-            pw.println();
-            pw.println("for i in $(seq 1 $Nblock)");
-            pw.println("do");
-            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
-            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
-            pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in BPinfo/0000*; do echo $k; done | sed -n $nstart,${nend}p)");
-            pw.println("  do");
-            pw.println("    cd $j");
-            if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-psvbp) < " + header + "_PSV.inf > runPSVBP.log &");
-            } else {
-                pw.println("    psvbp < " + header + "_PSV.inf > runPSVBP.log &");
-            }
-            pw.println("    cd ../");
-            pw.println("  done");
-            pw.println("  wait");
-            pw.println("done");
-
-        }
-    }
-
-    /**
-     * @throws IOException
-     */
-    public void writeSHBP() throws IOException {
-        Path shPath = workPath.resolve("runBP_sh.sh");
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
-            pw.println("#!/bin/sh");
-            pw.println("Nblock=" + nBlock);
-            pw.println("Nsimrun=" + nSimRun);
-            pw.println("Ncore=" + nCore);
-            pw.println();
-            pw.println("for i in $(seq 1 $Nblock)");
-            pw.println("do");
-            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
-            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
-            pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in BPinfo/0000*; do echo $k; done | sed -n $nstart,${nend}p)");
-            pw.println("  do");
-            pw.println("    cd $j");
-            if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-shbp) < " + header + "_SH.inf > runSHBP.log &");
-            } else {
-                pw.println("    shbp < " + header + "_SH.inf > runSHBP.log &");
-            }
-            pw.println("    cd ../");
-            pw.println("  done");
-            pw.println("  wait");
-            pw.println("done");
-
-        }
-    }
-
-    /**
-     * @throws IOException
-     */
-    public void writePSVFP() throws IOException {
-        Path shPath = workPath.resolve("runFP_psv.sh");
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
-            pw.println("#!/bin/sh");
-            pw.println("Nblock=" + nBlock);
-            pw.println("Nsimrun=" + nSimRun);
-            pw.println("Ncore=" + nCore);
-            pw.println();
-            pw.println("for i in $(seq 1 $Nblock)");
-            pw.println("do");
-            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
-            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
-            pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in FPinfo/*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
-            pw.println("  do");
-            pw.println("    cd $j");
-            if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-psvfp) < " + header + "_PSV.inf > runPSVFP.log &");
-            } else {
-                pw.println("    psvfp < " + header + "_PSV.inf > runPSVFP.log &");
-            }
-            pw.println("    cd ../");
-            pw.println("  done");
-            pw.println("  wait");
-            pw.println("done");
-
-        }
-    }
-
-    /**
-     * @throws IOException
-     */
-    public void writeSHFP() throws IOException {
-        Path shPath = workPath.resolve("runFP_sh.sh");
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath))) {
-            pw.println("#!/bin/sh");
-            pw.println("Nblock=" + nBlock);
-            pw.println("Nsimrun=" + nSimRun);
-            pw.println("Ncore=" + nCore);
-            pw.println();
-            pw.println("for i in $(seq 1 $Nblock)");
-            pw.println("do");
-            pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
-            pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
-            pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in FPinfo/*[A-Z]; do echo $k; done | sed -n $nstart,${nend}p)");
-            pw.println("  do");
-            pw.println("    cd $j");
-            if (mpi) {
-                pw.println("    mpirun -n $Ncore $(which mpi-shfp) < " + header + "_SH.inf > runSHFP.log &");
-            } else {
-                pw.println("    shfp < " + header + "_SH.inf > runSHFP.log &");
-            }
-            pw.println("    cd ../");
-            pw.println("  done");
-            pw.println("  wait");
-            pw.println("done");
-
-        }
-    }
 }

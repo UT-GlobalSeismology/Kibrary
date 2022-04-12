@@ -2,11 +2,11 @@ package io.github.kensuke1984.kibrary.specfem;
 
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -202,7 +202,7 @@ public class Make3DModel {
 	public static List<PerturbationPoint> checkerboardCATZ_4deg_4layers(double dvs, List<UnknownParameter> unknowns) {
 		List<PerturbationPoint> perturbations = new ArrayList<>();
 		
-		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
 		
 		double[] depths = new double[] {330, 410, 535, 660, 820};
 		
@@ -271,7 +271,7 @@ public class Make3DModel {
 	public static List<PerturbationPoint> checkerboardCATZ_4deg_8layers(double dvs, List<UnknownParameter> unknowns) {
 		List<PerturbationPoint> perturbations = new ArrayList<>();
 		
-		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
 		
 		double[] depths = new double[] {330, 370, 410, 472.5, 535, 597.5, 660, 740, 820};
 		
@@ -340,7 +340,7 @@ public class Make3DModel {
 	public static List<PerturbationPoint> checkerboardCATZ_6deg_4layers(double dvs, List<UnknownParameter> unknowns) {
 		List<PerturbationPoint> perturbations = new ArrayList<>();
 		
-		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
 		
 		double[] depths = new double[] {330, 410, 535, 660, 820};
 		

@@ -122,7 +122,7 @@ public class DataRequestor extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
-        networks = property.parseString("networks", null).split("\\s+");
+        networks = property.parseStringArray("networks", null);
 
         headAdjustment = property.parseInt("headAdjustment", null);
         footAdjustment = property.parseInt("footAdjustment", null);

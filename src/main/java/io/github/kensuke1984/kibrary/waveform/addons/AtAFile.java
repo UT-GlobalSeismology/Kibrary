@@ -1,8 +1,6 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -16,6 +14,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

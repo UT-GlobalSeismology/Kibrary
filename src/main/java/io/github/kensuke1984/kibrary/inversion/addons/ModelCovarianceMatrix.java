@@ -17,11 +17,11 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.CholeskyDecomposition;
 
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 public class ModelCovarianceMatrix {
 	
@@ -311,8 +311,8 @@ public class ModelCovarianceMatrix {
 			List<Integer> tmpI = new ArrayList<>();
 			List<Double> tmpV = new ArrayList<>();
 			for (int j = 0; j < n ; j++) {
-				FullPosition loci = parameters.get(i).getLocation();
-				FullPosition locj = parameters.get(j).getLocation();
+				FullPosition loci = parameters.get(i).getPosition();
+				FullPosition locj = parameters.get(j).getPosition();
 				double delta = Math.toDegrees(loci.getEpicentralDistance(locj));
 				double dr = Math.abs(loci.getR() - locj.getR());
 				double cmH = 0;

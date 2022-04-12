@@ -93,7 +93,7 @@ public class BasicIDMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
-        nameRoot = property.parseString("nameRoot", "actual");
+        nameRoot = property.parseStringSingle("nameRoot", "actual");
 
         for (int i = 1; i <= MAX_PAIR; i++) {
             String basicIDKey = "basicIDPath" + i;

@@ -3,10 +3,10 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -227,10 +227,10 @@ public class VelocityField3D {
 	private static Map<FullPosition, List<PerturbationValue>> toPerturbation(Map<UnknownParameter, Double> answerMap, Map<Double, Double> layerMap,
 			List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
 		Map<FullPosition, List<PerturbationValue>> perturbationMap = new HashMap<>();
-		List<FullPosition> locations = parameterOrder.stream().map(p -> p.getLocation()).distinct().collect(Collectors.toList());
+		List<FullPosition> locations = parameterOrder.stream().map(p -> p.getPosition()).distinct().collect(Collectors.toList());
 		
 		for (FullPosition location : locations) {
-			List<UnknownParameter> tmpParameters = parameterOrder.stream().filter(p -> p.getLocation().equals(location)).collect(Collectors.toList());
+			List<UnknownParameter> tmpParameters = parameterOrder.stream().filter(p -> p.getPosition().equals(location)).collect(Collectors.toList());
 			Map<PartialType, Double> typeValueMap = new HashMap<>();
 			for (UnknownParameter p : tmpParameters)
 				typeValueMap.put(p.getPartialType(), answerMap.get(p));

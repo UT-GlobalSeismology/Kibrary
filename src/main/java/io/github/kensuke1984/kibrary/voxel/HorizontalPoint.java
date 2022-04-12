@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.voxel;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  *
  * @author Kensuke Konishi
  * @version 0.1.3
+ * @deprecated before 2022/2/11
  */
 public class HorizontalPoint {
 

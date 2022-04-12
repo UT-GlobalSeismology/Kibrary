@@ -105,14 +105,14 @@ public class WaveformPlotCreater extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        components = Arrays.stream(property.parseString("components", "Z R T")
-                .split("\\s+")).map(SACComponent::valueOf).collect(Collectors.toSet());
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
-            tendEvents = Arrays.stream(property.parseString("tendEvents", null).split("\\s+")).map(GlobalCMTID::new)
+            tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                     .collect(Collectors.toSet());
         }
         splitComponents = property.parseBoolean("splitComponents", "true");

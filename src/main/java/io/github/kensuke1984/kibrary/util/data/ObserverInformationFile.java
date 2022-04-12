@@ -24,6 +24,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -32,6 +33,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * File containing information of observers.
  * <p>
  * Each line: station code, network code, latitude, longitude.
+ * <p>
+ * Only the station, network, latitude, and longitude are the parts used to convey data;
+ * the rest of the information is just for the users to see.
  *
  * @author Kensuke Konishi
  * @version 0.2.0.4
@@ -42,6 +46,7 @@ public final class ObserverInformationFile {
     }
 
     /**
+     * Writes an observer information file given a set of Observers.
      * @param observerSet Set of observers
      * @param outPath     of write file
      * @param options     for write
@@ -57,21 +62,22 @@ public final class ObserverInformationFile {
     }
 
     /**
+     * Reads an observer information file.
+     * Only the station, network, latitude, and longitude is read in; other information are ignored.
      * @param infoPath of station information file
      * @return (<b>unmodifiable</b>) Set of stations
      * @throws IOException if an I/O error occurs
      */
     public static Set<Observer> read(Path infoPath) throws IOException {
         Set<Observer> observerSet = new HashSet<>();
-        try (BufferedReader br = Files.newBufferedReader(infoPath)) {
-            br.lines().map(String::trim).filter(line -> !line.startsWith("#")).forEach(line -> {
-                String[] parts = line.split("\\s+");
-                HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),
-                        Double.parseDouble(parts[3]));
-                Observer observer = new Observer(parts[0], parts[1], hp);
-                if (!observerSet.add(observer))
-                    throw new RuntimeException("There is duplication of " + observer + " in " + infoPath + ".");
-            });
+        InformationFileReader reader = new InformationFileReader(infoPath, true);
+        while(reader.hasNext()) {
+            String[] parts = reader.next().split("\\s+");
+            HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),
+                    Double.parseDouble(parts[3]));
+            Observer observer = new Observer(parts[0], parts[1], hp);
+            if (!observerSet.add(observer))
+                throw new RuntimeException("There is duplication of " + observer + " in " + infoPath + ".");
         }
 
         // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?

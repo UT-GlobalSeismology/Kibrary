@@ -118,8 +118,38 @@ class Longitude implements Comparable<Longitude> {
      */
     @Override
     public String toString() {
-        return MathAid.padToString(longitude, 4, PRECISION);
+        return MathAid.padToString(longitude, 4, PRECISION, " ");
         //String format = "%" + (5 + PRECISION) + "." + PRECISION + "f";
         //return String.format(format, longitude);
     }
+
+    /**
+     * Turn the longitude value into a short String code.
+     * 1 letter ("N" for -100 and under, "M" for under 0, "P" for under 100, "Q" for 100 and above)
+     * followed by 2 + {@value #PRECISION} digits.
+     * @return (String) code
+     */
+    public String toCode() {
+        String letter;
+        double absolute = Math.abs(longitude);
+        if (longitude <= -100) {  // -180 ~ -100
+            letter = "N";
+            absolute -= 100;
+        }
+        else if (longitude < 0) {  // -100 ~ 0
+            letter = "M";
+        }
+        else if (longitude < 100) {  // 0 ~ 100
+            letter = "P";
+        }
+        else {  // 100 ~ 180
+            letter = "Q";
+            absolute -= 100;
+        }
+
+        int number = (int) Math.round(absolute * Math.pow(10, PRECISION));
+
+        return letter + MathAid.padToString(number, 2 + PRECISION, "0");
+    }
+
 }

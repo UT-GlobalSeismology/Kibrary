@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.voxel;
 
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -63,19 +63,19 @@ public class Physical1DParameter implements UnknownParameter {
         return weighting;
     }
 
-	@Override
-	public PartialType getPartialType() {
-		return partialType;
-	}
-	
-	@Override
-	public FullPosition getLocation() {
-		return new FullPosition(0., 0., perturbationR);
-	}
-	
-	@Override
-	public byte[] getBytes() {
-		return new byte[0];
-		// TODO
-	}
+    @Override
+    public PartialType getPartialType() {
+        return partialType;
+    }
+
+    @Override
+    public FullPosition getPosition() {
+        return new FullPosition(0., 0., perturbationR);
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return new byte[0];
+        // TODO
+    }
 }

@@ -4,10 +4,12 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
+import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
+import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -16,6 +18,9 @@ import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
+import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
+import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
+import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
 /**
  * An enum where all {@link Operation}s in Kibrary should be assigned to.
@@ -47,7 +52,12 @@ enum Manhattan {
     WaveformPlotCreater(42, WaveformPlotCreater.class), //
     RecordSectionCreater(43, RecordSectionCreater.class), //
     // Partial 50
+    ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class), //
+    PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class), //
+    PartialIDMerge(52, PartialIDMerge.class), //
     // Inversion 60
+    LetMeInvert(60, LetMeInvert.class), //
+    PseudoWaveformGenerator(65, PseudoWaveformGenerator.class), //
     // Temporal 100
     ;
 
@@ -60,7 +70,14 @@ enum Manhattan {
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.value + " " + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + " " + m.c.getSimpleName()));
+    }
+
+    static String numRange() {
+        Manhattan[] all = values();
+        int min = Arrays.stream(all).mapToInt(m -> m.value).min().getAsInt();
+        int max = Arrays.stream(all).mapToInt(m -> m.value).max().getAsInt();
+        return min + "-" + max;
     }
 
     /**
