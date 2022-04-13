@@ -22,6 +22,43 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 public final class DatasetAid {
 
     /**
+     * @param workPath
+     * @param nameRoot
+     * @param tag
+     * @param dateStr
+     * @return
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2022/4/13
+     */
+    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, String dateStr) throws IOException {
+        Path outPath;
+        if (tag == null) outPath = workPath.resolve(nameRoot + dateStr);
+        else outPath = workPath.resolve(nameRoot + "_" + tag + "_" + dateStr);
+
+        Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
+        return outPath;
+    }
+
+    /**
+     * @param nameRoot
+     * @param tag
+     * @param dateStr
+     * @return
+     *
+     * @author otsuru
+     * @since 2022/4/13
+     */
+    public static String generateOutputFileName(String nameRoot, String tag, String dateStr, String extension) {
+        String fileName;
+        if (tag == null) fileName = nameRoot + dateStr + extension;
+        else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
+        return fileName;
+    }
+
+    /**
      * Collect GlobalCMTIDs of event folders that exist under a given folder.
      * @param path {@link Path} for search of {@link GlobalCMTID}
      * @return <b>unmodifiable</b> Set of Global CMT IDs in the path

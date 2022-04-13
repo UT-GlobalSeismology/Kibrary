@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -36,7 +37,14 @@ public class BasicIDMerge extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * The first part of the name of output basic ID and waveform files
+     */
     private String nameRoot;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
 
     private List<Path> basicIDPaths = new ArrayList<>();
     private List<Path> basicPaths = new ArrayList<>();
@@ -61,6 +69,8 @@ public class BasicIDMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output basic ID and waveform files (actual)");
             pw.println("#nameRoot ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##########From here on, list up pairs of the paths of a basic ID file and a basic waveform file.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
@@ -92,8 +102,8 @@ public class BasicIDMerge extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-
         nameRoot = property.parseStringSingle("nameRoot", "actual");
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         for (int i = 1; i <= MAX_PAIR; i++) {
             String basicIDKey = "basicIDPath" + i;
@@ -189,10 +199,10 @@ public class BasicIDMerge extends Operation {
 
         // output merged files
         String dateStr = GadgetAid.getTemporaryString();
-        Path observerFilePath = workPath.resolve("observer" + dateStr + ".inf");
-        Path eventFilePath = workPath.resolve("event" + dateStr + ".inf");
-        Path outputIDPath = workPath.resolve(nameRoot + "ID" + dateStr + ".dat");
-        Path outputWavePath = workPath.resolve(nameRoot + dateStr + ".dat");
+        Path observerFilePath = workPath.resolve("observer" + dateStr + ".lst");
+        Path eventFilePath = workPath.resolve("event" + dateStr + ".lst");
+        Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", tag, dateStr, ".dat"));
+        Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, dateStr, ".dat"));
 
         System.err.println("Outputting in " + observerFilePath);
         ObserverInformationFile.write(observerSet, workPath.resolve(observerFilePath));

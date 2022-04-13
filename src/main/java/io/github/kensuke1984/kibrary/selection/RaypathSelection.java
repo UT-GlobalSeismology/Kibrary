@@ -15,6 +15,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -37,6 +38,10 @@ public class RaypathSelection extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
     /**
      * Path of the output timewindow file
      */
@@ -94,6 +99,8 @@ public class RaypathSelection extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##Path of a timewindow file, must be defined");
@@ -143,6 +150,7 @@ public class RaypathSelection extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -179,7 +187,7 @@ public class RaypathSelection extends Operation {
             throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputSelectedPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
+        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", tag, dateStr, ".dat"));
     }
 /*
     private void checkAndPutDefaults() {

@@ -71,6 +71,10 @@ public class FujiStaticCorrection extends Operation {
      */
     private Path workPath;
     /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * Path of the output file
      */
     private Path outputPath;
@@ -127,6 +131,8 @@ public class FujiStaticCorrection extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(double) sacSamplingHz (20)");
@@ -156,6 +162,7 @@ public class FujiStaticCorrection extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -170,7 +177,7 @@ public class FujiStaticCorrection extends Operation {
         mediantime = property.parseBoolean("mediantime", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve("staticCorrection" + dateStr + ".dat");
+        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", tag, dateStr, ".dat"));
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
 /*

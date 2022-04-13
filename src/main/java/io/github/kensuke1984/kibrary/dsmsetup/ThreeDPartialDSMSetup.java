@@ -126,9 +126,9 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event information file, must be set");
-            pw.println("#eventPath event.inf");
+            pw.println("#eventPath event.lst");
             pw.println("##Path of an observer information file, must be set");
-            pw.println("#observerPath observer.inf");
+            pw.println("#observerPath observer.lst");
             pw.println("##Path of a voxel information file for perturbation points, must be set");
             pw.println("#voxelPath voxel.inf");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");

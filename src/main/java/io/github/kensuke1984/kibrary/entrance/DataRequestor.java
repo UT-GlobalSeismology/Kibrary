@@ -13,6 +13,7 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -31,6 +32,14 @@ public class DataRequestor extends Operation {
      * Path for the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
 
     // private String label;
     // private String[] alternateMedia;
@@ -79,6 +88,8 @@ public class DataRequestor extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##Network names for request, listed using spaces, must be defined");
             pw.println("## Wildcards (*, ?) and virtual networks are allowed.");
             pw.println("## Note that it will make a request for all stations in the networks.");
@@ -121,6 +132,7 @@ public class DataRequestor extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         networks = property.parseStringArray("networks", null);
 
@@ -213,15 +225,21 @@ public class DataRequestor extends Operation {
 */
 
     @Override
-    public void run() {
+    public void run() throws IOException {
         requestedEvents = listEvents();
-        System.out.println(requestedEvents.size() + " events are found.");
+        if (!DatasetAid.checkEventNum(requestedEvents.size())) {
+            return;
+        }
         System.out.println("Label contains \"" + dateStr + "\"");
+
+        outPath = DatasetAid.createOutputFolder(workPath, "request", tag, dateStr);
+
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
-        Path sent = workPath.resolve("sent" + GadgetAid.getTemporaryString());
+
+        Path sentPath = outPath.resolve("sent");
         if (send) try {
             System.err.println("Sending requests in 5 sec.");
-            System.err.println("Sent mails will be in " + sent);
+            System.err.println("Sent mails will be in " + sentPath);
             Thread.sleep(1000 * 5);
         } catch (Exception e2) {
         }
@@ -230,8 +248,8 @@ public class DataRequestor extends Operation {
             try {
                 Path out = output(m);
                 if (!send) return;
-                Files.createDirectories(sent);
-                Files.move(out, sent.resolve(out.getFileName()));
+                Files.createDirectories(sentPath);
+                Files.move(out, sentPath.resolve(out.getFileName()));
                 System.err.println("Sending a request for " + event);
                 m.sendIris();
                 Thread.sleep(300 * 1000);
@@ -243,7 +261,7 @@ public class DataRequestor extends Operation {
     }
 
     private Path output(BreakFastMail mail) {
-        Path out = workPath.resolve(mail.getLabel() + ".mail");
+        Path out = outPath.resolve(mail.getLabel() + ".mail");
         try {
             Files.write(out, Arrays.asList(mail.getLines()));
         } catch (Exception e) {
