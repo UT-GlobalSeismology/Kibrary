@@ -5,17 +5,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.afeborgeaud.tomotool.math.Sph_specfem;
-import io.github.afeborgeaud.tomotool.utilities.ReadUtils;
+import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class S20RTS implements Seismic3Dmodel {
 
@@ -299,8 +297,8 @@ public class S20RTS implements Seismic3Dmodel {
 //		  String S20RTS_ = "/resources/S20RTS.dat";
 //		  String P12_ = "/resources/P12.dat";
       // for runnable JAR files
-      String S20RTS_ = "/S20RTS.dat";
-      String P12_ = "/P12.dat";
+      String S20RTS_ = "/tomotool/S20RTS.dat";
+      String P12_ = "/tomotool/P12.dat";
 
       String line;
 

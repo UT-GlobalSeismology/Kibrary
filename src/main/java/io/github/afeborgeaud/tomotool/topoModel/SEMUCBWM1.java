@@ -14,12 +14,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class SEMUCBWM1 implements Seismic3Dmodel {
 
-//	private final static double ddepth = 10.;
-//	private final static double dlon = 1.;
-//	private final static double dlat = 1.;
-//	private final static int nlon = 360;
-//	private final static int nlat = 181;
-//	private final static int ndepth = 284;
     private final static double ddepth = 20.;
     private final static double dlon = 2.;
     private final static double dlat = 2.;
@@ -54,13 +48,9 @@ public class SEMUCBWM1 implements Seismic3Dmodel {
         System.err.println("Loading model SEMUCBWM1");
         try {
 //			InputStream is = SEMUCBWM1.class.getResourceAsStream("/resources/model_semucb_wholemantle.dat"); // for non-runnable JAR files
-            InputStream is = SEMUCBWM1.class.getResourceAsStream("/model_semucb_wholemantle.dat"); // for runnable JAR files
+            InputStream is = SEMUCBWM1.class.getResourceAsStream("/tomotool/model_semucb_wholemantle.dat"); // for runnable JAR files
             BufferedReader bufferedReader =
                         new BufferedReader(new InputStreamReader(is));
-
-//			Path resourcePath =  new File("resources").getAbsoluteFile().toPath();
-//			Path modelPath = resourcePath.resolve("model_semucb_wholemantle.dat");
-//			BufferedReader bufferedReader = Files.newBufferedReader(modelPath);
 
             rmin = 0.;
             rmax = 6371.;

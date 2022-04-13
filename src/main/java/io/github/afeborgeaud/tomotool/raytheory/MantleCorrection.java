@@ -29,7 +29,7 @@ public class MantleCorrection {
             System.err.println("USAGE:");
             System.err.println("information file path, 3Dmodel, phase");
             System.err.println("information file should be timewiondow file or should contaion (GCMTID, station name, network name, latitude of the station, longitude of the station)");
-            System.err.println("Choose 3Dmodel form"); //TODO なんか一覧表示できるもの
+            System.err.println("Choose 3Dmodel form semucb, llnlg3d, or s20rts"); //TODO なんか一覧表示できるもの
             System.err.println("Chosse pahse form ScS, PcP");
         }
         else {

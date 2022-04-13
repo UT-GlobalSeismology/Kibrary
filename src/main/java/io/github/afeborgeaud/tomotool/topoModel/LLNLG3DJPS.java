@@ -1,20 +1,16 @@
 package io.github.afeborgeaud.tomotool.topoModel;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class LLNLG3DJPS implements Seismic3Dmodel {
 
@@ -56,13 +52,9 @@ public class LLNLG3DJPS implements Seismic3Dmodel {
         try {
             //TODO
 //			InputStream is = LLNLG3DJPS.class.getResourceAsStream("/resources/model_llnl3djps_wholemantle.dat"); // for non-runnable JAR files
-            InputStream is = LLNLG3DJPS.class.getResourceAsStream("/model_llnl3djps_wholemantle.dat"); // for runnable JAR files
+            InputStream is = LLNLG3DJPS.class.getResourceAsStream("/tomotool/model_llnl3djps_wholemantle.dat"); // for runnable JAR files
             BufferedReader bufferedReader =
                         new BufferedReader(new InputStreamReader(is));
-
-//			Path resourcePath =  new File("resources").getAbsoluteFile().toPath();
-//			Path modelPath = Paths.get("/home/navy/git/TopoCMB/resources/model_llnl3djps_wholemantle.dat");
-//			BufferedReader bufferedReader = Files.newBufferedReader(modelPath);
 
             String[] ss = bufferedReader.readLine().trim().split("\\s+");
             nlon = Integer.parseInt(ss[1]);
