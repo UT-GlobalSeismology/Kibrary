@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
+import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
@@ -56,6 +57,7 @@ enum Manhattan {
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class), //
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class), //
     PartialIDMerge(52, PartialIDMerge.class), //
+    SensitivityKernelMapper(53, SensitivityKernelMapper.class),
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class), //
     VelocityModelMapper(62, VelocityModelMapper.class),
@@ -72,7 +74,7 @@ enum Manhattan {
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + " " + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + "-" + m.c.getSimpleName()));
     }
 
     static String numRange() {
