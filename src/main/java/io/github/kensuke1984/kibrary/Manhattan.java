@@ -14,6 +14,7 @@ import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
+import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
@@ -34,7 +35,8 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
 enum Manhattan {
-    // Environment 00
+    // Environment & Common 00
+    DatasetMerge(1, DatasetMerge.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class), //
     DataLobby(14, DataLobby.class), //

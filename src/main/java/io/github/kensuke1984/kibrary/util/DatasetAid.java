@@ -22,11 +22,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 public final class DatasetAid {
 
     /**
-     * @param workPath
-     * @param nameRoot
-     * @param tag
-     * @param dateStr
-     * @return
+     * @param workPath (Path) Path to create the output folder under
+     * @param nameRoot (String) First part of output folder name
+     * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
+     * @param dateStr (String) The date string part of output folder name
+     * @return (Path) Path of created output folder
      * @throws IOException
      *
      * @author otsuru
@@ -43,10 +43,11 @@ public final class DatasetAid {
     }
 
     /**
-     * @param nameRoot
-     * @param tag
-     * @param dateStr
-     * @return
+     * @param nameRoot (String) First part of output file name
+     * @param tag (String) Additional comment to include in file name. If null, this part will be excluded.
+     * @param dateStr (String) The date string part of output file name
+     * @param extension (String)
+     * @return (String) Generated name of file
      *
      * @author otsuru
      * @since 2022/4/13

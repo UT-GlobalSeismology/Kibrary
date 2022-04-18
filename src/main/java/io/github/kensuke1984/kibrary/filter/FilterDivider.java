@@ -291,7 +291,7 @@ public class FilterDivider extends Operation {
     private void filterAndout(SACFileName name) {
         try {
             SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
-            Path out = outPath.resolve(name.getGlobalCMTID() + "/" + name.getName());
+            Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
             sacFile.writeSAC(out);
             if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);
         } catch (Exception e) {
