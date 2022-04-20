@@ -5,22 +5,25 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 
@@ -231,52 +234,58 @@ public final class TimewindowDataFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
         try {
-            run(args);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            System.err.println("-----");
-            usage().forEach(System.err::println);
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
-        List<String> usageList = new ArrayList<>();
-        usageList.add("Usage: [timewindowFile]");
-        usageList.add("  timewindowFile : Path of timewindow file to read");
-        return usageList;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+        // input
+        options.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
+                .desc("Set input timewindow file").build());
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+        return options;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      * @throws IOException
      */
-    public static void run(String[] args) throws IOException {
-        Path filePath;
+    public static void run(CommandLine cmdLine) throws IOException {
 
-        if (args.length == 1) {
-            filePath = Paths.get(args[0]);
+        Path filePath;
+        if (cmdLine.hasOption("t")) {
+            filePath = Paths.get(cmdLine.getOptionValue("t"));
             if (!Files.exists(filePath) || Files.isDirectory(filePath)) {
                 System.err.println(filePath + " does not exist or is a directory.");
                 return;
             }
-        } else if (args.length == 0) {
+        } else {
             String pathString = "";
             do {
                 pathString = GadgetAid.readInputDialogOrLine("File?", pathString);
                 if (pathString == null || pathString.isEmpty()) return;
                 filePath = Paths.get(pathString);
             } while (!Files.exists(filePath) || Files.isDirectory(filePath));
-        } else {
-            throw new IllegalArgumentException("Too many arguments");
         }
 
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".txt");
+
         Set<TimewindowData> set = TimewindowDataFile.read(filePath);
-        set.stream().sorted().forEach(tw -> {System.out.println(tw.toString());});
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            set.stream().sorted().forEach(pw::println);
+        }
     }
 }

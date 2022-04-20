@@ -17,6 +17,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -268,46 +273,50 @@ public final class BasicIDFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
         try {
-            run(args);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            System.err.println("-----");
-            usage().forEach(System.err::println);
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
-        List<String> usageList = new ArrayList<>();
-        usageList.add("Usage: [correctionFile]");
-        usageList.add(" 1. -i basicIDFile");
-        usageList.add(" 2. -w basicIDFile basicFile");
-        usageList.add("  -i : export content of basic ID file in standard output");
-        usageList.add("  -w : export waveforms in event directories under current path");
-        usageList.add("  basicIDFile : Path of basic ID file to read");
-        usageList.add("  basicFile : Path of basic waveform file to read");
-        return usageList;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+        //input
+        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("basicIDFile").required()
+                .desc("Export content of basic ID file").build());
+        options.addOption(Option.builder("w").longOpt("waveform").hasArg().argName("basicFile")
+                .desc("Export waveforms in event directories under current path").build());
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+        return options;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      * @throws IOException
      */
-    public static void run(String[] args) throws IOException {
-
-        if (args.length == 2 && args[0].equals("-i")) {
-            BasicID[] ids = read(Paths.get(args[1]));
-            Arrays.stream(ids).forEach(System.out::println);
-        } else if (args.length == 3 && args[0].equals("-w")) {
-            BasicID[] ids = read(Paths.get(args[1]), Paths.get(args[2]));
+    public static void run(CommandLine cmdLine) throws IOException {
+        BasicID[] ids;
+        if (cmdLine.hasOption("w")) {
+            ids = read(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
             outputWaveforms(ids);
         } else {
-            throw new IllegalArgumentException("Invalid arguments");
+            ids = read(Paths.get(cmdLine.getOptionValue("i")));
+        }
+
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get("basicID" + GadgetAid.getTemporaryString() + ".txt");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            Arrays.stream(ids).forEach(pw::println);
         }
     }
 

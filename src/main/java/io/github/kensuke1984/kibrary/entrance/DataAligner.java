@@ -3,11 +3,15 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -41,43 +45,47 @@ public class DataAligner {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
         try {
-            run(args);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            System.err.println("-----");
-            usage().forEach(System.err::println);
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
-        List<String> usageList = new ArrayList<>();
-        usageList.add("Usage:");
-        usageList.add(" 1. -m datacenter");
-        usageList.add("  -m : operate for mseed files, and download from the specified datacenter");
-        usageList.add("  datacenter : name of datacenter to download from, chosen from {IRIS, ORFEUS}.");
-        usageList.add(" 2. -s");
-        usageList.add("  -s : operate for seed files");
-        return usageList;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // input
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("m").longOpt("mseed").hasArg().argName("datacenter")
+                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}")
+                .build());
+        inputOption.addOption(Option.builder("s").longOpt("seed")
+                .desc("Operate for seed files").build());
+        options.addOptionGroup(inputOption);
+
+        return options;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      * @throws IOException
      */
-    public static void run(String[] args) throws IOException {
+    public static void run(CommandLine cmdLine) throws IOException {
         boolean forSeed = false;
         String datacenter = "";
 
-        if (args.length == 1 && args[0].equals("-s")) {
+        if (cmdLine.hasOption("s")) {
             forSeed = true;
-        } else if (args.length == 2 && args[0].equals("-m")) {
-            datacenter = args[1];
+        } else if (cmdLine.hasOption("m")) {
+            datacenter = cmdLine.getOptionValue("m");
         } else {
             throw new IllegalArgumentException("Invalid arguments.");
         }

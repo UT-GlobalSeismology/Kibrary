@@ -6,9 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -45,40 +48,51 @@ public final class DataTransfer {
      *             (/pub/userdata/`USERNAME`/) with the `tag`.
      *             If "-a", then get all seed files in the folder. <br>
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
         try {
-            run(args);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            System.err.println("-----");
-            usage().forEach(System.err::println);
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
-        List<String> usageList = new ArrayList<>();
-        usageList.add("Usage:");
-        usageList.add(" 1. -c");
-        usageList.add("  -c : check the number of files prepared at server");
-        usageList.add(" 2. tag");
-        usageList.add("  tag : download files that contain the specified string");
-        usageList.add(" 3. -a");
-        usageList.add("  -a : download all files at server");
-        return usageList;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        OptionGroup actionOption = new OptionGroup();
+        actionOption.setRequired(true);
+        actionOption.addOption(Option.builder("c").longOpt("checknum")
+                .desc("Check the number of files prepared at server").build());
+        actionOption.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+                .desc("Download files that contain the specified string").build());
+        actionOption.addOption(Option.builder("a").longOpt("all")
+                .desc("Download all files at server").build());
+        options.addOptionGroup(actionOption);
+
+        return options;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      * @throws IOException
      */
-    public static void run(String[] args) {
-        if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
-        get(args[0]);
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        String optionStr = null;
+        if (cmdLine.hasOption("c")) {
+            optionStr = "-c";
+        } else if (cmdLine.hasOption("t")) {
+            optionStr = cmdLine.getOptionValue("t");
+        } else if (cmdLine.hasOption("a")) {
+            optionStr = "-a";
+        }
+        get(optionStr);
     }
 
     private static void get(String date) {
