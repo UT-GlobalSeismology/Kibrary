@@ -6,23 +6,30 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * File containing information of observers.
@@ -75,28 +82,28 @@ public final class ObserverInformationFile {
                 throw new RuntimeException("There is duplication of " + observer + " in " + infoPath + ".");
         }
 
-        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
-        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()){
-            System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
-            Map<String, List<Observer>> nameToObserver = new HashMap<>();
-            observerSet.forEach(sta -> {
-                if (nameToObserver.containsKey(sta.toString())) {
-                    List<Observer> tmp = nameToObserver.get(sta.toString());
-                    tmp.add(sta);
-                    nameToObserver.put(sta.toString(), tmp);
-                }
-                else {
-                    List<Observer> tmp = new ArrayList<>();
-                    tmp.add(sta);
-                    nameToObserver.put(sta.toString(), tmp);
-                }
-            });
-            nameToObserver.forEach((name, obs) -> {
-                if (obs.size() > 1) {
-                    obs.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
-                }
-            });
-        }
+//        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
+//        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()){
+//            System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
+//            Map<String, List<Observer>> nameToObserver = new HashMap<>();
+//            observerSet.forEach(sta -> {
+//                if (nameToObserver.containsKey(sta.toString())) {
+//                    List<Observer> tmp = nameToObserver.get(sta.toString());
+//                    tmp.add(sta);
+//                    nameToObserver.put(sta.toString(), tmp);
+//                }
+//                else {
+//                    List<Observer> tmp = new ArrayList<>();
+//                    tmp.add(sta);
+//                    nameToObserver.put(sta.toString(), tmp);
+//                }
+//            });
+//            nameToObserver.forEach((name, obs) -> {
+//                if (obs.size() > 1) {
+//                    obs.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
+//                }
+//            });
+//        }
 
         return Collections.unmodifiableSet(observerSet);
     }
@@ -105,71 +112,89 @@ public final class ObserverInformationFile {
      * Reads observer information from SAC files in event directories under an input directory,
      * and creates an observer information file under the working directory.
      *
-     * @param args [input directory to collect observers from]
+     * @param args
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
         try {
-            run(args);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            System.err.println("-----");
-            usage().forEach(System.err::println);
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
-        List<String> usageList = new ArrayList<>();
-        usageList.add("Usage: [datasetFolder]");
-        usageList.add("  datasetFolder : Path of dataset folder containing event folders");
-        return usageList;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // settings
+        options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
+                .desc("Components to use, listed using commas").build());
+
+        // input
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
+                .desc("Use dataset folder containing event folders as input").build());
+        inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
+                .desc("Use timewindow file as input").build());
+        inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("BasicIDFile")
+                .desc("Use basic ID file as input").build());
+        options.addOptionGroup(inputOption);
+
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+
+        return options;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      * @throws IOException
      */
-    public static void run(String[] args) throws IOException {
-        Path inPath;
+    public static void run(CommandLine cmdLine) throws IOException {
 
-        if (args.length == 1) {
-            inPath = Paths.get(args[0]);
-            if (!Files.exists(inPath) || !Files.isDirectory(inPath)) {
-                System.err.println(inPath + " does not exist or is not a directory.");
-                return;
-            }
-        } else if (args.length == 0){
+        Set<SACComponent> components = cmdLine.hasOption("c")
+                ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
+                : SACComponent.componentSetOf("ZRT");
+
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get("observer" + GadgetAid.getTemporaryString() + ".lst");
+
+        Set<Observer> observerSet;
+        if (cmdLine.hasOption("d")) {
+            observerSet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
+        } else if (cmdLine.hasOption("t")) {
+            Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            observerSet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
+                    .map(TimewindowData::getObserver).collect(Collectors.toSet());
+        } else if (cmdLine.hasOption("b")) {
+            BasicID[] basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")));
+            observerSet = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
+                    .map(BasicID::getObserver).collect(Collectors.toSet());
+        } else {
             String pathString = "";
+            Path inPath;
             do {
                 pathString = GadgetAid.readInputDialogOrLine("Input folder?", pathString);
                 if (pathString == null || pathString.isEmpty()) return;
                 inPath = Paths.get(pathString);
             } while (!Files.exists(inPath) || !Files.isDirectory(inPath));
-        } else {
-            throw new IllegalArgumentException("Too many arguments");
+            observerSet = collectFromDataset(inPath, components);
         }
 
-        createObserverInformationFile(inPath);
+        write(observerSet, outputPath);
+
     }
 
-    /**
-     * ワーキングディレクトリ下のイベントフォルダ群からステーション情報を抽出して書き込む。
-     *
-     * @param workPath under which this looks for event folders and stations under
-     *                 the folders
-     * @param options  for write
-     * @throws IOException if an I/O error occurs
-     */
-    private static void createObserverInformationFile(Path inPath) throws IOException {
-        Path outPath = Paths.get("observer" + GadgetAid.getTemporaryString() + ".inf");
-
-        Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(inPath);
-        Set<Observer> observerSet = sacNameSet.stream().filter(sacname -> sacname.getComponent().equals(SACComponent.T)).map(sacName -> {
+    private static Set<Observer> collectFromDataset(Path datasetPath, Set<SACComponent> components) throws IOException {
+        Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(datasetPath);
+        return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent())).map(sacName -> {
             try {
                 return sacName.readHeader();
             } catch (Exception e) {
@@ -177,31 +202,6 @@ public final class ObserverInformationFile {
                 return null;
             }
         }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
-
-        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
-        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
-            System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
-            Map<String, List<Observer>> nameToObserver = new HashMap<>();
-            observerSet.forEach(sta -> {
-                if (nameToObserver.containsKey(sta.toString())) {
-                    List<Observer> tmp = nameToObserver.get(sta.toString());
-                    tmp.add(sta);
-                    nameToObserver.put(sta.toString(), tmp);
-                }
-                else {
-                    List<Observer> tmp = new ArrayList<>();
-                    tmp.add(sta);
-                    nameToObserver.put(sta.toString(), tmp);
-                }
-            });
-            nameToObserver.forEach((name, obs) -> {
-                if (obs.size() > 1) {
-                    obs.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
-                }
-            });
-        }
-
-        write(observerSet, outPath);
     }
 
 }

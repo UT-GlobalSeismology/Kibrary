@@ -3,6 +3,13 @@ package io.github.kensuke1984.kibrary;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
@@ -45,16 +52,24 @@ public class Summon {
         }
 
         //~get arguments~//
-        String[] argsInput = {""};
-        if (brooklyn.displayUsage()) {
+        Options options = brooklyn.getOptions();
+        CommandLine cmdLine = null;
+        if (options != null) {
+            showUsage(options);
             System.out.print("Enter arguments : ");
-            argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+            String[] argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+            try {
+                cmdLine = parseArgs(options, argsInput);
+            } catch (ParseException e) {
+                showUsage(options);
+                return;
+            }
         }
 
         //~run brooklyn~//
         System.err.println(brooklyn.getClassName() + " is running.");
         try {
-            brooklyn.summon(argsInput);
+            brooklyn.summon(cmdLine);
         } catch (InvocationTargetException e) {
             System.err.println("InvocationTargetException caused by");
             e.getCause().printStackTrace();
@@ -65,6 +80,29 @@ public class Summon {
         }
         System.err.println(brooklyn.getClassName() + " finished.");
 
+    }
+
+    public static Options defaultOptions() {
+        Options options = new Options();
+        options.addOption("h", "help", false, "Show usage");
+        return options;
+    }
+
+    public static CommandLine parseArgs(Options options, String[] args) throws ParseException {
+        CommandLineParser parser = new DefaultParser();
+        CommandLine comLine = parser.parse(options, args);
+
+        if (comLine.hasOption("h")) throw new ParseException("help");
+
+        return comLine;
+    }
+
+    public static void showUsage(Options options) {
+        HelpFormatter formatter = new HelpFormatter();
+        // display options in order of declaration
+        formatter.setOptionComparator(null);
+        // cmdLineSyntax (the first argument) is set black because it will become too long
+        formatter.printHelp(" ", options, true);
     }
 
 }

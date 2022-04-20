@@ -9,8 +9,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
@@ -39,36 +43,35 @@ public final class GlobalCMTCatalogUpdate {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
         try {
-            run(args);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            System.err.println("-----");
-            usage().forEach(System.err::println);
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
-        List<String> usageList = new ArrayList<>();
-        usageList.add("Usage: mmmYY");
-        usageList.add("  mmmYY : month and year the version of the catalog is up to,");
-        usageList.add("    where mmm is the first three letters of the name of the month (lower case),");
-        usageList.add("    and YY is the lower two digits of the year.");
-        return usageList;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        options.addOption(Option.builder("v").longOpt("version").hasArg().argName("mmmYY").required()
+                .desc("month and year the version of the catalog is up to, "
+                        + "where mmm is the first three letters of the name of the month (lower case), "
+                        + "and YY is the lower two digits of the year.").build());
+        return options;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      * @throws IOException
      */
-    public static void run(String[] args) throws IOException {
-        if (args.length != 1) throw new IllegalArgumentException("Wrong number of arguments");
-        switchCatalog(args[0]);
+    public static void run(CommandLine cmdLine) throws IOException {
+        switchCatalog(cmdLine.getOptionValue("v"));
     }
 
     private static void switchCatalog(String version) throws IOException {

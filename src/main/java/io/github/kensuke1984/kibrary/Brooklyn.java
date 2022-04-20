@@ -3,6 +3,9 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
@@ -89,13 +92,17 @@ enum Brooklyn {
         return true;
     }
 
-    void summon(String[] args) throws ReflectiveOperationException {
-        // when no argument is entered
-        if (args.length == 1 && args[0].isEmpty()) {
-            c.getMethod("run", String[].class).invoke(null, (Object) new String[0]);
-        } else {
-            c.getMethod("run", String[].class).invoke(null, (Object) args);
-        }
+    Options getOptions() throws ReflectiveOperationException {
+        return (Options) c.getMethod("defineOptions", (Class<?>[]) null).invoke(null, (Object[]) null);
+    }
+
+    void summon(CommandLine cmdLine) throws ReflectiveOperationException {
+//        // when no argument is entered
+//        if (args.length == 1 && args[0].isEmpty()) {
+//            c.getMethod("run", String[].class).invoke(null, (Object) new String[0]);
+//        } else {
+            c.getMethod("run", CommandLine.class).invoke(null, (Object) cmdLine);
+//        }
     }
 
 }

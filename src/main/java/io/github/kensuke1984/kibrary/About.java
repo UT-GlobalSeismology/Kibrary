@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary;
 
 import java.awt.GraphicsEnvironment;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,6 +10,9 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 
 /**
  * About Kibrary.
@@ -36,22 +38,22 @@ public final class About extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        run(args);
+        run(null);
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
+    public static Options defineOptions() {
         return null;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      */
-    public static void run(String[] args) {
+    public static void run(CommandLine cmdLine) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {

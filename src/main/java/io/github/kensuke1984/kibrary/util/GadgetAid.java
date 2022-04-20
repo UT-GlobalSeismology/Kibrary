@@ -137,7 +137,7 @@ public final class GadgetAid {
         try {
             string = JOptionPane.showInputDialog(message, initialValue);
         } catch (Exception e) {
-            System.err.println(message + " : ");
+            System.err.print(message + " : ");
             string = GadgetAid.readInputLine();
         }
         return string;

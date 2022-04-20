@@ -137,7 +137,7 @@ public class DatasetMerge extends Operation {
                     if(Files.exists(outSacPath)) {
                         System.err.println("Duplication of " + sacFile.getName() + " , skipping.");
                     } else {
-                        Files.createSymbolicLink(outSacPath, sacFile.toPath());
+                        Files.createSymbolicLink(outSacPath, Paths.get("..", "..").resolve(sacFile.toPath()));
                     }
                 }
             }

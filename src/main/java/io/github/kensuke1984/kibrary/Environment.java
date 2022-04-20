@@ -6,9 +6,11 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 
 /**
  * Runtime environment
@@ -115,22 +117,22 @@ public class Environment {
      * @param args will be ignored
      */
     public static void main(String[] args) {
-        run(args);
+        run(null);
     }
 
     /**
      * To be called from {@link Summon}.
-     * @return usage
+     * @return options
      */
-    public static List<String> usage() {
+    public static Options defineOptions() {
         return null;
     }
 
     /**
      * To be called from {@link Summon}.
-     * @param args
+     * @param cmdLine options
      */
-    public static void run(String[] args) {
+    public static void run(CommandLine cmdLine) {
 //      System.getProperties().keySet().forEach(System.out::println);
         System.out.println("OS: " + System.getProperty("os.name"));
         System.out.println("User name: " + getUserName());
