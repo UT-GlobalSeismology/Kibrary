@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -28,7 +27,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @since 2022/4/4
  */
 enum Brooklyn {
-    // Environment 00
+    // Environment & General 00
     About(0, About.class),
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
@@ -83,26 +82,12 @@ enum Brooklyn {
         return c.getName();
     }
 
-    boolean displayUsage() throws ReflectiveOperationException {
-        @SuppressWarnings("unchecked")
-        List<String> usageList = (List<String>) c.getMethod("usage", (Class<?>[]) null).invoke(null, (Object[]) null);
-        if (null == usageList) return false;
-
-        usageList.forEach(System.out::println);
-        return true;
-    }
-
     Options getOptions() throws ReflectiveOperationException {
         return (Options) c.getMethod("defineOptions", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
     void summon(CommandLine cmdLine) throws ReflectiveOperationException {
-//        // when no argument is entered
-//        if (args.length == 1 && args[0].isEmpty()) {
-//            c.getMethod("run", String[].class).invoke(null, (Object) new String[0]);
-//        } else {
-            c.getMethod("run", CommandLine.class).invoke(null, (Object) cmdLine);
-//        }
+        c.getMethod("run", CommandLine.class).invoke(null, (Object) cmdLine);
     }
 
 }
