@@ -30,13 +30,13 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
+import io.github.kensuke1984.kibrary.util.data.RaypathListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -54,7 +54,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @version 0.1.2
  * @author anselme add methods to draw raypaths inside D''
  */
-public class RaypathDistribution extends Operation {
+public class RaypathMapper extends Operation {
 
     private final Property property;
     /**
@@ -99,6 +99,7 @@ public class RaypathDistribution extends Operation {
     private Path psPath;
     private Path gmtPath;
     private Path eventClusterPath;
+
     private String model;
     private double pierceDepth;
     Map<GlobalCMTID, Integer> eventClusterMap;
@@ -141,7 +142,7 @@ public class RaypathDistribution extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public RaypathDistribution(Property property) throws IOException {
+    public RaypathMapper(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -164,14 +165,6 @@ public class RaypathDistribution extends Operation {
             throw new IllegalArgumentException("A folder or file for input must be set.");
         }
 
-        if (property.containsKey("timeWindowInformationPath")) {
-            Path timewindowPath = property.parsePath("timeWindowInformationPath", null, true, workPath);
-            timeWindowInformationFile = TimewindowDataFile.read(timewindowPath);
-        }
-        Path stationPath = property.parsePath("stationInformationPath", null, true, workPath);
-        if (timeWindowInformationFile == null) observers = ObserverListFile.read(stationPath);
-        else observers = timeWindowInformationFile.stream().map(tw -> tw.getObserver())
-                .collect(Collectors.toSet());
 
         pierceDepth = property.parseDouble("pierceDepth", "400");
         model = property.parseString("model", "prem");
@@ -229,10 +222,10 @@ public class RaypathDistribution extends Operation {
 
         EventListFile.write(events, eventPath);
         ObserverListFile.write(observers, observerPath);
+        RaypathListFile.write(raypaths, raypathPath);
 
         switch (drawsPathMode) {
         case 1:
-            outputRaypath();
             break;
         case 2:
             outputRaypathInside(pierceDepth);
@@ -257,29 +250,6 @@ public class RaypathDistribution extends Operation {
                                 && tw.getObserver().getStation().equals(name.getStationCode()));
     }
 
-    private void outputRaypath() throws IOException {
-        List<String> lines = DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
-            try {
-                return eventDir.sacFileSet().stream();
-            } catch (Exception e) {
-                return Stream.empty();
-            }
-        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
-                .map(name -> {
-                    try {
-                        return name.readHeader();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }).filter(Objects::nonNull)
-                .map(header -> header.getSACString(SACHeaderEnum.KSTNM) + " " + header.getSACString(SACHeaderEnum.KEVNM)
-                        + " " + header.getEventLocation() + " " + Observer.of(header).getPosition())
-                .collect(Collectors.toList());
-
-        Files.write(raypathPath, lines);
-    }
-
     private void outputTurningPoint() throws IOException {
         Phase phasetmp = Phase.ScS;
         if (components.size() == 1 && components.contains(SACComponent.Z))
@@ -287,34 +257,40 @@ public class RaypathDistribution extends Operation {
         final Phase phase = phasetmp;
 
         List<String> lines = new ArrayList<>();
-        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
-            try {
-                return eventDir.sacFileSet().stream();
-            } catch (Exception e) {
-                return Stream.empty();
-            }
-        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
-                .map(name -> {
-                    try {
-                        return name.readHeader();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }).filter(Objects::nonNull)
-                .forEach(headerData -> {
-                    FullPosition eventLocation = headerData.getEventLocation();
-                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
-                    Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, phase)
-                        .get(0);
-                    FullPosition turningPoint = info.getTurningPoint();
-                    lines.add(String.format("%.2f %.2f %.2f"
-                            , turningPoint.getLongitude()
-                            , turningPoint.getLatitude()
-                            , turningPoint.getR()));
-                });
-
+        raypaths.forEach(ray -> {
+            lines.add(ray.getTurningPoint(model, phase).toString());
+        });
         Files.write(turningPointPath, lines);
+
+
+//        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+//            try {
+//                return eventDir.sacFileSet().stream();
+//            } catch (Exception e) {
+//                return Stream.empty();
+//            }
+//        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
+//                .map(name -> {
+//                    try {
+//                        return name.readHeader();
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        return null;
+//                    }
+//                }).filter(Objects::nonNull)
+//                .forEach(headerData -> {
+//                    FullPosition eventLocation = headerData.getEventLocation();
+//                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
+//                    Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, phase)
+//                        .get(0);
+//                    FullPosition turningPoint = info.getTurningPoint();
+//                    lines.add(String.format("%.2f %.2f %.2f"
+//                            , turningPoint.getLongitude()
+//                            , turningPoint.getLatitude()
+//                            , turningPoint.getR()));
+//                });
+//
+//        Files.write(turningPointPath, lines);
     }
 
     private void outputRaypathInside(double pierceDepth) throws IOException {
@@ -471,7 +447,7 @@ public class RaypathDistribution extends Operation {
             minLatitude = -90;
         if (90 < maxLatitude)
             maxLatitude = 90;
-        return new GMTMap("MAP", minLongitude, maxLongitude, minLatitude, maxLatitude);
+        return new GMTMap("MAP", minLatitude, maxLatitude, minLongitude, maxLongitude);
     }
 
     private void outputGMT() throws IOException {

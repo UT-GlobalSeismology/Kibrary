@@ -5,6 +5,8 @@ import io.github.kensuke1984.anisotime.ComputationalMesh;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.anisotime.RaypathCatalog;
 import io.github.kensuke1984.anisotime.VelocityStructure;
+import io.github.kensuke1984.kibrary.external.TauPPierceReader;
+import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -117,6 +119,19 @@ public class Raypath {
      */
     public double getBackAzimuth() {
         return backAzimuth;
+    }
+
+    /**
+     * @param model
+     * @param phase
+     * @return
+     *
+     * @author otsuru
+     * @since 2022/4/22
+     */
+    public FullPosition getTurningPoint(String model, Phase phase) {
+        Info info = TauPPierceReader.getPierceInfo(sourcePosition, receiverPosition, model, phase).get(0);
+        return info.getTurningPoint();
     }
 
     /**

@@ -46,7 +46,7 @@ public final class ObserverListFile {
     private ObserverListFile() {}
 
     /**
-     * Writes an observer information file given a set of Observers.
+     * Writes an observer list file given a set of Observers.
      * @param observerSet Set of observers
      * @param outPath     of write file
      * @param options     for write
@@ -62,9 +62,9 @@ public final class ObserverListFile {
     }
 
     /**
-     * Reads an observer information file.
+     * Reads an observer list file.
      * Only the station, network, latitude, and longitude is read in; other information are ignored.
-     * @param infoPath of station information file
+     * @param infoPath of station list file
      * @return (<b>unmodifiable</b>) Set of stations
      * @throws IOException if an I/O error occurs
      */
@@ -108,7 +108,7 @@ public final class ObserverListFile {
 
     /**
      * Reads observer information from SAC files in event directories under an input directory,
-     * and creates an observer information file under the working directory.
+     * and creates an observer list file under the working directory.
      *
      * @param args
      * @throws IOException if an I/O error occurs

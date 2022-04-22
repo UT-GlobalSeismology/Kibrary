@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
-import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
+import io.github.kensuke1984.kibrary.external.gmt.RaypathMapper;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 enum Manhattan {
     // Environment & General 00
     DatasetMerge(1, DatasetMerge.class),
-    RaypathDistribution(6, RaypathDistribution.class),
+    RaypathMapper(6, RaypathMapper.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),
     DataLobby(14, DataLobby.class),

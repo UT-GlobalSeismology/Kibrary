@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
-import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Helper for use of GMT
@@ -49,16 +49,16 @@ public final class GMTMap {
 
     /**
      * @param title        for the map
-     * @param minLongitude [deg]
-     * @param maxLongitude [deg]
      * @param minLatitude  [deg]
      * @param maxLatitude  [deg]
+     * @param minLongitude [deg]
+     * @param maxLongitude [deg]
      */
-    public GMTMap(String title, int minLongitude, int maxLongitude, int minLatitude, int maxLatitude) {
-        this.minLongitude = minLongitude;
-        this.maxLongitude = maxLongitude;
+    public GMTMap(String title, int minLatitude, int maxLatitude, int minLongitude, int maxLongitude) {
         this.minLatitude = minLatitude;
         this.maxLatitude = maxLatitude;
+        this.minLongitude = minLongitude;
+        this.maxLongitude = maxLongitude;
         mapName = title.isEmpty() ? " " : title;
         setROption();
         epsFileName = "gmt" + GadgetAid.getTemporaryString() + ".eps";

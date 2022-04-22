@@ -43,7 +43,7 @@ public class EventListFile {
     private EventListFile() {}
 
     /**
-     * Writes an event information file given a set of GlobalCMTIDs.
+     * Writes an event list file given a set of GlobalCMTIDs.
      * @param eventSet Set of events
      * @param outPath  of write file
      * @param options  for write
@@ -59,7 +59,7 @@ public class EventListFile {
     }
 
     /**
-     * Reads an event information file. Only the GlobalCMTID is read in; other information are ignored.
+     * Reads an event lsit file. Only the GlobalCMTID is read in; other information are ignored.
      * @param infoPath of event information file
      * @return (<b>unmodifiable</b>) Set of events
      * @throws IOException if an I/O error occurs
@@ -81,7 +81,7 @@ public class EventListFile {
 
     /**
      * Finds event directories under an input directory,
-     * and creates an event information file under the working directory.
+     * and creates an event lsit file under the working directory.
      *
      * @param args
      * @throws IOException if an I/O error occurs
