@@ -72,15 +72,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  *
  */
 public final class TimewindowDataFile {
+    private TimewindowDataFile() {}
 
     /**
      * bytes for one time window information
      * @author anselme increased the byte size of a time window to add phase information
      */
     public static final int ONE_WINDOW_BYTE = 33;
-
-    private TimewindowDataFile() {
-    }
 
     /**
      * Output TimeWindowInformation in binary format

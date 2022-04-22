@@ -54,14 +54,12 @@ import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
  * @author anselme Added phase information
  */
 public final class PartialIDFile {
+    private PartialIDFile() {}
 
     /**
      * [byte] File size for an ID
      */
     public static final int oneIDByte = 50;
-
-    private PartialIDFile() {
-    }
 
     public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
             throws IOException {

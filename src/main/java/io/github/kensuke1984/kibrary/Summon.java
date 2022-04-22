@@ -18,7 +18,8 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @author otsuru
  * @since 2022/4/4
  */
-public class Summon {
+public final class Summon {
+    private Summon() {}
 
     /**
      * Runs a class listed in {@link Brooklyn}.

@@ -14,6 +14,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * @since 2022/2/5
  */
 class PolynomialStructureData {
+    private PolynomialStructureData() {}
 
     static PolynomialStructure initialAnisoPREM() {
         int nzone = 12;

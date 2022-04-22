@@ -109,11 +109,10 @@ public final class DatasetAid {
 
     /**
      * Collect all SAC files inside event folders under a given folder.
-     * Errors in reading each event folder is just noticed. Such event folders
-     * will be ignored.
+     * Errors in reading each event folder is just noticed. Such event folders will be ignored.
      *
      * @param path of a folder containing event folders which have SAC files.
-     * @return <b>Unmodifiable</b> Set of sac in event folders under the path
+     * @return <b>Unmodifiable</b> Set of sac file names in event folders under the path
      * @throws IOException if an I/O error occurs.
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {

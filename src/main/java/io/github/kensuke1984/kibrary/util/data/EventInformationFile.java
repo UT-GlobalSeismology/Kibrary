@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @since a long time ago
  */
 public class EventInformationFile {
+    private EventInformationFile() {}
 
     /**
      * Writes an event information file given a set of GlobalCMTIDs.

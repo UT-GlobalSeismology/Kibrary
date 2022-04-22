@@ -130,13 +130,9 @@ public class SPECFEMSetup {
         generateCmtSolutionFile(eventDir.getGlobalCMTID(), dataPath);
 
         // collect all observers of SAC files under eventDir
-        Set<Observer> observerSet = eventDir.sacFileSet().stream().map(name -> {
-                    try {
-                        return name.readHeader();
-                    } catch (Exception e2) {
-                        return null;
-                    }
-                }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
+        Set<Observer> observerSet = eventDir.sacFileSet().stream()
+                .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                .map(Observer::of).collect(Collectors.toSet());
         generateStationFile(observerSet, dataPath);
     }
 

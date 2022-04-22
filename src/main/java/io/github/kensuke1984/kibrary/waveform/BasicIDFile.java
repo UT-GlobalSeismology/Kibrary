@@ -59,14 +59,12 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * the input binary-format files can be exported in ascii format.
  */
 public final class BasicIDFile {
+    private BasicIDFile() {}
 
     /**
      * [byte] File size for an ID
      */
     public static final int ONE_ID_BYTE = 48;
-
-    private BasicIDFile() {
-    }
 
     /**
      * Reads both the ID file and the waveform file.

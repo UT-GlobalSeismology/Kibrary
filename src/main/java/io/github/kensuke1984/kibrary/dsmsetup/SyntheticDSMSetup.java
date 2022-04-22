@@ -302,13 +302,9 @@ public class SyntheticDSMSetup extends Operation {
         for (EventFolder eventDir : eventDirs) {
             try {
                 Set<Observer> observers = eventDir.sacFileSet().stream()
-                        .filter(name -> name.isOBS() && components.contains(name.getComponent())).map(name -> {
-                            try {
-                                return name.readHeader();
-                            } catch (Exception e2) {
-                                return null;
-                            }
-                        }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
+                        .filter(name -> name.isOBS() && components.contains(name.getComponent()))
+                        .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                        .map(Observer::of).collect(Collectors.toSet());
                 if (syntheticDataset)
                     observers = synObserverSet;
                 if (observers.isEmpty())

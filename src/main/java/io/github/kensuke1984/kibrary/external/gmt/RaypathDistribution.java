@@ -26,14 +26,20 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
+import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * This is like pathDrawer.pl The pathDrawer compute raypath coordinate. But
@@ -64,21 +70,30 @@ public class RaypathDistribution extends Operation {
      */
     private Set<SACComponent> components;
 
+    private Path datasetPath;
+    private Path timewindowPath;
+    private Path basicIDPath;
+
     /**
      * draw Path Mode; 0: don't draw, 1: quick draw, 2: detailed draw
      */
     protected int drawsPathMode;
+
     private Set<GlobalCMTID> events;
+    private Set<Observer> observers;
+    private Set<Raypath> raypaths;
+
+
+
     /**
      * draw points of partial TODO
      */
     // protected boolean drawsPoint;
 
-    private Set<Observer> observers;
     private Set<TimewindowData> timeWindowInformationFile;
-    private Path stationPath;
+
     private Path eventPath;
-    private Path eventCSVPath;
+    private Path observerPath;
     private Path raypathPath;
     private Path turningPointPath;
     private Path psPath;
@@ -109,13 +124,16 @@ public class RaypathDistribution extends Operation {
             pw.println("#tag ");
             pw.println("##SacComponents of data to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Integer if you want to draw raypath (0: don't draw, 1: quick draw, 2: detailed draw) (0)");
-            pw.println("#drawsPathMode");
-            pw.println("##StationInformationFile a file containing station information; must be set");
-            pw.println("#stationInformationPath station.inf");
-            pw.println("##Path of a time window information file.");
-            pw.println("##If it exists, draw raypaths in the file");
-            pw.println("#timeWindowInformationPath");
+            pw.println("##(int) Whether you want to draw raypath (0: don't draw, 1: quick draw, 2: detailed draw) (0)");
+            pw.println("#drawsPathMode ");
+            pw.println("##########For input, one of the following must be set. When many are set, the first one will be used.");
+            pw.println("##Path of a root folder containing dataset");
+            pw.println("#datasetPath .");
+            pw.println("##Path of a timewindow data file");
+            pw.println("#timeindowPath timewindow.dat");
+            pw.println("##Path of a basic ID file");
+            pw.println("#basicIDPath actualID.dat");
+            pw.println("##########Other settings:");
             pw.println("#model");
             pw.println("#pierceDepth");
             pw.println("#eventClusterPath");
@@ -135,6 +153,17 @@ public class RaypathDistribution extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         drawsPathMode = property.parseInt("drawsPathMode", "0");
+
+        if (property.containsKey("datasetPath")) {
+            datasetPath = property.parsePath("datasetPath", null, true, workPath);
+        } else if (property.containsKey("timewindowPath")) {
+            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        } else if (property.containsKey("basicIDPath")) {
+            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        } else {
+            throw new IllegalArgumentException("A folder or file for input must be set.");
+        }
+
         if (property.containsKey("timeWindowInformationPath")) {
             Path timewindowPath = property.parsePath("timeWindowInformationPath", null, true, workPath);
             timeWindowInformationFile = TimewindowDataFile.read(timewindowPath);
@@ -148,71 +177,59 @@ public class RaypathDistribution extends Operation {
         model = property.parseString("model", "prem");
         if (property.containsKey("eventClusterPath")) eventClusterPath = property.parsePath("eventClusterPath", null, true, workPath);
         else eventClusterPath = null;
-    }
 
+        setName();
+    }
 
     private void setName() {
-        String date = GadgetAid.getTemporaryString();
-        stationPath = workPath.resolve("rdStation" + date + ".inf");
-        eventPath = workPath.resolve("rdEvent" + date + ".inf");
-        raypathPath = workPath.resolve("rdRaypath" + date + ".inf");
-        turningPointPath = workPath.resolve("rdTurningPoint" + date + ".inf");
-        psPath = workPath.resolve("rd" + date + ".eps");
-        gmtPath = workPath.resolve("rd" + date + ".sh");
-        eventCSVPath = workPath.resolve("rdEvent" + date + ".csv");
-    }
-
-    private void outputEvent() throws IOException {
-        List<String> lines = new ArrayList<>();
-        for (GlobalCMTID id : events) {
-            FullPosition loc = id.getEvent().getCmtLocation();
-            double latitude = loc.getLatitude();
-            double longitude = loc.getLongitude();
-            longitude = 0 <= longitude ? longitude : longitude + 360;
-            lines.add(id + " " + latitude + " " + longitude + " " + loc.getR());
-        }
-        Files.write(eventPath, lines);
-    }
-
-    private void outputEventCSV() throws IOException {
-        List<String> lines = new ArrayList<>();
-        for (GlobalCMTID id : events) {
-            FullPosition loc = id.getEvent().getCmtLocation();
-            double latitude = loc.getLatitude();
-            double longitude = loc.getLongitude();
-            double depth = 6371. - loc.getR();
-            double mw = id.getEvent().getCmt().getMw();
-            double duration = id.getEvent().getHalfDuration() * 2;
-            longitude = 0 <= longitude ? longitude : longitude + 360;
-            lines.add(id + "," + latitude + "," + longitude + "," + depth + "," + mw + "," + duration);
-        }
-        Files.write(eventCSVPath, lines);
-    }
-
-    private void outputStation() throws IOException {
-        List<String> lines = observers.stream().map(station -> station + " " + station.getPosition())
-                .collect(Collectors.toList());
-        if (!lines.isEmpty())
-            Files.write(stationPath, lines);
+        String dateStr = GadgetAid.getTemporaryString();
+        eventPath = workPath.resolve("rdEvent" + dateStr + ".lst");
+        observerPath = workPath.resolve("rdObserver" + dateStr + ".lst");
+        raypathPath = workPath.resolve("rdRaypath" + dateStr + ".inf");
+        turningPointPath = workPath.resolve("rdTurningPoint" + dateStr + ".inf");
+        psPath = workPath.resolve("rd" + dateStr + ".eps");
+        gmtPath = workPath.resolve("rd" + dateStr + ".sh");
     }
 
     @Override
     public void run() throws IOException {
-        setName();
-        if (timeWindowInformationFile == null)
-            events = DatasetAid.globalCMTIDSet(workPath);
-        else
-            events = timeWindowInformationFile.stream().map(tw -> tw.getGlobalCMTID())
-                .collect(Collectors.toSet());
+
+        if (datasetPath != null) {
+            Set<SACHeaderAccess> validSacHeaderSet =  DatasetAid.sacFileNameSet(datasetPath)
+                    .stream().filter(sacname -> sacname.isOBS() && components.contains(sacname.getComponent()))
+                    .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            events = validSacHeaderSet.stream().map(sac -> sac.getGlobalCMTID()).collect(Collectors.toSet());
+            observers = validSacHeaderSet.stream().map(sac -> sac.getObserver()).collect(Collectors.toSet());
+            raypaths = validSacHeaderSet.stream().map(Raypath::new).collect(Collectors.toSet());
+        } else if (timewindowPath != null) {
+            Set<TimewindowData> validTimewindowSet = TimewindowDataFile.read(timewindowPath)
+                    .stream().filter(window -> components.contains(window.getComponent()))
+                    .collect(Collectors.toSet());
+            events = validTimewindowSet.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
+            observers = validTimewindowSet.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
+            raypaths = validTimewindowSet.stream().map(Raypath::new).collect(Collectors.toSet());
+        } else if (basicIDPath != null) {
+            BasicID[] basicIDs = BasicIDFile.read(basicIDPath);
+            Set<BasicID> validBasicIDSet = Arrays.stream(basicIDs)
+                    .filter(basicID -> basicID.getWaveformType().equals(WaveformType.OBS) && components.contains(basicID.getSacComponent()))
+                    .collect(Collectors.toSet());
+            events = validBasicIDSet.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
+            observers = validBasicIDSet.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
+            raypaths = validBasicIDSet.stream().map(Raypath::new).collect(Collectors.toSet());
+        } else {
+            throw new IllegalStateException("Input folder or file not set");
+        }
+
 
         if (eventClusterPath != null) {
             eventClusterMap = new HashMap<GlobalCMTID, Integer>();
             EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
         }
 
-        outputEvent();
-        outputStation();
-        outputEventCSV();
+        EventInformationFile.write(events, eventPath);
+        ObserverInformationFile.write(observers, observerPath);
+
         switch (drawsPathMode) {
         case 1:
             outputRaypath();
@@ -475,7 +492,7 @@ public class RaypathDistribution extends Operation {
         gmtCMD.add(GMTMap.psCoast());
         gmtCMD.add("awk '{print $2, $3}' " + eventPath + " | psxy -V -: -J -R -O -P -Sa0.3 -G255/0/0 -W1  -K "
                 + " >> $psname");
-        gmtCMD.add("awk '{print $2, $3}' " + stationPath + " |psxy -V -: -J -R -K -O -P -Si0.3 -G0/0/255 -W1 "
+        gmtCMD.add("awk '{print $2, $3}' " + observerPath + " |psxy -V -: -J -R -K -O -P -Si0.3 -G0/0/255 -W1 "
                 + " >> $psname");
         gmtCMD.add(gmtmap.psEnd());
         gmtCMD.add("#eps2eps $psname .$psname && mv .$psname $psname");

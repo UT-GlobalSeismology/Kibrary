@@ -38,6 +38,7 @@ import io.github.kensuke1984.kibrary.Environment;
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class GadgetAid {
+    private GadgetAid() {}
 
     /**
      * @param path      Path of the target

@@ -29,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @author Kensuke Konishi
  */
 class SacDeconvolution {
+    private SacDeconvolution() {}
 
     /**
      * 0: taper なし, 1: sine taper, 2: cosine taper TODO
@@ -48,9 +49,6 @@ class SacDeconvolution {
      * フーリエ変換
      */
     private static FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-
-    private SacDeconvolution() {
-    }
 
     /**
      * @param sourceSacPath 元になるSacFile

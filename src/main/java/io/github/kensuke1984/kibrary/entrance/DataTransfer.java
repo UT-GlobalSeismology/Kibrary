@@ -31,15 +31,13 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @author Kensuke Konishi
  */
 public final class DataTransfer {
+    private DataTransfer() {}
 
     /**
      * user PATH in IRIS
      */
     private static final String IRIS_USER_PATH = "/pub/userdata/" + Environment.getUserName() + "/";
     public static final String IRIS_FTP = "ftp.iris.washington.edu";
-
-    private DataTransfer() {
-    }
 
     /**
      * @param args [option] [tag]<br>

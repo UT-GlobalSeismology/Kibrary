@@ -73,14 +73,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author anselme add phase information
  */
 public final class StaticCorrectionDataFile {
+    private StaticCorrectionDataFile() {}
 
     /**
      * The number of bytes for one time shift data
      */
     public static final int ONE_CORRECTION_BYTE = 37;
-
-    private StaticCorrectionDataFile() {
-    }
 
     /**
      * @param outPath       of an write file.

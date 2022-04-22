@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * @since 2021/8/25
  */
 public final class GlobalCMTCatalogUpdate {
+    private GlobalCMTCatalogUpdate() {}
 
     /**
      * @param args [month and year of update]<br>

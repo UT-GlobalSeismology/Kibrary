@@ -43,9 +43,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @version 0.2.0.4
  */
 public final class ObserverInformationFile {
-
-    private ObserverInformationFile() {
-    }
+    private ObserverInformationFile() {}
 
     /**
      * Writes an observer information file given a set of Observers.
@@ -194,14 +192,9 @@ public final class ObserverInformationFile {
 
     private static Set<Observer> collectFromDataset(Path datasetPath, Set<SACComponent> components) throws IOException {
         Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(datasetPath);
-        return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent())).map(sacName -> {
-            try {
-                return sacName.readHeader();
-            } catch (Exception e) {
-                System.err.println(sacName + " is an invalid SAC file.");
-                return null;
-            }
-        }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
+        return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent()))
+                .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                .map(Observer::of).collect(Collectors.toSet());
     }
 
 }

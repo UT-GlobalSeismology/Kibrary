@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  *
  */
 public class DataSelectionInformationFile {
+    private DataSelectionInformationFile() {}
 
     public static void write(List<DataSelectionInformation> infoList, Path outpath) throws IOException {
         PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outpath,

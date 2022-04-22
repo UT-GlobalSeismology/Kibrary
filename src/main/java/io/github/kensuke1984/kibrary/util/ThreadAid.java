@@ -16,9 +16,7 @@ import java.util.function.Consumer;
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class ThreadAid {
-
-    private ThreadAid() {
-    }
+    private ThreadAid() {}
 
     public static ExecutorService createFixedThreadPool() {
         int nThreads = Runtime.getRuntime().availableProcessors();

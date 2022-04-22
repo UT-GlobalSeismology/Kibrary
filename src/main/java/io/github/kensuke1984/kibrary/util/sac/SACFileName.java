@@ -343,6 +343,22 @@ public class SACFileName extends File {
     }
 
     /**
+     * Reads header. Any exceptions are suppressed and null is returned instead.
+     * @return (immutable) SACHeaderData of this file, or null on failure
+     *
+     * @author otsuru
+     * @since 2022/4/22
+     */
+    public SACHeaderAccess readHeaderWithNullOnFailure() {
+        try {
+            return readHeader();
+        } catch (Exception e) {
+            System.err.println(this.toString() + " is an invalid SAC file.");
+            return null;
+        }
+    }
+
+    /**
      * @return (immutable) SACData of this file
      * @throws IOException if an I/O error occurs
      */

@@ -6,6 +6,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.anisotime.RaypathCatalog;
 import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -60,6 +61,18 @@ public class Raypath {
      */
     public Raypath(SACHeaderAccess sacHeaderData) {
         this(sacHeaderData.getEventLocation(), sacHeaderData.getObserver().getPosition());
+    }
+
+    /**
+     * Create a raypath for an input timewindow
+     *
+     * @param timewindow of a raypath to create
+     *
+     * @author otsuru
+     * @since 2022/4/22
+     */
+    public Raypath(TimewindowData timewindow) {
+        this(timewindow.getGlobalCMTID().getEvent().getCmtLocation(), timewindow.getObserver().getPosition());
     }
 
     /**

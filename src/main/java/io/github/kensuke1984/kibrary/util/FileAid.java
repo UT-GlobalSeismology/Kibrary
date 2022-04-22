@@ -31,6 +31,7 @@ import org.apache.commons.io.IOUtils;
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class FileAid {
+    private FileAid() {}
 
     /**
      * Moves a given file to a specified directory.
