@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * File containing information of observers.
+ * File containing list of observers.
  * <p>
  * Each line: station code, network code, latitude, longitude.
  * <p>
@@ -42,8 +42,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @author Kensuke Konishi
  * @version 0.2.0.4
  */
-public final class ObserverInformationFile {
-    private ObserverInformationFile() {}
+public final class ObserverListFile {
+    private ObserverListFile() {}
 
     /**
      * Writes an observer information file given a set of Observers.

@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -105,7 +105,7 @@ public class ExcludeTimewindow {
 			Set<String> excludedStations = Stream.of(tmpStations).collect(Collectors.toSet());
 			
 			if (args.length == 3) { //2
-				Set<Observer> stations = ObserverInformationFile.read(Paths.get(args[1]));
+				Set<Observer> stations = ObserverListFile.read(Paths.get(args[1]));
 				
 				Set<TimewindowData> newTimewindows = timewindows.parallelStream()
 						.filter(tw -> stations.contains(tw.getObserver()))

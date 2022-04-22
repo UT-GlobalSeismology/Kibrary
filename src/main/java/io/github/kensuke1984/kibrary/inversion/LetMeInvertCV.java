@@ -59,7 +59,7 @@ import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -1838,7 +1838,7 @@ public class LetMeInvertCV implements Operation_old {
 		// // ステーションの情報の読み込み
 		System.err.print("reading station Information");
 		if (stationSet == null)
-			stationSet = ObserverInformationFile.read(stationInformationPath);
+			stationSet = ObserverListFile.read(stationInformationPath);
 		System.err.println(" done");
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {

@@ -15,9 +15,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -265,11 +265,11 @@ public class ThreeDPartialDSMSetup extends Operation {
         perturbationPositions = vif.getHorizontalPositions();
 
         // read event information
-        Set<GlobalCMTID> eventSet = EventInformationFile.read(eventPath);
+        Set<GlobalCMTID> eventSet = EventListFile.read(eventPath);
         System.err.println("Number of events read in: " + eventSet.size());
 
         // read observer information
-        Set<Observer> observerSet = ObserverInformationFile.read(observerPath);
+        Set<Observer> observerSet = ObserverListFile.read(observerPath);
         System.err.println("Number of observers read in: " + observerSet.size());
 
         PolynomialStructure structure = null;

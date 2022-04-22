@@ -26,9 +26,9 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -169,7 +169,7 @@ public class RaypathDistribution extends Operation {
             timeWindowInformationFile = TimewindowDataFile.read(timewindowPath);
         }
         Path stationPath = property.parsePath("stationInformationPath", null, true, workPath);
-        if (timeWindowInformationFile == null) observers = ObserverInformationFile.read(stationPath);
+        if (timeWindowInformationFile == null) observers = ObserverListFile.read(stationPath);
         else observers = timeWindowInformationFile.stream().map(tw -> tw.getObserver())
                 .collect(Collectors.toSet());
 
@@ -227,8 +227,8 @@ public class RaypathDistribution extends Operation {
             EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
         }
 
-        EventInformationFile.write(events, eventPath);
-        ObserverInformationFile.write(observers, observerPath);
+        EventListFile.write(events, eventPath);
+        ObserverListFile.write(observers, observerPath);
 
         switch (drawsPathMode) {
         case 1:

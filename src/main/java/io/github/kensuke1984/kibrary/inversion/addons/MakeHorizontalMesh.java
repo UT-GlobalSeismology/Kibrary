@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -25,7 +25,7 @@ public class MakeHorizontalMesh {
 			Path stationFile = Paths.get(args[0]);
 			dl = Double.parseDouble(args[1]);
 		
-			Set<Observer> stations = ObserverInformationFile.read(stationFile);
+			Set<Observer> stations = ObserverListFile.read(stationFile);
 		
 			Set<GlobalCMTID> events = DatasetAid.eventFolderSet(workdir).stream().map(event -> event.getGlobalCMTID()).collect(Collectors.toSet());
 		

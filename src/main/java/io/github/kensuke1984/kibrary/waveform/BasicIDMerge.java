@@ -17,9 +17,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -205,10 +205,10 @@ public class BasicIDMerge extends Operation {
         Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, dateStr, ".dat"));
 
         System.err.println("Outputting in " + observerFilePath);
-        ObserverInformationFile.write(observerSet, workPath.resolve(observerFilePath));
+        ObserverListFile.write(observerSet, workPath.resolve(observerFilePath));
 
         System.err.println("Outputting in " + eventFilePath);
-        EventInformationFile.write(eventSet, workPath.resolve(eventFilePath));
+        EventListFile.write(eventSet, workPath.resolve(eventFilePath));
 
         System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
         try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {

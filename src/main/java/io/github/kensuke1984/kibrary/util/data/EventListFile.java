@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * File containing information of events.
+ * File containing list of events.
  * <p>
  * Each line: globalCMTID, latitude, longitude, radius.
  * <p>
@@ -39,8 +39,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @author ???
  * @since a long time ago
  */
-public class EventInformationFile {
-    private EventInformationFile() {}
+public class EventListFile {
+    private EventListFile() {}
 
     /**
      * Writes an event information file given a set of GlobalCMTIDs.

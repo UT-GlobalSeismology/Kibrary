@@ -40,9 +40,9 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -461,8 +461,8 @@ public class ActualWaveformCompiler extends Operation {
        String dateStr = GadgetAid.getTemporaryString();
        outPath = DatasetAid.createOutputFolder(workPath, "compiled", tag, dateStr);
 
-       ObserverInformationFile.write(observerSet, outPath.resolve("observer.lst"));
-       EventInformationFile.write(eventSet, outPath.resolve("event.lst"));
+       ObserverListFile.write(observerSet, outPath.resolve("observer.lst"));
+       EventListFile.write(eventSet, outPath.resolve("event.lst"));
 
        Path waveIDPath = null;
        Path waveformPath = null;
