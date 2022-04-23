@@ -61,7 +61,7 @@ public class InputStreamThread extends Thread {
      *
      * @return {@link String}[] from input stream
      */
-    public String[] waitAndGetString() {
+    public String[] waitAndGetStringArray() {
         try {
             while (!closed) Thread.sleep(100);
         } catch (InterruptedException e) {
@@ -77,10 +77,21 @@ public class InputStreamThread extends Thread {
     }
 
     /**
-     * Get List of String from the stream
-     * @return {@link List} of {@link String} from the {@link InputStream}
+     * Wait until the inputstream is closed and return List of String from the stream
+     * @return {@link List} of {@link String} from input stream
      */
-    public List<String> getStringList() {
+    public List<String> waitAndGetStringList() {
+        try {
+            while (!closed) Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // This method is called from a master thread, so exceptions can be caught in higher levels.
+            // InterruptedException means that someone wants the master thread to stop,
+            // but the 'interrupted' flag is reset when InterruptedException is thrown in sleep(),
+            // so the flag should be set back up.
+            // Then, throw RuntimeException to halt the program.
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
         return new ArrayList<>(inputStringList);
     }
 

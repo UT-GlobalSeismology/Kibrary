@@ -1,10 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,193 +33,115 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  *
  */
 public final class TauPPierceReader {
+    private TauPPierceReader() {}
 
-    private TauPPierceReader() {
-    }
-
-    private static final String path = "taup_pierce";
+    private static final String cmdName = "taup_pierce";
 
     static {
         try {
-            initialize();
+            checkExistence();
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
     }
 
-    private static void initialize() throws RuntimeException {
-        if (!ExternalProcess.isInPath(path))
-            throw new RuntimeException(path + " is not in PATH");
+    private static void checkExistence() throws RuntimeException {
+        if (!ExternalProcess.isInPath(cmdName))
+            throw new RuntimeException(cmdName + " is not in PATH");
     }
 
     /**
-     * @param eventR
-     *            radius (km) !!not depth from the surface!!
-     * @param epicentralDistance
-     *            [deg] targetDistance
-     * @param phases
-     *            to look for
-     * @return travel times for the phase if there is multiplication, all values
-     *         will be returned
+     * Gets information of turning points of specified phases.
+     * @param eventPositionF (FullPosition)
+     * @param stationPositionH (HorizontalPosition)
+     * @param modelName (String) Name of structure model to use
+     * @param phaseSet (Set of Phase) Phases to calculate for
+     * @return (List of Info) MAY BE NULL
      */
-    public static List<Info> getPierceInfo(FullPosition eventLocation, HorizontalPosition stationPosition, String model, Phase... phases) {
-        Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
-        return toPhase(operateTauPPierce(eventLocation, stationPosition, phaseSet, model));
-    }
+    public static Info getTurningInfo(FullPosition eventPositionF, HorizontalPosition stationPositionH, String modelName, Set<Phase> phaseSet) {
+        List<String> lines = operate(makeCMDForTurningInfo(eventPositionF, stationPositionH, phaseSet, modelName));
 
-    public static List<Info> getPierceInfo(FullPosition eventLocation, HorizontalPosition stationPosition, String model, double pierceDepth, Phase... phases) {
-        Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
-        return toPhase(operateTauPPierce(eventLocation, stationPosition, phaseSet, model, pierceDepth), pierceDepth);
-    }
-
-    /**
-     * @param eventR
-     *            radius of seismic source !!not depth from the surface!!
-     * @param epicentralDistance
-     *            [deg] target epicentral distance
-     * @param phaseSet
-     *            set of seismic phase.
-     * @return {@link Set} of TauPPhases.
-     */
-    public static List<Info> getPierceInfo(FullPosition eventLocation, HorizontalPosition stationPosition, String model, Set<Phase> phaseSet) {
-        return toPhase(operateTauPPierce(eventLocation, stationPosition, phaseSet, model));
-    }
-
-    /**
-     * TauPの結果の出力を読み込む
-     *
-     * @param eventR
-     * @param epicentralDistance
-     * @param phase
-     * @return result lines
-     */
-    private static List<String> operateTauPPierce(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phase, String model, double pierceDepth) {
-        String[] cmd = makeCMD(eventLocation, stationPosition, phase, model, pierceDepth);
-        ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.redirectError(ExternalProcess.bitBucket);
-        try {
-            Process p = pb.start();
-            p.waitFor();
-            List<String> outLines = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    outLines.add(line);
-//					System.out.println(line);
-                }
-            }
-            return outLines;
-        } catch (Exception e) {
-            System.out.println("Error occured");
-            System.out.println("could not find the time");
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static List<String> operateTauPPierce(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phase, String model) {
-        String[] cmd = makeCMD(eventLocation, stationPosition, phase, model);
-        ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.redirectError(ExternalProcess.bitBucket);
-        try {
-            Process p = pb.start();
-            p.waitFor();
-            List<String> outLines = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    outLines.add(line);
-//					System.out.println(line);
-                }
-            }
-            return outLines;
-        } catch (Exception e) {
-            System.out.println("Error occured");
-            System.out.println("could not find the time");
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static List<String> operateTauPPierce(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phase) {
-        return operateTauPPierce(eventLocation, stationPosition, phase);
-    }
-
-    private static List<Info> toPhase(List<String> lines) {
-        List<Info> infos = new ArrayList<>();
         if (lines == null || lines.size() == 0) {
-            return Collections.emptyList();
+            return null;
+        } else if (lines.size() != 2) {
+            throw new UnsupportedOperationException("Phases with multiple turning points not supported");
         }
-//		if (lines.size() % 2 != 0)
-//			throw new RuntimeException("Unreadable output of taup_pierce");
-//		for (int i = 0; i < lines.size() / 2; i++) {
-//			String[] tmpLines = new String[] {lines.get(2 * i).trim(), lines.get(2 * i + 1).trim()};
-//			infos.add(new Info(tmpLines));
-//		}
-        String[] tmpLines = new String[] {lines.get(0).trim(), lines.get(1).trim(), lines.get(2).trim(), lines.get(3).trim()};
-        infos.add(new Info(tmpLines));
-        return infos;
-    }
-
-    private static List<Info> toPhase(List<String> lines, double pierceDepth) {
-        List<Info> infos = new ArrayList<>();
-        if (lines == null || lines.size() == 0) {
-            return Collections.emptyList();
-        }
-//		if (lines.size() % 2 != 0)
-//			throw new RuntimeException("Unreadable output of taup_pierce");
-//		for (int i = 0; i < lines.size() / 2; i++) {
-//			String[] tmpLines = new String[] {lines.get(2 * i).trim(), lines.get(2 * i + 1).trim()};
-//			infos.add(new Info(tmpLines));
-//		}
         String[] tmpLines = lines.toArray(new String[0]);
-        infos.add(new Info(tmpLines, pierceDepth));
-        return infos;
+        return new Info(tmpLines);
     }
 
     /**
-     * TauPに投げる命令文を作る
-     *
-     * @param eventR
-     *            [km] RADIUS (NOT depth from the surface)
-     * @param epicentralDistance
-     *            [deg]
-     * @param phases
-     *            phase set
-     * @return command
+     * Gets information of turning points of specified phases.
+     * @param eventPositionF (FullPosition)
+     * @param stationPositionH (HorizontalPosition)
+     * @param modelName (String) Name of structure model to use
+     * @param phases (Phase...) Phases to calculate for
+     * @return (List of Info)
      */
-    private static String[] makeCMD(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phases) {
-        return makeCMD(eventLocation, stationPosition, phases, "prem");
+    public static Info getTurningInfo(FullPosition eventPositionF, HorizontalPosition stationPositionH, String modelName, Phase... phases) {
+        Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
+        return getTurningInfo(eventPositionF, stationPositionH, modelName, phaseSet);
     }
 
-    private static String[] makeCMD(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model) {
-        String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
-//		System.out.println(phase);
-        if (!(phase.trim().equals("ScS") || phase.trim().equals("PcP")))
-            throw new RuntimeException("Error: at the moment only ScS and PcP are supported for taup_pierce reader");
-        String cmd = path
-                + " -h " + eventLocation.getDepth()
-                + " -evt " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
-                + " -sta " + stationPosition.getLatitude() + " " + stationPosition.getLongitude()
-                + " -model " + model
-                + " -ph " + phase
-                + " -pierce 2491,2891 -nodiscon";
-        return cmd.split("\\s+");
+    /**
+     * Gets information of piercing points at a specified depth, in addition to turning points, of specified phases.
+     * @param eventPositionF (FullPosition)
+     * @param stationPositionH (HorizontalPosition)
+     * @param modelName (String) Name of structure model to use
+     * @param pierceDepth (double) Depth of piercing point
+     * @param phases (Phase...) Phases to calculate for
+     * @return (List:Info)
+     */
+    public static Info getPierceInfo(FullPosition eventPositionF, HorizontalPosition stationPositionH, String modelName, double pierceDepth, Phase... phases) {
+        Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
+
+        List<String> lines = operate(makeCMDForPierceInfo(eventPositionF, stationPositionH, phaseSet, modelName, pierceDepth));
+
+        if (lines == null || lines.size() == 0) {
+            return null;
+        } else if (lines.size() != 4) {
+            throw new UnsupportedOperationException("Phases that do not have 1 enter, turning, and leaving points each are not supported");
+        }
+        String[] tmpLines = lines.toArray(new String[0]);
+        return new Info(tmpLines, pierceDepth);
     }
 
-    private static String[] makeCMD(FullPosition eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model, double pierceDepth) {
+    private static List<String> operate(String cmd) {
+        try {
+            // launch process
+            ExternalProcess process = ExternalProcess.launch(cmd, Paths.get(""));
+            // return the output
+            return process.getStandardOutputThread().waitAndGetStringList();
+        } catch (Exception e) {
+            System.err.println("Error occured; could not find the pierce points");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String makeCMDForTurningInfo(FullPosition eventPositionF, HorizontalPosition stationPositionH, Set<Phase> phases, String modelName) {
         String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
-//		System.out.println(phase);
-        if (!(phase.trim().equals("ScS") || phase.trim().equals("PcP")))
-            throw new RuntimeException("Error: at the moment only ScS and PcP are supported for taup_pierce reader");
-        String cmd = path
-                + " -h " + eventLocation.getDepth()
-                + " -evt " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
-                + " -sta " + stationPosition.getLatitude() + " " + stationPosition.getLongitude()
-                + " -model " + model
+        String cmd = cmdName
+                + " -h " + eventPositionF.getDepth()
+                + " -evt " + eventPositionF.getLatitude() + " " + eventPositionF.getLongitude()
+                + " -sta " + stationPositionH.getLatitude() + " " + stationPositionH.getLongitude()
+                + " -model " + modelName
                 + " -ph " + phase
-                + " -pierce " + pierceDepth;
-        return cmd.split("\\s+");
+                + " -turn -nodiscon";
+        return cmd;
+    }
+
+    private static String makeCMDForPierceInfo(FullPosition eventPositionF, HorizontalPosition stationPositionH, Set<Phase> phases, String modelName, double pierceDepth) {
+        String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
+        String cmd = cmdName
+                + " -h " + eventPositionF.getDepth()
+                + " -evt " + eventPositionF.getLatitude() + " " + eventPositionF.getLongitude()
+                + " -sta " + stationPositionH.getLatitude() + " " + stationPositionH.getLongitude()
+                + " -model " + modelName
+                + " -ph " + phase
+                + " -pierce " + pierceDepth
+                + " -turn -nodiscon";
+        return cmd;
     }
 
     public static class Info {
@@ -234,41 +153,41 @@ public final class TauPPierceReader {
         private FullPosition enterPoint;
 
         public Info(String[] lines, double pierceDepth) {
-//			if (lines.length != 2)
-//				throw new RuntimeException("Input should consit of two lines");
             if (lines.length == 4)
-                parseOutputDpp(lines);
+                parseOutputDppPierce(lines);
             else
                 parseOutputS(lines, pierceDepth);
         }
 
         public Info(String[] lines) {
-//			if (lines.length != 2)
-//				throw new RuntimeException("Input should consit of two lines");
-            if (lines.length == 4)
-                parseOutputDpp(lines);
+            if (lines.length == 2)
+                parseOutputDppTurn(lines);
             else
                 throw new RuntimeException("Error: Specify a pierce depth");
         }
 
-        private void parseOutputDpp(String[] lines) {
-//			System.out.println("-->\n" + lines[0] + "\n" + lines[1]);
-            String[] parts0 = lines[0].split("\\s+");
-            String[] parts1 = lines[1].split("\\s+");
-            String[] parts2 = lines[2].split("\\s+");
-            String[] parts3 = lines[3].split("\\s+");
+        private void parseOutputDppPierce(String[] lines) {
+            String[] parts0 = lines[0].trim().split("\\s+");
             phase = Phase.create(parts0[1], false);
             travelTime = Double.parseDouble(parts0[3]);
             distance = Double.parseDouble(parts0[6]);
-            turningPoint = new FullPosition(Double.parseDouble(parts2[3])
-                    ,Double.parseDouble(parts2[4])
-                    ,6371. - Double.parseDouble(parts2[1]));
-            enterPoint = new FullPosition(Double.parseDouble(parts1[3])
-                    ,Double.parseDouble(parts1[4])
-                    ,6371. - Double.parseDouble(parts1[1]));
-            leavePoint = new FullPosition(Double.parseDouble(parts3[3])
-                    ,Double.parseDouble(parts3[4])
-                    ,6371. - Double.parseDouble(parts3[1]));
+            turningPoint = createPositionForLine(lines[2]);
+            enterPoint = createPositionForLine(lines[1]);
+            leavePoint = createPositionForLine(lines[3]);
+        }
+        private void parseOutputDppTurn(String[] lines) {
+            String[] parts0 = lines[0].trim().split("\\s+");
+            phase = Phase.create(parts0[1], false);
+            travelTime = Double.parseDouble(parts0[3]);
+            distance = Double.parseDouble(parts0[6]);
+            turningPoint = createPositionForLine(lines[1]);
+        }
+
+        private FullPosition createPositionForLine(String line) {
+            String[] parts = line.trim().split("\\s+");
+            return new FullPosition(Double.parseDouble(parts[3])
+                    ,Double.parseDouble(parts[4])
+                    ,6371. - Double.parseDouble(parts[1]));
         }
 
         private void parseOutputS(String[] lines, double pierceDepth) {

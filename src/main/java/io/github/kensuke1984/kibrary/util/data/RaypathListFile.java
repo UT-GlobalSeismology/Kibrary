@@ -7,6 +7,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
 
+import io.github.kensuke1984.anisotime.Phase;
+
 /**
  * File containing list of raypaths.
  * <p>
@@ -29,11 +31,19 @@ public class RaypathListFile {
     public static void write(Set<Raypath> raypathSet, Path outPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
             pw.println("# source[latitude, longitude, radius], reciever[latitude, longitude]");
-            raypathSet.stream().sorted().forEach(raypath -> {
+            raypathSet.stream().forEach(raypath -> {
                 pw.println(raypath.getSource() + " " + raypath.getReceiver());
             });
         }
     }
 
+    public static void writeSegments(Set<Raypath> raypathSet, String model, Phase phase, double pierceDepth,
+            Path insidePath, Path outsidePath, Path turningPath) throws IOException {
 
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(insidePath))) {
+            raypathSet.stream().forEach(raypath -> {
+                pw.println(raypath.getTurningPoint());
+            });
+        }
+    }
 }

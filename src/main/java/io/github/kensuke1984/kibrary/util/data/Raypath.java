@@ -43,6 +43,28 @@ public class Raypath {
     private final HorizontalPosition receiverPosition;
 
     /**
+     * whether attempt to calculate turning and piercing points has been made
+     */
+    private boolean calculatedPiercePoints;
+    /**
+     * whether attempt to calculate turning point has been made
+     */
+    private boolean calculatedTurningPoint;
+    /**
+     * the bottoming point of raypath
+     */
+    private FullPosition turnPosition;
+    /**
+     * the point the ray pierces in through a certain depth
+     */
+    private FullPosition enterPosition;
+    /**
+     * the point the ray pierces out through a certain depth
+     */
+    private FullPosition leavePosition;
+
+
+    /**
      * Create a raypath for the source and station.
      *
      * @param source  {@link FullPosition} of a source
@@ -121,17 +143,50 @@ public class Raypath {
         return backAzimuth;
     }
 
+    public boolean calculateTurningPoint(String model, Phase phase) {
+        Info info = TauPPierceReader.getTurningInfo(sourcePosition, receiverPosition, model, phase);
+        calculatedTurningPoint = true;
+
+        if (info != null) {
+            turnPosition = info.getTurningPoint();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean calculatePiercePoints(String model, Phase phase, double pierceDepth) {
+        Info info = TauPPierceReader.getPierceInfo(sourcePosition, receiverPosition, model, pierceDepth, phase);
+        calculatedPiercePoints = true;
+        calculatedTurningPoint = true;
+
+        if (info != null) {
+            enterPosition = info.getEnterPoint();
+            turnPosition = info.getTurningPoint();
+            leavePosition = info.getLeavePoint();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
-     * @param model
-     * @param phase
-     * @return
+     * @return MAY BE NULL if turning point does not exist
      *
      * @author otsuru
      * @since 2022/4/22
      */
-    public FullPosition getTurningPoint(String model, Phase phase) {
-        Info info = TauPPierceReader.getPierceInfo(sourcePosition, receiverPosition, model, phase).get(0);
-        return info.getTurningPoint();
+    public FullPosition getTurningPoint() {
+        if (calculatedTurningPoint) return turnPosition;
+        else throw new IllegalStateException("Turning point is not yet calculated");
+    }
+    public FullPosition getEnterPoint() {
+        if (calculatedPiercePoints) return enterPosition;
+        else throw new IllegalStateException("Pierce points are not yet calculated");
+    }
+    public FullPosition getLeavePoint() {
+        if (calculatedPiercePoints) return leavePosition;
+        else throw new IllegalStateException("Pierce points are not yet calculated");
     }
 
     /**

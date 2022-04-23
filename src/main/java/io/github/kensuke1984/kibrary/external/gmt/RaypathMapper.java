@@ -14,13 +14,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.TauPPierceReader;
-import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -32,7 +29,6 @@ import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.data.RaypathListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -83,6 +79,10 @@ public class RaypathMapper extends Operation {
     private Set<Observer> observers;
     private Set<Raypath> raypaths;
 
+    private Phase piercePhase;
+    private double pierceDepth;
+    private String model;
+
 
 
     /**
@@ -100,8 +100,6 @@ public class RaypathMapper extends Operation {
     private Path gmtPath;
     private Path eventClusterPath;
 
-    private String model;
-    private double pierceDepth;
     Map<GlobalCMTID, Integer> eventClusterMap;
 
     /**
@@ -135,8 +133,12 @@ public class RaypathMapper extends Operation {
             pw.println("##Path of a basic ID file");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##########Other settings:");
-            pw.println("#model");
-            pw.println("#pierceDepth");
+            pw.println("#Phase to calculate pierce points for (ScS)");
+            pw.println("#piercePhase ");
+            pw.println("#(double) Depth to calculate pierce points for [km] (2491)");
+            pw.println("#pierceDepth ");
+            pw.println("#(String) Name of model to use for calculating pierce points (prem)");
+            pw.println("#model ");
             pw.println("#eventClusterPath");
         }
         System.err.println(outPath + " is created.");
@@ -165,9 +167,10 @@ public class RaypathMapper extends Operation {
             throw new IllegalArgumentException("A folder or file for input must be set.");
         }
 
-
-        pierceDepth = property.parseDouble("pierceDepth", "400");
+        piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
+        pierceDepth = property.parseDouble("pierceDepth", "2491");
         model = property.parseString("model", "prem");
+
         if (property.containsKey("eventClusterPath")) eventClusterPath = property.parsePath("eventClusterPath", null, true, workPath);
         else eventClusterPath = null;
 
@@ -228,7 +231,7 @@ public class RaypathMapper extends Operation {
         case 1:
             break;
         case 2:
-            outputRaypathInside(pierceDepth);
+            //outputRaypathInside(pierceDepth);
             outputTurningPoint();
             break;
         default:
@@ -251,18 +254,27 @@ public class RaypathMapper extends Operation {
     }
 
     private void outputTurningPoint() throws IOException {
-        Phase phasetmp = Phase.ScS;
-        if (components.size() == 1 && components.contains(SACComponent.Z))
-            phasetmp = Phase.PcP;
-        final Phase phase = phasetmp;
 
         List<String> lines = new ArrayList<>();
         raypaths.forEach(ray -> {
-            lines.add(ray.getTurningPoint(model, phase).toString());
+            ray.calculateTurningPoint(model, piercePhase);
+            FullPosition p = ray.getTurningPoint();
+            if(p != null)
+                lines.add(p.toString());
         });
         Files.write(turningPointPath, lines);
 
 
+    }
+//
+//    private void outputRaypathInside(double pierceDepth) throws IOException {
+//        List<String> lines = new ArrayList<>();
+//
+//        Phase phasetmp = Phase.ScS;
+//        if (components.size() == 1 && components.contains(SACComponent.Z))
+//            phasetmp = Phase.PcP;
+//        final Phase phase = phasetmp;
+//
 //        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 //            try {
 //                return eventDir.sacFileSet().stream();
@@ -281,133 +293,95 @@ public class RaypathMapper extends Operation {
 //                .forEach(headerData -> {
 //                    FullPosition eventLocation = headerData.getEventLocation();
 //                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
-//                    Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, phase)
-//                        .get(0);
-//                    FullPosition turningPoint = info.getTurningPoint();
-//                    lines.add(String.format("%.2f %.2f %.2f"
-//                            , turningPoint.getLongitude()
-//                            , turningPoint.getLatitude()
-//                            , turningPoint.getR()));
+//                    List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, phase);
+//                    Info info = null;
+//                    if (infoList.size() > 0) {
+//                        info = infoList.get(0);
+//                        FullPosition enterPoint = info.getEnterPoint();
+//                        FullPosition leavePoint = info.getLeavePoint();
+//                        if (eventClusterPath != null)
+//                            lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
+//                                , enterPoint.getLatitude()
+//                                , enterPoint.getLongitude()
+//                                , leavePoint.getLatitude()
+//                                , leavePoint.getLongitude()
+//                                , eventClusterMap.get(headerData.getGlobalCMTID())
+//                                ));
+//                        else
+//                            lines.add(String.format("%.2f %.2f %.2f %.2f"
+//                                    , enterPoint.getLatitude()
+//                                    , enterPoint.getLongitude()
+//                                    , leavePoint.getLatitude()
+//                                    , leavePoint.getLongitude()
+//                                    ));
+//                    }
 //                });
 //
-//        Files.write(turningPointPath, lines);
-    }
-
-    private void outputRaypathInside(double pierceDepth) throws IOException {
-        List<String> lines = new ArrayList<>();
-
-        Phase phasetmp = Phase.ScS;
-        if (components.size() == 1 && components.contains(SACComponent.Z))
-            phasetmp = Phase.PcP;
-        final Phase phase = phasetmp;
-
-        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
-            try {
-                return eventDir.sacFileSet().stream();
-            } catch (Exception e) {
-                return Stream.empty();
-            }
-        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
-                .map(name -> {
-                    try {
-                        return name.readHeader();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }).filter(Objects::nonNull)
-                .forEach(headerData -> {
-                    FullPosition eventLocation = headerData.getEventLocation();
-                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
-                    List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, phase);
-                    Info info = null;
-                    if (infoList.size() > 0) {
-                        info = infoList.get(0);
-                        FullPosition enterPoint = info.getEnterPoint();
-                        FullPosition leavePoint = info.getLeavePoint();
-                        if (eventClusterPath != null)
-                            lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
-                                , enterPoint.getLatitude()
-                                , enterPoint.getLongitude()
-                                , leavePoint.getLatitude()
-                                , leavePoint.getLongitude()
-                                , eventClusterMap.get(headerData.getGlobalCMTID())
-                                ));
-                        else
-                            lines.add(String.format("%.2f %.2f %.2f %.2f"
-                                    , enterPoint.getLatitude()
-                                    , enterPoint.getLongitude()
-                                    , leavePoint.getLatitude()
-                                    , leavePoint.getLongitude()
-                                    ));
-                    }
-                });
-
-        Path outpath = workPath.resolve("raypathInside.inf");
-        Files.write(outpath, lines);
-    }
-
-    private void outputRaypathInside_divide() throws IOException {
-        List<String> lines_western = new ArrayList<>();
-        List<String> lines_central = new ArrayList<>();
-        List<String> lines_eastern = new ArrayList<>();
-
-        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
-            try {
-                return eventDir.sacFileSet().stream();
-            } catch (Exception e) {
-                return Stream.empty();
-            }
-        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
-                .map(name -> {
-                    try {
-                        return name.readHeader();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }).filter(Objects::nonNull)
-                .forEach(headerData -> {
-                    FullPosition eventLocation = headerData.getEventLocation();
-                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
-                    List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS);
-                    Info info = null;
-                    if (infoList.size() > 0) {
-                        info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS)
-                        .get(0);
-                        FullPosition enterDpp = info.getEnterPoint();
-                        FullPosition leaveDpp = info.getLeavePoint();
-                        if (stationPosition.getLongitude() >= -130 && stationPosition.getLongitude() <= -110)
-                            lines_western.add(String.format("%.2f %.2f %.2f %.2f"
-                                , enterDpp.getLatitude()
-                                , enterDpp.getLongitude()
-                                , leaveDpp.getLatitude()
-                                , leaveDpp.getLongitude()
-                                ));
-                        else if (stationPosition.getLongitude() > -110 && stationPosition.getLongitude() <= -90)
-                            lines_central.add(String.format("%.2f %.2f %.2f %.2f"
-                                    , enterDpp.getLatitude()
-                                    , enterDpp.getLongitude()
-                                    , leaveDpp.getLatitude()
-                                    , leaveDpp.getLongitude()
-                                    ));
-                        else if (stationPosition.getLongitude() > -90 && stationPosition.getLongitude() <= -70)
-                            lines_eastern.add(String.format("%.2f %.2f %.2f %.2f"
-                                    , enterDpp.getLatitude()
-                                    , enterDpp.getLongitude()
-                                    , leaveDpp.getLatitude()
-                                    , leaveDpp.getLongitude()
-                                    ));
-                    }
-                });
-
-        Path path_western = workPath.resolve("raypathInside_western.inf");
-        Path path_central = workPath.resolve("raypathInside_central.inf");
-        Path path_eastern = workPath.resolve("raypathInside_eastern.inf");
-        Files.write(path_western, lines_western);
-        Files.write(path_central, lines_central);
-        Files.write(path_eastern, lines_eastern);
-    }
+//        Path outpath = workPath.resolve("raypathInside.inf");
+//        Files.write(outpath, lines);
+//    }
+//
+//    private void outputRaypathInside_divide() throws IOException {
+//        List<String> lines_western = new ArrayList<>();
+//        List<String> lines_central = new ArrayList<>();
+//        List<String> lines_eastern = new ArrayList<>();
+//
+//        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+//            try {
+//                return eventDir.sacFileSet().stream();
+//            } catch (Exception e) {
+//                return Stream.empty();
+//            }
+//        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
+//                .map(name -> {
+//                    try {
+//                        return name.readHeader();
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        return null;
+//                    }
+//                }).filter(Objects::nonNull)
+//                .forEach(headerData -> {
+//                    FullPosition eventLocation = headerData.getEventLocation();
+//                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
+//                    List<Info> infoList = TauPPierceReader.getTurningInfo(eventLocation, stationPosition, "prem", Phase.ScS);
+//                    Info info = null;
+//                    if (infoList.size() > 0) {
+//                        info = TauPPierceReader.getTurningInfo(eventLocation, stationPosition, "prem", Phase.ScS)
+//                        .get(0);
+//                        FullPosition enterDpp = info.getEnterPoint();
+//                        FullPosition leaveDpp = info.getLeavePoint();
+//                        if (stationPosition.getLongitude() >= -130 && stationPosition.getLongitude() <= -110)
+//                            lines_western.add(String.format("%.2f %.2f %.2f %.2f"
+//                                , enterDpp.getLatitude()
+//                                , enterDpp.getLongitude()
+//                                , leaveDpp.getLatitude()
+//                                , leaveDpp.getLongitude()
+//                                ));
+//                        else if (stationPosition.getLongitude() > -110 && stationPosition.getLongitude() <= -90)
+//                            lines_central.add(String.format("%.2f %.2f %.2f %.2f"
+//                                    , enterDpp.getLatitude()
+//                                    , enterDpp.getLongitude()
+//                                    , leaveDpp.getLatitude()
+//                                    , leaveDpp.getLongitude()
+//                                    ));
+//                        else if (stationPosition.getLongitude() > -90 && stationPosition.getLongitude() <= -70)
+//                            lines_eastern.add(String.format("%.2f %.2f %.2f %.2f"
+//                                    , enterDpp.getLatitude()
+//                                    , enterDpp.getLongitude()
+//                                    , leaveDpp.getLatitude()
+//                                    , leaveDpp.getLongitude()
+//                                    ));
+//                    }
+//                });
+//
+//        Path path_western = workPath.resolve("raypathInside_western.inf");
+//        Path path_central = workPath.resolve("raypathInside_central.inf");
+//        Path path_eastern = workPath.resolve("raypathInside_eastern.inf");
+//        Files.write(path_western, lines_western);
+//        Files.write(path_central, lines_central);
+//        Files.write(path_eastern, lines_eastern);
+//    }
 
     private GMTMap createBaseMap() {
 
