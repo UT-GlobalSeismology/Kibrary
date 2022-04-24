@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.external.gmt;
+package io.github.kensuke1984.kibrary.visual;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.external.gmt.GMTMap;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -28,10 +29,8 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.data.RaypathListFile;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -65,6 +64,10 @@ public class RaypathMapper extends Operation {
      * components for path
      */
     private Set<SACComponent> components;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
 
     private Path datasetPath;
     private Path timewindowPath;
@@ -83,21 +86,19 @@ public class RaypathMapper extends Operation {
     private double pierceDepth;
     private String model;
 
-
-
     /**
      * draw points of partial TODO
      */
     // protected boolean drawsPoint;
 
-    private Set<TimewindowData> timeWindowInformationFile;
+    private String eventFileName;
+    private String observerFileName;
+    private String raypathFileName;
+    private String turningPointFileName;
+    private String insideFileName;
+    private String outsideFileName;
+    private String psFileName;
 
-    private Path eventPath;
-    private Path observerPath;
-    private Path raypathPath;
-    private Path turningPointPath;
-    private Path psPath;
-    private Path gmtPath;
     private Path eventClusterPath;
 
     Map<GlobalCMTID, Integer> eventClusterMap;
@@ -178,13 +179,13 @@ public class RaypathMapper extends Operation {
     }
 
     private void setName() {
-        String dateStr = GadgetAid.getTemporaryString();
-        eventPath = workPath.resolve("rdEvent" + dateStr + ".lst");
-        observerPath = workPath.resolve("rdObserver" + dateStr + ".lst");
-        raypathPath = workPath.resolve("rdRaypath" + dateStr + ".inf");
-        turningPointPath = workPath.resolve("rdTurningPoint" + dateStr + ".inf");
-        psPath = workPath.resolve("rd" + dateStr + ".eps");
-        gmtPath = workPath.resolve("rd" + dateStr + ".sh");
+        eventFileName = "event.lst";
+        observerFileName = "observer.lst";
+        raypathFileName = "raypath.lst";
+        turningPointFileName = "turningPoint.lst";
+        insideFileName = "raypathInside.lst";
+        outsideFileName = "raypathOutside.lst";
+        psFileName = "raypathMap.eps";
     }
 
     @Override
@@ -224,15 +225,16 @@ public class RaypathMapper extends Operation {
             EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
         }
 
-        EventListFile.write(events, eventPath);
-        ObserverListFile.write(observers, observerPath);
-        RaypathListFile.write(raypaths, raypathPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", tag, GadgetAid.getTemporaryString());
+
+        EventListFile.write(events, outPath.resolve(eventFileName));
+        ObserverListFile.write(observers, outPath.resolve(observerFileName));
+        RaypathListFile.write(raypaths, outPath.resolve(raypathFileName));
 
         switch (drawsPathMode) {
         case 1:
             break;
         case 2:
-            //outputRaypathInside(pierceDepth);
             outputTurningPoint();
             break;
         default:
@@ -242,29 +244,24 @@ public class RaypathMapper extends Operation {
         outputGMT();
     }
 
-    /**
-     * @param name Sacfile
-     * @return if the path of Sacfile should be drawn
-     */
-    private boolean inTimeWindow(SACFileName name) {
-        return timeWindowInformationFile == null ? true
-                : timeWindowInformationFile.stream()
-                        .anyMatch(tw -> tw.getComponent() == name.getComponent()
-                                && tw.getGlobalCMTID().equals(name.getGlobalCMTID())
-                                && tw.getObserver().getStation().equals(name.getStationCode()));
-    }
-
     private void outputTurningPoint() throws IOException {
 
-        List<String> lines = new ArrayList<>();
-        raypaths.forEach(ray -> {
-            ray.calculateTurningPoint(model, piercePhase);
-            FullPosition p = ray.getTurningPoint();
-            if(p != null)
-                lines.add(p.toString());
-        });
-        Files.write(turningPointPath, lines);
+        List<String> turningPointLines = new ArrayList<>();
+        List<String> insideLines = new ArrayList<>();
+        List<String> outsideLines = new ArrayList<>();
 
+        raypaths.forEach(ray -> {
+            if (ray.calculatePiercePoints(model, piercePhase, pierceDepth)) {
+                turningPointLines.add(ray.getTurningPoint().toString());
+                insideLines.add(ray.getEnterPoint() + " " + ray.getLeavePoint());
+                outsideLines.add(ray.getSource() + " " + ray.getEnterPoint());
+                outsideLines.add(ray.getLeavePoint() + " " + ray.getReceiver());
+            }
+        });
+
+        Files.write(outPath.resolve(turningPointFileName), turningPointLines);
+        Files.write(outPath.resolve(insideFileName), insideLines);
+        Files.write(outPath.resolve(outsideFileName), outsideLines);
 
     }
 //
@@ -426,7 +423,55 @@ public class RaypathMapper extends Operation {
     }
 
     private void outputGMT() throws IOException {
-        GMTMap gmtmap = createBaseMap();
+        Path gmtPath = outPath.resolve("raypathMap.sh");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("");
+            pw.println("# GMT options");
+            pw.println("gmt set COLOR_MODEL RGB");
+            pw.println("gmt set PS_MEDIA 1100x1100");
+            pw.println("gmt set PS_PAGE_ORIENTATION landscape");
+            pw.println("gmt set MAP_DEFAULT_PEN black");
+            pw.println("gmt set MAP_TITLE_OFFSET 1p");
+            pw.println("gmt set FONT 20p");
+            pw.println("gmt set FONT_LABEL 15p,Helvetica,black");
+            pw.println("gmt set FONT_ANNOT_PRIMARY 25p");
+            pw.println("");
+            pw.println("# parameters for gmt pscoast");
+            pw.println("R='-R-90/80/-70/50'");//TODO parameterize
+            pw.println("J='-JQ20'");
+            pw.println("B='-Ba30 -BWeSn'");
+            pw.println("C='-Ggray -Wthinnest,gray20'");
+            pw.println("");
+            pw.println("psname=\"" + psFileName + "\"");
+            pw.println("");
+            pw.println("gmt pscoast -K $R $J $B $C -P  > $psname");
+            pw.println("");
+            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -J -R -O -P -Sa0.3 -G255/156/0 -Wthinnest -K  >> $psname");
+            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -J -R -O -P -Si0.3 -G71/187/243 -Wthinnest -K >> $psname");
+            pw.println("");
+            pw.println("while read line");
+            pw.println("do");
+            pw.println("echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+            pw.println("gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
+            pw.println("done < " + insideFileName);
+            pw.println("");
+            pw.println("");
+            pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
+            pw.println("");
+            pw.println("#------- Finalize");
+            pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $psname");
+            pw.println("END");
+            pw.println("");
+            pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
+            pw.println("");
+            pw.println("#-------- clear");
+            pw.println("rm -rf color.cpt tmp.grd comp.grd $OUTFILE gmt.conf gmt.history");
+        }
+        gmtPath.toFile().setExecutable(true);
+
+/*        GMTMap gmtmap = createBaseMap();
         List<String> gmtCMD = new ArrayList<>();
         gmtCMD.add("#!/bin/sh");
         gmtCMD.add("psname=\"" + psPath + "\"");
@@ -443,12 +488,13 @@ public class RaypathMapper extends Operation {
         gmtCMD.add(GMTMap.psCoast());
         gmtCMD.add("awk '{print $2, $3}' " + eventPath + " | psxy -V -: -J -R -O -P -Sa0.3 -G255/0/0 -W1  -K "
                 + " >> $psname");
-        gmtCMD.add("awk '{print $2, $3}' " + observerPath + " |psxy -V -: -J -R -K -O -P -Si0.3 -G0/0/255 -W1 "
+        gmtCMD.add("awk '{print $3, $4}' " + observerPath + " | psxy -V -: -J -R -K -O -P -Si0.3 -G0/0/255 -W1 "
                 + " >> $psname");
         gmtCMD.add(gmtmap.psEnd());
         gmtCMD.add("#eps2eps $psname .$psname && mv .$psname $psname");
         Files.write(gmtPath, gmtCMD);
         gmtPath.toFile().setExecutable(true);
+*/
     }
 
 }

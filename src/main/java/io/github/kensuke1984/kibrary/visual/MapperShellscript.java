@@ -70,13 +70,7 @@ public class MapperShellscript {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("# parameters for gmt pscoast");
-            pw.println("R='-R-60/45/-55/35'");//TODO parameterize
-            pw.println("J='-JQ15'");
-            pw.println("G='-G255/255/255';");
-            pw.println("B='-B30f10';");
-            pw.println("O='-W1';");
-            pw.println("");
+            pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
             pw.println("gmt set PS_MEDIA 3300x3300");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
@@ -84,6 +78,13 @@ public class MapperShellscript {
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT 50");
             pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
+            pw.println("");
+            pw.println("# parameters for gmt pscoast");
+            pw.println("R='-R-60/45/-55/35'");//TODO parameterize
+            pw.println("J='-JQ15'");
+            pw.println("G='-G255/255/255';");
+            pw.println("B='-B30f10';");
+            pw.println("O='-W1';");
             pw.println("");
             pw.println("outputps=" + modelFileName + "Map.eps");
             pw.println("MP=3");//TODO parameterize
