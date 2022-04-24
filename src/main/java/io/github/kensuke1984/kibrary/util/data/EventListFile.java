@@ -76,6 +76,8 @@ public class EventListFile {
             if (!eventSet.add(event))
                 throw new RuntimeException("There is duplication of " + event + " in " + infoPath + ".");
         }
+
+        DatasetAid.checkNum(eventSet.size(), "event", "events");
         return Collections.unmodifiableSet(eventSet);
     }
 
@@ -149,7 +151,7 @@ public class EventListFile {
             eventSet = DatasetAid.globalCMTIDSet(inPath);
         }
 
-        if (!DatasetAid.checkEventNum(eventSet.size())) return;
+        if (!DatasetAid.checkNum(eventSet.size(), "event", "events")) return;
         write(eventSet, outputPath);
 
     }

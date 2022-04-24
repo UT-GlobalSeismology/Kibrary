@@ -46,7 +46,7 @@ public class SectionBelowCMB {
         }
 
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(Paths.get(""));
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
 

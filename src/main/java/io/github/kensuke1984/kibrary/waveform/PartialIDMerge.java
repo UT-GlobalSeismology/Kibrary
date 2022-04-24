@@ -16,6 +16,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -64,20 +65,7 @@ public class PartialIDMerge extends Operation {
             pw.println("##########From here on, list up pairs of the paths of a partial ID file and a partial waveform file.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
-                switch(i) {
-                case 1:
-                    pw.println("##1st pair");
-                    break;
-                case 2:
-                    pw.println("##2nd pair");
-                    break;
-                case 3:
-                    pw.println("##3rd pair");
-                    break;
-                default:
-                    pw.println("##" + i + "th pair");
-                    break;
-                }
+                pw.println("##" + MathAid.ordinalNumber(i) + " pair");
                 pw.println("#partialIDPath" + i + " partialID" + i + ".dat");
                 pw.println("#partialPath" + i + " partial" + i + ".dat");
             }

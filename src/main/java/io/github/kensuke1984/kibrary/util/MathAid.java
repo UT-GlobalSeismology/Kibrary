@@ -23,6 +23,22 @@ public final class MathAid {
     }
 
     /**
+     * Rounds value to n effective digits.
+     *
+     * @param value (double) The value to be rounded
+     * @param n (int) The number of effective digits
+     * @return (double) The rounded value which has n effective digits
+     */
+    public static double roundToEffective(double value, int n) {
+        if (n < 1)
+            throw new IllegalArgumentException("invalid input n");
+
+        final long log10 = (long) Math.floor(Math.log10(Math.abs(value)));
+        final double power10 = FastMath.pow(10, log10 - n + 1);
+        return Math.round(value / power10) * power10;
+    }
+
+    /**
      * Transforms a value to a String.
      *
      * @param value (double) The value to turn into a String
@@ -57,7 +73,7 @@ public final class MathAid {
 
     /**
      * Transforms a value (double) to a padded String.
-     * The left side is padded with spaces and the right with "0"s.
+     * The left side is padded with the specified letter and the right with "0"s.
      *
      * @param value (double) The value to turn into a String
      * @param nInteger (int) The number of digits for the integer part, including the minus sign but excluding the decimal point.
@@ -65,8 +81,8 @@ public final class MathAid {
      * @param headLetter (String) The letter to pad at the head (i.e. " ", "0", ...)
      * @return (String) The padded String form of the value
      *
-     * @since 2021/11/26
      * @author otsuru
+     * @since 2021/11/26
      */
     public static String padToString(double value, int nInteger, int nDecimal, String headLetter) {
         String format;
@@ -85,8 +101,8 @@ public final class MathAid {
      * @param headLetter (String) The letter to pad at the head (i.e. " ", "0", ...)
      * @return (String) The padded String form of the value
      *
-     * @since 2022/2/4
      * @author otsuru
+     * @since 2022/2/4
      */
     public static String padToString(int value, int nInteger, String headLetter) {
         String format;
@@ -98,22 +114,43 @@ public final class MathAid {
     }
 
     /**
-     * Rounds value to n effective digits.
+     * Turns a positive number into an ordinal number String (i.e. 1st, 2nd, ...)
+     * @param n (int) Number to get the ordinal of
+     * @return (String)
      *
-     * @param value (double) The value to be rounded
-     * @param n (int) The number of effective digits
-     * @return (double) The rounded value which has n effective digits
+     * @author otsuru
+     * @since 2022/4/24
      */
-    public static double roundToEffective(double value, int n) {
-        if (n < 1)
-            throw new RuntimeException("invalid input n");
+    public static String ordinalNumber(int n) {
+        if (n < 0) throw new IllegalArgumentException("invalid input n");
 
-        final long log10 = (long) Math.floor(Math.log10(Math.abs(value)));
-        final double power10 = FastMath.pow(10, log10 - n + 1);
-        return Math.round(value / power10) * power10;
+        if (n % 10 == 1 && n != 11) return n + "st";
+        else if (n % 10 == 2 && n != 12) return n + "nd";
+        else if (n % 10 == 3 && n != 13) return n + "rd";
+        else return n + "th";
     }
 
     /**
+     * Switches the wording to use based on whether a value is singular or plural.
+     * For counting objects (file/files) or changing verbs (is/are).
+     * @param n (int) Number
+     * @param singularCase (String) Words to append when the number is singular
+     * @param pluralCase (String) Words to append when the number is plural
+     * @return (String) Number followd by appended words
+     *
+     * @author otsuru
+     * @since 2022/4/24
+     */
+    public static String switchSingularPlural(int n, String singularCase, String pluralCase) {
+        if (n == 1) {
+            return n + " " + singularCase;
+        } else {
+            return n + " " + pluralCase;
+        }
+    }
+
+    /**
+     * Check if two values are equal, within a certain error range.
      * @param v1
      * @param v2
      * @param eps
@@ -128,6 +165,7 @@ public final class MathAid {
     }
 
     /**
+     * Check if an angle is within a specified range.
      * @param angle [0:360)
      * @param lower [-360:upper)
      * @param upper (lower:360]

@@ -217,6 +217,7 @@ public class RaypathMapper extends Operation {
             throw new IllegalStateException("Input folder or file not set");
         }
 
+        DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
 
         if (eventClusterPath != null) {
             eventClusterMap = new HashMap<GlobalCMTID, Integer>();

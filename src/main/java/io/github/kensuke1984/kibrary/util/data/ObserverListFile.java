@@ -103,6 +103,7 @@ public final class ObserverListFile {
 //            });
 //        }
 
+        DatasetAid.checkNum(observerSet.size(), "observer", "observers");
         return Collections.unmodifiableSet(observerSet);
     }
 
@@ -186,6 +187,7 @@ public final class ObserverListFile {
             observerSet = collectFromDataset(inPath, components);
         }
 
+        if (!DatasetAid.checkNum(observerSet.size(), "observer", "observers")) return;
         write(observerSet, outputPath);
 
     }

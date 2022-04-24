@@ -246,7 +246,7 @@ public class SyntheticDSMSetup extends Operation {
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
 

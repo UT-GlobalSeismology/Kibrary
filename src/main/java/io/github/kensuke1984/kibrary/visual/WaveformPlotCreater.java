@@ -169,7 +169,7 @@ public class WaveformPlotCreater extends Operation {
            eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
                    .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
        }
-       if (!DatasetAid.checkEventNum(eventDirs.size())) {
+       if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
            return;
        }
 

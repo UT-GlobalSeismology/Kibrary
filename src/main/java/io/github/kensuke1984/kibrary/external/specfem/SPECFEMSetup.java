@@ -53,7 +53,7 @@ public class SPECFEMSetup {
 
     private void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(inPath);
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         } else if (eventDirs.size() >= 10000) {
             // only 4 digits can be used for the run**** folder names

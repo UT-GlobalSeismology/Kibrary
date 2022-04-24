@@ -39,7 +39,7 @@ public class LobbyCleanup {
     private static void run() throws IOException {
         Path workPath = Paths.get(".");
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
 
@@ -66,7 +66,7 @@ public class LobbyCleanup {
         Path outPath = Paths.get(output);
 
         Set<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath);
-        if (!DatasetAid.checkEventNum(inEventDirs.size())) {
+        if (!DatasetAid.checkNum(inEventDirs.size(), "event", "events")) {
             return;
         }
 
@@ -93,7 +93,7 @@ public class LobbyCleanup {
         Path workPath = Paths.get(".");
 
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
 

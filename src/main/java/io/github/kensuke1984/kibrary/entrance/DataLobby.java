@@ -233,7 +233,7 @@ public class DataLobby extends Operation {
     public void run() throws IOException {
         requestedEvents = listEvents();
         int n_total = requestedEvents.size();
-        if (!DatasetAid.checkEventNum(n_total)) {
+        if (!DatasetAid.checkNum(n_total, "event", "events")) {
             return;
         }
 

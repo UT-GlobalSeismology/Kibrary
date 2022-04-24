@@ -218,7 +218,7 @@ public class DataKitchen extends Operation {
     @Override
     public void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
 

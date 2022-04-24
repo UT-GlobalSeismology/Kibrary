@@ -99,7 +99,7 @@ public final class BasicIDFile {
                 ids[i] = id.setData(data);
             });
         }
-        System.err.println("Reading waveform done in " + GadgetAid.toTimeString(System.nanoTime() - t));
+        System.err.println("Reading waveforms done in " + GadgetAid.toTimeString(System.nanoTime() - t));
         return ids;
     }
 

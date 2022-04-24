@@ -87,22 +87,21 @@ public final class DatasetAid {
     }
 
     /**
-     * Checks whether a given number of events is non-zero, and displays the number.
-     * @param num (int) Number of events
+     * Checks whether a given number of some object is non-zero, and displays the number.
+     * @param num (int) Number of some object
+     * @param singular (String) Singular form of name of object
+     * @param plural (String) Plural form of name of object
      * @return  (boolean) true of the number is non-zero
      *
      * @author otsuru
      * @since 2021/11/25
      */
-    public static boolean checkEventNum(int num) {
+    public static boolean checkNum(int num, String singular, String plural) {
         if (num == 0) {
-            System.err.println("No events found.");
+            System.err.println("No " + plural + " found.");
             return false;
-        } else if (num == 1) {
-            System.err.println("1 event is found.");
-            return true;
         } else {
-            System.err.println(num + " events are found.");
+            System.err.println(MathAid.switchSingularPlural(num, singular + " is", plural + " are") + " found.");
             return true;
         }
     }
@@ -116,7 +115,7 @@ public final class DatasetAid {
      * @throws IOException if an I/O error occurs.
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {
-        return Collections.unmodifiableSet(eventFolderSet(path).stream().flatMap(eDir -> {
+        Set<SACFileName> sacNameSet = Collections.unmodifiableSet(eventFolderSet(path).stream().flatMap(eDir -> {
             try {
                 return eDir.sacFileSet().stream();
             } catch (Exception e) {
@@ -124,6 +123,9 @@ public final class DatasetAid {
                 return Stream.empty();
             }
         }).collect(Collectors.toSet()));
+
+        checkNum(sacNameSet.size(), "sac file", "sac files");
+        return sacNameSet;
     }
 
     /**
