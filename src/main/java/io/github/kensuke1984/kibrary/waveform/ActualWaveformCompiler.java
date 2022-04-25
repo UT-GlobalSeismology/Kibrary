@@ -82,7 +82,7 @@ public class ActualWaveformCompiler extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String tag;
     /**

@@ -95,6 +95,10 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Path workPath;
     /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * output directory Path
      */
     private Path outPath;
@@ -210,6 +214,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##SacComponents to be used (Z R T)");
             pw.println("#components ");
             pw.println("##(double) Sac sampling Hz (20)");
@@ -264,6 +270,7 @@ public class PartialWaveformAssembler3D extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -1035,11 +1042,8 @@ public class PartialWaveformAssembler3D extends Operation {
         synchronized (PartialWaveformAssembler3D.class) {
             do {
                 dateString = GadgetAid.getTemporaryString();
-                outPath = workPath.resolve("assembled" + dateString);
+                outPath = DatasetAid.createOutputFolder(workPath, "assembled", tag, dateString);
                 logPath = outPath.resolve("assembler" + dateString + ".log");
-                if (!Files.exists(outPath))
-                    Files.createDirectories(outPath);
-                System.err.println("Output directory is " + outPath);
             } while (Files.exists(logPath));
             Files.createFile(logPath);
         }
@@ -1048,8 +1052,8 @@ public class PartialWaveformAssembler3D extends Operation {
     private void setPartialFile() throws IOException {
 
         // 書き込み準備
-        Path idPath = outPath.resolve("partialID" + dateString + ".dat");
-        Path datasetPath = outPath.resolve("partial" + dateString + ".dat");
+        Path idPath = outPath.resolve("partialID.dat");
+        Path datasetPath = outPath.resolve("partial.dat");
 
         partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
                 phases, perturbationLocationSet);

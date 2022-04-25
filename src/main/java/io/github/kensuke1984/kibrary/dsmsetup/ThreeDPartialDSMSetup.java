@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -44,6 +45,10 @@ public class ThreeDPartialDSMSetup extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String tag;
     /**
      * Path of the output folder
      */
@@ -123,6 +128,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event information file, must be set");
@@ -158,6 +165,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
@@ -279,9 +287,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             structure = PolynomialStructure.of(structureName);
         }
 
-        outPath = workPath.resolve("threeDPartial" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, GadgetAid.getTemporaryString());
 
         if (property != null)
             property.write(outPath.resolve("threeddsm.properties"));

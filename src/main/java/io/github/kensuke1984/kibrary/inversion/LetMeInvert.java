@@ -41,6 +41,7 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
@@ -203,7 +204,7 @@ public class LetMeInvert extends Operation {
             pw.println("##Path of a partial spc waveform file");
             pw.println("#partialSpcPath ");
             pw.println("##Path of an unknown parameter list file, must be set");
-            pw.println("#unknownParameterListPath unknowns.inf");
+            pw.println("#unknownParameterListPath unknowns.lst");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) alpha it self, if it is set, compute aic for each alpha.");
@@ -1388,13 +1389,7 @@ public class LetMeInvert extends Operation {
 
     @Override
     public void run() throws IOException {
-        if (tag == null) {
-            outPath = workPath.resolve("lmi" + GadgetAid.getTemporaryString());
-        } else {
-            outPath = workPath.resolve("lmi_" + tag + GadgetAid.getTemporaryString());
-        }
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "lmi", tag, GadgetAid.getTemporaryString());
 
         if (property != null)
             property.write(outPath.resolve("lmi.properties"));

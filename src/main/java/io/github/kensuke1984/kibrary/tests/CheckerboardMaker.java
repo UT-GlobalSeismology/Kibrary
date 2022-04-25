@@ -8,8 +8,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
@@ -23,34 +32,74 @@ public class CheckerboardMaker {
     private Path voxelPath;
     private double percentVs;
     private boolean flipSign;
-    private PolynomialStructure prem;
+    private PolynomialStructure initialStructure;
 
-    String dateStr;
+    private String tag;
+    private Path outPath;
 
-    List<Double> perturbationList = new ArrayList<>();
-    List<Double> radiusList = new ArrayList<>();
+    private List<Double> perturbationList = new ArrayList<>();
+    private List<Double> radiusList = new ArrayList<>();
 
+    /**
+     * Create checkerboard input model
+     * Usage: voxelInformationFile(Path) percentVs(double) flipSign(boolean)
+     *
+     * @param args
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
-        if (args.length != 3) {
-            System.err.println("Usage: voxelInformationFile(Path) percentVs(double) flipSign(boolean)");
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
+    }
 
-        Path voxelPath = Paths.get(args[0]);
-        double percentVs = Double.parseDouble(args[1]);
-        boolean flipSign = Boolean.parseBoolean(args[2]);
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        options.addOption(Option.builder("v").longOpt("voxel").hasArg().argName("voxelFile").required()
+                .desc("Path of input voxel file").build());
+        options.addOption(Option.builder("p").longOpt("percent").hasArg().argName("percentVs").required() //TODO: choose parameter to perturb
+                .desc("Percent of Vs perturbation").build());
+        options.addOption(Option.builder("f").longOpt("flip")
+                .desc("Flip sign of perturbation").build());
+        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+                .desc("A tag to include in output folder name.").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
+        double percentVs = Double.parseDouble(cmdLine.getOptionValue("p"));
+        boolean flipSign = cmdLine.hasOption("f");
+        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
+
         PolynomialStructure prem = PolynomialStructure.PREM;
 
-        CheckerboardMaker cm = new CheckerboardMaker(voxelPath, percentVs, flipSign, prem);
+        CheckerboardMaker cm = new CheckerboardMaker(voxelPath, percentVs, flipSign, prem, tag);
         cm.velocityCheckerboard();
         cm.writeModel();
     }
 
-    public CheckerboardMaker(Path voxelPath, double percentVs, boolean flipSign, PolynomialStructure prem) {
+    public CheckerboardMaker(Path voxelPath, double percentVs, boolean flipSign, PolynomialStructure prem, String tag) {
         this.voxelPath = voxelPath;
         this.percentVs = percentVs;
         this.flipSign = flipSign;
-        this.prem = prem;
-        dateStr = GadgetAid.getTemporaryString();
+        this.initialStructure = prem;
+        this.tag = tag;
     }
 
     private void velocityCheckerboard() throws IOException {
@@ -77,7 +126,9 @@ public class CheckerboardMaker {
             }
         }
 
-        Path velPath = Paths.get("velocity" + dateStr + ".inf");
+        outPath = DatasetAid.createOutputFolder(Paths.get(""), "checkerboard", tag, GadgetAid.getTemporaryString());
+
+        Path velPath = outPath.resolve("velocity.lst");
         System.err.println("Outputting velocity perturbations in " + velPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(velPath))) {
@@ -87,7 +138,7 @@ public class CheckerboardMaker {
     }
 
     private void writeModel() throws IOException {
-        Path modelPath = Paths.get("model" + dateStr + ".inf");
+        Path modelPath = outPath.resolve("model.lst");
         System.err.println("Outputting modulus perturbations in " + modelPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(modelPath))) {
@@ -98,10 +149,11 @@ public class CheckerboardMaker {
     }
 
     private double VdashToDeltaMu(double deltaVs, double radius){
-        double v = prem.getVshAt(radius);
-        double rho = prem.getRhoAt(radius);
+        ElasticMedium initialMedium = initialStructure.getMediumAt(radius);
+        double v = initialMedium.get(ParameterType.Vsh);
+        double rho = initialMedium.get(ParameterType.RHO);
         double vDash = (1 + deltaVs * 0.01) * v;
-        double deltaMu = (rho * vDash * vDash) - prem.computeMu(radius);
+        double deltaMu = (rho * vDash * vDash) - initialMedium.get(ParameterType.MU);
         return deltaMu;
     }
 

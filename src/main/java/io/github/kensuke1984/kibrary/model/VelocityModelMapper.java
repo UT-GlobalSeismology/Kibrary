@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -32,6 +33,10 @@ public class VelocityModelMapper extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String tag;
 
     /**
      * The root folder containing results of inversion
@@ -65,6 +70,8 @@ public class VelocityModelMapper extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##Path of a root folder containing results of inversion (.)");
             pw.println("#resultPath ");
             pw.println("##Path of an initial structure file used. If this is unset, the following structureName will be referenced.");
@@ -86,6 +93,7 @@ public class VelocityModelMapper extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
         if (property.containsKey("structurePath")) {
@@ -113,9 +121,7 @@ public class VelocityModelMapper extends Operation {
         Path unknownsPath = resultPath.resolve("unknownParameterOrder.inf");
         List<UnknownParameter> unknownsList = UnknownParameterFile.read(unknownsPath);
 
-        Path outPath = workPath.resolve("map" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", tag, GadgetAid.getTemporaryString());
 
         //~write list files
         for (InverseMethodEnum inverse : inverseMethods) {
