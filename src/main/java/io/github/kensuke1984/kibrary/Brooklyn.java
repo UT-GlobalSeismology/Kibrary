@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
@@ -38,6 +39,7 @@ enum Brooklyn {
     // Data download 10
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),
+    LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),

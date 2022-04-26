@@ -7,8 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
@@ -19,24 +24,45 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  */
 public class LobbyCleanup {
 
+
     public static void main(String[] args) throws IOException {
-        if (args.length == 1 && args[0].equals("-d")) {
-            run();
-        } else if (args.length == 1 && args[0].equals("-t")) {
-            organize_temp();
-        } else if (args.length == 3 && args[0].equals("-c")) {
-            copyMseeds(args[1], args[2]);
-        } else {
-            System.err.println("Usage:");
-            System.err.println(" [-d] : delete sacs and resps");
-            return;
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
     }
 
     /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        options.addOption(Option.builder("d").longOpt("delete")//TODO required
+                .desc("Delete sacs and resps").build());
+        options.addOption(Option.builder("t")
+                .desc("Old file structure to new").build());//TODO erase
+        options.addOption(Option.builder("c").hasArg().argName("outPath")
+                .desc("Copy mseeds into new dataset folder").build());//TODO erase
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
      * @throws IOException
      */
-    private static void run() throws IOException {
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        if (cmdLine.hasOption("t")) organize_temp();//TODO erase
+        if (cmdLine.hasOption("c")) copyMseeds(cmdLine.getOptionValue("c"));//TODO erase
+
+        if (!cmdLine.hasOption("d")) return;
+
         Path workPath = Paths.get(".");
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
         if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
@@ -61,9 +87,9 @@ public class LobbyCleanup {
      * @throws IOException
      * @deprecated
      */
-    private static void copyMseeds(String input, String output) throws IOException {
+    private static void copyMseeds(String input) throws IOException {
         Path inPath = Paths.get(input);
-        Path outPath = Paths.get(output);
+        Path outPath = Paths.get(input + "new");
 
         Set<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath);
         if (!DatasetAid.checkNum(inEventDirs.size(), "event", "events")) {

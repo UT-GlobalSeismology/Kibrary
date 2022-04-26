@@ -61,8 +61,8 @@ public class MapperShellscript {
             pw.println("    dep=${depth%.0}");
             pw.println("    grep \"$depth\" " + modelFileName + ".lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
-            pw.println("    gmt xyz2grd -G$dep.grd -R-60/45/-55/35 -I5 -di0");//TODO parameterize
-            pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.5");
+            pw.println("    gmt xyz2grd -G$dep.grd -R-60/45/-55/35 -I5 -di0");//TODO parameterize position range (-R) and interval (-I)
+            pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.5");//TODO parameterize interval (-I)
             pw.println("done");
         }
     }
@@ -116,7 +116,7 @@ public class MapperShellscript {
             }
 
             pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
-            pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
+            pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
             pw.println("echo \"Done!\"");
         }
     }

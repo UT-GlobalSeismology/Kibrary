@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -29,10 +30,12 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.data.RaypathListFile;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
@@ -72,6 +75,7 @@ public class RaypathMapper extends Operation {
     private Path datasetPath;
     private Path timewindowPath;
     private Path basicIDPath;
+    private Path voxelPath;
 
     /**
      * draw Path Mode; 0: don't draw, 1: quick draw, 2: detailed draw
@@ -94,6 +98,7 @@ public class RaypathMapper extends Operation {
     private String eventFileName;
     private String observerFileName;
     private String raypathFileName;
+    private String perturbationFileName;
     private String turningPointFileName;
     private String insideFileName;
     private String outsideFileName;
@@ -133,6 +138,9 @@ public class RaypathMapper extends Operation {
             pw.println("#timeindowPath timewindow.dat");
             pw.println("##Path of a basic ID file");
             pw.println("#basicIDPath actualID.dat");
+            pw.println("##########To plot perturbation points, set one of the following.");
+            pw.println("##Path of a voxel information file");
+            pw.println("#voxelPath voxel.inf");
             pw.println("##########Other settings:");
             pw.println("#Phase to calculate pierce points for (ScS)");
             pw.println("#piercePhase ");
@@ -167,6 +175,9 @@ public class RaypathMapper extends Operation {
         } else {
             throw new IllegalArgumentException("A folder or file for input must be set.");
         }
+        if (property.containsKey("voxelPath")) {
+            voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        }
 
         piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
         pierceDepth = property.parseDouble("pierceDepth", "2491");
@@ -182,6 +193,7 @@ public class RaypathMapper extends Operation {
         eventFileName = "event.lst";
         observerFileName = "observer.lst";
         raypathFileName = "raypath.lst";
+        perturbationFileName = "perturbation.lst";
         turningPointFileName = "turningPoint.lst";
         insideFileName = "raypathInside.lst";
         outsideFileName = "raypathOutside.lst";
@@ -231,11 +243,17 @@ public class RaypathMapper extends Operation {
         ObserverListFile.write(observers, outPath.resolve(observerFileName));
         RaypathListFile.write(raypaths, outPath.resolve(raypathFileName));
 
+        if (voxelPath != null) {
+            HorizontalPosition[] perturbationPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+            List<String> perturbationLines = Stream.of(perturbationPositions).map(HorizontalPosition::toString).collect(Collectors.toList());
+            Files.write(outPath.resolve(perturbationFileName), perturbationLines);
+        }
+
         switch (drawsPathMode) {
         case 1:
             break;
         case 2:
-            outputTurningPoint();
+            outputRaypathSegments();
             break;
         default:
             break;
@@ -244,7 +262,7 @@ public class RaypathMapper extends Operation {
         outputGMT();
     }
 
-    private void outputTurningPoint() throws IOException {
+    private void outputRaypathSegments() throws IOException {
 
         List<String> turningPointLines = new ArrayList<>();
         List<String> insideLines = new ArrayList<>();
@@ -258,6 +276,8 @@ public class RaypathMapper extends Operation {
                 outsideLines.add(ray.getLeavePoint() + " " + ray.getReceiver());
             }
         });
+
+        System.err.println("Calculation of raypath segments for " + turningPointLines.size() + " raypaths succeeded.");
 
         Files.write(outPath.resolve(turningPointFileName), turningPointLines);
         Files.write(outPath.resolve(insideFileName), insideLines);
@@ -448,6 +468,7 @@ public class RaypathMapper extends Operation {
             pw.println("");
             pw.println("gmt pscoast -K $R $J $B $C -P  > $psname");
             pw.println("");
+            pw.println("#------- Raypath");
             pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -J -R -O -P -Sa0.3 -G255/156/0 -Wthinnest -K  >> $psname");
             pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -J -R -O -P -Si0.3 -G71/187/243 -Wthinnest -K >> $psname");
             pw.println("");
@@ -460,11 +481,19 @@ public class RaypathMapper extends Operation {
             pw.println("");
             pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
             pw.println("");
+
+            if (voxelPath != null) {
+            pw.println("#------- Perturbation");
+            pw.println("gmt psxy " + perturbationFileName + " -: -J -R -O -P -Sc0.2 -G0/255/0 -Wthinnest -K >> $psname");
+            pw.println("");
+            }
+
             pw.println("#------- Finalize");
             pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $psname");
             pw.println("END");
             pw.println("");
             pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
+            pw.println("gmt psconvert $psname -A -Tg -Qg4 -E100");
             pw.println("");
             pw.println("#-------- clear");
             pw.println("rm -rf color.cpt tmp.grd comp.grd $OUTFILE gmt.conf gmt.history");
