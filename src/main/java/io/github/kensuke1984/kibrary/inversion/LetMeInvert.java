@@ -851,6 +851,25 @@ public class LetMeInvert extends Operation {
                         eqB = eqB.scalarMultiply(mul);
                         eqB.setObsNormSquare(eqA.getDVector().getObsNormSquare());
                     }
+
+
+                    /* TODO: erase -------------*
+                    outPath = DatasetAid.createOutputFolder(workPath, "lmi_temp", tag, GadgetAid.getTemporaryString());
+                    RealMatrix ata = eq.getAtA();
+                    try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath.resolve("ata_diag.lst")))) {
+                        for (int i = 0; i < ata.getColumnDimension(); i++) {
+                            pw.println(ata.getEntry(i, i));
+                        }
+                    }
+                    RealVector atd = eq.getAtD();
+                    try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath.resolve("atd.lst")))) {
+                        for (int i = 0; i < atd.getDimension(); i++) {
+                            pw.println(atd.getEntry(i));
+                        }
+                    }
+                    throw new RuntimeException("stop here");
+                    *  -------------*/
+
                 }
             }
 

@@ -492,7 +492,8 @@ public class RaypathMapper extends Operation {
             pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $psname");
             pw.println("END");
             pw.println("");
-            pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
+//            pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
+            pw.println("gmt psconvert $psname -A -Tf -Qg4 -E100");
             pw.println("gmt psconvert $psname -A -Tg -Qg4 -E100");
             pw.println("");
             pw.println("#-------- clear");

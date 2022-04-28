@@ -115,8 +115,9 @@ public class MapperShellscript {
                 pw.println("");
             }
 
+            pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
             pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
-            pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
+//            pw.println("gmt ps2raster $outputps -A -Tgf -Qg4 -E150");
             pw.println("echo \"Done!\"");
         }
     }
