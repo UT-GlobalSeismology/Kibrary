@@ -32,9 +32,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @version 0.0.6
  */
 public class UnknownParameterFile {
-
-    private UnknownParameterFile() {
-    }
+    private UnknownParameterFile() {}
 
     /**
      * @param path of an unknown parameter file.

@@ -72,6 +72,9 @@ public class CheckerboardMaker {
         options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
                 .desc("A tag to include in output folder name.").build());
 
+        options.addOption(Option.builder("x").longOpt("longitude").hasArg().argName("longitude")
+                .desc("Flip sign of perturbation above the given longitude.").build()); //TODO erase or sophisticate
+
         return options;
     }
 
@@ -87,10 +90,12 @@ public class CheckerboardMaker {
         boolean flipSign = cmdLine.hasOption("f");
         String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
 
+        Double switchingLongitude = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : null; //TODO erase or sophisticate
+
         PolynomialStructure prem = PolynomialStructure.PREM;
 
         CheckerboardMaker cm = new CheckerboardMaker(voxelPath, percentVs, flipSign, prem, tag);
-        cm.velocityCheckerboard();
+        cm.velocityCheckerboard(switchingLongitude);
         cm.writeModel();
     }
 
@@ -102,7 +107,7 @@ public class CheckerboardMaker {
         this.tag = tag;
     }
 
-    private void velocityCheckerboard() throws IOException {
+    private void velocityCheckerboard(Double switchingLongitude) throws IOException {
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         //double[] layerThicknesses = file.getThicknesses();
@@ -117,7 +122,9 @@ public class CheckerboardMaker {
                 int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude
                         + (position.getLongitude() - referencePosition.getLongitude()) / dLongitude) + i;
 
-                if ((numDiff % 2 == 1) ^ flipSign) { // ^ is XOR
+                boolean switchSignHere = (switchingLongitude != null) ? (position.getLongitude() > switchingLongitude) : false; //TODO erase or sophisticate
+
+                if ((numDiff % 2 == 1) ^ flipSign ^ switchSignHere) { // ^ is XOR
                     perturbationList.add(-percentVs);
                 } else {
                     perturbationList.add(percentVs);
