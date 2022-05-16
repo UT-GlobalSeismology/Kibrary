@@ -81,14 +81,15 @@ public class RaypathMapper extends Operation {
      * draw Path Mode; 0: don't draw, 1: quick draw, 2: detailed draw
      */
     protected int drawsPathMode;
-
-    private Set<GlobalCMTID> events;
-    private Set<Observer> observers;
-    private Set<Raypath> raypaths;
+    private boolean binDistance;
 
     private Phase piercePhase;
     private double pierceDepth;
     private String model;
+
+    private Set<GlobalCMTID> events;
+    private Set<Observer> observers;
+    private Set<Raypath> raypaths;
 
     /**
      * draw points of partial TODO
@@ -472,11 +473,24 @@ public class RaypathMapper extends Operation {
             pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -J -R -O -P -Sa0.3 -G255/156/0 -Wthinnest -K  >> $psname");
             pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -J -R -O -P -Si0.3 -G71/187/243 -Wthinnest -K >> $psname");
             pw.println("");
+
             pw.println("while read line");
             pw.println("do");
-            pw.println("echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
-            pw.println("gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
+            if (binDistance) {
+                pw.println("  distance=$(echo $line | awk '{print $6}')");
+                pw.println("  bin=$( $(($distance / 10 % 10)) )");
+                pw.println("  if [ $(( ]; then");
+                pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
+
+                //TODO finish up this part
+
+            } else {
+                pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
+            }
             pw.println("done < " + insideFileName);
+
             pw.println("");
             pw.println("");
             pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
