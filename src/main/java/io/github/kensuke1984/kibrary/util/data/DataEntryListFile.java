@@ -8,7 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,89 +28,64 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
-/**
- * File containing list of observers.
- * <p>
- * Each line: station code, network code, latitude, longitude.
- * <p>
- * Only the station, network, latitude, and longitude are the parts used to convey data;
- * the rest of the information is just for the users to see.
- *
- * @author Kensuke Konishi
- * @version 0.2.0.4
- */
-public final class ObserverListFile {
-    private ObserverListFile() {}
+public class DataEntryListFile {
 
-    /**
-     * Writes an observer list file given a set of Observers.
-     * @param observerSet Set of observers
-     * @param outputPath     of write file
-     * @param options     for write
-     * @throws IOException if an I/O error occurs
-     */
-    public static void write(Set<Observer> observerSet, Path outputPath, OpenOption... options) throws IOException {
+    public static void writeFromMap(Map<GlobalCMTID, Set<DataEntry>> entryMap, Path outputPath, OpenOption... options) throws IOException {
+        Set<DataEntry> entrySet = new HashSet<>();
+        for (GlobalCMTID event : entryMap.keySet()) {
+            entrySet.addAll(entryMap.get(event));
+        }
+        writeFromSet(entrySet, outputPath, options);
+    }
+
+    public static void writeFromSet(Set<DataEntry> entrySet, Path outputPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            pw.println("# station network latitude longitude");
-            observerSet.stream().sorted().forEach(observer -> {
-                pw.println(observer.getPaddedInfoString());
-            });
+            pw.println("# globalCMTID station network latitude longitude component");
+            entrySet.stream().sorted().forEach(entry -> pw.println(entry.toString()));
         }
     }
 
-    /**
-     * Reads an observer list file.
-     * Only the station, network, latitude, and longitude is read in; other information are ignored.
-     * @param inputPath of station list file
-     * @return (<b>unmodifiable</b>) Set of stations
-     * @throws IOException if an I/O error occurs
-     */
-    public static Set<Observer> read(Path inputPath) throws IOException {
-        Set<Observer> observerSet = new HashSet<>();
+    public static Map<GlobalCMTID, Set<DataEntry>> readAsMap(Path inputPath) throws IOException {
+        Set<DataEntry> entrySet = readAsSet(inputPath);
+
+        // rearrange Set into Map
+        Map<GlobalCMTID, Set<DataEntry>> entryMap = new HashMap<>();
+        for (DataEntry entry : entrySet) {
+            GlobalCMTID event = entry.getEvent();
+            if (!entryMap.containsKey(event)) entryMap.put(event, new HashSet<>());
+            entryMap.get(event).add(entry);
+        }
+        return Collections.unmodifiableMap(entryMap);
+    }
+
+    public static Set<DataEntry> readAsSet(Path inputPath) throws IOException {
+        Set<DataEntry> entrySet = new HashSet<>();
+
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while(reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
-            HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
-            Observer observer = new Observer(parts[0], parts[1], hp);
-            if (!observerSet.add(observer))
-                throw new RuntimeException("There is duplication of " + observer + " in " + inputPath + ".");
+            GlobalCMTID event = new GlobalCMTID(parts[0]);
+            HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]));
+            Observer observer = new Observer(parts[1], parts[2], hp);
+            SACComponent component = SACComponent.valueOf(parts[5]);
+
+            DataEntry entry = new DataEntry(event, observer, component);
+            if (!entrySet.add(entry))
+                throw new RuntimeException("There is duplication of " + entry + " in " + inputPath + ".");
         }
 
-//        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
-//        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()){
-//            System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
-//            Map<String, List<Observer>> nameToObserver = new HashMap<>();
-//            observerSet.forEach(sta -> {
-//                if (nameToObserver.containsKey(sta.toString())) {
-//                    List<Observer> tmp = nameToObserver.get(sta.toString());
-//                    tmp.add(sta);
-//                    nameToObserver.put(sta.toString(), tmp);
-//                }
-//                else {
-//                    List<Observer> tmp = new ArrayList<>();
-//                    tmp.add(sta);
-//                    nameToObserver.put(sta.toString(), tmp);
-//                }
-//            });
-//            nameToObserver.forEach((name, obs) -> {
-//                if (obs.size() > 1) {
-//                    obs.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
-//                }
-//            });
-//        }
-
-        DatasetAid.checkNum(observerSet.size(), "observer", "observers");
-        return Collections.unmodifiableSet(observerSet);
+        return Collections.unmodifiableSet(entrySet);
     }
 
     /**
-     * Reads observer information from an input source
-     * and creates an observer list file under the working directory.
+     * Reads dataset information from an input source
+     * and creates a data entry list file under the working directory.
      * The input source may be SAC files in event directories under a dataset directory,
      * a timewindow file, or a basic ID file.
      *
@@ -164,19 +141,21 @@ public final class ObserverListFile {
                 : SACComponent.componentSetOf("ZRT");
 
         Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("observer" + GadgetAid.getTemporaryString() + ".lst");
+                : Paths.get("dataEntry" + GadgetAid.getTemporaryString() + ".lst");
 
-        Set<Observer> observerSet;
+        Set<DataEntry> entrySet;
         if (cmdLine.hasOption("d")) {
-            observerSet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
+            entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
             Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            observerSet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
-                    .map(TimewindowData::getObserver).collect(Collectors.toSet());
+            entrySet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
+                    .map(timewindow -> new DataEntry(timewindow.getGlobalCMTID(), timewindow.getObserver(), timewindow.getComponent()))
+                    .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             BasicID[] basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")));
-            observerSet = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
-                    .map(BasicID::getObserver).collect(Collectors.toSet());
+            entrySet = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
+                    .map(id -> new DataEntry(id.getGlobalCMTID(), id.getObserver(), id.getSacComponent()))
+                    .collect(Collectors.toSet());
         } else {
             String pathString = "";
             Path inPath;
@@ -185,18 +164,20 @@ public final class ObserverListFile {
                 if (pathString == null || pathString.isEmpty()) return;
                 inPath = Paths.get(pathString);
             } while (!Files.exists(inPath) || !Files.isDirectory(inPath));
-            observerSet = collectFromDataset(inPath, components);
+            entrySet = collectFromDataset(inPath, components);
         }
 
-        if (!DatasetAid.checkNum(observerSet.size(), "observer", "observers")) return;
-        write(observerSet, outputPath);
+        if (!DatasetAid.checkNum(entrySet.size(), "entry", "entries")) return;
+        writeFromSet(entrySet, outputPath);
     }
 
-    private static Set<Observer> collectFromDataset(Path datasetPath, Set<SACComponent> components) throws IOException {
+    private static Set<DataEntry> collectFromDataset(Path datasetPath, Set<SACComponent> components) throws IOException {
         Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(datasetPath);
         return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent()))
                 .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                .map(Observer::of).collect(Collectors.toSet());
+                .map(header -> new DataEntry(header.getGlobalCMTID(), header.getObserver(), header.getComponent()))
+                .collect(Collectors.toSet());
     }
+
 
 }

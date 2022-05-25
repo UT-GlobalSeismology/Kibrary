@@ -150,16 +150,16 @@ public final class TimewindowDataFile {
     /**
      * Read timewindow information from binary format file
      *
-     * @param infoPath of the information file to read
+     * @param inputPath of the information file to read
      * @return <b>unmodifiable</b> Set of timewindow information
      * @throws IOException if an I/O error occurs
      * @author Kensuke Konishi
      * @author anselme add phase information
      */
-    public static Set<TimewindowData> read(Path infoPath) throws IOException {
-        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)));) {
+    public static Set<TimewindowData> read(Path inputPath) throws IOException {
+        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(inputPath)));) {
             long t = System.nanoTime();
-            long fileSize = Files.size(infoPath);
+            long fileSize = Files.size(inputPath);
             // Read header
             Observer[] observers = new Observer[dis.readShort()];
             GlobalCMTID[] events = new GlobalCMTID[dis.readShort()];
@@ -167,7 +167,7 @@ public final class TimewindowDataFile {
             int headerBytes = 3 * 2 + (8 + 8 + 8 * 2) * observers.length + 15 * events.length + 16 * phases.length;
             long windowParts = fileSize - headerBytes;
             if (windowParts % ONE_WINDOW_BYTE != 0)
-                throw new RuntimeException(infoPath + " has some problems.");
+                throw new RuntimeException(inputPath + " has some problems.");
             // station(8),network(8),position(8*2)
             byte[] observerBytes = new byte[32];
             for (int i = 0; i < observers.length; i++) {

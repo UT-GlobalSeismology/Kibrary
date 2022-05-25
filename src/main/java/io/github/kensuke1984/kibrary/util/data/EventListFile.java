@@ -45,12 +45,12 @@ public class EventListFile {
     /**
      * Writes an event list file given a set of GlobalCMTIDs.
      * @param eventSet Set of events
-     * @param outPath  of write file
+     * @param outputPath  of write file
      * @param options  for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(Set<GlobalCMTID> eventSet, Path outPath, OpenOption... options) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+    public static void write(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# GCMTID latitude longitude radius");
             eventSet.stream().sorted().forEach(event -> {
                 pw.println(event.toPaddedString() + " " + event.getEvent().getCmtLocation());
@@ -60,21 +60,21 @@ public class EventListFile {
 
     /**
      * Reads an event lsit file. Only the GlobalCMTID is read in; other information are ignored.
-     * @param infoPath of event information file
+     * @param inputPath of event information file
      * @return (<b>unmodifiable</b>) Set of events
      * @throws IOException if an I/O error occurs
      *
      * @author otsuru
      * @since 2022/2/5
      */
-    public static Set<GlobalCMTID> read(Path infoPath) throws IOException {
+    public static Set<GlobalCMTID> read(Path inputPath) throws IOException {
         Set<GlobalCMTID> eventSet = new HashSet<>();
-        InformationFileReader reader = new InformationFileReader(infoPath, true);
+        InformationFileReader reader = new InformationFileReader(inputPath, true);
         while(reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             GlobalCMTID event = new GlobalCMTID(parts[0]);
             if (!eventSet.add(event))
-                throw new RuntimeException("There is duplication of " + event + " in " + infoPath + ".");
+                throw new RuntimeException("There is duplication of " + event + " in " + inputPath + ".");
         }
 
         DatasetAid.checkNum(eventSet.size(), "event", "events");
@@ -82,8 +82,10 @@ public class EventListFile {
     }
 
     /**
-     * Finds event directories under an input directory,
-     * and creates an event lsit file under the working directory.
+     * Reads event information from an input source
+     * and creates an event list file under the working directory.
+     * The input source may be SAC files in event directories under a dataset directory,
+     * a timewindow file, or a basic ID file.
      *
      * @param args
      * @throws IOException if an I/O error occurs
@@ -110,7 +112,7 @@ public class EventListFile {
                 .desc("Use dataset folder containing event folders as input").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
                 .desc("Use timewindow file as input").build());
-        inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("BasicIDFile")
+        inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("basicIDFile")
                 .desc("Use basic ID file as input").build());
         options.addOptionGroup(inputOption);
 
@@ -153,7 +155,6 @@ public class EventListFile {
 
         if (!DatasetAid.checkNum(eventSet.size(), "event", "events")) return;
         write(eventSet, outputPath);
-
     }
 
 }
