@@ -34,6 +34,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
+/**
+ * File containing list of {@link DataEntry}.
+ * <p>
+ * Each line: globalCMTID station network latitude longitude component
+ * <p>
+ * Here, "station network latitude longitude" is for the observer.
+ *
+ * @author otsuru
+ * @since 2022/5/25
+ */
 public class DataEntryListFile {
 
     public static void writeFromMap(Map<GlobalCMTID, Set<DataEntry>> entryMap, Path outputPath, OpenOption... options) throws IOException {
@@ -85,8 +95,8 @@ public class DataEntryListFile {
 
     /**
      * Reads dataset information from an input source
-     * and creates a data entry list file under the working directory.
-     * The input source may be SAC files in event directories under a dataset directory,
+     * and creates a data entry list file under the working folder.
+     * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic ID file.
      *
      * @param args

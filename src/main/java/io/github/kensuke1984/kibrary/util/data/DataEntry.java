@@ -3,6 +3,12 @@ package io.github.kensuke1984.kibrary.util.data;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
+/**
+ * Each entry of dataset, specified by event, observer, and component.
+ *
+ * @author otsuru
+ * @since 2022/5/25
+ */
 public class DataEntry implements Comparable<DataEntry> {
 
     private GlobalCMTID event;

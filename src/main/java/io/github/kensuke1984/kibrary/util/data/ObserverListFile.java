@@ -108,8 +108,8 @@ public final class ObserverListFile {
 
     /**
      * Reads observer information from an input source
-     * and creates an observer list file under the working directory.
-     * The input source may be SAC files in event directories under a dataset directory,
+     * and creates an observer list file under the working folder.
+     * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic ID file.
      *
      * @param args

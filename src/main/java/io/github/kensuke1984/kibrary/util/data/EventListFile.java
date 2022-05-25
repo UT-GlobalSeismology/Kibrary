@@ -83,8 +83,8 @@ public class EventListFile {
 
     /**
      * Reads event information from an input source
-     * and creates an event list file under the working directory.
-     * The input source may be SAC files in event directories under a dataset directory,
+     * and creates an event list file under the working folder.
+     * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic ID file.
      *
      * @param args

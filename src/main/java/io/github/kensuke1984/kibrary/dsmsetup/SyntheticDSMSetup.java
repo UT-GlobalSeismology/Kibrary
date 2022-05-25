@@ -2,29 +2,28 @@ package io.github.kensuke1984.kibrary.dsmsetup;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.IOUtils;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -34,11 +33,11 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
 /**
  * Operation that makes DSM input files to be used in tish and tipsv,
  * and prepares the environment to run these programs.
- * Input files can be made either for existing observed dataset in event folders, or for a virtual set of observers.
+ * Input files can be made either for existing observed dataset in event folders, for a data entry list file,
+ * or for a virtual set of observers.
  * <p>
- * Input event folders must be inside one certain input directory, which may or may not be the workpath.
- * Only observers that have files of the specified components will be considered.
- * If there is no valid data in a certain input event directory, the corresponding output event directory will not be made.
+ * Only observers that have files (or entries) of the specified components will be considered.
+ * If there is no valid data in a certain input event folder, the corresponding output event folder will not be made.
  * <p>
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.
@@ -64,19 +63,21 @@ public class SyntheticDSMSetup extends Operation {
     private Set<SACComponent> components;
 
     /**
+     * The data entry list file
+     */
+    private Path entryPath;
+    /**
      * The root folder containing event folders which have observed SAC files
      */
     private Path obsPath;
     /**
-     * structure file instead of PREM
+     * Structure file to use instead of PREM
      */
     private Path structurePath;
-    private String structureName;
     /**
-     * Whether to use only events in a timewindow file
+     * Structure to use
      */
-    private boolean usewindow;
-    private Path timewindowPath;
+    private String structureName;
 
     /**
      * Time length [s].
@@ -105,7 +106,6 @@ public class SyntheticDSMSetup extends Operation {
      * maximum epicentral distance of virtual observers
      */
     private int synMaxDistance;
-    private boolean specfemDataset;
 
     /**
      * @param args  none to create a property file <br>
@@ -130,14 +130,14 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
+            pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
+            pw.println("#entryPath ");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
             pw.println("#structureName ");
-            pw.println("##To use only events in a timewindow file, set its path");
-            pw.println("#timewindowPath NOT SUPPORTED YET");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen ");
             pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
@@ -150,8 +150,6 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#synMinDistance ");
             pw.println("##Maximum epicentral distance of virtual observer, must be integer (170)");
             pw.println("#synMaxDistance ");
-            pw.println("##SPECFEM3D_GLOBE test dataset (false)");
-            pw.println("#specfemDataset ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -168,14 +166,15 @@ public class SyntheticDSMSetup extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        obsPath = property.parsePath("obsPath", ".", true, workPath);
+        if (property.containsKey("entryPath")) {
+            entryPath = property.parsePath("entryPath", null, true, workPath);
+        } else {
+            obsPath = property.parsePath("obsPath", ".", true, workPath);
+        }
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
             structureName = property.parseString("structureName", "PREM");
-        }
-        if (usewindow = property.containsKey("timewindowPath")) {  // This "=" is not a mistake, calm down.
-            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         }
 
         tlen = property.parseDouble("tlen", "3276.8");
@@ -188,56 +187,10 @@ public class SyntheticDSMSetup extends Operation {
         if (synMinDistance < 0 || synMinDistance > synMaxDistance || 360 < synMaxDistance)
             throw new IllegalArgumentException("Distance range " + synMinDistance + " , " + synMaxDistance + " is invalid.");
 
-        specfemDataset = property.parseBoolean("specfemDataset", "false");
-
         // write additional info
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
 
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("header")) property.setProperty("header", "PREM");
-        if (!property.containsKey("tlen")) property.setProperty("tlen", "3276.8");
-        if (!property.containsKey("np")) property.setProperty("np", "512");
-        if (!property.containsKey("mpi")) property.setProperty("mpi", "true");
-        if (!property.containsKey("syntheticDataset")) property.setProperty("syntheticDataset", "false");
-        if (!property.containsKey("synMinDistance")) property.setProperty("synMinDistance", "1");
-        if (!property.containsKey("synMaxDistance")) property.setProperty("synMaxDistance", "170");
-        if (!property.containsKey("specfemDataset")) property.setProperty("specfemDataset", "false");
-        if (!property.containsKey("timewindowPath")) property.setProperty("timewindowPath", "");
-        // write additional info
-        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        obsPath = getPath("obsPath");
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        header = property.getProperty("header").split("\\s+")[0];
-        if (property.containsKey("structureFile"))
-            structurePath = Paths.get(property.getProperty("structureFile").split("\\s+")[0]);
-        else
-            structurePath = Paths.get("PREM");
-        tlen = Double.parseDouble(property.getProperty("tlen").split("\\s+")[0]);
-        np = Integer.parseInt(property.getProperty("np").split("\\s+")[0]);
-        mpi = Boolean.parseBoolean(property.getProperty("mpi"));
-
-        syntheticDataset = Boolean.parseBoolean(property.getProperty("syntheticDataset"));
-        synMinDistance = Integer.parseInt(property.getProperty("synMinDistance"));
-        synMaxDistance = Integer.parseInt(property.getProperty("synMaxDistance"));
-        specfemDataset = Boolean.parseBoolean(property.getProperty("specfemDataset"));
-
-        usewindow = property.getProperty("timewindowPath") != "";
-        timewindowPath = Paths.get(property.getProperty("timewindowPath"));
-    }
-*/
 
     /**
      * @author Kensuke Konishi
@@ -245,11 +198,42 @@ public class SyntheticDSMSetup extends Operation {
      */
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-            return;
+
+        // create set of events and observers to set up DSM for
+        Map<GlobalCMTID, Set<Observer>> rayMap = new HashMap<>();
+
+        if (entryPath != null) {
+            Map<GlobalCMTID, Set<DataEntry>> entryMap = DataEntryListFile.readAsMap(entryPath);
+            if (!DatasetAid.checkNum(entryMap.size(), "event", "events")) {
+                return;
+            }
+
+            for (GlobalCMTID event : entryMap.keySet()) {
+                Set<Observer> observers = entryMap.get(event).stream()
+                        .filter(entry -> components.contains(entry.getComponent()))
+                        .map(DataEntry::getObserver).collect(Collectors.toSet());
+                rayMap.put(event, observers);
+            }
+
+        } else if (obsPath != null){
+            Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
+            if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
+                return;
+            }
+
+            for (EventFolder eventDir : eventDirs) {
+                Set<Observer> observers = eventDir.sacFileSet().stream()
+                        .filter(name -> name.isOBS() && components.contains(name.getComponent()))
+                        .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                        .map(Observer::of).collect(Collectors.toSet());
+                rayMap.put(eventDir.getGlobalCMTID(), observers);
+            }
+
+        } else {
+            throw new IllegalStateException("Either entryMap or obsPath must be specified.");
         }
 
+        // set structure to use
         PolynomialStructure structure = null;
         if (structurePath != null) {
             structure = new PolynomialStructure(structurePath);
@@ -257,19 +241,12 @@ public class SyntheticDSMSetup extends Operation {
             structure = PolynomialStructure.of(structureName);
         }
 
-        //use only events in timewindow file TODO
-        if (usewindow) {
-            Set<GlobalCMTID> idInWindow =
-                    TimewindowDataFile.read(timewindowPath).stream()
-                    .map(tw -> tw.getGlobalCMTID()).collect(Collectors.toSet());
-        }
-
         Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", tag, GadgetAid.getTemporaryString());
 
         if (property != null)
             property.write(outPath.resolve("syndsm.properties"));
 
-        //synthetic station set
+        // synthetic observer set
         Set<Observer> synObserverSet = new HashSet<>();
         if (syntheticDataset) {
             for (int i = synMinDistance; i <= synMaxDistance; i+=1) {
@@ -281,30 +258,10 @@ public class SyntheticDSMSetup extends Operation {
             }
         }
 
-        //specfem test dataset
-        if (specfemDataset) {
-            Set<Observer> specfemObserverSet = IOUtils.readLines(SyntheticDSMSetup.class.getClassLoader()
-                    .getResourceAsStream("specfem_stations.inf"), Charset.defaultCharset())
-                .stream().map(s -> Observer.createObserver(s)).collect(Collectors.toSet());
+        // output information files in each event folder
+        for (GlobalCMTID event : rayMap.keySet()) {
             try {
-                GlobalCMTAccess id = new GlobalCMTID("060994A").getEvent();
-                Path eventOut = outPath.resolve(id.toString());
-                SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, id, specfemObserverSet, header, tlen, np);
-                Files.createDirectories(eventOut.resolve(header));
-                info.writePSV(eventOut.resolve(header + "_PSV.inf"));
-                info.writeSH(eventOut.resolve(header + "_SH.inf"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // output information files in each event directory
-        for (EventFolder eventDir : eventDirs) {
-            try {
-                Set<Observer> observers = eventDir.sacFileSet().stream()
-                        .filter(name -> name.isOBS() && components.contains(name.getComponent()))
-                        .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                        .map(Observer::of).collect(Collectors.toSet());
+                Set<Observer> observers = rayMap.get(event);
                 if (syntheticDataset)
                     observers = synObserverSet;
                 if (observers.isEmpty())
@@ -313,29 +270,29 @@ public class SyntheticDSMSetup extends Operation {
                 // in the same event folder, observers with the same name should have same position
                 int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different positions in "
-                            + eventDir);
+                    System.err.println("!Caution there are observers with the same name and different position for "
+                            + event);
 
-                Path eventOut = outPath.resolve(eventDir.toString());
+                Path eventOut = outPath.resolve(event.toString());
 
-                if (eventDir.getGlobalCMTID().getEvent() != null) {
-                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, eventDir.getGlobalCMTID().getEvent(), observers, header, tlen, np);
+                if (event.getEvent() != null) {
+                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEvent(), observers, header, tlen, np);
                     Files.createDirectories(eventOut.resolve(header));
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));
                 }
                 else {
-                    System.err.println(eventDir.getGlobalCMTID() + "is not in the catalog");
+                    System.err.println(event + "is not in the catalog");
                 }
             } catch (IOException e) {
                 // If there are any problems, move on to the next event.
-                System.err.println("Error on " + eventDir);
+                System.err.println("Error on " + event);
                 e.printStackTrace();
             }
         }
 
         // output shellscripts for execution of tipsv and tish
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
+        DSMShellscript shell = new DSMShellscript(outPath, mpi, rayMap.size(), header);
         shell.write(SPCType.SYNTHETIC, SPCMode.PSV);
         shell.write(SPCType.SYNTHETIC, SPCMode.SH);
     }
