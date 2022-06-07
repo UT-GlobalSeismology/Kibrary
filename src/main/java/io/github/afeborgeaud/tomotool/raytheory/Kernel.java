@@ -1,6 +1,6 @@
 package io.github.afeborgeaud.tomotool.raytheory;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 public class Kernel {
 

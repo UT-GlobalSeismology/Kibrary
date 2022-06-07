@@ -1,6 +1,14 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -44,23 +52,81 @@ public class Summon {
         }
 
         //~get arguments~//
-        String[] argsInput = {""};
-        if (brooklyn.displayUsage()) {
+        Options options = brooklyn.getOptions();
+        CommandLine cmdLine = null;
+        if (options != null) {
+            showUsage(options);
             System.out.print("Enter arguments : ");
-            argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+            String[] argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+            try {
+                cmdLine = parseArgs(options, argsInput);
+            } catch (ParseException e) {
+                showUsage(options);
+                return;
+            }
         }
 
         //~run brooklyn~//
         System.err.println(brooklyn.getClassName() + " is running.");
         try {
-            brooklyn.summon(argsInput);
+            brooklyn.summon(cmdLine);
+        } catch (InvocationTargetException e) {
+            System.err.println("InvocationTargetException caused by");
+            e.getCause().printStackTrace();
+            return;
         } catch (Exception e) {
-            System.err.println("Could not run " + brooklyn + " due to " + e.getCause());
             e.printStackTrace();
             return;
         }
         System.err.println(brooklyn.getClassName() + " finished.");
 
+    }
+
+    /**
+     * Create a new {@link Options} instance including default options.
+     * @return an options instance
+     *
+     * @author otsuru
+     * @since 2022/4/20
+     */
+    public static Options defaultOptions() {
+        Options options = new Options();
+        options.addOption("h", "help", false, "Show usage");
+        return options;
+    }
+
+    /**
+     * Reads command line arguments according to a set of {@link Options} and sets them in a {@link CommandLine} object.
+     * @param options (Options) The set of options accepted in a command line
+     * @param args (String[]) Command line input
+     * @return (CommandLine) Parsed arguments
+     * @throws ParseException if input is illegal, or if help should be shown
+     *
+     * @author otsuru
+     * @since 2022/4/20
+     */
+    public static CommandLine parseArgs(Options options, String[] args) throws ParseException {
+        CommandLineParser parser = new DefaultParser();
+        CommandLine comLine = parser.parse(options, args);
+
+        if (comLine.hasOption("h")) throw new ParseException("help");
+
+        return comLine;
+    }
+
+    /**
+     * Shows the usage of a set of options.
+     * @param (Options) The set of options accepted in a command line
+     *
+     * @author otsuru
+     * @since 2022/4/20
+     */
+    public static void showUsage(Options options) {
+        HelpFormatter formatter = new HelpFormatter();
+        // to display options in order of declaration, reset the comparator with null
+        formatter.setOptionComparator(null);
+        // cmdLineSyntax (the first argument) is set blank here because it will become too long
+        formatter.printHelp(" ", options, true);
     }
 
 }

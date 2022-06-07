@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -49,6 +50,10 @@ public class SyntheticDSMSetup extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
     /**
      * Information file name is header_[psv,sh].inf (default:PREM)
      */
@@ -119,6 +124,8 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
@@ -156,6 +163,7 @@ public class SyntheticDSMSetup extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         header = property.parseString("header", "PREM").split("\\s+")[0];
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -256,10 +264,7 @@ public class SyntheticDSMSetup extends Operation {
                     .map(tw -> tw.getGlobalCMTID()).collect(Collectors.toSet());
         }
 
-
-        Path outPath = workPath.resolve("synthetic" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", tag, GadgetAid.getTemporaryString());
 
         if (property != null)
             property.write(outPath.resolve("syndsm.properties"));

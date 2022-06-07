@@ -40,6 +40,10 @@ public class DataLobby extends Operation {
      * Path for the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
 
     private String datacenter;
     private String networks;
@@ -87,6 +91,8 @@ public class DataLobby extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##Datacenter to send request, from {IRIS, ORFEUS} (IRIS)");
             pw.println("#datacenter ");
             pw.println("##Network names for request, listed using commas, must be defined");
@@ -131,6 +137,7 @@ public class DataLobby extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         datacenter = property.parseStringSingle("datacenter", "IRIS");
         networks = property.parseStringSingle("networks", null);
@@ -230,9 +237,7 @@ public class DataLobby extends Operation {
             return;
         }
 
-        Path outPath = workPath.resolve("dl" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", tag, GadgetAid.getTemporaryString());
 
         final AtomicInteger n = new AtomicInteger();
         requestedEvents.stream().sorted().forEach(event -> {

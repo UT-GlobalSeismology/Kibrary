@@ -4,7 +4,7 @@ package io.github.kensuke1984.kibrary.util;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
  * @author Kensuke Konishi

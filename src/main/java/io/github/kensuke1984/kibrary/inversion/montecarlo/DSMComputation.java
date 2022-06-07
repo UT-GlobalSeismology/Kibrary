@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMInputFile;
 import io.github.kensuke1984.kibrary.external.DSMMPI;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -9,6 +8,7 @@ import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;

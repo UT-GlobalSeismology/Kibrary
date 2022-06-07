@@ -6,7 +6,6 @@ import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
-import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
@@ -25,7 +24,6 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
 public enum Manhattan_old {
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
-    RaypathDistribution(13, RaypathDistribution.class), //
     Result(14, Result.class), //
     SecondHandler(15, SecondHandler.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //

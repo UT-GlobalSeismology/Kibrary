@@ -1,24 +1,15 @@
 package io.github.afeborgeaud.tomotool.topoModel;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.afeborgeaud.tomotool.math.Sph;
 import io.github.afeborgeaud.tomotool.math.Sph_specfem;
 import io.github.afeborgeaud.tomotool.utilities.ReadUtils;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class ExternalModel implements Seismic3Dmodel {
 

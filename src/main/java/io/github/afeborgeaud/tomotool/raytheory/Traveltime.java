@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.afeborgeaud.tomotool.raytheory.TauPUtils.Ray;
 import io.github.afeborgeaud.tomotool.topoModel.Seismic3Dmodel;
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 public class Traveltime {
 

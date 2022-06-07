@@ -44,6 +44,10 @@ public class FilterDivider extends Operation {
      */
     private Path workPath;
     /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -111,6 +115,8 @@ public class FilterDivider extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a root folder containing observed dataset (.)");
@@ -143,6 +149,7 @@ public class FilterDivider extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -211,9 +218,7 @@ public class FilterDivider extends Operation {
             return;
         }
 
-        outPath = workPath.resolve("filtered" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "filtered", tag, GadgetAid.getTemporaryString());
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
@@ -286,7 +291,7 @@ public class FilterDivider extends Operation {
     private void filterAndout(SACFileName name) {
         try {
             SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
-            Path out = outPath.resolve(name.getGlobalCMTID() + "/" + name.getName());
+            Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
             sacFile.writeSAC(out);
             if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);
         } catch (Exception e) {

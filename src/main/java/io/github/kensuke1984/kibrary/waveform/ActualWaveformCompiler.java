@@ -82,6 +82,10 @@ public class ActualWaveformCompiler extends Operation {
      */
     private Path workPath;
     /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -224,6 +228,8 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
@@ -270,6 +276,7 @@ public class ActualWaveformCompiler extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -452,12 +459,10 @@ public class ActualWaveformCompiler extends Operation {
        readPeriodRanges();
 
        String dateStr = GadgetAid.getTemporaryString();
-       outPath = workPath.resolve("compiled" + dateStr);
-       Files.createDirectories(outPath);
-       System.err.println("Output folder is " + outPath);
+       outPath = DatasetAid.createOutputFolder(workPath, "compiled", tag, dateStr);
 
-       ObserverInformationFile.write(observerSet, outPath.resolve("observer" + dateStr + ".inf"));
-       EventInformationFile.write(eventSet, outPath.resolve("event" + dateStr + ".inf"));
+       ObserverInformationFile.write(observerSet, outPath.resolve("observer.lst"));
+       EventInformationFile.write(eventSet, outPath.resolve("event.lst"));
 
        Path waveIDPath = null;
        Path waveformPath = null;
@@ -472,8 +477,8 @@ public class ActualWaveformCompiler extends Operation {
        Path spcImIDPath = null;
        Path spcImPath = null;
 
-       waveIDPath = outPath.resolve("actualID" + dateStr + ".dat");
-       waveformPath = outPath.resolve("actual" + dateStr + ".dat");
+       waveIDPath = outPath.resolve("actualID.dat");
+       waveformPath = outPath.resolve("actual.dat");
        envelopeIDPath = outPath.resolve("envelopeID" + dateStr + ".dat");
        envelopePath = outPath.resolve("envelope" + dateStr + ".dat");
        hyIDPath = outPath.resolve("hyID" + dateStr + ".dat");
@@ -502,7 +507,7 @@ public class ActualWaveformCompiler extends Operation {
            ExecutorService es = ThreadAid.createFixedThreadPool();
 
            for (EventFolder eventDir : eventDirs)
-               es.execute(new Worker(eventDir));
+           es.execute(new Worker(eventDir));
            es.shutdown();
 
            while (!es.isTerminated()){

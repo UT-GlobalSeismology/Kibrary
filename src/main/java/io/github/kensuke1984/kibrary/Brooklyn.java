@@ -1,10 +1,18 @@
 package io.github.kensuke1984.kibrary;
 
 import java.util.Arrays;
-import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
+import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
@@ -19,11 +27,24 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
  * @since 2022/4/4
  */
 enum Brooklyn {
-    // Environment 00
+    // Environment & General 00
+    About(0, About.class),
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
+    EventInformationFile(5, EventInformationFile.class),
+    ObserverInformationFile(6, ObserverInformationFile.class),
     // Data download 10
-    DataAligner(13, DataAligner.class), //
+    DataTransfer(12, DataTransfer.class),
+    DataAligner(13, DataAligner.class),
+    // Synthetic  20
+    // Filtered 30
+    TimewindowDataFile(31, TimewindowDataFile.class),
+    StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
+    // Compiled 40
+    BasicIDFile(40, BasicIDFile.class),
+    // Partial 50
+    // Inversion 60
+    // Temporal 100
     ;
 
     private Class<?> c;
@@ -61,22 +82,12 @@ enum Brooklyn {
         return c.getName();
     }
 
-    boolean displayUsage() throws ReflectiveOperationException {
-        @SuppressWarnings("unchecked")
-        List<String> usageList = (List<String>) c.getMethod("usage", (Class<?>[]) null).invoke(null, (Object[]) null);
-        if (null == usageList) return false;
-
-        usageList.forEach(System.out::println);
-        return true;
+    Options getOptions() throws ReflectiveOperationException {
+        return (Options) c.getMethod("defineOptions", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
-    void summon(String[] args) throws ReflectiveOperationException {
-        // when no argument is entered
-        if (args.length == 1 && args[0].isEmpty()) {
-            c.getMethod("run", String[].class).invoke(null, (Object) new String[0]);
-        } else {
-            c.getMethod("run", String[].class).invoke(null, (Object) args);
-        }
+    void summon(CommandLine cmdLine) throws ReflectiveOperationException {
+        c.getMethod("run", CommandLine.class).invoke(null, (Object) cmdLine);
     }
 
 }

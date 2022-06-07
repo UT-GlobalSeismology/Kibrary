@@ -1,9 +1,18 @@
 package io.github.kensuke1984.kibrary;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.GroupLayout;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.WindowConstants;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 
 /**
  * About Kibrary.
@@ -18,22 +27,33 @@ public final class About extends javax.swing.JFrame {
     public static final String CODENAME = "Shiva";
     public static final String VERSION = "0.4.9.31";
     private static final String LINE = "Kibrary " + VERSION + " (" + CODENAME + ")\n" +
-    		"Made in Vana'diel\n" +
+            "Made in Vana'diel\n" +
             "Copyright \u00a9 2015-2020 Kensuke Konishi and Anselme F.E. Borgeaud.\n\n" +
             "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
 
     // kibrary.jar
     private static final String KIBRARY_JAR_URL = "https://bit.ly/31FkTrh";
 
-    private About() {
-        super("About Kibrary");
-        initComponents();
-    }
-
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        run(null);
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        return null;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     */
+    public static void run(CommandLine cmdLine) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -46,6 +66,11 @@ public final class About extends javax.swing.JFrame {
         }
         if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
         else System.err.println(LINE);
+    }
+
+    private About() {
+        super("About Kibrary");
+        initComponents();
     }
 
     private void initComponents() {

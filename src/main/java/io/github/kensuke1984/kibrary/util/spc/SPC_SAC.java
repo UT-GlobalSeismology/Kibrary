@@ -55,6 +55,10 @@ public final class SPC_SAC extends Operation {
      */
     private Path workPath;
     /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -110,6 +114,8 @@ public final class SPC_SAC extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##SACComponents to be written, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(boolean) Whether to use PSV spectrums (true)");
@@ -142,6 +148,7 @@ public final class SPC_SAC extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -244,9 +251,7 @@ public final class SPC_SAC extends Operation {
         if (useSH == true && (shSPCs = collectSHSPCs()).isEmpty())
             throw new FileNotFoundException("No SH spectrum files are found.");
 
-        outPath = workPath.resolve("spcsac" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", tag, GadgetAid.getTemporaryString());
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
 

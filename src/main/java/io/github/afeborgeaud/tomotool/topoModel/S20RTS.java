@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.github.afeborgeaud.tomotool.math.Sph_specfem;
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 

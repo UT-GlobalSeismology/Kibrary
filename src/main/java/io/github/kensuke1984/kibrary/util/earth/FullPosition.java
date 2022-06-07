@@ -80,10 +80,10 @@ public class FullPosition extends HorizontalPosition {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
+        // if horizontal position is different, false
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         FullPosition other = (FullPosition) obj;
-//        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
         return MathAid.equalWithinEpsilon(R, other.R, Math.pow(10, -R_PRECISION)/2);
     }
 

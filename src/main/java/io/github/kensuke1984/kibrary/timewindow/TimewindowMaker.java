@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -65,6 +66,10 @@ public class TimewindowMaker extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
     /**
      * Path of the output file
      */
@@ -126,6 +131,8 @@ public class TimewindowMaker extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(boolean) Whether or not to use major arc phases (false)");
@@ -155,10 +162,8 @@ public class TimewindowMaker extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        String date = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve("timewindow" + date + ".dat");
-        invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
-        timewindowSet = Collections.synchronizedSet(new HashSet<>());
+
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         majorArc = property.parseBoolean("majorArc", "false");
@@ -174,6 +179,11 @@ public class TimewindowMaker extends Operation {
         String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";
         catalogue_sS = readCatalogue(catalogueName_sS);
         catalogue_pP = readCatalogue(catalogueName_pP);
+
+        String dateStr = GadgetAid.getTemporaryString();
+        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", tag, dateStr, ".dat"));
+        invalidList = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", tag, dateStr, ".txt"));
+        timewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
 /*

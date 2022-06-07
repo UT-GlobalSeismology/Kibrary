@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.dsmsetup;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -7,6 +7,12 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
+/**
+ * Data of various 1D Earth structures
+ *
+ * @author otsuru
+ * @since 2022/2/5
+ */
 class PolynomialStructureData {
 
     static PolynomialStructure initialAnisoPREM() {

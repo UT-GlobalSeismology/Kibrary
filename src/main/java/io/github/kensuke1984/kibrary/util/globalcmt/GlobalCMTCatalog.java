@@ -1,7 +1,5 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -13,12 +11,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.swing.JOptionPane;
-
-import org.apache.commons.io.input.CloseShieldInputStream;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Catalog of global CMT solutions.
@@ -78,26 +73,18 @@ public final class GlobalCMTCatalog {
     }
 
     private static Path selectCatalogFile() {
-        Path catalogFile;
-        String path = System.getProperty("user.dir");
-        do {
-            try {
-                path = JOptionPane.showInputDialog("A catalog filename?", path);
-            } catch (Exception e) {
-                System.err.println("A catalog filename?");
-                try (BufferedReader br = new BufferedReader(
-                        new InputStreamReader(CloseShieldInputStream.wrap(System.in)))) {
-                    path = br.readLine().trim();
-                    if (!path.startsWith("/")) path = System.getProperty("user.dir") + "/" + path;
-                } catch (Exception e2) {
-                    e2.printStackTrace();
-                    throw new RuntimeException("No catalog.");
-                }
-            } finally {
-                catalogFile = Paths.get(path);
-            }
-        } while (!Files.exists(catalogFile));
-        return catalogFile;
+        Path catalogPath;
+        try {
+            String pathString = "";
+            do {
+                pathString = GadgetAid.readInputDialogOrLine("A catalog filename?", pathString);
+                catalogPath = Paths.get(pathString);
+            } while (!Files.exists(catalogPath) || Files.isDirectory(catalogPath));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("No catalog");
+        }
+        return catalogPath;
     }
 
 

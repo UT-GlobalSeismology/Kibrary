@@ -46,6 +46,10 @@ public class DataKitchen extends Operation {
      */
     private Path workPath;
     /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -88,6 +92,8 @@ public class DataKitchen extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##The name of catalog to use from {cmt, pde}  (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling Hz, can not be changed now (20)");
@@ -120,6 +126,7 @@ public class DataKitchen extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":
@@ -215,9 +222,7 @@ public class DataKitchen extends Operation {
             return;
         }
 
-        outPath = workPath.resolve("processed" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "processed", tag, GadgetAid.getTemporaryString());
 
         // create processors for each event
         Set<EventProcessor> eps = eventDirs.stream().map(eventDir -> {

@@ -1366,8 +1366,8 @@ public class LetMeInvert extends Operation {
             dVector.outOrder(outPath);
             dVector.outPhases(outPath);
             outEachTrace(outPath.resolve("trace"));
-            UnknownParameterFile.write(outPath.resolve("unknownParameterOrder.inf"), eq.getParameterList());
-            UnknownParameterFile.write(outPath.resolve("originalUnknownParameterOrder.inf"), eq.getOriginalParameterList());
+            UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
+            UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
             eq.outputA(outPath.resolve("partial"));
 //			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
             eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));

@@ -239,7 +239,7 @@ public class TriangleRadialSpline {
 	}
 	
 	public void writeNewParameters(Path outPath) throws IOException {
-		UnknownParameterFile.write(outPath, newUnknowns.stream().collect(Collectors.toList()));
+		UnknownParameterFile.write(newUnknowns.stream().collect(Collectors.toList()), outPath);
 	}
 	
 	public Matrix computeNewA(RealMatrix a) {

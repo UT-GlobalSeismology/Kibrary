@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -20,11 +21,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.swing.JOptionPane;
-
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -215,21 +220,65 @@ public final class StaticCorrectionDataFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
-        Set<StaticCorrectionData> scf;
-        if (args.length != 0)
-            scf = StaticCorrectionDataFile.read(Paths.get(args[0]));
-        else {
-            String s = JOptionPane.showInputDialog("file?");
-            if (s == null || s.isEmpty()) return;
-            scf = StaticCorrectionDataFile.read(Paths.get(s));
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
-        scf.stream().sorted().forEach(corr -> {
-            double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
-                    .getAzimuth(corr.getObserver().getPosition()));
-            double distance = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
-                    .getEpicentralDistance(corr.getObserver().getPosition()));
-            System.out.println(corr.toString() + " " + azimuth + " " + distance);
-        });
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+        // input
+        options.addOption(Option.builder("c").longOpt("correction").hasArg().argName("staticCorrectionFile")
+                .desc("Set input static correction file").build());
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        Path filePath;
+        if (cmdLine.hasOption("c")) {
+            filePath = Paths.get(cmdLine.getOptionValue("c"));
+            if (!Files.exists(filePath) || Files.isDirectory(filePath)) {
+                System.err.println(filePath + " does not exist or is a directory.");
+                return;
+            }
+        } else {
+            String pathString = "";
+            do {
+                pathString = GadgetAid.readInputDialogOrLine("File?", pathString);
+                if (pathString == null || pathString.isEmpty()) return;
+                filePath = Paths.get(pathString);
+            } while (!Files.exists(filePath) || Files.isDirectory(filePath));
+        }
+
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get("staticCorrection" + GadgetAid.getTemporaryString() + ".txt");
+
+        Set<StaticCorrectionData> scf = StaticCorrectionDataFile.read(filePath);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            scf.stream().sorted().forEach(corr -> {
+                double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
+                        .getAzimuth(corr.getObserver().getPosition()));
+                double distance = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
+                        .getEpicentralDistance(corr.getObserver().getPosition()));
+                pw.println(corr.toString() + " " + azimuth + " " + distance);
+            });
+        }
     }
 
 }

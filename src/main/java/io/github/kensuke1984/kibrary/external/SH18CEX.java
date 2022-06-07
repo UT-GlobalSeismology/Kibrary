@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
-import io.github.kensuke1984.kibrary.dsmsetup.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
  * Model SH18CEX by Nozomu Takeuchi

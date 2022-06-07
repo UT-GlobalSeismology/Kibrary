@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.dsmsetup;
+package io.github.kensuke1984.kibrary.util.earth;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -19,6 +19,8 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
+import io.github.kensuke1984.kibrary.dsmsetup.TransverselyIsotropicParameter;
+import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -35,7 +37,8 @@ import io.github.kensuke1984.kibrary.util.data.Trace;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, anselme
- * @version 0.2.10
+ * @since version 0.2.10
+ * @version 2022/2/10 moved from dsmsetup
  */
 public class PolynomialStructure implements Serializable {
 
@@ -771,7 +774,8 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km] radius
      * @return the parameter A under TI approx.
-     */
+      * @deprecated use {@link #getMediumAt(double)}
+    */
     public double computeA(double r) {
         double vph = getVphAt(r);
         return getRhoAt(r) * vph * vph;
@@ -782,6 +786,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km] radius
      * @return the parameter C under TI approximation.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeC(double r) {
         double vpv = getVpvAt(r);
@@ -793,6 +798,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km]
      * @return the parameter F under TI approx.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeF(double r) {
         return computeEta(r) * (computeA(r) - 2 * computeL(r));
@@ -803,6 +809,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km]
      * @return the parameter L under TI approx.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeL(double r) {
         double vsv = getVsvAt(r);
@@ -814,6 +821,7 @@ public class PolynomialStructure implements Serializable {
      *
      * @param r [km]
      * @return the parameter N under TI approx.
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeN(double r) {
         double v = getVshAt(r);
@@ -828,6 +836,7 @@ public class PolynomialStructure implements Serializable {
      * @param r
      *            [km] radius
      * @return &xi; (N/L)
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeXi(double r) {
         return computeN(r) / computeL(r);
@@ -836,6 +845,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param r [km] radius
      * @return &mu; computed by Vs * Vs * &rho;
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeMu(double r) {
         double v = computeVs(r);
@@ -845,6 +855,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param r
      * @return &kappa; bulk modulus
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeKappa(double r) {
         return computeLambda(r) + 2./3. * computeMu(r);
@@ -853,6 +864,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param r [km] radius
      * @return &lambda; computed by Vs * Vs * &rho;
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeLambda(double r) {
         double v = getVphAt(r);
@@ -865,9 +877,114 @@ public class PolynomialStructure implements Serializable {
      * @param r
      *            [km] radius
      * @return effective isotropic shear wave velocity
+     * @deprecated use {@link #getMediumAt(double)}
      */
     public double computeVs(double r) {
         return Math.sqrt((2 * computeL(r) + computeN(r)) / 3 / getRhoAt(r));
+    }
+
+    /**
+     * Get elastic medium at a given radius.
+     * @param r
+     * @return
+     *
+     * @author otsuru
+     * @since 2022/4/11
+     */
+    public ElasticMedium getMediumAt(double r) {
+        ElasticMedium medium = new ElasticMedium();
+        medium.set(ParameterType.RHO, rho[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vpv, vpv[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vph, vph[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vsv, vsv[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Vsh, vsh[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.ETA, eta[zoneOf(r)].value(toX(r)));
+        medium.set(ParameterType.Qmu, qMu[zoneOf(r)]);
+        medium.set(ParameterType.Qkappa, qKappa[zoneOf(r)]);
+        return medium;
+    }
+
+    /**
+     * Get value of various parameters.
+     * They are calculated as follows:
+     * <ul>
+     * <li> A = &rho;V<sub>PH</sub><sup>2</sup> </li>
+     * <li> C = &rho;V<sub>PV</sub><sup>2</sup> </li>
+     * <li> F = &eta;(A-2*L) </li>
+     * <li> L = &rho;V<sub>SV</sub><sup>2</sup> </li>
+     * <li> N = &rho;V<sub>SH</sub><sup>2</sup> </li>
+     * <li> &xi; = N/L </li>
+     * <li> Vs = (2L+N)/(3&rho;)  (effective isotropic shear wave velocity)</li>
+     * <li> &mu; = Vs * Vs * &rho; </li>
+     * <li> &lambda; = Vp * Vp * &rho; - 2 &mu; </li>
+     * <li> &kappa; = &lambda; + 2/3 &mu; (bulk modulus) </li>
+     * <li> Vb = sqrt(&kappa; / &rho;) </li>
+     * </ul>
+     * @param type (ParameterType) the type of parameter to obtain
+     * @param r (double) radius [km]
+     * @return
+     *
+     * @author otsuru
+     * @since 2022/4/11
+     */
+    public double getAtRadius(ParameterType type, double r) {
+        switch(type) {
+        case RHO:
+            return rho[zoneOf(r)].value(toX(r));
+        // TI
+        case Vpv:
+            return vpv[zoneOf(r)].value(toX(r));
+        case Vph:
+            return vph[zoneOf(r)].value(toX(r));
+        case Vsv:
+            return vsv[zoneOf(r)].value(toX(r));
+        case Vsh:
+            return vsh[zoneOf(r)].value(toX(r));
+        case ETA:
+            return eta[zoneOf(r)].value(toX(r));
+/*        case A:
+            double vph = getAtRadius(ParameterType.Vph, r);
+            return getAtRadius(ParameterType.RHO, r) * vph * vph;
+        case C:
+            double vpv = getAtRadius(ParameterType.Vpv, r);
+            return getAtRadius(ParameterType.RHO, r) * vpv * vpv;
+        case F:
+            return getAtRadius(ParameterType.ETA, r) * (getAtRadius(ParameterType.A, r) - 2 * getAtRadius(ParameterType.L, r));
+        case L:
+            double vsv = getAtRadius(ParameterType.Vsv, r);
+            return getAtRadius(ParameterType.RHO, r) * vsv * vsv;
+        case N:
+            double vsh = getAtRadius(ParameterType.Vsh, r);
+            return getAtRadius(ParameterType.RHO, r) * vsh * vsh;
+        case XI:
+            return getAtRadius(ParameterType.N, r) / getAtRadius(ParameterType.L, r);
+        // iso
+        case Vp:
+            return getAtRadius(ParameterType.Vph, r); //TODO is this OK?
+        case Vs:
+            return Math.sqrt((2 * getAtRadius(ParameterType.L, r) + getAtRadius(ParameterType.N, r)) / 3 / getAtRadius(ParameterType.RHO, r)); //TODO where does this come from?
+        case Vb:
+            return Math.sqrt(getAtRadius(ParameterType.KAPPA, r) / getAtRadius(ParameterType.RHO, r));
+        case LAMBDA:
+            return getAtRadius(ParameterType.LAMBDAplus2MU, r) - 2 * getAtRadius(ParameterType.MU, r);
+        case MU:
+            double vs = getAtRadius(ParameterType.Vs, r);
+            return getAtRadius(ParameterType.RHO, r) * vs * vs;
+        case LAMBDAplus2MU:
+            double vp = getAtRadius(ParameterType.Vp, r);
+            return getAtRadius(ParameterType.RHO, r) * vp * vp;
+        case KAPPA:
+            return getAtRadius(ParameterType.LAMBDA, r) + 2./3. * getAtRadius(ParameterType.MU, r);
+*/
+        // Q
+        case Qmu:
+            return qMu[zoneOf(r)];
+        case Qkappa:
+            return qKappa[zoneOf(r)];
+        default:
+            return getMediumAt(r).get(type);
+//            throw new IllegalArgumentException("Illegal parameter type");
+        }
     }
 
     public double getTransverselyIsotropicValue(TransverselyIsotropicParameter ti, double r) {

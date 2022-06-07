@@ -638,10 +638,10 @@ public class LetMeInvert_fromAtA implements Operation_old {
 //			dVector.outOrder(outPath);
 //			dVector.outPhases(outPath);
 //			outEachTrace(outPath.resolve("trace"));
-			UnknownParameterFile.write(outPaths[iweight][ifreq][iphase][icorr].resolve("unknownParameterOrder.inf"),
-					eq[iweight][ifreq][iphase][icorr].getParameterList());
-			UnknownParameterFile.write(outPaths[iweight][ifreq][iphase][icorr].resolve("originalUnknownParameterOrder.inf"),
-					eq[iweight][ifreq][iphase][icorr].getOriginalParameterList());
+			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getParameterList(),
+					outPaths[iweight][ifreq][iphase][icorr].resolve("unknownParameterOrder.inf"));
+			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getOriginalParameterList(),
+					outPaths[iweight][ifreq][iphase][icorr].resolve("originalUnknownParameterOrder.inf"));
 			if (applyParameterWeight) {
 				PrintWriter pw = new PrintWriter(outPaths[iweight][ifreq][iphase][icorr].resolve("parameterWeight.inf").toFile());
 				for (double pWeight : parameterWeights)
