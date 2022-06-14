@@ -38,6 +38,10 @@ public class VelocityModelMapper extends Operation {
      */
     private Path resultPath;
     /**
+     * Seismic velocities to be plotted
+     */
+    private List<ParameterType> velocityTypes;
+    /**
      * structure file instead of PREM
      */
     private Path structurePath;
@@ -67,6 +71,8 @@ public class VelocityModelMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##Path of a root folder containing results of inversion (.)");
             pw.println("#resultPath ");
+            pw.println("##Velocity types to be plotted (Vs)");
+            pw.println("#velocityTypes");
             pw.println("##Path of an initial structure file used. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of an initial structure model used (PREM)");
@@ -88,6 +94,10 @@ public class VelocityModelMapper extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
+
+        velocityTypes = Arrays.stream(property.parseStringArray("velocityTypes", "Vs"))
+                .map(ParameterType::valueOf).collect(Collectors.toList());;
+
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
@@ -132,9 +142,9 @@ public class VelocityModelMapper extends Operation {
 
                 Path outBasisPath = outPath.resolve(inverse.simple() + k);
                 Files.createDirectories(outBasisPath);
-                Path outputPercentPath = outBasisPath.resolve("vsPercent.lst");
+                Path outputPercentPath = outBasisPath.resolve("velocityPercent.lst");
 
-                PerturbationModelFile.writePercentForType(ParameterType.Vs, model, outputPercentPath);
+                PerturbationModelFile.writePercentForType(velocityTypes, model, outputPercentPath);
             }
         }
 

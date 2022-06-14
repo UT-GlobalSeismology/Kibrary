@@ -94,7 +94,7 @@ interface WeightingFactor {
             switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
                 case MU:
                     return 1;
-                case LAMBDAplus2MU:
+                case LAMBDA2MU:
                     return 2;
                 default:
                     return 0;
@@ -109,7 +109,7 @@ interface WeightingFactor {
         public double getFactor(int i, int j, int k, int l) {
             switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
                 case LAMBDA:
-                case LAMBDAplus2MU:
+                case LAMBDA2MU:
                     return 1;
                 default:
                     return 0;
@@ -117,50 +117,50 @@ interface WeightingFactor {
         }
 
     };
-    
+
     /**
      * @author anselme
      */
     static final WeightingFactor KAPPA = new WeightingFactor() {
-		/**
-		 * λの係数 i, j, k, l ={0, 1, 2}
-		 */
-		@Override
-		public double getFactor(int i, int j, int k, int l) {
-			switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
-			case LAMBDA:
-				return 1.;
-			case LAMBDAplus2MU:
-				return 4.;
-			case MU:
-				return 1.5;
-			default:
-				return 0;
-			}
-		}
-	};
-	
-	/**
-	 * @author anselme
-	 */
-	static final WeightingFactor LAMBDA2MU = new WeightingFactor() {
-		/**
-		 * λの係数 i, j, k, l ={0, 1, 2}
-		 */
-		@Override
-		public double getFactor(int i, int j, int k, int l) {
-			switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
-			case LAMBDA:
-				return 1.;
-			case LAMBDAplus2MU:
-				return 2.;
-			case MU:
-				return .5;
-			default:
-				return 0;
-			}
-		}
-	};
+        /**
+         * λの係数 i, j, k, l ={0, 1, 2}
+         */
+        @Override
+        public double getFactor(int i, int j, int k, int l) {
+            switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
+            case LAMBDA:
+                return 1.;
+            case LAMBDA2MU:
+                return 4.;
+            case MU:
+                return 1.5;
+            default:
+                return 0;
+            }
+        }
+    };
+
+    /**
+     * @author anselme
+     */
+    static final WeightingFactor LAMBDA2MU = new WeightingFactor() {
+        /**
+         * λの係数 i, j, k, l ={0, 1, 2}
+         */
+        @Override
+        public double getFactor(int i, int j, int k, int l) {
+            switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
+            case LAMBDA:
+                return 1.;
+            case LAMBDA2MU:
+                return 2.;
+            case MU:
+                return .5;
+            default:
+                return 0;
+            }
+        }
+    };
 
     /**
      * デカルト座標

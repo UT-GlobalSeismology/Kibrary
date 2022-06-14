@@ -966,11 +966,11 @@ public class PolynomialStructure implements Serializable {
         case Vb:
             return Math.sqrt(getAtRadius(ParameterType.KAPPA, r) / getAtRadius(ParameterType.RHO, r));
         case LAMBDA:
-            return getAtRadius(ParameterType.LAMBDAplus2MU, r) - 2 * getAtRadius(ParameterType.MU, r);
+            return getAtRadius(ParameterType.LAMBDA2MU, r) - 2 * getAtRadius(ParameterType.MU, r);
         case MU:
             double vs = getAtRadius(ParameterType.Vs, r);
             return getAtRadius(ParameterType.RHO, r) * vs * vs;
-        case LAMBDAplus2MU:
+        case LAMBDA2MU:
             double vp = getAtRadius(ParameterType.Vp, r);
             return getAtRadius(ParameterType.RHO, r) * vp * vp;
         case KAPPA:

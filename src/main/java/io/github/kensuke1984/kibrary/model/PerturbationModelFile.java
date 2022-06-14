@@ -27,14 +27,18 @@ public class PerturbationModelFile {
         }
     }
 
-    public static void writePercentForType(ParameterType type, PerturbationModel model, Path outPath, OpenOption... options)
+    public static void writePercentForType(List<ParameterType> types, PerturbationModel model, Path outPath, OpenOption... options)
             throws IOException {
 
         List<PerturbationVoxel> voxels = model.getVoxels();
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
             for (PerturbationVoxel voxel : voxels) {
-                pw.println(voxel.getPosition() + " " + (voxel.getPercent(type)));
+                pw.print(voxel.getPosition());
+                for (ParameterType type : types) {
+                    pw.print(" " + voxel.getPercent(type));
+                }
+                pw.println();
             }
         }
     }

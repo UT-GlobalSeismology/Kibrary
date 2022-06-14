@@ -70,7 +70,7 @@ public class ElasticMedium {
 
 /*        switch(type) {
         case Vp:
-            if (isDefined(ParameterType.LAMBDAplus2MU)) return false;
+            if (isDefined(ParameterType.LAMBDA2MU)) return false;
             else if (isDefined(ParameterType.Vs) && isDefined(ParameterType.Vb)) return false;
             else return true;
         case Vs:
@@ -81,7 +81,7 @@ public class ElasticMedium {
             if (isDefined(ParameterType.KAPPA)) return false;
             else if (isDefined(ParameterType.Vp) && isDefined(ParameterType.Vb)) return false;
             else return true;
-        case LAMBDAplus2MU:
+        case LAMBDA2MU:
             return isDefined(ParameterType.Vp) ? false : true;
         case MU:
             return isDefined(ParameterType.Vs) ? false : true;
@@ -129,13 +129,27 @@ public class ElasticMedium {
     }
 
     private void tiToIsotropic() {
-        if (isDefined(ParameterType.L) && isDefined(ParameterType.N)) {
+        //if (isDefined(ParameterType.L) && isDefined(ParameterType.N)) {
+        //    double l = parameterMap.get(ParameterType.L);
+        //    double n = parameterMap.get(ParameterType.N);
+        //    double mu = (2 * l + n) / 3;
+        //    parameterMap.put(ParameterType.MU, mu);
+        //}
+        //TODO how to calculate LAMBDA?
+
+        //Voigt approximation
+        if (isDefined(ParameterType.A) && isDefined(ParameterType.C) && isDefined(ParameterType.F) && isDefined(ParameterType.L) && isDefined(ParameterType.N)) {
+            double a = parameterMap.get(ParameterType.A);
+            double c = parameterMap.get(ParameterType.C);
+            double f = parameterMap.get(ParameterType.F);
             double l = parameterMap.get(ParameterType.L);
             double n = parameterMap.get(ParameterType.N);
-            double mu = (2 * l + n) / 3;
+            double kappa = (4 * a + c + 4 * f - 4 * n) / 9;
+            double mu = (a + c - 2 * f + 5 * n + 6 * l) / 15;
+            parameterMap.put(ParameterType.KAPPA, kappa);
             parameterMap.put(ParameterType.MU, mu);
         }
-        //TODO how to calculate LAMBDA?
+        //TODO adopt Hill approximation
     }
 
     private void findTIModuli() {
@@ -234,7 +248,7 @@ public class ElasticMedium {
 
     private void findIsotropicModuli() {
         int numDefined = 0;
-        if (isDefined(ParameterType.LAMBDAplus2MU)) numDefined++;
+        if (isDefined(ParameterType.LAMBDA2MU)) numDefined++;
         if (isDefined(ParameterType.LAMBDA)) numDefined++;
         if (isDefined(ParameterType.MU)) numDefined++;
         if (isDefined(ParameterType.KAPPA)) numDefined++;
@@ -242,22 +256,22 @@ public class ElasticMedium {
             return;
         }
 
-        if (isDefined(ParameterType.LAMBDAplus2MU) && isDefined(ParameterType.LAMBDA)) {
-            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDAplus2MU);
+        if (isDefined(ParameterType.LAMBDA2MU) && isDefined(ParameterType.LAMBDA)) {
+            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDA2MU);
             double lambda = parameterMap.get(ParameterType.LAMBDA);
             double mu = (lambdaPlus2Mu - lambda) / 2.;
             double kappa = lambda + 2./3. * mu;
             parameterMap.put(ParameterType.MU, mu);
             parameterMap.put(ParameterType.KAPPA, kappa);
-        } else if (isDefined(ParameterType.LAMBDAplus2MU) && isDefined(ParameterType.MU)) {
-            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDAplus2MU);
+        } else if (isDefined(ParameterType.LAMBDA2MU) && isDefined(ParameterType.MU)) {
+            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDA2MU);
             double mu = parameterMap.get(ParameterType.MU);
             double lambda = lambdaPlus2Mu - 2. * mu;
             double kappa = lambda + 2./3. * mu;
             parameterMap.put(ParameterType.LAMBDA, lambda);
             parameterMap.put(ParameterType.KAPPA, kappa);
-        } else if (isDefined(ParameterType.LAMBDAplus2MU) && isDefined(ParameterType.KAPPA)) {
-            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDAplus2MU);
+        } else if (isDefined(ParameterType.LAMBDA2MU) && isDefined(ParameterType.KAPPA)) {
+            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDA2MU);
             double kappa = parameterMap.get(ParameterType.KAPPA);
             double mu = (lambdaPlus2Mu - kappa) * 3./4.;
             double lambda = lambdaPlus2Mu - 2. * mu;
@@ -268,21 +282,21 @@ public class ElasticMedium {
             double mu = parameterMap.get(ParameterType.MU);
             double lambdaPlus2Mu = lambda + 2. * mu;
             double kappa = lambda + 2./3. * mu;
-            parameterMap.put(ParameterType.LAMBDAplus2MU, lambdaPlus2Mu);
+            parameterMap.put(ParameterType.LAMBDA2MU, lambdaPlus2Mu);
             parameterMap.put(ParameterType.KAPPA, kappa);
         } else if (isDefined(ParameterType.LAMBDA) && isDefined(ParameterType.KAPPA)) {
             double lambda = parameterMap.get(ParameterType.LAMBDA);
             double kappa = parameterMap.get(ParameterType.KAPPA);
             double mu = (kappa - lambda) * 3./2.;
             double lambdaPlus2Mu = lambda + 2. * mu;
-            parameterMap.put(ParameterType.LAMBDAplus2MU, lambdaPlus2Mu);
+            parameterMap.put(ParameterType.LAMBDA2MU, lambdaPlus2Mu);
             parameterMap.put(ParameterType.MU, mu);
         } else if (isDefined(ParameterType.MU) && isDefined(ParameterType.KAPPA)) {
             double mu = parameterMap.get(ParameterType.MU);
             double kappa = parameterMap.get(ParameterType.KAPPA);
             double lambda = kappa - 2./3. * mu;
             double lambdaPlus2Mu = lambda + 2. * mu;
-            parameterMap.put(ParameterType.LAMBDAplus2MU, lambdaPlus2Mu);
+            parameterMap.put(ParameterType.LAMBDA2MU, lambdaPlus2Mu);
             parameterMap.put(ParameterType.LAMBDA, lambda);
         }
     }
@@ -291,10 +305,10 @@ public class ElasticMedium {
         if (!isDefined(ParameterType.RHO)) return;
         double rho = parameterMap.get(ParameterType.RHO);
 
-        if (isDefined(ParameterType.Vp) == true && isDefined(ParameterType.LAMBDAplus2MU) == false) {
+        if (isDefined(ParameterType.Vp) == true && isDefined(ParameterType.LAMBDA2MU) == false) {
             double vp = parameterMap.get(ParameterType.Vp);
             double lambdaPlus2Mu = rho * vp * vp;
-            parameterMap.put(ParameterType.LAMBDAplus2MU, lambdaPlus2Mu);
+            parameterMap.put(ParameterType.LAMBDA2MU, lambdaPlus2Mu);
         }
         if (isDefined(ParameterType.Vs) == true && isDefined(ParameterType.MU) == false) {
             double vs = parameterMap.get(ParameterType.Vs);
@@ -312,8 +326,8 @@ public class ElasticMedium {
         if (!isDefined(ParameterType.RHO)) return;
         double rho = parameterMap.get(ParameterType.RHO);
 
-        if (isDefined(ParameterType.LAMBDAplus2MU) == true && isDefined(ParameterType.Vp) == false) {
-            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDAplus2MU);
+        if (isDefined(ParameterType.LAMBDA2MU) == true && isDefined(ParameterType.Vp) == false) {
+            double lambdaPlus2Mu = parameterMap.get(ParameterType.LAMBDA2MU);
             double vp = Math.sqrt(lambdaPlus2Mu/rho);
             parameterMap.put(ParameterType.Vp, vp);
         }

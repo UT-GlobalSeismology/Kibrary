@@ -9,15 +9,25 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @since 2022//4/11
  */
 public enum ParameterType {
-    RHO,
+    RHO(0),
     // iso
-    Vp, Vs, Vb,
-    LAMBDA, MU, LAMBDAplus2MU, KAPPA,
+    Vp(1), Vs(2), Vb(3),
+    LAMBDA(4), MU(5), LAMBDA2MU(6), KAPPA(7),
     // TI
-    Vpv, Vph, Vsv, Vsh, ETA,
-    A, C, F, L, N, XI,
+    Vpv(8), Vph(9), Vsv(10), Vsh(11), ETA(12),
+    A(13), C(14), F(15), L(16), N(17), XI(18),
     // Q
-    Qmu, Qkappa;
+    Qmu(19), Qkappa(20);
+
+    private int value;
+
+    ParameterType(int n) {
+        value = n;
+    }
+
+    public int valueOf() {
+        return value;
+    }
 
     public static boolean isIsotropicVelocity(ParameterType type) {
         switch (type) {
@@ -32,7 +42,7 @@ public enum ParameterType {
 
     public static boolean isIsotropicModulus(ParameterType type) {
         switch (type) {
-        case LAMBDAplus2MU:
+        case LAMBDA2MU:
         case LAMBDA:
         case MU:
         case KAPPA:
@@ -79,6 +89,8 @@ public enum ParameterType {
         case N: return N;
         case LAMBDA: return LAMBDA;
         case MU: return MU;
+        case LAMBDA2MU: return LAMBDA2MU;
+        case KAPPA: return KAPPA;
 
         default:
             throw new IllegalArgumentException("Illegal partial type");

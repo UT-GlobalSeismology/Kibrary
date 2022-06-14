@@ -7,7 +7,7 @@ package io.github.kensuke1984.kibrary.elasticparameter;
  * @version 0.0.2
  */
 public enum IsotropicModulusEnum {
-    LAMBDA, MU, LAMBDAplus2MU, ZERO;
+    LAMBDA, MU, LAMBDA2MU, ZERO;
 
     public static IsotropicModulusEnum getIsotropic(ElasticMN mn) {
         int m;
@@ -24,7 +24,7 @@ public enum IsotropicModulusEnum {
             case 1:
                 switch (n) {
                     case 1:
-                        return LAMBDAplus2MU;
+                        return LAMBDA2MU;
                     case 2:
                     case 3:
                         return LAMBDA;
@@ -36,7 +36,7 @@ public enum IsotropicModulusEnum {
             case 2:
                 switch (n) {
                     case 2:
-                        return LAMBDAplus2MU;
+                        return LAMBDA2MU;
                     case 3:
                         return LAMBDA;
                     case 4:
@@ -47,7 +47,7 @@ public enum IsotropicModulusEnum {
             case 3:
                 switch (n) {
                     case 3:
-                        return LAMBDAplus2MU;
+                        return LAMBDA2MU;
                     case 4:
                     case 5:
                     case 6:
