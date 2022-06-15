@@ -28,6 +28,7 @@ public abstract class SPCFileName extends File {
     //-------------------- generate a new name --------------------//
 
     /**
+     * Genarates an SPC file name as String.
      * If the inputs are invalid, the generated name would be invalid, but the name will be returned nonetheless.
      * @param observerID
      * @param eventID
@@ -48,7 +49,7 @@ public abstract class SPCFileName extends File {
         }
         String[] parts = name.split("\\.");
         if (parts.length != 3 && parts.length != 7) {
-            System.err.println("SPC file name must be ObserverID.GlobalCMTID(PSV, SV).spc or " +
+            System.err.println("SPC file name must be ObserverID.GlobalCMTID_(PSV, SV).spc or " +
                     "ObserverID.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
             return false;
         }
@@ -69,6 +70,14 @@ public abstract class SPCFileName extends File {
         }
 
         return true;
+    }
+
+    /**
+     * @param path for check
+     * @return if the filePath is formatted.
+     */
+    public static boolean isFormatted(Path path) {
+        return isFormatted(path.getFileName().toString());
     }
 
     /**
@@ -136,6 +145,12 @@ public abstract class SPCFileName extends File {
      * @author anselme
      */
     public abstract String getNetworkCode(); // TODO: delete
+
+    /**
+     * @return the PSV/SH pair file name
+     */
+    public abstract String getPairFileName();
+
 
     //-------------------- read data of this name --------------------//
 

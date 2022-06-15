@@ -60,8 +60,8 @@ public class FormattedSPCFileName extends SPCFileName {
     /**
      * @param pathname path of a spectrum file
      */
-    public FormattedSPCFileName(String pathname) {
-        super(pathname);
+    public FormattedSPCFileName(String pathName) {
+        super(pathName);
         readName(getName());
     }
 
@@ -78,8 +78,26 @@ public class FormattedSPCFileName extends SPCFileName {
     }
 
     /**
-     * 入力ファイルのSpcFileTypeを返す
-     *
+     * @param fileName
+     * @author anselme add network
+     */
+    private void readName(String fileName) {
+        if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid SPC file name.");
+//        observerID = fileName.split("\\.")[0];
+        fileType = getFileType(fileName);
+        mode = getMode(fileName);
+        sourceID = getEventID(fileName);
+        stationCode = fileName.split("\\.")[0].split("_")[0];
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
+                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
+            networkCode = null;
+        else
+            networkCode = fileName.split("\\.")[0].split("_")[1];
+        x = getX(fileName);
+        y = getY(fileName);
+    }
+
+    /**
      * @param fileName name of SPC file
      * @return which par or syn...なんのスペクトルファイルか
      */
@@ -122,35 +140,6 @@ public class FormattedSPCFileName extends SPCFileName {
         return parts.length != 7 ? null : parts[4];
     }
 
-    /**
-     * @param path for check
-     * @return if the filePath is formatted.
-     */
-    public static boolean isFormatted(Path path) {
-        return isFormatted(path.getFileName().toString());
-    }
-
-    /**
-     * @param fileName
-     * @author anselme add network
-     */
-    private void readName(String fileName) {
-        if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
-//        observerID = fileName.split("\\.")[0];
-        fileType = getFileType(fileName);
-        mode = getMode(fileName);
-        sourceID = getEventID(fileName);
-        stationCode = fileName.split("\\.")[0].split("_")[0];
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB)
-                || fileType.equals(SPCType.UF))
-            networkCode = null;
-        else
-            networkCode = fileName.split("\\.")[0].split("_")[1];
-        x = getX(fileName);
-        y = getY(fileName);
-    }
-
 
     //-------------------- get info of a certain instance --------------------//
 
@@ -187,10 +176,10 @@ public class FormattedSPCFileName extends SPCFileName {
     @Override
     public String getObserverID() {
         if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB)
-                || fileType.equals(SPCType.UF))
+                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
             return stationCode;
-        return stationCode + "_" + networkCode;
+        else
+            return stationCode + "_" + networkCode;
     }
 
     /**
@@ -206,8 +195,7 @@ public class FormattedSPCFileName extends SPCFileName {
     @Override
     public String getNetworkCode() {
         if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB)
-                || fileType.equals(SPCType.UF))
+                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
             throw new RuntimeException("PB, PF, UB, and UF waveforms have no network");
         return networkCode;
     }
@@ -220,6 +208,13 @@ public class FormattedSPCFileName extends SPCFileName {
         return y;
     }
 
+    @Override
+    public String getPairFileName() {
+        if (mode == SPCMode.PSV)
+            return getName().replace("PSV.spc", "SH.spc");
+        else
+            return getName().replace("SH.spc", "PSV.spc");
+    }
 
     //-------------------- read data of this name --------------------//
 

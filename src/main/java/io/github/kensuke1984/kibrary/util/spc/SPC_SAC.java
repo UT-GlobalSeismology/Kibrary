@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -37,9 +38,19 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * Operation that converts from {@link SPCFile} to {@link SACFileAccess} file.
  * Source time function can be convolved during this process.
  * <p>
- * It converts all the SPC files in eventFolders/model under the specified PSVFolder and SHFolder.
- * If you leave 'model name' blank and each event folder has only one folder,
+ * It converts all the SPC files in eventFolders/modelName under the specified PSV folder and SH folder.
+ * If either {@link #usePSV} or {@link #useSH} is false, only one of the PSV or SH files will be used.
+ * If both {@link #usePSV} and {@link #useSH} is true and a pair for an SPC file cannot be found, an exception will be thrown.
+ * <p>
+ * If you set a 'model name', only SPC files under that model folder will be used.
+ * In this case, there may be event folders that do not contain this model folder.
+ * <p>
+ * If you leave 'model name' blank and all event folders have exactly one folder, all with a common name,
  * the model name will be set automatically as the name of that folder.
+ * In this case, if several model names exist, or if event folders without the common-name model folder exist,
+ * an exception will be thrown.
+ * <p>
+ * If {@link #components} is set, only the SAC files for the components included here will be exported.
  * <p>
  * The waveform in time domain will be sampled in {@link #samplingHz},
  * so the number of data points will become [time length x samplingHz].
@@ -116,7 +127,7 @@ public final class SPC_SAC extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#tag ");
-            pw.println("##SACComponents to be written, listed using spaces (Z R T)");
+            pw.println("##SACComponents to be exported, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(boolean) Whether to use PSV spectrums (true)");
             pw.println("#usePSV ");
@@ -160,7 +171,7 @@ public final class SPC_SAC extends Operation {
         if (property.containsKey("modelName")) {
             modelName = property.parseString("modelName", null);
         } else {
-            setModelName();
+            modelName = searchModelName();
         }
 
         setSourceTimeFunction();
@@ -168,7 +179,8 @@ public final class SPC_SAC extends Operation {
         computeTimePartial = property.parseBoolean("computeTimePartial", "false");
     }
 
-    private void setModelName() throws IOException {
+    private String searchModelName() throws IOException {
+        // gather all names of model folders
         Set<EventFolder> eventFolders = new HashSet<>();
         if (usePSV) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
         if (useSH) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
@@ -176,11 +188,14 @@ public final class SPC_SAC extends Operation {
                 eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
                         .collect(Collectors.toSet());
         if (possibleNames.size() != 1) throw new RuntimeException(
-                "There are no model folder in event folders or more than one folder. You must specify 'modelName' in the case.");
+                "There are no model folders in event folders or more than one folder. You must specify 'modelName' in this case.");
 
+        // set model name
         String modelName = possibleNames.iterator().next();
+
+        // check if all events contains the model folder
         if (eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists))
-            this.modelName = modelName;
+            return modelName;
         else throw new RuntimeException("There are some events without model folder " + modelName);
     }
 
@@ -205,51 +220,24 @@ public final class SPC_SAC extends Operation {
         }
     }
 
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("psvPath")) property.setProperty("psvPath", "");
-        if (!property.containsKey("shPath")) property.setProperty("shPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("sourceTimeFunction")) property.setProperty("sourceTimeFunction", "0");
-        if (!property.containsKey("timePartial")) property.setProperty("timePartial", "false");
-        if (!property.containsKey("modelName")) property.setProperty("modelName", "");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        if (!property.getProperty("psvPath").equals("null")) psvPath = getPath("psvPath");
-        if (psvPath != null && !Files.exists(psvPath))
-            throw new NoSuchFileException("The psvPath " + psvPath + " does not exist");
-
-        if (!property.getProperty("shPath").equals("null")) shPath = getPath("shPath");
-        if (shPath != null && !Files.exists(shPath))
-            throw new NoSuchFileException("The shPath " + shPath + " does not exist");
-
-        modelName = property.getProperty("modelName");
-        if (modelName.isEmpty()) setModelName();
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        setSourceTimeFunction();
-        computeTimePartial = Boolean.parseBoolean(property.getProperty("timePartial"));
-        samplingHz = 20; // TODO
-    }
-*/
-
     @Override
     public void run() throws IOException {
         System.err.println("Model name is " + modelName);
         if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
 
-        if (usePSV == true && (psvSPCs = collectPSVSPCs()).isEmpty())
+        if (usePSV == false && useSH == false) {
+            System.err.println("Both usePSV and useSH are false; nothing to do.");
+            return;
+        }
+        if (usePSV == true && (psvSPCs = collectSPCs(SPCMode.PSV, psvPath)).isEmpty()) {
             throw new FileNotFoundException("No PSV spectrum files are found.");
-
-        if (useSH == true && (shSPCs = collectSHSPCs()).isEmpty())
+        }
+        if (useSH == true && (shSPCs = collectSPCs(SPCMode.SH, shPath)).isEmpty()) {
             throw new FileNotFoundException("No SH spectrum files are found.");
+        }
+        if (usePSV == true && useSH == true && psvSPCs.size() != shSPCs.size()) {
+            throw new IllegalStateException("Number of PSV files and SH files does not match.");
+        }
 
         outPath = DatasetAid.createOutputFolder(workPath, "spcsac", tag, GadgetAid.getTemporaryString());
 
@@ -272,8 +260,7 @@ public final class SPC_SAC extends Operation {
             SPCFile one = SPCFile.getInstance(spc);
             SPCFileName pair = pairFile(spc);
             if (pair == null || !pair.exists()) {
-                System.err.println(pair + " does not exist");
-                continue;
+                throw new NoSuchFileException(pair + " does not exist");
             }
             SPCFile two = SPCFile.getInstance(pairFile(spc));
             // create event folder under outPath
@@ -426,32 +413,21 @@ public final class SPC_SAC extends Operation {
                     , Charset.defaultCharset());
     }
 
-    private Set<SPCFileName> collectSHSPCs() throws IOException {
-        Set<SPCFileName> shSet = new HashSet<>();
-        Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(shPath);
+    private Set<SPCFileName> collectSPCs(SPCMode mode, Path inPath) throws IOException {
+        Set<SPCFileName> spcSet = new HashSet<>();
+        Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(inPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
             SpcFileAid.collectSpcFileName(modelFolder).stream()
-                    .filter(f -> !f.getName().contains("par") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
+                    .filter(f -> f.getMode() == mode).forEach(spcSet::add);
         }
-        return shSet;
-    }
-
-    private Set<SPCFileName> collectPSVSPCs() throws IOException {
-        Set<SPCFileName> psvSet = new HashSet<>();
-        Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(psvPath);
-        for (EventFolder eventFolder : eventFolderSet) {
-            Path modelFolder = eventFolder.toPath().resolve(modelName);
-            SpcFileAid.collectSpcFileName(modelFolder).stream()
-                    .filter(f -> !f.getName().contains("par") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
-        }
-        return psvSet;
+        return spcSet;
     }
 
     private FormattedSPCFileName pairFile(SPCFileName psvFileName) {
         if (psvFileName.getMode() == SPCMode.SH) return null;
-        return new FormattedSPCFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
-                psvFileName.getName().replace("PSV.spc", "SH.spc")));
+        return new FormattedSPCFileName(shPath.resolve(psvFileName.getSourceID()).resolve(modelName)
+                .resolve(psvFileName.getPairFileName()));
     }
 
 }

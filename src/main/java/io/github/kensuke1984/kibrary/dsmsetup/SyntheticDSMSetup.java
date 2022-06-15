@@ -35,9 +35,23 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  * and prepares the environment to run these programs.
  * DSM input files can be made either for existing observed dataset in event folders, for a data entry list file,
  * or for a virtual set of observers.
+ *
  * <p>
- * Only observers that have files (or entries) of the specified components will be considered.
- * If there is no valid data in a certain input event folder, the corresponding output event folder will not be made.
+ * If a dataset folder is assigned as input, SAC files that satisfy the following criteria will be chosen:
+ * <ul>
+ * <li> is observed waveform </li>
+ * <li> the component is included in the components specified in the property file </li>
+ * </ul>
+ * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
+ * If there is no valid data in a certain input event folder, the corresponding output event folder will not be created.
+ *
+ * <p>
+ * If a data entry list file is assigned as input, entries that satisfy the following criteria will be chosen:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * </ul>
+ * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
+ *
  * <p>
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.

@@ -30,7 +30,7 @@ public final class SpcFileAid {
      */
     public static Set<SPCFileName> collectSpcFileName(Path path) throws IOException {
         try (Stream<Path> stream = Files.list(path)) {
-            return stream.filter(FormattedSPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toSet());
+            return stream.filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toSet());
         }
     }
 
