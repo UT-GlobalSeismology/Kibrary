@@ -209,7 +209,7 @@ public class FormattedSPCFileName extends SPCFileName {
     }
 
     @Override
-    public String getPairFileName() {
+    public String pairFileName() {
         if (mode == SPCMode.PSV)
             return getName().replace("PSV.spc", "SH.spc");
         else

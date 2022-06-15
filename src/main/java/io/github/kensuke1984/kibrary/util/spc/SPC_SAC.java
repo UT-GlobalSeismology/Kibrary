@@ -100,6 +100,10 @@ public final class SPC_SAC extends Operation {
      * If it computes temporal partial or not.
      */
     private boolean computeTimePartial;
+    /**
+     * If this is true, the SACExtension of computed files will be that of observed SAC files
+     */
+    private boolean computeAsObserved;
 
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Set<SPCFileName> psvSPCs;
@@ -146,8 +150,11 @@ public final class SPC_SAC extends Operation {
             pw.println("#sourceTimeFunction ");
             pw.println("##SamplingHz (20) !You can not change yet!");
             pw.println("#samplingHz ");
-            pw.println("##(boolean) If it is true, then temporal partial is computed (false)");
+            pw.println("##(boolean) If this is true, temporal partial is computed (false)");
             pw.println("#computeTimePartial ");
+            pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed (false)");
+            pw.println("## This is only valid when computeTimePartial is false.");
+            pw.println("#computeAsObserved ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -177,6 +184,7 @@ public final class SPC_SAC extends Operation {
         setSourceTimeFunction();
         samplingHz = 20; // TODO
         computeTimePartial = property.parseBoolean("computeTimePartial", "false");
+        computeAsObserved = property.parseBoolean("computeAsObserved", "false");
     }
 
     private String searchModelName() throws IOException {
@@ -304,6 +312,7 @@ public final class SPC_SAC extends Operation {
         };
         sm.setComponents(components);
         sm.setTemporalDifferentiation(computeTimePartial);
+        sm.setAsObserved(computeAsObserved);
         sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
         return sm;
     }
@@ -427,7 +436,7 @@ public final class SPC_SAC extends Operation {
     private FormattedSPCFileName pairFile(SPCFileName psvFileName) {
         if (psvFileName.getMode() == SPCMode.SH) return null;
         return new FormattedSPCFileName(shPath.resolve(psvFileName.getSourceID()).resolve(modelName)
-                .resolve(psvFileName.getPairFileName()));
+                .resolve(psvFileName.pairFileName()));
     }
 
 }

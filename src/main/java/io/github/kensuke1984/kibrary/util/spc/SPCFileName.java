@@ -149,7 +149,7 @@ public abstract class SPCFileName extends File {
     /**
      * @return the PSV/SH pair file name
      */
-    public abstract String getPairFileName();
+    public abstract String pairFileName();
 
 
     //-------------------- read data of this name --------------------//

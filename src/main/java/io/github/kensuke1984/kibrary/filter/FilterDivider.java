@@ -30,8 +30,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Operation that filters observed and synthetic SAC files in eventFolders under obsDir and synDir.
  * Resulting files will all be placed inside event folders under outDir.
  * <p>
+ * SAC files that satisfy the following criteria will be filtered:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * </ul>
+ * Even synthetic SAC files under obsDir and observed SAC files under synDir will be processed.
  * Filtering will be done even if only observed (and not synthetic) SAC files exist, or vice versa.
- * If both obsDir and synDir is empty for a certain event, the corresponding event folder will not be created.
+ * If both obsDir and synDir are empty for a certain event, the corresponding event folder will not be created.
  * <p>
  * The lower and upper period limits of the filter will be written in headers USER0 and USER1 of resulting SAC files.
  *
@@ -165,42 +170,6 @@ public class FilterDivider extends Operation {
         npts = property.parseInt("npts", String.valueOf(Integer.MAX_VALUE));
 
     }
-
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
-        if (!property.containsKey("synPath")) property.setProperty("synPath", "");
-        if (!property.containsKey("delta")) property.setProperty("delta", "0.05");
-        if (!property.containsKey("highFreq")) property.setProperty("highFreq", "0.08");
-        if (!property.containsKey("lowFreq")) property.setProperty("lowFreq", "0.005");
-        if (!property.containsKey("backward")) property.setProperty("backward", "true");
-        if (!property.containsKey("np")) property.setProperty("np", "4");
-        if (!property.containsKey("filter")) property.setProperty("filter", "bandpass");
-        if (!property.containsKey("npts")) property.setProperty("npts", String.valueOf(Integer.MAX_VALUE));
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        obsPath = getPath("obsPath");
-        if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
-        synPath = getPath("synPath");
-        if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
-
-        delta = Double.parseDouble(property.getProperty("delta"));
-        highFreq = Double.parseDouble(property.getProperty("highFreq"));
-        lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
-        backward = Boolean.parseBoolean(property.getProperty("backward"));
-        np = Integer.parseInt(property.getProperty("np"));
-        npts = Integer.parseInt(property.getProperty("npts"));
-    }
-*/
 
     @Override
     public void run() throws IOException {
