@@ -11,6 +11,7 @@ import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
@@ -19,7 +20,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
- * They are classes that can be run with only a few arguments.
+ * They are classes that can be run with just a few arguments.
  * <p>
  * Classes assigned here must contain methods usage() and run().
  * If no arguments are needed, usage() should return null.
@@ -34,6 +35,7 @@ enum Brooklyn {
     About(0, About.class),
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
+    DataEntryListFile(4, DataEntryListFile.class),
     EventListFile(5, EventListFile.class),
     ObserverListFile(6, ObserverListFile.class),
     // Data download 10

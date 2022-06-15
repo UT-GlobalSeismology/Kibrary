@@ -11,9 +11,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public class DataEntry implements Comparable<DataEntry> {
 
-    private GlobalCMTID event;
-    private Observer observer;
-    private SACComponent component;
+    private final GlobalCMTID event;
+    private final Observer observer;
+    private final SACComponent component;
 
     public DataEntry(GlobalCMTID event, Observer observer, SACComponent component) {
         this.event = event;
@@ -87,6 +87,5 @@ public class DataEntry implements Comparable<DataEntry> {
     public String toString() {
         return event + " " + observer.getPaddedInfoString() + " " + component;
     }
-
 
 }

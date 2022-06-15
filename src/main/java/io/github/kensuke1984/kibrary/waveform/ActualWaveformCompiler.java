@@ -437,9 +437,6 @@ public class ActualWaveformCompiler extends Operation {
            mantleCorrectionSet = StaticCorrectionDataFile.read(mantleCorrectionPath);
        }
 
-       // obsDirからイベントフォルダを指定
-       eventDirs = DatasetAid.eventFolderSet(obsPath);
-
        if (timewindowRefPath != null)
            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
                .stream().filter(tw -> {
@@ -455,6 +452,10 @@ public class ActualWaveformCompiler extends Operation {
                .collect(Collectors.toSet());
        phases = sourceTimewindowSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
                .distinct().toArray(Phase[]::new);
+
+       // obsDirからイベントフォルダを指定
+       eventDirs = DatasetAid.eventFolderSet(obsPath).stream()
+               .filter(dir -> eventSet.contains(dir.getGlobalCMTID())).collect(Collectors.toSet());
 
        readPeriodRanges();
 

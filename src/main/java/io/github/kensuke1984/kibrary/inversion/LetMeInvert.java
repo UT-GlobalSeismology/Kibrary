@@ -853,7 +853,7 @@ public class LetMeInvert extends Operation {
                     }
 
 
-                    /* TODO: erase -------------*/
+                    /* TODO: erase -------------*
                     outPath = DatasetAid.createOutputFolder(workPath, "lmi_temp", tag, GadgetAid.getTemporaryString());
                     RealMatrix ata = eq.getAtA();
                     try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath.resolve("ata_diag.lst")))) {
@@ -876,7 +876,7 @@ public class LetMeInvert extends Operation {
                         }
                     }
                     throw new RuntimeException("stop here");
-                    /*  -------------*/
+                    *  -------------*/
 
                 }
             }

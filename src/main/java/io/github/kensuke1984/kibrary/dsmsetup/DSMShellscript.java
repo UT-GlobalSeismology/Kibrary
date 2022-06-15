@@ -67,7 +67,7 @@ class DSMShellscript {
         nSimRun = nThreads / nCore;
 
         // Number of sources that will be processed = nBlock * nSimRun.
-        nBlock = nSources / nSimRun + 1;
+        nBlock = nSources / nSimRun + ((nSources % nSimRun == 0) ? 0 : 1);
     }
 
     /**
@@ -105,7 +105,7 @@ class DSMShellscript {
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
             break;
         default:
-            throw new IllegalArgumentException("This SPCType is not supproted yet.");
+            throw new IllegalArgumentException("This SPCType is not supported yet.");
         }
 
         String programString;

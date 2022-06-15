@@ -84,7 +84,7 @@ class Longitude implements Comparable<Longitude> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
-//        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
+
         return MathAid.equalWithinEpsilon(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
     }
 
@@ -119,8 +119,6 @@ class Longitude implements Comparable<Longitude> {
     @Override
     public String toString() {
         return MathAid.padToString(longitude, 4, PRECISION, " ");
-        //String format = "%" + (5 + PRECISION) + "." + PRECISION + "f";
-        //return String.format(format, longitude);
     }
 
     /**

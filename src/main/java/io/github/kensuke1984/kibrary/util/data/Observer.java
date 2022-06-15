@@ -42,7 +42,7 @@ public class Observer implements Comparable<Observer> {
     private static final int STA_LENGTH = 5;
     /**
      * maximum number of letters of network
-     * (length it may be 3 in case of 'DSM', but rightPad() won't cut it so it is OK.)
+     * (length may be 3 in case of 'DSM', but rightPad() won't cut it so it is OK.)
      */
     private static final int NET_LENGTH = 2;
 
@@ -235,7 +235,5 @@ public class Observer implements Comparable<Observer> {
     public String getPaddedInfoString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH)
                 + " " + position.toString();
-//            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 9) + " "
-//            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 9);
     }
 }

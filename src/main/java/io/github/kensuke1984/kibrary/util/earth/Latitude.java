@@ -97,7 +97,7 @@ class Latitude implements Comparable<Latitude> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
-        // return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
+
         return MathAid.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
     }
 
@@ -135,8 +135,6 @@ class Latitude implements Comparable<Latitude> {
     @Override
     public String toString() {
         return MathAid.padToString(geographicLatitude, 3, PRECISION, " ");
-        //String format = "%" + (4 + PRECISION) + "." + PRECISION + "f";
-        //return String.format(format, geographicLatitude);
     }
 
     /**

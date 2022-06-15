@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
 /**
  * Operation that makes DSM input files to be used in tish and tipsv,
  * and prepares the environment to run these programs.
- * Input files can be made either for existing observed dataset in event folders, for a data entry list file,
+ * DSM input files can be made either for existing observed dataset in event folders, for a data entry list file,
  * or for a virtual set of observers.
  * <p>
  * Only observers that have files (or entries) of the specified components will be considered.
