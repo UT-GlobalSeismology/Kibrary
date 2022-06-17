@@ -9,11 +9,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * Latitude [-90, 90].
  * The value is rounded off to the 4th decimal place.
  *<p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
  */
-class Latitude implements Comparable<Latitude> {
+final class Latitude implements Comparable<Latitude> {
 
     /**
      * the number of decimal places to round off the latitude value
@@ -23,15 +23,15 @@ class Latitude implements Comparable<Latitude> {
     /**
      * [-90, 90] geographic latitude [deg]
      */
-    private double geographicLatitude;
+    private final double geographicLatitude;
     /**
      * [-&pi;/2, &pi;/2] geocentric latitude [rad]
      */
-    private double geocentricLatitude;
+    private final double geocentricLatitude;
     /**
      * [0, &pi;] &theta; in spherical coordinates [rad]
      */
-    private double theta;
+    private final double theta;
 
     /**
      * Method to convert a (double) latitude value to a (double) theta value.

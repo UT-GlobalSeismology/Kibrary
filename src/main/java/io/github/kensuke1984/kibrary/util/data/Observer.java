@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Information of observer,
  * consisting of station code, network code, and {@link HorizontalPosition}. <br>
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  * </p>
  * <p>
  * Station code and network code must be 8 or less letters.
@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  *
  * @author Kensuke Konishi
  */
-public class Observer implements Comparable<Observer> {
+public final class Observer implements Comparable<Observer> {
 
     /**
      * network code for stations in synthetic datasets

@@ -16,14 +16,14 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * Latitude (-180, 180) Longitude（-90, 90）Radius [0, &infin;)
  * <p>
- * <b>This class is IMMUTABLE</b>.
+ * This class is <b>IMMUTABLE</b>.
  * <p>
  * The radius is rounded off to the 6th decimal place.
  *
  * @author Kensuke Konishi
  * @author anselme add methods used for BP/FP catalog
  */
-public class FullPosition extends HorizontalPosition {
+public final class FullPosition extends HorizontalPosition {
 
     /**
      * the number of decimal places to round off the radius value

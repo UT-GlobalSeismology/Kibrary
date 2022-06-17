@@ -13,7 +13,8 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * <p>
  * Latitude Longitude
  * <p>
- * This class is <b>immutable</b>.
+ * This class is <b>almost IMMUTABLE</b> (expect that it is not a final class).
+ * Classes that extend this class must be <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
  */

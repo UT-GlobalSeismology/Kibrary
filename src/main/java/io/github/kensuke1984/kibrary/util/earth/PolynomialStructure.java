@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -214,6 +213,22 @@ public class PolynomialStructure implements Serializable {
     }
 
     private PolynomialStructure() {
+    }
+
+    public PolynomialStructure(int nzone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
+            PolynomialFunction[] vpv, PolynomialFunction[] vph, PolynomialFunction[] vsv, PolynomialFunction[] vsh,
+            PolynomialFunction[] eta, double[] qMu, double[] qKappa) {
+        this.nzone = nzone;
+        this.rmin = rmin;
+        this.rmax = rmax;
+        this.rho = rho;
+        this.vpv = vpv;
+        this.vph = vph;
+        this.vsv = vsv;
+        this.vsh = vsh;
+        this.eta = eta;
+        this.qMu = qMu;
+        this.qKappa = qKappa;
     }
 
     /**
@@ -636,36 +651,10 @@ public class PolynomialStructure implements Serializable {
      * @param outPath {@link Path} of an write file.
      * @param options for writing
      * @throws IOException if any
+     * @deprecated
      */
     public void writePSV(Path outPath, OpenOption... options) throws IOException {
         Files.write(outPath, Arrays.asList(toPSVlines()), options);
-    }
-
-    /**
-     * @param outPath {@link Path} of an write file.
-     * @param options for write
-     * @throws IOException if any
-     */
-    public void writeSH(Path outPath, OpenOption... options) throws IOException {
-        Files.write(outPath, Arrays.asList(toSHlines()), options);
-    }
-
-    /**
-     *
-     * @param outPath {@link Path} of an output file
-     * @throws IOException
-     */
-    public void writeVelocity(Path outPath) throws IOException {
-        Files.deleteIfExists(outPath);
-        Files.createFile(outPath);
-        for (int i = 0; i < 10000; i++) {
-            double r = i * 6371./10000.;
-            double vsh = getVshAt(r);
-            double vsv = getVsvAt(r);
-            double vph = getVphAt(r);
-            double vpv = getVpvAt(r);
-            Files.write(outPath, (r + " " + vpv + " " + vph + " " + vsv + " " + vsh + " " + "\n").getBytes(), StandardOpenOption.APPEND);
-        }
     }
 
     /**

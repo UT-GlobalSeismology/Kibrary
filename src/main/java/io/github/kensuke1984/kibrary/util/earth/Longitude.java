@@ -12,11 +12,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * The input can be in range [-180, 360).
  * If you input 200, then the value is considered to be -160.
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
  */
-class Longitude implements Comparable<Longitude> {
+final class Longitude implements Comparable<Longitude> {
 
     /**
      * the number of decimal places to round off the longitude value
@@ -26,12 +26,12 @@ class Longitude implements Comparable<Longitude> {
     /**
      * [-180, 180) geographic longitude [deg]
      */
-    private double longitude;
+    private final double longitude;
 
     /**
      * [-&pi;, &pi;) &phi; in spherical coordinates [rad]
      */
-    private double phi;
+    private final double phi;
 
     /**
      * @param longitude [deg] [-180, 360)

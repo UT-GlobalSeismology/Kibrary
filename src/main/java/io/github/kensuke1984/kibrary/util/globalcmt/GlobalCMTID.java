@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.1.1.2
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
-public class GlobalCMTID implements Comparable<GlobalCMTID> {
+public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     /**
      * recent Harvard ID yyyymmddhhmm[A-Za-z] 2004-
