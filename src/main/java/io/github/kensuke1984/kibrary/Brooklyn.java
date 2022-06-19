@@ -14,6 +14,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -35,6 +36,7 @@ enum Brooklyn {
     About(0, About.class),
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
+    PolynomialStructureFile(3, PolynomialStructureFile.class),
     DataEntryListFile(4, DataEntryListFile.class),
     EventListFile(5, EventListFile.class),
     ObserverListFile(6, ObserverListFile.class),

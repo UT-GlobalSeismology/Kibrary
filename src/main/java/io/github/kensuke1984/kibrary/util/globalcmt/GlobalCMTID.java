@@ -40,7 +40,7 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     private final String id;
     /**
-     * if once {@link #getEvent()} is invoked, this holds it.
+     * if {@link #getEvent()} is once invoked, this holds it.
      */
     private volatile NDK ndk;
 
@@ -99,7 +99,7 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
                 PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
     }
 
-    /**
+    /** TODO Why is this here?
      * When you want to create Events not contained in Global CMT Catalog, you
      * can make it by yourself and use this.
      *
@@ -108,15 +108,6 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
      */
     public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
         return new HashSet<>(GlobalCMTCatalog.readCatalog(catalogFile, false));
-    }
-
-    /**
-     * Compares global CMT IDs by their ID using
-     * {@link String#compareTo(String)}
-     */
-    @Override
-    public int compareTo(GlobalCMTID o) {
-        return id.compareTo(o.id);
     }
 
     @Override
@@ -137,6 +128,15 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             if (other.id != null) return false;
         } else if (!id.equals(other.id)) return false;
         return true;
+    }
+
+    /**
+     * Compares global CMT IDs by their ID using
+     * {@link String#compareTo(String)}
+     */
+    @Override
+    public int compareTo(GlobalCMTID o) {
+        return id.compareTo(o.id);
     }
 
     @Override

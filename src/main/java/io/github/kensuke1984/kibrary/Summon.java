@@ -92,7 +92,7 @@ public final class Summon {
      */
     public static Options defaultOptions() {
         Options options = new Options();
-        options.addOption("h", "help", false, "Show usage");
+        options.addOption("?", "help", false, "Show usage");
         return options;
     }
 
@@ -110,7 +110,7 @@ public final class Summon {
         CommandLineParser parser = new DefaultParser();
         CommandLine comLine = parser.parse(options, args);
 
-        if (comLine.hasOption("h")) throw new ParseException("help");
+        if (comLine.hasOption("?")) throw new ParseException("help");
 
         return comLine;
     }

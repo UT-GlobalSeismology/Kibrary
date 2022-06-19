@@ -5,10 +5,16 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.nio.file.Paths;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
@@ -20,9 +26,36 @@ public class PolynomialStructureFile {
     private PolynomialStructureFile() {}
 
     public static void write(PolynomialStructure_new structure, Path outputPath, OpenOption... options) throws IOException {
+        int nZone = structure.getNZone();
+        int nCoreZone = structure.getNCoreZone();
+        double[] rmin = structure.getRmin();
+        double[] rmax = structure.getRmax();
+        PolynomialFunction[] rho = structure.getRho();
+        PolynomialFunction[] vpv = structure.getVpv();
+        PolynomialFunction[] vph = structure.getVpv();
+        PolynomialFunction[] vsv = structure.getVsv();
+        PolynomialFunction[] vsh = structure.getVsv();
+        PolynomialFunction[] eta = structure.getEta();
+        double[] qMu = structure.getQMu();
+        double[] qKappa = structure.getQKappa();
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            String[] structureLines = structure.toPSVlines();
-            Arrays.stream(structureLines).forEach(pw::println);
+            pw.println("c nZone nCoreZone");
+            pw.println(nZone + " " + nCoreZone);
+            pw.println("c  - Radius (km) -    --- Density (g/cm^3) ---");
+            pw.println("c                     ---   Vpv     (km/s) ---");
+            pw.println("c                     ---   Vph     (km/s) ---");
+            pw.println("c                     ---   Vsv     (km/s) ---");
+            pw.println("c                     ---   Vsh     (km/s) ---");
+            pw.println("c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -");
+            for (int i = 0; i < nZone; i++) {
+                pw.println(rmin[i] + " " + rmax[i] + " " + PolynomialStructure_new.stringFor(rho[i]));
+                pw.println("          " + PolynomialStructure_new.stringFor(vpv[i]));
+                pw.println("          " + PolynomialStructure_new.stringFor(vph[i]));
+                pw.println("          " + PolynomialStructure_new.stringFor(vsv[i]));
+                pw.println("          " + PolynomialStructure_new.stringFor(vsh[i]));
+                pw.println("          " + PolynomialStructure_new.stringFor(eta[i]) + " " + qMu[i] + " " + qKappa[i]);
+            }
         }
     }
 
@@ -30,24 +63,26 @@ public class PolynomialStructureFile {
         InformationFileReader reader = new InformationFileReader(inputPath, false);
         String[] structureLines = reader.getNonCommentLines();
 
-        int nzone = Integer.parseInt(structureLines[0].split("\\s+")[0]);
-        if (nzone < 1)
+        String[] headerParts = structureLines[0].split("\\s+");
+        int nZone = Integer.parseInt(headerParts[0]);
+        int nCoreZone = Integer.parseInt(headerParts[1]);
+        if (nZone < 1)
             throw new IllegalStateException("nzone is invalid.");
-        if (structureLines.length != (nzone * 6 + 1))
+        if (structureLines.length != (nZone * 6 + 1))
             throw new IllegalStateException("Invalid number of lines");
 
-        double[] rmin = new double[nzone];
-        double[] rmax = new double[nzone];
-        PolynomialFunction[] rho = new PolynomialFunction[nzone];
-        PolynomialFunction[] vpv = new PolynomialFunction[nzone];
-        PolynomialFunction[] vph = new PolynomialFunction[nzone];
-        PolynomialFunction[] vsv = new PolynomialFunction[nzone];
-        PolynomialFunction[] vsh = new PolynomialFunction[nzone];
-        PolynomialFunction[] eta = new PolynomialFunction[nzone];
-        double[] qMu = new double[nzone];
-        double[] qKappa = new double[nzone];
+        double[] rmin = new double[nZone];
+        double[] rmax = new double[nZone];
+        PolynomialFunction[] rho = new PolynomialFunction[nZone];
+        PolynomialFunction[] vpv = new PolynomialFunction[nZone];
+        PolynomialFunction[] vph = new PolynomialFunction[nZone];
+        PolynomialFunction[] vsv = new PolynomialFunction[nZone];
+        PolynomialFunction[] vsh = new PolynomialFunction[nZone];
+        PolynomialFunction[] eta = new PolynomialFunction[nZone];
+        double[] qMu = new double[nZone];
+        double[] qKappa = new double[nZone];
 
-        for (int i = 0; i < nzone; i++) {
+        for (int i = 0; i < nZone; i++) {
             String[] rangeRhoParts = structureLines[i * 6 + 1].split("\\s+");
             String[] vpvParts = structureLines[i * 6 + 2].split("\\s+");
             String[] vphParts = structureLines[i * 6 + 3].split("\\s+");
@@ -83,12 +118,69 @@ public class PolynomialStructureFile {
             qKappa[i] = Double.parseDouble(etaParts[5]);
         }
 
-        return new PolynomialStructure_new(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return new PolynomialStructure_new(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    public static void main(String[] args) {
-        // TODO 自動生成されたメソッド・スタブ
-
+    /**
+     * Create a polynomial structure file under the working folder.
+     * The structure can be specified by its name or by using a DSM PSV input file.
+     *
+     * @param args
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
     }
 
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // input
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.addOption(Option.builder("n").longOpt("name").hasArg().argName("name")
+                .desc("Specify name of structure").build());
+        inputOption.addOption(Option.builder("d").longOpt("dsmPsv").hasArg().argName("dsmPsvInputFile")
+                .desc("Use DSM PSV input file as input").build());
+        options.addOptionGroup(inputOption);
+
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        PolynomialStructure_new structure;
+        String structureName;
+
+        if (cmdLine.hasOption("n")) {
+            structureName = cmdLine.getOptionValue("n");
+            structure = PolynomialStructure_new.of(structureName);
+        } else {
+            System.err.println("not supported yet"); // TODO
+            return;
+        }
+
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get(structureName + ".structure");
+
+        write(structure, outputPath);
+
+    }
 }

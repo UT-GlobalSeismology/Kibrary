@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util.earth;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -13,6 +14,8 @@ import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
  * To be used as input for softwares of <i>Direct Solution Method</i> (DSM)<br>
  * <p>
  * Structures shall be defined as combinations of polynomial functions.
+ * The arrays containing structure information must be ordered from radius=0 to radius=planetRadius.
+ * <p>
  * Every depth is written in <b>radius</b>.
  * The radii used as the variable x in polynomial functions should be normalized to the planet radius.
  * <p>
@@ -37,11 +40,11 @@ public final class PolynomialStructure_new {
     /**
      * the number of layers
      */
-    private final int nzone;
+    private final int nZone;
     /**
      * Number of zones of cores.
      */
-    private final int coreZone = 2; // TODO
+    private final int nCoreZone;
     private final double[] rmin;
     private final double[] rmax;
     private final PolynomialFunction[] rho;
@@ -85,7 +88,10 @@ public final class PolynomialStructure_new {
             System.err.println("Using AK135");
             ps = DefaultStructure.AK135;
             break;
-
+        case "MAK135":
+            System.err.println("Using MAK135");
+            ps = DefaultStructure.MAK135;
+            break;
         case "HOMOGEN":
             System.err.println("Using HOMOGEN");
             ps = DefaultStructure.HOMOGEN;
@@ -99,7 +105,7 @@ public final class PolynomialStructure_new {
 
     /**
      * Constructor for creating user-defined structures.
-     * @param nzone
+     * @param nZone
      * @param rmin
      * @param rmax
      * @param rho
@@ -111,15 +117,15 @@ public final class PolynomialStructure_new {
      * @param qMu
      * @param qKappa
      */
-    public PolynomialStructure_new(int nzone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
+    public PolynomialStructure_new(int nZone, int nCoreZone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
             PolynomialFunction[] vpv, PolynomialFunction[] vph, PolynomialFunction[] vsv, PolynomialFunction[] vsh,
             PolynomialFunction[] eta, double[] qMu, double[] qKappa) {
-        this(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, false);
+        this(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, false);
     }
 
     /**
      * Constructor for creating default structures in {@link PolynomialStructureData}.
-     * @param nzone
+     * @param nZone
      * @param rmin
      * @param rmax
      * @param rho
@@ -132,10 +138,11 @@ public final class PolynomialStructure_new {
      * @param qKappa
      * @param isDefault
      */
-    PolynomialStructure_new(int nzone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
+    PolynomialStructure_new(int nZone, int nCoreZone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
             PolynomialFunction[] vpv, PolynomialFunction[] vph, PolynomialFunction[] vsv, PolynomialFunction[] vsh,
             PolynomialFunction[] eta, double[] qMu, double[] qKappa, boolean isDefault) {
-        this.nzone = nzone;
+        this.nZone = nZone;
+        this.nCoreZone = nCoreZone;
         this.rmin = rmin.clone();
         this.rmax = rmax.clone();
         this.rho = rho.clone();
@@ -151,7 +158,7 @@ public final class PolynomialStructure_new {
 
     /**
      * Constructor for creating default structures in {@link PolynomialStructureData}.
-     * @param nzone
+     * @param nZone
      * @param rmin
      * @param rmax
      * @param rho
@@ -164,20 +171,21 @@ public final class PolynomialStructure_new {
      * @param qKappa
      * @param isDefault
      */
-    PolynomialStructure_new(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
+    PolynomialStructure_new(int nZone, int nCoreZone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
             double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu,
             double[] qKappa, boolean isDefault) {
-        this.nzone = nzone;
+        this.nZone = nZone;
+        this.nCoreZone = nCoreZone;
         this.rmin = rmin.clone();
         this.rmax = rmax.clone();
 
-        this.rho = new PolynomialFunction[nzone];
-        this.vpv = new PolynomialFunction[nzone];
-        this.vph = new PolynomialFunction[nzone];
-        this.vsv = new PolynomialFunction[nzone];
-        this.vsh = new PolynomialFunction[nzone];
-        this.eta = new PolynomialFunction[nzone];
-        for (int i = 0; i < nzone; i++) {
+        this.rho = new PolynomialFunction[nZone];
+        this.vpv = new PolynomialFunction[nZone];
+        this.vph = new PolynomialFunction[nZone];
+        this.vsv = new PolynomialFunction[nZone];
+        this.vsh = new PolynomialFunction[nZone];
+        this.eta = new PolynomialFunction[nZone];
+        for (int i = 0; i < nZone; i++) {
             this.rho[i] = new PolynomialFunction(rho[i]);
             this.vpv[i] = new PolynomialFunction(vpv[i]);
             this.vph[i] = new PolynomialFunction(vph[i]);
@@ -193,15 +201,80 @@ public final class PolynomialStructure_new {
     }
 
     /**
+     * Add boundaries at the input radii.
+     * If there is already a boundary at r then nothing will be done.
+     *
+     * @param boundaries (double...) radii for boundaries. Values smaller than 0 or bigger than
+     *              earth radius will be ignored
+     * @return a new structure which has additional layers given by input
+     * boundaries or this if there all the radiuses already exist in
+     * this
+     */
+    public PolynomialStructure_new withBoundaries(double... boundaries) {
+        return withBoundaries(false, boundaries);
+    }
+
+    /**
+     * Add boundaries at the input radii.
+     * If there is already a boundary at r then nothing will be done.
+     *
+     * @param isDefault (boolean) whether to create this as a default structure (to be used in {@link PolynomialStructureData})
+     * @param boundaries (double...) radii for boundaries. Values smaller than 0 or bigger than
+     *              earth radius will be ignored
+     * @return a new structure which has additional layers given by input
+     * boundaries or this if there all the radiuses already exist in
+     * this
+     */
+    PolynomialStructure_new withBoundaries(boolean isDefault, double... boundaries) {
+        double[] addBoundaries = Arrays.stream(boundaries)
+                .filter(d -> 0 < d && d < rmax[nZone - 1] && Arrays.binarySearch(rmin, d) < 0).distinct().sorted()
+                .toArray();
+        if (addBoundaries.length == 0)
+            return this;
+
+        int nZoneNew = nZone + addBoundaries.length;
+        int nCoreZoneNew = nCoreZone + (int) Arrays.stream(addBoundaries).filter(r -> r < rmin[nCoreZone]).count();
+        double[] rminNew = DoubleStream.concat(Arrays.stream(rmin), Arrays.stream(addBoundaries)).sorted().toArray();
+        double[] rmaxNew = DoubleStream.concat(Arrays.stream(rmax), Arrays.stream(addBoundaries)).sorted().toArray();
+
+        PolynomialFunction[] rhoNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vpvNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vphNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vsvNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vshNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] etaNew = new PolynomialFunction[nZoneNew];
+        double[] qMuNew = new double[nZoneNew];
+        double[] qKappaNew = new double[nZoneNew];
+
+        for (int iZoneNew = 0; iZoneNew < nZoneNew; iZoneNew++) {
+            double rmin = rminNew[iZoneNew];
+            // izone in this for rmin
+            int iZoneOld = zoneOf(rmin);
+            // copy. PolynomialFunction is immutable so instances do not have to be recreated.
+            rhoNew[iZoneNew] = rho[iZoneOld];
+            vpvNew[iZoneNew] = vpv[iZoneOld];
+            vphNew[iZoneNew] = vph[iZoneOld];
+            vsvNew[iZoneNew] = vsv[iZoneOld];
+            vshNew[iZoneNew] = vsh[iZoneOld];
+            etaNew[iZoneNew] = eta[iZoneOld];
+            qMuNew[iZoneNew] = qMu[iZoneOld];
+            qKappaNew[iZoneNew] = qKappa[iZoneOld];
+        }
+
+        return new PolynomialStructure_new(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
+                rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew, isDefault);
+    }
+
+    /**
      * Find the number of the zone which includes the given radius.
      * @param r (double) [km] radius [0, rmax]
      * @return (int) the number of the zone which includes r.
      * Note that the zone will be rmin &le; r &lt; rmax except when r = planetRadius
      */
     public int zoneOf(double r) {
-        if (r == rmax[nzone - 1])
-            return nzone - 1;
-        return IntStream.range(0, nzone).filter(i -> rmin[i] <= r && r < rmax[i]).findAny()
+        if (r == rmax[nZone - 1])
+            return nZone - 1;
+        return IntStream.range(0, nZone).filter(i -> rmin[i] <= r && r < rmax[i]).findAny()
                 .orElseThrow(() -> new IllegalArgumentException("Input r:" + r + "is invalid."));
     }
 
@@ -212,7 +285,7 @@ public final class PolynomialStructure_new {
      * @return (double) a value x to the input r for polynomial functions
      */
     private double xFor(double r) {
-        return r / rmax[nzone - 1];
+        return r / rmax[nZone - 1];
     }
 
     /**
@@ -274,15 +347,15 @@ public final class PolynomialStructure_new {
      * @return (String[]) Lines to be printed, including comment lines starting with the letter 'c'.
      */
     public String[] toPSVlines() {
-        String[] outString = new String[6 * (nzone) + 7];
-        outString[0] = String.valueOf(nzone) + " nzone";
+        String[] outString = new String[6 * (nZone) + 7];
+        outString[0] = String.valueOf(nZone) + " nzone";
         outString[1] = "c  - Radius (km) -    --- Density (g/cm^3) ---";
         outString[2] = "c                     ---   Vpv     (km/s) ---";
         outString[3] = "c                     ---   Vph     (km/s) ---";
         outString[4] = "c                     ---   Vsv     (km/s) ---";
         outString[5] = "c                     ---   Vsh     (km/s) ---";
         outString[6] = "c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -";
-        for (int i = 0; i < nzone; i++) {
+        for (int i = 0; i < nZone; i++) {
             outString[6 * i + 7] = rmin[i] + " " + rmax[i] + " " + stringFor(rho[i]);
             outString[6 * i + 8] = "          " + stringFor(vpv[i]);
             outString[6 * i + 9] = "          " + stringFor(vph[i]);
@@ -298,16 +371,16 @@ public final class PolynomialStructure_new {
      * @return (String[]) Lines to be printed, including comment lines starting with the letter 'c'.
      */
     public String[] toSHlines() {
-        int zone = nzone - coreZone;
+        int zone = nZone - nCoreZone;
         String[] outString = new String[3 * zone + 4];
         outString[0] = zone + " nzone";
         outString[1] = "c  - Radius (km) -    --- Density (g/cm^3) ---";
         outString[2] = "c                     ---   Vsv     (km/s) ---";
         outString[3] = "c                     ---   Vsh     (km/s) ---          - Qmu -";
-        for (int i = coreZone; i < nzone; i++) {
-            outString[3 * (i - coreZone) + 4] = rmin[i] + " " + rmax[i] + " " + stringFor(rho[i]);
-            outString[3 * (i - coreZone) + 5] = "          " + stringFor(vsv[i]);
-            outString[3 * (i - coreZone) + 6] = "          " + stringFor(vsh[i]) + " " + qMu[i];
+        for (int i = nCoreZone; i < nZone; i++) {
+            outString[3 * (i - nCoreZone) + 4] = rmin[i] + " " + rmax[i] + " " + stringFor(rho[i]);
+            outString[3 * (i - nCoreZone) + 5] = "          " + stringFor(vsv[i]);
+            outString[3 * (i - nCoreZone) + 6] = "          " + stringFor(vsh[i]) + " " + qMu[i];
         }
         return outString;
     }
@@ -318,7 +391,7 @@ public final class PolynomialStructure_new {
      * @param pf polynomial function for a layer
      * @return string in a form of this
      */
-    private static String stringFor(PolynomialFunction pf) {
+    static String stringFor(PolynomialFunction pf) {
         return Arrays.stream(Arrays.copyOf(pf.getCoefficients(), 4)).mapToObj(Double::toString)
                 .collect(Collectors.joining(" "));
     }
@@ -327,9 +400,9 @@ public final class PolynomialStructure_new {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + coreZone;
+        result = prime * result + nCoreZone;
         result = prime * result + Arrays.hashCode(eta);
-        result = prime * result + nzone;
+        result = prime * result + nZone;
         result = prime * result + Arrays.hashCode(qKappa);
         result = prime * result + Arrays.hashCode(qMu);
         result = prime * result + Arrays.hashCode(rho);
@@ -355,11 +428,11 @@ public final class PolynomialStructure_new {
         if (getClass() != obj.getClass())
             return false;
         PolynomialStructure_new other = (PolynomialStructure_new) obj;
-        if (coreZone != other.coreZone)
+        if (nCoreZone != other.nCoreZone)
             return false;
         if (!Arrays.equals(eta, other.eta))
             return false;
-        if (nzone != other.nzone)
+        if (nZone != other.nZone)
             return false;
         if (!Arrays.equals(qKappa, other.qKappa))
             return false;
@@ -382,12 +455,12 @@ public final class PolynomialStructure_new {
         return true;
     }
 
-    public int getNzone() {
-        return nzone;
+    public int getNZone() {
+        return nZone;
     }
 
-    public int getCoreZone() {
-        return coreZone;
+    public int getNCoreZone() {
+        return nCoreZone;
     }
 
     public double[] getRmin() {
@@ -422,11 +495,11 @@ public final class PolynomialStructure_new {
         return eta.clone();
     }
 
-    public double[] getqMu() {
+    public double[] getQMu() {
         return qMu.clone();
     }
 
-    public double[] getqKappa() {
+    public double[] getQKappa() {
         return qKappa.clone();
     }
 
