@@ -37,7 +37,7 @@ public class QualityControlStack {
 				.filter(bid -> bid.getGlobalCMTID().equals(idref))
 				.forEach(bid -> {
 					double distance = bid.getGlobalCMTID().getEvent().getCmtLocation()
-							.getEpicentralDistance(bid.getObserver().getPosition()) * 180 / Math.PI;
+							.calculateEpicentralDistance(bid.getObserver().getPosition()) * 180 / Math.PI;
 					
 					if (distance >= 20 && distance < 40) {
 						try {

@@ -45,7 +45,7 @@ public class InfoFromTimewindow {
 			Observer sta = timewindow.getObserver();
 			usedStation.add(sta);
 			
-			System.out.println((6371. - event.getEvent().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(sta.getPosition())));
+			System.out.println((6371. - event.getEvent().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEvent().getCmtLocation().calculateEpicentralDistance(sta.getPosition())));
 		}
 		
 		for (Observer sta : usedStation)

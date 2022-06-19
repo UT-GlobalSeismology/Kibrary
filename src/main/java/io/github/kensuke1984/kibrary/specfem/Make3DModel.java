@@ -485,7 +485,7 @@ public class Make3DModel {
 					if (depth == 2371)
 						dv = 0.;
 					else {
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(loc));
 						if (azimuth < 180) azimuth += 360;
 						
 						int iaz = -1;
@@ -644,7 +644,7 @@ public class Make3DModel {
 					if (depth == 2371)
 						dv = 0.;
 					else {
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(loc));
 						if (azimuth < 180) azimuth += 360;
 						
 						int iaz = -1;
@@ -743,7 +743,7 @@ public class Make3DModel {
 					if (depth == 2371)
 						dv = 0.;
 					else {
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(loc));
 						if (azimuth < 180) azimuth += 360;
 						
 						int iaz = -1;
@@ -892,7 +892,7 @@ public class Make3DModel {
 					if (depth == 2371)
 						dv = 0.;
 					else {
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(loc));
 						if (azimuth < 180) azimuth += 360;
 						
 						int iaz = -1;
@@ -1017,7 +1017,7 @@ public class Make3DModel {
 					if (depth == 2371)
 						dv = 0.;
 					else {
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(loc));
 						if (azimuth < 180) azimuth += 360;
 						
 						int iaz = -1;

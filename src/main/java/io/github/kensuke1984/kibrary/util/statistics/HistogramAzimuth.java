@@ -63,10 +63,10 @@ public class HistogramAzimuth {
                 double az = 0;
                 if (centered) {
                     az = 	this.averageLoc.
-                                getAzimuth(staLoc)*180/Math.PI;
+                                calculateAzimuth(staLoc)*180/Math.PI;
                 }
                 else
-                    az = cmtLocation.getAzimuth(staLoc)*180/Math.PI;
+                    az = cmtLocation.calculateAzimuth(staLoc)*180/Math.PI;
 
                 this.numberOfRecords[(int) (az / interval)]++;
                 this.mean += (int) (az / interval);

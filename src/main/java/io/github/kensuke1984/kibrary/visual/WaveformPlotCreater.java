@@ -240,7 +240,7 @@ public class WaveformPlotCreater extends Operation {
                 BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
             }
 
-            gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
+            gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");

@@ -34,7 +34,7 @@ public class WriteMisfitFromWaveform {
 				}
 				
 				double distance = Math.toDegrees(ids[i].getGlobalCMTID().getEvent().getCmtLocation()
-						.getEpicentralDistance(ids[i].getObserver().getPosition()));
+						.calculateEpicentralDistance(ids[i].getObserver().getPosition()));
 				if (distance < 70 || distance > 79)
 					continue;
 				
@@ -64,7 +64,7 @@ public class WriteMisfitFromWaveform {
 	
 	private static String regionName(BasicID id, List<EventCluster> clusters) {
 		EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get();
-		double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
+		double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 		int iaz = -1;
 //		if (azimuth < 180)
 //			azimuth += 360;

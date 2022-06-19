@@ -229,7 +229,7 @@ public class PerturbationPoint extends HorizontalPoint {
      */
     public FullPosition[] getNearestLocation(FullPosition location) {
         FullPosition[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
-        Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location)));
+        Arrays.sort(locations, Comparator.comparingDouble(o -> o.computeDistance(location)));
         return locations;
     }
 

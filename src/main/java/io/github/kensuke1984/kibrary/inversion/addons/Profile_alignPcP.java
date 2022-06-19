@@ -159,8 +159,8 @@ public class Profile_alignPcP {
 			String[] eachMisfitString = new String[] {""};
 			
 			Comparator<BasicID> compareByDistance = (BasicID o1, BasicID o2) -> {
-				double d1 = o1.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o1.getObserver().getPosition());
-				double d2 = o2.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o2.getObserver().getPosition());
+				double d1 = o1.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(o1.getObserver().getPosition());
+				double d2 = o2.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(o2.getObserver().getPosition());
             	return Double.compare(d1, d2);
 				};
 			
@@ -209,7 +209,7 @@ public class Profile_alignPcP {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							double ypos = counter.getAndIncrement() * 6.;
 							double norm = maxObs /= 3.;
@@ -341,9 +341,9 @@ public class Profile_alignPcP {
 					RealVector synVector = synTrace.getYVector();
 					RealVector bornVector = bornTrace.getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					

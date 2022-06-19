@@ -217,9 +217,9 @@ public class Profile_alignScS_fromref {
 						continue;
 					}
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -617,7 +617,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		double maxObs = ir.observedOf(id).getYVector().getLInfNorm() * 4;
 		String name = ir.getTxtName(id);
 		
-		double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+		double distance = id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 				* 180. / Math.PI;
 		if (id.getSacComponent().equals(SACComponent.R))
 			outputString.scriptString_R += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"

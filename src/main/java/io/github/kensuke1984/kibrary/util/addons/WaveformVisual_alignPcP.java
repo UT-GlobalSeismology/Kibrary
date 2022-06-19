@@ -119,11 +119,11 @@ public class WaveformVisual_alignPcP {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
-					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition()));
 					int k = (int) distance;
 					int ked = (int) (distance / dEd);
 					
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 					int kaz = (int) (azimuth / dAz);
 					int kazsec = (int) (azimuth);
 					

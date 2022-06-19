@@ -21,18 +21,6 @@ public class DataEntry implements Comparable<DataEntry> {
         this.component = component;
     }
 
-    /**
-     * Sorting order is event &rarr; observer.
-     */
-    @Override
-    public int compareTo(DataEntry o) {
-        int evCompare = event.compareTo(o.event);
-        if (evCompare != 0)
-            return evCompare;
-        int obCompare = observer.compareTo(o.observer);
-        return obCompare != 0 ? obCompare : component.compareTo(o.component);
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -71,6 +59,18 @@ public class DataEntry implements Comparable<DataEntry> {
         return true;
     }
 
+    /**
+     * Sorting order is event &rarr; observer.
+     */
+    @Override
+    public int compareTo(DataEntry o) {
+        int evCompare = event.compareTo(o.event);
+        if (evCompare != 0)
+            return evCompare;
+        int obCompare = observer.compareTo(o.observer);
+        return obCompare != 0 ? obCompare : component.compareTo(o.component);
+    }
+
     public GlobalCMTID getEvent() {
         return event;
     }
@@ -85,7 +85,7 @@ public class DataEntry implements Comparable<DataEntry> {
 
     @Override
     public String toString() {
-        return event + " " + observer.getPaddedInfoString() + " " + component;
+        return event + " " + observer.toPaddedInfoString() + " " + component;
     }
 
 }

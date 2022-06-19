@@ -12,52 +12,40 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
- * File defining 1D polynomial structure of the Earth.
+ * File defining 1D polynomial structure of a planet.
  * @author otsuru
- * @since 2022/6/15
+ * @since 2022/6/15 extracted some parts of PolynomialStructure
  */
 public class PolynomialStructureFile {
     private PolynomialStructureFile() {}
 
-    public static void write(PolynomialStructure structure, Path outputPath, OpenOption... options) throws IOException {
+    public static void write(PolynomialStructure_new structure, Path outputPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             String[] structureLines = structure.toPSVlines();
             Arrays.stream(structureLines).forEach(pw::println);
         }
     }
 
-    public static PolynomialStructure read(Path inputPath) throws IOException {
+    public static PolynomialStructure_new read(Path inputPath) throws IOException {
         InformationFileReader reader = new InformationFileReader(inputPath, false);
         String[] structureLines = reader.getNonCommentLines();
 
-        int nzone;
-        double[] rmin;
-        double[] rmax;
-        PolynomialFunction[] rho;
-        PolynomialFunction[] vpv;
-        PolynomialFunction[] vph;
-        PolynomialFunction[] vsv;
-        PolynomialFunction[] vsh;
-        PolynomialFunction[] eta;
-        double[] qMu;
-        double[] qKappa;
-
-        nzone = Integer.parseInt(structureLines[0].split("\\s+")[0]);
-        if (structureLines.length != (nzone * 6 + 1))
-            throw new IllegalArgumentException("Invalid lines");
-
+        int nzone = Integer.parseInt(structureLines[0].split("\\s+")[0]);
         if (nzone < 1)
             throw new IllegalStateException("nzone is invalid.");
-        rmin = new double[nzone];
-        rmax = new double[nzone];
-        rho = new PolynomialFunction[nzone];
-        vpv = new PolynomialFunction[nzone];
-        vph = new PolynomialFunction[nzone];
-        vsv = new PolynomialFunction[nzone];
-        vsh = new PolynomialFunction[nzone];
-        eta = new PolynomialFunction[nzone];
-        qMu = new double[nzone];
-        qKappa = new double[nzone];
+        if (structureLines.length != (nzone * 6 + 1))
+            throw new IllegalStateException("Invalid number of lines");
+
+        double[] rmin = new double[nzone];
+        double[] rmax = new double[nzone];
+        PolynomialFunction[] rho = new PolynomialFunction[nzone];
+        PolynomialFunction[] vpv = new PolynomialFunction[nzone];
+        PolynomialFunction[] vph = new PolynomialFunction[nzone];
+        PolynomialFunction[] vsv = new PolynomialFunction[nzone];
+        PolynomialFunction[] vsh = new PolynomialFunction[nzone];
+        PolynomialFunction[] eta = new PolynomialFunction[nzone];
+        double[] qMu = new double[nzone];
+        double[] qKappa = new double[nzone];
 
         for (int i = 0; i < nzone; i++) {
             String[] rangeRhoParts = structureLines[i * 6 + 1].split("\\s+");
@@ -66,8 +54,10 @@ public class PolynomialStructureFile {
             String[] vsvParts = structureLines[i * 6 + 4].split("\\s+");
             String[] vshParts = structureLines[i * 6 + 5].split("\\s+");
             String[] etaParts = structureLines[i * 6 + 6].split("\\s+");
+
             rmin[i] = Double.parseDouble(rangeRhoParts[0]);
             rmax[i] = Double.parseDouble(rangeRhoParts[1]);
+
             double[] rhoCoeffs = new double[4];
             double[] vpvCoeffs = new double[4];
             double[] vphCoeffs = new double[4];
@@ -88,11 +78,12 @@ public class PolynomialStructureFile {
             vsv[i] = new PolynomialFunction(vsvCoeffs);
             vsh[i] = new PolynomialFunction(vshCoeffs);
             eta[i] = new PolynomialFunction(etaCoeffs);
+
             qMu[i] = Double.parseDouble(etaParts[4]);
             qKappa[i] = Double.parseDouble(etaParts[5]);
         }
 
-        return new PolynomialStructure(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return new PolynomialStructure_new(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
     public static void main(String[] args) {

@@ -48,7 +48,7 @@ public class AmplitudePolarDistribution {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			pw.println("#azimuth amplitude_ratio upper_mantle_ratio lower_mantle_ratio");
 			for (StaticCorrectionData correction : takeuchiCorrections) {
-				double azimuth = correction.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(correction.getObserver().getPosition())
+				double azimuth = correction.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(correction.getObserver().getPosition())
 						* 180. / Math.PI;
 				
 				GlobalCMTID id = correction.getGlobalCMTID();

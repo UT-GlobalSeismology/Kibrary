@@ -45,18 +45,8 @@ public final class FullPosition extends HorizontalPosition {
 //        R = r;
     }
 
-    public static double toLatitude(double theta) {
-        return Latitude.toLatitude(theta);
-    }
-
-    /**
-     * Sorting order is latitude &rarr; longitude &rarr; radius.
-     */
-    @Override
-    public int compareTo(HorizontalPosition o) {
-        int horizontalCompare = super.compareTo(o);
-        if (horizontalCompare != 0 || !(o instanceof FullPosition)) return horizontalCompare;
-        return Double.compare(R, ((FullPosition) o).R);
+    public static double latitudeFor(double theta) {
+        return Latitude.valueFor(theta);
     }
 
     @Override
@@ -85,6 +75,16 @@ public final class FullPosition extends HorizontalPosition {
         if (getClass() != obj.getClass()) return false;
         FullPosition other = (FullPosition) obj;
         return MathAid.equalWithinEpsilon(R, other.R, Math.pow(10, -R_PRECISION)/2);
+    }
+
+    /**
+     * Sorting order is latitude &rarr; longitude &rarr; radius.
+     */
+    @Override
+    public int compareTo(HorizontalPosition o) {
+        int horizontalCompare = super.compareTo(o);
+        if (horizontalCompare != 0 || !(o instanceof FullPosition)) return horizontalCompare;
+        return Double.compare(R, ((FullPosition) o).R);
     }
 
     /**
@@ -139,7 +139,7 @@ public final class FullPosition extends HorizontalPosition {
      * @param location {@link FullPosition} to compute distance with
      * @return [km] one-line distance from the location
      */
-    public double getDistance(FullPosition location) {
+    public double computeDistance(FullPosition location) {
         return location.toXYZ().getDistance(toXYZ());
     }
 
@@ -148,7 +148,7 @@ public final class FullPosition extends HorizontalPosition {
      * @return
      * @author anselme
      */
-    public double getDistanceGeographical(FullPosition location) {
+    public double computeDistanceGeographical(FullPosition location) {
         return location.toXYZGeographical().getDistance(toXYZGeographical());
     }
 
@@ -156,9 +156,9 @@ public final class FullPosition extends HorizontalPosition {
      * @param locations to be sorted.
      * @return locations in the order of the distance from this.
      */
-    public FullPosition[] getNearestLocation(FullPosition[] locations) {
+    public FullPosition[] findNearestPosition(FullPosition[] locations) {
         FullPosition[] newLocations = locations.clone();
-        Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::getDistance));
+        Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::computeDistance));
         return newLocations;
     }
 
@@ -168,13 +168,13 @@ public final class FullPosition extends HorizontalPosition {
      * @return
      * @author anselme
      */
-    public FullPosition[] getNearestLocation(FullPosition[] locations, double maxSearchRange) {
+    public FullPosition[] findNearestPosition(FullPosition[] locations, double maxSearchRange) {
         FullPosition[] newLocations = Arrays.stream(locations).parallel().filter(loc -> {
     //		System.out.println(loc + " " + this.toString() + " " + this.getDistance(loc));
             return Math.abs(this.R - loc.getR()) < maxSearchRange;
         }).collect(Collectors.toList()).toArray(new FullPosition[0]);
     //	System.out.println(newLocations.length);
-        Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::getDistance));
+        Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::computeDistance));
         return newLocations;
     }
 
@@ -183,12 +183,12 @@ public final class FullPosition extends HorizontalPosition {
      * @return
      * @author anselme
      */
-    public FullPosition[] getNearestHorizontalLocation(FullPosition[] locations) {
+    public FullPosition[] findNearestHorizontalPosition(FullPosition[] locations) {
         FullPosition[] newLocations = Arrays.stream(locations)
                 .filter(loc -> loc.getR() == this.getR())
                 .collect(Collectors.toList())
                 .toArray(new FullPosition[0]);
-        Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
+        Arrays.sort(newLocations, Comparator.comparingDouble(this::computeDistance));
         return newLocations;
     }
 

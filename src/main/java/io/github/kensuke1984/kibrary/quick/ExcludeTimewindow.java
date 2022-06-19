@@ -118,7 +118,7 @@ public class ExcludeTimewindow {
 				Set<TimewindowData> newTimewindows = timewindows.parallelStream()
 						.filter(tw ->  {
 							System.out.println(cluster.getAzimuthIndex(tw.getObserver().getPosition()));
-							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getObserver().getPosition()));
+							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition()));
 //							if (distance > 30. || distance < 17.)
 //								return false;
 //							if (distance < 30. || distance > 90.)

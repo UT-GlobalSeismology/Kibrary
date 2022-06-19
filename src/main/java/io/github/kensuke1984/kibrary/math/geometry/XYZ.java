@@ -99,7 +99,7 @@ public class XYZ extends XY {
 
     public FullPosition toLocation() {
         RThetaPhi rtp = toSphericalCoordinate(x, y, z);
-        return new FullPosition(FullPosition.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
+        return new FullPosition(FullPosition.latitudeFor(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
     }
 
 	public RThetaPhi toSphericalCoordinate() {

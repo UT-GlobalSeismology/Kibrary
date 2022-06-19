@@ -793,8 +793,8 @@ public class LetMeInvert_fromAtA implements Operation_old {
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
 			// eventFolder.mkdir();
 			Path plotPath = eventFolder.resolve("recordOBS.plt");
@@ -884,8 +884,8 @@ public class LetMeInvert_fromAtA implements Operation_old {
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
 					PrintWriter plotW = new PrintWriter(
 							Files.newBufferedWriter(plotFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
@@ -1102,8 +1102,8 @@ public class LetMeInvert_fromAtA implements Operation_old {
 				GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
 				Observer station = id.getObserver();
 				double epicentralDistance = Math
-						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
-				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
+						.toDegrees(station.getPosition().calculateEpicentralDistance(event.getCmtLocation()));
+				double azimuth = Math.toDegrees(station.getPosition().calculateAzimuth(event.getCmtLocation()));
 				pw.println(
 						station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
 								+ " " + Precision.round(epicentralDistance, 2) + " " + Precision.round(azimuth, 2));

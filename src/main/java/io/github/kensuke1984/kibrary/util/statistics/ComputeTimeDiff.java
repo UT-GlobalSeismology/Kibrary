@@ -45,7 +45,7 @@ public class ComputeTimeDiff {
 			double dT = correctionScS.getTimeshift() - corrS.getTimeshift();
 			double dA = correctionScS.getAmplitudeRatio() / corrS.getAmplitudeRatio();
 			
-			double distance = Math.toDegrees(corrS.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(corrS.getObserver().getPosition()));
+			double distance = Math.toDegrees(corrS.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(corrS.getObserver().getPosition()));
 			timetool.setSourceDepth(6371. - corrS.getGlobalCMTID().getEvent().getCmtLocation().getR());
 			timetool.calculate(distance);
 			TimeDist[] pierces = timetool.getArrival(0).getPierce();
@@ -59,7 +59,7 @@ public class ComputeTimeDiff {
 			
 			double evtLat = corrS.getGlobalCMTID().getEvent().getCmtLocation().getLatitude();
 			double evtLon = corrS.getGlobalCMTID().getEvent().getCmtLocation().getLongitude();
-			double azimuth = Math.toDegrees(corrS.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(corrS.getObserver().getPosition()));
+			double azimuth = Math.toDegrees(corrS.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(corrS.getObserver().getPosition()));
 			
 			double lat = SphericalCoords.latFor(evtLat, evtLon, pierceDist, azimuth);
 			double lon = SphericalCoords.lonFor(evtLat, evtLon, pierceDist, azimuth);

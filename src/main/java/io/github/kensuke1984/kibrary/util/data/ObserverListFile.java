@@ -56,7 +56,7 @@ public final class ObserverListFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# station network latitude longitude");
             observerSet.stream().sorted().forEach(observer -> {
-                pw.println(observer.getPaddedInfoString());
+                pw.println(observer.toPaddedInfoString());
             });
         }
     }

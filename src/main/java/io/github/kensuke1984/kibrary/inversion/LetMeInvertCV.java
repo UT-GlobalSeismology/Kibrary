@@ -720,7 +720,7 @@ public class LetMeInvertCV implements Operation_old {
 				if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
 					return false;
 				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+						.getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
@@ -763,7 +763,7 @@ public class LetMeInvertCV implements Operation_old {
 			chooser = id -> {
 				boolean clusterKeep = false;
 				for (int i = 0; i < clusterIndex.length; i++) {
-					double azimuth = centerPosition[i].getAzimuth(id.getObserver().getPosition())
+					double azimuth = centerPosition[i].calculateAzimuth(id.getObserver().getPosition())
 							* 180. / Math.PI;
 					if (thisClusterIDs.get(i).contains(id.getGlobalCMTID()) && azimuth >= azimuthRange[i][0] && azimuth <= azimuthRange[i][1])
 						clusterKeep = true;
@@ -771,7 +771,7 @@ public class LetMeInvertCV implements Operation_old {
 				if (!clusterKeep)
 					return false;
 				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+						.getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
@@ -923,7 +923,7 @@ public class LetMeInvertCV implements Operation_old {
 			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
 			chooser = id -> {
 				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+						.getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
@@ -991,7 +991,7 @@ public class LetMeInvertCV implements Operation_old {
 					EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get();
 					int icluster = cluster.getIndex();
 					
-					double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(id.getObserver().getPosition()));
 					if (azimuth < 180) azimuth += 360;
 					double tmpw = 1.;
 					
@@ -1065,7 +1065,7 @@ public class LetMeInvertCV implements Operation_old {
 						EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get();
 						int icluster = cluster.getIndex();
 						
-						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(id.getObserver().getPosition()));
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().calculateAzimuth(id.getObserver().getPosition()));
 						if (azimuth < 180) azimuth += 360;
 						double tmpw = 1.;
 						
@@ -2262,8 +2262,8 @@ public class LetMeInvertCV implements Operation_old {
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
 			// eventFolder.mkdir();
 			Path plotPath = eventFolder.resolve("recordOBS.plt");
@@ -2357,8 +2357,8 @@ public class LetMeInvertCV implements Operation_old {
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
 					PrintWriter plotW = new PrintWriter(
 							Files.newBufferedWriter(plotFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
@@ -2849,8 +2849,8 @@ public class LetMeInvertCV implements Operation_old {
 				GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
 				Observer station = id.getObserver();
 				double epicentralDistance = Math
-						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
-				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
+						.toDegrees(station.getPosition().calculateEpicentralDistance(event.getCmtLocation()));
+				double azimuth = Math.toDegrees(station.getPosition().calculateAzimuth(event.getCmtLocation()));
 				pw.println(
 						station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
 								+ " " + Precision.round(epicentralDistance, 2) + " " + Precision.round(azimuth, 2));

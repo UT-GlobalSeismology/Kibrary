@@ -53,11 +53,11 @@ public class BouncingPointInformation {
 			else
 				continue;
 			
-			double distance = Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition()));
+			double distance = Math.toDegrees(event.getEvent().getCmtLocation().calculateEpicentralDistance(timewindow.getObserver().getPosition()));
 			if (distance > maxdistance)
 				continue;
 			
-			double azimuth = Math.toDegrees(event.getEvent().getCmtLocation().getAzimuth(timewindow.getObserver().getPosition()));
+			double azimuth = Math.toDegrees(event.getEvent().getCmtLocation().calculateAzimuth(timewindow.getObserver().getPosition()));
 			
 			timetool.setSourceDepth(6371. - event.getEvent().getCmtLocation().getR());
 			timetool.calculate(distance);

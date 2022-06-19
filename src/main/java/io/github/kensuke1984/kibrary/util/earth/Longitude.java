@@ -37,7 +37,7 @@ final class Longitude implements Comparable<Longitude> {
      * @param longitude [deg] [-180, 360)
      */
     Longitude(double longitude) {
-        if (!checkLongitude(longitude)) throw new IllegalArgumentException(
+        if (!withinValidRange(longitude)) throw new IllegalArgumentException(
                 "The input longitude: " + longitude + " is invalid (must be [-180, 360)).");
 
         if (180 <= longitude) {
@@ -54,13 +54,8 @@ final class Longitude implements Comparable<Longitude> {
      * @param longitude [deg]
      * @return if the longitude is valid
      */
-    private static boolean checkLongitude(double longitude) {
+    private static boolean withinValidRange(double longitude) {
         return -180 <= longitude && longitude < 360;
-    }
-
-    @Override
-    public int compareTo(Longitude o) {
-        return Double.compare(longitude, o.longitude);
     }
 
     @Override
@@ -86,6 +81,11 @@ final class Longitude implements Comparable<Longitude> {
         Longitude other = (Longitude) obj;
 
         return MathAid.equalWithinEpsilon(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
+    }
+
+    @Override
+    public int compareTo(Longitude o) {
+        return Double.compare(longitude, o.longitude);
     }
 
     /**

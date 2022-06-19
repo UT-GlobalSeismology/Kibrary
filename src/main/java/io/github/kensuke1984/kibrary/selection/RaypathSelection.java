@@ -290,8 +290,8 @@ public class RaypathSelection extends Operation {
                 continue;
             }
 
-            double distance = eventPosition.getEpicentralDistance(observerPosition) * 180. / Math.PI;
-            double azimuth = eventPosition.getAzimuth(observerPosition) * 180. / Math.PI;
+            double distance = eventPosition.calculateEpicentralDistance(observerPosition) * 180. / Math.PI;
+            double azimuth = eventPosition.calculateAzimuth(observerPosition) * 180. / Math.PI;
             if ((lowerDistance <= distance && distance <= upperDistance && MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth))
                     == false) {
                 if (eliminationMode) {

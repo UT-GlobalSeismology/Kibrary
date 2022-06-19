@@ -94,7 +94,7 @@ public class HorizontalPoint {
      */
     public String[] getNearestPoints(HorizontalPosition position) {
         return perPointMap.keySet().stream()
-                .sorted(Comparator.comparingDouble(o -> perPointMap.get(o).getEpicentralDistance(position)))
+                .sorted(Comparator.comparingDouble(o -> perPointMap.get(o).calculateEpicentralDistance(position)))
                 .toArray(String[]::new);
     }
 }

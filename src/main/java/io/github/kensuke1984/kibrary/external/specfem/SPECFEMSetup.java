@@ -167,7 +167,7 @@ public class SPECFEMSetup {
     private void generateStationFile(Set<Observer> observerSet, Path dataPath) throws IOException {
         Path stationPath = dataPath.resolve("STATIONS");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stationPath))) {
-            observerSet.forEach(observer -> pw.println(observer.getPaddedInfoString() + "  0.0  0.0"));
+            observerSet.forEach(observer -> pw.println(observer.toPaddedInfoString() + "  0.0  0.0"));
         }
     }
 

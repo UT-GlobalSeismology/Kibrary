@@ -129,18 +129,6 @@ public final class Observer implements Comparable<Observer> {
         return new Observer(stationName, network, position);
     }
 
-    /**
-     * Sorting order is station &rarr; network &rarr; position.
-     */
-    @Override
-    public int compareTo(Observer o) {
-        int name = station.compareTo(o.station);
-        if (name != 0)
-            return name;
-        int net = network.compareTo(o.network);
-        return net != 0 ? net : position.compareTo(o.getPosition());
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -191,6 +179,18 @@ public final class Observer implements Comparable<Observer> {
     }
 
     /**
+     * Sorting order is station &rarr; network &rarr; position.
+     */
+    @Override
+    public int compareTo(Observer o) {
+        int name = station.compareTo(o.station);
+        if (name != 0)
+            return name;
+        int net = network.compareTo(o.network);
+        return net != 0 ? net : position.compareTo(o.getPosition());
+    }
+
+    /**
      * @return the name of the station
      */
     public String getStation() {
@@ -232,7 +232,7 @@ public final class Observer implements Comparable<Observer> {
     /**
      * @return (String) station network latitude longitude
      */
-    public String getPaddedInfoString() {
+    public String toPaddedInfoString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH)
                 + " " + position.toString();
     }

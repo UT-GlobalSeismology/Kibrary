@@ -38,7 +38,7 @@ final class Latitude implements Comparable<Latitude> {
      * @param theta [rad] spherical coordinates [0, &pi;]
      * @return geographic latitude [deg]
      */
-    static double toLatitude(double theta) {
+    static double valueFor(double theta) {
         if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
                 "Invalid theta (must be[0, pi]): " + theta + " @" +
                         Thread.currentThread().getStackTrace()[1].getMethodName());
@@ -53,7 +53,7 @@ final class Latitude implements Comparable<Latitude> {
      * @param geographicLatitude [deg] [-90, 90]
      */
     Latitude(double geographicLatitude) {
-        if (!checkLatitude(geographicLatitude)) throw new IllegalArgumentException(
+        if (!withinValidRange(geographicLatitude)) throw new IllegalArgumentException(
                 "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
@@ -67,13 +67,8 @@ final class Latitude implements Comparable<Latitude> {
      * @param latitude [deg]
      * @return if the latitude is valid
      */
-    private static boolean checkLatitude(double latitude) {
+    private static boolean withinValidRange(double latitude) {
         return -90 <= latitude && latitude <= 90;
-    }
-
-    @Override
-    public int compareTo(Latitude o) {
-        return Double.compare(geographicLatitude, o.geographicLatitude);
     }
 
     @Override
@@ -101,24 +96,29 @@ final class Latitude implements Comparable<Latitude> {
         return MathAid.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
     }
 
+    @Override
+    public int compareTo(Latitude o) {
+        return Double.compare(geographicLatitude, o.geographicLatitude);
+    }
+
     /**
      * @return geographic latitude [deg]
      */
-    public double getLatitude() {
+    double getLatitude() {
         return geographicLatitude;
     }
 
     /**
      * @return geocentric latitude [rad]
      */
-    public double getGeocentricLatitude() {
+    double getGeocentricLatitude() {
         return geocentricLatitude;
     }
 
     /**
      * @return theta [radian]
      */
-    public double getTheta() {
+    double getTheta() {
         return theta;
     }
 

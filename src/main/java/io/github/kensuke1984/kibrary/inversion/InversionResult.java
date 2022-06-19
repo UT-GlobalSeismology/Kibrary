@@ -183,12 +183,12 @@ public class InversionResult {
             return ansMap.get(location);
 
         FullPosition[] nearLocations = location
-                .getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
+                .findNearestPosition(answer.keySet().stream().filter(key -> key.getPartialType() == type)
                         .map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(FullPosition[]::new));
         double[] r = new double[nPoints];
         double rTotal = 0;
         for (int iPoint = 0; iPoint < nPoints; iPoint++) {
-            r[iPoint] = Math.pow(nearLocations[iPoint].getDistance(location), nPower);
+            r[iPoint] = Math.pow(nearLocations[iPoint].computeDistance(location), nPower);
             rTotal += 1 / r[iPoint];
         }
         double value = 0;
