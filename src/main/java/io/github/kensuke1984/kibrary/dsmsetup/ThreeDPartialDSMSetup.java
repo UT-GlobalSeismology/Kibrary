@@ -305,7 +305,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         for (GlobalCMTID eventID : eventSet) {
             GlobalCMTAccess event;
             try {
-                event = eventID.getEvent();
+                event = eventID.getEventData();
 
                 // joint CMT inversion
                 if (jointCMT) {

@@ -132,7 +132,7 @@ public class ProfileWaveform {
 
                         // print gnuplot script for profile
                         double maxObs = obsDataVector.getLInfNorm();
-                        double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                        double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
                                 .calculateEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
                         pwProfile.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs, distance)
                                 + "w lines lw 1 lt 1 lc \"black\",\\");

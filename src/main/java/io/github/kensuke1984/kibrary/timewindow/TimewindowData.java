@@ -112,7 +112,7 @@ public class TimewindowData extends Timewindow {
      * @author anselme
      */
     public double getAzimuthDegree() {
-        return Math.toDegrees(eventID.getEvent().getCmtLocation().calculateAzimuth(observer.getPosition()));
+        return Math.toDegrees(eventID.getEventData().getCmtLocation().calculateAzimuth(observer.getPosition()));
     }
 
     /**
@@ -120,7 +120,7 @@ public class TimewindowData extends Timewindow {
      * @author anselme
      */
     public double getDistanceDegree() {
-        return Math.toDegrees(eventID.getEvent().getCmtLocation().calculateEpicentralDistance(observer.getPosition()));
+        return Math.toDegrees(eventID.getEventData().getCmtLocation().calculateEpicentralDistance(observer.getPosition()));
     }
 
     @Override

@@ -217,6 +217,7 @@ public class FilterDivider extends Operation {
                 Files.createDirectories(outPath.resolve(eventname));
                 set.forEach(this::filterAndout);
             } catch (Exception e) {
+                // if an exception is thrown, ignore that event folder and finish up the rest
                 System.err.println("Error on " + eventDir);
                 e.printStackTrace();
             } finally {
@@ -261,9 +262,12 @@ public class FilterDivider extends Operation {
         try {
             SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
             Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
-            sacFile.writeSAC(out);
+            // write SAC file. If there are SAC files with the same name, this throws an exception
+            sacFile.writeSAC(out, StandardOpenOption.CREATE_NEW);
             if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);
         } catch (Exception e) {
+            // if an exception is thrown, move on to the next SAC file
+            System.err.println("Error on " + name.getPath());
             e.printStackTrace();
         }
     }

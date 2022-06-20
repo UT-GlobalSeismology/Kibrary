@@ -63,7 +63,7 @@ public class MakeHorizontalMesh {
 	
 	private static double[] getBounds(Set<Observer> stations, Set<GlobalCMTID> events, double lonborder, double latborder) {
 		double[] bounds = new double[] {Double.MAX_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MIN_VALUE};
-		Stream.concat(stations.stream().map(s -> s.getPosition()), events.stream().map(e -> e.getEvent().getCmtLocation().toHorizontalPosition()))
+		Stream.concat(stations.stream().map(s -> s.getPosition()), events.stream().map(e -> e.getEventData().getCmtLocation().toHorizontalPosition()))
 			.forEach(pos -> {
 				double lat = pos.getLatitude();
 				double lon = pos.getLongitude();

@@ -119,7 +119,7 @@ public class InformationFileReader {
     }
 
     /**
-     * Get all non-comment lines.
+     * Get all non-comment lines. The spaces at the beginning and end of each line are trimmed.
      * @return String[] made of non comment lines
      */
     public String[] getNonCommentLines() {

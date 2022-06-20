@@ -370,9 +370,9 @@ public class RecordSectionCreater extends Operation {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
                         .calculateEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-                double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
+                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtLocation()
                         .calculateAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
                 // skip waveform if distance or azimuth is out of bounds

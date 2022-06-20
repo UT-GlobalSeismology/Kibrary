@@ -335,7 +335,7 @@ public final class SPC_SAC extends Operation {
      * @author anselme add more options for source time function catalogs
      */
     private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
-        double halfDuration = id.getEvent().getHalfDuration();
+        double halfDuration = id.getEventData().getHalfDuration();
         switch (sourceTimeFunction) {
             case -1:
                 SourceTimeFunction tmp = userSourceTimeFunctions.get(id);
@@ -350,8 +350,8 @@ public final class SPC_SAC extends Operation {
                 return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
             case 3:
                 if (stfcat.contains("LSTF")) {
-                    double halfDuration1 = id.getEvent().getHalfDuration();
-                    double halfDuration2 = id.getEvent().getHalfDuration();
+                    double halfDuration1 = id.getEventData().getHalfDuration();
+                    double halfDuration2 = id.getEventData().getHalfDuration();
                     boolean found = false;
                       for (String str : stfcat) {
                           String[] stflist = str.split("\\s+");
@@ -369,7 +369,7 @@ public final class SPC_SAC extends Operation {
                           stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
                       }
                       else
-                          stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+                          stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEventData().getHalfDuration());
                       return stf;
                 }
                 else {
@@ -388,7 +388,7 @@ public final class SPC_SAC extends Operation {
                     if (found)
                         return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, ampCorr);
                     else
-                        return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+                        return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEventData().getHalfDuration());
                 }
             case 4:
                 throw new RuntimeException("Case 4 not implemented yet");
@@ -409,7 +409,7 @@ public final class SPC_SAC extends Operation {
                   if (found)
                       stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, 1. / amplitudeCorrection);
                   else
-                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEventData().getHalfDuration());
                   return stf;
             default:
                 throw new RuntimeException("Integer for source time function is invalid.");

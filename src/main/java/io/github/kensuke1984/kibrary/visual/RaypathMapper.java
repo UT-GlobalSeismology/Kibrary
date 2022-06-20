@@ -404,14 +404,14 @@ public class RaypathMapper extends Operation {
 
     private GMTMap createBaseMap() {
 
-        double minimumEventLatitude = events.stream().mapToDouble(id -> id.getEvent().getCmtLocation().getLatitude()).min()
+        double minimumEventLatitude = events.stream().mapToDouble(id -> id.getEventData().getCmtLocation().getLatitude()).min()
                 .getAsDouble();
-        double maximumEventLatitude = events.stream().mapToDouble(id -> id.getEvent().getCmtLocation().getLatitude()).max()
+        double maximumEventLatitude = events.stream().mapToDouble(id -> id.getEventData().getCmtLocation().getLatitude()).max()
                 .getAsDouble();
 
-        double minimumEventLongitude = events.stream().mapToDouble(e -> e.getEvent().getCmtLocation().getLongitude())
+        double minimumEventLongitude = events.stream().mapToDouble(e -> e.getEventData().getCmtLocation().getLongitude())
                 .map(d -> 0 <= d ? d : d + 360).min().getAsDouble();
-        double maximumEventLongitude = events.stream().mapToDouble(e -> e.getEvent().getCmtLocation().getLongitude())
+        double maximumEventLongitude = events.stream().mapToDouble(e -> e.getEventData().getCmtLocation().getLongitude())
                 .map(d -> 0 <= d ? d : d + 360).max().getAsDouble();
 
         double minimumStationLatitude = observers.stream().mapToDouble(s -> s.getPosition().getLatitude()).min()

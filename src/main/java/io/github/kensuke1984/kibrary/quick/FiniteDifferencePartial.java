@@ -89,11 +89,11 @@ public class FiniteDifferencePartial {
 				pw2.close();
 				pw3.close();
 				
-				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(obsIds[i].getObserver().getPosition()))
+				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(obsIds[i].getObserver().getPosition()))
 						/ daz);
 				int icomp = obsIds[i].getSacComponent().valueOf();
 				double max = new ArrayRealVector(obs).subtract(new ArrayRealVector(syn)).getLInfNorm() * 0.167;
-				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(obsIds[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obsIds[i].getObserver().getPosition()));
 				azimuthPlotString[iaz][icomp-1] += String.format("'%s' u 1:($2/%.4e+%.3f) w l lc rgb 'black' lt 1 lw .5 noti,\\\n", outname, max, distance);
 			}
 			

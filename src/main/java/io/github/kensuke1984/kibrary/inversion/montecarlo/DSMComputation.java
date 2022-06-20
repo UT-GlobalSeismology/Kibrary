@@ -1,33 +1,40 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMInputFile;
-import io.github.kensuke1984.kibrary.external.DSMMPI;
-import io.github.kensuke1984.kibrary.filter.BandPassFilter;
-import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
-import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
-import io.github.kensuke1984.kibrary.util.spc.SACMaker;
-import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
-
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMInputFile;
+import io.github.kensuke1984.kibrary.external.DSMMPI;
+import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SACMaker;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 /**
  * Computes DSM(tish) write will be in outdir.
@@ -35,7 +42,7 @@ import java.util.stream.Stream;
  * @author Kensuke Konishi
  * @version 0.0.1.2
  */
-class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess[]> {
+class DSMComputation implements DataGenerator<PolynomialStructure_new, SACFileAccess[]> {
 
 
     private static final int NP = 256;
@@ -78,7 +85,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
                         eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getStationCode)
                                 .distinct().map(this::pickup).collect(Collectors.toSet());
                 GlobalCMTID id = eventDir.getGlobalCMTID();
-                return new SyntheticDSMInputFile(PolynomialStructure.PREM, id.getEvent(), stations, id.toString(), TLEN, NP);
+                return new SyntheticDSMInputFile(DefaultStructure.PREM, id.getEventData(), stations, id.toString(), TLEN, NP);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -99,7 +106,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
     }
 
     @Override
-    public SACFileAccess[] generate(PolynomialStructure model) {
+    public SACFileAccess[] generate(PolynomialStructure_new model) {
         try {
             Path root = Files.createDirectories(outPath.resolve("DSMComputation_" + sequentialNumber++));
             SyntheticDSMInputFile[] infos = createDSMInfo(model);
@@ -129,7 +136,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
                 .orElseThrow(() -> new RuntimeException("No information about " + stationName));
     }
 
-    private SyntheticDSMInputFile[] createDSMInfo(PolynomialStructure model) {
+    private SyntheticDSMInputFile[] createDSMInfo(PolynomialStructure_new model) {
         return Arrays.stream(DSM_INFOS).map(info -> info.replaceStructure(model)).toArray(SyntheticDSMInputFile[]::new);
     }
 
@@ -148,7 +155,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
     private void makeSacFiles(EventFolder eventDir) throws IOException {
         Path spcPath = eventDir.toPath();
         SourceTimeFunction sourceTimeFunction = SourceTimeFunction.boxcarSourceTimeFunction(NP, TLEN, SAMPLING_HZ,
-                eventDir.getGlobalCMTID().getEvent().getHalfDuration());
+                eventDir.getGlobalCMTID().getEventData().getHalfDuration());
         try (Stream<Path> stream = Files.list(spcPath)) {
             stream.filter(path -> path.toString().endsWith("SH.spc")).forEach(shPath -> {
                 SPCFileName shName = new FormattedSPCFileName(shPath);

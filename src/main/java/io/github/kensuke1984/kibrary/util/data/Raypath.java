@@ -96,7 +96,7 @@ public class Raypath {
      * @since 2022/4/22
      */
     public Raypath(TimewindowData timewindow) {
-        this(timewindow.getGlobalCMTID().getEvent().getCmtLocation(), timewindow.getObserver().getPosition());
+        this(timewindow.getGlobalCMTID().getEventData().getCmtLocation(), timewindow.getObserver().getPosition());
     }
 
     /**
@@ -105,7 +105,7 @@ public class Raypath {
      * @param basicID of a raypath to create
      */
     public Raypath(BasicID basicID) {
-        this(basicID.getGlobalCMTID().getEvent().getCmtLocation(), basicID.getObserver().getPosition());
+        this(basicID.getGlobalCMTID().getEventData().getCmtLocation(), basicID.getObserver().getPosition());
     }
 
     /**

@@ -30,8 +30,8 @@ public class HistogramAzimuth {
         double tmpLon = 0;
         if (centered) {
             for (BasicID id : basicIDs) {
-                tmpLat += id.getGlobalCMTID().getEvent().getCmtLocation().getLatitude();
-                tmpLon += id.getGlobalCMTID().getEvent().getCmtLocation().getLongitude();
+                tmpLat += id.getGlobalCMTID().getEventData().getCmtLocation().getLatitude();
+                tmpLon += id.getGlobalCMTID().getEventData().getCmtLocation().getLongitude();
             }
             tmpLat /= basicIDs.length;
             tmpLon /= basicIDs.length;
@@ -49,7 +49,7 @@ public class HistogramAzimuth {
             idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
             .forEach(id -> {
                 Observer station = stationSet.stream().filter(s->s.equals(id.getObserver())).findAny().get();
-                FullPosition cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
+                FullPosition cmtLocation = id.getGlobalCMTID().getEventData().getCmtLocation();
 
                 // do not consider the following ids
 //				if (cmtLocation.getLongitude() > -80)

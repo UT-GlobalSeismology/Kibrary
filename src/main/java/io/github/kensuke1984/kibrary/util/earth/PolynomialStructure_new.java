@@ -8,6 +8,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * 1D structure of a planet.
@@ -32,6 +33,11 @@ import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
  * @version 2022/6/15 recreated this file to make this class actually immutable
  */
 public final class PolynomialStructure_new {
+
+    /**
+     * The margin to decide whether two radii are the same value
+     */
+    private static final double R_EPSILON = 1e-6;
 
     /**
      * true if default structure, false if user-defined structure
@@ -221,9 +227,8 @@ public final class PolynomialStructure_new {
      * @param isDefault (boolean) whether to create this as a default structure (to be used in {@link PolynomialStructureData})
      * @param boundaries (double...) radii for boundaries. Values smaller than 0 or bigger than
      *              earth radius will be ignored
-     * @return a new structure which has additional layers given by input
-     * boundaries or this if there all the radiuses already exist in
-     * this
+     * @return a new structure which has additional layers given by input,
+     * or current structure itself if all radii already exist in current structure
      */
     PolynomialStructure_new withBoundaries(boolean isDefault, double... boundaries) {
         double[] addBoundaries = Arrays.stream(boundaries)
@@ -263,6 +268,89 @@ public final class PolynomialStructure_new {
 
         return new PolynomialStructure_new(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
                 rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew, isDefault);
+    }
+
+    /**
+     * Add perturbation of a certain parameter to an arbitrary layer.
+     * @param r1 (double) Lower radius of layer to add perturbation to
+     * @param r2 (double) Upper radius of layer to add perturbation to
+     * @param parameter (ParameterType) The parameter to perburb
+     * @param percent (double) Size of perturbation [%]
+     * @return a new structure with added perturbations
+     */
+    public PolynomialStructure_new withPerturbation(double r1, double r2, ParameterType parameter, double percent) {
+        // look up whether r1 and r2 are existing boundaries or not
+        boolean foundR1 = false;
+        boolean foundR2 = false;
+        for (double r : rmin) {
+            if (MathAid.equalWithinEpsilon(r1, r, R_EPSILON))
+                foundR1 = true;
+            if (MathAid.equalWithinEpsilon(r2, r, R_EPSILON))
+                foundR2 = true;
+        }
+
+        // add r1 and r2 as boundaries if they were not already
+        PolynomialStructure_new structureNew = this;
+        if (!foundR1)
+            structureNew = structureNew.withBoundaries(r1);
+        if (!foundR2)
+            structureNew = structureNew.withBoundaries(r2);
+
+        // get values of structureNew
+        int nZoneNew = structureNew.getNZone();
+        int nCoreZoneNew = structureNew.getNCoreZone();
+        double[] rminNew = structureNew.getRmin();
+        double[] rmaxNew = structureNew.getRmax();
+        PolynomialFunction[] rhoNew = structureNew.getRho();
+        PolynomialFunction[] vpvNew = structureNew.getVpv();
+        PolynomialFunction[] vphNew = structureNew.getVph();
+        PolynomialFunction[] vsvNew = structureNew.getVsv();
+        PolynomialFunction[] vshNew = structureNew.getVsh();
+        PolynomialFunction[] etaNew = structureNew.getEta();
+        double[] qMuNew = structureNew.getQMu();
+        double[] qKappaNew = structureNew.getQKappa();
+
+        // create a constant function
+        double coefficient = 1.0 + percent/100.0;
+        PolynomialFunction p0 = new PolynomialFunction(new double[] {coefficient});
+
+        // multiply the functions of the corresponding zones
+        int izoneR1 = structureNew.zoneOf(r1);
+        int izoneR2 = structureNew.zoneOf(r2);
+        for (int izone = izoneR1; izone < izoneR2; izone++) {
+            switch(parameter) {
+            case RHO:
+                rhoNew[izone] = rhoNew[izone].multiply(p0);
+                break;
+            case Vpv:
+                vpvNew[izone] = vpvNew[izone].multiply(p0);
+                break;
+            case Vph:
+                vphNew[izone] = vphNew[izone].multiply(p0);
+                break;
+            case Vsv:
+                vsvNew[izone] = vsvNew[izone].multiply(p0);
+                break;
+            case Vsh:
+                vshNew[izone] = vshNew[izone].multiply(p0);
+                break;
+            case ETA:
+                etaNew[izone] = etaNew[izone].multiply(p0);
+                break;
+            case Qmu:
+                qMuNew[izone] = qMuNew[izone] * coefficient;
+                break;
+            case Qkappa:
+                qKappaNew[izone] = qKappaNew[izone] * coefficient;
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal parameter type");
+            }
+        }
+
+        return new PolynomialStructure_new(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
+                rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
+
     }
 
     /**

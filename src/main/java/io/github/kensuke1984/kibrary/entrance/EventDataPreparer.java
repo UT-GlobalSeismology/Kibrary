@@ -76,7 +76,7 @@ class EventDataPreparer {
         sacSetPath = eventDir.toPath().resolve("sac");
         stationSetPath = eventDir.toPath().resolve("station");
         respSetPath = eventDir.toPath().resolve("resp");
-        eventData = eventFolder.getGlobalCMTID().getEvent();
+        eventData = eventFolder.getGlobalCMTID().getEventData();
     }
 
     /**

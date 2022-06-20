@@ -719,12 +719,12 @@ public class LetMeInvertCV implements Operation_old {
 			chooser = id -> {
 				if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
 					return false;
-				double distance = id.getGlobalCMTID().getEvent()
+				double distance = id.getGlobalCMTID().getEventData()
 						.getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
-				double mw = id.getGlobalCMTID().getEvent()
+				double mw = id.getGlobalCMTID().getEventData()
 						.getCmt().getMw();
 				if (mw < minMw || mw > maxMw) {
 					System.out.println(mw);
@@ -770,12 +770,12 @@ public class LetMeInvertCV implements Operation_old {
 				}
 				if (!clusterKeep)
 					return false;
-				double distance = id.getGlobalCMTID().getEvent()
+				double distance = id.getGlobalCMTID().getEventData()
 						.getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
-				double mw = id.getGlobalCMTID().getEvent()
+				double mw = id.getGlobalCMTID().getEventData()
 						.getCmt().getMw();
 				if (mw < minMw || mw > maxMw) {
 					System.out.println(mw);
@@ -922,12 +922,12 @@ public class LetMeInvertCV implements Operation_old {
 		else {
 			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
 			chooser = id -> {
-				double distance = id.getGlobalCMTID().getEvent()
+				double distance = id.getGlobalCMTID().getEventData()
 						.getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (distance < minDistance || distance > maxDistance)
 					return false;
-				double mw = id.getGlobalCMTID().getEvent()
+				double mw = id.getGlobalCMTID().getEventData()
 						.getCmt().getMw();
 				if (mw < minMw || mw > maxMw) {
 					System.out.println(mw);
@@ -2203,7 +2203,7 @@ public class LetMeInvertCV implements Operation_old {
 			pwEvent.println("#id latitude longitude radius variance");
 			d.getEventVariance().entrySet().forEach(entry -> {
 				pwEvent.println(
-						entry.getKey() + " " + entry.getKey().getEvent().getCmtLocation() + " " + entry.getValue());
+						entry.getKey() + " " + entry.getKey().getEventData().getCmtLocation() + " " + entry.getValue());
 			});
 			pwStation.println("#name network latitude longitude variance");
 			d.getStationVariance().entrySet().forEach(entry -> {
@@ -2260,7 +2260,7 @@ public class LetMeInvertCV implements Operation_old {
 			String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
 					+ "." + i + ".txt";
 
-			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
+			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
@@ -2355,7 +2355,7 @@ public class LetMeInvertCV implements Operation_old {
 					+ obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
 			Path plotFile = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/record.plt");
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
-			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
+			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
@@ -2741,7 +2741,7 @@ public class LetMeInvertCV implements Operation_old {
 		
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out, StandardOpenOption.CREATE_NEW))) {
 			for (GlobalCMTID id : eventSet) {
-				double GCMTMw = id.getEvent().getCmt().getMw();
+				double GCMTMw = id.getEventData().getCmt().getMw();
 				
 				String s = id.toString() + " " + String.format("%.2f", GCMTMw);
 				double[] variance = varianceMap.get(id);
@@ -2846,7 +2846,7 @@ public class LetMeInvertCV implements Operation_old {
 			BasicID[] obsIDs = eq.getDVector().getObsIDs();
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
-				GlobalCMTAccess event = id.getGlobalCMTID().getEvent();
+				GlobalCMTAccess event = id.getGlobalCMTID().getEventData();
 				Observer station = id.getObserver();
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().calculateEpicentralDistance(event.getCmtLocation()));

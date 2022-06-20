@@ -82,7 +82,7 @@ public class Vespagram {
 		recordsinBin = new int[(int) (180 / deltaDistance)];
 		usedBinIndexes = new HashSet<>();
 		for (int i = 0; i < obsIDs.length; i++) {
-			double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(obsIDs[i].getObserver().getPosition()));
+			double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obsIDs[i].getObserver().getPosition()));
 			int ibin = (int) (distance / deltaDistance);
 			id2bin[i] = ibin;
 			usedBinIndexes.add(ibin);
@@ -120,7 +120,7 @@ public class Vespagram {
 				double[] data = obsIDs[i].getData();
 				double max = new ArrayRealVector(data).getLInfNorm();
 				
-				double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(obsIDs[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obsIDs[i].getObserver().getPosition()));
 				double timeshift = smax * deltaDistance - slowness * (distance - distance0);
 				int shift = (int) (timeshift * samplingHz);
 				
@@ -164,7 +164,7 @@ public class Vespagram {
 				double[] data = synIDs[i].getData();
 				double max = new ArrayRealVector(data).getLInfNorm();
 				
-				double distance = Math.toDegrees(synIDs[i].getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(synIDs[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(synIDs[i].getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(synIDs[i].getObserver().getPosition()));
 				double timeshift = smax * deltaDistance - slowness * (distance - distance0);
 				int shift = (int) (timeshift * samplingHz);
 				

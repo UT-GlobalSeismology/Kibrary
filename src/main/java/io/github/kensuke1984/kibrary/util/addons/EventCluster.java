@@ -108,8 +108,8 @@ public class EventCluster {
 			AtomicInteger count = new AtomicInteger();
 			final int itmp = i;
 			clusters.stream().filter(c -> c.index == itmp).forEach(c -> {
-				latlon[0] += c.getID().getEvent().getCmtLocation().getLatitude();
-				latlon[1] += c.getID().getEvent().getCmtLocation().getLongitude();
+				latlon[0] += c.getID().getEventData().getCmtLocation().getLatitude();
+				latlon[1] += c.getID().getEventData().getCmtLocation().getLongitude();
 				count.incrementAndGet();
 			});
 			if (count.get() == 0)
@@ -134,8 +134,8 @@ public class EventCluster {
 		double lonmax = -1000;
 		
 		for (GlobalCMTID id : ids) {
-			double lat = id.getEvent().getCmtLocation().getLatitude();
-			double lon = id.getEvent().getCmtLocation().getLongitude();
+			double lat = id.getEventData().getCmtLocation().getLatitude();
+			double lon = id.getEventData().getCmtLocation().getLongitude();
 			
 			if (lat < latmin)
 				latmin = lat;
@@ -155,8 +155,8 @@ public class EventCluster {
 		int nlat = (int) ((latmax - latmin) / dL) + 2;
 		
 		for (GlobalCMTID id : ids) {
-			double lat = id.getEvent().getCmtLocation().getLatitude();
-			double lon = id.getEvent().getCmtLocation().getLongitude();
+			double lat = id.getEventData().getCmtLocation().getLatitude();
+			double lon = id.getEventData().getCmtLocation().getLongitude();
 			
 			int ilon = (int) ((lon - lonmin) / dL);
 			int ilat = (int) ((lat - latmin) / dL);
@@ -306,7 +306,7 @@ public class EventCluster {
 			azimuthString += String.format("%.4f ", azimuthSlices.get(i));
 		if (azimuthSlices.size() > 0)
 			azimuthString += String.format("%.4f", azimuthSlices.get(azimuthSlices.size() - 1));
-		return id + " " + id.getEvent().getCmtLocation().toHorizontalPosition() + " " + centerPosition + " " + index + " " + azimuthString;
+		return id + " " + id.getEventData().getCmtLocation().toHorizontalPosition() + " " + centerPosition + " " + index + " " + azimuthString;
 	}
 	
 }

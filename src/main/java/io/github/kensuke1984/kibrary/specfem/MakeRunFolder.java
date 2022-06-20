@@ -106,7 +106,7 @@ public class MakeRunFolder {
 	}
 
 	public static String cmtSolutionString(GlobalCMTID id) {
-		GlobalCMTAccess idData = id.getEvent();
+		GlobalCMTAccess idData = id.getEventData();
 		LocalDateTime pdeTime = idData.getPDETime();
 		MomentTensor mt = idData.getCmt();
 		double pow = Math.pow(10, mt.getMtExp());

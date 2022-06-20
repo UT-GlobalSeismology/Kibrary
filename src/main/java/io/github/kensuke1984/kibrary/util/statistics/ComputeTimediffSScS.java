@@ -73,7 +73,7 @@ public class ComputeTimediffSScS {
 		
 		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath).stream()
 			.filter(tw -> {
-					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation()
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation()
 							.calculateEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance || distance > maxDistance)
 						return false;
@@ -98,7 +98,7 @@ public class ComputeTimediffSScS {
 			if (!Files.exists(eventPath))
 				Files.createDirectory(eventPath);
 			
-			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR());
+			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEventData().getCmtLocation().getR());
 			
 			Set<TimewindowData> thisWindows = timewindows.stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))

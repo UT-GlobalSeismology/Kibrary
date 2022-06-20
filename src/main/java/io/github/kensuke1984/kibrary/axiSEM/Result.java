@@ -283,7 +283,7 @@ public class Result implements Operation_old {
 					
 					// source time function
 					double halfDuration = eventFolder.getGlobalCMTID()
-							.getEvent().getHalfDuration();
+							.getEventData().getHalfDuration();
 //					int npts = (int) (tlen / DELTA);
 //					data = Arrays.copyOf(data, npts);
 ////					TODO think about a good value for np

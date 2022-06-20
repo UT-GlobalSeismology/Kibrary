@@ -969,7 +969,7 @@ public class AtAMaker implements Operation_old {
 							System.out.println("FP catalogue");
 							for (HorizontalPosition position : originalHorizontalPositions) {
 								if (fastCompute) {
-									FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
+									FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
 									HorizontalPosition bpSourceLoc = station.getPosition();
 									double distanceFP = fpSourceLoc.calculateEpicentralDistance(position);
 									double az = fpSourceLoc.calculateAzimuth(bpSourceLoc) - fpSourceLoc.calculateAzimuth(position);
@@ -994,7 +994,7 @@ public class AtAMaker implements Operation_old {
 								else if (mode.equals("BOTH")) {
 									HorizontalPosition position = fpnames.get(ispc).read().getObserverPosition();
 									if (fastCompute) {
-										FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
+										FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
 										HorizontalPosition bpSourceLoc = station.getPosition();
 										double distanceFP = fpSourceLoc.calculateEpicentralDistance(position);
 										double az = fpSourceLoc.calculateAzimuth(bpSourceLoc) - fpSourceLoc.calculateAzimuth(position);
@@ -1460,7 +1460,7 @@ public class AtAMaker implements Operation_old {
 		
 		userSourceTimeFunctions = new HashMap<>();
 		idSet.forEach(id -> {
-			double halfDuration = id.getEvent().getHalfDuration();
+			double halfDuration = id.getEventData().getHalfDuration();
 			SourceTimeFunction stf;
 			switch (sourceTimeFunction) {
 			case 1:
@@ -1473,8 +1473,8 @@ public class AtAMaker implements Operation_old {
 				break;
 			case 3:
 				System.out.println("Using asymmetric triangle STF with user catalog");
-				double halfDuration1 = id.getEvent().getHalfDuration();
-	        	double halfDuration2 = id.getEvent().getHalfDuration();
+				double halfDuration1 = id.getEventData().getHalfDuration();
+	        	double halfDuration2 = id.getEventData().getHalfDuration();
 	        	boolean found = false;
 		      	for (String str : stfcat) {
 		      		String[] stflist = str.split("\\s+");
@@ -1490,7 +1490,7 @@ public class AtAMaker implements Operation_old {
 		      	if (found)
 		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
 		      	else
-		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
 	            break;
 			case 4:
 				throw new RuntimeException("Case 4 not implemented yet");
@@ -1511,7 +1511,7 @@ public class AtAMaker implements Operation_old {
 		      	if (found)
 		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, 1. / amplitudeCorrection);
 		      	else
-		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
 		      	break;
 			default:
 				throw new RuntimeException("Error: undefined source time function identifier (0: none, 1: boxcar, 2: triangle).");
@@ -1730,7 +1730,7 @@ public class AtAMaker implements Operation_old {
 			}
 			
 			FullPosition bpSourceLoc = station.getPosition().toFullPosition(Earth.EARTH_RADIUS);
-			FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
+			FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
 			double distanceBP = bpSourceLoc.calculateEpicentralDistance(obsPos) * 180. / Math.PI;
 			double distanceFP = fpSourceLoc.calculateEpicentralDistance(obsPos) * 180. / Math.PI;
 //			double distance = bpSourceLoc.getGeographicalDistance(obsPos) * 180. / Math.PI;

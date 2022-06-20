@@ -206,7 +206,7 @@ public class Profile_alignScS {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm() * 4;
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
+							double distance = id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
 								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
@@ -334,7 +334,7 @@ public class Profile_alignScS {
 				double bornVariance = 0;
 				double obsNorm = 0;
 				
-				timetool.setSourceDepth(6371. - event.getEvent().getCmtLocation().getR());
+				timetool.setSourceDepth(6371. - event.getEventData().getCmtLocation().getR());
 				
 				for (BasicID id : tmpObs) {
 					if (!Stream.of(id.getPhases()).collect(Collectors.toSet()).contains(phase))
@@ -355,9 +355,9 @@ public class Profile_alignScS {
 					RealVector synVector = synTrace.getYVector();
 					RealVector bornVector = bornTrace.getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -396,10 +396,10 @@ public class Profile_alignScS {
 				}
 					double tmpSyn = synVariance / obsNorm;
 					double tmpBorn =  bornVariance / obsNorm;
-					double lat = event.getEvent().getCmtLocation().getLatitude();
-					double lon = event.getEvent().getCmtLocation().getLongitude();
-					double depth = 6371. - event.getEvent().getCmtLocation().getR();
-					pw4.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + " " + lat + " " + lon + " " + depth + " " + event.getEvent().getCmt().getMw());
+					double lat = event.getEventData().getCmtLocation().getLatitude();
+					double lon = event.getEventData().getCmtLocation().getLongitude();
+					double depth = 6371. - event.getEventData().getCmtLocation().getR();
+					pw4.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + " " + lat + " " + lon + " " + depth + " " + event.getEventData().getCmt().getMw());
 					
 				Path outPlot = stackPath.resolve(event + ".plt");
 				Files.deleteIfExists(outPlot);
@@ -658,8 +658,8 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 				);
 		
 		ss += "gmt psxy -R-170/-52/-41/75 -JQ270/4.4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
-		double evLat = event.getEvent().getCmtLocation().getLatitude();
-		double evLon = event.getEvent().getCmtLocation().getLongitude();
+		double evLat = event.getEventData().getCmtLocation().getLatitude();
+		double evLon = event.getEventData().getCmtLocation().getLongitude();
 		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";

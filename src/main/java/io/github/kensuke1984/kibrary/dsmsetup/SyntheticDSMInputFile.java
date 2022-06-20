@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
  */
 public class SyntheticDSMInputFile extends DSMInputHeader {
 
-    protected final PolynomialStructure structure;
+    protected final PolynomialStructure_new structure;
 
     protected final String output;
 
@@ -43,7 +43,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @param tlen      TLEN[s]
      * @param np        NP
      */
-    public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
+    public SyntheticDSMInputFile(PolynomialStructure_new structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
                             double tlen, int np) {
         super(tlen, np);
         this.structure = structure;
@@ -71,8 +71,8 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             String[] structurePart = structure.toPSVlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
-            FullPosition eventLocation = event.getCmtLocation();
             // source
+            FullPosition eventLocation = event.getCmtLocation();
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
                     " r0(km), lat, lon (deg)");
@@ -115,8 +115,9 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // structure
             String[] structurePart = structure.toSHlines();
             Arrays.stream(structurePart).forEach(pw::println);
-            FullPosition eventLocation = event.getCmtLocation();
+
             // source
+            FullPosition eventLocation = event.getCmtLocation();
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
                     " r0(km), lat, lon (deg)");
@@ -139,7 +140,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
         }
     }
 
-    public SyntheticDSMInputFile replaceStructure(PolynomialStructure structure) {
+    public SyntheticDSMInputFile replaceStructure(PolynomialStructure_new structure) {
         return new SyntheticDSMInputFile(structure, event, observers, output, getTlen(), getNp());
     }
 

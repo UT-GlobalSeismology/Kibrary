@@ -134,7 +134,7 @@ class EventProcessor implements Runnable {
         inputRespSetPath = eventDir.toPath().resolve("resp");
         outputPath = outPath.resolve(eventDir.getName());
 
-        event = eventDir.getGlobalCMTID().getEvent();
+        event = eventDir.getGlobalCMTID().getEventData();
 
         doneMergePath = outputPath.resolve("doneMerge");
         unMergedPath = outputPath.resolve("unMerged");

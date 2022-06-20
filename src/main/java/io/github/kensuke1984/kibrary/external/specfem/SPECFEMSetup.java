@@ -138,7 +138,7 @@ public class SPECFEMSetup {
 
     private void generateCmtSolutionFile(GlobalCMTID eventID, Path dataPath) throws IOException {
         Path cmtSolutionPath = dataPath.resolve("CMTSOLUTION");
-        GlobalCMTAccess event = eventID.getEvent();
+        GlobalCMTAccess event = eventID.getEventData();
         double latitude = event.getCmtLocation().getLatitude();
         double longitude = event.getCmtLocation().getLongitude();
         double depth = event.getCmtLocation().getDepth();

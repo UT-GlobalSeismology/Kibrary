@@ -747,7 +747,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
                     cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtLocation(), PartialType.TIME_SOURCE,
                     cutU);
 
             try {
@@ -1147,7 +1147,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
             observerSet.forEach(observer -> perturbationLocationSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            eventSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
+            eventSet.forEach(id -> perturbationLocationSet.add(id.getEventData().getCmtLocation()));
         }
         writeLog(perturbationLocationSet.size() + " perturbation points are found in " + voxelPath);
     }
@@ -1171,7 +1171,7 @@ public class PartialWaveformAssembler3D extends Operation {
         }
         userSourceTimeFunctions = new HashMap<>();
         eventSet.forEach(id -> {
-            double halfDuration = id.getEvent().getHalfDuration();
+            double halfDuration = id.getEventData().getHalfDuration();
             SourceTimeFunction stf;
             switch (sourceTimeFunction) {
             case 1:
@@ -1192,8 +1192,8 @@ public class PartialWaveformAssembler3D extends Operation {
                 break;
             case 3:
                 if (stfcat.contains("LSTF")) {
-                    double halfDuration1 = id.getEvent().getHalfDuration();
-                    double halfDuration2 = id.getEvent().getHalfDuration();
+                    double halfDuration1 = id.getEventData().getHalfDuration();
+                    double halfDuration2 = id.getEventData().getHalfDuration();
                     boolean found = false;
                       for (String str : stfcat) {
                           String[] stflist = str.split("\\s+");
@@ -1215,9 +1215,9 @@ public class PartialWaveformAssembler3D extends Operation {
                         }
                       }
                       else
-                          stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+                          stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
                       try {
-                        writeLog("Using triangle STF : For " + id.toString() + " half duration is " + id.getEvent().getHalfDuration());
+                        writeLog("Using triangle STF : For " + id.toString() + " half duration is " + id.getEventData().getHalfDuration());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -1244,9 +1244,9 @@ public class PartialWaveformAssembler3D extends Operation {
                         }
                     }
                     else {
-                        stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+                        stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
                         try {
-                            writeLog("Using triangle STF : For " + id.toString() + " half duration is " + id.getEvent().getHalfDuration());
+                            writeLog("Using triangle STF : For " + id.toString() + " half duration is " + id.getEventData().getHalfDuration());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -1279,9 +1279,9 @@ public class PartialWaveformAssembler3D extends Operation {
                       }
                   }
                   else {
-                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
                       try {
-                          writeLog("Using triangle STF : For " + id.toString() + " halfDuration is " + id.getEvent().getHalfDuration());
+                          writeLog("Using triangle STF : For " + id.toString() + " halfDuration is " + id.getEventData().getHalfDuration());
                       } catch (IOException e) {
                           e.printStackTrace();
                       }

@@ -23,7 +23,8 @@ import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -248,11 +249,11 @@ public class SyntheticDSMSetup extends Operation {
         }
 
         // set structure to use
-        PolynomialStructure structure = null;
+        PolynomialStructure_new structure = null;
         if (structurePath != null) {
-            structure = new PolynomialStructure(structurePath);
+            structure = PolynomialStructureFile.read(structurePath);
         } else {
-            structure = PolynomialStructure.of(structureName);
+            structure = PolynomialStructure_new.of(structureName);
         }
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", tag, GadgetAid.getTemporaryString());
@@ -289,8 +290,8 @@ public class SyntheticDSMSetup extends Operation {
 
                 Path eventOut = outPath.resolve(event.toString());
 
-                if (event.getEvent() != null) {
-                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEvent(), observers, header, tlen, np);
+                if (event.getEventData() != null) {
+                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
                     Files.createDirectories(eventOut.resolve(header));
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));

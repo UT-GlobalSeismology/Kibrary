@@ -209,7 +209,7 @@ public class DividePerAzimuth {
 		Set<GlobalCMTID> events = info.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
 		events.stream().forEach(id -> {
-			FullPosition loc = id.getEvent().getCmtLocation();
+			FullPosition loc = id.getEventData().getCmtLocation();
 			latLon[0] += loc.getLatitude();
 			latLon[1] += loc.getLongitude(); 
 		});
@@ -334,12 +334,12 @@ public class DividePerAzimuth {
 			timetool.parsePhaseList("ScS");
 			
 			for (TimewindowData tw : info) {
-				HorizontalPosition evtLoc = tw.getGlobalCMTID().getEvent().getCmtLocation();
-				double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().calculateAzimuth(tw.getObserver().getPosition());
-				double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition());
+				HorizontalPosition evtLoc = tw.getGlobalCMTID().getEventData().getCmtLocation();
+				double azimuth = tw.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(tw.getObserver().getPosition());
+				double distance = tw.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition());
 				
 				//
-				timetool.setSourceDepth(6371. - tw.getGlobalCMTID().getEvent().getCmtLocation().getR());
+				timetool.setSourceDepth(6371. - tw.getGlobalCMTID().getEventData().getCmtLocation().getR());
 				timetool.calculate(distance);
 				Arrival arrivalScS = timetool.getArrival(0);
 				

@@ -332,7 +332,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 				System.out.println("Used (#obs): " + obsTraces.size());
 				System.out.println("Excluded (#obs): " + excludedObsLength);
 				
-				double gcmtHalfDuration = eventFolder.getGlobalCMTID().getEvent().getHalfDuration();
+				double gcmtHalfDuration = eventFolder.getGlobalCMTID().getEventData().getHalfDuration();
 				
 				for (int i = 0; i < npts; i++) {
 					halfDurations[i] = minHalfDuration +
@@ -423,7 +423,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 //					for (int i = 0; i < misfits.length; i++)
 //						System.out.println(misfits[i] + " " + halfDurations[i]);
 				
-				double Mw = eventFolder.getGlobalCMTID().getEvent().getCmt().getMw();
+				double Mw = eventFolder.getGlobalCMTID().getEventData().getCmt().getMw();
 				double correctedMw = Mw + Math.log10(ampCorrMinMisfit) / 1.5;
 				
 				double misfitMinDurationPlusOneSec = misfits[iDurationMin + (int) (1. / deltaHalfDuration)][iAmpcorrMin];
@@ -431,17 +431,17 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 				Files.write(detailedCatalogFile, String.format("%s %.2f %.2f %.4e %.4e %.4e %.4e %.4e %d %.2f %.2f %.2f %.2f\n"
 						, eventFolder.getGlobalCMTID()
 						, halfDurationMinMisfit
-						, eventFolder.getGlobalCMTID().getEvent().getHalfDuration()
+						, eventFolder.getGlobalCMTID().getEventData().getHalfDuration()
 						, minMisfit
 						, misfitMinDurationPlusOneSec
 						, gcmtMisfit
 						, misfitMinDurationPlusOneSec - minMisfit
 						, gcmtMisfit - minMisfit
 						, obsTraces.size()
-						, eventFolder.getGlobalCMTID().getEvent().getCmt().getMw()
+						, eventFolder.getGlobalCMTID().getEventData().getCmt().getMw()
 						, correctedMw
 						, ampCorrMinMisfit
-						, Earth.EARTH_RADIUS - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR()).getBytes()
+						, Earth.EARTH_RADIUS - eventFolder.getGlobalCMTID().getEventData().getCmtLocation().getR()).getBytes()
 					, StandardOpenOption.APPEND);
 				
 				Files.write(catalogueFile, String.format("%s %f %f %d %f %f\n"
@@ -455,7 +455,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 				
 				Files.write(gcmtFile, String.format("%s %f\n"
 						, eventFolder.getGlobalCMTID()
-						, eventFolder.getGlobalCMTID().getEvent().getHalfDuration())
+						, eventFolder.getGlobalCMTID().getEventData().getHalfDuration())
 							.getBytes()
 					, StandardOpenOption.APPEND);
 					
@@ -756,7 +756,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 		public void run() {
 			try {
 				for (TimewindowData timewindow : timewindows) {
-					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(
+					double distance = timewindow.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(
 							timewindow.getObserver().getPosition()) * 180. / Math.PI;
 					if (distance < minDistance || distance > maxDistance)
 						continue;

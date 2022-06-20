@@ -405,7 +405,7 @@ public class ActualWaveformCompiler extends Operation {
    public void run() throws IOException {
        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
                .stream().filter(tw -> {
-                   double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation()
+                   double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation()
                            .calculateEpicentralDistance(tw.getObserver().getPosition()));
                    if (distance < minDistance)
                        return false;
@@ -440,7 +440,7 @@ public class ActualWaveformCompiler extends Operation {
        if (timewindowRefPath != null)
            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
                .stream().filter(tw -> {
-                   double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition()));
+                   double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition()));
                    if (distance < minDistance)
                        return false;
                    return true;

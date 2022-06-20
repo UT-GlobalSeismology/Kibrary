@@ -40,7 +40,7 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     private final String id;
     /**
-     * if {@link #getEvent()} is once invoked, this holds it.
+     * if {@link #getEventData()} is once invoked, this holds it.
      */
     private volatile NDK ndk;
 
@@ -62,7 +62,7 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             }
 
             GlobalCMTID id = new GlobalCMTID(idString);
-            GlobalCMTAccess event = id.getEvent();
+            GlobalCMTAccess event = id.getEventData();
 
             System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
             System.out.println("Centroid Time: " + event.getCMTTime());
@@ -149,12 +149,12 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     }
 
     /**
-     * if there is a certain existing ID, then returns the {@link GlobalCMTAccess}
-     * for the ID if not null will be returned.
+     * If there is a certain existing ID, then returns the {@link GlobalCMTAccess} for this ID.
+     * If not, null will be returned.
      *
      * @return GlobalCMTData for this
      */
-    public GlobalCMTAccess getEvent() {
+    public GlobalCMTAccess getEventData() {
         if (ndk == null) synchronized (this) {
             if (ndk == null) ndk = GlobalCMTCatalog.getNDK(this);
         }

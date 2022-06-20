@@ -48,22 +48,22 @@ class CMTSeaAB {
 //						* 180 / Math.PI;
 //				double distance2 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(50, -100))
 //						* 180 / Math.PI;
-				double distance1 = id.getEvent().getCmtLocation().calculateEpicentralDistance(new HorizontalPosition(55, -130))
+				double distance1 = id.getEventData().getCmtLocation().calculateEpicentralDistance(new HorizontalPosition(55, -130))
 						* 180 / Math.PI;
-				double distance2 = id.getEvent().getCmtLocation().calculateEpicentralDistance(new HorizontalPosition(35, -75))
+				double distance2 = id.getEventData().getCmtLocation().calculateEpicentralDistance(new HorizontalPosition(35, -75))
 						* 180 / Math.PI;
 				pw.printf("%15s   %.1f   %.1f  %.1f %.1f %.1f %.1f%n"
 						, id.toString()
 //						, id.getEvent().getCMTTime().format(formatter)
-						, id.getEvent().getCmtLocation().getLongitude()
-						, id.getEvent().getCmtLocation().getLatitude()
-						, Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR()
+						, id.getEventData().getCmtLocation().getLongitude()
+						, id.getEventData().getCmtLocation().getLatitude()
+						, Earth.EARTH_RADIUS - id.getEventData().getCmtLocation().getR()
 //						, distance
 //						, id.getEvent().getCMTTime().format(formatter)
-						, id.getEvent().getCmt().getMw()
+						, id.getEventData().getCmt().getMw()
 						, distance1, distance2);
 				
-				meanDepth += Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR();
+				meanDepth += Earth.EARTH_RADIUS - id.getEventData().getCmtLocation().getR();
 			}
 			pw.close();
 			meanDepth /= wellDefinedEvent.size();

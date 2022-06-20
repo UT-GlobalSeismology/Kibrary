@@ -389,7 +389,7 @@ public class SACMaker implements Runnable {
             sm.setSourceTimeFunction(scardec.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
         }
         if (id != null) {
-            double halfDuration = id.getEvent().getHalfDuration();
+            double halfDuration = id.getEventData().getHalfDuration();
             sm.setSourceTimeFunction(stfshape.equals("boxcar") ?
                     SourceTimeFunction.boxcarSourceTimeFunction(oneSPC.np(), oneSPC.tlen(), 20, halfDuration) :
                     SourceTimeFunction.triangleSourceTimeFunction(oneSPC.np(), oneSPC.tlen(), 20, halfDuration));
@@ -422,7 +422,7 @@ public class SACMaker implements Runnable {
         station = new Observer(primeSPC.getObserverID(), primeSPC.getObserverPosition());
         path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
         if (globalCMTID != null && beginDateTime == null)
-            beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();
+            beginDateTime = pde ? globalCMTID.getEventData().getPDETime() : globalCMTID.getEventData().getCMTTime();
         npts = findNPTS();
         lsmooth = findLsmooth();
         delta = primeSPC.tlen() / npts;

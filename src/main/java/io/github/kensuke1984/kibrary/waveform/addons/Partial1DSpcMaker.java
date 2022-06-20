@@ -461,7 +461,7 @@ public class Partial1DSpcMaker implements Operation_old {
 
 		private SourceTimeFunction computeSourceTimeFunction() {
 			GlobalCMTID id = eventDir.getGlobalCMTID();
-			double halfDuration = id.getEvent().getHalfDuration();
+			double halfDuration = id.getEventData().getHalfDuration();
 			switch (Partial1DSpcMaker.this.sourceTimeFunction) {
 			case -1:
 				return userSourceTimeFunctions.get(id);
@@ -473,8 +473,8 @@ public class Partial1DSpcMaker implements Operation_old {
 				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 			case 3:
 				if (stfcat.contains("LSTF")) {
-		        	double halfDuration1 = id.getEvent().getHalfDuration();
-		        	double halfDuration2 = id.getEvent().getHalfDuration();
+		        	double halfDuration1 = id.getEventData().getHalfDuration();
+		        	double halfDuration2 = id.getEventData().getHalfDuration();
 		        	boolean found = false;
 			      	for (String str : stfcat) {
 			      		String[] stflist = str.split("\\s+");
@@ -493,7 +493,7 @@ public class Partial1DSpcMaker implements Operation_old {
 		//	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
 			      	}
 			      	else
-			      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+			      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
 			      	return stf;
 				}
 				else {
@@ -514,7 +514,7 @@ public class Partial1DSpcMaker implements Operation_old {
 						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, ampCorr);
 					}
 					else
-						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
 				}
 			default:
 				throw new RuntimeException("Integer for source time function is invalid.");
@@ -972,7 +972,7 @@ public class Partial1DSpcMaker implements Operation_old {
 					periodRange[0], periodRange[1], t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
 					cutU);
 			PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-					periodRange[0], periodRange[1], t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
+					periodRange[0], periodRange[1], t.getPhases(), 0, true, id.getEventData().getCmtLocation(), PartialType.TIME_SOURCE,
 					cutU);
 			
 			try {
@@ -1072,7 +1072,7 @@ public class Partial1DSpcMaker implements Operation_old {
 				throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
 			stationSet.forEach(station -> perturbationLocationSet.add(new FullPosition(station.getPosition().getLatitude(),
 					station.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-			idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
+			idSet.forEach(id -> perturbationLocationSet.add(id.getEventData().getCmtLocation()));
 		}
 	}
 	

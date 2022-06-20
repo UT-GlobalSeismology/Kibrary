@@ -271,7 +271,7 @@ public class RaypathSelection extends Operation {
 
             // in extraction mode (eliminationMode=false), ignore raypaths that are not within range
             // in elimination mode (eliminationMode=true), select raypaths that are not within range
-            FullPosition eventPosition = window.getGlobalCMTID().getEvent().getCmtLocation();
+            FullPosition eventPosition = window.getGlobalCMTID().getEventData().getCmtLocation();
             if (eventPosition.isInRange(lowerEventLatitude, upperEventLatitude, lowerEventLongitude, upperEventLongitude)
                     == false) {
                 if (eliminationMode) {

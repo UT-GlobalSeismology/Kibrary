@@ -36,7 +36,7 @@ public class QualityControlStack {
 			ir.getBasicIDList().stream()
 				.filter(bid -> bid.getGlobalCMTID().equals(idref))
 				.forEach(bid -> {
-					double distance = bid.getGlobalCMTID().getEvent().getCmtLocation()
+					double distance = bid.getGlobalCMTID().getEventData().getCmtLocation()
 							.calculateEpicentralDistance(bid.getObserver().getPosition()) * 180 / Math.PI;
 					
 					if (distance >= 20 && distance < 40) {
