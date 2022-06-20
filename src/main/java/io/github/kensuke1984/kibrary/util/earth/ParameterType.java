@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * Parameters of elastic medium.
  *
  * @author otsuru
- * @since 2022//4/11
+ * @since 2022/4/11
  */
 public enum ParameterType {
     RHO,

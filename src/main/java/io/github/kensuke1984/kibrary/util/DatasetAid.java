@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
@@ -11,7 +12,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACExtension;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
@@ -152,4 +158,90 @@ public final class DatasetAid {
         ThreadAid.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
     }
 
+    /**
+     * An abstract class that can be used to execute tasks in filtered datasets for a set of timewindows.
+     * @author otsuru
+     * @since 2022/6/20
+     */
+    public abstract static class FilteredDatasetWorker implements Runnable {
+        protected GlobalCMTID eventID;
+        private Path obsEventPath;
+        private Path synEventPath;
+        private boolean convolved;
+        private Set<TimewindowData> sourceTimewindowSet;
+
+        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved, Set<TimewindowData> sourceTimewindowSet) {
+            this.eventID = eventID;
+            obsEventPath = obsPath.resolve(eventID.toString());
+            synEventPath = synPath.resolve(eventID.toString());
+            this.convolved = convolved;
+            this.sourceTimewindowSet = sourceTimewindowSet;
+        }
+
+        /**
+         * A class to implement the actual work that needs to be done to each timewindow
+         * @param timewindow
+         * @param obsSac
+         * @param synSac
+         */
+        public abstract void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac);
+
+        @Override
+        public void run() {
+            if (!Files.exists(obsEventPath)) {
+                new NoSuchFileException(obsEventPath.toString()).printStackTrace();
+                return;
+            }
+            if (!Files.exists(synEventPath)) {
+                new NoSuchFileException(synEventPath.toString()).printStackTrace();
+                return;
+            }
+
+            // pick out time windows of this event
+            Set<TimewindowData> timewindows = sourceTimewindowSet.stream()
+                    .filter(info -> info.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
+
+            for (TimewindowData timewindow : timewindows) {
+                Observer observer = timewindow.getObserver();
+                SACComponent component = timewindow.getComponent();
+
+                // get observed data
+                SACExtension obsExt = SACExtension.valueOfObserved(component);
+                SACFileName obsName = new SACFileName(obsEventPath.resolve(SACFileName.generate(observer, eventID, obsExt)));
+                if (!obsName.exists()) {
+                    System.err.println("!! " + obsName + " does not exist, skippping.");
+                    continue;
+                }
+                SACFileAccess obsSac;
+                try {
+                    obsSac = obsName.read();
+                } catch (Exception e) {
+                    System.err.println("!! Could not read " + obsName + " , skipping.");
+                    e.printStackTrace();
+                    continue;
+                }
+
+                // get synthetic data
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
+                        : SACExtension.valueOfSynthetic(component);
+                SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
+                if (!synName.exists()) {
+                    System.err.println("!! " + synName + " does not exist, skippping.");
+                    continue;
+                }
+                SACFileAccess synSac;
+                try {
+                    synSac = synName.read();
+                } catch (Exception e) {
+                    System.err.println("!! Could not read " + synName + " , skipping.");
+                    e.printStackTrace();
+                    continue;
+                }
+
+                actualWork(timewindow, obsSac, synSac);
+            }
+
+            System.err.print(".");
+        }
+    }
 }

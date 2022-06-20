@@ -38,14 +38,21 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * Operation that creates a data file of timewindows.
  * <p>
- * Timewindows are created for observed waveforms in event folders under the working directory.
- * For all the waveforms, timewindows are computed by TauP.
+ * Timewindows are created for all SAC files in event folders under workDir that satisfy the following criteria:
+ * <ul>
+ * <li> is observed waveform </li>
+ * <li> the component is included in the components specified in the property file </li>
+ * </ul>
+ * For each (event, observer, component) data pair of the selected SAC files,
+ * several timewindows may be created for different phases.
+ * Thus, output data can be specified as a (event, observer, component, timeframe) pair.
  * <p>
  * This class creates a window for each specified phase,
  * starting from (arrival time - frontShift) and ending at (arrival time + rearShift).
  * It also creates a window for each exphase,
  * starting from (arrival time - exFrontShift) and ending at (arrival time + rearShift),
  * and abandons overlapped parts between these.
+ * Arrival times are computed by TauP.
  * <p>
  * Start and end times of the windows are set to integer multiples of DELTA in SAC files.
  * <p>
@@ -185,52 +192,6 @@ public class TimewindowMaker extends Operation {
         invalidList = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", tag, dateStr, ".txt"));
         timewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
-
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("frontShift")) property.setProperty("frontShift", "0");
-        if (!property.containsKey("rearShift")) property.setProperty("rearShift", "0");
-        if (!property.containsKey("exPhases")) property.setProperty("exPhases", "");
-        if (!property.containsKey("usePhases")) property.setProperty("usePhases", "S");
-        if (!property.containsKey("majorArc")) property.setProperty("majorArc", "false");
-        if (!property.containsKey("corridor")) property.setProperty("corridor", "false");
-        if (!property.containsKey("model")) property.setProperty("model", "prem");
-        if (!property.containsKey("minLength")) property.setProperty("minLength", "0");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        String date = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve("timewindow" + date + ".dat");
-        invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
-        timewindowSet = Collections.synchronizedSet(new HashSet<>());
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        usePhases = phaseSet(property.getProperty("usePhases"));
-        exPhases = phaseSet(property.getProperty("exPhases"));
-        majorArc = Boolean.parseBoolean(property.getProperty("majorArc"));
-
-        frontShift = Double.parseDouble(property.getProperty("frontShift"));
-        rearShift = Double.parseDouble(property.getProperty("rearShift"));
-
-        corridor = Boolean.parseBoolean(property.getProperty("corridor"));
-
-        model = property.getProperty("model").trim().toLowerCase();
-
-        minLength = Double.parseDouble(property.getProperty("minLength"));
-
-        String catalogueName_sS =  "firstAppearance_sS." + model + ".catalogue";
-        String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";
-        catalogue_sS = readCatalogue(catalogueName_sS);
-        catalogue_pP = readCatalogue(catalogueName_pP);
-    }
-*/
 
     private static Set<Phase> phaseSet(String arg) {
         return (arg == null || arg.isEmpty()) ? Collections.emptySet()

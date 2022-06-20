@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.earth.ParameterType;
  * <li> L = &rho;V<sub>SV</sub><sup>2</sup> </li>
  * <li> N = &rho;V<sub>SH</sub><sup>2</sup> </li>
  * <li> &xi; = N/L </li>
- * <li> Vs = (2L+N)/(3&rho;)  (effective isotropic shear wave velocity)</li>
+ * <li> Vs = (2L+N)/(3&rho;)  (effective isotropic shear wave velocity)</li> //TODO changed?
  * <li> &mu; = Vs * Vs * &rho; </li>
  * <li> &lambda; = Vp * Vp * &rho; - 2 &mu; </li>
  * <li> &kappa; = &lambda; + 2/3 &mu; (bulk modulus) </li>
