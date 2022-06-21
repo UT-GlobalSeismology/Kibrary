@@ -94,10 +94,6 @@ public final class PolynomialStructure_new {
             System.err.println("Using AK135");
             ps = DefaultStructure.AK135;
             break;
-        case "MAK135":
-            System.err.println("Using MAK135");
-            ps = DefaultStructure.MAK135;
-            break;
         case "HOMOGEN":
             System.err.println("Using HOMOGEN");
             ps = DefaultStructure.HOMOGEN;

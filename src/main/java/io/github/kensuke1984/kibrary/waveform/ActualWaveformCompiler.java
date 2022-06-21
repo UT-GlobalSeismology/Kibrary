@@ -39,6 +39,8 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -58,6 +60,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
+ * <li> the (event, observer, component)-pair is included in the input data entry file </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
  * <li> synthetic waveform data exists for the (event, observer, component)-pair </li>
  * </ul>
@@ -128,6 +131,10 @@ public class ActualWaveformCompiler extends Operation {
      * Whether to correct amplitude ratio
      */
     private boolean correctAmplitude;
+    /**
+     * {@link Path} of a data entry file
+     */
+    private Path dataEntryPath;
     /**
      * {@link Path} of a static correction file
      */
@@ -238,6 +245,8 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
             pw.println("#convolved ");
+            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("#dataEntryPath entry.lst");
             pw.println("##Path of a static correction file");
             pw.println("## If the following correctTime or correctAmplitude is true, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
@@ -283,6 +292,10 @@ public class ActualWaveformCompiler extends Operation {
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
 
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        }
+
         correctTime = property.parseBoolean("correctTime", "false");
         correctAmplitude = property.parseBoolean("correctAmplitude", "false");
         if (correctTime || correctAmplitude) {
@@ -309,9 +322,16 @@ public class ActualWaveformCompiler extends Operation {
 
    @Override
    public void run() throws IOException {
-       sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
-               .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
+       // read entry set to be used for selection
+       Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
+       // read timewindows and select based on component and entries
+       sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+               .stream().filter(window -> components.contains(window.getComponent()) &&
+                       entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
+               .collect(Collectors.toSet());
+
+       // read static correction data
        if (correctTime || correctAmplitude) {
            Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
            staticCorrectionSet = tmpset.stream()
@@ -341,9 +361,9 @@ public class ActualWaveformCompiler extends Operation {
            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
                .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
-       observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver)
-               .collect(Collectors.toSet());
        eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
+               .collect(Collectors.toSet());
+       observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver)
                .collect(Collectors.toSet());
        phases = sourceTimewindowSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
                .distinct().toArray(Phase[]::new);
@@ -354,8 +374,8 @@ public class ActualWaveformCompiler extends Operation {
        outPath = DatasetAid.createOutputFolder(workPath, "compiled", tag, dateStr);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       ObserverListFile.write(observerSet, outPath.resolve("observer.lst"));
        EventListFile.write(eventSet, outPath.resolve("event.lst"));
+       ObserverListFile.write(observerSet, outPath.resolve("observer.lst"));
 
        Path waveIDPath = null;
        Path waveformPath = null;
