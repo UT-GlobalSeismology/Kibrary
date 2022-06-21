@@ -248,6 +248,7 @@ public final class SPC_SAC extends Operation {
         }
 
         outPath = DatasetAid.createOutputFolder(workPath, "spcsac", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
 

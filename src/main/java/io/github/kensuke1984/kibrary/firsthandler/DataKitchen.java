@@ -164,56 +164,6 @@ public class DataKitchen extends Operation {
         removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
 
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("catalog")) property.setProperty("catalog", "cmt");
-        if (!property.containsKey("samplingHz")) property.setProperty("samplingHz", "20"); // TODO
-        if (!property.containsKey("minDistance")) property.setProperty("minDistance", "0");
-        if (!property.containsKey("maxDistance")) property.setProperty("maxDistance", "180");
-        if (!property.containsKey("minLatitude")) property.setProperty("minLatitude", "-90");
-        if (!property.containsKey("maxLatitude")) property.setProperty("maxLatitude", "90");
-        if (!property.containsKey("minLongitude")) property.setProperty("minLongitude", "-180");
-        if (!property.containsKey("maxLongitude")) property.setProperty("maxLongitude", "180");
-        if (!property.containsKey("coordinateGrid")) property.setProperty("coordinateGrid", "0.01");
-        if (!property.containsKey("removeIntermediateFile")) property.setProperty("removeIntermediateFile", "true");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        switch (property.getProperty("catalog")) {
-            case "cmt":
-            case "CMT":
-                catalog = 0;
-                break;
-            case "pde":
-            case "PDE":
-                catalog = 0;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid catalog name.");
-        }
-        minDistance = Double.parseDouble(property.getProperty("minDistance"));
-        maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
-        if (minDistance < 0 || minDistance > maxDistance || 180 < maxDistance)
-            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
-        minLatitude = Double.parseDouble(property.getProperty("minLatitude"));
-        maxLatitude = Double.parseDouble(property.getProperty("maxLatitude"));
-        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude)
-            throw new IllegalArgumentException("Latitude range " + minLatitude + " , " + maxLatitude + " is invalid.");
-        minLongitude = Double.parseDouble(property.getProperty("minLongitude"));
-        maxLongitude = Double.parseDouble(property.getProperty("maxLongitude"));
-        if (minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude)
-            throw new IllegalArgumentException("Longitude range " + minLongitude + " , " + maxLongitude + " is invalid.");
-        coordinateGrid = Double.parseDouble(property.getProperty("coordinateGrid"));
-        if (coordinateGrid < 0)
-            throw new IllegalArgumentException("coordinateGrid must be non-negative.");
-        removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
-    }
-*/
 
     @Override
     public void run() throws IOException {
@@ -223,6 +173,7 @@ public class DataKitchen extends Operation {
         }
 
         outPath = DatasetAid.createOutputFolder(workPath, "processed", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event
         Set<EventProcessor> eps = eventDirs.stream().map(eventDir -> {

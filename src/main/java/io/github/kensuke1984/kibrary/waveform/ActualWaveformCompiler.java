@@ -352,6 +352,7 @@ public class ActualWaveformCompiler extends Operation {
 
        String dateStr = GadgetAid.getTemporaryString();
        outPath = DatasetAid.createOutputFolder(workPath, "compiled", tag, dateStr);
+       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        ObserverListFile.write(observerSet, outPath.resolve("observer.lst"));
        EventListFile.write(eventSet, outPath.resolve("event.lst"));
@@ -665,7 +666,7 @@ public class ActualWaveformCompiler extends Operation {
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-            if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) {
+            if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) { // TODO should 10 be maxStaticShift ?
                 System.err.println("!! End time of timewindow " + timewindow + " is too late.");
                 return;
             }

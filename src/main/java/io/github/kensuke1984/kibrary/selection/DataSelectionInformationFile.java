@@ -32,7 +32,7 @@ public class DataSelectionInformationFile {
         PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outpath,
                         StandardOpenOption.CREATE, StandardOpenOption.APPEND));
 
-        writer.println("#station, network, lat, lon, event, component, start time, end time, phases, max ratio, min ratio, abs ratio, variance, cc, SN ratio");
+        writer.println("#station, network, lat, lon, event, component, start time, end time, phases, max ratio, min ratio, abs ratio, variance, cc, SN ratio, selected");
         for (DataSelectionInformation info : infoList)
             writer.println(info);
 
@@ -52,7 +52,7 @@ public class DataSelectionInformationFile {
 
             DataSelectionInformation info = new DataSelectionInformation(timewindow, Double.parseDouble(s[12]),
                     Double.parseDouble(s[13]), Double.parseDouble(s[9]), Double.parseDouble(s[10]),
-                    Double.parseDouble(s[11]), Double.parseDouble(s[14]));
+                    Double.parseDouble(s[11]), Double.parseDouble(s[14]), Boolean.parseBoolean(s[15]));
 
             infoList.add(info);
         });

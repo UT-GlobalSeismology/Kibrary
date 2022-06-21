@@ -45,7 +45,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * </ul>
  * For each (event, observer, component) data pair of the selected SAC files,
  * several timewindows may be created for different phases.
- * Thus, output data can be specified as a (event, observer, component, timeframe) pair.
+ * Thus, output data can be specified as a (event, observer, component, timeframe)-pair.
  * <p>
  * This class creates a window for each specified phase,
  * starting from (arrival time - frontShift) and ending at (arrival time + rearShift).

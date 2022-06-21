@@ -191,7 +191,6 @@ public class FujiStaticCorrection extends Operation {
         // gather all timewindows to be processed
         sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
-
         // collect all events that exist in the timewindow set
         Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
                 .collect(Collectors.toSet());

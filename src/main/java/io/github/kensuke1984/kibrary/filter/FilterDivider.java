@@ -188,6 +188,7 @@ public class FilterDivider extends Operation {
         }
 
         outPath = DatasetAid.createOutputFolder(workPath, "filtered", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);

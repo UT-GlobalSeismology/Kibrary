@@ -257,9 +257,7 @@ public class SyntheticDSMSetup extends Operation {
         }
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", tag, GadgetAid.getTemporaryString());
-
-        if (property != null)
-            property.write(outPath.resolve("syndsm.properties"));
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // synthetic observer set
         Set<Observer> synObserverSet = new HashSet<>();
