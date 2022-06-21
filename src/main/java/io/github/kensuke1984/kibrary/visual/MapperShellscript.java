@@ -61,8 +61,10 @@ public class MapperShellscript {
             pw.println("    dep=${depth%.0}");
             pw.println("    grep \"$depth\" " + modelFileName + ".lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
-            pw.println("    gmt xyz2grd -G$dep.grd -R-60/45/-55/35 -I5 -di0");//TODO parameterize
-            pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.5");
+            pw.println("    gmt xyz2grd -G$dep.grd -R-60/45/-55/35 -I2.5 -di0");//TODO parameterize
+            pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.25");
+            //pw.println("    gmt xyz2grd -G$dep.grd -R-60/45/-55/35 -I5.0 -di0");//TODO parameterize
+            //pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.5");
             pw.println("done");
         }
     }
@@ -97,8 +99,10 @@ public class MapperShellscript {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
                             + "km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
                 } else if (i == radii.length / 2 - 1) {
+                    //pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
+                    //        + "km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
+                            + "km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
                 } else {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
                             + "km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");

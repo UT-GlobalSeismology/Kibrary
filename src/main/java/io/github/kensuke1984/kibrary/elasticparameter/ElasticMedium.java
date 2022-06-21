@@ -129,27 +129,49 @@ public class ElasticMedium {
     }
 
     private void tiToIsotropic() {
-        //if (isDefined(ParameterType.L) && isDefined(ParameterType.N)) {
-        //    double l = parameterMap.get(ParameterType.L);
-        //    double n = parameterMap.get(ParameterType.N);
-        //    double mu = (2 * l + n) / 3;
-        //    parameterMap.put(ParameterType.MU, mu);
-        //}
-        //TODO how to calculate LAMBDA?
-
         //Voigt approximation
-        if (isDefined(ParameterType.A) && isDefined(ParameterType.C) && isDefined(ParameterType.F) && isDefined(ParameterType.L) && isDefined(ParameterType.N)) {
+        if (isDefined(ParameterType.L) && isDefined(ParameterType.N)) {
+            if (isDefined(ParameterType.A) && isDefined(ParameterType.C) && isDefined(ParameterType.F)) {
+                double a = parameterMap.get(ParameterType.A);
+                double c = parameterMap.get(ParameterType.C);
+                double f = parameterMap.get(ParameterType.F);
+                double l = parameterMap.get(ParameterType.L);
+                double n = parameterMap.get(ParameterType.N);
+                double kappa = (4 * a + c + 4 * f - 4 * n) / 9;
+                double mu = (a + c - 2 * f + 5 * n + 6 * l) / 15;
+                parameterMap.put(ParameterType.KAPPA, kappa);
+                parameterMap.put(ParameterType.MU, mu);
+            } else {
+                //Only for MU (not for kappa)
+                double l = parameterMap.get(ParameterType.L);
+                double n = parameterMap.get(ParameterType.N);
+                double mu = (2 * l + n) / 3;
+                parameterMap.put(ParameterType.MU, mu);
+            }
+        }
+    }
+
+    //VRH (Voigt-Reuss-Hill) approximantion
+    //TODO check accuracy
+    private void tiToIsotropicByVRH() {
+        if (isDefined(ParameterType.L) && isDefined(ParameterType.N) && isDefined(ParameterType.A) && isDefined(ParameterType.C) && isDefined(ParameterType.F)) {
             double a = parameterMap.get(ParameterType.A);
             double c = parameterMap.get(ParameterType.C);
             double f = parameterMap.get(ParameterType.F);
             double l = parameterMap.get(ParameterType.L);
             double n = parameterMap.get(ParameterType.N);
-            double kappa = (4 * a + c + 4 * f - 4 * n) / 9;
-            double mu = (a + c - 2 * f + 5 * n + 6 * l) / 15;
+            //Voigt approximation
+            double kv = (4 * a + c + 4 * f - 4 * n) / 9;
+            double mv = (a + c - 2 * f + 5 * n + 6 * l) / 15;
+            //Reuss approximation
+            double kr = 1 / ((a * c - f * f + 2 * a * n - 2 * n * n) / 2 / (a * c * n - c * n * n - f * f * n) + 2 * (2 / l + 1 / n));
+            double mr = 15 / ((3 * a * c - 3 * f * f + 4 * a * n + 4 * f * n - 2 * c * n - n * n) / (a * c * n - c * n * n - f * f * n) + 3 * (2 / l + 1 / n));
+            //Hill approximation
+            double kappa = (kv + kr) / 2;
+            double mu = (mv + mr)/ 2;
             parameterMap.put(ParameterType.KAPPA, kappa);
             parameterMap.put(ParameterType.MU, mu);
         }
-        //TODO adopt Hill approximation
     }
 
     private void findTIModuli() {

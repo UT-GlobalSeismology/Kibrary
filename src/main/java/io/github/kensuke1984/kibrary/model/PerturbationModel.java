@@ -26,10 +26,6 @@ public class PerturbationModel {
                 locations.add(loc);
         }
 
-        for (FullPosition location : locations) {
-            System.err.println(location); //TODO
-        }
-
         for (int i = 0; i < locations.size(); i++) {
             boolean flag = false;
 

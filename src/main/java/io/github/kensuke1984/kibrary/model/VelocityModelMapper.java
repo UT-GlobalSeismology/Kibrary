@@ -151,7 +151,7 @@ public class VelocityModelMapper extends Operation {
         //~write shellscripts for mapping
         writeParentShellscript(outPath.resolve("plotmap.sh"));
         double[] radii = unknownsList.stream().mapToDouble(unknown -> unknown.getPosition().getR()).distinct().sorted().toArray();
-        MapperShellscript script = new MapperShellscript(radii, "vsPercent");
+        MapperShellscript script = new MapperShellscript(radii, "velocityPercent");
         script.write(outPath);
     }
 
