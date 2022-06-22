@@ -150,6 +150,7 @@ public class PolynomialStructureFile {
                 .desc("Specify name of structure").build());
         inputOption.addOption(Option.builder("d").longOpt("dsmPsv").hasArg().argName("dsmPsvInputFile")
                 .desc("Use DSM PSV input file as input").build());
+        inputOption.setRequired(true);
         options.addOptionGroup(inputOption);
 
         // output
@@ -181,6 +182,7 @@ public class PolynomialStructureFile {
                 : Paths.get(structureName + ".structure");
 
         write(structure, outputPath);
+        System.err.println(outputPath + " is created.");
 
     }
 }

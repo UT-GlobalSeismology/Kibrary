@@ -83,6 +83,10 @@ public class DataEntry implements Comparable<DataEntry> {
         return component;
     }
 
+    public Raypath toRaypath() {
+        return new Raypath(event.getEventData().getCmtLocation(), observer.getPosition());
+    }
+
     @Override
     public String toString() {
         return event + " " + observer.toPaddedInfoString() + " " + component;

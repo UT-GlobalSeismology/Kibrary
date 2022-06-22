@@ -60,7 +60,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
- * <li> the (event, observer, component)-pair is included in the input data entry file </li>
+ * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
  * <li> synthetic waveform data exists for the (event, observer, component)-pair </li>
  * </ul>
@@ -246,7 +246,7 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
             pw.println("#convolved ");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
-            pw.println("#dataEntryPath entry.lst");
+            pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file");
             pw.println("## If the following correctTime or correctAmplitude is true, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
@@ -322,14 +322,21 @@ public class ActualWaveformCompiler extends Operation {
 
    @Override
    public void run() throws IOException {
-       // read entry set to be used for selection
-       Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+       if (dataEntryPath != null) {
+           // read entry set to be used for selection
+           Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
-       // read timewindows and select based on component and entries
-       sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
-               .stream().filter(window -> components.contains(window.getComponent()) &&
-                       entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
-               .collect(Collectors.toSet());
+           // read timewindows and select based on component and entries
+           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+                   .stream().filter(window -> components.contains(window.getComponent()) &&
+                           entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
+                   .collect(Collectors.toSet());
+       } else {
+           // read timewindows and select based on component
+           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+                   .stream().filter(window -> components.contains(window.getComponent()))
+                   .collect(Collectors.toSet());
+       }
 
        // read static correction data
        if (correctTime || correctAmplitude) {

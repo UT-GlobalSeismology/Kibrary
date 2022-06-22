@@ -20,11 +20,11 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gmt.GMTMap;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -34,10 +34,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * This is like pathDrawer.pl The pathDrawer compute raypath coordinate. But
@@ -73,8 +70,7 @@ public class RaypathMapper extends Operation {
     private Path outPath;
 
     private Path datasetPath;
-    private Path timewindowPath;
-    private Path basicIDPath;
+    private Path dataEntryPath;
     private Path voxelPath;
 
     /**
@@ -135,10 +131,8 @@ public class RaypathMapper extends Operation {
             pw.println("##########For input, one of the following must be set. When many are set, the first one will be used.");
             pw.println("##Path of a root folder containing dataset");
             pw.println("#datasetPath .");
-            pw.println("##Path of a timewindow data file");
-            pw.println("#timeindowPath timewindow.dat");
-            pw.println("##Path of a basic ID file");
-            pw.println("#basicIDPath actualID.dat");
+            pw.println("##Path of a data entry file");
+            pw.println("#dataEntryPath entry.lst");
             pw.println("##########To plot perturbation points, set one of the following.");
             pw.println("##Path of a voxel information file");
             pw.println("#voxelPath voxel.inf");
@@ -169,10 +163,8 @@ public class RaypathMapper extends Operation {
 
         if (property.containsKey("datasetPath")) {
             datasetPath = property.parsePath("datasetPath", null, true, workPath);
-        } else if (property.containsKey("timewindowPath")) {
-            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
-        } else if (property.containsKey("basicIDPath")) {
-            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        } else if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         } else {
             throw new IllegalArgumentException("A folder or file for input must be set.");
         }
@@ -212,26 +204,19 @@ public class RaypathMapper extends Operation {
             events = validSacHeaderSet.stream().map(sac -> sac.getGlobalCMTID()).collect(Collectors.toSet());
             observers = validSacHeaderSet.stream().map(sac -> sac.getObserver()).collect(Collectors.toSet());
             raypaths = validSacHeaderSet.stream().map(Raypath::new).collect(Collectors.toSet());
-        } else if (timewindowPath != null) {
-            Set<TimewindowData> validTimewindowSet = TimewindowDataFile.read(timewindowPath)
-                    .stream().filter(window -> components.contains(window.getComponent()))
+        } else if (dataEntryPath != null) {
+            Set<DataEntry> validEntrySet = DataEntryListFile.readAsSet(dataEntryPath)
+                    .stream().filter(entry -> components.contains(entry.getComponent()))
                     .collect(Collectors.toSet());
-            events = validTimewindowSet.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
-            observers = validTimewindowSet.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
-            raypaths = validTimewindowSet.stream().map(Raypath::new).collect(Collectors.toSet());
-        } else if (basicIDPath != null) {
-            BasicID[] basicIDs = BasicIDFile.read(basicIDPath);
-            Set<BasicID> validBasicIDSet = Arrays.stream(basicIDs)
-                    .filter(basicID -> basicID.getWaveformType().equals(WaveformType.OBS) && components.contains(basicID.getSacComponent()))
-                    .collect(Collectors.toSet());
-            events = validBasicIDSet.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
-            observers = validBasicIDSet.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
-            raypaths = validBasicIDSet.stream().map(Raypath::new).collect(Collectors.toSet());
+            events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
+            observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
+            raypaths = validEntrySet.stream().map(DataEntry::toRaypath).collect(Collectors.toSet());
         } else {
             throw new IllegalStateException("Input folder or file not set");
         }
 
         DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         if (eventClusterPath != null) {
             eventClusterMap = new HashMap<GlobalCMTID, Integer>();
