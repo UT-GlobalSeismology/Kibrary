@@ -8,12 +8,10 @@ import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 /**
  * Raypath between a source at {@link #sourcePosition} and a receiver at
@@ -88,27 +86,6 @@ public class Raypath {
     }
 
     /**
-     * Create a raypath for an input timewindow
-     *
-     * @param timewindow of a raypath to create
-     *
-     * @author otsuru
-     * @since 2022/4/22
-     */
-    public Raypath(TimewindowData timewindow) {
-        this(timewindow.getGlobalCMTID().getEventData().getCmtLocation(), timewindow.getObserver().getPosition());
-    }
-
-    /**
-     * Create a raypath for an input id
-     *
-     * @param basicID of a raypath to create
-     */
-    public Raypath(BasicID basicID) {
-        this(basicID.getGlobalCMTID().getEventData().getCmtLocation(), basicID.getObserver().getPosition());
-    }
-
-    /**
      * @return {@link FullPosition} of the seismic source on the raypath
      */
     public FullPosition getSource() {
@@ -143,6 +120,12 @@ public class Raypath {
         return backAzimuth;
     }
 
+    /**
+     * Calculate turning point on the raypath.
+     * @param model
+     * @param phase
+     * @return (boolean) true if calculation succeeded
+     */
     public boolean calculateTurningPoint(String model, Phase phase) {
         Info info = TauPPierceReader.getTurningInfo(sourcePosition, receiverPosition, model, phase);
         calculatedTurningPoint = true;
@@ -155,6 +138,13 @@ public class Raypath {
         }
     }
 
+    /**
+     * Calculate turning point and pierce points on the raypath.
+     * @param model
+     * @param phase
+     * @param pierceDepth
+     * @return (boolean) true if calculation succeeded
+     */
     public boolean calculatePiercePoints(String model, Phase phase, double pierceDepth) {
         Info info = TauPPierceReader.getPierceInfo(sourcePosition, receiverPosition, model, pierceDepth, phase);
         calculatedPiercePoints = true;

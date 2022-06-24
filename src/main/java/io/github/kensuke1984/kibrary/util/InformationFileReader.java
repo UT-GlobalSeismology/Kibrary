@@ -77,7 +77,7 @@ public class InformationFileReader {
     }
 
     /**
-     * Read the next line, and return it after trimming.
+     * Read the next non-comment line, and return it after trimming.
      * Comment lines ("#", "!" (and "c", "C", if alphabets should not exist)) and blank lines will be skipped.
      *
      * @return the next line after the line already read. Returns null if all lines are already read.
@@ -86,7 +86,7 @@ public class InformationFileReader {
         if (readlineNum == linesNum) return null;
         String line;
         for (; ; )
-            if (!isComment(line = lines.get(readlineNum++).trim())) return line;
+            if (!isComment(line = lines.get(readlineNum++))) return line;
     }
 
     /**
@@ -119,11 +119,18 @@ public class InformationFileReader {
     }
 
     /**
+     * @return (int) the number of non-comment lines in the file
+     */
+    public int getNumLines() {
+        return linesNum;
+    }
+
+    /**
      * Get all non-comment lines. The spaces at the beginning and end of each line are trimmed.
      * @return String[] made of non comment lines
      */
     public String[] getNonCommentLines() {
-        return lines.stream().filter(line -> !isComment(line)).map(String::trim).toArray(String[]::new);
+        return lines.toArray(new String[lines.size()]);
     }
 
 }

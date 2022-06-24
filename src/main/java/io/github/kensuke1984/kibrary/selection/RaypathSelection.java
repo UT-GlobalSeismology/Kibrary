@@ -104,7 +104,7 @@ public class RaypathSelection extends Operation {
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components");
             pw.println("##Path of a data entry list file, must be defined");
-            pw.println("#dataEntryPath entry.lst");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##(boolean) Whether to eliminate the specified raypaths instead of extracting them (false)");
             pw.println("#eliminationMode");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");

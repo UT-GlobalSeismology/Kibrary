@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.math3.util.FastMath;
+
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -29,7 +31,6 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
-import io.github.kensuke1984.kibrary.util.data.RaypathListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -77,15 +78,17 @@ public class RaypathMapper extends Operation {
      * draw Path Mode; 0: don't draw, 1: quick draw, 2: detailed draw
      */
     protected int drawsPathMode;
-    private boolean binDistance;
 
     private Phase piercePhase;
     private double pierceDepth;
     private String model;
+    private boolean binDistance;
+    private Path colorBinPath;
 
     private Set<GlobalCMTID> events;
     private Set<Observer> observers;
     private Set<Raypath> raypaths;
+    private ColorBinInformationFile colorBin;
 
     /**
      * draw points of partial TODO
@@ -132,7 +135,7 @@ public class RaypathMapper extends Operation {
             pw.println("##Path of a root folder containing dataset");
             pw.println("#datasetPath .");
             pw.println("##Path of a data entry file");
-            pw.println("#dataEntryPath entry.lst");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##########To plot perturbation points, set one of the following.");
             pw.println("##Path of a voxel information file");
             pw.println("#voxelPath voxel.inf");
@@ -143,6 +146,10 @@ public class RaypathMapper extends Operation {
             pw.println("#pierceDepth ");
             pw.println("#(String) Name of model to use for calculating pierce points (prem)");
             pw.println("#model ");
+            pw.println("#(bolean) Whether to change color of raypaths by distance (false)");
+            pw.println("#binDistance ");
+            pw.println("#Path of color bin file, must be set if binDistance is true");
+            pw.println("#colorBinPath ");
             pw.println("#eventClusterPath");
         }
         System.err.println(outPath + " is created.");
@@ -175,6 +182,8 @@ public class RaypathMapper extends Operation {
         piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
         pierceDepth = property.parseDouble("pierceDepth", "2491");
         model = property.parseString("model", "prem");
+        binDistance = property.parseBoolean("binDistance", "false");
+        if (binDistance) colorBinPath = property.parsePath("colorBinPath", null, true, workPath);
 
         if (property.containsKey("eventClusterPath")) eventClusterPath = property.parsePath("eventClusterPath", null, true, workPath);
         else eventClusterPath = null;
@@ -216,7 +225,8 @@ public class RaypathMapper extends Operation {
         }
 
         DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
-        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        if (binDistance) colorBin = new ColorBinInformationFile(colorBinPath);
 
         if (eventClusterPath != null) {
             eventClusterMap = new HashMap<GlobalCMTID, Integer>();
@@ -224,10 +234,11 @@ public class RaypathMapper extends Operation {
         }
 
         outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));
         ObserverListFile.write(observers, outPath.resolve(observerFileName));
-        RaypathListFile.write(raypaths, outPath.resolve(raypathFileName));
+        ColorBinInformationFile.write(raypaths, outPath.resolve(raypathFileName));
 
         if (voxelPath != null) {
             HorizontalPosition[] perturbationPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
@@ -257,7 +268,7 @@ public class RaypathMapper extends Operation {
         raypaths.forEach(ray -> {
             if (ray.calculatePiercePoints(model, piercePhase, pierceDepth)) {
                 turningPointLines.add(ray.getTurningPoint().toString());
-                insideLines.add(ray.getEnterPoint() + " " + ray.getLeavePoint());
+                insideLines.add(ray.getEnterPoint() + " " + ray.getLeavePoint() + " " + Math.round(FastMath.toDegrees(ray.getEpicentralDistance())));
                 outsideLines.add(ray.getSource() + " " + ray.getEnterPoint());
                 outsideLines.add(ray.getLeavePoint() + " " + ray.getReceiver());
             }
@@ -462,14 +473,24 @@ public class RaypathMapper extends Operation {
             pw.println("while read line");
             pw.println("do");
             if (binDistance) {
-                pw.println("  distance=$(echo $line | awk '{print $6}')");
-                pw.println("  bin=$( $(($distance / 10 % 10)) )");
-                pw.println("  if [ $(( ]; then");
-                pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
-                pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
-
-                //TODO finish up this part
-
+                int nSections = colorBin.getNSections();
+                if (nSections == 1) {
+                    pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                    pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(0) + " >> $psname");
+                } else {
+                    pw.println("  distance=$(echo $line | awk '{print $7}')");
+                    for (int i = 0; i < nSections; i++) {
+                        if (i == 0)
+                            pw.println("  if [ $distance -lt " + colorBin.getValueFor(i) + " ]; then");
+                        else if (i < nSections - 1)
+                            pw.println("  elif [ $distance -lt " + colorBin.getValueFor(i) + " ]; then");
+                        else
+                            pw.println("  else");
+                        pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                        pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(i) + " >> $psname");
+                    }
+                    pw.println("  fi");
+                }
             } else {
                 pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
                 pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
