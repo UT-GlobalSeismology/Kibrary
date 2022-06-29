@@ -8,10 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,20 +18,18 @@ import org.apache.commons.math3.util.FastMath;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.gmt.GMTMap;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
@@ -46,11 +41,22 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <b>Assume that there are no stations with the same name but different
  * networks in an event</b>
  *
+ * TODO: pierce calculation may not work for phases other than ScS (see {@link Raypath})
+ *
  * @author Kensuke Konishi
  * @version 0.1.2
  * @author anselme add methods to draw raypaths inside D''
  */
 public class RaypathMapper extends Operation {
+
+    /**
+     * The interval of deciding map size
+     */
+    private static final int INTERVAL = 5;
+    /**
+     * How much space to provide at the rim of the map
+     */
+    private static final int MAP_RIM = 5;
 
     private final Property property;
     /**
@@ -70,43 +76,36 @@ public class RaypathMapper extends Operation {
      */
     private Path outPath;
 
-    private Path datasetPath;
+    private Path reusePath;
     private Path dataEntryPath;
     private Path voxelPath;
 
-    /**
-     * draw Path Mode; 0: don't draw, 1: quick draw, 2: detailed draw
-     */
-    protected int drawsPathMode;
-
+    private boolean cutAtPiercePoint;
     private Phase piercePhase;
     private double pierceDepth;
     private String model;
-    private boolean binDistance;
+
+    private int colorMode;
+    private static final int BIN_DISTANCE = 1;
+    private static final int BIN_AZIMUTH = 2;
     private Path colorBinPath;
+    private boolean drawOutsides;
+    private Path outsideColorBinPath;
+    private String mapRegion;
 
-    private Set<GlobalCMTID> events;
-    private Set<Observer> observers;
-    private Set<Raypath> raypaths;
+    private String dateStr;
     private ColorBinInformationFile colorBin;
-
-    /**
-     * draw points of partial TODO
-     */
-    // protected boolean drawsPoint;
+    private ColorBinInformationFile outsideColorBin;
 
     private String eventFileName;
     private String observerFileName;
     private String raypathFileName;
-    private String perturbationFileName;
-    private String turningPointFileName;
     private String insideFileName;
     private String outsideFileName;
+    private String turningPointFileName;
+    private String perturbationFileName;
+    private String gmtFileName;
     private String psFileName;
-
-    private Path eventClusterPath;
-
-    Map<GlobalCMTID, Integer> eventClusterMap;
 
     /**
      * @param args  none to create a property file <br>
@@ -125,32 +124,39 @@ public class RaypathMapper extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##To reuse raypath data that have already been exported, set the folder containing them");
+            pw.println("#reusePath raypathMap");
+            pw.println("##########The following is valid when reusePath is not set.");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#tag ");
             pw.println("##SacComponents of data to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##(int) Whether you want to draw raypath (0: don't draw, 1: quick draw, 2: detailed draw) (0)");
-            pw.println("#drawsPathMode ");
-            pw.println("##########For input, one of the following must be set. When many are set, the first one will be used.");
-            pw.println("##Path of a root folder containing dataset");
-            pw.println("#datasetPath .");
-            pw.println("##Path of a data entry file");
+            pw.println("##Path of a data entry file, must be set if reusePath is not set.");
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##########To plot perturbation points, set one of the following.");
             pw.println("##Path of a voxel information file");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##########Other settings:");
-            pw.println("#Phase to calculate pierce points for (ScS)");
+            pw.println("##########Overall settings");
+            pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
+            pw.println("#cutAtPiercePoint ");
+            pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
+            pw.println("##Phase to calculate pierce points for (ScS)");
             pw.println("#piercePhase ");
-            pw.println("#(double) Depth to calculate pierce points for [km] (2491)");
+            pw.println("##(double) Depth to calculate pierce points for [km] (2491)");
             pw.println("#pierceDepth ");
-            pw.println("#(String) Name of model to use for calculating pierce points (prem)");
+            pw.println("##(String) Name of model to use for calculating pierce points (prem)");
             pw.println("#model ");
-            pw.println("#(bolean) Whether to change color of raypaths by distance (false)");
-            pw.println("#binDistance ");
-            pw.println("#Path of color bin file, must be set if binDistance is true");
+            pw.println("##########Settings for mapping");
+            pw.println("##Mode of coloring of raypaths {0: single color, 1: bin by distance, 2: bin by azimuth} (0)");
+            pw.println("#colorMode ");
+            pw.println("##Path of color bin file, must be set if colorMode is not 0");
             pw.println("#colorBinPath ");
-            pw.println("#eventClusterPath");
+            pw.println("##(boolean) Whether to draw the raypaths outside the pierce points (false)");
+            pw.println("#drawOutsides ");
+            pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true");
+            pw.println("#outsideColorBinPath ");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("#mapRegion -180/180/-90/90");
         }
         System.err.println(outPath + " is created.");
     }
@@ -166,10 +172,8 @@ public class RaypathMapper extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        drawsPathMode = property.parseInt("drawsPathMode", "0");
-
-        if (property.containsKey("datasetPath")) {
-            datasetPath = property.parsePath("datasetPath", null, true, workPath);
+        if (property.containsKey("reusePath")) {
+            reusePath = property.parsePath("reusePath", null, true, workPath);
         } else if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         } else {
@@ -179,41 +183,75 @@ public class RaypathMapper extends Operation {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
 
+        cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
         piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
         pierceDepth = property.parseDouble("pierceDepth", "2491");
         model = property.parseString("model", "prem");
-        binDistance = property.parseBoolean("binDistance", "false");
-        if (binDistance) colorBinPath = property.parsePath("colorBinPath", null, true, workPath);
 
-        if (property.containsKey("eventClusterPath")) eventClusterPath = property.parsePath("eventClusterPath", null, true, workPath);
-        else eventClusterPath = null;
+        colorMode = property.parseInt("colorMode", "0");
+        if (colorMode > 0)
+            colorBinPath = property.parsePath("colorBinPath", null, true, workPath);
+        drawOutsides = property.parseBoolean("drawOutsides", "false");
+        if (colorMode > 0 && drawOutsides == true)
+            outsideColorBinPath = property.parsePath("outsideColorBinPath", null, true, workPath);
+        if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
 
         setName();
     }
 
     private void setName() {
+        dateStr = GadgetAid.getTemporaryString();
         eventFileName = "event.lst";
         observerFileName = "observer.lst";
         raypathFileName = "raypath.lst";
-        perturbationFileName = "perturbation.lst";
-        turningPointFileName = "turningPoint.lst";
         insideFileName = "raypathInside.lst";
         outsideFileName = "raypathOutside.lst";
-        psFileName = "raypathMap.eps";
+        turningPointFileName = "turningPoint.lst";
+        perturbationFileName = "perturbation.lst";
+        gmtFileName = "raypathMap" + dateStr + ".sh";
+        psFileName = "raypathMap" + dateStr + ".eps";
     }
 
     @Override
     public void run() throws IOException {
 
-        if (datasetPath != null) {
-            Set<SACHeaderAccess> validSacHeaderSet =  DatasetAid.sacFileNameSet(datasetPath)
-                    .stream().filter(sacname -> sacname.isOBS() && components.contains(sacname.getComponent()))
-                    .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-            events = validSacHeaderSet.stream().map(sac -> sac.getGlobalCMTID()).collect(Collectors.toSet());
-            observers = validSacHeaderSet.stream().map(sac -> sac.getObserver()).collect(Collectors.toSet());
-            raypaths = validSacHeaderSet.stream().map(Raypath::new).collect(Collectors.toSet());
-        } else if (dataEntryPath != null) {
+        if (reusePath != null) {
+            checkReusePath();
+        } else {
+            readAndOutput();
+        }
+
+        if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
+        if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
+
+        outputGMT();
+    }
+
+    private void checkReusePath() {
+        if (!Files.exists(reusePath.resolve(eventFileName)) || !Files.exists(reusePath.resolve(observerFileName))){
+            throw new IllegalStateException(reusePath + " is missing files.");
+        }
+        if (cutAtPiercePoint) {
+            if (!Files.exists(reusePath.resolve(turningPointFileName)) || !Files.exists(reusePath.resolve(insideFileName))
+                    || !Files.exists(reusePath.resolve(outsideFileName))){
+                throw new IllegalStateException(reusePath + " is missing files.");
+            }
+        } else {
+            if (!Files.exists(reusePath.resolve(raypathFileName))) {
+                throw new IllegalStateException(reusePath + " is missing files.");
+            }
+        }
+
+        outPath = reusePath;
+        System.err.println("Reusing " + reusePath);
+    }
+
+    private void readAndOutput() throws IOException {
+        Set<GlobalCMTID> events;
+        Set<Observer> observers;
+        Set<Raypath> raypaths;
+
+        if (dataEntryPath != null) {
             Set<DataEntry> validEntrySet = DataEntryListFile.readAsSet(dataEntryPath)
                     .stream().filter(entry -> components.contains(entry.getComponent()))
                     .collect(Collectors.toSet());
@@ -226,19 +264,17 @@ public class RaypathMapper extends Operation {
 
         DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
 
-        if (binDistance) colorBin = new ColorBinInformationFile(colorBinPath);
-
-        if (eventClusterPath != null) {
-            eventClusterMap = new HashMap<GlobalCMTID, Integer>();
-            EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
-        }
-
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", tag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", tag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));
         ObserverListFile.write(observers, outPath.resolve(observerFileName));
-        ColorBinInformationFile.write(raypaths, outPath.resolve(raypathFileName));
+
+        if (cutAtPiercePoint) {
+            outputRaypathSegments(raypaths);
+        } else {
+            outputRaypaths(raypaths);
+        }
 
         if (voxelPath != null) {
             HorizontalPosition[] perturbationPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
@@ -246,31 +282,32 @@ public class RaypathMapper extends Operation {
             Files.write(outPath.resolve(perturbationFileName), perturbationLines);
         }
 
-        switch (drawsPathMode) {
-        case 1:
-            break;
-        case 2:
-            outputRaypathSegments();
-            break;
-        default:
-            break;
-        }
-
-        outputGMT();
     }
 
-    private void outputRaypathSegments() throws IOException {
+    private void outputRaypaths(Set<Raypath> raypaths) throws IOException {
+        List<String> raypathLines = new ArrayList<>();
 
+        raypaths.forEach(ray -> {
+            raypathLines.add(lineFor(ray.getSource(), ray.getReceiver(), ray));
+        });
+        Files.write(outPath.resolve(raypathFileName), raypathLines);
+    }
+
+    private void outputRaypathSegments(Set<Raypath> raypaths) throws IOException {
         List<String> turningPointLines = new ArrayList<>();
         List<String> insideLines = new ArrayList<>();
         List<String> outsideLines = new ArrayList<>();
 
+        System.err.println("Calculating pierce points ...");
+
         raypaths.forEach(ray -> {
             if (ray.calculatePiercePoints(model, piercePhase, pierceDepth)) {
-                turningPointLines.add(ray.getTurningPoint().toString());
-                insideLines.add(ray.getEnterPoint() + " " + ray.getLeavePoint() + " " + Math.round(FastMath.toDegrees(ray.getEpicentralDistance())));
-                outsideLines.add(ray.getSource() + " " + ray.getEnterPoint());
-                outsideLines.add(ray.getLeavePoint() + " " + ray.getReceiver());
+                turningPointLines.add(ray.getTurningPoint().toHorizontalPosition().toString());
+                insideLines.add(lineFor(ray.getEnterPoint(), ray.getLeavePoint(), ray));
+                outsideLines.add(lineFor(ray.getSource(), ray.getEnterPoint(), ray));
+                outsideLines.add(lineFor(ray.getLeavePoint(), ray.getReceiver(), ray));
+            } else {
+                System.err.println("Pierce point calculation for " + ray + "failed.");
             }
         });
 
@@ -279,168 +316,28 @@ public class RaypathMapper extends Operation {
         Files.write(outPath.resolve(turningPointFileName), turningPointLines);
         Files.write(outPath.resolve(insideFileName), insideLines);
         Files.write(outPath.resolve(outsideFileName), outsideLines);
-
     }
-//
-//    private void outputRaypathInside(double pierceDepth) throws IOException {
-//        List<String> lines = new ArrayList<>();
-//
-//        Phase phasetmp = Phase.ScS;
-//        if (components.size() == 1 && components.contains(SACComponent.Z))
-//            phasetmp = Phase.PcP;
-//        final Phase phase = phasetmp;
-//
-//        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
-//            try {
-//                return eventDir.sacFileSet().stream();
-//            } catch (Exception e) {
-//                return Stream.empty();
-//            }
-//        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
-//                .map(name -> {
-//                    try {
-//                        return name.readHeader();
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                        return null;
-//                    }
-//                }).filter(Objects::nonNull)
-//                .forEach(headerData -> {
-//                    FullPosition eventLocation = headerData.getEventLocation();
-//                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
-//                    List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, phase);
-//                    Info info = null;
-//                    if (infoList.size() > 0) {
-//                        info = infoList.get(0);
-//                        FullPosition enterPoint = info.getEnterPoint();
-//                        FullPosition leavePoint = info.getLeavePoint();
-//                        if (eventClusterPath != null)
-//                            lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
-//                                , enterPoint.getLatitude()
-//                                , enterPoint.getLongitude()
-//                                , leavePoint.getLatitude()
-//                                , leavePoint.getLongitude()
-//                                , eventClusterMap.get(headerData.getGlobalCMTID())
-//                                ));
-//                        else
-//                            lines.add(String.format("%.2f %.2f %.2f %.2f"
-//                                    , enterPoint.getLatitude()
-//                                    , enterPoint.getLongitude()
-//                                    , leavePoint.getLatitude()
-//                                    , leavePoint.getLongitude()
-//                                    ));
-//                    }
-//                });
-//
-//        Path outpath = workPath.resolve("raypathInside.inf");
-//        Files.write(outpath, lines);
-//    }
-//
-//    private void outputRaypathInside_divide() throws IOException {
-//        List<String> lines_western = new ArrayList<>();
-//        List<String> lines_central = new ArrayList<>();
-//        List<String> lines_eastern = new ArrayList<>();
-//
-//        DatasetAid.eventFolderSet(workPath).stream().flatMap(eventDir -> {
-//            try {
-//                return eventDir.sacFileSet().stream();
-//            } catch (Exception e) {
-//                return Stream.empty();
-//            }
-//        }).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
-//                .map(name -> {
-//                    try {
-//                        return name.readHeader();
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                        return null;
-//                    }
-//                }).filter(Objects::nonNull)
-//                .forEach(headerData -> {
-//                    FullPosition eventLocation = headerData.getEventLocation();
-//                    HorizontalPosition stationPosition = headerData.getObserver().getPosition();
-//                    List<Info> infoList = TauPPierceReader.getTurningInfo(eventLocation, stationPosition, "prem", Phase.ScS);
-//                    Info info = null;
-//                    if (infoList.size() > 0) {
-//                        info = TauPPierceReader.getTurningInfo(eventLocation, stationPosition, "prem", Phase.ScS)
-//                        .get(0);
-//                        FullPosition enterDpp = info.getEnterPoint();
-//                        FullPosition leaveDpp = info.getLeavePoint();
-//                        if (stationPosition.getLongitude() >= -130 && stationPosition.getLongitude() <= -110)
-//                            lines_western.add(String.format("%.2f %.2f %.2f %.2f"
-//                                , enterDpp.getLatitude()
-//                                , enterDpp.getLongitude()
-//                                , leaveDpp.getLatitude()
-//                                , leaveDpp.getLongitude()
-//                                ));
-//                        else if (stationPosition.getLongitude() > -110 && stationPosition.getLongitude() <= -90)
-//                            lines_central.add(String.format("%.2f %.2f %.2f %.2f"
-//                                    , enterDpp.getLatitude()
-//                                    , enterDpp.getLongitude()
-//                                    , leaveDpp.getLatitude()
-//                                    , leaveDpp.getLongitude()
-//                                    ));
-//                        else if (stationPosition.getLongitude() > -90 && stationPosition.getLongitude() <= -70)
-//                            lines_eastern.add(String.format("%.2f %.2f %.2f %.2f"
-//                                    , enterDpp.getLatitude()
-//                                    , enterDpp.getLongitude()
-//                                    , leaveDpp.getLatitude()
-//                                    , leaveDpp.getLongitude()
-//                                    ));
-//                    }
-//                });
-//
-//        Path path_western = workPath.resolve("raypathInside_western.inf");
-//        Path path_central = workPath.resolve("raypathInside_central.inf");
-//        Path path_eastern = workPath.resolve("raypathInside_eastern.inf");
-//        Files.write(path_western, lines_western);
-//        Files.write(path_central, lines_central);
-//        Files.write(path_eastern, lines_eastern);
-//    }
 
-    private GMTMap createBaseMap() {
+    /**
+     * Output line: lat1 lon1 lat2 lon2 dist azimuth
+     * @param point1
+     * @param point2
+     * @param raypath
+     * @return
+     */
+    private static String lineFor(FullPosition point1, HorizontalPosition point2, Raypath raypath) {
+        // turn point2 into HorizontalPosition if it is FullPosition
+        HorizontalPosition point2h = point2;
+        if (point2 instanceof FullPosition) point2h = ((FullPosition) point2).toHorizontalPosition();
 
-        double minimumEventLatitude = events.stream().mapToDouble(id -> id.getEventData().getCmtLocation().getLatitude()).min()
-                .getAsDouble();
-        double maximumEventLatitude = events.stream().mapToDouble(id -> id.getEventData().getCmtLocation().getLatitude()).max()
-                .getAsDouble();
-
-        double minimumEventLongitude = events.stream().mapToDouble(e -> e.getEventData().getCmtLocation().getLongitude())
-                .map(d -> 0 <= d ? d : d + 360).min().getAsDouble();
-        double maximumEventLongitude = events.stream().mapToDouble(e -> e.getEventData().getCmtLocation().getLongitude())
-                .map(d -> 0 <= d ? d : d + 360).max().getAsDouble();
-
-        double minimumStationLatitude = observers.stream().mapToDouble(s -> s.getPosition().getLatitude()).min()
-                .orElse(minimumEventLatitude);
-        double maximumStationLatitude = observers.stream().mapToDouble(s -> s.getPosition().getLatitude()).max()
-                .orElse(maximumEventLatitude);
-
-        double minimumStationLongitude = observers.stream().mapToDouble(s -> s.getPosition().getLongitude())
-                .map(d -> 0 <= d ? d : d + 360).min().orElse(minimumEventLongitude);
-        double maximumStationLongitude = observers.stream().mapToDouble(s -> s.getPosition().getLongitude())
-                .map(d -> 0 <= d ? d : d + 360).max().orElse(maximumEventLongitude);
-
-        int minLatitude = (int) Math
-                .round(minimumEventLatitude < minimumStationLatitude ? minimumEventLatitude : minimumStationLatitude)
-                / 5 * 5 - 10;
-        int maxLatitude = (int) Math
-                .round(maximumEventLatitude < maximumStationLatitude ? maximumStationLatitude : maximumEventLatitude)
-                / 5 * 5 + 10;
-        int minLongitude = (int) Math.round(
-                minimumEventLongitude < minimumStationLongitude ? minimumEventLongitude : minimumStationLongitude) / 5
-                * 5 - 10;
-        int maxLongitude = (int) Math.round(
-                maximumEventLongitude < maximumStationLongitude ? maximumStationLongitude : maximumEventLongitude) / 5
-                * 5 + 10;
-        if (minLatitude < -90)
-            minLatitude = -90;
-        if (90 < maxLatitude)
-            maxLatitude = 90;
-        return new GMTMap("MAP", minLatitude, maxLatitude, minLongitude, maxLongitude);
+        // only output latitude and longitude, not radius, because point2 may be HorizontalPosition or FullPosition
+        return point1.toHorizontalPosition() + " " + point2h + " "
+                + Math.round(FastMath.toDegrees(raypath.getEpicentralDistance())) + " "
+                + Math.round(FastMath.toDegrees(raypath.getAzimuth()));
     }
 
     private void outputGMT() throws IOException {
-        Path gmtPath = outPath.resolve("raypathMap.sh");
+        Path gmtPath = outPath.resolve(gmtFileName);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
@@ -456,7 +353,7 @@ public class RaypathMapper extends Operation {
             pw.println("gmt set FONT_ANNOT_PRIMARY 25p");
             pw.println("");
             pw.println("# parameters for gmt pscoast");
-            pw.println("R='-R-90/80/-70/50'");//TODO parameterize
+            pw.println("R='-R" + decideMapRegion() + "'");
             pw.println("J='-JQ20'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("C='-Ggray -Wthinnest,gray20'");
@@ -465,54 +362,94 @@ public class RaypathMapper extends Operation {
             pw.println("");
             pw.println("gmt pscoast -K $R $J $B $C -P  > $psname");
             pw.println("");
-            pw.println("#------- Raypath");
+            pw.println("#------- Events & Observers");
             pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -J -R -O -P -Sa0.3 -G255/156/0 -Wthinnest -K  >> $psname");
             pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -J -R -O -P -Si0.3 -G71/187/243 -Wthinnest -K >> $psname");
             pw.println("");
 
+            pw.println("#------- Raypath");
+
+            // raypathOutside
+            if (cutAtPiercePoint && drawOutsides) {
+                pw.println("while read line");
+                pw.println("do");
+                if (colorMode > 0) {
+                    int nSections = outsideColorBin.getNSections();
+                    int binColumn = (colorMode == BIN_DISTANCE ? 5 : 6);
+                    if (nSections == 1) {
+                        pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
+                        pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(0) + " >> $psname");
+                    } else {
+                        pw.println("  valueForBin=$(echo $line | awk '{print $" + binColumn + "}')");
+                        for (int i = 0; i < nSections; i++) {
+                            if (i == 0)
+                                pw.println("  if [ $valueForBin -lt " + outsideColorBin.getValueFor(i) + " ]; then");
+                            else if (i < nSections - 1)
+                                pw.println("  elif [ $valueForBin -lt " + outsideColorBin.getValueFor(i) + " ]; then");
+                            else
+                                pw.println("  else");
+                            pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
+                            pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(i) + " >> $psname");
+                        }
+                        pw.println("  fi");
+                    }
+                } else {
+                    pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
+                    pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,lavender >> $psname");
+                }
+                pw.println("done < " + outsideFileName);
+                pw.println("");
+            }
+
+            // raypathInside
             pw.println("while read line");
             pw.println("do");
-            if (binDistance) {
+            if (colorMode > 0) {
                 int nSections = colorBin.getNSections();
+                int binColumn = (colorMode == BIN_DISTANCE ? 5 : 6);
                 if (nSections == 1) {
-                    pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                    pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
                     pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(0) + " >> $psname");
                 } else {
-                    pw.println("  distance=$(echo $line | awk '{print $7}')");
+                    pw.println("  valueForBin=$(echo $line | awk '{print $" + binColumn + "}')");
                     for (int i = 0; i < nSections; i++) {
                         if (i == 0)
-                            pw.println("  if [ $distance -lt " + colorBin.getValueFor(i) + " ]; then");
+                            pw.println("  if [ $valueForBin -lt " + colorBin.getValueFor(i) + " ]; then");
                         else if (i < nSections - 1)
-                            pw.println("  elif [ $distance -lt " + colorBin.getValueFor(i) + " ]; then");
+                            pw.println("  elif [ $valueForBin -lt " + colorBin.getValueFor(i) + " ]; then");
                         else
                             pw.println("  else");
-                        pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                        pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
                         pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(i) + " >> $psname");
                     }
                     pw.println("  fi");
                 }
             } else {
-                pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $4, $5}' | \\");
+                pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
                 pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
             }
-            pw.println("done < " + insideFileName);
+            if (cutAtPiercePoint) {
+                pw.println("done < " + insideFileName);
+            } else {
+                pw.println("done < " + raypathFileName);
+            }
+            pw.println("");
 
-            pw.println("");
-            pw.println("");
-            pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
-            pw.println("");
+            if (cutAtPiercePoint) {
+                pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
+                pw.println("");
+            }
 
             if (voxelPath != null) {
-            pw.println("#------- Perturbation");
-            pw.println("gmt psxy " + perturbationFileName + " -: -J -R -O -P -Sc0.2 -G0/255/0 -Wthinnest -K >> $psname");
-            pw.println("");
+                pw.println("#------- Perturbation");
+                pw.println("gmt psxy " + perturbationFileName + " -: -J -R -O -P -Sc0.2 -G0/255/0 -Wthinnest -K >> $psname");
+                pw.println("");
             }
 
             pw.println("#------- Finalize");
             pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $psname");
             pw.println("END");
             pw.println("");
-//            pw.println("gmt ps2raster $psname -A -Tgf -Qg4 -E150");
             pw.println("gmt psconvert $psname -A -Tf -Qg4 -E100");
             pw.println("gmt psconvert $psname -A -Tg -Qg4 -E100");
             pw.println("");
@@ -521,30 +458,45 @@ public class RaypathMapper extends Operation {
         }
         gmtPath.toFile().setExecutable(true);
 
-/*        GMTMap gmtmap = createBaseMap();
-        List<String> gmtCMD = new ArrayList<>();
-        gmtCMD.add("#!/bin/sh");
-        gmtCMD.add("psname=\"" + psPath + "\"");
-        gmtCMD.add(gmtmap.psStart());
-        if (drawsPathMode == 1) {
-            gmtCMD.add("while  read line");
-            gmtCMD.add("do");
-            gmtCMD.add("echo $line |awk '{print $3, $4, \"\\n\", $6, $7}' | \\");
-            gmtCMD.add("psxy -: -J -R -O -P -K  -W0.25,grey,.@100 >>$psname");
-            gmtCMD.add("done < " + raypathPath);
-            // draw over the path
-        }
+    }
 
-        gmtCMD.add(GMTMap.psCoast());
-        gmtCMD.add("awk '{print $2, $3}' " + eventPath + " | psxy -V -: -J -R -O -P -Sa0.3 -G255/0/0 -W1  -K "
-                + " >> $psname");
-        gmtCMD.add("awk '{print $3, $4}' " + observerPath + " | psxy -V -: -J -R -K -O -P -Si0.3 -G0/0/255 -W1 "
-                + " >> $psname");
-        gmtCMD.add(gmtmap.psEnd());
-        gmtCMD.add("#eps2eps $psname .$psname && mv .$psname $psname");
-        Files.write(gmtPath, gmtCMD);
-        gmtPath.toFile().setExecutable(true);
-*/
+    private String decideMapRegion() throws IOException {
+        if (mapRegion != null) {
+            return mapRegion;
+        } else {
+            double latMin, latMax, lonMin, lonMax;
+            Set<GlobalCMTID> events = EventListFile.read(outPath.resolve(eventFileName));
+            Set<Observer> observers = ObserverListFile.read(outPath.resolve(observerFileName));
+
+            // set one position as an initial value
+            HorizontalPosition pos0 = events.iterator().next().getEventData().getCmtLocation();
+            latMin = latMax = pos0.getLatitude();
+            lonMin = lonMax = pos0.getLongitude();
+
+            for (GlobalCMTID event : events) {
+                HorizontalPosition pos = event.getEventData().getCmtLocation();
+                if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
+                if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
+                if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
+                if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
+            }
+
+            for (Observer observer : observers) {
+                HorizontalPosition pos = observer.getPosition();
+                if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
+                if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
+                if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
+                if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
+            }
+
+            // expand the region a bit more
+            latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
+            latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
+            lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
+            lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
+
+            return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+        }
     }
 
 }

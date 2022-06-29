@@ -5,10 +5,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.Set;
 
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.data.Raypath;
 
 /**
  * File to specify the colors to use in visualizations.
@@ -27,18 +25,22 @@ public class ColorBinInformationFile {
     private String[] colors;
 
     /**
-     * Writes a raypath list file given a set of raypaths.
-     * @param raypathSet Set of raypaths
-     * @param outPath  of write file
-     * @param options  for write
-     * @throws IOException if an I/O error occurs
+     * Writes a color bin information file.
+     * @param values
+     * @param colors
+     * @param outPath
+     * @param options
+     * @throws IOException
      */
-    public static void write(Set<Raypath> raypathSet, Path outPath, OpenOption... options) throws IOException {
+    public static void write(int[] values, String[] colors, Path outPath, OpenOption... options) throws IOException {
+        if (values.length + 1 != colors.length) throw new IllegalArgumentException("#colors must be #values + 1");
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            pw.println("# Odd lines: name of color. Even lines: value of limit of interval (int).");
-            raypathSet.stream().forEach(raypath -> {
-                pw.println(raypath.getSource() + " " + raypath.getReceiver());
-            });
+            for (int i = 0; i < colors.length; i++) {
+                pw.println(colors[i]);
+                if (i == colors.length - 1) break;
+                pw.println(values[i]);
+            }
         }
     }
 
