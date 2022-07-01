@@ -242,7 +242,7 @@ public class TimewindowMaker extends Operation {
     private void makeTimeWindow(SACFileName sacFileName) throws IOException {
         SACFileAccess sacFile = sacFileName.read();
         // 震源深さ radius
-        double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
+        double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP); //TODO: depth to radius
         // 震源観測点ペアの震央距離
         double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 

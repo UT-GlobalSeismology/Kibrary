@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
@@ -40,6 +41,7 @@ enum Brooklyn {
     DataEntryListFile(4, DataEntryListFile.class),
     EventListFile(5, EventListFile.class),
     ObserverListFile(6, ObserverListFile.class),
+    ColorBinInformationFile(9, ColorBinInformationFile.class),
     // Data download 10
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),

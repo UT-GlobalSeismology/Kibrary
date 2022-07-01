@@ -88,10 +88,13 @@ public class RaypathMapper extends Operation {
     private int colorMode;
     private static final int BIN_DISTANCE = 1;
     private static final int BIN_AZIMUTH = 2;
+    private static final int BIN_BACKAZIMUTH = 3;
+    private static final int BIN_MIDAZIMUTH = 4;
     private Path colorBinPath;
     private boolean drawOutsides;
     private Path outsideColorBinPath;
     private String mapRegion;
+    private String legendJustification;
 
     private String dateStr;
     private ColorBinInformationFile colorBin;
@@ -147,7 +150,8 @@ public class RaypathMapper extends Operation {
             pw.println("##(String) Name of model to use for calculating pierce points (prem)");
             pw.println("#model ");
             pw.println("##########Settings for mapping");
-            pw.println("##Mode of coloring of raypaths {0: single color, 1: bin by distance, 2: bin by azimuth} (0)");
+            pw.println("##Mode of coloring of raypaths {0: single color, 1: bin by distance, 2: bin by azimuth,");
+            pw.println("## 3: bin by back azimuth, 4: bin by turning-point-azimuth} (0)");
             pw.println("#colorMode ");
             pw.println("##Path of color bin file, must be set if colorMode is not 0");
             pw.println("#colorBinPath ");
@@ -157,6 +161,8 @@ public class RaypathMapper extends Operation {
             pw.println("#outsideColorBinPath ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none} (BR)");
+            pw.println("#legendJustification ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -195,6 +201,7 @@ public class RaypathMapper extends Operation {
         if (colorMode > 0 && drawOutsides == true)
             outsideColorBinPath = property.parsePath("outsideColorBinPath", null, true, workPath);
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        legendJustification = property.parseString("legendJustification", "BR");
 
         setName();
     }
@@ -333,7 +340,9 @@ public class RaypathMapper extends Operation {
         // only output latitude and longitude, not radius, because point2 may be HorizontalPosition or FullPosition
         return point1.toHorizontalPosition() + " " + point2h + " "
                 + Math.round(FastMath.toDegrees(raypath.getEpicentralDistance())) + " "
-                + Math.round(FastMath.toDegrees(raypath.getAzimuth()));
+                + Math.round(FastMath.toDegrees(raypath.getAzimuth())) + " "
+                + Math.round(FastMath.toDegrees(raypath.getBackAzimuth())) + " "
+                + Math.round(FastMath.toDegrees(raypath.calculateMidAzimuth()));
     }
 
     private void outputGMT() throws IOException {
@@ -375,7 +384,15 @@ public class RaypathMapper extends Operation {
                 pw.println("do");
                 if (colorMode > 0) {
                     int nSections = outsideColorBin.getNSections();
-                    int binColumn = (colorMode == BIN_DISTANCE ? 5 : 6);
+                    int binColumn;
+                    switch (colorMode) {
+                    case BIN_DISTANCE: binColumn = 5; break;
+                    case BIN_AZIMUTH: binColumn = 6; break;
+                    case BIN_BACKAZIMUTH: binColumn = 7; break;
+                    case BIN_MIDAZIMUTH: binColumn = 8; break;
+                    default: throw new IllegalArgumentException("colorMode out of range");
+                    }
+
                     if (nSections == 1) {
                         pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
                         pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(0) + " >> $psname");
@@ -446,6 +463,22 @@ public class RaypathMapper extends Operation {
                 pw.println("");
             }
 
+            if (colorMode > 0 && legendJustification.equals("none") == false) {
+                pw.println("#------- Legend");
+                pw.println("gmt pslegend -Dj" + legendJustification + "+w6c -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $psname");
+                int nSections = colorBin.getNSections();
+                for (int i = 0; i < nSections; i++) {
+                    if (i == 0) {
+                        pw.println("S 1c - 1c - 0.4p," + colorBin.getColorFor(i) + " 2c ~" + colorBin.getValueFor(i));
+                    } else if (i < nSections - 1) {
+                        pw.println("S 1c - 1c - 0.4p," + colorBin.getColorFor(i) + " 2c " + colorBin.getValueFor(i - 1) + "~" + colorBin.getValueFor(i));
+                    } else {
+                        pw.println("S 1c - 1c - 0.4p," + colorBin.getColorFor(i) + " 2c " + colorBin.getValueFor(i - 1) + "~");
+                    }
+                }
+                pw.println("END");
+            }
+
             pw.println("#------- Finalize");
             pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $psname");
             pw.println("END");
@@ -494,6 +527,14 @@ public class RaypathMapper extends Operation {
             latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
             lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
             lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
+            // space for legend
+            if (colorMode > 0) {
+                if (legendJustification.equals("TL") || legendJustification.equals("BL")) {
+                    lonMin -= 40;
+                } else if (legendJustification.equals("TR") || legendJustification.equals("BR")) {
+                    lonMax += 40;
+                }
+            }
 
             return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }

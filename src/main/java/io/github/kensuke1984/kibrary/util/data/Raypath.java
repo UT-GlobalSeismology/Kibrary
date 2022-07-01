@@ -180,6 +180,14 @@ public class Raypath {
     }
 
     /**
+     * Calculate the azimuth of the raypath at the turning point
+     * @return
+     */
+    public double calculateMidAzimuth() {
+        return turnPosition.calculateAzimuth(receiverPosition);
+    }
+
+    /**
      * 震源から観測点に向けての震央距離thetaでの座標
      * @param theta [rad]
      * @return {@link HorizontalPosition} on the raypath where the epicentral distance from the source is theta.

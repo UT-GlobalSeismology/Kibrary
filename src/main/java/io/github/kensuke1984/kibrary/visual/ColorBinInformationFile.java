@@ -5,14 +5,23 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
  * File to specify the colors to use in visualizations.
  * <p>
  * Odd lines: name of color.
- * Even lines: value of limit of interval (int).
+ * Even lines: (int) value of limit of interval.
  * <p>
  *
  * @author otsuru
@@ -72,4 +81,72 @@ public class ColorBinInformationFile {
         return colors[i];
     }
 
+
+
+    /**
+     * Creates a template color bin information file.
+     *
+     * @param args
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // input
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.addOption(Option.builder("d").longOpt("distance")
+                .desc("Bin by epicentral distance").build());
+        inputOption.addOption(Option.builder("a").longOpt("azimuth")
+                .desc("Bin by azimuth").build());
+        inputOption.setRequired(true);
+        options.addOptionGroup(inputOption);
+
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get("colorBin" + GadgetAid.getTemporaryString() + ".inf");
+
+        int values[];
+        String colors[];
+        if (cmdLine.hasOption("d")) {
+            int values0[] = {80, 90};
+            values = values0;
+            String colors0[] = {"green", "blue", "purple"};
+            colors = colors0;
+        } else if (cmdLine.hasOption("a")) {
+            int values0[] = {45, 90, 135, 180, 225, 270, 315};
+            values = values0;
+            String colors0[] = {"darkorange", "green", "blue", "purple", "darkorange", "green", "blue", "purple"};
+            colors = colors0;
+        } else {
+            throw new IllegalArgumentException();
+        }
+
+        write(values, colors, outputPath);
+    }
 }
