@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
+ * A model composed of a set of voxels, each of which its parameters are perturbed.
+ * This class holds a set of {@link PerturbationVoxel}s.
+ *
  * @author otsuru
  * @since 2022/4/9
  */
@@ -15,7 +18,7 @@ public class PerturbationModel {
 
     private List<PerturbationVoxel> voxelList = new ArrayList<>();
 
-    public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure) {
+    public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure_new initialStructure) {
         if (unknowns.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values does not match");
 
         for (int i = 0; i < unknowns.size(); i++) {

@@ -17,7 +17,8 @@ import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.visual.MapperShellscript;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
@@ -111,11 +112,11 @@ public class VelocityModelMapper extends Operation {
     @Override
     public void run() throws IOException {
 
-        PolynomialStructure structure = null;
+        PolynomialStructure_new structure = null;
         if (structurePath != null) {
-            structure = new PolynomialStructure(structurePath);
+            structure = PolynomialStructureFile.read(structurePath);
         } else {
-            structure = PolynomialStructure.of(structureName);
+            structure = PolynomialStructure_new.of(structureName);
         }
 
         Path unknownsPath = resultPath.resolve("unknownParameterOrder.inf");

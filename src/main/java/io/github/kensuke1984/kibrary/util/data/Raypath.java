@@ -11,7 +11,6 @@ import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 
 /**
  * Raypath between a source at {@link #sourcePosition} and a receiver at
@@ -77,50 +76,6 @@ public class Raypath {
     }
 
     /**
-     * Create a raypath for the input SAC.
-     *
-     * @param sacHeaderData of a raypath to create
-     */
-    public Raypath(SACHeaderAccess sacHeaderData) {
-        this(sacHeaderData.getEventLocation(), sacHeaderData.getObserver().getPosition());
-    }
-
-    /**
-     * @return {@link FullPosition} of the seismic source on the raypath
-     */
-    public FullPosition getSource() {
-        return sourcePosition;
-    }
-
-    /**
-     * @return {@link HorizontalPosition} of the seismic station on the raypath
-     */
-    public HorizontalPosition getReceiver() {
-        return receiverPosition;
-    }
-
-    /**
-     * @return epicentral distance of this raypath [rad]
-     */
-    public double getEpicentralDistance() {
-        return epicentralDistance;
-    }
-
-    /**
-     * @return azimuth [rad]
-     */
-    public double getAzimuth() {
-        return azimuth;
-    }
-
-    /**
-     * @return back azimuth [rad]
-     */
-    public double getBackAzimuth() {
-        return backAzimuth;
-    }
-
-    /**
      * Calculate turning point on the raypath.
      * @param model
      * @param phase
@@ -180,11 +135,13 @@ public class Raypath {
     }
 
     /**
-     * Calculate the azimuth of the raypath at the turning point
-     * @return
+     * Calculate the azimuth of the raypath at the turning point.
+     * The turning point must be already calculated.
+     * @return (double) azimuth at turning point
      */
     public double calculateMidAzimuth() {
-        return turnPosition.calculateAzimuth(receiverPosition);
+        if (calculatedTurningPoint) return turnPosition.calculateAzimuth(receiverPosition);
+        else throw new IllegalStateException("Turning point is not yet calculated");
     }
 
     /**
@@ -246,4 +203,46 @@ public class Raypath {
                 .searchPath(phase, sourcePosition.getR(), epicentralDistance, false);
     }
 
+    /**
+     * @return {@link FullPosition} of the seismic source on the raypath
+     */
+    public FullPosition getSource() {
+        return sourcePosition;
+    }
+
+    /**
+     * @return {@link HorizontalPosition} of the seismic station on the raypath
+     */
+    public HorizontalPosition getReceiver() {
+        return receiverPosition;
+    }
+
+    /**
+     * @return epicentral distance of this raypath [rad]
+     */
+    public double getEpicentralDistance() {
+        return epicentralDistance;
+    }
+
+    /**
+     * @return azimuth [rad]
+     */
+    public double getAzimuth() {
+        return azimuth;
+    }
+
+    /**
+     * @return back azimuth [rad]
+     */
+    public double getBackAzimuth() {
+        return backAzimuth;
+    }
+
+    public boolean hasCalculatedTurningPoint() {
+        return calculatedTurningPoint;
+    }
+
+    public boolean hasCalculatedPiercePoints() {
+        return calculatedPiercePoints;
+    }
 }

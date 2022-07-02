@@ -203,6 +203,10 @@ public class RaypathMapper extends Operation {
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         legendJustification = property.parseString("legendJustification", "BR");
 
+        // error prevention
+        if (cutAtPiercePoint == false && colorMode == BIN_MIDAZIMUTH)
+            throw new IllegalArgumentException("Cannot calculate midazimuth without cutAtPiercePoint");
+
         setName();
     }
 
@@ -326,7 +330,7 @@ public class RaypathMapper extends Operation {
     }
 
     /**
-     * Output line: lat1 lon1 lat2 lon2 dist azimuth
+     * Output line: lat1 lon1 lat2 lon2 dist azimuth backazimuth (midazimuth)
      * @param point1
      * @param point2
      * @param raypath
@@ -337,12 +341,17 @@ public class RaypathMapper extends Operation {
         HorizontalPosition point2h = point2;
         if (point2 instanceof FullPosition) point2h = ((FullPosition) point2).toHorizontalPosition();
 
+        // create output line
         // only output latitude and longitude, not radius, because point2 may be HorizontalPosition or FullPosition
-        return point1.toHorizontalPosition() + " " + point2h + " "
+        String line = point1.toHorizontalPosition() + " " + point2h + " "
                 + Math.round(FastMath.toDegrees(raypath.getEpicentralDistance())) + " "
                 + Math.round(FastMath.toDegrees(raypath.getAzimuth())) + " "
-                + Math.round(FastMath.toDegrees(raypath.getBackAzimuth())) + " "
-                + Math.round(FastMath.toDegrees(raypath.calculateMidAzimuth()));
+                + Math.round(FastMath.toDegrees(raypath.getBackAzimuth()));
+        // midazimuth can be obtained only when turning point is already known
+        if (raypath.hasCalculatedTurningPoint()) {
+            line = line + " " + Math.round(FastMath.toDegrees(raypath.calculateMidAzimuth()));
+        }
+        return line;
     }
 
     private void outputGMT() throws IOException {
@@ -384,20 +393,11 @@ public class RaypathMapper extends Operation {
                 pw.println("do");
                 if (colorMode > 0) {
                     int nSections = outsideColorBin.getNSections();
-                    int binColumn;
-                    switch (colorMode) {
-                    case BIN_DISTANCE: binColumn = 5; break;
-                    case BIN_AZIMUTH: binColumn = 6; break;
-                    case BIN_BACKAZIMUTH: binColumn = 7; break;
-                    case BIN_MIDAZIMUTH: binColumn = 8; break;
-                    default: throw new IllegalArgumentException("colorMode out of range");
-                    }
-
                     if (nSections == 1) {
                         pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
                         pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(0) + " >> $psname");
                     } else {
-                        pw.println("  valueForBin=$(echo $line | awk '{print $" + binColumn + "}')");
+                        pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                         for (int i = 0; i < nSections; i++) {
                             if (i == 0)
                                 pw.println("  if [ $valueForBin -lt " + outsideColorBin.getValueFor(i) + " ]; then");
@@ -423,12 +423,11 @@ public class RaypathMapper extends Operation {
             pw.println("do");
             if (colorMode > 0) {
                 int nSections = colorBin.getNSections();
-                int binColumn = (colorMode == BIN_DISTANCE ? 5 : 6);
                 if (nSections == 1) {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
                     pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(0) + " >> $psname");
                 } else {
-                    pw.println("  valueForBin=$(echo $line | awk '{print $" + binColumn + "}')");
+                    pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                     for (int i = 0; i < nSections; i++) {
                         if (i == 0)
                             pw.println("  if [ $valueForBin -lt " + colorBin.getValueFor(i) + " ]; then");
@@ -477,6 +476,7 @@ public class RaypathMapper extends Operation {
                     }
                 }
                 pw.println("END");
+                pw.println("");
             }
 
             pw.println("#------- Finalize");
@@ -491,6 +491,19 @@ public class RaypathMapper extends Operation {
         }
         gmtPath.toFile().setExecutable(true);
 
+    }
+
+    private static int columnFor(int colorMode) {
+        int binColumn;
+        switch (colorMode) {
+        case BIN_DISTANCE: binColumn = 5; break;
+        case BIN_AZIMUTH: binColumn = 6; break;
+        case BIN_BACKAZIMUTH: binColumn = 7; break;
+        case BIN_MIDAZIMUTH: binColumn = 8; break;
+        default: throw new IllegalArgumentException("colorMode out of range");
+        }
+
+        return binColumn;
     }
 
     private String decideMapRegion() throws IOException {

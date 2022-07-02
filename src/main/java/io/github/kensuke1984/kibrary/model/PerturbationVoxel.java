@@ -3,9 +3,11 @@ package io.github.kensuke1984.kibrary.model;
 import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 
 /**
+ * A voxel of which its parameters are perturbed.
+ *
  * @author otsuru
  * @since 2022/4/9
  */
@@ -15,9 +17,9 @@ class PerturbationVoxel {
     private final ElasticMedium initialMedium;
     private final ElasticMedium perturbedMedium;
 
-    PerturbationVoxel(FullPosition position, PolynomialStructure oneDStructure) {
+    PerturbationVoxel(FullPosition position, PolynomialStructure_new oneDStructure) {
         this.position = position;
-        this.initialMedium = oneDStructure.getMediumAt(position.getR());
+        this.initialMedium = oneDStructure.mediumAt(position.getR());
         this.perturbedMedium = new ElasticMedium();
     }
 
