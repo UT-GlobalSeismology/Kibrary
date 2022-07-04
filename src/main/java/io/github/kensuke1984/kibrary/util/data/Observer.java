@@ -27,6 +27,14 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * [network code is equal && station code is equal && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
  * If the network code is 'DSM', comparison of networks between instances is not done;
  * station code and horizontal position is considered.
+ * <p>
+ * At a single time moment, only one observer with the same network and station code exists.
+ * However, at different times, observers with the same name but different positions can exist.
+ * Therefore, the latitude and longitude are needed to specify a certain observer.
+ * On the other hand, network and station codes are useful for humans to recognize an observer.
+ * Hence, these 4 keys (network, station, latitude, longitude) shall be used to specify observers.
+ * Only inside folders of a single event can files be named using just network and station code
+ * (because a single event means a single time moment).
  *
  * @author Kensuke Konishi
  */

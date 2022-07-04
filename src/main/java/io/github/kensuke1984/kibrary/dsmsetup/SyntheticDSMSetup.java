@@ -56,6 +56,9 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  * <p>
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.
+ *
+ * @since a long time ago
+ * @version 2021/11/2 renamed from SyntheticDSMInformationFileMaker
  */
 public class SyntheticDSMSetup extends Operation {
 

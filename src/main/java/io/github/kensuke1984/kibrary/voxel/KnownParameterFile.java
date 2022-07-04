@@ -23,6 +23,10 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * <p>
  * Duplication is NOT allowed.
  * Parameters with same type and position are regarded as same parameters, even if weighting differs.
+ *
+ * <p>
+ * {@code List<KnownParameter>} is used instead of {@code Map<UnknownParameter, Double>} here
+ * because {@link UnknownParameter} is not Comparable and thus cannot be sorted.
  * <p>
  * TODO ３次元と１次元の混在をさける
  *

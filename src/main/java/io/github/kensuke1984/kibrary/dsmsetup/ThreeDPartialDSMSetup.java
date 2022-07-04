@@ -29,14 +29,32 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * This class makes information files for <br>
- * SHBP SHFP PSVBP PSVFP
+ * Operation that makes DSM input files to be used in SHFP, SHBP, PSVFP, and PSVBP,
+ * and prepares the environment to run these programs.
  * <p>
- * TODO information of eliminated stations and events
+ * As input, the following 3 files are needed:
+ * <ul>
+ * <li> an event list file </li>
+ * <li> an observer list file </li>
+ * <li> a voxel information file </li>
+ * </ul>
+ * DSM input files for FP will be created to calculate for all (event, perturbationPoint)-pairs.
+ * DSM input files for BP will be created to calculate for all (observerPosition, perturbationPoint)-pairs.
+ * <p>
+ * The resulting folders in output BP folder will be named by the position code of observers (see {@link HorizontalPosition#toCode}).
+ * Observer position codes are used here instead of observer names to dodge the problem caused by
+ * "observers with same name but different position".
+ * (At a single time moment, only one observer with the same network and station code exists.
+ * However, at different times, observers with the same name but different positions can exist.
+ * In BP folders created here, observers are collected from different time periods, so their names can conflict.
+ * Therefore, observer positions are used instead to distinguish an observer.
+ * "Observers with different names but same position" can also exist, but they do not cause problems here
+ * because the same BP waveform can be used for both of them.)
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1
+ * @since version 0.2.2.1
  * @author anselme add content for catalog
+ * @version 2021/12/24 renamed from InformationFileMaker
  */
 public class ThreeDPartialDSMSetup extends Operation {
 
@@ -132,9 +150,9 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#tag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
-            pw.println("##Path of an event information file, must be set");
+            pw.println("##Path of an event list file, must be set");
             pw.println("#eventPath event.lst");
-            pw.println("##Path of an observer information file, must be set");
+            pw.println("##Path of an observer list file, must be set");
             pw.println("#observerPath observer.lst");
             pw.println("##Path of a voxel information file for perturbation points, must be set");
             pw.println("#voxelPath voxel.inf");
@@ -195,75 +213,6 @@ public class ThreeDPartialDSMSetup extends Operation {
         // additional info
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath"))
-            property.setProperty("workPath", "");
-        if (!property.containsKey("components"))
-            property.setProperty("components", "Z R T");
-        if (!property.containsKey("tlen"))
-            property.setProperty("tlen", "6553.6");
-        if (!property.containsKey("np"))
-            property.setProperty("np", "1024");
-        if (!property.containsKey("mpi"))
-            property.setProperty("mpi", "true");
-        if (!property.containsKey("header"))
-            property.setProperty("header", "PREM");
-        if (!property.containsKey("jointCMT"))
-            property.setProperty("jointCMT", "false");
-        if (!property.containsKey("catalogue"))
-            property.setProperty("catalogue", "false");
-
-        // additional info
-        property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogPath().toString());
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-
-        if (!Files.exists(workPath))
-            throw new RuntimeException("The workPath: " + workPath + " does not exist");
-
-        perturbationPath = getPath("locationsPath");
-
-        observerPath = getPath("stationInformationPath");
-        // str = reader.getValues("partialTypes");
-        np = Integer.parseInt(property.getProperty("np"));
-        tlen = Double.parseDouble(property.getProperty("tlen"));
-        mpi = Boolean.parseBoolean(property.getProperty("mpi"));
-        header = property.getProperty("header");
-
-        if (property.containsKey("structureFile")) {
-            Path psPath = getPath("structureFile");
-            ps = PolynomialStructure.PREM;
-            if (psPath.toString().equals("PREM")) {
-                ps = PolynomialStructure.PREM;
-            }
-            else if (psPath.toString().trim().equals("AK135")) {
-                ps = PolynomialStructure.AK135;
-            }
-            else if (psPath.toString().trim().equals("AK135_elastic")) {
-                ps = PolynomialStructure.AK135_elastic;
-            }
-            else
-                ps = new PolynomialStructure(psPath);
-        }
-        else
-            ps = PolynomialStructure.PREM;
-
-        jointCMT = Boolean.parseBoolean(property.getProperty("jointCMT"));
-
-        catalogue = Boolean.parseBoolean(property.getProperty("catalogue"));
-        if (catalogue) {
-            double[] tmpthetainfo = Stream.of(property.getProperty("thetaRange").trim().split("\\s+")).mapToDouble(Double::parseDouble)
-                    .toArray();
-            thetamin = tmpthetainfo[0];
-            thetamax = tmpthetainfo[1];
-            dtheta = tmpthetainfo[2];
-        }
-    }
-*/
 
     @Override
     public void run() throws IOException {

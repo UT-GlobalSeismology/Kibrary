@@ -30,7 +30,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * Information file for SSHSH
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @since version 0.1.3
+ * @version 2021/12/24 renamed from SshDSMInformationFileMaker
  */
 public class OneDPartialDSMSetup implements Operation_old {
 

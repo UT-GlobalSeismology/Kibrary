@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -55,16 +56,18 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
+ * Operation that assembles partial waveforms from SPC files created by shfp、shbp、psvfp, and psvbp.
+ * <p>
+ * SPC files for FP must be inside fpPath/eventDir/modelName/.
+ * SPC files for BP must be inside bpPath/observerPositionCode/modelName/.
+ * For information about observerPositionCode, see {@link HorizontalPosition#toCode}.
+ * Input SPC file names should take the form:
+ * (point name).(observerPositionCode or eventID).(PB or PF)...(sh or psv).spc
+ * <p>
+ * A timewindow data file, a voxel information file, and a set of partialTypes to work for must be specified.
+ * TODO organize this program file and decide which set of data is worked for.
  *
- * shfp、shbp、psvfp,psvbp から作られたSPCファイルがあるディレクトリの操作
- *
- * fpDIR, bpDIR(未定義の場合workDir)の下に イベントごとのフォルダ（FP）、ステーションごとのフォルダ(BP)があり その下の
- * modelNameにspcfileをおく
- *
- * イベントフォルダはeventnameで定義されたもの ステーショフォルダは0000(stationname)
- *
- * spcfileの名前は (point name).(station or eventname).(PB or PF)...(sh or psv).spc
- *
+ * <p>
  * halfDurationはevent informationファイルから読み取る
  *
  * time window informationファイルの中からtime windowを見つける。 その中に入っている震源観測点成分の組み合わせのみ計算する
@@ -78,14 +81,10 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  *
  * 摂動点の情報がない摂動点に対しては計算しない
  *
- * <b>Assume there are no stations with the same name and different networks</b>
- * TODO
- * <p>
- * Because of DSM condition, stations can not have the same name...
- *
- * @version 2.3.0.5
  *
  * @author Kensuke Konishi
+ * @since version 2.3.0.5
+ * @version 2021/12/24 renamed from PartialDatasetMaker_v2
  */
 public class PartialWaveformAssembler3D extends Operation {
 
@@ -117,6 +116,18 @@ public class PartialWaveformAssembler3D extends Operation {
     private double finalSamplingHz;
 
     /**
+     * タイムウインドウ情報のファイル
+     */
+    private Path timewindowPath;
+    /**
+     * Information file about voxels for perturbations
+     */
+    private Path voxelPath;
+    /**
+     * set of partial type for computation
+     */
+    private Set<PartialType> partialTypes;
+    /**
      * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
      */
     private Path fpPath;
@@ -142,18 +153,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * The folder contains source time functions.
      */
     private Path sourceTimeFunctionPath;
-    /**
-     * タイムウインドウ情報のファイル
-     */
-    private Path timewindowPath;
-    /**
-     * Information file about voxels for perturbations
-     */
-    private Path voxelPath;
-    /**
-     * set of partial type for computation
-     */
-    private Set<PartialType> partialTypes;
 
     /**
      * time length (DSM parameter)
@@ -222,6 +221,12 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#partialSamplingHz cant change now");
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
+            pw.println("##Path of a time window file, must be set");
+            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Voxel file path, must be set");
+            pw.println("#voxelPath voxel.inf");
+            pw.println("##PartialTypes to compute for, listed using spaces (MU)");
+            pw.println("#partialTypes ");
             pw.println("##Path of a forward propagate spc folder (FPinfo)");
             pw.println("#fpPath ");
             pw.println("##Path of a back propagate spc folder (BPinfo)");
@@ -237,12 +242,6 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("##Type of source time function from {0:none, 1:boxcar, 2:triangle, 3: asymmetric triangle (user catalog), 4: coming soon, 5: symmetric triangle (user catalog)} (0)");
             pw.println("## or folder name containing *.stf if you want to use your own GLOBALCMTID.stf");
             pw.println("#sourceTimeFunction ");
-            pw.println("##Path of a time window file, must be set");
-            pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Voxel file path, must be set");
-            pw.println("#voxelPath voxel.inf");
-            pw.println("##PartialTypes to compute for, listed using spaces (MU)");
-            pw.println("#partialTypes ");
             pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen ");
             pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
@@ -278,6 +277,10 @@ public class PartialWaveformAssembler3D extends Operation {
         if (partialSamplingHz % finalSamplingHz != 0)
             throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
 
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
+                .collect(Collectors.toSet());
         fpPath = property.parsePath("fpPath", "FPinfo", true, workPath);
         bpPath = property.parsePath("bpPath", "BPinfo", true, workPath);
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
@@ -297,10 +300,6 @@ public class PartialWaveformAssembler3D extends Operation {
         }
 
         setSourceTimeFunction();
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
-        voxelPath = property.parsePath("voxelPath", null, true, workPath);
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
-                .collect(Collectors.toSet());
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
@@ -337,107 +336,6 @@ public class PartialWaveformAssembler3D extends Operation {
                 throw new RuntimeException("Integer for source time function is invalid.");
         }
     }
-
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath"))
-            property.setProperty("workPath", "");
-        if (!property.containsKey("components"))
-            property.setProperty("components", "Z R T");
-        if (!property.containsKey("bpPath"))
-            property.setProperty("bpPath", "BPinfo");
-        if (!property.containsKey("fpPath"))
-            property.setProperty("fpPath", "FPinfo");
-        if (!property.containsKey("catalogue"))
-            property.setProperty("catalogue", "false");
-        if (!property.containsKey("modelName"))
-            property.setProperty("modelName", "PREM");
-        if (!property.containsKey("maxFreq"))
-            property.setProperty("maxFreq", "0.08");
-        if (!property.containsKey("minFreq"))
-            property.setProperty("minFreq", "0.005");
-        // if (!property.containsKey("backward")) TODO allow user to change
-        // property.setProperty("backward", "true");partialSamplingHz
-        if (!property.containsKey("sourceTimeFunction"))
-            property.setProperty("sourceTimeFunction", "0");
-        if (!property.containsKey("partialTypes"))
-            property.setProperty("partialTypes", "MU");
-        if (!property.containsKey("partialSamplingHz"))
-            property.setProperty("partialSamplingHz", "20");
-        if (!property.containsKey("finalSamplingHz"))
-            property.setProperty("finalSamplingHz", "1");
-        if (!property.containsKey("filterNp"))
-            property.setProperty("filterNp", "4");
-        if (!property.containsKey("backward"))
-            property.setProperty("backward", "false");
-        if (!property.containsKey("mode"))
-            property.setProperty("mode", "SH");
-
-        // additional unused info
-        property.setProperty("STFcatalog", stfcatName);
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-
-        if (!Files.exists(workPath))
-            throw new RuntimeException("The workPath: " + workPath + " does not exist");
-
-        bpPath = getPath("bpPath");
-        fpPath = getPath("fpPath");
-        timewindowPath = getPath("timewindowPath");
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-
-        if (property.containsKey("qinf"))
-            structure = new PolynomialStructure(getPath("qinf"));
-        try {
-            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-        } catch (Exception e) {
-            sourceTimeFunction = -1;
-            sourceTimeFunctionPath = getPath("sourceTimeFunction");
-        }
-        modelName = property.getProperty("modelName");
-
-        partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
-                .collect(Collectors.toSet());
-
-        if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
-            timePartialPath = Paths.get(property.getProperty("timePartialPath"));
-            if (!Files.exists(timePartialPath))
-                throw new RuntimeException("The timePartialPath: " + timePartialPath + " does not exist");
-        }
-
-        tlen = Double.parseDouble(property.getProperty("tlen"));
-        np = Integer.parseInt(property.getProperty("np"));
-        minFreq = Double.parseDouble(property.getProperty("minFreq"));
-        maxFreq = Double.parseDouble(property.getProperty("maxFreq"));
-        perturbationPath = getPath("perturbationPath");
-        // partialSamplingHz
-        // =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
-
-        finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
-
-        filterNp = Integer.parseInt(property.getProperty("filterNp"));
-
-        backward = Boolean.parseBoolean(property.getProperty("backward"));
-
-        mode = property.getProperty("mode").trim().toUpperCase();
-        if (!(mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")))
-                throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
-        System.err.println("Using mode " + mode);
-
-        catalogue = Boolean.parseBoolean(property.getProperty("catalogue"));
-        if (catalogue) {
-            double[] tmpthetainfo = Stream.of(property.getProperty("thetaInfo").trim().split("\\s+")).mapToDouble(Double::parseDouble)
-                    .toArray();
-            thetamin = tmpthetainfo[0];
-            thetamax = tmpthetainfo[1];
-            dtheta = tmpthetainfo[2];
-        }
-    }
-*/
 
     @Override
     public void run() throws IOException {

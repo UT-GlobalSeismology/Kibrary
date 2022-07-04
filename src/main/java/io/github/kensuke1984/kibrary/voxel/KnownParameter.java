@@ -3,6 +3,10 @@ package io.github.kensuke1984.kibrary.voxel;
 /**
  * A parameter with its known value.
  *
+ * <p>
+ * This extra class is created because {@link UnknownParameter} is not Comparable
+ * and thus {@code Map<UnknownParameter, Double>} cannot be sorted.
+ *
  * @author otsuru
  * @since 2022/7/2
  */
