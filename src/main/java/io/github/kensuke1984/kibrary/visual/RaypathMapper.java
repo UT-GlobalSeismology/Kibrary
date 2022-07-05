@@ -343,13 +343,14 @@ public class RaypathMapper extends Operation {
 
         // create output line
         // only output latitude and longitude, not radius, because point2 may be HorizontalPosition or FullPosition
+        // Math.floor is used because intervals will be set by integer, as "int_i <= val < int_{i+1}"
         String line = point1.toHorizontalPosition() + " " + point2h + " "
-                + Math.round(FastMath.toDegrees(raypath.getEpicentralDistance())) + " "
-                + Math.round(FastMath.toDegrees(raypath.getAzimuth())) + " "
-                + Math.round(FastMath.toDegrees(raypath.getBackAzimuth()));
+                + (int) Math.floor(FastMath.toDegrees(raypath.getEpicentralDistance())) + " "
+                + (int) Math.floor(FastMath.toDegrees(raypath.getAzimuth())) + " "
+                + (int) Math.floor(FastMath.toDegrees(raypath.getBackAzimuth()));
         // midazimuth can be obtained only when turning point is already known
         if (raypath.hasCalculatedTurningPoint()) {
-            line = line + " " + Math.round(FastMath.toDegrees(raypath.calculateMidAzimuth()));
+            line = line + " " + (int) Math.floor(FastMath.toDegrees(raypath.calculateMidAzimuth()));
         }
         return line;
     }
@@ -398,15 +399,18 @@ public class RaypathMapper extends Operation {
                         pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(0) + " >> $psname");
                     } else {
                         pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
-                        for (int i = 0; i < nSections; i++) {
-                            if (i == 0)
-                                pw.println("  if [ $valueForBin -lt " + outsideColorBin.getValueFor(i) + " ]; then");
-                            else if (i < nSections - 1)
-                                pw.println("  elif [ $valueForBin -lt " + outsideColorBin.getValueFor(i) + " ]; then");
-                            else
+                        for (int i = 0; i < nSections + 2; i++) {
+                            if (i == 0) {
+                                pw.println("  if [ $valueForBin -lt " + outsideColorBin.getStartValueFor(i) + " ]; then");
+                                pw.println("    echo \"value $valueForBin out of range\"");
+                            } else if (i < nSections + 1) {
+                                pw.println("  elif [ $valueForBin -lt " + outsideColorBin.getStartValueFor(i) + " ]; then");
+                                pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
+                                pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(i - 1) + " >> $psname");
+                            } else {
                                 pw.println("  else");
-                            pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                            pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(i) + " >> $psname");
+                                pw.println("    echo \"value $valueForBin out of range\"");
+                            }
                         }
                         pw.println("  fi");
                     }
@@ -428,15 +432,18 @@ public class RaypathMapper extends Operation {
                     pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(0) + " >> $psname");
                 } else {
                     pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
-                    for (int i = 0; i < nSections; i++) {
-                        if (i == 0)
-                            pw.println("  if [ $valueForBin -lt " + colorBin.getValueFor(i) + " ]; then");
-                        else if (i < nSections - 1)
-                            pw.println("  elif [ $valueForBin -lt " + colorBin.getValueFor(i) + " ]; then");
-                        else
+                    for (int i = 0; i < nSections + 2; i++) {
+                        if (i == 0) {
+                            pw.println("  if [ $valueForBin -lt " + colorBin.getStartValueFor(i) + " ]; then");
+                            pw.println("    echo \"value $valueForBin out of range\"");
+                        } else if (i < nSections + 1) {
+                            pw.println("  elif [ $valueForBin -lt " + colorBin.getStartValueFor(i) + " ]; then");
+                            pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
+                            pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(i - 1) + " >> $psname");
+                        } else {
                             pw.println("  else");
-                        pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                        pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(i) + " >> $psname");
+                            pw.println("    echo \"value $valueForBin out of range\"");
+                        }
                     }
                     pw.println("  fi");
                 }
@@ -456,24 +463,20 @@ public class RaypathMapper extends Operation {
                 pw.println("");
             }
 
+            // perturbation points
             if (voxelPath != null) {
                 pw.println("#------- Perturbation");
                 pw.println("gmt psxy " + perturbationFileName + " -: -J -R -O -P -Sc0.2 -G0/255/0 -Wthinnest -K >> $psname");
                 pw.println("");
             }
 
+            // legend
             if (colorMode > 0 && legendJustification.equals("none") == false) {
                 pw.println("#------- Legend");
                 pw.println("gmt pslegend -Dj" + legendJustification + "+w6c -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $psname");
                 int nSections = colorBin.getNSections();
                 for (int i = 0; i < nSections; i++) {
-                    if (i == 0) {
-                        pw.println("S 1c - 1c - 0.4p," + colorBin.getColorFor(i) + " 2c ~" + colorBin.getValueFor(i));
-                    } else if (i < nSections - 1) {
-                        pw.println("S 1c - 1c - 0.4p," + colorBin.getColorFor(i) + " 2c " + colorBin.getValueFor(i - 1) + "~" + colorBin.getValueFor(i));
-                    } else {
-                        pw.println("S 1c - 1c - 0.4p," + colorBin.getColorFor(i) + " 2c " + colorBin.getValueFor(i - 1) + "~");
-                    }
+                    pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c " + colorBin.getStartValueFor(i) + "@.~" + colorBin.getStartValueFor(i + 1) + "@.");
                 }
                 pw.println("END");
                 pw.println("");

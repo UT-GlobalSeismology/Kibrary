@@ -42,9 +42,9 @@ public class KnownParameterFile {
      * @param options       for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(List<KnownParameter> parameterList, Path outPath, OpenOption... options)
+    public static void write(List<KnownParameter> parameterList, Path outputPath, OpenOption... options)
             throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             parameterList.forEach(pw::println);
         }
     }

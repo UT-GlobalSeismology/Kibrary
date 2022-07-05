@@ -20,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 /**
  * File to specify the colors to use in visualizations.
  * <p>
- * Odd lines: name of color.
- * Even lines: (int) value of limit of interval.
+ * Odd lines: (int) value of limit of interval.
+ * Even lines: name of color.
  * <p>
  *
  * @author otsuru
@@ -42,13 +42,13 @@ public class ColorBinInformationFile {
      * @throws IOException
      */
     public static void write(int[] values, String[] colors, Path outPath, OpenOption... options) throws IOException {
-        if (values.length + 1 != colors.length) throw new IllegalArgumentException("#colors must be #values + 1");
+        if (values.length - 1 != colors.length) throw new IllegalArgumentException("#colors must be #values - 1");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            for (int i = 0; i < colors.length; i++) {
-                pw.println(colors[i]);
-                if (i == colors.length - 1) break;
+            for (int i = 0; i < values.length; i++) {
                 pw.println(values[i]);
+                if (i == values.length - 1) break;
+                pw.println(colors[i]);
             }
         }
     }
@@ -58,14 +58,14 @@ public class ColorBinInformationFile {
 
         int nLines = reader.getNumLines();
         if (nLines % 2 == 0) throw new IllegalStateException("The file should have odd number of lines");
-        nSections = (nLines + 1) / 2;
-        values = new int[nSections - 1];
+        nSections = (nLines - 1) / 2;
+        values = new int[nSections + 1];
         colors = new String[nSections];
 
-        for (int i = 0 ; i < nSections; i++) {
-            colors[i] = reader.next();
-            if (i == nSections - 1) break;
+        for (int i = 0 ; i < nSections + 1; i++) {
             values[i] = Integer.parseInt(reader.next());
+            if (i == nSections) break;
+            colors[i] = reader.next();
         }
     }
 
@@ -73,7 +73,7 @@ public class ColorBinInformationFile {
         return nSections;
     }
 
-    public int getValueFor(int i) {
+    public int getStartValueFor(int i) {
         return values[i];
     }
 
@@ -134,12 +134,12 @@ public class ColorBinInformationFile {
         int values[];
         String colors[];
         if (cmdLine.hasOption("d")) {
-            int values0[] = {80, 90};
+            int values0[] = {70, 80, 90, 100};
             values = values0;
             String colors0[] = {"green", "blue", "purple"};
             colors = colors0;
         } else if (cmdLine.hasOption("a")) {
-            int values0[] = {45, 90, 135, 180, 225, 270, 315};
+            int values0[] = {0, 45, 90, 135, 180, 225, 270, 315, 360};
             values = values0;
             String colors0[] = {"darkorange", "green", "blue", "purple", "darkorange", "green", "blue", "purple"};
             colors = colors0;
