@@ -7,10 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -105,38 +105,6 @@ public class BasicIDMerge extends Operation {
             basicPaths.add(property.parsePath(basicKey, null, true, workPath));
         }
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("nameRoot")) property.setProperty("nameRoot", "actual");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        nameRoot = property.getProperty("nameRoot");
-
-        for (int i = 1; i <= MAX_PAIR; i++) {
-            String basicIDKey = "basicIDPath" + i;
-            String basicKey = "basicPath" + i;
-            if (!property.containsKey(basicIDKey) && !property.containsKey(basicKey)) {
-                continue;
-            } else if (!property.containsKey(basicIDKey) || !property.containsKey(basicKey)) {
-                throw new IllegalArgumentException("Basic ID file and basic waveform file must be set in pairs.");
-            }
-            Path basicIDPath = property.parsePath(basicIDKey, null, true, workPath);
-            Path basicPath = property.parsePath(basicKey, null, true, workPath);
-            if (!Files.exists(basicIDPath))
-                throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
-            if (!Files.exists(basicPath))
-                throw new NoSuchFileException("The basic waveform file " + basicPath + " does not exist");
-            basicIDPaths.add(property.parsePath(basicIDKey, null, true, workPath));
-            basicPaths.add(property.parsePath(basicKey, null, true, workPath));
-        }
-    }
-*/
 
     @Override
     public void run() throws IOException {
@@ -156,7 +124,7 @@ public class BasicIDMerge extends Operation {
         Set<BasicID> basicIDs = new HashSet<>();
         for (int i = 0; i < pairNum; i++) {
             BasicID[] srcIDs = BasicIDFile.read(basicIDPaths.get(i), basicPaths.get(i));
-            Stream.of(srcIDs).forEach(id -> basicIDs.add(id));
+            Arrays.stream(srcIDs).forEach(id -> basicIDs.add(id));
         }
 
         // extract set of observers, events, periods, and phases

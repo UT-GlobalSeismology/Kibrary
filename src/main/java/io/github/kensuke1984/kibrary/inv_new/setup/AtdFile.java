@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_new;
+package io.github.kensuke1984.kibrary.inv_new.setup;
 
 import java.io.IOException;
 import java.io.PrintWriter;

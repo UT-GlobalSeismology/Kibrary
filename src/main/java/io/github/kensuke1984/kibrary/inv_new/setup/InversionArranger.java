@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_new;
+package io.github.kensuke1984.kibrary.inv_new.setup;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,7 +10,9 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inversion.Dvector;
+import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -19,6 +21,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
+ * Operation for for assembling A<sup>T</sup>A and A<sup>T</sup>d.
+ *
  * @author otsuru
  * @since 2022/7/4
  */
@@ -41,23 +45,25 @@ public class InversionArranger extends Operation {
     /**
      * path of basic ID file
      */
-    protected Path basicIDPath;
+    private Path basicIDPath;
     /**
      * path of waveform data
      */
-    protected Path basicPath;
+    private Path basicPath;
     /**
      * path of partial ID file
      */
-    protected Path partialIDPath;
+    private Path partialIDPath;
     /**
      * path of partial data
      */
-    protected Path partialPath;
+    private Path partialPath;
     /**
      * Path of unknown parameter file
      */
-    protected Path unknownParameterListPath;
+    private Path unknownParameterListPath;  //TODO rename unknownParameterPath
+
+    private WeightingType weightingType;
 
     /**
      * @param args  none to create a property file <br>
@@ -82,22 +88,14 @@ public class InversionArranger extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
-            pw.println("##Path of a spcAmpID file");
-            pw.println("#spcAmpIDPath ");
-            pw.println("##Path of a spcAmp file");
-            pw.println("#spcAmpPath ");
             pw.println("##Path of a partial ID file, must be set");
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
-            pw.println("##Path of a partial spc id file");
-            pw.println("#partialSpcIDPath ");
-            pw.println("##Path of a partial spc waveform file");
-            pw.println("#partialSpcPath ");
             pw.println("##Path of an unknown parameter list file, must be set");
-            pw.println("#unknownParameterListPath unknowns.lst");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
-            pw.println("#inverseMethods ");
+            pw.println("#unknownParameterPath unknowns.lst");
+            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
+            pw.println("#weightingType ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -115,21 +113,25 @@ public class InversionArranger extends Operation {
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
-        unknownParameterListPath = property.parsePath("unknownParameterListPath", null, true, workPath);
+        unknownParameterListPath = property.parsePath("unknownParameterPath", null, true, workPath);
+
+        weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
+
     }
 
     @Override
     public void run() throws IOException {
-        BasicID[] basicIds = BasicIDFile.read(basicIDPath, basicPath);
+
+        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
-        // set Dvector
-        System.err.println("Creating D vector");
-        Dvector dVector =  null;
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-
-        // create AtA and Atd
-        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+        AtAFile.write(assembler.getAta(), outPath.resolve("ata.lst"));
+        AtdFile.write(assembler.getAtd(), outPath.resolve("atd.lst"));
     }
 
 }

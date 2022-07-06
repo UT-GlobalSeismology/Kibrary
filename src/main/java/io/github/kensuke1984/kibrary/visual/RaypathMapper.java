@@ -44,8 +44,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * TODO: pierce calculation may not work for phases other than ScS (see {@link Raypath})
  *
  * @author Kensuke Konishi
- * @version 0.1.2
- * @author anselme add methods to draw raypaths inside D''
+ * @since version 0.1.2
+ * @version 2022/4/24 moved and renamed from external.gmt.RaypathDistribution
  */
 public class RaypathMapper extends Operation {
 

@@ -1,10 +1,11 @@
-package io.github.kensuke1984.kibrary.inv_new;
+package io.github.kensuke1984.kibrary.inv_new.setup;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -23,7 +24,7 @@ public class AtAFile {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             for (int i = 0; i < ata.getRowDimension(); i++) {
-                String[] rowAsString = Stream.of(ata.getRow(i)).map(String::valueOf).toArray(String[]::new);
+                String[] rowAsString = Arrays.stream(ata.getRow(i)).mapToObj(String::valueOf).toArray(String[]::new);
                 pw.println(String.join(" ", rowAsString));
             }
         }

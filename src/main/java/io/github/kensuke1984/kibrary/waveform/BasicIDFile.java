@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -205,61 +204,6 @@ public final class BasicIDFile {
     }
 
     /**
-     * Pairs up observed and synthetic BasicIDs included inside an array with random order.
-     * @param ids (BasicID[]) Array of IDs to be paired up
-     * @param resultObsList ({@literal List<BasicID>}) An empty list to write in the resulting observed IDs
-     * @param resultSynList ({@literal List<BasicID>}) An empty list to write in the resulting synthetic IDs
-     */
-    public static void pairUp(BasicID[] ids, List<BasicID> resultObsList, List<BasicID> resultSynList) {
-
-        // 観測波形の抽出 list observed IDs
-        List<BasicID> obsList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.OBS)
-                .collect(Collectors.toList());
-                //.filter(CHOOSER::test).collect(Collectors.toList());
-
-        // 重複チェック 重複が見つかればここから進まない
-        for (int i = 0; i < obsList.size(); i++)
-            for (int j = i + 1; j < obsList.size(); j++)
-                if (obsList.get(i).equals(obsList.get(j)))
-                    throw new RuntimeException("Duplicate observed detected");
-
-        // 理論波形の抽出
-        List<BasicID> synList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.SYN)
-                .collect(Collectors.toList());
-                //.filter(CHOOSER::test).collect(Collectors.toList());
-
-        // 重複チェック
-        for (int i = 0; i < synList.size() - 1; i++)
-            for (int j = i + 1; j < synList.size(); j++)
-                if (synList.get(i).equals(synList.get(j)))
-                    throw new RuntimeException("Duplicate synthetic detected");
-
-        System.err.println("Number of obs IDs before pairing with syn IDs = " + obsList.size());
-        if (obsList.size() != synList.size())
-            System.err.println("The numbers of observed IDs " + obsList.size() + " and " + " synthetic IDs "
-                    + synList.size() + " are different ");
-
-        for (int i = 0; i < synList.size(); i++) {
-            boolean foundPair = false;
-            for (int j = 0; j < obsList.size(); j++) {
-                if (BasicID.isPair(synList.get(i), obsList.get(j))) {
-                    resultObsList.add(obsList.get(j));
-                    resultSynList.add(synList.get(i));
-                    foundPair = true;
-                    break;
-                }
-            }
-            if (!foundPair) {
-                System.err.println("Didn't find OBS for " + synList.get(i));
-            }
-        }
-
-        if (resultObsList.size() != resultSynList.size())
-            throw new RuntimeException("unanticipated");
-
-    }
-
-    /**
      * Exports data files in ascii format.
      *
      * @param args [option]
@@ -326,9 +270,9 @@ public final class BasicIDFile {
      */
     private static void outputWaveforms(BasicID[] ids) throws IOException {
 
-        List<BasicID> obsList = new ArrayList<>();
-        List<BasicID> synList = new ArrayList<>();
-        pairUp(ids, obsList, synList);
+        BasicIDPairUp pairer = new BasicIDPairUp(ids);
+        List<BasicID> obsList = pairer.getObsList();
+        List<BasicID> synList = pairer.getSynList();
 
         Set<GlobalCMTID> events = obsList.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
 
