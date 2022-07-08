@@ -49,6 +49,17 @@ public class KnownParameterFile {
         }
     }
 
+    public static void write(List<UnknownParameter> unknownList, double[] values, Path outputPath, OpenOption... options)
+            throws IOException {
+        if (unknownList.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values differ.");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
+            for (int i = 0; i < unknownList.size(); i++) {
+                pw.println(unknownList.get(i) + " " + values[i]);
+            }
+        }
+    }
+
     /**
      * @param path of a known parameter file.
      * @return <b>unmodifiable</b> List of known parameters in the path

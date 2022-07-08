@@ -104,7 +104,7 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
 
 	@Override
 	public RealMatrix computeCovariance(double sigmaD, int j) {
-		RealMatrix covariance = MatrixUtils.createRealMatrix(getParN(), getParN());
+		RealMatrix covariance = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
 		double sigmaD2 = sigmaD * sigmaD;
 		for (int i = 0; i < j ; i++) {
 			double paap = p.getColumnVector(i).dotProduct(ata.operate(p.getColumnVector(i)));
@@ -122,8 +122,8 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
 	 * @return L<sub>i, j</sub>
 	 */
 	public RealMatrix getL() {
-		RealMatrix l = MatrixUtils.createRealMatrix(getParN(), getParN());
-		for (int i = 0; i < getParN(); i++) {
+		RealMatrix l = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
+		for (int i = 0; i < getNParameter(); i++) {
 			RealVector p = this.p.getColumnVector(i);
 			double val = p.dotProduct(ata.operate(p));
 			l.setEntry(i, i, val);
@@ -134,7 +134,7 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
 	@Deprecated
 	public RealMatrix computeCovariance() {
 		// RealMatrix ata = this.ata;
-		RealMatrix covariance = MatrixUtils.createRealMatrix(getParN(), getParN());
+		RealMatrix covariance = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
 
 		// new LUDecomposition(getL()).getSolver().getInverse();
 		// covariance = p.multiply(getL().inverse()).multiply(p.transpose());

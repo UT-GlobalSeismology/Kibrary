@@ -25,23 +25,35 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 
 /**
  * Class for building A matrix in Am=d.
+ * It will be weighed as WA = [weight diagonal matrix][partial derivatives].
+ * The volumes of voxels will be multiplied to the partial waveforms here.
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author otsuru
  * @since 2022/7/6 created based on inversion.ObservationEquation
  */
-public class AMatrixBuilder {
+final class AMatrixBuilder {
 
-    private PartialID[] partialIDs;
-    private DVectorBuilder dVector;
-    private List<UnknownParameter> parameterList; //TODO rename
+    private final PartialID[] partialIDs;
+    private final DVectorBuilder dVector;
+    private final List<UnknownParameter> parameterList;
 
-    public AMatrixBuilder(PartialID[] partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
-        this.parameterList = parameterList;
+    AMatrixBuilder(PartialID[] partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
         this.partialIDs = partialIDs;
         this.dVector = dVector;
+        this.parameterList = parameterList;
     }
 
-    public Matrix buildWithWeight(Weighting weighting) {
+    /**
+     * Builds and returns the A matrix.
+     * It will be weighed as WA = [weight diagonal matrix][partial derivatives].
+     * The volumes of voxels will be multiplied to the partial waveforms here.
+     *
+     * @param weighting (Weighting)
+     * @return (Matrix) A
+     */
+    Matrix buildWithWeight(Weighting weighting) {
 
         Matrix a = new Matrix(dVector.getNpts(), parameterList.size());
         a.scalarMultiply(0);
@@ -55,7 +67,7 @@ public class AMatrixBuilder {
                 return;
 
             // find which unknown parameter this partialID corresponds to
-            int column = whatNumber(id.getPartialType(), id.getPerturbationLocation(),
+            int column = findColumn(id.getPartialType(), id.getPerturbationLocation(),
                     id.getObserver(), id.getGlobalCMTID(), id.getPhases());
             if (column < 0) {
                 return;
@@ -114,11 +126,12 @@ public class AMatrixBuilder {
     }
 
     /**
+     * Find which column a parameter should be in.
      * @param type     to look for
      * @param position to look for
      * @return i, m<sub>i</sub> = type, parameterが何番目にあるか なければ-1
      */
-    private int whatNumber(PartialType type, FullPosition position, Observer observer, GlobalCMTID event, Phase[] phases) {
+    private int findColumn(PartialType type, FullPosition position, Observer observer, GlobalCMTID event, Phase[] phases) {
         for (int i = 0; i < parameterList.size(); i++) {
             if (parameterList.get(i).getPartialType() != type)
                 continue;

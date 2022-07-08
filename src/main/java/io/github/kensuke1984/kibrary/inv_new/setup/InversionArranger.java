@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * Operation for for assembling A<sup>T</sup>A and A<sup>T</sup>d.
  *
  * @author otsuru
- * @since 2022/7/4
+ * @since 2022/7/4 created based on part of inversion.LetMeInvert
  */
 public class InversionArranger extends Operation {
 
@@ -132,6 +132,7 @@ public class InversionArranger extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         AtAFile.write(assembler.getAta(), outPath.resolve("ata.lst"));
         AtdFile.write(assembler.getAtd(), outPath.resolve("atd.lst"));
+        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
     }
 
 }

@@ -13,29 +13,33 @@ import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
  * Weighting to be applied to A matrix and d vector in Am=d.
  * To be applied as the W matrix in WAm=Wd.
  * It is assumed to be a diagonal matrix, so the diagonal components are stored as a vector.
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
+ * Caution: {@link RealVector} is not immutable, so don't hand it over without deep-copying!
  *
  * @author otsuru
  * @since 2022/7/6 created based on part of inversion.Dvector
  */
-public class Weighting {
+final class Weighting {
 
-    private RealVector[] weightingVectors;
-    private DVectorBuilder dVector;
+    private final RealVector[] weightingVecs;
 
-    private WeightingType weightingType;
-    List<DataSelectionInformation> selectionInfo; // TODO apply
+    private final DVectorBuilder dVector;
+    private final WeightingType weightingType;
+    private final List<DataSelectionInformation> selectionInfo; // TODO apply
 
-    public Weighting(DVectorBuilder dVector, WeightingType weightingType, List<DataSelectionInformation> selectionInfo) {
+    Weighting(DVectorBuilder dVector, WeightingType weightingType, List<DataSelectionInformation> selectionInfo) {
         this.dVector = dVector;
         this.weightingType = weightingType;
         this.selectionInfo = selectionInfo;
 
-        set();
+        this.weightingVecs = setWeights();
+
     }
 
-    private void set() {
+    private RealVector[] setWeights() {
         ToDoubleBiFunction<RealVector, RealVector> WEIGHTING_FUNCTION;
-        weightingVectors = new ArrayRealVector[dVector.getNTimeWindow()];
+        RealVector[] weightingVectors = new ArrayRealVector[dVector.getNTimeWindow()];
 
         switch (weightingType) {
         case RECIPROCAL:
@@ -61,11 +65,11 @@ public class Weighting {
             weightingVectors[i] = new ArrayRealVector(ws);
 
         }
-
+        return weightingVectors;
     }
 
-    public RealVector get(int i) {
-        return weightingVectors[i];
+    RealVector get(int i) {
+        return weightingVecs[i].copy();
     }
 
 }

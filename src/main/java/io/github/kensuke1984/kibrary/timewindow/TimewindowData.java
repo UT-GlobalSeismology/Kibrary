@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Timewindow for a raypath (a pair of a source and a receiver).
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  * </p>
  * <p>
  * The information contains a component, a station and a global CMT ID.

@@ -912,7 +912,7 @@ public class LetMeInvert_fromAtA implements Operation_old {
 			try {
 				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD)
 					return; // TODO
-				solve(outPaths[iweight][ifreq][iphase][icorr].resolve(method.simple()), method.getMethod(eq[iweight][ifreq][iphase][icorr].getAtA(), eq[iweight][ifreq][iphase][icorr].getAtD())
+				solve(outPaths[iweight][ifreq][iphase][icorr].resolve(method.simple()), method.formProblem(eq[iweight][ifreq][iphase][icorr].getAtA(), eq[iweight][ifreq][iphase][icorr].getAtD())
 						, iweight, ifreq, iphase, icorr);
 			} catch (Exception e) {
 				e.printStackTrace();

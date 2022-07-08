@@ -1717,15 +1717,15 @@ public class LetMeInvert extends Operation {
 //								RealVector jatd = ja.preMultiply(eq.getDVector().getD());
                                 RealVector jatd = ja.preMultiply(jd);
                                 method.setConditioner(eq.getM());
-                                solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.getMethod(ja, jatd));
+                                solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.formProblem(ja, jatd));
                             }
                         }
                         else {
-                            solve(outPath.resolve(method.simple()), method.getMethod(eq.getA(), eq.getAtD()));
+                            solve(outPath.resolve(method.simple()), method.formProblem(eq.getA(), eq.getAtD()));
                         }
                     }
                     else {
-                        solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+                        solve(outPath.resolve(method.simple()), method.formProblem(eq.getAtA(), eq.getAtD()));
                     }
                 }
                 else {
@@ -1768,11 +1768,11 @@ public class LetMeInvert extends Operation {
                                 }
 //								RealVector jatd = ja.preMultiply(eq.getDVector().getD());
                                 RealVector jatd = ja.preMultiply(jd);
-                                solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.getMethod(ja, jatd));
+                                solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.formProblem(ja, jatd));
                             }
                         }
                         else {
-                            solve(outPath.resolve(method.simple()), method.getMethod(eq.getA(), eq.getAtD()));
+                            solve(outPath.resolve(method.simple()), method.formProblem(eq.getA(), eq.getAtD()));
                         }
                     }
                     else if (method == InverseMethodEnum.NONLINEAR_CONJUGATE_GRADIENT) {
@@ -1785,7 +1785,7 @@ public class LetMeInvert extends Operation {
                     }
                     else {
 //						eq.applyCombiner2(2);
-                        solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+                        solve(outPath.resolve(method.simple()), method.formProblem(eq.getAtA(), eq.getAtD()));
                     }
                 }
             } catch (Exception e) {
@@ -1834,7 +1834,7 @@ public class LetMeInvert extends Operation {
         ModelCovarianceMatrix cm = eq.getCm();
         RealMatrix l = cm.getL();
         for (int i = 1; i <= n; i++) {
-            RealVector deltaM = l.operate(inverseProblem.getAns(i));
+            RealVector deltaM = l.operate(inverseProblem.getAnsVec(i));
             inverseProblem.setANS(i, deltaM);
         }
     }
@@ -1847,7 +1847,7 @@ public class LetMeInvert extends Operation {
         int n = eq.getMlength();//Math.max(20, eq.getMlength());
         RealVector m = eq.getM();
         for (int i = 1; i <= n; i++) {
-            RealVector deltaM = inverseProblem.getAns(i);
+            RealVector deltaM = inverseProblem.getAnsVec(i);
             for (int k = 0; k < n; k++)
                 deltaM.setEntry(k, deltaM.getEntry(k) * m.getEntry(k));
             inverseProblem.setANS(i, deltaM);
@@ -1866,7 +1866,7 @@ public class LetMeInvert extends Operation {
         Path out = outPath.resolve("lcurve.txt");
         if (Files.exists(out))
             throw new FileAlreadyExistsException(out.toString());
-        int m = inverse.getParN();
+        int m = inverse.getNParameter();
 
         double varA = 0;
         double varB = 0;

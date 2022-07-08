@@ -172,7 +172,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 				// solve z = arg min ||a' z - b'||_2
 				ConjugateGradientMethod cgMethod = new ConjugateGradientMethod(aPrime.computeAtA(), aPrime.transpose().operate(bPrime));
 				cgMethod.compute();
-				RealVector z = cgMethod.getAns(jPrimeToj.size());
+				RealVector z = cgMethod.getAnsVec(jPrimeToj.size());
 				System.out.println("Z length " + z.getDimension());
 				for (double zi : z.toArray())
 					System.out.println(zi);
