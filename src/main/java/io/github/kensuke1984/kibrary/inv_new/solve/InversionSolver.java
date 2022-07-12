@@ -38,6 +38,7 @@ public class InversionSolver extends Operation {
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String tag;
+
     /**
      * path of ata file
      */
@@ -54,7 +55,6 @@ public class InversionSolver extends Operation {
      * Solvers for equation
      */
     private Set<InverseMethodEnum> inverseMethods;
-
 
 
     /**

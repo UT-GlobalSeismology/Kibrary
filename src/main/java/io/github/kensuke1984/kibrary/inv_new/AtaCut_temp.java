@@ -9,7 +9,6 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.visual.MapperShellscript;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -100,8 +99,8 @@ public class AtaCut_temp {
         }
 
         double[] radii = parameterList.stream().mapToDouble(unknown -> unknown.getPosition().getR()).distinct().sorted().toArray();
-        MapperShellscript script = new MapperShellscript(radii, nameRoot + column + "Model");
-        script.write(Paths.get(""));
+//        MapperShellscript script = new MapperShellscript(radii, nameRoot + column + "Model");
+//        script.write(Paths.get(""));
 
     }
 }

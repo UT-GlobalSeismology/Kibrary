@@ -97,10 +97,20 @@ public abstract class ButterworthFilter {
     }
 
     /**
+     * true: zero phase, false: causal
      * @param backward if true, backword filtering is done
      */
     public void setBackward(boolean backward) {
         this.backward = backward;
+    }
+    /**
+     * true: causal, false: zero-phase
+     * @param causal (boolean) if false, backword filtering is done
+     * @author otsuru
+     * @since 2022/7/12
+     */
+    public void setCausal(boolean causal) {
+        this.backward = !causal;
     }
 
     void setN() {

@@ -61,7 +61,7 @@ public class InversionArranger extends Operation {
     /**
      * Path of unknown parameter file
      */
-    private Path unknownParameterListPath;  //TODO rename unknownParameterPath
+    private Path unknownParameterPath;
 
     private WeightingType weightingType;
 
@@ -113,7 +113,7 @@ public class InversionArranger extends Operation {
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
-        unknownParameterListPath = property.parsePath("unknownParameterPath", null, true, workPath);
+        unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
 
@@ -124,7 +124,7 @@ public class InversionArranger extends Operation {
 
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
+        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));

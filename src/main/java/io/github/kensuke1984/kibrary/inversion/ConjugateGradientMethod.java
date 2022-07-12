@@ -51,7 +51,6 @@ public class ConjugateGradientMethod extends InverseProblem {
         p = MatrixUtils.createRealMatrix(column, column);
         ans = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
-        System.err.println("Solving by CG method.");
         p.setColumnVector(0, atd.mapMultiply(-1));
         RealVector r = atd; // r_k = Atd -AtAm_k (A35)
 

@@ -176,7 +176,10 @@ public class PartialWaveformAssembler3D extends Operation {
      * see Saito, n
      */
     private int filterNp;
-    private boolean backward;
+    /**
+     * Whether to apply causal filter. true: causal, false: zero-phase
+     */
+    private boolean causal;
     /**
      * structure for Q partial
      */
@@ -252,8 +255,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#maxFreq ");
             pw.println("##(int) The value of np for the filter (4)");
             pw.println("#filterNp ");
-            pw.println("##Filter if backward filtering is applied (false)");
-            pw.println("#backward ");
+            pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
+            pw.println("#causal ");
             pw.println("##File for Qstructure (if no file, then PREM)");
             pw.println("#qinf ");
             pw.println("##path of the time partials directory, must be set if PartialType contains TIME_SOURCE or TIME_RECEIVER");
@@ -306,7 +309,7 @@ public class PartialWaveformAssembler3D extends Operation {
         maxFreq = property.parseDouble("maxFreq", "0.08");
         minFreq = property.parseDouble("minFreq", "0.005");
         filterNp = property.parseInt("filterNp", "4");
-        backward = property.parseBoolean("backward", "false");
+        causal = property.parseBoolean("causal", "false");
 
         if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
             timePartialPath = property.parsePath("timePartialPath", null, true, workPath);
@@ -1030,8 +1033,7 @@ public class PartialWaveformAssembler3D extends Operation {
         double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
         double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
         filter = new BandPassFilter(omegaH, omegaL, filterNp);
-        filter.setBackward(backward);
-//		filter.setBackward(true);
+        filter.setCausal(causal);
         writeLog(filter.toString());
         periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
     }

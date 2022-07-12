@@ -5,20 +5,28 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+
 public class MapperShellscript {
 
+    private ParameterType parameter;
     private double[] radii;
+    private String mapRegion;
+    private double scale;
     private String modelFileName;
 
-    public MapperShellscript(double[] radii, String modelFileName) {
+    public MapperShellscript(ParameterType parameter, double[] radii, String mapRegion, double scale, String modelFileName) {
+        this.parameter = parameter;
         this.radii = radii;
+        this.mapRegion = mapRegion;
+        this.scale = scale;
         this.modelFileName = modelFileName;
     }
 
     public void write(Path outPath) throws IOException {
         writeCpMaster(outPath.resolve("cp_master.cpt"));
-        writeGridMaker(outPath.resolve("gridmaker.sh"));
-        writeMakeMap(outPath.resolve("makemap.sh"));
+        writeGridMaker(outPath.resolve(modelFileName + "Grid.sh"));
+        writeMakeMap(outPath.resolve(modelFileName + "Map.sh"));
     }
 
     private void writeCpMaster(Path outPath) throws IOException {
@@ -61,12 +69,13 @@ public class MapperShellscript {
             pw.println("    dep=${depth%.0}");
             pw.println("    grep \"$depth\" " + modelFileName + ".lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
-            pw.println("    gmt xyz2grd -G$dep.grd -R-60/45/-55/35 -I5 -di0");//TODO parameterize position range (-R) and interval (-I)
+            pw.println("    gmt xyz2grd -G$dep.grd -R" + mapRegion + " -I5 -di0");//TODO parameterize interval (-I)
             pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.5");//TODO parameterize interval (-I)
             pw.println("done");
         }
     }
     private void writeMakeMap(Path outPath) throws IOException {
+        String paramName = parameter.toString();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
@@ -80,14 +89,14 @@ public class MapperShellscript {
             pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
             pw.println("");
             pw.println("# parameters for gmt pscoast");
-            pw.println("R='-R-60/45/-55/35'");//TODO parameterize
+            pw.println("R='-R" + mapRegion + "'");
             pw.println("J='-JQ15'");
             pw.println("G='-G255/255/255';");
             pw.println("B='-B30f10';");
             pw.println("O='-W1';");
             pw.println("");
             pw.println("outputps=" + modelFileName + "Map.eps");
-            pw.println("MP=3");//TODO parameterize
+            pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
 
@@ -106,7 +115,7 @@ public class MapperShellscript {
                 }
 
                 if (i == 0) {
-                    pw.println("gmt psscale -Ccp.cpt -D7/-1/12/0.8h -B1.0:@~d@~Vs/Vs\\(\\%\\): -K -O -Y-3 -X-32 >> $outputps");
+                    pw.println("gmt psscale -Ccp.cpt -D7/-1/12/0.8h -B1.0:@~d@~" + paramName + "/" + paramName + "\\(\\%\\): -K -O -Y-3 -X-32 >> $outputps");
                     pw.println("gmt pscoast -R -J $O -X32 -Y3 -O -Wthinner,black -A500 >> $outputps");
                 } else {
                     pw.println("gmt pscoast -R -J $O -K -O  -Wthinner,black -A500 >> $outputps");

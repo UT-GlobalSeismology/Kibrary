@@ -95,9 +95,9 @@ public class FilterDivider extends Operation {
      */
     private int np;
     /**
-     * If backward computation is performed. true: zero-phase false: causal
+     * Whether to apply causal filter. true: causal, false: zero-phase
      */
-    private boolean backward;
+    private boolean causal;
     /**
      * SAC files with NPTS over this value will be slimmed.
      */
@@ -138,8 +138,8 @@ public class FilterDivider extends Operation {
             pw.println("#highFreq ");
             pw.println("##The value of NP for the filter (4)");
             pw.println("#np ");
-            pw.println("##If backward computation is performed. true: zero phase, false: causal (true)");
-            pw.println("#backward ");
+            pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
+            pw.println("#causal ");
             pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2");
             pw.println("## When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
             pw.println("#npts ");
@@ -165,7 +165,7 @@ public class FilterDivider extends Operation {
         filterType = property.parseString("filterType", "bandpass");
         highFreq = property.parseDouble("highFreq", "0.08");
         lowFreq = property.parseDouble("lowFreq", "0.005");
-        backward = property.parseBoolean("backward", "true");
+        causal = property.parseBoolean("causal", "false");
         np = property.parseInt("np", "4");
         npts = property.parseInt("npts", String.valueOf(Integer.MAX_VALUE));
 
@@ -251,7 +251,7 @@ public class FilterDivider extends Operation {
             default:
                 throw new IllegalArgumentException("No such filter as " + filterType);
         }
-        filter.setBackward(backward);
+        filter.setCausal(causal);
     }
 
     /**

@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inv_new.setup.InversionArranger;
+import io.github.kensuke1984.kibrary.inv_new.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
@@ -66,7 +67,8 @@ enum Manhattan {
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class),
     InversionArranger(61, InversionArranger.class),
-    VelocityModelMapper(62, VelocityModelMapper.class),
+    InversionSolver(62, InversionSolver.class),
+    VelocityModelMapper(64, VelocityModelMapper.class),
     PseudoWaveformGenerator(65, PseudoWaveformGenerator.class),
     // Temporal 100
     ;
