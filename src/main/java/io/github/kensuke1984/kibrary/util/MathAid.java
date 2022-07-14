@@ -156,6 +156,7 @@ public final class MathAid {
      * @param eps
      * @return
      * @author anselme
+     * @deprecated use Precision.equals
      */
     public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
         if (Math.abs(v1 - v2) > eps)

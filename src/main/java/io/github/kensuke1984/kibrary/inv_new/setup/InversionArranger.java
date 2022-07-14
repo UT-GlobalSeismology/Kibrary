@@ -122,13 +122,16 @@ public class InversionArranger extends Operation {
     @Override
     public void run() throws IOException {
 
+        // read input
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
+        // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
+        // assemble matrices and output
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         AtAFile.write(assembler.getAta(), outPath.resolve("ata.lst"));
         AtdFile.write(assembler.getAtd(), outPath.resolve("atd.lst"));

@@ -9,9 +9,9 @@ import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
+import io.github.kensuke1984.kibrary.inv_new.LetMeInvert;
 import io.github.kensuke1984.kibrary.inv_new.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inv_new.solve.InversionSolver;
-import io.github.kensuke1984.kibrary.inversion.LetMeInvert_old;
 import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
-import io.github.kensuke1984.kibrary.waveform.BasicIDSelect;
+import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
@@ -60,14 +60,14 @@ enum Manhattan {
     BasicIDMerge(41, BasicIDMerge.class),
     WaveformPlotCreater(42, WaveformPlotCreater.class),
     RecordSectionCreater(43, RecordSectionCreater.class),
-    BasicIDSelect(45, BasicIDSelect.class),
+    BasicIDRebuilder(45, BasicIDRebuilder.class),
     // Partial 50
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class),
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class),
     PartialIDMerge(52, PartialIDMerge.class),
     SensitivityKernelMapper(53, SensitivityKernelMapper.class),
     // Inversion 60
-    LetMeInvert(60, LetMeInvert_old.class),
+    LetMeInvert(60, LetMeInvert.class),
     InversionArranger(61, InversionArranger.class),
     InversionSolver(62, InversionSolver.class),
     VelocityModelMapper(64, VelocityModelMapper.class),

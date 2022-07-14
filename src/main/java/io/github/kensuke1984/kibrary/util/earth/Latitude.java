@@ -93,7 +93,7 @@ final class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
 
-        return MathAid.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
+        return Precision.equals(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
     }
 
     @Override

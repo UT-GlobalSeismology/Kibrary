@@ -15,11 +15,11 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Updating the catalog of global CMT solutions.
@@ -134,7 +134,7 @@ public final class GlobalCMTCatalogUpdate {
             //~fix errors where "60.0" seconds exists~//
             String hypocenterLine = lines.get(n * 5);
             String[] timeStrings = hypocenterLine.split("\\s+")[2].split(":");
-            if (MathAid.equalWithinEpsilon(Double.parseDouble(timeStrings[2]), 60.0, 0.001)) {
+            if (Precision.equals(Double.parseDouble(timeStrings[2]), 60.0, 0.001)) {
                 // calculate correct time
                 LocalTime time = LocalTime.parse(timeStrings[0] + ":" + timeStrings[1] + ":00");
                 time = time.plusMinutes(1);

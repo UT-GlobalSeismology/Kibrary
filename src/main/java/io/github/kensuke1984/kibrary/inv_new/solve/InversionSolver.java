@@ -109,10 +109,12 @@ public class InversionSolver extends Operation {
     @Override
     public void run() throws IOException {
 
+        // read input
         RealMatrix ata = AtAFile.read(ataPath);
         RealVector atd = AtdFile.read(atdPath);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
 
+        // solve inversion and output
         for (InverseMethodEnum method : inverseMethods) {
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();

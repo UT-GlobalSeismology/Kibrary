@@ -80,7 +80,7 @@ final class Longitude implements Comparable<Longitude> {
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
 
-        return MathAid.equalWithinEpsilon(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
+        return Precision.equals(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
     }
 
     @Override

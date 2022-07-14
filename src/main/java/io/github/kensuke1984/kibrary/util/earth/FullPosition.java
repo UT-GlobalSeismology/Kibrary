@@ -74,7 +74,7 @@ public final class FullPosition extends HorizontalPosition {
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         FullPosition other = (FullPosition) obj;
-        return MathAid.equalWithinEpsilon(R, other.R, Math.pow(10, -R_PRECISION)/2);
+        return Precision.equals(R, other.R, Math.pow(10, -R_PRECISION)/2);
     }
 
     /**

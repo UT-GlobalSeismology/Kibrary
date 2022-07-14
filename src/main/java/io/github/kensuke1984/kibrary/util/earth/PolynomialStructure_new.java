@@ -6,9 +6,9 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
-import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * 1D structure of a planet.
@@ -279,9 +279,9 @@ public final class PolynomialStructure_new {
         boolean foundR1 = false;
         boolean foundR2 = false;
         for (double r : rmin) {
-            if (MathAid.equalWithinEpsilon(r1, r, R_EPSILON))
+            if (Precision.equals(r1, r, R_EPSILON))
                 foundR1 = true;
-            if (MathAid.equalWithinEpsilon(r2, r, R_EPSILON))
+            if (Precision.equals(r2, r, R_EPSILON))
                 foundR2 = true;
         }
 
