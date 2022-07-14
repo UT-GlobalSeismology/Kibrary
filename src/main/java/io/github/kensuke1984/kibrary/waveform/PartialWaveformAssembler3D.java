@@ -41,7 +41,8 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -183,7 +184,7 @@ public class PartialWaveformAssembler3D extends Operation {
     /**
      * structure for Q partial
      */
-    private PolynomialStructure structure;
+    private PolynomialStructure_new structure;
     private Path timePartialPath;
 
     private ButterworthFilter filter;
@@ -315,7 +316,7 @@ public class PartialWaveformAssembler3D extends Operation {
             timePartialPath = property.parsePath("timePartialPath", null, true, workPath);
         }
         if (property.containsKey("qinf")) {
-            structure = new PolynomialStructure(property.parsePath("qinf", null, true, workPath));
+            structure = PolynomialStructureFile.read(property.parsePath("qinf", null, true, workPath));
         }
     }
 

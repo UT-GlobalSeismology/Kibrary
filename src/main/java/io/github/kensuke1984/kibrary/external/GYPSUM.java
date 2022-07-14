@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import ucar.ma2.Array;
 import ucar.ma2.Index;
 import ucar.ma2.InvalidRangeException;
@@ -84,7 +84,7 @@ public class GYPSUM {
 	}
 	
 	public void writeMantleForSPECFEM(Path outpath, double rTrunc) throws IOException {
-		PolynomialStructure prem = PolynomialStructure.PREM;
+		PolynomialStructure_old prem = PolynomialStructure_old.PREM;
 		
 		double depthTrunc = 6371. - rTrunc;
 		applyRadialSmoothing(depthTrunc);

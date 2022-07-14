@@ -126,7 +126,7 @@ public final class PolynomialStructure_new {
     }
 
     /**
-     * Constructor for creating default structures in {@link PolynomialStructureData}.
+     * Constructor for creating default structures in {@link DefaultStructure}.
      * @param nZone
      * @param rmin
      * @param rmax
@@ -159,7 +159,7 @@ public final class PolynomialStructure_new {
     }
 
     /**
-     * Constructor for creating default structures in {@link PolynomialStructureData}.
+     * Constructor for creating default structures in {@link DefaultStructure}.
      * @param nZone
      * @param rmin
      * @param rmax
@@ -220,7 +220,7 @@ public final class PolynomialStructure_new {
      * Add boundaries at the input radii.
      * If there is already a boundary at r then nothing will be done.
      *
-     * @param isDefault (boolean) whether to create this as a default structure (to be used in {@link PolynomialStructureData})
+     * @param isDefault (boolean) whether to create this as a default structure (to be used in {@link DefaultStructure})
      * @param boundaries (double...) radii for boundaries. Values smaller than 0 or bigger than
      *              earth radius will be ignored
      * @return a new structure which has additional layers given by input,

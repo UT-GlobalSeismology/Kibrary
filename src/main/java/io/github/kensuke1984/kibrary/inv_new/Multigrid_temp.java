@@ -11,14 +11,14 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 public class Multigrid_temp {
 
-    private static PolynomialStructure initialStructure = PolynomialStructure.PREM;
+    private static PolynomialStructure_old initialStructure = PolynomialStructure_old.PREM;
 
 
     public static void main(String[] args) throws IOException {

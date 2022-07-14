@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 /**
  * @author Kensuke Konishi
@@ -44,7 +44,7 @@ class Developper {
 
     public static void main(String[] args) throws IOException {
 //        catalog();
-        PolynomialStructure.PREM.writePSV(Paths.get("/tmp/prem.model"));
+        PolynomialStructure_old.PREM.writePSV(Paths.get("/tmp/prem.model"));
     }
 
 

@@ -4,7 +4,7 @@ package io.github.kensuke1984.kibrary.util;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 /**
  * @author Kensuke Konishi
@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 class NamedDiscontinuityStructureTest {
     private static void prem() {
         NamedDiscontinuityStructure premND = NamedDiscontinuityStructure.prem();
-        PolynomialStructure premPS = PolynomialStructure.ISO_PREM;
+        PolynomialStructure_old premPS = PolynomialStructure_old.ISO_PREM;
         for (int i = 0; i < 6371; i++)
             System.out.println(i + " " + (premND.getVph(i) - premPS.getVphAt(i)));
     }

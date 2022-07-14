@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 /**
  * @author Kensuke Konishi
@@ -31,13 +31,13 @@ class ModelProbability {
                 "/home/kensuke/data/WesternPacific/anelasticity/montecarlo/selection/group2/sigmaHalflikelihood2");
         ModelProbability mp = new ModelProbability(workPath);
         Path[] modelPaths = mp.gatherModelPaths(workPath);
-        PolynomialStructure[] models = Arrays.stream(modelPaths).map(p -> {
+        PolynomialStructure_old[] models = Arrays.stream(modelPaths).map(p -> {
             try {
-                return new PolynomialStructure(p);
+                return new PolynomialStructure_old(p);
             } catch (Exception e) {
             }
             return null;
-        }).toArray(PolynomialStructure[]::new);
+        }).toArray(PolynomialStructure_old[]::new);
         modelsToDepths(models, workPath.resolve("test"));
         depthTohistGram(workPath.resolve("test"));
         forGMT(workPath.resolve("test"));
@@ -96,7 +96,7 @@ class ModelProbability {
 
     }
 
-    private static void modelsToDepths(PolynomialStructure[] ps, Path outDir) {
+    private static void modelsToDepths(PolynomialStructure_old[] ps, Path outDir) {
         if (Files.exists(outDir)) return;
         try {
             Files.createDirectories(outDir);
@@ -184,7 +184,7 @@ class ModelProbability {
         return histgram;
     }
 
-    static double[] readVs(PolynomialStructure structure) {
+    static double[] readVs(PolynomialStructure_old structure) {
         double[] vs = new double[8];
         for (int j = 0; j < 8; j++) {
             double r = 3480 + (j) * 50 + 25;
@@ -193,7 +193,7 @@ class ModelProbability {
         return vs;
     }
 
-    static double[] readQ(PolynomialStructure structure) {
+    static double[] readQ(PolynomialStructure_old structure) {
         double[] q = new double[8];
         for (int j = 0; j < 8; j++) {
             double r = 3480 + (j) * 50 + 25;

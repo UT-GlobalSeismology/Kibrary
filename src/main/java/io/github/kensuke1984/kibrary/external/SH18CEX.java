@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 /**
  * Model SH18CEX by Nozomu Takeuchi
@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  */
 public final class SH18CEX {
 
-    private static final PolynomialStructure PREM = PolynomialStructure.PREM;
+    private static final PolynomialStructure_old PREM = PolynomialStructure_old.PREM;
     private final static double[] MODEL_NODE =
             {3480.0, 3981.0, 4431.0, 4821.0, 5161.0, 5451.0, 5701.0, 5841.0, 5971.0, 6091.0, 6211.0, 6301.0, 6346.6,
                     6368.0};

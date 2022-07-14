@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.data.Trace;
  * @since version 0.2.10
  * @version 2022/2/10 moved from dsmsetup
  */
-public class PolynomialStructure implements Serializable {
+public class PolynomialStructure_old implements Serializable {
 
     /**
      * 2020/4/18
@@ -49,26 +49,26 @@ public class PolynomialStructure implements Serializable {
     /**
      * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
      */
-    public static final PolynomialStructure PREM = PolynomialStructureData.initialAnisoPREM();
+    public static final PolynomialStructure_old PREM = PolynomialStructureData_old.initialAnisoPREM();
     /**
      * isotropic PREM by Dziewonski &amp; Anderson 1981
      */
-    public static final PolynomialStructure ISO_PREM = PolynomialStructureData.initialIsoPREM();
+    public static final PolynomialStructure_old ISO_PREM = PolynomialStructureData_old.initialIsoPREM();
     /**
      * AK135 by Kennett <i>et al</i>. (1995)
      */
-    public static final PolynomialStructure AK135 = PolynomialStructureData.initialAK135();
+    public static final PolynomialStructure_old AK135 = PolynomialStructureData_old.initialAK135();
 
     /**
      * Homogeneous earth structure used for test purposes
      */
-    public static final PolynomialStructure HOMOGEN = PolynomialStructureData.homogeneous();
-    public static final PolynomialStructure MIASP91 = PolynomialStructureData.initialMIASP91();
-    public static final PolynomialStructure TBL50 = PolynomialStructureData.initialTBL50();
-    public static final PolynomialStructure TNASNA = PolynomialStructureData.initialTNASNA();
-    public static final PolynomialStructure AK135_elastic = PolynomialStructureData.initialAK135_elastic();
-    public static final PolynomialStructure MAK135 = PolynomialStructureData.initialMAK135();
-    public static final PolynomialStructure PREM_PRIME = PolynomialStructureData.initialPREM_PRIME();
+    public static final PolynomialStructure_old HOMOGEN = PolynomialStructureData_old.homogeneous();
+    public static final PolynomialStructure_old MIASP91 = PolynomialStructureData_old.initialMIASP91();
+    public static final PolynomialStructure_old TBL50 = PolynomialStructureData_old.initialTBL50();
+    public static final PolynomialStructure_old TNASNA = PolynomialStructureData_old.initialTNASNA();
+    public static final PolynomialStructure_old AK135_elastic = PolynomialStructureData_old.initialAK135_elastic();
+    public static final PolynomialStructure_old MAK135 = PolynomialStructureData_old.initialMAK135();
+    public static final PolynomialStructure_old PREM_PRIME = PolynomialStructureData_old.initialPREM_PRIME();
 
     /**
      * true if default structure. False if user-defined structure
@@ -96,7 +96,7 @@ public class PolynomialStructure implements Serializable {
     public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Usage: model file.");
         Path path = Paths.get(args[0]);
-        PolynomialStructure ps = new PolynomialStructure(path);
+        PolynomialStructure_old ps = new PolynomialStructure_old(path);
         ps.printValues(1);
     }
 
@@ -119,8 +119,8 @@ public class PolynomialStructure implements Serializable {
      * @author otsuru
      * @since 2022/2/5 moved from inside run() in SyntheticDSMSetup
      */
-    public static PolynomialStructure of(String modelName) {
-        PolynomialStructure ps = null;
+    public static PolynomialStructure_old of(String modelName) {
+        PolynomialStructure_old ps = null;
 
         // PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
         if (!modelName.contains("/") && modelName.contains("_")) {
@@ -138,7 +138,7 @@ public class PolynomialStructure implements Serializable {
                 quantityPercentMap.put(quantity_percent[0], percent);
             }
             if (modelName.equals("MIASP91")) {
-                ps = PolynomialStructure.MIASP91;
+                ps = PolynomialStructure_old.MIASP91;
                 for (String quantity : quantityPercentMap.keySet()) {
                     System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
                     if (quantity.equals("RHO"))
@@ -148,7 +148,7 @@ public class PolynomialStructure implements Serializable {
                 }
             }
             else if (modelName.equals("PREM")) {
-                ps = PolynomialStructure.PREM;
+                ps = PolynomialStructure_old.PREM;
                 for (String quantity : quantityPercentMap.keySet()) {
                     System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
                     if (quantity.equals("RHO"))
@@ -158,7 +158,7 @@ public class PolynomialStructure implements Serializable {
                 }
             }
             else if (modelName.equals("AK135")) {
-                ps = PolynomialStructure.AK135;
+                ps = PolynomialStructure_old.AK135;
                 for (String quantity : quantityPercentMap.keySet()) {
                     System.err.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
                     if (quantity.equals("RHO"))
@@ -174,35 +174,35 @@ public class PolynomialStructure implements Serializable {
             switch (modelName) {
             case "PREM":
                 System.err.println("Using PREM");
-                ps = PolynomialStructure.PREM;
+                ps = PolynomialStructure_old.PREM;
                 break;
             case "AK135":
                 System.err.println("Using AK135");
-                ps = PolynomialStructure.AK135;
+                ps = PolynomialStructure_old.AK135;
                 break;
             case "AK135-ELASTIC":
                 System.err.println("Using AK135 elastic");
-                ps = PolynomialStructure.AK135_elastic;
+                ps = PolynomialStructure_old.AK135_elastic;
                 break;
             case "MIASP91":
                 System.err.println("Using MIASP91");
-                ps = PolynomialStructure.MIASP91;
+                ps = PolynomialStructure_old.MIASP91;
                 break;
             case "IPREM":
                 System.err.println("Using IPREM");
-                ps = PolynomialStructure.ISO_PREM;
+                ps = PolynomialStructure_old.ISO_PREM;
                 break;
             case "TNASNA":
                 System.err.println("Using TNASNA");
-                ps = PolynomialStructure.TNASNA;
+                ps = PolynomialStructure_old.TNASNA;
                 break;
             case "TBL50":
                 System.err.println("Using TBL50");
-                ps = PolynomialStructure.TBL50;
+                ps = PolynomialStructure_old.TBL50;
                 break;
             case "MAK135":
                 System.err.println("Using MAK135");
-                ps = PolynomialStructure.MAK135;
+                ps = PolynomialStructure_old.MAK135;
                 break;
             default:
                 throw new RuntimeException("Model not implemented yet");
@@ -212,10 +212,10 @@ public class PolynomialStructure implements Serializable {
         return ps;
     }
 
-    private PolynomialStructure() {
+    private PolynomialStructure_old() {
     }
 
-    public PolynomialStructure(int nzone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
+    public PolynomialStructure_old(int nzone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
             PolynomialFunction[] vpv, PolynomialFunction[] vph, PolynomialFunction[] vsv, PolynomialFunction[] vsh,
             PolynomialFunction[] eta, double[] qMu, double[] qKappa) {
         this.nzone = nzone;
@@ -236,14 +236,14 @@ public class PolynomialStructure implements Serializable {
      * @throws IOException if an I/O error occurs. A structure file (structurePath) must
      *                     exist.
      */
-    public PolynomialStructure(Path structurePath) throws IOException {
+    public PolynomialStructure_old(Path structurePath) throws IOException {
         readStructureFile(structurePath);
     }
 
-    static PolynomialStructure set(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
+    static PolynomialStructure_old set(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
                                            double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu,
                                            double[] qKappa) {
-        PolynomialStructure structure = new PolynomialStructure();
+        PolynomialStructure_old structure = new PolynomialStructure_old();
         structure.nzone = nzone;
         structure.rmin = rmin;
         structure.rmax = rmax;
@@ -270,8 +270,8 @@ public class PolynomialStructure implements Serializable {
     }
 
     @Override
-    public PolynomialStructure clone() {
-        PolynomialStructure ps = new PolynomialStructure();
+    public PolynomialStructure_old clone() {
+        PolynomialStructure_old ps = new PolynomialStructure_old();
         ps.nzone = this.nzone;
         ps.rmin = this.rmin;
         ps.rmax = this.rmax;
@@ -286,8 +286,8 @@ public class PolynomialStructure implements Serializable {
         return ps;
     }
 
-    private PolynomialStructure deepCopy() {
-        PolynomialStructure structure = new PolynomialStructure();
+    private PolynomialStructure_old deepCopy() {
+        PolynomialStructure_old structure = new PolynomialStructure_old();
         structure.nzone = nzone;
         structure.coreZone = coreZone;
         structure.rmin = rmin.clone();
@@ -330,7 +330,7 @@ public class PolynomialStructure implements Serializable {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        PolynomialStructure other = (PolynomialStructure) obj;
+        PolynomialStructure_old other = (PolynomialStructure_old) obj;
         if (coreZone != other.coreZone)
             return false;
         if (!Arrays.equals(eta, other.eta))
@@ -388,8 +388,8 @@ public class PolynomialStructure implements Serializable {
      * boundaries or this if there all the radiuses already exist in
      * this
      */
-    public PolynomialStructure addBoundaries(double... boundaries) {
-        PolynomialStructure ps = new PolynomialStructure();
+    public PolynomialStructure_old addBoundaries(double... boundaries) {
+        PolynomialStructure_old ps = new PolynomialStructure_old();
         double[] addBoundaries = Arrays.stream(boundaries)
                 .filter(d -> 0 < d && d < rmax[nzone - 1] && Arrays.binarySearch(rmin, d) < 0).distinct().sorted()
                 .toArray();
@@ -418,8 +418,8 @@ public class PolynomialStructure implements Serializable {
         return ps;
     }
 
-    public PolynomialStructure addRhoDiscontinuity(double r1, double r2, double percent) {
-        PolynomialStructure ps = this.clone();
+    public PolynomialStructure_old addRhoDiscontinuity(double r1, double r2, double percent) {
+        PolynomialStructure_old ps = this.clone();
         boolean foundR1 = false;
         boolean foundR2 = false;
         for (double r : ps.rmin) {
@@ -442,8 +442,8 @@ public class PolynomialStructure implements Serializable {
         return ps;
     }
 
-    public PolynomialStructure addVsDiscontinuity(double r1, double r2, double percent) {
-        PolynomialStructure ps = this.clone();
+    public PolynomialStructure_old addVsDiscontinuity(double r1, double r2, double percent) {
+        PolynomialStructure_old ps = this.clone();
         boolean foundR1 = false;
         boolean foundR2 = false;
         for (double r : ps.rmin) {
@@ -516,7 +516,7 @@ public class PolynomialStructure implements Serializable {
      * @param i index of a layer which disappears after the merge
      * @return slimmed Structure
      */
-    public PolynomialStructure mergeLayer(int i) {
+    public PolynomialStructure_old mergeLayer(int i) {
         if (i <= coreZone) throw new IllegalArgumentException("Cannot merge layers in the core.");
         if (nzone - 2 < i) throw new IllegalArgumentException("Input i must be less than " + (nzone - 1));
         UnaryOperator<double[]> one =
@@ -662,8 +662,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for &rho; in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setRho(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setRho(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.rho[izone] = polynomialFunction;
         return str;
     }
@@ -673,8 +673,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for V<sub>pv</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setVpv(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setVpv(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.vpv[izone] = polynomialFunction;
         return str;
     }
@@ -684,8 +684,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for V<sub>ph</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setVph(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setVph(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.vph[izone] = polynomialFunction;
         return str;
     }
@@ -695,8 +695,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for V<sub>sv</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setVsv(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setVsv(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.vsv[izone] = polynomialFunction;
         return str;
     }
@@ -706,8 +706,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for V<sub>sh</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setVsh(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setVsh(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.vsh[izone] = polynomialFunction;
         return str;
     }
@@ -717,8 +717,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for V<sub>pv</sub> and V<sub>ph</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setVp(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setVp(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.vph[izone] = polynomialFunction;
         str.vpv[izone] = polynomialFunction;
         return str;
@@ -729,8 +729,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for V<sub>sv</sub> and V<sub>sh</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setVs(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setVs(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.vsh[izone] = polynomialFunction;
         str.vsv[izone] = polynomialFunction;
         return str;
@@ -741,8 +741,8 @@ public class PolynomialStructure implements Serializable {
      * @param polynomialFunction replace the function for &eta; in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setEta(int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setEta(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure_old str = deepCopy();
         str.eta[izone] = polynomialFunction;
         return str;
     }
@@ -752,8 +752,8 @@ public class PolynomialStructure implements Serializable {
      * @param qMu   replace q<sub>&mu;</sub> in the ith zone to it
      * @return new structure
      */
-    public PolynomialStructure setQMu(int izone, double qMu) {
-        PolynomialStructure str = deepCopy();
+    public PolynomialStructure_old setQMu(int izone, double qMu) {
+        PolynomialStructure_old str = deepCopy();
         str.qMu[izone] = qMu;
         return str;
     }

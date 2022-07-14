@@ -13,10 +13,10 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * @author otsuru
  * @since 2022/2/5
  */
-class PolynomialStructureData {
-    private PolynomialStructureData() {}
+class PolynomialStructureData_old {
+    private PolynomialStructureData_old() {}
 
-    static PolynomialStructure initialAnisoPREM() {
+    static PolynomialStructure_old initialAnisoPREM() {
         int nzone = 12;
         double[] rmin = new double[]{0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356};
         double[] rmax = new double[]{1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356, 6371};
@@ -49,11 +49,11 @@ class PolynomialStructureData {
         double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
-        return PolynomialStructure.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return PolynomialStructure_old.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    static PolynomialStructure initialIsoPREM() {
-        PolynomialStructure prem = initialAnisoPREM();
+    static PolynomialStructure_old initialIsoPREM() {
+        PolynomialStructure_old prem = initialAnisoPREM();
         PolynomialFunction funcVp = new PolynomialFunction(new double[]{4.1875, 3.9382, 0, 0});
         PolynomialFunction funcVs = new PolynomialFunction(new double[]{2.1519, 2.3481, 0, 0});
         PolynomialFunction funcEta = new PolynomialFunction(new double[]{1, 0, 0, 0});
@@ -68,7 +68,7 @@ class PolynomialStructureData {
     /**
      * Homogeneous earth structure used for test purposes
      */
-    static PolynomialStructure homogeneous() {
+    static PolynomialStructure_old homogeneous() {
         double eps = 1e-10;
         int nzone = 3;
         double[] rmin = new double[]{0, 1221.5, 3480.0};
@@ -82,10 +82,10 @@ class PolynomialStructureData {
         double[][] eta = new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}}; // ok
         double[] qMu = new double[]{84.6, -1, 600}; // ok
         double[] qKappa = new double[]{1327.7, 57823, 57823}; // OK
-        return PolynomialStructure.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return PolynomialStructure_old.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    static PolynomialStructure initialMIASP91() {
+    static PolynomialStructure_old initialMIASP91() {
         final int nzone = 12;
         final double[] rmin = new double[] {0, 1221.5, 3480, 3630, 5610, 5641, 5781, 5891, 5971, 6030.9, 6160, 6281};
         final double[] rmax = new double[] {1221.5, 3480, 3630, 5610, 5641, 5781, 5891, 5971, 6030.9, 6160, 6281, 6371};
@@ -101,7 +101,7 @@ class PolynomialStructureData {
         final double[][] eta = new double[][] { {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000} };
         final double[] qMu = new double[] { 84.6, -1.0, 312.0, 312.0, 312.0, 312.0, 143.0, 143.0, 143.0, 143.0, 80.0, 600.0 };
         final double[] qKappa = new double[] { 1327.7, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0 };
-        return PolynomialStructure.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return PolynomialStructure_old.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
     /**
@@ -142,7 +142,7 @@ class PolynomialStructureData {
     /**
      * standard AK135 Kennett <i>et al<i>. (1995)
      */
-    static PolynomialStructure initialAK135() {
+    static PolynomialStructure_old initialAK135() {
         int nzone = 11;
         double[] rmin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
         double[] rmax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
@@ -173,14 +173,14 @@ class PolynomialStructureData {
         double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600,}; // ok
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,}; // OK
-        return PolynomialStructure.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return PolynomialStructure_old.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
     /**
      * standard AK135 Kennett <i>et al<i>. (1995)
      */
-    static PolynomialStructure initialMAK135() {
-        PolynomialStructure mak135 = initialAK135();
+    static PolynomialStructure_old initialMAK135() {
+        PolynomialStructure_old mak135 = initialAK135();
         mak135 = mak135.addBoundaries(5661.0, 5761.0 , 5911.0, 6011.0);
 
         // smoothed 660 km discontinuity
@@ -204,8 +204,8 @@ class PolynomialStructureData {
         return mak135;
     }
 
-    static PolynomialStructure initialAK135_elastic() {
-        PolynomialStructure structure = initialAK135();
+    static PolynomialStructure_old initialAK135_elastic() {
+        PolynomialStructure_old structure = initialAK135();
         double[] qMu = new double[] {84.6, -1, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000,};
         for (int i = 0; i < 11; i++) {
             structure = structure.setQMu(i, qMu[i]);
@@ -213,7 +213,7 @@ class PolynomialStructureData {
         return structure;
     }
 
-    static PolynomialStructure initialTBL50() {
+    static PolynomialStructure_old initialTBL50() {
         final int nzone = 17;
         final double[] rmin = new double[] { 0.0, 1221.5, 3480.0, 3500.0, 3524.0, 3590.0, 3630.0, 3698.7, 4371.0, 5610.0, 5641.0, 5781.0, 5891.0, 5971.0, 6030.9, 6160.0, 6281.0 };
         final double[] rmax = new double[] { 1221.5, 3480.0, 3500.0, 3524.0, 3590.0, 3630.0, 3698.7, 4371.0, 5610.0, 5641.0, 5781.0, 5891.0, 5971.0, 6030.9, 6160.0, 6281.0, 6371.0 };
@@ -225,10 +225,10 @@ class PolynomialStructureData {
         final double[][] eta = new double[][] { {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000}, {1.0000, 0.0000, 0.0000, 0.0000} };
         final double[] qMu = new double[] { 84.6,  -1.0,  312.0,  312.0,  312.0,  312.0,  312.0,  312.0,  312.0,  312.0,  312.0,  143.0,  143.0,  143.0,  143.0,  80.0,  600.0 };
         final double[] qKappa = new double[] { 1327.7,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0,  57823.0 };
-        return PolynomialStructure.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return PolynomialStructure_old.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    static PolynomialStructure initialTNASNA() {
+    static PolynomialStructure_old initialTNASNA() {
         final int nzone = 20;
         final double[] rmin = new double[] { 0.0, 1221.5, 3480.0, 3630.0, 3780.0, 5600.0, 5711.0, 5771.0, 5812.0, 5961.0, 6060.0, 6151.0, 6196.0, 6246.0, 6271.0, 6291.0, 6335.0, 6355.0, 6367.0, 6367.5 };
         final double[] rmax = new double[] { 1221.5, 3480.0, 3630.0, 3780.0, 5600.0, 5711.0, 5771.0, 5812.0, 5961.0, 6060.0, 6151.0, 6196.0, 6246.0, 6271.0, 6291.0, 6335.0, 6355.0, 6367.0, 6367.5, 6371.0 };
@@ -240,14 +240,14 @@ class PolynomialStructureData {
         final double[][] eta = new double[][] { {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000}, {1.0000,0.0000,0.0000,0.0000} };
         final double[] qMu = new double[] { 84.6, -1.0, 312.0, 312.0, 312.0, 312.0, 143.0, 143.0, 143.0, 143.0, 143.0, 80.0, 80.0, 80.0, 80.0, 600.0, 600.0, 600.0, 600.0, 600.0 };
         final double[] qKappa = new double[] { 1327.7, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0 };
-        return PolynomialStructure.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return PolynomialStructure_old.set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    static PolynomialStructure initialPREM_PRIME() {
-        PolynomialStructure structure = initialAnisoPREM();
+    static PolynomialStructure_old initialPREM_PRIME() {
+        PolynomialStructure_old structure = initialAnisoPREM();
         try {
             List<String> lines = IOUtils.readLines(
-                    PolynomialStructure.class.getClassLoader().getResourceAsStream("PREM_PRIME.poly"),
+                    PolynomialStructure_old.class.getClassLoader().getResourceAsStream("PREM_PRIME.poly"),
                     Charset.defaultCharset());
             structure.readStructureFile(lines);
         } catch (IOException e) {

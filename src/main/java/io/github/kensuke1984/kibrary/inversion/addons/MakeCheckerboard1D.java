@@ -13,7 +13,7 @@ import java.util.Map;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -23,7 +23,7 @@ public class MakeCheckerboard1D {
 //		System.out.println("dV = " + dV(1., 3505., PolynomialStructure.PREM));
 		
 //		PolynomialStructure premdpp = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/FWICarib_PS/SYNTHETIC_TEST/ONE_REC/16LAYERS/lmi_2005_rec_kappa/stack/TRUE_MODEL/prem_dpp.poly"));
-		PolynomialStructure prem = PolynomialStructure.PREM;
+		PolynomialStructure_old prem = PolynomialStructure_old.PREM;
 		
 		
 //		System.out.println(dMU(0.020487955855501883, 3505, PolynomialStructure.PREM));
@@ -47,8 +47,8 @@ public class MakeCheckerboard1D {
 		Path verticalSignFile = Paths.get(args[1]);
 //		int nR = Integer.parseInt(args[2]);
 		double dv = 0.01;
-		PolynomialStructure structure 
-			= PolynomialStructure.PREM;
+		PolynomialStructure_old structure 
+			= PolynomialStructure_old.PREM;
 		Path outDvFile = Paths.get("dv" + GadgetAid.getTemporaryString() + ".inf");
 		
 		try {
@@ -93,14 +93,14 @@ public class MakeCheckerboard1D {
 	}
 	
 	private static double dMU(double dv, double r
-			, PolynomialStructure structure) {
+			, PolynomialStructure_old structure) {
 		double v = structure.getVshAt(r);
 		return structure.getRhoAt(r) * v * v 
 				* (1 + dv) * (1 + dv) 
 				- structure.computeMu(r);
 	}
 	
-	private static double dLambda2mu(double dvp, double r, PolynomialStructure structure) {
+	private static double dLambda2mu(double dvp, double r, PolynomialStructure_old structure) {
 		double v = structure.getVphAt(r);
 		return structure.getRhoAt(r) * v * v 
 				* (1 + dvp) * (1 + dvp) 
@@ -108,7 +108,7 @@ public class MakeCheckerboard1D {
 	}
 	
 	private static double dKappa(double dv, double r
-			, PolynomialStructure structure) {
+			, PolynomialStructure_old structure) {
 		double v = structure.getVbAt(r);
 		return structure.getRhoAt(r) * v * v 
 				* (1 + dv) * (1 + dv) 
@@ -116,13 +116,13 @@ public class MakeCheckerboard1D {
 	}
 	
 	private static double dLambda(double dv, double r
-			, PolynomialStructure structure) {
+			, PolynomialStructure_old structure) {
 		double v = structure.getVphAt(r);
 		return structure.getRhoAt(r) * v * v 
 				* ( (1 + dv) * (1 + dv) - 1 );
 	}
 	
-	private static double dV(double dMU, double r, PolynomialStructure structure) {
+	private static double dV(double dMU, double r, PolynomialStructure_old structure) {
 		return Math.sqrt((structure.computeMu(r) + dMU) / structure.getRhoAt(r)) / structure.getVshAt(r) - 1;
 	}
 }

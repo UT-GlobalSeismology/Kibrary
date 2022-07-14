@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.inversion.InversionResult;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -579,9 +579,9 @@ public class Make3DModel {
 		Map<Double, Double> vel_high = new HashMap<>();
 		Map<Double, Double> vel_low = vel3;
 		
-		PolynomialStructure model = null;
+		PolynomialStructure_old model = null;
 		try {
-			model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
+			model = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/sw_it1.poly"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -592,7 +592,7 @@ public class Make3DModel {
 				dv = (vel0.get(depth) + vel1.get(depth) + vel2.get(depth) + vel4.get(depth) + vel5.get(depth)) / 5.;
 			else {
 				double r = 6371 - depth;
-				dv = (model.getVshAt(r) - PolynomialStructure.PREM.getVshAt(r)) / PolynomialStructure.PREM.getVshAt(r) * 100;
+				dv = (model.getVshAt(r) - PolynomialStructure_old.PREM.getVshAt(r)) / PolynomialStructure_old.PREM.getVshAt(r) * 100;
 			}
 			vel_high.put(depth, dv);
 		}
@@ -607,8 +607,8 @@ public class Make3DModel {
 			Collections.sort(sortedDepths);
 			
 			for (Double depth : sortedDepths) {
-				double vlow = PolynomialStructure.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
-				double vhigh = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly")).getVshAt(6371. - depth)
+				double vlow = PolynomialStructure_old.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
+				double vhigh = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/sw_it1.poly")).getVshAt(6371. - depth)
 						* (1 + vel_high.get(depth) / 100.);
 				pw_low.println(depth + " " + vlow + " " + vlow + " " + vlow);
 				pw_high.println(depth + " " + vhigh + " " + vhigh + " " + vhigh);
@@ -854,8 +854,8 @@ public class Make3DModel {
 			Collections.sort(sortedDepths);
 			
 			for (Double depth : sortedDepths) {
-				double vlow = PolynomialStructure.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
-				double vhigh = new PolynomialStructure(Paths.get("/work/anselme/POLY/cl3az0_it2.poly")).getVshAt(6371. - depth)
+				double vlow = PolynomialStructure_old.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
+				double vhigh = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/cl3az0_it2.poly")).getVshAt(6371. - depth)
 						* (1 + vel_high.get(depth) / 100.);
 				pw_low.println(depth + " " + vlow + " " + vlow + " " + vlow);
 				pw_high.println(depth + " " + vhigh + " " + vhigh + " " + vhigh);
@@ -1056,7 +1056,7 @@ public class Make3DModel {
 	}
 	
 	private static Map<Double, Double> readVel(Path inversionRootPath) {
-		PolynomialStructure model = PolynomialStructure.PREM;
+		PolynomialStructure_old model = PolynomialStructure_old.PREM;
 		Map<Double, Double> velMap = new HashMap<Double, Double>();
 		List<String> lines = null;
 		try {
@@ -1084,7 +1084,7 @@ public class Make3DModel {
 	}
 		
 	public static void writeModel(List<PerturbationPoint> perturbations, Path outpath) throws IOException {
-		PolynomialStructure prem = PolynomialStructure.PREM;
+		PolynomialStructure_old prem = PolynomialStructure_old.PREM;
 		PrintWriter writer = new PrintWriter(new FileWriter(outpath.toString()));
 		String line = "#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(%), Vs-PREM (km/s)";
 		writer.println(line);

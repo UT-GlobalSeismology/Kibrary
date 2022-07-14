@@ -13,10 +13,12 @@ import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -673,15 +675,15 @@ public class ThreeDPartialMaker {
     /**
      * The structure is used for computation Q
      *
-     * @param structure {@link PolynomialStructure}
+     * @param structure {@link PolynomialStructure_old}
      */
-    public void setStructure(PolynomialStructure structure) {
+    public void setStructure(PolynomialStructure_new structure) {
         fujiConversion = new FujiConversion(structure);
     }
 
     private Complex[] computeQpartial(SACComponent component, int iBody) {
         if (fujiConversion == null)
-            fujiConversion = new FujiConversion(PolynomialStructure.PREM);
+            fujiConversion = new FujiConversion(DefaultStructure.PREM);
         SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU));
         return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
 

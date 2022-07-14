@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -38,7 +38,7 @@ public class MuToVs {
 		
 		System.out.println(partialsMU.size());
 		
-		PolynomialStructure structure = PolynomialStructure.PREM;
+		PolynomialStructure_old structure = PolynomialStructure_old.PREM;
 		
 		List<PartialID> partialsVs = partialsMU.stream().map(p -> {
 			double r = p.getPerturbationLocation().getR();

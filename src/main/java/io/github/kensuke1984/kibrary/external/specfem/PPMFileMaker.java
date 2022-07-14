@@ -7,11 +7,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class PPMFileMaker {
 
-    private static final PolynomialStructure PREM = PolynomialStructure.PREM;
+    private static final PolynomialStructure_old PREM = PolynomialStructure_old.PREM;
     private Path workPath;
     private double[] radii;
     private double dLatitude;

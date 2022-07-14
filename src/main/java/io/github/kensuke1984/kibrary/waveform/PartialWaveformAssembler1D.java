@@ -27,6 +27,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -38,9 +39,12 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -997,19 +1001,19 @@ public class PartialWaveformAssembler1D implements Operation_old {
         // N_THREADS = 2;
         writeLog("going with " + N_THREADS + " threads");
 
-        PolynomialStructure structure = null;
+        PolynomialStructure_new structure = null;
         switch (structurePath) {
         case "PREM":
         case "prem":
-            structure = PolynomialStructure.PREM;
+            structure = DefaultStructure.PREM;
             break;
         case "AK135":
         case "ak135":
-            structure = PolynomialStructure.AK135;
+            structure = DefaultStructure.AK135;
             break;
         default:
             try {
-                structure = new PolynomialStructure(Paths.get(structurePath));
+                structure = PolynomialStructureFile.read(Paths.get(structurePath));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1139,9 +1143,10 @@ public class PartialWaveformAssembler1D implements Operation_old {
 
                     double r = par0.getPerturbationLocation().getR();
 
-                    double mu = structure.computeMu(r);
-                    double M = structure.computeLambda(r) + 2 * mu;
-                    double rho = structure.getRhoAt(r);
+                    ElasticMedium medium = structure.mediumAt(r);
+                    double mu = medium.get(ParameterType.MU);
+                    double M = medium.get(ParameterType.LAMBDA) + 2 * mu;
+                    double rho = medium.get(ParameterType.RHO);
 
                     double[] dataG = new double[data.length];
                     double[] dataM = data1;

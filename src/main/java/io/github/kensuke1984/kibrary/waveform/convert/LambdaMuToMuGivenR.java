@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -37,7 +37,7 @@ public class LambdaMuToMuGivenR {
 		Path partialIDPath = Paths.get(args[0]);
 		Path partialPath = Paths.get(args[1]);
 		
-		PolynomialStructure structure = PolynomialStructure.PREM;
+		PolynomialStructure_old structure = PolynomialStructure_old.PREM;
 		System.out.println("Using structure " + structure);
 		
 		Map<Double, Double> rKRDH16 = new HashMap<>();

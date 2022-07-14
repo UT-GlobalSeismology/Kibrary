@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -78,37 +78,37 @@ public class VelocityField_RND {
 		}
 		if (polynomialStructureString == null || polynomialStructureString.isEmpty())
 			throw new RuntimeException("Error: please input a path to a polynomial structure");
-		PolynomialStructure structure = null;
+		PolynomialStructure_old structure = null;
 		switch (polynomialStructureString) {
 		case "ak135":
-			structure = PolynomialStructure.AK135;
+			structure = PolynomialStructure_old.AK135;
 			break;
 		case "AK135":
-			structure = PolynomialStructure.AK135;
+			structure = PolynomialStructure_old.AK135;
 			break;
 		case "prem":
-			structure = PolynomialStructure.PREM;
+			structure = PolynomialStructure_old.PREM;
 			break;
 		case "PREM":
-			structure = PolynomialStructure.PREM;
+			structure = PolynomialStructure_old.PREM;
 			break;
 		case "iso_prem":
-			structure = PolynomialStructure.ISO_PREM;
+			structure = PolynomialStructure_old.ISO_PREM;
 			break;
 		case "iprem":
-			structure = PolynomialStructure.ISO_PREM;
+			structure = PolynomialStructure_old.ISO_PREM;
 			break;
 		case "stw105":
 			polynomialStructurePath = Paths.get("/mnt/melonpan/anpan/inversion/Dpp/POLY/stw105_smallCoeff.poly");
 			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
 				throw new RuntimeException("Error: no such file " + polynomialStructurePath.toString());
-			structure = new PolynomialStructure(polynomialStructurePath);
+			structure = new PolynomialStructure_old(polynomialStructurePath);
 			break;
 		case "STW105":
 			polynomialStructurePath = Paths.get("/mnt/melonpan/anpan/inversion/Dpp/POLY/stw105_smallCoeff.poly");
 			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
 				throw new RuntimeException("Error: no such file " + polynomialStructurePath.toString());
-			structure = new PolynomialStructure(polynomialStructurePath);
+			structure = new PolynomialStructure_old(polynomialStructurePath);
 			break;
 		default:
 			break;
@@ -117,7 +117,7 @@ public class VelocityField_RND {
 			polynomialStructurePath = Paths.get(polynomialStructureStringAbsolute);
 			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
 				throw new RuntimeException("Error: no such file " + polynomialStructureStringAbsolute);
-			structure = new PolynomialStructure(polynomialStructurePath);
+			structure = new PolynomialStructure_old(polynomialStructurePath);
 		}
 		
 		for (int isample = 0; isample < nSample; isample++) {
@@ -214,7 +214,7 @@ public class VelocityField_RND {
 		}
 	}
 	
-	private static double[] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
+	private static double[] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure_old structure) {
 		double[] velocities = new double[answerMap.size()];
 		int n = parameterOrder.size();
 		for (int i = 0; i < n; i++) {
@@ -238,7 +238,7 @@ public class VelocityField_RND {
 		return velocities;
 	}
 	
-	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
+	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure_old structure
 			, double amplifyPerturbation) {
 		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
 				.filter(unknown -> unknown.getPartialType().equals(PartialType.PAR2))
@@ -271,7 +271,7 @@ public class VelocityField_RND {
 		return velocities;
 	}
 	
-	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
+	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure_old structure
 			, double amplifyPerturbation) {
 		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
 				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARQ))
@@ -292,7 +292,7 @@ public class VelocityField_RND {
 		return velocities;
 	}
 	
-	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure structure) {
+	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure_old structure) {
 		int n = 200;
 		double[][] velocities = new double[n][];
 		for (int i = 0; i < n; i++) {
@@ -306,21 +306,21 @@ public class VelocityField_RND {
 		return velocities;
 	}
 	
-	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure) {
+	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure_old structure) {
 		return getSimpsonVsh(rmin, rmax, structure, deltaMu);
 	}
 	
-	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure,
+	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure_old structure,
 			double amplifyPerturbation) {
 		return getSimpsonVsh(rmin, rmax, structure, deltaMu * amplifyPerturbation);
 	}
 	
-	private static double toQ(double dq, double r, double rmin, double rmax, PolynomialStructure structure,
+	private static double toQ(double dq, double r, double rmin, double rmax, PolynomialStructure_old structure,
 			double amplifyPerturbation) {
 		return getSimpsonQ(rmin, rmax, structure, dq, amplifyPerturbation);
 	}
 	
-	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure structure, double amplifyPerturbation) {
+	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure_old structure, double amplifyPerturbation) {
 		int n = 200;
 		double[][] Qs = new double[n][];
 		for (int i = 0; i < n; i++) {
@@ -337,7 +337,7 @@ public class VelocityField_RND {
 		return Qs;
 	}
 	
-	public static double getSimpsonRho (double r1, double r2, PolynomialStructure structure) {
+	public static double getSimpsonRho (double r1, double r2, PolynomialStructure_old structure) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -350,7 +350,7 @@ public class VelocityField_RND {
 		return res / vol;
 	}
 	
-	public static double getSimpsonMu (double r1, double r2, PolynomialStructure structure) {
+	public static double getSimpsonMu (double r1, double r2, PolynomialStructure_old structure) {
 		double res = 0;
 		double dr = (r2 - r1) / 40;
 		double vol = r2 - r1;
@@ -363,7 +363,7 @@ public class VelocityField_RND {
 		return res / vol;
 	}
 	
-	public static double getSimpsonVsh (double r1, double r2, PolynomialStructure structure, double dMu) {
+	public static double getSimpsonVsh (double r1, double r2, PolynomialStructure_old structure, double dMu) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -380,7 +380,7 @@ public class VelocityField_RND {
 		return res / vol;
 	}
 	
-	public static double getSimpsonQ (double r1, double r2, PolynomialStructure structure, double dq, double amplifyPerturbation) {
+	public static double getSimpsonQ (double r1, double r2, PolynomialStructure_old structure, double dq, double amplifyPerturbation) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;

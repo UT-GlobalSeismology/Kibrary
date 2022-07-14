@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -105,7 +105,7 @@ public class AtAMaker implements Operation_old {
 	
 	private boolean backward;
 	
-	private PolynomialStructure structure;
+	private PolynomialStructure_old structure;
 	
 	private int sourceTimeFunction;
 	
@@ -620,7 +620,7 @@ public class AtAMaker implements Operation_old {
 		timewindowPath = getPath("timewindowPath");
 		
 		if (PROPERTY.containsKey("qinf"))
-			structure = new PolynomialStructure(getPath("qinf"));
+			structure = new PolynomialStructure_old(getPath("qinf"));
 		try {
 			sourceTimeFunction = Integer.parseInt(PROPERTY.getProperty("sourceTimeFunction"));
 		} catch (Exception e) {

@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.dsminformation;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 /**
  * @author Kensuke Konishi
@@ -11,6 +11,6 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  */
 class PolynomialStructureTest {
     public static void main(String[] args) throws IOException {
-        PolynomialStructure.PREM.writePSV(Paths.get("/tmp/hoge"));
+        PolynomialStructure_old.PREM.writePSV(Paths.get("/tmp/hoge"));
     }
 }

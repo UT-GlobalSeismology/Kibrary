@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
@@ -32,7 +32,7 @@ public class CheckerboardMaker {
     private Path voxelPath;
     private double percentVs;
     private boolean flipSign;
-    private PolynomialStructure initialStructure;
+    private PolynomialStructure_old initialStructure;
 
     private String tag;
     private Path outPath;
@@ -92,14 +92,14 @@ public class CheckerboardMaker {
 
         Double switchingLongitude = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : null; //TODO erase or sophisticate
 
-        PolynomialStructure prem = PolynomialStructure.PREM;
+        PolynomialStructure_old prem = PolynomialStructure_old.PREM;
 
         CheckerboardMaker cm = new CheckerboardMaker(voxelPath, percentVs, flipSign, prem, tag);
         cm.velocityCheckerboard(switchingLongitude);
         cm.writeModel();
     }
 
-    public CheckerboardMaker(Path voxelPath, double percentVs, boolean flipSign, PolynomialStructure prem, String tag) {
+    public CheckerboardMaker(Path voxelPath, double percentVs, boolean flipSign, PolynomialStructure_old prem, String tag) {
         this.voxelPath = voxelPath;
         this.percentVs = percentVs;
         this.flipSign = flipSign;

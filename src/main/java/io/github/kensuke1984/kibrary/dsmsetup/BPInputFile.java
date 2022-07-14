@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
 
 
 /**
@@ -38,7 +38,7 @@ public class BPInputFile extends DSMInputHeader {
      * Position of the observer
      */
     private final HorizontalPosition sourcePosition;
-    private final PolynomialStructure structure;
+    private final PolynomialStructure_new structure;
 
     /**
      * @param observer              Information of observer
@@ -49,7 +49,7 @@ public class BPInputFile extends DSMInputHeader {
      * @param perturbationRadii   will be copied
      * @param perturbationPositions will be copied
      */
-    public BPInputFile(HorizontalPosition observerPositon, String outputDir, PolynomialStructure structure, double tlen, int np,
+    public BPInputFile(HorizontalPosition observerPositon, String outputDir, PolynomialStructure_new structure, double tlen, int np,
                   double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
         this.sourcePosition = observerPositon;
@@ -59,7 +59,7 @@ public class BPInputFile extends DSMInputHeader {
         this.receiverPositions = perturbationPositions.clone();
     }
 
-    public BPInputFile(String outputDir, PolynomialStructure structure, double tlen, int np,
+    public BPInputFile(String outputDir, PolynomialStructure_new structure, double tlen, int np,
             double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
         this.sourcePosition = null;
@@ -86,7 +86,7 @@ public class BPInputFile extends DSMInputHeader {
     /**
      * @return structure to be used
      */
-    public PolynomialStructure getStructure() {
+    public PolynomialStructure_new getStructure() {
         return structure;
     }
 

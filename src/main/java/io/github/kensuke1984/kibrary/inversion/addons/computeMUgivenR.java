@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -19,7 +19,7 @@ public class computeMUgivenR {
 		Path rootpath = Paths.get(".");
 		InversionResult ir = new InversionResult(rootpath);
 		
-		PolynomialStructure structure = PolynomialStructure.PREM;
+		PolynomialStructure_old structure = PolynomialStructure_old.PREM;
 		System.out.println("Using structure " + structure);
 		
 		Map<Double, Double> rKRDH16 = new HashMap<>();
