@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 /**
- * Utilities for write of {@link LetMeInvert}.
+ * Utilities for write of {@link LetMeInvert_old}.
  *
  * @author Kensuke Konishi
  * @version 0.1.2.1

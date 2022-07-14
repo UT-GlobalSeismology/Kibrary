@@ -71,7 +71,7 @@ import io.github.kensuke1984.kibrary.waveform.addons.AtdFile;
  * @version 2.0.3.6
  * @author anselme added regularization, ...
  */
-public class LetMeInvert extends Operation {
+public class LetMeInvert_old extends Operation {
 
     private final Property property;
     /**
@@ -279,7 +279,7 @@ public class LetMeInvert extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public LetMeInvert(Property property) throws IOException {
+    public LetMeInvert_old(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 /*
@@ -561,7 +561,7 @@ public class LetMeInvert extends Operation {
                 if (id.getWaveformType().equals(WaveformType.OBS)) {
                     double w = eventAmpCorr.get(id.getGlobalCMTID());
                     double[] data_corr = Arrays.stream(id.getData()).map(d -> d / w).toArray();
-                    ids[i] = id.setData(data_corr);
+                    ids[i] = id.withData(data_corr);
                 }
             }
             if (spcIds != null) {
@@ -570,7 +570,7 @@ public class LetMeInvert extends Operation {
                     if (id.getWaveformType().equals(WaveformType.OBS)) {
                         double w = eventAmpCorr.get(id.getGlobalCMTID());
                         double[] data_corr = Arrays.stream(id.getData()).map(d -> d - Math.log(w)).toArray();
-                        spcIds[i] = id.setData(data_corr);
+                        spcIds[i] = id.withData(data_corr);
                     }
                 }
             }
@@ -618,7 +618,7 @@ public class LetMeInvert extends Operation {
                     double w = tmpw;
 
                     double[] data_corr = Arrays.stream(id.getData()).map(d -> d / w).toArray();
-                    ids[i] = id.setData(data_corr);
+                    ids[i] = id.withData(data_corr);
                 }
             }
             if (spcIds != null) {
@@ -662,7 +662,7 @@ public class LetMeInvert extends Operation {
                         double w = tmpw;
 
                         double[] data_corr = Arrays.stream(id.getData()).map(d -> d - Math.log(w)).toArray();
-                        spcIds[i] = id.setData(data_corr);
+                        spcIds[i] = id.withData(data_corr);
                     }
                 }
             }
@@ -957,7 +957,7 @@ public class LetMeInvert extends Operation {
                             nEnd = partialIDs[k].getNpts();
                         }
                         double[] trimmedData = Arrays.copyOfRange(partialIDs[k].getData(), nStart, nEnd);
-                        partialIDs[k].setData(trimmedData);
+                        partialIDs[k].withData(trimmedData);
                     }
                 }
 

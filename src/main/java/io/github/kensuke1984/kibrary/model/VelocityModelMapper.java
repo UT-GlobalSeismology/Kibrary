@@ -182,11 +182,6 @@ public class VelocityModelMapper extends Operation {
         }
     }
 
-    @Deprecated
-    private static double[] readAnswer(Path answerPath) throws IOException {
-        return Files.readAllLines(answerPath).stream().mapToDouble(Double::parseDouble).toArray();
-    }
-
     private String decideMapRegion(List<UnknownParameter> unknowns) throws IOException {
         if (mapRegion != null) {
             return mapRegion;

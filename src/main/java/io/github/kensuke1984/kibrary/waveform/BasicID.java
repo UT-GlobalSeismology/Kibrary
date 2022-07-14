@@ -120,7 +120,7 @@ public class BasicID {
      * @param data Waveform data to be replaced
      * @return BasicID with the input data
      */
-    public BasicID setData(double[] data) {
+    public BasicID withData(double[] data) {
         return new BasicID(TYPE, SAMPLINGHZ, START_TIME, NPTS, observer, event, COMPONENT, MIN_PERIOD,
                 MAX_PERIOD, PHASES, START_BYTE, CONVOLUTE, data);
     }

@@ -251,8 +251,8 @@ public class PseudoWaveformGenerator extends Operation {
             BasicID[] obsIDs = dVector.getObsIDs();
             BasicID[] synIDs = dVector.getSynIDs();
             for (int i = 0; i < dVector.getNTimeWindow(); i++) {
-                bdw.addBasicID(obsIDs[i].setData(bornPart[i].mapDivide(dVector.getWeighting(i)).toArray()));
-                bdw.addBasicID(synIDs[i].setData(dVector.getSynVec()[i].mapDivide(dVector.getWeighting(i)).toArray()));
+                bdw.addBasicID(obsIDs[i].withData(bornPart[i].mapDivide(dVector.getWeighting(i)).toArray()));
+                bdw.addBasicID(synIDs[i].withData(dVector.getSynVec()[i].mapDivide(dVector.getWeighting(i)).toArray()));
             }
         }
     }
@@ -278,8 +278,8 @@ public class PseudoWaveformGenerator extends Operation {
             BasicID[] synIDs = dVector.getSynIDs();
             for (int i = 0; i < dVector.getNTimeWindow(); i++) {
                 double weighting = dVector.getWeighting(i);
-                bdw.addBasicID(obsIDs[i].setData(dVector.getObsVec()[i].mapDivide(weighting).toArray()));
-                bdw.addBasicID(synIDs[i].setData(bornPart[i].mapDivide(weighting).toArray()));
+                bdw.addBasicID(obsIDs[i].withData(dVector.getObsVec()[i].mapDivide(weighting).toArray()));
+                bdw.addBasicID(synIDs[i].withData(bornPart[i].mapDivide(weighting).toArray()));
             }
         }
     }

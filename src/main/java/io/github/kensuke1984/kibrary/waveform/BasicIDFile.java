@@ -95,7 +95,7 @@ public final class BasicIDFile {
                 double[] data = new double[id.NPTS];
                 for (int j = 0; j < data.length; j++)
                     data[j] = bb.getDouble();
-                ids[i] = id.setData(data);
+                ids[i] = id.withData(data);
             });
         }
         System.err.println("Reading waveforms done in " + GadgetAid.toTimeString(System.nanoTime() - t));
