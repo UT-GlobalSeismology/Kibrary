@@ -9,13 +9,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -23,8 +23,6 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * An operation to select or resample BasicIDs.
@@ -130,13 +128,21 @@ public class BasicIDRebuilder extends Operation {
 
         if (property.containsKey("requiredPhases"))
             requiredPhases = property.parseStringArray("requiredPhases", null);
+
         minDistance = property.parseDouble("minDistance", "0.");
         maxDistance = property.parseDouble("maxDistance", "360.");
+        if (minDistance < 0 || minDistance > maxDistance || 360 < maxDistance)
+            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
+
         minMw = property.parseDouble("minMw", "0.");
         maxMw = property.parseDouble("maxMw", "10.");
+        if (minMw > maxMw)
+            throw new IllegalArgumentException("Magnitude range " + minMw + " , " + maxMw + " is invalid.");
 
         bootstrap = property.parseBoolean("bootstrap", "false");
         subsamplingPercent = property.parseDouble("subsamplingPercent", "100");
+        if (subsamplingPercent < 0)
+            throw new IllegalArgumentException("subsamplingPercent must be positive.");
 
     }
 
@@ -150,12 +156,18 @@ public class BasicIDRebuilder extends Operation {
         synIDs = pairer.getSynList();
 
         selectByCriteria();
+        if (obsIDs.size() == 0) return;
 
         if (bootstrap) {
             resample(subsamplingPercent, true);
         } else if (!Precision.equals(subsamplingPercent, 100)) {
             resample(subsamplingPercent, false);
         }
+        if (obsIDs.size() == 0) return;
+
+        List<BasicID> finalList = new ArrayList<>();
+        finalList.addAll(obsIDs);
+        finalList.addAll(synIDs);
 
         // prepare output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", tag, GadgetAid.getTemporaryString());
@@ -164,55 +176,8 @@ public class BasicIDRebuilder extends Operation {
         // output
         Path outputIDPath = outPath.resolve(nameRoot + "ID.dat");
         Path outputWavePath = outPath.resolve(nameRoot + ".dat");
-        output(outputIDPath, outputWavePath);
+        BasicIDFile.write(finalList, outputIDPath, outputWavePath);
 
-    }
-
-    private void output(Path outputIDPath, Path outputWavePath) throws IOException {
-
-        // extract set of observers, events, periods, and phases
-        Set<Observer> observerSet = new HashSet<>();
-        Set<GlobalCMTID> eventSet = new HashSet<>();
-        Set<double[]> periodSet = new HashSet<>();
-        Set<Phase> phaseSet = new HashSet<>();
-
-        obsIDs.forEach(id -> {
-            observerSet.add(id.getObserver());
-            eventSet.add(id.getGlobalCMTID());
-            boolean add = true;
-            for (double[] periods : periodSet) {
-                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
-                    add = false;
-            }
-            if (add)
-                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
-            for (Phase phase : id.getPhases())
-                phaseSet.add(phase);
-        });
-
-        double[][] periodRanges = new double[periodSet.size()][];
-        int j = 0;
-        for (double[] periods : periodSet)
-            periodRanges[j++] = periods;
-        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
-
-        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {
-            obsIDs.forEach(id -> {
-                try {
-                    wdw.addBasicID(id);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            synIDs.forEach(id -> {
-                try {
-                    wdw.addBasicID(id);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
     }
 
     private void selectByCriteria() {
@@ -233,8 +198,8 @@ public class BasicIDRebuilder extends Operation {
             }
 
             // check distance
-            double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
-                    .calculateEpicentralDistance(obsID.getObserver().getPosition());
+            double distance = FastMath.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                    .calculateEpicentralDistance(obsID.getObserver().getPosition()));
             if (distance < minDistance || distance > maxDistance) {
                 continue;
             }
@@ -249,6 +214,7 @@ public class BasicIDRebuilder extends Operation {
             selectedObsIDs.add(obsID);
             selectedSynIDs.add(synID);
         }
+        System.err.println("Selected " + selectedObsIDs.size() + " pairs of basic IDs based on criteria.");
 
         // replace list by selected ones
         obsIDs = selectedObsIDs;
@@ -261,13 +227,16 @@ public class BasicIDRebuilder extends Operation {
         List<BasicID> selectedSynIDs = new ArrayList<>();
 
         if (duplication) {
+            System.err.println("Selecting " + numToSample + " pairs of basic IDs with duplication.");
             Random random = new Random();
             int[] shuffledIndices = random.ints(numToSample, 0, obsIDs.size()).toArray();
             for (int i = 0; i < numToSample; i++) {
+                System.err.println(shuffledIndices[i]);
                 selectedObsIDs.add(obsIDs.get(shuffledIndices[i]));
                 selectedSynIDs.add(synIDs.get(shuffledIndices[i]));
             }
         } else {
+            System.err.println("Selecting " + numToSample + " pairs of basic IDs without duplication.");
             List<Integer> shuffledIndices = IntStream.range(0, obsIDs.size()).boxed().collect(Collectors.toList());
             Collections.shuffle(shuffledIndices);
             for (int i = 0; i < numToSample; i++) {

@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.inv_old;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;

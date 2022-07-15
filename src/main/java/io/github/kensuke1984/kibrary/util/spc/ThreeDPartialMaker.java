@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -677,7 +677,7 @@ public class ThreeDPartialMaker {
      *
      * @param structure {@link PolynomialStructure_old}
      */
-    public void setStructure(PolynomialStructure_new structure) {
+    public void setStructure(PolynomialStructure structure) {
         fujiConversion = new FujiConversion(structure);
     }
 

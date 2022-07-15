@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -1001,7 +1001,7 @@ public class PartialWaveformAssembler1D implements Operation_old {
         // N_THREADS = 2;
         writeLog("going with " + N_THREADS + " threads");
 
-        PolynomialStructure_new structure = null;
+        PolynomialStructure structure = null;
         switch (structurePath) {
         case "PREM":
         case "prem":

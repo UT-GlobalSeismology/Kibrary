@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
  * @author Kensuke Konishi
  * @version 0.0.1.2
  */
-class DSMComputation implements DataGenerator<PolynomialStructure_new, SACFileAccess[]> {
+class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess[]> {
 
 
     private static final int NP = 256;
@@ -106,7 +106,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure_new, SACFileAc
     }
 
     @Override
-    public SACFileAccess[] generate(PolynomialStructure_new model) {
+    public SACFileAccess[] generate(PolynomialStructure model) {
         try {
             Path root = Files.createDirectories(outPath.resolve("DSMComputation_" + sequentialNumber++));
             SyntheticDSMInputFile[] infos = createDSMInfo(model);
@@ -136,7 +136,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure_new, SACFileAc
                 .orElseThrow(() -> new RuntimeException("No information about " + stationName));
     }
 
-    private SyntheticDSMInputFile[] createDSMInfo(PolynomialStructure_new model) {
+    private SyntheticDSMInputFile[] createDSMInfo(PolynomialStructure model) {
         return Arrays.stream(DSM_INFOS).map(info -> info.replaceStructure(model)).toArray(SyntheticDSMInputFile[]::new);
     }
 

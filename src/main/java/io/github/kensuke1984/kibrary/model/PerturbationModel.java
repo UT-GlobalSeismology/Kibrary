@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -19,7 +19,7 @@ public class PerturbationModel {
 
     private List<PerturbationVoxel> voxelList = new ArrayList<>();
 
-    public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure_new initialStructure) {
+    public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure) {
         if (unknowns.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values does not match");
 
         for (int i = 0; i < unknowns.size(); i++) {
@@ -47,7 +47,7 @@ public class PerturbationModel {
         }
     }
 
-    public PerturbationModel(List<KnownParameter> knowns, PolynomialStructure_new initialStructure) {
+    public PerturbationModel(List<KnownParameter> knowns, PolynomialStructure initialStructure) {
         for (int i = 0; i < knowns.size(); i++) {
             boolean flag = false;
 

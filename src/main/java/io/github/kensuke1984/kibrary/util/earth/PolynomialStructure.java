@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
  * @version 2022/2/10 moved from package dsmsetup into util.earth
  * @version 2022/6/15 recreated this file to make this class actually immutable
  */
-public final class PolynomialStructure_new {
+public final class PolynomialStructure {
 
     /**
      * The margin to decide whether two radii are the same value
@@ -70,8 +70,8 @@ public final class PolynomialStructure_new {
      * @author otsuru
      * @since 2022/2/5 moved from inside run() in SyntheticDSMSetup
      */
-    public static PolynomialStructure_new of(String modelName) {
-        PolynomialStructure_new ps = null;
+    public static PolynomialStructure of(String modelName) {
+        PolynomialStructure ps = null;
 
         switch (modelName) {
         case "PREM":
@@ -119,7 +119,7 @@ public final class PolynomialStructure_new {
      * @param qMu
      * @param qKappa
      */
-    public PolynomialStructure_new(int nZone, int nCoreZone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
+    public PolynomialStructure(int nZone, int nCoreZone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
             PolynomialFunction[] vpv, PolynomialFunction[] vph, PolynomialFunction[] vsv, PolynomialFunction[] vsh,
             PolynomialFunction[] eta, double[] qMu, double[] qKappa) {
         this(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, false);
@@ -140,7 +140,7 @@ public final class PolynomialStructure_new {
      * @param qKappa
      * @param isDefault
      */
-    PolynomialStructure_new(int nZone, int nCoreZone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
+    PolynomialStructure(int nZone, int nCoreZone, double[] rmin, double[] rmax, PolynomialFunction[] rho,
             PolynomialFunction[] vpv, PolynomialFunction[] vph, PolynomialFunction[] vsv, PolynomialFunction[] vsh,
             PolynomialFunction[] eta, double[] qMu, double[] qKappa, boolean isDefault) {
         this.nZone = nZone;
@@ -173,7 +173,7 @@ public final class PolynomialStructure_new {
      * @param qKappa
      * @param isDefault
      */
-    PolynomialStructure_new(int nZone, int nCoreZone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
+    PolynomialStructure(int nZone, int nCoreZone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
             double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu,
             double[] qKappa, boolean isDefault) {
         this.nZone = nZone;
@@ -212,7 +212,7 @@ public final class PolynomialStructure_new {
      * boundaries or this if there all the radiuses already exist in
      * this
      */
-    public PolynomialStructure_new withBoundaries(double... boundaries) {
+    public PolynomialStructure withBoundaries(double... boundaries) {
         return withBoundaries(false, boundaries);
     }
 
@@ -226,7 +226,7 @@ public final class PolynomialStructure_new {
      * @return a new structure which has additional layers given by input,
      * or current structure itself if all radii already exist in current structure
      */
-    PolynomialStructure_new withBoundaries(boolean isDefault, double... boundaries) {
+    PolynomialStructure withBoundaries(boolean isDefault, double... boundaries) {
         double[] addBoundaries = Arrays.stream(boundaries)
                 .filter(d -> 0 < d && d < rmax[nZone - 1] && Arrays.binarySearch(rmin, d) < 0).distinct().sorted()
                 .toArray();
@@ -262,7 +262,7 @@ public final class PolynomialStructure_new {
             qKappaNew[iZoneNew] = qKappa[iZoneOld];
         }
 
-        return new PolynomialStructure_new(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
+        return new PolynomialStructure(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
                 rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew, isDefault);
     }
 
@@ -274,7 +274,7 @@ public final class PolynomialStructure_new {
      * @param percent (double) Size of perturbation [%]
      * @return a new structure with added perturbations
      */
-    public PolynomialStructure_new withPerturbation(double r1, double r2, ParameterType parameter, double percent) {
+    public PolynomialStructure withPerturbation(double r1, double r2, ParameterType parameter, double percent) {
         // look up whether r1 and r2 are existing boundaries or not
         boolean foundR1 = false;
         boolean foundR2 = false;
@@ -286,7 +286,7 @@ public final class PolynomialStructure_new {
         }
 
         // add r1 and r2 as boundaries if they were not already
-        PolynomialStructure_new structureNew = this;
+        PolynomialStructure structureNew = this;
         if (!foundR1)
             structureNew = structureNew.withBoundaries(r1);
         if (!foundR2)
@@ -344,7 +344,7 @@ public final class PolynomialStructure_new {
             }
         }
 
-        return new PolynomialStructure_new(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
+        return new PolynomialStructure(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
                 rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
 
     }
@@ -511,7 +511,7 @@ public final class PolynomialStructure_new {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        PolynomialStructure_new other = (PolynomialStructure_new) obj;
+        PolynomialStructure other = (PolynomialStructure) obj;
         if (nCoreZone != other.nCoreZone)
             return false;
         if (!Arrays.equals(eta, other.eta))

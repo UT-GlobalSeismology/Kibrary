@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;

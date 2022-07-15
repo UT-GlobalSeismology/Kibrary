@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;

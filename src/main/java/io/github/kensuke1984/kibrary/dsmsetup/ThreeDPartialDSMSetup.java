@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -230,11 +230,11 @@ public class ThreeDPartialDSMSetup extends Operation {
         Set<Observer> observerSet = ObserverListFile.read(observerPath);
         System.err.println("Number of observers read in: " + observerSet.size());
 
-        PolynomialStructure_new structure = null;
+        PolynomialStructure structure = null;
         if (structurePath != null) {
             structure = PolynomialStructureFile.read(structurePath);
         } else {
-            structure = PolynomialStructure_new.of(structureName);
+            structure = PolynomialStructure.of(structureName);
         }
 
         outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, GadgetAid.getTemporaryString());

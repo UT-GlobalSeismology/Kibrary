@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;

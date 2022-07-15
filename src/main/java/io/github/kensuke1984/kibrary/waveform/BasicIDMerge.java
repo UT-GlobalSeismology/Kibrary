@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -121,37 +120,19 @@ public class BasicIDMerge extends Operation {
         }
 
         // read BasicIDs from all input files
-        Set<BasicID> basicIDs = new HashSet<>();
+        List<BasicID> basicIDs = new ArrayList<>();
         for (int i = 0; i < pairNum; i++) {
             BasicID[] srcIDs = BasicIDFile.read(basicIDPaths.get(i), basicPaths.get(i));
             Arrays.stream(srcIDs).forEach(id -> basicIDs.add(id));
         }
 
-        // extract set of observers, events, periods, and phases
+        // extract set of observers, events
         Set<Observer> observerSet = new HashSet<>();
         Set<GlobalCMTID> eventSet = new HashSet<>();
-        Set<double[]> periodSet = new HashSet<>();
-        Set<Phase> phaseSet = new HashSet<>();
-
         basicIDs.forEach(id -> {
             observerSet.add(id.getObserver());
             eventSet.add(id.getGlobalCMTID());
-            boolean add = true;
-            for (double[] periods : periodSet) {
-                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
-                    add = false;
-            }
-            if (add)
-                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
-            for (Phase phase : id.getPhases())
-                phaseSet.add(phase);
         });
-
-        double[][] periodRanges = new double[periodSet.size()][];
-        int j = 0;
-        for (double[] periods : periodSet)
-            periodRanges[j++] = periods;
-        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
 
         // output merged files
         String dateStr = GadgetAid.getTemporaryString();
@@ -166,16 +147,7 @@ public class BasicIDMerge extends Operation {
         System.err.println("Outputting in " + eventFilePath);
         EventListFile.write(eventSet, workPath.resolve(eventFilePath));
 
-        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {
-            basicIDs.forEach(id -> {
-                try {
-                    wdw.addBasicID(id);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+        BasicIDFile.write(basicIDs, outputIDPath, outputWavePath);
     }
 
 }

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary.inv_old;
 
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;

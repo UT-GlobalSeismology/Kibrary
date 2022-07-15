@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 public class PolynomialStructureFile {
     private PolynomialStructureFile() {}
 
-    public static void write(PolynomialStructure_new structure, Path outputPath, OpenOption... options) throws IOException {
+    public static void write(PolynomialStructure structure, Path outputPath, OpenOption... options) throws IOException {
         int nZone = structure.getNZone();
         int nCoreZone = structure.getNCoreZone();
         double[] rmin = structure.getRmin();
@@ -49,17 +49,17 @@ public class PolynomialStructureFile {
             pw.println("c                     ---   Vsh     (km/s) ---");
             pw.println("c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -");
             for (int i = 0; i < nZone; i++) {
-                pw.println(rmin[i] + " " + rmax[i] + " " + PolynomialStructure_new.stringFor(rho[i]));
-                pw.println("          " + PolynomialStructure_new.stringFor(vpv[i]));
-                pw.println("          " + PolynomialStructure_new.stringFor(vph[i]));
-                pw.println("          " + PolynomialStructure_new.stringFor(vsv[i]));
-                pw.println("          " + PolynomialStructure_new.stringFor(vsh[i]));
-                pw.println("          " + PolynomialStructure_new.stringFor(eta[i]) + " " + qMu[i] + " " + qKappa[i]);
+                pw.println(rmin[i] + " " + rmax[i] + " " + PolynomialStructure.stringFor(rho[i]));
+                pw.println("          " + PolynomialStructure.stringFor(vpv[i]));
+                pw.println("          " + PolynomialStructure.stringFor(vph[i]));
+                pw.println("          " + PolynomialStructure.stringFor(vsv[i]));
+                pw.println("          " + PolynomialStructure.stringFor(vsh[i]));
+                pw.println("          " + PolynomialStructure.stringFor(eta[i]) + " " + qMu[i] + " " + qKappa[i]);
             }
         }
     }
 
-    public static PolynomialStructure_new read(Path inputPath) throws IOException {
+    public static PolynomialStructure read(Path inputPath) throws IOException {
         InformationFileReader reader = new InformationFileReader(inputPath, false);
         String[] structureLines = reader.getNonCommentLines();
 
@@ -118,7 +118,7 @@ public class PolynomialStructureFile {
             qKappa[i] = Double.parseDouble(etaParts[5]);
         }
 
-        return new PolynomialStructure_new(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+        return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
     /**
@@ -167,12 +167,12 @@ public class PolynomialStructureFile {
      */
     public static void run(CommandLine cmdLine) throws IOException {
 
-        PolynomialStructure_new structure;
+        PolynomialStructure structure;
         String structureName;
 
         if (cmdLine.hasOption("n")) {
             structureName = cmdLine.getOptionValue("n");
-            structure = PolynomialStructure_new.of(structureName);
+            structure = PolynomialStructure.of(structureName);
         } else {
             System.err.println("not supported yet"); // TODO
             return;

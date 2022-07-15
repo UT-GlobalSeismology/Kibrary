@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -155,7 +155,7 @@ public class OneDPartialDSMSetup implements Operation_old {
         final Set<TimewindowData> timewindows = tmpwindows;
 
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
-        PolynomialStructure_new ps = DefaultStructure.PREM;
+        PolynomialStructure ps = DefaultStructure.PREM;
         if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
             ps = DefaultStructure.PREM;
         }

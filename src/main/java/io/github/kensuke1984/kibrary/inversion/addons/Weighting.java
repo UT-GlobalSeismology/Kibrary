@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.ConjugateGradientMethod;
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.NonNegativeLeastSquaresMethod;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.ConjugateGradientMethod;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.NonNegativeLeastSquaresMethod;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;

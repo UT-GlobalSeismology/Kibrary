@@ -10,7 +10,7 @@ import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -23,12 +23,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public final class FujiConversion {
 
-    private final PolynomialStructure_new STRUCTURE;
+    private final PolynomialStructure STRUCTURE;
 
     /**
      * @param structure STRUCTURE
      */
-    public FujiConversion(PolynomialStructure_new structure) {
+    public FujiConversion(PolynomialStructure structure) {
         STRUCTURE = structure;
     }
 

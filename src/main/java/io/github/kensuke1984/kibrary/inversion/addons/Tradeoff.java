@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;

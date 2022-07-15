@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
 /**
@@ -30,7 +30,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
     private final double[] radii;
     private boolean[] commentPerturbationR;
 
-    public OneDPartialDSMInputFile(PolynomialStructure_new structure, GlobalCMTAccess event, Set<Observer> stations, String outputDir,
+    public OneDPartialDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> stations, String outputDir,
                       double[] perturbationR, double tlen, int np) {
         super(structure, event, stations, outputDir, tlen, np);
         radii = perturbationR.clone();

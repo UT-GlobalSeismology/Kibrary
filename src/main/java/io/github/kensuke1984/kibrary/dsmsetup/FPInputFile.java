@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 
 /**
@@ -27,7 +27,7 @@ public class FPInputFile extends DSMInputHeader {
     private final GlobalCMTAccess event;
     private final HorizontalPosition[] positions;
     private final double[] radii;
-    private final PolynomialStructure_new structure;
+    private final PolynomialStructure structure;
     private final String output;
 
     /**
@@ -39,7 +39,7 @@ public class FPInputFile extends DSMInputHeader {
      * @param perturbationRadii will be copied
      * @param perturbationPositions  will be copied
      */
-    public FPInputFile(GlobalCMTAccess event, String outputDir, PolynomialStructure_new structure, double tlen, int np,
+    public FPInputFile(GlobalCMTAccess event, String outputDir, PolynomialStructure structure, double tlen, int np,
                   double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
         this.event = event;
@@ -252,7 +252,7 @@ public class FPInputFile extends DSMInputHeader {
     /**
      * @return structure to be used
      */
-    public PolynomialStructure_new getStructure() {
+    public PolynomialStructure getStructure() {
         return structure;
     }
 

@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;

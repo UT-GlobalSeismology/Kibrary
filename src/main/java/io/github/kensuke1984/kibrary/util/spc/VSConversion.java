@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -28,13 +28,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public final class VSConversion {
 
-    private PolynomialStructure_new structure;
+    private PolynomialStructure structure;
 
     /**
      * @param structure
      *            structure
      */
-    public VSConversion(PolynomialStructure_new structure) {
+    public VSConversion(PolynomialStructure structure) {
         this.structure = structure == null ? DefaultStructure.PREM : structure;
     }
 

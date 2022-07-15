@@ -13,13 +13,13 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.visual.MapperShellscript;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
@@ -137,11 +137,11 @@ public class VelocityModelMapper extends Operation {
     @Override
     public void run() throws IOException {
 
-        PolynomialStructure_new structure = null;
+        PolynomialStructure structure = null;
         if (structurePath != null) {
             structure = PolynomialStructureFile.read(structurePath);
         } else {
-            structure = PolynomialStructure_new.of(structureName);
+            structure = PolynomialStructure.of(structureName);
         }
 
         Path unknownsPath = resultPath.resolve("unknowns.lst");

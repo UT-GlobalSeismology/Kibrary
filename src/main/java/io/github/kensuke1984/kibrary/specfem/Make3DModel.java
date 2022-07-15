@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.specfem;
 
-import io.github.kensuke1984.kibrary.inversion.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;

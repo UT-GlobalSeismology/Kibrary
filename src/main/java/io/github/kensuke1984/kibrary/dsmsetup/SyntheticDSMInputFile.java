@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_new;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
  */
 public class SyntheticDSMInputFile extends DSMInputHeader {
 
-    protected final PolynomialStructure_new structure;
+    protected final PolynomialStructure structure;
 
     protected final String output;
 
@@ -43,7 +43,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @param tlen      TLEN[s]
      * @param np        NP
      */
-    public SyntheticDSMInputFile(PolynomialStructure_new structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
+    public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
                             double tlen, int np) {
         super(tlen, np);
         this.structure = structure;
@@ -140,7 +140,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
         }
     }
 
-    public SyntheticDSMInputFile replaceStructure(PolynomialStructure_new structure) {
+    public SyntheticDSMInputFile replaceStructure(PolynomialStructure structure) {
         return new SyntheticDSMInputFile(structure, event, observers, output, getTlen(), getNp());
     }
 
