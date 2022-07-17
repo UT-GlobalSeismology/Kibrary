@@ -168,7 +168,7 @@ public class VelocityModelMapper extends Operation {
 
                 for (VariableType variable : variableTypes) {
                     Path outputPercentPath = outBasisPath.resolve(variable.toString().toLowerCase() +  "Percent.lst");
-                    PerturbationModelFile.writePercentForType(variable, model, outputPercentPath);
+                    PerturbationListFile.writePercentForType(variable, model, outputPercentPath);
                 }
             }
         }
@@ -186,11 +186,10 @@ public class VelocityModelMapper extends Operation {
         if (mapRegion != null) {
             return mapRegion;
         } else {
-            double latMin, latMax, lonMin, lonMax;
-            // set one position as an initial value
-            HorizontalPosition pos0 = unknowns.get(0).getPosition();
-            latMin = latMax = pos0.getLatitude();
-            lonMin = lonMax = pos0.getLongitude();
+            double latMin = Double.MAX_VALUE;
+            double latMax = -Double.MAX_VALUE;
+            double lonMin = Double.MAX_VALUE;
+            double lonMax = -Double.MAX_VALUE;
             // search all unknowns
             for (UnknownParameter unknown : unknowns) {
                 HorizontalPosition pos = unknown.getPosition();

@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.model;
 
 import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 
 /**
  * A voxel of which its parameters are perturbed.
@@ -31,7 +31,7 @@ public class PerturbationVoxel {
     }
 
     public void setPercent(VariableType type, double percent) {
-        double absolute = initialMedium.get(type) * (1. + percent);
+        double absolute = initialMedium.get(type) * (1. + percent / 100);
         perturbedMedium.set(type, absolute);
     }
 

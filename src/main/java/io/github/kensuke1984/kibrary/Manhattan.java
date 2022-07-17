@@ -61,7 +61,6 @@ enum Manhattan {
     BasicIDMerge(41, BasicIDMerge.class),
     WaveformPlotCreater(42, WaveformPlotCreater.class),
     RecordSectionCreater(43, RecordSectionCreater.class),
-    BasicIDRebuilder(45, BasicIDRebuilder.class),
     // Partial 50
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class),
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class),
@@ -75,6 +74,7 @@ enum Manhattan {
     // Tests 70
     CheckerboardMaker(71, CheckerboardMaker.class),
     PseudoWaveformGenerator(72, PseudoWaveformGenerator.class),
+    BasicIDRebuilder(73, BasicIDRebuilder.class),
     // Temporal 100
     ;
 

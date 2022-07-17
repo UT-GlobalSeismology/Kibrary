@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.model.PerturbationListFile;
 import io.github.kensuke1984.kibrary.model.PerturbationModel;
-import io.github.kensuke1984.kibrary.model.PerturbationModelFile;
 import io.github.kensuke1984.kibrary.model.PerturbationVoxel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -86,7 +86,7 @@ public class CheckerboardMaker extends Operation {
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#tag ");
             pw.println("##Path of a voxel information file, must be set");
-            pw.println("#voxelPath voxel.lst");
+            pw.println("#voxelPath voxel.inf");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
@@ -151,19 +151,23 @@ public class CheckerboardMaker extends Operation {
         HorizontalPosition[] positions = file.getHorizontalPositions();
 
         // set checkerboard model
+        System.err.println("Creating checkerboard perturbations.");
         PerturbationModel model = new PerturbationModel();
         HorizontalPosition referencePosition = positions[0];
         for (HorizontalPosition horizontalPosition : positions) {
             for (int i = 0; i < radii.length; i++) {
                 FullPosition position = horizontalPosition.toFullPosition(radii[i]);
+                // find the sign shift with respect to referencePosition
                 int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude
                         + (position.getLongitude() - referencePosition.getLongitude()) / dLongitude) + i;
 
                 double volume = Earth.getVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < variableTypes.size(); k++) {
-                    int sign = ((numDiff % 2 == 1) ^ signFlips[k]) ? -1 : 1; // ^ is XOR
-                    voxel.setPercent(variableTypes.get(k), percents[k] * sign);
+                    double percent = ((numDiff % 2 == 1) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
+                    voxel.setPercent(variableTypes.get(k), percent);
+                    // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
+                    voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
                 model.add(voxel);
             }
@@ -172,13 +176,14 @@ public class CheckerboardMaker extends Operation {
         Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        System.err.println("Outputting perturbation model files.");
+        System.err.println("Outputting perturbation list files.");
         for (VariableType variable : variableTypes) {
             Path paramPath = outPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
-            PerturbationModelFile.writePercentForType(variable, model, paramPath);
+            PerturbationListFile.writePercentForType(variable, model, paramPath);
         }
 
         // set known parameters
+        System.err.println("Setting checkerboard model parameters.");
         List<KnownParameter> knowns = new ArrayList<>();
         for (PartialType partial : partialTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
@@ -189,7 +194,7 @@ public class CheckerboardMaker extends Operation {
         }
 
         System.err.println("Outputting known parameter file.");
-        Path knownPath = outPath.resolve("knowns.lst");
+        Path knownPath = outPath.resolve("model.lst");
         KnownParameterFile.write(knowns, knownPath);
 
 //

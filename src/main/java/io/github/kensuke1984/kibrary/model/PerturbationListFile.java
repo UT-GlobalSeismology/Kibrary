@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.earth.VariableType;
  * @author otsuru
  * @since 2022/4/9
  */
-public class PerturbationModelFile {
+public class PerturbationListFile {
 
     public static void writeAbsoluteForType(VariableType type, PerturbationModel model, Path outPath, OpenOption... options)
             throws IOException {

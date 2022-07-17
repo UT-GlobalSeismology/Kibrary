@@ -513,15 +513,12 @@ public class RaypathMapper extends Operation {
         if (mapRegion != null) {
             return mapRegion;
         } else {
-            double latMin, latMax, lonMin, lonMax;
+            double latMin = Double.MAX_VALUE;
+            double latMax = -Double.MAX_VALUE;
+            double lonMin = Double.MAX_VALUE;
+            double lonMax = -Double.MAX_VALUE;
+
             Set<GlobalCMTID> events = EventListFile.read(outPath.resolve(eventFileName));
-            Set<Observer> observers = ObserverListFile.read(outPath.resolve(observerFileName));
-
-            // set one position as an initial value
-            HorizontalPosition pos0 = events.iterator().next().getEventData().getCmtLocation();
-            latMin = latMax = pos0.getLatitude();
-            lonMin = lonMax = pos0.getLongitude();
-
             for (GlobalCMTID event : events) {
                 HorizontalPosition pos = event.getEventData().getCmtLocation();
                 if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
@@ -530,6 +527,7 @@ public class RaypathMapper extends Operation {
                 if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
             }
 
+            Set<Observer> observers = ObserverListFile.read(outPath.resolve(observerFileName));
             for (Observer observer : observers) {
                 HorizontalPosition pos = observer.getPosition();
                 if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
