@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -1144,9 +1144,9 @@ public class PartialWaveformAssembler1D implements Operation_old {
                     double r = par0.getPerturbationLocation().getR();
 
                     ElasticMedium medium = structure.mediumAt(r);
-                    double mu = medium.get(ParameterType.MU);
-                    double M = medium.get(ParameterType.LAMBDA) + 2 * mu;
-                    double rho = medium.get(ParameterType.RHO);
+                    double mu = medium.get(VariableType.MU);
+                    double M = medium.get(VariableType.LAMBDA) + 2 * mu;
+                    double rho = medium.get(VariableType.RHO);
 
                     double[] dataG = new double[data.length];
                     double[] dataM = data1;

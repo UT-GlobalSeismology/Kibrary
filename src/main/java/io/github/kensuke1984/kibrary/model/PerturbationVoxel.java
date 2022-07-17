@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.model;
 
 import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
@@ -25,32 +25,32 @@ public class PerturbationVoxel {
         this.perturbedMedium = new ElasticMedium();
     }
 
-    public void setDelta(ParameterType type, double perturbation) {
+    public void setDelta(VariableType type, double perturbation) {
         double absolute = initialMedium.get(type) + perturbation;
         perturbedMedium.set(type, absolute);
     }
 
-    public void setPercent(ParameterType type, double percent) {
+    public void setPercent(VariableType type, double percent) {
         double absolute = initialMedium.get(type) * (1. + percent);
         perturbedMedium.set(type, absolute);
     }
 
-    public void setDefaultIfUndefined(ParameterType type) {
+    public void setDefaultIfUndefined(VariableType type) {
         if (!perturbedMedium.isDefined(type)) {
             double def = initialMedium.get(type);
             perturbedMedium.set(type, def);
         }
     }
 
-    public double getDelta(ParameterType type) {
+    public double getDelta(VariableType type) {
         return perturbedMedium.get(type) - initialMedium.get(type);
     }
 
-    public double getAbsolute(ParameterType type) {
+    public double getAbsolute(VariableType type) {
         return perturbedMedium.get(type);
     }
 
-    public double getPercent(ParameterType type) {
+    public double getPercent(VariableType type) {
         return (perturbedMedium.get(type) / initialMedium.get(type) - 1.) * 100;
     }
 

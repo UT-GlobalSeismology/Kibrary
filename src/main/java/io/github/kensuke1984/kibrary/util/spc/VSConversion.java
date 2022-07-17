@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -66,7 +66,7 @@ public final class VSConversion {
         for (int i = 0; i < spectrum.nbody(); i++) {
             double r = bodyR[i];
             ElasticMedium medium = structure.mediumAt(r);
-            double fact = 2. * medium.get(ParameterType.RHO) * medium.get(ParameterType.Vsh);
+            double fact = 2. * medium.get(VariableType.RHO) * medium.get(VariableType.Vsh);
             SPCBody body = spectrum.getSpcBodyList().get(i);
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {

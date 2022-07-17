@@ -9,7 +9,6 @@ import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
-import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
@@ -55,7 +54,6 @@ enum Brooklyn {
     // Partial 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
     // Inversion 60
-    CheckerboardMaker(64, CheckerboardMaker.class),
     // Temporal 100
     ;
 

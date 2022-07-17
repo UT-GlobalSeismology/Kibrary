@@ -21,9 +21,9 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Creates a checkerboard model file.
+ * Operation that creates a checkerboard model file.
  * @author otsuru
  * @since 2022/3/4
  */
@@ -61,7 +61,7 @@ public class CheckerboardMaker extends Operation {
      */
     private String structureName;
 
-    private List<ParameterType> parameterTypes;
+    private List<VariableType> variableTypes;
     private double[] percents;
     private boolean[] signFlips;
     private List<PartialType> partialTypes;
@@ -91,8 +91,8 @@ public class CheckerboardMaker extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
             pw.println("#structureName ");
-            pw.println("##Parameter types to perturb, listed using spaces, must be set.");
-            pw.println("#parameterTypes ");
+            pw.println("##Variable types to perturb, listed using spaces, must be set.");
+            pw.println("#variableTypes ");
             pw.println("##(double) Percentage of perturbation, listed using spaces in the order of partialTypes, must be set.");
             pw.println("#percents ");
             pw.println("##(boolean) Whether to flip the sign, listed using spaces in the order of partialTypes, must be set.");
@@ -119,13 +119,13 @@ public class CheckerboardMaker extends Operation {
             structureName = property.parseString("structureName", "PREM");
         }
 
-        parameterTypes = Arrays.stream(property.parseStringArray("parameterTypes", null)).map(ParameterType::valueOf)
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
                 .collect(Collectors.toList());
         percents = property.parseDoubleArray("percents", null);
-        if (percents.length != parameterTypes.size())
+        if (percents.length != variableTypes.size())
             throw new IllegalArgumentException("Number of percents does not match number of parameterTypes.");
         signFlips = property.parseBooleanArray("signFlips", null);
-        if (signFlips.length != parameterTypes.size())
+        if (signFlips.length != variableTypes.size())
             throw new IllegalArgumentException("Number of signFlips does not match number of parameterTypes.");
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
                 .collect(Collectors.toList());
@@ -161,9 +161,9 @@ public class CheckerboardMaker extends Operation {
 
                 double volume = Earth.getVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
-                for (int p = 0; p < parameterTypes.size(); p++) {
-                    int sign = ((numDiff % 2 == 1) ^ signFlips[i]) ? -1 : 1; // ^ is XOR
-                    voxel.setPercent(parameterTypes.get(i), percents[i] * sign);
+                for (int k = 0; k < variableTypes.size(); k++) {
+                    int sign = ((numDiff % 2 == 1) ^ signFlips[k]) ? -1 : 1; // ^ is XOR
+                    voxel.setPercent(variableTypes.get(k), percents[k] * sign);
                 }
                 model.add(voxel);
             }
@@ -173,9 +173,9 @@ public class CheckerboardMaker extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation model files.");
-        for (ParameterType param : parameterTypes) {
-            Path paramPath = outPath.resolve(param.toString().toLowerCase() + "Percent.lst");
-            PerturbationModelFile.writePercentForType(param, model, paramPath);
+        for (VariableType variable : variableTypes) {
+            Path paramPath = outPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
+            PerturbationModelFile.writePercentForType(variable, model, paramPath);
         }
 
         // set known parameters
@@ -183,7 +183,7 @@ public class CheckerboardMaker extends Operation {
         for (PartialType partial : partialTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
                 UnknownParameter unknown = new Physical3DParameter(partial, voxel.getPosition(), voxel.getVolume());
-                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(ParameterType.of(partial)));
+                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(VariableType.of(partial)));
                 knowns.add(known);
             }
         }

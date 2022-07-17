@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -174,7 +174,7 @@ public class SensitivityKernelMapper extends Operation {
                 pw.println(partial.getPerturbationLocation() + " " + cumulativeSensitivity * 1e31);
             }
 
-            MapperShellscript script = new MapperShellscript(ParameterType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
+            MapperShellscript script = new MapperShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
             script.write(observerPath);
 
         }

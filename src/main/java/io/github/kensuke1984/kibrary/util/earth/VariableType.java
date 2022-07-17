@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @author otsuru
  * @since 2022/4/11
  */
-public enum ParameterType {
+public enum VariableType {
     RHO,
     // iso
     Vp, Vs, Vb,
@@ -19,7 +19,7 @@ public enum ParameterType {
     // Q
     Qmu, Qkappa;
 
-    public static boolean isIsotropicVelocity(ParameterType type) {
+    public static boolean isIsotropicVelocity(VariableType type) {
         switch (type) {
         case Vp:
         case Vs:
@@ -30,7 +30,7 @@ public enum ParameterType {
         }
     }
 
-    public static boolean isIsotropicModulus(ParameterType type) {
+    public static boolean isIsotropicModulus(VariableType type) {
         switch (type) {
         case LAMBDAplus2MU:
         case LAMBDA:
@@ -42,7 +42,7 @@ public enum ParameterType {
         }
     }
 
-    public static boolean isTIVelocity(ParameterType type) {
+    public static boolean isTIVelocity(VariableType type) {
         switch (type) {
         case Vpv:
         case Vph:
@@ -55,7 +55,7 @@ public enum ParameterType {
         }
     }
 
-    public static boolean isTIModulus(ParameterType type) {
+    public static boolean isTIModulus(VariableType type) {
         switch (type) {
         case A:
         case C:
@@ -69,7 +69,7 @@ public enum ParameterType {
         }
     }
 
-    public static ParameterType of(PartialType type) {
+    public static VariableType of(PartialType type) {
         switch (type) {
         case RHO: return RHO;
         case A: return A;

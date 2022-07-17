@@ -270,11 +270,11 @@ public final class PolynomialStructure {
      * Add perturbation of a certain parameter to an arbitrary layer.
      * @param r1 (double) Lower radius of layer to add perturbation to
      * @param r2 (double) Upper radius of layer to add perturbation to
-     * @param parameter (ParameterType) The parameter to perburb
+     * @param variable (VariableType) The parameter to perburb
      * @param percent (double) Size of perturbation [%]
      * @return a new structure with added perturbations
      */
-    public PolynomialStructure withPerturbation(double r1, double r2, ParameterType parameter, double percent) {
+    public PolynomialStructure withPerturbation(double r1, double r2, VariableType variable, double percent) {
         // look up whether r1 and r2 are existing boundaries or not
         boolean foundR1 = false;
         boolean foundR2 = false;
@@ -314,7 +314,7 @@ public final class PolynomialStructure {
         int izoneR1 = structureNew.zoneOf(r1);
         int izoneR2 = structureNew.zoneOf(r2);
         for (int izone = izoneR1; izone < izoneR2; izone++) {
-            switch(parameter) {
+            switch(variable) {
             case RHO:
                 rhoNew[izone] = rhoNew[izone].multiply(p0);
                 break;
@@ -382,28 +382,28 @@ public final class PolynomialStructure {
      */
     public ElasticMedium mediumAt(double r) {
         ElasticMedium medium = new ElasticMedium();
-        medium.set(ParameterType.RHO, rho[zoneOf(r)].value(xFor(r)));
-        medium.set(ParameterType.Vpv, vpv[zoneOf(r)].value(xFor(r)));
-        medium.set(ParameterType.Vph, vph[zoneOf(r)].value(xFor(r)));
-        medium.set(ParameterType.Vsv, vsv[zoneOf(r)].value(xFor(r)));
-        medium.set(ParameterType.Vsh, vsh[zoneOf(r)].value(xFor(r)));
-        medium.set(ParameterType.ETA, eta[zoneOf(r)].value(xFor(r)));
-        medium.set(ParameterType.Qmu, qMu[zoneOf(r)]);
-        medium.set(ParameterType.Qkappa, qKappa[zoneOf(r)]);
+        medium.set(VariableType.RHO, rho[zoneOf(r)].value(xFor(r)));
+        medium.set(VariableType.Vpv, vpv[zoneOf(r)].value(xFor(r)));
+        medium.set(VariableType.Vph, vph[zoneOf(r)].value(xFor(r)));
+        medium.set(VariableType.Vsv, vsv[zoneOf(r)].value(xFor(r)));
+        medium.set(VariableType.Vsh, vsh[zoneOf(r)].value(xFor(r)));
+        medium.set(VariableType.ETA, eta[zoneOf(r)].value(xFor(r)));
+        medium.set(VariableType.Qmu, qMu[zoneOf(r)]);
+        medium.set(VariableType.Qkappa, qKappa[zoneOf(r)]);
         return medium;
     }
 
     /**
      * Get value of a specified parameter at a given radius.
-     * @param type (ParameterType) the type of parameter to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
+     * @param variable (VariableType) the type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
      * @param r (double) radius [km]
      * @return (double) value of the parameter at the given radius
      *
      * @author otsuru
      * @since 2022/4/11
      */
-    public double getAtRadius(ParameterType type, double r) {
-        switch(type) {
+    public double getAtRadius(VariableType variable, double r) {
+        switch(variable) {
         case RHO:
             return rho[zoneOf(r)].value(xFor(r));
         case Vpv:

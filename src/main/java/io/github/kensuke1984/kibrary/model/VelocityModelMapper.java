@@ -17,9 +17,9 @@ import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.visual.MapperShellscript;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
@@ -60,7 +60,7 @@ public class VelocityModelMapper extends Operation {
      */
     private Path structurePath;
     private String structureName;
-    private Set<ParameterType> parameterTypes;
+    private Set<VariableType> variableTypes;
     /**
      * Solvers for equation
      */
@@ -94,8 +94,8 @@ public class VelocityModelMapper extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of an initial structure model used (PREM)");
             pw.println("#structureName ");
-            pw.println("##Parameter types to map, listed using spaces (Vs)");
-            pw.println("#parameterTypes ");
+            pw.println("##Variable types to map, listed using spaces (Vs)");
+            pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(int) Maximum number of basis vectors to map (20)");
@@ -124,7 +124,7 @@ public class VelocityModelMapper extends Operation {
             structureName = property.parseString("structureName", "PREM");
         }
 
-        parameterTypes = Arrays.stream(property.parseStringArray("parameterTypes", "Vs")).map(ParameterType::valueOf)
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
@@ -166,18 +166,18 @@ public class VelocityModelMapper extends Operation {
                 Path outBasisPath = outPath.resolve(inverse.simple() + k);
                 Files.createDirectories(outBasisPath);
 
-                for (ParameterType parameter : parameterTypes) {
-                    Path outputPercentPath = outBasisPath.resolve(parameter.toString().toLowerCase() +  "Percent.lst");
-                    PerturbationModelFile.writePercentForType(parameter, model, outputPercentPath);
+                for (VariableType variable : variableTypes) {
+                    Path outputPercentPath = outBasisPath.resolve(variable.toString().toLowerCase() +  "Percent.lst");
+                    PerturbationModelFile.writePercentForType(variable, model, outputPercentPath);
                 }
             }
         }
 
         //~write shellscripts for mapping
-        for (ParameterType parameter : parameterTypes) {
-            String paramName = parameter.toString().toLowerCase();
+        for (VariableType variable : variableTypes) {
+            String paramName = variable.toString().toLowerCase();
             writeParentShellscript(paramName, outPath.resolve(paramName + "PercentAllMap.sh"));
-            MapperShellscript script = new MapperShellscript(parameter, radii, decideMapRegion(unknownsList), scale, paramName + "Percent");
+            MapperShellscript script = new MapperShellscript(variable, radii, decideMapRegion(unknownsList), scale, paramName + "Percent");
             script.write(outPath);
         }
     }

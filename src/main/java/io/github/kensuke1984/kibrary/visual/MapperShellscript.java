@@ -5,18 +5,18 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 
 public class MapperShellscript {
 
-    private ParameterType parameter;
+    private VariableType variable;
     private double[] radii;
     private String mapRegion;
     private double scale;
     private String modelFileName;
 
-    public MapperShellscript(ParameterType parameter, double[] radii, String mapRegion, double scale, String modelFileName) {
-        this.parameter = parameter;
+    public MapperShellscript(VariableType variable, double[] radii, String mapRegion, double scale, String modelFileName) {
+        this.variable = variable;
         this.radii = radii;
         this.mapRegion = mapRegion;
         this.scale = scale;
@@ -75,7 +75,7 @@ public class MapperShellscript {
         }
     }
     private void writeMakeMap(Path outPath) throws IOException {
-        String paramName = parameter.toString();
+        String paramName = variable.toString();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             pw.println("#!/bin/sh");
             pw.println("");

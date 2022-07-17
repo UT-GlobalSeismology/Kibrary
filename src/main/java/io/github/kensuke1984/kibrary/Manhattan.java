@@ -15,6 +15,7 @@ import io.github.kensuke1984.kibrary.inv_new.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
+import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -71,7 +72,9 @@ enum Manhattan {
     InversionArranger(61, InversionArranger.class),
     InversionSolver(62, InversionSolver.class),
     VelocityModelMapper(64, VelocityModelMapper.class),
-    PseudoWaveformGenerator(65, PseudoWaveformGenerator.class),
+    // Tests 70
+    CheckerboardMaker(71, CheckerboardMaker.class),
+    PseudoWaveformGenerator(72, PseudoWaveformGenerator.class),
     // Temporal 100
     ;
 

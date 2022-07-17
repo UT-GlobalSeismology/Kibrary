@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.util.earth.ParameterType;
+import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -30,7 +30,7 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(unknowns.get(i).getPosition())) {
-                    voxel.setDelta(ParameterType.of(unknowns.get(i).getPartialType()), values[i]);
+                    voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
                     flag = true;
                 }
             }
@@ -38,14 +38,14 @@ public class PerturbationModel {
             // otherwise, create new voxel
             if (flag == false) {
                 PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getWeighting(), initialStructure);
-                voxel.setDelta(ParameterType.of(unknowns.get(i).getPartialType()), values[i]);
+                voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
                 voxelList.add(voxel);
             }
         }
 
         // if RHO is not included in unknwons, set RHO to value in initial structure
         for (PerturbationVoxel voxel : voxelList) {
-            voxel.setDefaultIfUndefined(ParameterType.RHO);
+            voxel.setDefaultIfUndefined(VariableType.RHO);
         }
     }
 
@@ -59,7 +59,7 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(parameter.getPosition())) {
-                    voxel.setDelta(ParameterType.of(parameter.getPartialType()), value);
+                    voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
                     flag = true;
                 }
             }
@@ -67,14 +67,14 @@ public class PerturbationModel {
             // otherwise, create new voxel
             if (flag == false) {
                 PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getWeighting(), initialStructure);
-                voxel.setDelta(ParameterType.of(parameter.getPartialType()), value);
+                voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
                 voxelList.add(voxel);
             }
         }
 
         // if RHO is not included in unknwons, set RHO to value in initial structure
         for (PerturbationVoxel voxel : voxelList) {
-            voxel.setDefaultIfUndefined(ParameterType.RHO);
+            voxel.setDefaultIfUndefined(VariableType.RHO);
         }
     }
 

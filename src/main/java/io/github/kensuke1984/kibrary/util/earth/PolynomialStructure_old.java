@@ -882,14 +882,14 @@ public class PolynomialStructure_old implements Serializable {
      */
     public ElasticMedium getMediumAt(double r) {
         ElasticMedium medium = new ElasticMedium();
-        medium.set(ParameterType.RHO, rho[zoneOf(r)].value(toX(r)));
-        medium.set(ParameterType.Vpv, vpv[zoneOf(r)].value(toX(r)));
-        medium.set(ParameterType.Vph, vph[zoneOf(r)].value(toX(r)));
-        medium.set(ParameterType.Vsv, vsv[zoneOf(r)].value(toX(r)));
-        medium.set(ParameterType.Vsh, vsh[zoneOf(r)].value(toX(r)));
-        medium.set(ParameterType.ETA, eta[zoneOf(r)].value(toX(r)));
-        medium.set(ParameterType.Qmu, qMu[zoneOf(r)]);
-        medium.set(ParameterType.Qkappa, qKappa[zoneOf(r)]);
+        medium.set(VariableType.RHO, rho[zoneOf(r)].value(toX(r)));
+        medium.set(VariableType.Vpv, vpv[zoneOf(r)].value(toX(r)));
+        medium.set(VariableType.Vph, vph[zoneOf(r)].value(toX(r)));
+        medium.set(VariableType.Vsv, vsv[zoneOf(r)].value(toX(r)));
+        medium.set(VariableType.Vsh, vsh[zoneOf(r)].value(toX(r)));
+        medium.set(VariableType.ETA, eta[zoneOf(r)].value(toX(r)));
+        medium.set(VariableType.Qmu, qMu[zoneOf(r)]);
+        medium.set(VariableType.Qkappa, qKappa[zoneOf(r)]);
         return medium;
     }
 
@@ -916,7 +916,7 @@ public class PolynomialStructure_old implements Serializable {
      * @author otsuru
      * @since 2022/4/11
      */
-    public double getAtRadius(ParameterType type, double r) {
+    public double getAtRadius(VariableType type, double r) {
         switch(type) {
         case RHO:
             return rho[zoneOf(r)].value(toX(r));
