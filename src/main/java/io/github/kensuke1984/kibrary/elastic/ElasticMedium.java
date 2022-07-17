@@ -1,9 +1,7 @@
-package io.github.kensuke1984.kibrary.elasticparameter;
+package io.github.kensuke1984.kibrary.elastic;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
 
 /**
  * Class for computing unknown parameters of isotropic and transversely isotropic (TI) media

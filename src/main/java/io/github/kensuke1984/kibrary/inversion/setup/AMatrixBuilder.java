@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_new.setup;
+package io.github.kensuke1984.kibrary.inversion.setup;
 
 import java.util.ArrayList;
 import java.util.Arrays;

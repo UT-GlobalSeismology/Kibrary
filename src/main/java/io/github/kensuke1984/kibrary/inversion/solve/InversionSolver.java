@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_new.solve;
+package io.github.kensuke1984.kibrary.inversion.solve;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,10 +16,10 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inv_new.setup.AtAFile;
-import io.github.kensuke1984.kibrary.inv_new.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inv_old.InverseProblem;
+import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
+import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 

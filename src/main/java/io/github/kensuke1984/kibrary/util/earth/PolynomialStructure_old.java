@@ -19,7 +19,8 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import io.github.kensuke1984.kibrary.dsmsetup.TransverselyIsotropicParameter;
-import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.data.Trace;

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_new;
+package io.github.kensuke1984.kibrary.inversion.setup;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -6,19 +6,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inv_new.setup.MatrixAssembly;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InverseProblem;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -30,12 +24,12 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Operation for operating inversion.
+ * Operation for for assembling A<sup>T</sup>A and A<sup>T</sup>d.
  *
  * @author otsuru
- * @since 2022/4/28 recreated inversion.LetMeInvert
+ * @since 2022/7/4 created based on part of inversion.LetMeInvert
  */
-public class LetMeInvert extends Operation {
+public class InversionArranger extends Operation {
 
     private final Property property;
     /**
@@ -73,10 +67,6 @@ public class LetMeInvert extends Operation {
     private Path unknownParameterPath;
 
     private WeightingType weightingType;
-    /**
-     * Solvers for equation
-     */
-    private Set<InverseMethodEnum> inverseMethods;
 
     /**
      * @param args  none to create a property file <br>
@@ -109,13 +99,11 @@ public class LetMeInvert extends Operation {
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weightingType ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
-            pw.println("#inverseMethods ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public LetMeInvert(Property property) throws IOException {
+    public InversionArranger(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -132,8 +120,6 @@ public class LetMeInvert extends Operation {
 
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
 
-        inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
-                .collect(Collectors.toSet());
     }
 
     @Override
@@ -144,23 +130,19 @@ public class LetMeInvert extends Operation {
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
+        // prepare output folder
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
 
-        // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
-        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
-
-        // solve inversion and output
+        // output
+        AtAFile.write(ata, outPath.resolve("ata.lst"));
+        AtdFile.write(atd, outPath.resolve("atd.lst"));
         UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
-        for (InverseMethodEnum method : inverseMethods) {
-            InverseProblem inverseProblem = method.formProblem(ata, atd);
-            inverseProblem.compute();
-            inverseProblem.outputAnswers(parameterList, outPath.resolve(method.simpleName()));
-        }
-
     }
 
 }

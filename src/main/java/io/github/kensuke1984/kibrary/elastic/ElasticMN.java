@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.elasticparameter;
+package io.github.kensuke1984.kibrary.elastic;
 
 /**
  * ID for elastic parameter C<sub>mn</sub>

@@ -13,14 +13,14 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.model.PerturbationListFile;
-import io.github.kensuke1984.kibrary.model.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * @author otsuru
  * @since 2022/4/9
- * @version 2022/7/17 moved and renamed from model.VelocityModelMapper
+ * @version 2022/7/17 moved and renamed from model.VelocityModelMapper to visual.ModelSetMapper
  */
 public class ModelSetMapper extends Operation {
 

@@ -70,6 +70,7 @@ import io.github.kensuke1984.kibrary.waveform.addons.AtdFile;
  * @author Kensuke Konishi
  * @version 2.0.3.6
  * @author anselme added regularization, ...
+ * @deprecated use LetMeInvert
  */
 public class LetMeInvert_old extends Operation {
 

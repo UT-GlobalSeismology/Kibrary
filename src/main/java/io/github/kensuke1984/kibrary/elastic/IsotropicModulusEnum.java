@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.elasticparameter;
+package io.github.kensuke1984.kibrary.elastic;
 
 /**
  * enum for elements in modulus

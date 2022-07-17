@@ -8,7 +8,8 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 
 /**
  * 1D structure of a planet.

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util.earth;
+package io.github.kensuke1984.kibrary.elastic;
 
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -7,6 +7,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  *
  * @author otsuru
  * @since 2022/4/11
+ * @version 2022/7/17 renamed & moved from util.earth.ParameterType to elastic.VariableType
  */
 public enum VariableType {
     RHO,

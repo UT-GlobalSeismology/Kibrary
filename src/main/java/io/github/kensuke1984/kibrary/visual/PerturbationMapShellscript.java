@@ -5,12 +5,12 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 
 /**
  * @author otsuru
  * @since 2022/4/12
- * @version 2022/7/17 renamed from MapperShellscript
+ * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
  */
 public class PerturbationMapShellscript {
 

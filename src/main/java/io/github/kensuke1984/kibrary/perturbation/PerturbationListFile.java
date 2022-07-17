@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.model;
+package io.github.kensuke1984.kibrary.perturbation;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,7 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 
 /**
  * @author otsuru

@@ -1,9 +1,9 @@
-package io.github.kensuke1984.kibrary.model;
+package io.github.kensuke1984.kibrary.perturbation;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;

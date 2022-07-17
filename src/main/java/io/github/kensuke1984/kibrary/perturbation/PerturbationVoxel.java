@@ -1,9 +1,9 @@
-package io.github.kensuke1984.kibrary.model;
+package io.github.kensuke1984.kibrary.perturbation;
 
-import io.github.kensuke1984.kibrary.elasticparameter.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.VariableType;
 
 /**
  * A voxel of which its parameters are perturbed.

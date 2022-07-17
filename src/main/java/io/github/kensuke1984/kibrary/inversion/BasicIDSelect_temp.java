@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_new;
+package io.github.kensuke1984.kibrary.inversion;
 
 import java.io.IOException;
 import java.nio.file.Path;
