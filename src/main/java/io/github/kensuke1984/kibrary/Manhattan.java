@@ -12,13 +12,14 @@ import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inv_new.LetMeInvert;
 import io.github.kensuke1984.kibrary.inv_new.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inv_new.solve.InversionSolver;
-import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.ModelMapper;
+import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
@@ -70,7 +71,8 @@ enum Manhattan {
     LetMeInvert(60, LetMeInvert.class),
     InversionArranger(61, InversionArranger.class),
     InversionSolver(62, InversionSolver.class),
-    VelocityModelMapper(64, VelocityModelMapper.class),
+    ModelMapper(63, ModelMapper.class),
+    ModelSetMapper(64, ModelSetMapper.class),
     // Tests 70
     CheckerboardMaker(71, CheckerboardMaker.class),
     PseudoWaveformGenerator(72, PseudoWaveformGenerator.class),

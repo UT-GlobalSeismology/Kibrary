@@ -1717,15 +1717,15 @@ public class LetMeInvert_old extends Operation {
 //								RealVector jatd = ja.preMultiply(eq.getDVector().getD());
                                 RealVector jatd = ja.preMultiply(jd);
                                 method.setConditioner(eq.getM());
-                                solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.formProblem(ja, jatd));
+                                solveMinimalOutput(outPath.resolve(method.simpleName() + String.valueOf(ires)), method.formProblem(ja, jatd));
                             }
                         }
                         else {
-                            solve(outPath.resolve(method.simple()), method.formProblem(eq.getA(), eq.getAtD()));
+                            solve(outPath.resolve(method.simpleName()), method.formProblem(eq.getA(), eq.getAtD()));
                         }
                     }
                     else {
-                        solve(outPath.resolve(method.simple()), method.formProblem(eq.getAtA(), eq.getAtD()));
+                        solve(outPath.resolve(method.simpleName()), method.formProblem(eq.getAtA(), eq.getAtD()));
                     }
                 }
                 else {
@@ -1768,24 +1768,24 @@ public class LetMeInvert_old extends Operation {
                                 }
 //								RealVector jatd = ja.preMultiply(eq.getDVector().getD());
                                 RealVector jatd = ja.preMultiply(jd);
-                                solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.formProblem(ja, jatd));
+                                solveMinimalOutput(outPath.resolve(method.simpleName() + String.valueOf(ires)), method.formProblem(ja, jatd));
                             }
                         }
                         else {
-                            solve(outPath.resolve(method.simple()), method.formProblem(eq.getA(), eq.getAtD()));
+                            solve(outPath.resolve(method.simpleName()), method.formProblem(eq.getA(), eq.getAtD()));
                         }
                     }
                     else if (method == InverseMethodEnum.NONLINEAR_CONJUGATE_GRADIENT) {
 //						eq.applyCombiner(3);
-                        solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getA(), eq.getDVector().getObs(), eq.getDVector().getSyn()));
+                        solve(outPath.resolve(method.simpleName()), method.getMethod(eq.getAtA(), eq.getA(), eq.getDVector().getObs(), eq.getDVector().getSyn()));
                     }
                     else if (method == InverseMethodEnum.CONSTRAINED_CONJUGATE_GRADIENT) {
                         RealMatrix h = ConstrainedConjugateGradientMethod.projectorRectangle(eq.getMlength(), 2);
-                        solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD(), h));
+                        solve(outPath.resolve(method.simpleName()), method.getMethod(eq.getAtA(), eq.getAtD(), h));
                     }
                     else {
 //						eq.applyCombiner2(2);
-                        solve(outPath.resolve(method.simple()), method.formProblem(eq.getAtA(), eq.getAtD()));
+                        solve(outPath.resolve(method.simpleName()), method.formProblem(eq.getAtA(), eq.getAtD()));
                     }
                 }
             } catch (Exception e) {

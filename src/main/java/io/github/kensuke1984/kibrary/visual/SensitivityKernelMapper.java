@@ -174,7 +174,7 @@ public class SensitivityKernelMapper extends Operation {
                 pw.println(partial.getPerturbationLocation() + " " + cumulativeSensitivity * 1e31);
             }
 
-            MapperShellscript script = new MapperShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
+            PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
             script.write(observerPath);
 
         }

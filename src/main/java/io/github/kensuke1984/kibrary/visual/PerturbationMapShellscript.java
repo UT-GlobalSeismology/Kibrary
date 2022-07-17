@@ -7,7 +7,12 @@ import java.nio.file.Path;
 
 import io.github.kensuke1984.kibrary.util.earth.VariableType;
 
-public class MapperShellscript {
+/**
+ * @author otsuru
+ * @since 2022/4/12
+ * @version 2022/7/17 renamed from MapperShellscript
+ */
+public class PerturbationMapShellscript {
 
     private VariableType variable;
     private double[] radii;
@@ -15,7 +20,7 @@ public class MapperShellscript {
     private double scale;
     private String modelFileName;
 
-    public MapperShellscript(VariableType variable, double[] radii, String mapRegion, double scale, String modelFileName) {
+    public PerturbationMapShellscript(VariableType variable, double[] radii, String mapRegion, double scale, String modelFileName) {
         this.variable = variable;
         this.radii = radii;
         this.mapRegion = mapRegion;
@@ -126,7 +131,6 @@ public class MapperShellscript {
 
             pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
             pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
-//            pw.println("gmt ps2raster $outputps -A -Tgf -Qg4 -E150");
             pw.println("echo \"Done!\"");
         }
     }

@@ -83,14 +83,14 @@ public class VelocityField3D {
 			System.out.println(depth);
 		
 		for (InverseMethodEnum inverse : ir.getInverseMethods()) {
-			if (!Files.exists(inversionResultPath.resolve(inverse.simple() + "_mean")))
-					Files.createDirectory(inversionResultPath.resolve(inverse.simple() + "_mean"));
+			if (!Files.exists(inversionResultPath.resolve(inverse.simpleName() + "_mean")))
+					Files.createDirectory(inversionResultPath.resolve(inverse.simpleName() + "_mean"));
 			
 			System.out.println(inverse);
 			
 			if (!jackknife) {
 				for (int i = 1; i <= n; i++) {
-					Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
+					Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + ".txt");
 					
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 					
@@ -115,7 +115,7 @@ public class VelocityField3D {
 					pw.close();
 					
 					//write model for specfem
-					Path outpahSpecfem = inversionResultPath.resolve(inverse.simple() + "/" + "specfem_velocity" + inverse.simple() + i + ".txt");
+					Path outpahSpecfem = inversionResultPath.resolve(inverse.simpleName() + "/" + "specfem_velocity" + inverse.simpleName() + i + ".txt");
 					writeSpecfemPerturbationMap(outpahSpecfem, perturbations, dL, perturbationLayers);		
 				}
 				
@@ -149,7 +149,7 @@ public class VelocityField3D {
 					Map<FullPosition, List<PerturbationValue>> meanPerturbationMap = new HashMap<>();
 					
 					for (int ires = 0; ires < nRes; ires++) {
-						Path outpath = inversionResultPath.resolve(inverse.simple() + ires + "/" + "velocity" + inverse.simple() + i + ".txt");
+						Path outpath = inversionResultPath.resolve(inverse.simpleName() + ires + "/" + "velocity" + inverse.simpleName() + i + ".txt");
 						
 						Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i, ires);
 						
@@ -182,8 +182,8 @@ public class VelocityField3D {
 						pw.close();
 					}
 				
-					Path outpathMean = inversionResultPath.resolve(inverse.simple() + "_mean/" + "velocity" + inverse.simple() + i + "_mean" + ".txt");
-					Path outpathVar = inversionResultPath.resolve(inverse.simple() + "_mean/" + "velocity" + inverse.simple() + i + "_var" + ".txt");
+					Path outpathMean = inversionResultPath.resolve(inverse.simpleName() + "_mean/" + "velocity" + inverse.simpleName() + i + "_mean" + ".txt");
+					Path outpathVar = inversionResultPath.resolve(inverse.simpleName() + "_mean/" + "velocity" + inverse.simpleName() + i + "_var" + ".txt");
 					PrintWriter pwMean = new PrintWriter(Files.newBufferedWriter(outpathMean, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 					PrintWriter pwVar = new PrintWriter(Files.newBufferedWriter(outpathVar, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 					

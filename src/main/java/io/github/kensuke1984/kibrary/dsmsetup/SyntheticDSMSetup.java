@@ -23,8 +23,8 @@ import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -311,6 +311,7 @@ public class SyntheticDSMSetup extends Operation {
         DSMShellscript shell = new DSMShellscript(outPath, mpi, rayMap.size(), header);
         shell.write(SPCType.SYNTHETIC, SPCMode.PSV);
         shell.write(SPCType.SYNTHETIC, SPCMode.SH);
+        System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
     }
 
 }

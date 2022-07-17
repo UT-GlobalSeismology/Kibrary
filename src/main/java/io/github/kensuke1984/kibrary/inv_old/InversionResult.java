@@ -82,7 +82,7 @@ public class InversionResult {
      */
     public InversionResult(Path rootPath) throws IOException {
         this.rootPath = rootPath;
-        inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simple()).toFile().exists())
+        inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simpleName()).toFile().exists())
             .collect(Collectors.toSet());
         readVarianceMap();
         readOrder();
@@ -99,7 +99,7 @@ public class InversionResult {
      */
     public InversionResult(Path rootPath, boolean minimal) throws IOException {
         this.rootPath = rootPath;
-        inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simple()).toFile().exists())
+        inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simpleName()).toFile().exists())
             .collect(Collectors.toSet());
 //		readVarianceMap();
 //		readOrder();
@@ -464,7 +464,7 @@ public class InversionResult {
         if (n <= 0)
             throw new IllegalArgumentException("n is out of range. must be >= 0 " + n);
         double[] unknownParameterWeigths = getUnkownParameterWeights();
-        double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + "/" + inverse.simple() + n + ".txt"))
+        double[] values = Files.readAllLines(rootPath.resolve(inverse.simpleName() + "/" + inverse.simpleName() + n + ".txt"))
                 .stream().mapToDouble(Double::parseDouble).toArray();
         if (unknownParameterWeigths == null)
             return IntStream.range(0, values.length).boxed()
@@ -478,7 +478,7 @@ public class InversionResult {
         if (n <= 0)
             throw new IllegalArgumentException("n is out of range. must be >= 0 " + n);
         double[] unknownParameterWeigths = getUnkownParameterWeights();
-        double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + "/" + inverse.simple() + "_x" + n + ".txt"))
+        double[] values = Files.readAllLines(rootPath.resolve(inverse.simpleName() + "/" + inverse.simpleName() + "_x" + n + ".txt"))
                 .stream().mapToDouble(Double::parseDouble).toArray();
         if (unknownParameterWeigths == null)
             return IntStream.range(0, values.length).boxed()
@@ -492,7 +492,7 @@ public class InversionResult {
         if (n <= 0)
             throw new IllegalArgumentException("n is out of range. must be >= 0 " + n);
         double[] unknownParameterWeigths = getUnkownParameterWeights();
-        double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + iRes + "/" + inverse.simple() + n + ".txt"))
+        double[] values = Files.readAllLines(rootPath.resolve(inverse.simpleName() + iRes + "/" + inverse.simpleName() + n + ".txt"))
                 .stream().mapToDouble(Double::parseDouble).toArray();
         if (unknownParameterWeigths == null)
             return IntStream.range(0, values.length).boxed()
@@ -799,7 +799,7 @@ public class InversionResult {
             // TODO
             if (inverse == InverseMethodEnum.LEAST_SQUARES_METHOD)
                 continue;
-            Path path = rootPath.resolve(inverse.simple() + "/variance.txt");
+            Path path = rootPath.resolve(inverse.simpleName() + "/variance.txt");
             answerVarianceMap.put(inverse,
                     Files.lines(path).mapToDouble(Double::parseDouble).boxed().toArray(Double[]::new));
         }

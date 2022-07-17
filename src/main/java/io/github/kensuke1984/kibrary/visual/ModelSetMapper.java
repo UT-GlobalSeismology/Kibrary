@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.model;
+package io.github.kensuke1984.kibrary.visual;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.model.PerturbationListFile;
+import io.github.kensuke1984.kibrary.model.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.VariableType;
-import io.github.kensuke1984.kibrary.visual.MapperShellscript;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -29,17 +29,9 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * @author otsuru
  * @since 2022/4/9
+ * @version 2022/7/17 moved and renamed from model.VelocityModelMapper
  */
-public class VelocityModelMapper extends Operation {
-
-    /**
-     * The interval of deciding map size
-     */
-    private static final int INTERVAL = 5;
-    /**
-     * How much space to provide at the rim of the map
-     */
-    private static final int MAP_RIM = 5;
+public class ModelSetMapper extends Operation {
 
     private final Property property;
     /**
@@ -108,7 +100,7 @@ public class VelocityModelMapper extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public VelocityModelMapper(Property property) throws IOException {
+    public ModelSetMapper(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -137,6 +129,7 @@ public class VelocityModelMapper extends Operation {
     @Override
     public void run() throws IOException {
 
+        // read initial structure
         PolynomialStructure structure = null;
         if (structurePath != null) {
             structure = PolynomialStructureFile.read(structurePath);
@@ -144,90 +137,72 @@ public class VelocityModelMapper extends Operation {
             structure = PolynomialStructure.of(structureName);
         }
 
+        // read parameters
         Path unknownsPath = resultPath.resolve("unknowns.lst");
         List<UnknownParameter> unknownsList = UnknownParameterFile.read(unknownsPath);
         double[] radii = unknownsList.stream().mapToDouble(unknown -> unknown.getPosition().getR()).distinct().sorted().toArray();
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", tag, GadgetAid.getTemporaryString());
+        // decide map region
+        if (mapRegion == null) mapRegion = ModelMapper.decideMapRegion(unknownsList);
 
-        //~write list files
-        for (InverseMethodEnum inverse : inverseMethods) {
-            Path methodPath = resultPath.resolve(inverse.simple());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        // write list files
+        for (InverseMethodEnum method : inverseMethods) {
+            Path methodPath = resultPath.resolve(method.simpleName());
             if (!Files.exists(methodPath)) {
-                System.err.println("Results for " + inverse.simple() + " do not exist, skipping.");
+                System.err.println("Results for " + method.simpleName() + " do not exist, skipping.");
                 continue;
             }
 
             for (int k = 1; k <= maxNum; k++){
-                Path answerPath = methodPath.resolve(inverse.simple() + k + ".lst");
+                Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 List<KnownParameter> answers = KnownParameterFile.read(answerPath);
                 PerturbationModel model = new PerturbationModel(answers, structure);
 
-                Path outBasisPath = outPath.resolve(inverse.simple() + k);
+                Path outBasisPath = outPath.resolve(method.simpleName() + k);
                 Files.createDirectories(outBasisPath);
 
                 for (VariableType variable : variableTypes) {
-                    Path outputPercentPath = outBasisPath.resolve(variable.toString().toLowerCase() +  "Percent.lst");
+                    Path outputPercentPath = outBasisPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
                     PerturbationListFile.writePercentForType(variable, model, outputPercentPath);
                 }
             }
         }
 
-        //~write shellscripts for mapping
+        // write shellscripts for mapping
         for (VariableType variable : variableTypes) {
-            String paramName = variable.toString().toLowerCase();
-            writeParentShellscript(paramName, outPath.resolve(paramName + "PercentAllMap.sh"));
-            MapperShellscript script = new MapperShellscript(variable, radii, decideMapRegion(unknownsList), scale, paramName + "Percent");
+            String variableName = variable.toString().toLowerCase();
+            writeParentShellscript(variableName, outPath.resolve(variableName + "PercentAllMap.sh"));
+            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, mapRegion, scale, variableName + "Percent");
             script.write(outPath);
-        }
-    }
-
-    private String decideMapRegion(List<UnknownParameter> unknowns) throws IOException {
-        if (mapRegion != null) {
-            return mapRegion;
-        } else {
-            double latMin = Double.MAX_VALUE;
-            double latMax = -Double.MAX_VALUE;
-            double lonMin = Double.MAX_VALUE;
-            double lonMax = -Double.MAX_VALUE;
-            // search all unknowns
-            for (UnknownParameter unknown : unknowns) {
-                HorizontalPosition pos = unknown.getPosition();
-                if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
-                if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
-                if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
-                if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
-            }
-            // expand the region a bit more
-            latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
-            latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
-            lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
-            lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
-            // return as String
-            return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+            System.err.println("After this finishes, please run " + outPath + "/" + variableName + "PercentAllMap.sh");
         }
     }
 
     private void writeParentShellscript(String paramName, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
-            pw.println("");
-            pw.println("for i in `seq 1 " + maxNum + "`");
-            pw.println("do");
-            pw.println("    cd CG$i");
-            pw.println("    ln -s ../" + paramName + "PercentGrid.sh .");
-            pw.println("    ln -s ../" + paramName + "PercentMap.sh .");
-            pw.println("    ln -s ../cp_master.cpt .");
-            pw.println("    sh " + paramName + "PercentGrid.sh");
-            pw.println("    wait");
-            pw.println("    sh " + paramName + "PercentMap.sh");
-            pw.println("    wait");
-            pw.println("    rm -rf *.grd gmt.* cp.cpt");
-            pw.println("    unlink " + paramName + "PercentGrid.sh");
-            pw.println("    unlink " + paramName + "PercentMap.sh");
-            pw.println("    unlink cp_master.cpt");
-            pw.println("    cd ..");
-            pw.println("done");
+            for (InverseMethodEnum method : inverseMethods) {
+                pw.println("");
+                pw.println("for i in `seq 1 " + maxNum + "`");
+                pw.println("do");
+                pw.println("    cd " + method.simpleName() + "$i");
+                pw.println("    ln -s ../" + paramName + "PercentGrid.sh .");
+                pw.println("    ln -s ../" + paramName + "PercentMap.sh .");
+                pw.println("    ln -s ../cp_master.cpt .");
+                pw.println("    sh " + paramName + "PercentGrid.sh");
+                pw.println("    wait");
+                pw.println("    sh " + paramName + "PercentMap.sh");
+                pw.println("    wait");
+                pw.println("    rm -rf *.grd gmt.* cp.cpt");
+                pw.println("    unlink " + paramName + "PercentGrid.sh");
+                pw.println("    unlink " + paramName + "PercentMap.sh");
+                pw.println("    unlink cp_master.cpt");
+                pw.println("    cd ..");
+                pw.println("done");
+            }
         }
     }
 

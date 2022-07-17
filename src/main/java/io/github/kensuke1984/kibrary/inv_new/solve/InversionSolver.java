@@ -118,7 +118,7 @@ public class InversionSolver extends Operation {
         for (InverseMethodEnum method : inverseMethods) {
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();
-            inverseProblem.outputAnswers(unknowns, workPath.resolve(method.simple()));
+            inverseProblem.outputAnswers(unknowns, workPath.resolve(method.simpleName()));
         }
 
     }

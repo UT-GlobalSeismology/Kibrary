@@ -158,7 +158,7 @@ public class LetMeInvert extends Operation {
         for (InverseMethodEnum method : inverseMethods) {
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();
-            inverseProblem.outputAnswers(parameterList, outPath.resolve(method.simple()));
+            inverseProblem.outputAnswers(parameterList, outPath.resolve(method.simpleName()));
         }
 
     }

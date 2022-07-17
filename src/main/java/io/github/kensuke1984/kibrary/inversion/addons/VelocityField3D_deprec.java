@@ -171,7 +171,7 @@ public class VelocityField3D_deprec {
 		Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
 		if (partialTypes.contains(PartialType.MU)) {
 			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
-				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocityInitialModel" + ".txt");
+				Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocityInitialModel" + ".txt");
 				
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 					pw.println("# perturbationR Vsh");
@@ -183,10 +183,10 @@ public class VelocityField3D_deprec {
 				int n = unknowns.size();
 //				n = 15;
 				for (int i = 1; i <= n; i+=1) {
-					outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
-					Path outpathForCrosssection = inversionResultPath.resolve(inverse.simple() + "/" + "forCrosssection" + inverse.simple() + i + ".txt");
-					Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");
-					Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
+					outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + ".txt");
+					Path outpathForCrosssection = inversionResultPath.resolve(inverse.simpleName() + "/" + "forCrosssection" + inverse.simpleName() + i + ".txt");
+					Path outpathIteration = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + "_iteration.txt");
+					Path outpathQ = inversionResultPath.resolve(inverse.simpleName() + "/" + "Q" + inverse.simpleName() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 					Map<FullPosition, Double> locAnswerMap = new HashMap<>();
 					answerMap.forEach((m, v) -> locAnswerMap.put(m.getPosition(), v));
@@ -270,7 +270,7 @@ public class VelocityField3D_deprec {
 							}
 							
 							//1D profile
-							Path outpathProfile = inversionResultPath.resolve(inverse.simple() + "/" + "profile1D_" + inverse.simple() + i + ".txt");
+							Path outpathProfile = inversionResultPath.resolve(inverse.simpleName() + "/" + "profile1D_" + inverse.simpleName() + i + ".txt");
 							PrintWriter pw2 = new PrintWriter(Files.newBufferedWriter(outpathProfile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 							for (int j = 0; j < profile1D.length; j++) {
 								pw2.println(profile1D[j][0] + " " + (6371.- profile1D[j][0]) + " " + profile1D[j][1]);
@@ -280,8 +280,8 @@ public class VelocityField3D_deprec {
 							//local 1D profile at each horizontal point
 							if (i == 7) {
 								for (HorizontalPosition p : horizontalPoints) {
-									Path outpath3 = inversionResultPath.resolve(inverse.simple() + "/" + "local1D_" + p.getLatitude() + "_" + p.getLongitude()
-											+ "_" + inverse.simple() + i + ".txt");
+									Path outpath3 = inversionResultPath.resolve(inverse.simpleName() + "/" + "local1D_" + p.getLatitude() + "_" + p.getLongitude()
+											+ "_" + inverse.simpleName() + i + ".txt");
 									PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outpath3, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 									for (double r : perturbationRs) {
 										FullPosition loc = p.toFullPosition(r);
@@ -795,7 +795,7 @@ public class VelocityField3D_deprec {
 		
 		for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 			for (int i = 1; i < n; i++) {
-				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
+				Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + ".txt");
 				Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 				Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 				answerMap.forEach((m, v) -> zeroMap.put(m, 0.));

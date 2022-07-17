@@ -63,7 +63,7 @@ public abstract class InverseProblem {
         Files.createDirectories(outPath);
         System.err.println("Outputting the answer files in " + outPath);
         for (int i = 0; i < getNParameter(); i++) {
-            Path outputPath = outPath.resolve(getEnum().simple() + (i+1) + ".lst");
+            Path outputPath = outPath.resolve(getEnum().simpleName() + (i+1) + ".lst");
             double[] m = ans.getColumn(i);
             KnownParameterFile.write(unknowns, m, outputPath);
         }
@@ -79,7 +79,7 @@ public abstract class InverseProblem {
         Files.createDirectories(outPath);
         System.err.println("outputting the answer files in " + outPath);
         for (int i = 0; i < getNParameter(); i++) {
-            Path out = outPath.resolve(getEnum().simple() + (i+1) + ".txt");
+            Path out = outPath.resolve(getEnum().simpleName() + (i+1) + ".txt");
             double[] m = ans.getColumn(i);
             writeDat(out, m);
         }
@@ -96,7 +96,7 @@ public abstract class InverseProblem {
         Files.createDirectories(outPath);
         System.err.println("outputting the answer files in " + outPath);
         for (int i = 0; i < getNParameter(); i++) {
-            Path out = outPath.resolve(getEnum().simple() + (i+1) + ".txt");
+            Path out = outPath.resolve(getEnum().simpleName() + (i+1) + ".txt");
             double[] m = ans.getColumn(i);
             for (int j = 0; j < m.length; j++)
                 m[j] *= parameterWeights[j];
@@ -114,7 +114,7 @@ public abstract class InverseProblem {
         Files.createDirectories(outPath);
         System.err.println("outputting the answer files in " + outPath);
         for (int i = 0; i < getNParameter(); i++) {
-            Path out = outPath.resolve(getEnum().simple() + "_x" + (i+1) + ".txt");
+            Path out = outPath.resolve(getEnum().simpleName() + "_x" + (i+1) + ".txt");
             double[] m = ans.getColumn(i);
             writeDat(out, m);
         }

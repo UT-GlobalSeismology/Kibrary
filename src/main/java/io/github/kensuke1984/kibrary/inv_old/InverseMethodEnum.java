@@ -58,7 +58,7 @@ public enum InverseMethodEnum {
         conditioner = m;
     }
 
-    public String simple() {
+    public String simpleName() {
         switch (this) {
         case SINGULAR_VALUE_DECOMPOSITION:
             return "SVD";

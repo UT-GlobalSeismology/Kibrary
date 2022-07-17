@@ -133,7 +133,7 @@ public class VelocityField_RND {
 			Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
 			if (partialTypes.contains(PartialType.PAR2) || partialTypes.contains(PartialType.PARQ)) {
 				for (InverseMethodEnum inverse : ir.getInverseMethods()) {
-					Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocityInitialModel" + ".txt");
+					Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocityInitialModel" + ".txt");
 					try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 						pw.println("# perturbationR Vsh");
 						for (int j = 0; j <= 1000; j++) {
@@ -143,9 +143,9 @@ public class VelocityField_RND {
 					}
 					int n = unknowns.size();
 					for (int i = 1; i <= n; i++) {
-						outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
-						Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");
-						Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
+						outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + ".txt");
+						Path outpathIteration = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + "_iteration.txt");
+						Path outpathQ = inversionResultPath.resolve(inverse.simpleName() + "/" + "Q" + inverse.simpleName() + i + ".txt");
 						Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 						Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 						answerMap.forEach((m, v) -> zeroMap.put(m, 0.));

@@ -20,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -302,6 +302,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
         shellFP.write(SPCType.PF, SPCMode.PSV);
         shellFP.write(SPCType.PF, SPCMode.SH);
+        System.err.println("After this finishes, please run " + outPath + "/runFP_PSV.sh and " + outPath + "/runFP_SH.sh");
 
         // BP
         System.err.println("Making information files for the observers (bp) ...");
@@ -334,6 +335,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
         shellBP.write(SPCType.PB, SPCMode.PSV);
         shellBP.write(SPCType.PB, SPCMode.SH);
+        System.err.println("After this finishes, please run " + outPath + "/runBP_PSV.sh and " + outPath + "/runBP_SH.sh");
 
         // TODO
         if (fpPath.toFile().delete() && bpPath.toFile().delete()) {
