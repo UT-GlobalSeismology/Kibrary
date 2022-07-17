@@ -11,43 +11,54 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * @author otsuru
  * @since 2022/4/9
  */
-class PerturbationVoxel {
+public class PerturbationVoxel {
 
     private final FullPosition position;
+    private final double volume;
     private final ElasticMedium initialMedium;
     private final ElasticMedium perturbedMedium;
 
-    PerturbationVoxel(FullPosition position, PolynomialStructure oneDStructure) {
+    public PerturbationVoxel(FullPosition position, double volume, PolynomialStructure oneDStructure) {
         this.position = position;
+        this.volume = volume;
         this.initialMedium = oneDStructure.mediumAt(position.getR());
         this.perturbedMedium = new ElasticMedium();
     }
 
-    void setDelta(ParameterType type, double perturbation) {
+    public void setDelta(ParameterType type, double perturbation) {
         double absolute = initialMedium.get(type) + perturbation;
         perturbedMedium.set(type, absolute);
     }
 
-    void setDefaultIfUndefined(ParameterType type) {
+    public void setPercent(ParameterType type, double percent) {
+        double absolute = initialMedium.get(type) * (1. + percent);
+        perturbedMedium.set(type, absolute);
+    }
+
+    public void setDefaultIfUndefined(ParameterType type) {
         if (!perturbedMedium.isDefined(type)) {
             double def = initialMedium.get(type);
             perturbedMedium.set(type, def);
         }
     }
 
-    double getDelta(ParameterType type) {
+    public double getDelta(ParameterType type) {
         return perturbedMedium.get(type) - initialMedium.get(type);
     }
 
-    double getAbsolute(ParameterType type) {
+    public double getAbsolute(ParameterType type) {
         return perturbedMedium.get(type);
     }
 
-    double getPercent(ParameterType type) {
+    public double getPercent(ParameterType type) {
         return (perturbedMedium.get(type) / initialMedium.get(type) - 1.) * 100;
     }
 
-    FullPosition getPosition() {
+    public FullPosition getPosition() {
         return position;
+    }
+
+    public double getVolume() {
+        return volume;
     }
 }

@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * <p>
  * {@code List<KnownParameter>} is used instead of {@code Map<UnknownParameter, Double>} here
  * because {@link UnknownParameter} is not Comparable and thus cannot be sorted.
+ * (Map mixes up the order. Even with LinkedHashMap, keySet() cannot get the keys in order.)
  * <p>
  * TODO ３次元と１次元の混在をさける
  *

@@ -8,6 +8,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
@@ -131,10 +134,14 @@ public class InversionArranger extends Operation {
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        // assemble matrices and output
+        // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
-        AtAFile.write(assembler.getAta(), outPath.resolve("ata.lst"));
-        AtdFile.write(assembler.getAtd(), outPath.resolve("atd.lst"));
+        RealMatrix ata = assembler.getAta();
+        RealVector atd = assembler.getAtd();
+
+        // output
+        AtAFile.write(ata, outPath.resolve("ata.lst"));
+        AtdFile.write(atd, outPath.resolve("atd.lst"));
         UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
     }
 

@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * </ul>
  * <p>
  * Duplication is NOT allowed.
- * Parameters with same type and position are regarded as same parameters, even if weighting differs.
+ * Parameters with same type and position are regarded as same parameters, even if weighting differs. TODO really?
  * <p>
  * TODO ３次元と１次元の混在をさける
  *

@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  * @author otsuru
  * @since 2022/7/5 recreated inversion.Dvector
  */
-final class DVectorBuilder {
+public final class DVectorBuilder {
     private static final double START_TIME_DELAY_LIMIT = 15.0;
 
     /**
@@ -54,7 +54,7 @@ final class DVectorBuilder {
     private final int[] startPoints;
 
 
-    DVectorBuilder(BasicID[] basicIDs) {
+    public DVectorBuilder(BasicID[] basicIDs) {
         // check if IDs are valid
         if (!check(basicIDs)) throw new RuntimeException("Input IDs do not have waveform data.");
 
@@ -69,18 +69,18 @@ final class DVectorBuilder {
         startPoints = new int[nTimeWindow];
         System.err.println(nTimeWindow + " timewindows are used");
 
-        read();
+        npts = read();
     }
 
-    private void read() {
-        this.npts = 0;
+    private int read() {
+        int npts = 0;
         int start = 0;
 
         for (int i = 0; i < nTimeWindow; i++) {
             startPoints[i] = start;
-            int npts = obsIDs[i].getNpts();
-            this.npts += npts;
-            start += npts;
+            int nptsI = obsIDs[i].getNpts();
+            npts += nptsI;
+            start += nptsI;
 
             // read waveforms
             obsVecs[i] = new ArrayRealVector(obsIDs[i].getData(), false);
@@ -91,6 +91,7 @@ final class DVectorBuilder {
             if (obsVecs[i].getLInfNorm() == 0 || Double.isNaN(obsVecs[i].getLInfNorm()))
                 throw new RuntimeException("Obs is 0 or NaN: " + obsIDs[i] + " " + obsVecs[i].getLInfNorm());
         }
+        return npts;
     }
 
     /**
@@ -134,7 +135,7 @@ final class DVectorBuilder {
      * @param id {@link BasicID}
      * @return index for the ID. -1 if no ID found.
      */
-    int whichTimewindow(BasicID id) {
+    public int whichTimewindow(BasicID id) {
         BasicID[] ids = id.getWaveformType() == WaveformType.OBS ? obsIDs : synIDs;
         return IntStream.range(0, ids.length).filter(i -> isPair(id, ids[i])).findAny().orElse(-1);
     }
@@ -165,7 +166,7 @@ final class DVectorBuilder {
      * @param weighting (Weighting)
      * @return (RealVector) d
      */
-    RealVector buildWithWeight(Weighting weighting) {
+    public RealVector buildWithWeight(Weighting weighting) {
         RealVector v = new ArrayRealVector(npts);
         for (int i = 0; i < nTimeWindow; i++) {
             // [(obs - syn) * weight] for each element point inside timewindow i
@@ -176,32 +177,64 @@ final class DVectorBuilder {
     }
 
     /**
+     * @param vector to separate
+     * @return Separated vectors for each time window. Error occurs if the input is invalid.
+     */
+    public RealVector[] separate(RealVector vector) {
+        if (vector.getDimension() != npts)
+            throw new RuntimeException("The length of input vector " + vector.getDimension() + " is invalid, should be " + npts);
+        RealVector[] vectors = new RealVector[nTimeWindow];
+        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVecs[i].getDimension()));
+        return vectors;
+    }
+
+    /**
+     * Builds and returns the full synthetic vector
+     * @return (RealVector) syn
+     */
+    public RealVector fullSynVec() {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], synVecs[i]);
+        }
+        return v;
+    }
+
+    /**
      * @param i (int)
      * @return (int) number of points inside i-th timewindow
      */
-    int nptsOfWindow(int i) {
+    public int nptsOfWindow(int i) {
         return obsIDs[i].getNpts();
     }
 
     /**
      * @return (int) number of points of whole vector
      */
-    int getNpts() {
+    public int getNpts() {
         return npts;
     }
 
     /**
      * @return (int) number of timewindows (= number of BasicIDs) included
      */
-    int getNTimeWindow() {
+    public int getNTimeWindow() {
         return nTimeWindow;
     }
 
-    RealVector getObsVec(int i) {
+    public BasicID getObsID(int i) {
+        return obsIDs[i];
+    }
+
+    public BasicID getSynID(int i) {
+        return synIDs[i];
+    }
+
+    public RealVector getObsVec(int i) {
         return obsVecs[i].copy();
     }
 
-    RealVector getSynVec(int i) {
+    public RealVector getSynVec(int i) {
         return synVecs[i].copy();
     }
 
@@ -209,7 +242,7 @@ final class DVectorBuilder {
      * @param i (int) index of timewindow
      * @return (int) the index of start point where the i th timewindow starts
      */
-    int getStartPoint(int i) {
+    public int getStartPoint(int i) {
         return startPoints[i];
     }
 

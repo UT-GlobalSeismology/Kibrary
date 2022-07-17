@@ -28,6 +28,10 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  * It will be weighed as WA = [weight diagonal matrix][partial derivatives].
  * The volumes of voxels will be multiplied to the partial waveforms here.
  * <p>
+ * The number of rows will be decided by the input {@DVectorBuilder}.
+ * The number of columns will be decided by the input List of {@UnknownParameter}s.
+ * The input {@PartialID} array can have extra IDs, but all needed IDs must be included.
+ * <p>
  * This class is <b>IMMUTABLE</b>.
  *
  * @author otsuru

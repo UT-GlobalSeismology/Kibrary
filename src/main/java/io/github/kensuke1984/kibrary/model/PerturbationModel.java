@@ -19,6 +19,8 @@ public class PerturbationModel {
 
     private List<PerturbationVoxel> voxelList = new ArrayList<>();
 
+    public PerturbationModel() {}
+
     public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure) {
         if (unknowns.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values does not match");
 
@@ -35,7 +37,7 @@ public class PerturbationModel {
 
             // otherwise, create new voxel
             if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), initialStructure);
+                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getWeighting(), initialStructure);
                 voxel.setDelta(ParameterType.of(unknowns.get(i).getPartialType()), values[i]);
                 voxelList.add(voxel);
             }
@@ -64,7 +66,7 @@ public class PerturbationModel {
 
             // otherwise, create new voxel
             if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), initialStructure);
+                PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getWeighting(), initialStructure);
                 voxel.setDelta(ParameterType.of(parameter.getPartialType()), value);
                 voxelList.add(voxel);
             }
@@ -76,7 +78,11 @@ public class PerturbationModel {
         }
     }
 
-    List<PerturbationVoxel> getVoxels() {
+    public void add(PerturbationVoxel voxel) {
+        voxelList.add(voxel);
+    }
+
+    public List<PerturbationVoxel> getVoxels() {
         return voxelList;
     }
 

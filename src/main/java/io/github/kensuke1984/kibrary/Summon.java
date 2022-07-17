@@ -2,6 +2,9 @@ package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -25,7 +28,7 @@ public final class Summon {
      * Runs a class listed in {@link Brooklyn}.
      *
      * @param args  none to choose a {@link Brooklyn} <br>
-     *              [operation name] to work for that {@link Brooklyn}
+     *              "brooklynName [arguments]" to work for that {@link Brooklyn}
      * @throws IOException on failure of reading input
      * @throws ReflectiveOperationException on failure to invoke method from {@link Brooklyn}
      */
@@ -33,9 +36,8 @@ public final class Summon {
 
         //~get brooklyn~//
         Brooklyn brooklyn;
-        if (1 < args.length) {
-            throw new IllegalArgumentException("Too many arguments. You can specify only one Brooklyn.");
-        } else if (args.length == 1) {
+        if (args.length > 0) {
+            // when args exists, args[0] is the name of Brooklyn
             try {
                 brooklyn = Brooklyn.valueOf(args[0]);
             } catch (IllegalArgumentException iae) {
@@ -45,10 +47,11 @@ public final class Summon {
                 return;
             }
         } else {
+            // read Brooklyn number from input
             Brooklyn.printList();
             System.out.print("Which one do you want to summon? [" + Brooklyn.numRange() + "] : ");
             String valInput = GadgetAid.readInputLine();
-            if (valInput.isEmpty()) System.exit(9);
+            if (valInput.isEmpty()) return;
             brooklyn = Brooklyn.valueOf(Integer.parseInt(valInput));
         }
 
@@ -56,9 +59,21 @@ public final class Summon {
         Options options = brooklyn.getOptions();
         CommandLine cmdLine = null;
         if (options != null) {
-            showUsage(options);
-            System.out.print("Enter arguments : ");
-            String[] argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+
+            String[] argsInput;
+            if (args.length > 1) {
+                // remove args[0] because it is the name of Brooklyn
+                // A new ArrayList is created here because the size of result of Arrays.asList() is fixed.
+                List<String> argsListOriginal = new ArrayList<String>(Arrays.asList(args));
+                argsListOriginal.remove(0);
+                argsInput = argsListOriginal.toArray(new String[argsListOriginal.size()]);
+            } else {
+                // read arguments from input
+                showUsage(options);
+                System.out.print("Enter arguments : ");
+                argsInput = GadgetAid.readInputLine().trim().split("\\s+");
+            }
+
             try {
                 cmdLine = parseArgs(options, argsInput);
             } catch (ParseException e) {

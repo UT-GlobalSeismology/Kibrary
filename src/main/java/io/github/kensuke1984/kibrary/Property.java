@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
@@ -134,6 +135,22 @@ public class Property extends Properties {
     }
 
     /**
+     * Gets a pre-specified value, or sets a default value, and returns it in boolean[].
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (boolean[]) array of value to the correcponding key, split at spaces
+     */
+    public boolean[] parseBooleanArray(String key, String defaltValue) {
+        String[] strings = checkAndPutDefault(key, defaltValue).split("\\s+");
+        boolean[] booleans = new boolean[strings.length];
+        for (int i = 0; i < strings.length; i++) {
+            booleans[i] = Boolean.parseBoolean(strings[i]);
+        }
+        return booleans;
+    }
+
+    /**
      * Gets a pre-specified value, or sets a default value, and returns it as int.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
@@ -145,6 +162,17 @@ public class Property extends Properties {
     }
 
     /**
+     * Gets a pre-specified value, or sets a default value, and returns it in int[].
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (int[]) array of value to the correcponding key, split at spaces
+     */
+    public int[] parseIntArray(String key, String defaltValue) {
+        return Arrays.stream(checkAndPutDefault(key, defaltValue).split("\\s+")).mapToInt(Integer::parseInt).toArray();
+    }
+
+    /**
      * Gets a pre-specified value, or sets a default value, and returns it as double.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
@@ -153,6 +181,17 @@ public class Property extends Properties {
      */
     public double parseDouble(String key, String defaltValue) {
         return Double.parseDouble(checkAndPutDefault(key, defaltValue));
+    }
+
+    /**
+     * Gets a pre-specified value, or sets a default value, and returns it in double[].
+     * @param key (String) Name of key. Must not be empty.
+     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     *          This must not be "".
+     * @return (double[]) array of value to the correcponding key, split at spaces
+     */
+    public double[] parseDoubleArray(String key, String defaltValue) {
+        return Arrays.stream(checkAndPutDefault(key, defaltValue).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
     }
 
     /**

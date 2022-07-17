@@ -144,18 +144,17 @@ public class LetMeInvert extends Operation {
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
-        // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
-        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
-
-        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
-
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
 
+        // prepare output folder
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
         // solve inversion and output
+        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
         for (InverseMethodEnum method : inverseMethods) {
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();
