@@ -78,7 +78,8 @@ public class Traveltime {
 
     public void run() {
         measurements.clear();
-        System.err.println("Computing " + raypathInformations.size() + " raypaths");
+        if (raypathInformations.size() > 1)
+            System.err.println("Computing " + raypathInformations.size() + " raypaths");
 
         AtomicInteger count = new AtomicInteger();
         TauPUtils taupUtils = new TauPUtils(modelName);
@@ -144,14 +145,17 @@ public class Traveltime {
             }
             measurements.add(thisRecordList);
 
-            int step = Math.max(1, raypathInformations.size() / 10);
-            if (count.incrementAndGet() % step == 0)
-                System.err.print(count.get() * 10 / step + "%...");
+            if (raypathInformations.size() > 1) {
+                 int step = Math.max(1, raypathInformations.size() / 10);
+                 if (count.incrementAndGet() % step == 0)
+                     System.err.print(count.get() * 10 / step + "%...");
+            }
 //		});
         }
-
-        System.err.println();
-        System.err.println("Run finished!");
+        if (raypathInformations.size() > 1) {
+            System.err.println();
+            System.err.println("Run finished!");
+        }
     }
 
     public List<List<TraveltimeData>> getMeasurements() {
