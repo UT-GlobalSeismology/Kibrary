@@ -33,13 +33,15 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * This is like pathDrawer.pl The pathDrawer compute raypath coordinate. But
- * this class uses raypath by GMT.
+ * Operation to draw map of raypaths, events, observers, and voxel points.
  * <p>
- * event and station are necessary.
+ * In cutAtPiercePoint mode, pierce points are calculated using TauP and exported in list files.
+ * By reusing the output folder, these pierce point files can be reused to save the time to compute them again.
  * <p>
- * <b>Assume that there are no stations with the same name but different
- * networks in an event</b>
+ * This class uses GMT to draw raypaths.
+ * Raypaths can be classified in different colors binned by epicentral distance, azimuth at the event,
+ * azimuth at the observer (backazimuth), and azimuth at the turning point.
+ * <p>
  *
  * TODO: pierce calculation may not work for phases other than ScS (see {@link Raypath})
  *
@@ -136,7 +138,7 @@ public class RaypathMapper extends Operation {
             pw.println("#components ");
             pw.println("##Path of a data entry file, must be set if reusePath is not set.");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##########To plot perturbation points, set one of the following.");
+            pw.println("##########To plot perturbation points, set the following.");
             pw.println("##Path of a voxel information file");
             pw.println("#voxelPath voxel.inf");
             pw.println("##########Overall settings");
@@ -232,6 +234,12 @@ public class RaypathMapper extends Operation {
             readAndOutput();
         }
 
+        if (voxelPath != null) {
+            HorizontalPosition[] perturbationPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+            List<String> perturbationLines = Stream.of(perturbationPositions).map(HorizontalPosition::toString).collect(Collectors.toList());
+            Files.write(outPath.resolve(perturbationFileName), perturbationLines);
+        }
+
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
@@ -286,13 +294,6 @@ public class RaypathMapper extends Operation {
         } else {
             outputRaypaths(raypaths);
         }
-
-        if (voxelPath != null) {
-            HorizontalPosition[] perturbationPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
-            List<String> perturbationLines = Stream.of(perturbationPositions).map(HorizontalPosition::toString).collect(Collectors.toList());
-            Files.write(outPath.resolve(perturbationFileName), perturbationLines);
-        }
-
     }
 
     private void outputRaypaths(Set<Raypath> raypaths) throws IOException {
