@@ -19,14 +19,16 @@ import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
-import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 /**
+ * Creates shellscripts to map a set of inversion results.
+ *
  * @author otsuru
  * @since 2022/4/9
  * @version 2022/7/17 moved and renamed from model.VelocityModelMapper to visual.ModelSetMapper
@@ -139,11 +141,12 @@ public class ModelSetMapper extends Operation {
 
         // read parameters
         Path unknownsPath = resultPath.resolve("unknowns.lst");
-        List<UnknownParameter> unknownsList = UnknownParameterFile.read(unknownsPath);
-        double[] radii = unknownsList.stream().mapToDouble(unknown -> unknown.getPosition().getR()).distinct().sorted().toArray();
+        Set<FullPosition> positions = UnknownParameterFile.read(unknownsPath).stream()
+                .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
+        double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region
-        if (mapRegion == null) mapRegion = ModelMapper.decideMapRegion(unknownsList);
+        if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));

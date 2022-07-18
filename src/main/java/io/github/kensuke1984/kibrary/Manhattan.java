@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
+import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
@@ -71,12 +72,13 @@ enum Manhattan {
     LetMeInvert(60, LetMeInvert.class),
     InversionArranger(61, InversionArranger.class),
     InversionSolver(62, InversionSolver.class),
-    ModelMapper(63, ModelMapper.class),
     ModelSetMapper(64, ModelSetMapper.class),
     // Tests 70
     CheckerboardMaker(71, CheckerboardMaker.class),
-    PseudoWaveformGenerator(72, PseudoWaveformGenerator.class),
-    BasicIDRebuilder(73, BasicIDRebuilder.class),
+    PerturbationMapper(72, PerturbationMapper.class),
+    ModelMapper(73, ModelMapper.class),
+    PseudoWaveformGenerator(75, PseudoWaveformGenerator.class),
+    BasicIDRebuilder(76, BasicIDRebuilder.class),
     // Temporal 100
     ;
 

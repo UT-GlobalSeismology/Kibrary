@@ -13,7 +13,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
  * File of parameters with known values.
- * m in Am=d
+ * m in Am=d.
+ * Values should be in delta (difference from initial model).
  * <p>
  * Each line:
  * <ul>
@@ -22,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * </ul>
  * <p>
  * Duplication is NOT allowed.
- * Parameters with same type and position are regarded as same parameters, even if weighting differs.
+ * Parameters with same type and position are regarded as same parameters, even if weighting differs. //TODO really?
  *
  * <p>
  * {@code List<KnownParameter>} is used instead of {@code Map<UnknownParameter, Double>} here

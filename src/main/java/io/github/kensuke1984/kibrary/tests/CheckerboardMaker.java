@@ -123,10 +123,10 @@ public class CheckerboardMaker extends Operation {
                 .collect(Collectors.toList());
         percents = property.parseDoubleArray("percents", null);
         if (percents.length != variableTypes.size())
-            throw new IllegalArgumentException("Number of percents does not match number of parameterTypes.");
+            throw new IllegalArgumentException("Number of percents does not match number of variableTypes.");
         signFlips = property.parseBooleanArray("signFlips", null);
         if (signFlips.length != variableTypes.size())
-            throw new IllegalArgumentException("Number of signFlips does not match number of parameterTypes.");
+            throw new IllegalArgumentException("Number of signFlips does not match number of variableTypes.");
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
                 .collect(Collectors.toList());
     }
@@ -164,7 +164,8 @@ public class CheckerboardMaker extends Operation {
                 double volume = Earth.getVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < variableTypes.size(); k++) {
-                    double percent = ((numDiff % 2 == 1) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
+                    // CAUTION: (numdiff % 2) can be either 1 or -1 !!
+                    double percent = ((numDiff % 2 != 0) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
                     voxel.setPercent(variableTypes.get(k), percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);

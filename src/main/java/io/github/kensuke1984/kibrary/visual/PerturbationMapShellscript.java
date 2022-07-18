@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
  * @author otsuru
@@ -13,6 +15,15 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
  * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
  */
 public class PerturbationMapShellscript {
+
+    /**
+     * The interval of deciding map size
+     */
+    private static final int INTERVAL = 5;
+    /**
+     * How much space to provide at the rim of the map
+     */
+    private static final int MAP_RIM = 5;
 
     private VariableType variable;
     private double[] radii;
@@ -28,6 +39,11 @@ public class PerturbationMapShellscript {
         this.modelFileName = modelFileName;
     }
 
+    /**
+     * Write cp_master file, grid shellscript, and map shellscript.
+     * @param outPath (Path) Directory where output files should be written.
+     * @throws IOException
+     */
     public void write(Path outPath) throws IOException {
         writeCpMaster(outPath.resolve("cp_master.cpt"));
         writeGridMaker(outPath.resolve(modelFileName + "Grid.sh"));
@@ -135,4 +151,31 @@ public class PerturbationMapShellscript {
         }
     }
 
+
+    /**
+     * Decides a rectangular region of a map that is sufficient to plot all parameter points.
+     * @param positions (Set of FullPosition) Positions that need to be included in map region
+     * @return (String) "lonMin/lonMax/latMin/latMax"
+     * @throws IOException
+     */
+    static String decideMapRegion(Set<FullPosition> positions) throws IOException {
+        double latMin = Double.MAX_VALUE;
+        double latMax = -Double.MAX_VALUE;
+        double lonMin = Double.MAX_VALUE;
+        double lonMax = -Double.MAX_VALUE;
+        // search all unknowns
+        for (FullPosition pos : positions) {
+            if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
+            if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
+            if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
+            if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
+        }
+        // expand the region a bit more
+        latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
+        latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
+        lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
+        lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
+        // return as String
+        return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+    }
 }
