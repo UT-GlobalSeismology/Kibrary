@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  */
 public class PerturbationMapShellscript {
 
+    private static final int PANEL_PER_ROW = 4;
     /**
      * The interval of deciding map size
      */
@@ -121,15 +122,16 @@ public class PerturbationMapShellscript {
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
 
+            // CAUTION: i is in reverse order because we will draw from the top
             for (int i = radii.length - 1; i >= 0; i--) {
                 int radius = (int) radii[i];
 
                 if (i == radii.length - 1) {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
                             + "km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
-                } else if (i == radii.length / 2 - 1) {
+                } else if (i % PANEL_PER_ROW == 3) {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
+                            + "km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
                 } else {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
                             + "km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");

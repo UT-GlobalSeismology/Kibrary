@@ -174,7 +174,6 @@ public class CheckerboardMaker extends Operation {
             }
         }
 
-
         Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 

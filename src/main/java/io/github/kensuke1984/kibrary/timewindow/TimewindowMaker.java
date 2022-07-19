@@ -181,7 +181,7 @@ public class TimewindowMaker extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         majorArc = property.parseBoolean("majorArc", "false");
         usePhases = phaseSet(property.parseString("usePhases", "S"));
-        exPhases = property.containsKey("exPhases") ? phaseSet(property.parseString("exPhases", null)): phaseSet(null);
+        exPhases = property.containsKey("exPhases") ? phaseSet(property.parseString("exPhases", null)) : phaseSet(null);
         frontShift = property.parseDouble("frontShift", "0");
         rearShift = property.parseDouble("rearShift", "0");
         minLength = property.parseDouble("minLength", "0");
