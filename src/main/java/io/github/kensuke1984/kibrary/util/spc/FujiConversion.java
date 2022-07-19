@@ -6,6 +6,8 @@ import java.util.List;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
+import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -52,8 +54,9 @@ public final class FujiConversion {
 //		double omega0 = spectrum.tlen(); // TODO
         for (int i = 0; i < spectrum.nbody(); i++) {
             double r = bodyR[i];
-            double q = 1 / STRUCTURE.getQmuAt(r);
-            double mu0 = STRUCTURE.computeMu(r);
+            ElasticMedium medium = STRUCTURE.mediumAt(r);
+            double q = 1 / medium.get(VariableType.Qmu);
+            double mu0 = medium.get(VariableType.MU);
             SPCBody body = spectrum.getSpcBodyList().get(i);
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {

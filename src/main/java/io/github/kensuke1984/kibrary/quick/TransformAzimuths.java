@@ -18,8 +18,8 @@ public class TransformAzimuths {
 			double lon = SphericalCoords.lonFor(center_pos.getLatitude(), center_pos.getLongitude(), dist, azimuths[i]);
 			HorizontalPosition az_pos = new HorizontalPosition(lat, lon);
 			
-			new_azimuths[i] = Math.toDegrees(new_center_pos.getAzimuth(az_pos));
-			System.out.println(az_pos + " "  + Math.toDegrees(center_pos.getAzimuth(az_pos)));
+			new_azimuths[i] = Math.toDegrees(new_center_pos.calculateAzimuth(az_pos));
+			System.out.println(az_pos + " "  + Math.toDegrees(center_pos.calculateAzimuth(az_pos)));
 		}
 		
 		for (int i = 0; i < azimuths.length; i++)

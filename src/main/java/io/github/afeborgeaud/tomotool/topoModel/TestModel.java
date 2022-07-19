@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class TestModel implements Seismic3Dmodel {
 
@@ -36,12 +36,12 @@ public class TestModel implements Seismic3Dmodel {
 
     @Override
     public double getVs(double radius) {
-        return PolynomialStructure.PREM.getVshAt(radius);
+        return PolynomialStructure_old.PREM.getVshAt(radius);
     }
 
     @Override
     public double getVp(double radius) {
-        return PolynomialStructure.PREM.getVphAt(radius);
+        return PolynomialStructure_old.PREM.getVphAt(radius);
     }
 
     @Override

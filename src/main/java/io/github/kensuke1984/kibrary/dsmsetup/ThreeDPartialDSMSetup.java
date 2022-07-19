@@ -14,12 +14,14 @@ import org.apache.commons.io.FileUtils;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -28,14 +30,32 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * This class makes information files for <br>
- * SHBP SHFP PSVBP PSVFP
+ * Operation that makes DSM input files to be used in SHFP, SHBP, PSVFP, and PSVBP,
+ * and prepares the environment to run these programs.
  * <p>
- * TODO information of eliminated stations and events
+ * As input, the following 3 files are needed:
+ * <ul>
+ * <li> an event list file </li>
+ * <li> an observer list file </li>
+ * <li> a voxel information file </li>
+ * </ul>
+ * DSM input files for FP will be created to calculate for all (event, perturbationPoint)-pairs.
+ * DSM input files for BP will be created to calculate for all (observerPosition, perturbationPoint)-pairs.
+ * <p>
+ * The resulting folders in output BP folder will be named by the position code of observers (see {@link HorizontalPosition#toCode}).
+ * Observer position codes are used here instead of observer names to dodge the problem caused by
+ * "observers with same name but different position".
+ * (At a single time moment, only one observer with the same network and station code exists.
+ * However, at different times, observers with the same name but different positions can exist.
+ * In BP folders created here, observers are collected from different time periods, so their names can conflict.
+ * Therefore, observer positions are used instead to distinguish an observer.
+ * "Observers with different names but same position" can also exist, but they do not cause problems here
+ * because the same BP waveform can be used for both of them.)
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1
+ * @since version 0.2.2.1
  * @author anselme add content for catalog
+ * @version 2021/12/24 renamed from InformationFileMaker
  */
 public class ThreeDPartialDSMSetup extends Operation {
 
@@ -44,6 +64,10 @@ public class ThreeDPartialDSMSetup extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String tag;
     /**
      * Path of the output folder
      */
@@ -123,11 +147,13 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
-            pw.println("##Path of an event information file, must be set");
+            pw.println("##Path of an event list file, must be set");
             pw.println("#eventPath event.lst");
-            pw.println("##Path of an observer information file, must be set");
+            pw.println("##Path of an observer list file, must be set");
             pw.println("#observerPath observer.lst");
             pw.println("##Path of a voxel information file for perturbation points, must be set");
             pw.println("#voxelPath voxel.inf");
@@ -158,6 +184,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
@@ -187,75 +214,6 @@ public class ThreeDPartialDSMSetup extends Operation {
         // additional info
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath"))
-            property.setProperty("workPath", "");
-        if (!property.containsKey("components"))
-            property.setProperty("components", "Z R T");
-        if (!property.containsKey("tlen"))
-            property.setProperty("tlen", "6553.6");
-        if (!property.containsKey("np"))
-            property.setProperty("np", "1024");
-        if (!property.containsKey("mpi"))
-            property.setProperty("mpi", "true");
-        if (!property.containsKey("header"))
-            property.setProperty("header", "PREM");
-        if (!property.containsKey("jointCMT"))
-            property.setProperty("jointCMT", "false");
-        if (!property.containsKey("catalogue"))
-            property.setProperty("catalogue", "false");
-
-        // additional info
-        property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogPath().toString());
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-
-        if (!Files.exists(workPath))
-            throw new RuntimeException("The workPath: " + workPath + " does not exist");
-
-        perturbationPath = getPath("locationsPath");
-
-        observerPath = getPath("stationInformationPath");
-        // str = reader.getValues("partialTypes");
-        np = Integer.parseInt(property.getProperty("np"));
-        tlen = Double.parseDouble(property.getProperty("tlen"));
-        mpi = Boolean.parseBoolean(property.getProperty("mpi"));
-        header = property.getProperty("header");
-
-        if (property.containsKey("structureFile")) {
-            Path psPath = getPath("structureFile");
-            ps = PolynomialStructure.PREM;
-            if (psPath.toString().equals("PREM")) {
-                ps = PolynomialStructure.PREM;
-            }
-            else if (psPath.toString().trim().equals("AK135")) {
-                ps = PolynomialStructure.AK135;
-            }
-            else if (psPath.toString().trim().equals("AK135_elastic")) {
-                ps = PolynomialStructure.AK135_elastic;
-            }
-            else
-                ps = new PolynomialStructure(psPath);
-        }
-        else
-            ps = PolynomialStructure.PREM;
-
-        jointCMT = Boolean.parseBoolean(property.getProperty("jointCMT"));
-
-        catalogue = Boolean.parseBoolean(property.getProperty("catalogue"));
-        if (catalogue) {
-            double[] tmpthetainfo = Stream.of(property.getProperty("thetaRange").trim().split("\\s+")).mapToDouble(Double::parseDouble)
-                    .toArray();
-            thetamin = tmpthetainfo[0];
-            thetamax = tmpthetainfo[1];
-            dtheta = tmpthetainfo[2];
-        }
-    }
-*/
 
     @Override
     public void run() throws IOException {
@@ -265,23 +223,21 @@ public class ThreeDPartialDSMSetup extends Operation {
         perturbationPositions = vif.getHorizontalPositions();
 
         // read event information
-        Set<GlobalCMTID> eventSet = EventInformationFile.read(eventPath);
+        Set<GlobalCMTID> eventSet = EventListFile.read(eventPath);
         System.err.println("Number of events read in: " + eventSet.size());
 
         // read observer information
-        Set<Observer> observerSet = ObserverInformationFile.read(observerPath);
+        Set<Observer> observerSet = ObserverListFile.read(observerPath);
         System.err.println("Number of observers read in: " + observerSet.size());
 
         PolynomialStructure structure = null;
         if (structurePath != null) {
-            structure = new PolynomialStructure(structurePath);
+            structure = PolynomialStructureFile.read(structurePath);
         } else {
             structure = PolynomialStructure.of(structureName);
         }
 
-        outPath = workPath.resolve("threeDPartial" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, GadgetAid.getTemporaryString());
 
         if (property != null)
             property.write(outPath.resolve("threeddsm.properties"));
@@ -299,7 +255,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         for (GlobalCMTID eventID : eventSet) {
             GlobalCMTAccess event;
             try {
-                event = eventID.getEvent();
+                event = eventID.getEventData();
 
                 // joint CMT inversion
                 if (jointCMT) {
@@ -346,6 +302,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
         shellFP.write(SPCType.PF, SPCMode.PSV);
         shellFP.write(SPCType.PF, SPCMode.SH);
+        System.err.println("After this finishes, please run " + outPath + "/runFP_PSV.sh and " + outPath + "/runFP_SH.sh");
 
         // BP
         System.err.println("Making information files for the observers (bp) ...");
@@ -378,6 +335,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
         shellBP.write(SPCType.PB, SPCMode.PSV);
         shellBP.write(SPCType.PB, SPCMode.SH);
+        System.err.println("After this finishes, please run " + outPath + "/runBP_PSV.sh and " + outPath + "/runBP_SH.sh");
 
         // TODO
         if (fpPath.toFile().delete() && bpPath.toFile().delete()) {

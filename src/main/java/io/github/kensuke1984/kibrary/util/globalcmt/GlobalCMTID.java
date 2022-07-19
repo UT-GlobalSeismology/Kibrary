@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.1.1.2
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
-public class GlobalCMTID implements Comparable<GlobalCMTID> {
+public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     /**
      * recent Harvard ID yyyymmddhhmm[A-Za-z] 2004-
@@ -40,7 +40,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     private final String id;
     /**
-     * if once {@link #getEvent()} is invoked, this holds it.
+     * if {@link #getEventData()} is once invoked, this holds it.
      */
     private volatile NDK ndk;
 
@@ -62,7 +62,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
             }
 
             GlobalCMTID id = new GlobalCMTID(idString);
-            GlobalCMTAccess event = id.getEvent();
+            GlobalCMTAccess event = id.getEventData();
 
             System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
             System.out.println("Centroid Time: " + event.getCMTTime());
@@ -99,7 +99,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
                 PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
     }
 
-    /**
+    /** TODO Why is this here?
      * When you want to create Events not contained in Global CMT Catalog, you
      * can make it by yourself and use this.
      *
@@ -108,15 +108,6 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
      */
     public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
         return new HashSet<>(GlobalCMTCatalog.readCatalog(catalogFile, false));
-    }
-
-    /**
-     * Compares global CMT IDs by their ID using
-     * {@link String#compareTo(String)}
-     */
-    @Override
-    public int compareTo(GlobalCMTID o) {
-        return id.compareTo(o.id);
     }
 
     @Override
@@ -139,6 +130,15 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
         return true;
     }
 
+    /**
+     * Compares global CMT IDs by their ID using
+     * {@link String#compareTo(String)}
+     */
+    @Override
+    public int compareTo(GlobalCMTID o) {
+        return id.compareTo(o.id);
+    }
+
     @Override
     public String toString() {
         return id;
@@ -149,12 +149,12 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     }
 
     /**
-     * if there is a certain existing ID, then returns the {@link GlobalCMTAccess}
-     * for the ID if not null will be returned.
+     * If there is a certain existing ID, then returns the {@link GlobalCMTAccess} for this ID.
+     * If not, null will be returned.
      *
      * @return GlobalCMTData for this
      */
-    public GlobalCMTAccess getEvent() {
+    public GlobalCMTAccess getEventData() {
         if (ndk == null) synchronized (this) {
             if (ndk == null) ndk = GlobalCMTCatalog.getNDK(this);
         }

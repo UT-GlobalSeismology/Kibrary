@@ -6,9 +6,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class SH18CEX implements Seismic3Dmodel {
 
@@ -68,11 +68,11 @@ public class SH18CEX implements Seismic3Dmodel {
     }
 
     public double getVs(double radius) {
-        return PolynomialStructure.PREM.getVshAt(radius);
+        return PolynomialStructure_old.PREM.getVshAt(radius);
     }
 
     public double getVp(double radius) {
-        return PolynomialStructure.PREM.getVphAt(radius);
+        return PolynomialStructure_old.PREM.getVphAt(radius);
     }
 
     @Override

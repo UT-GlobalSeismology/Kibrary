@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.correction;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -24,27 +23,30 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Operation that computes values of Static correction after Fuji <i>et al</i>., (2010).
  * <p>
- * Both observed and synthetic data must be in event folders under workDir.
- * {@link TimewindowDataFile} is necessary.
+ * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * <li> observed waveform data exists for the (event, observer, component)-pair </li>
+ * <li> synthetic waveform data exists for the (event, observer, component)-pair </li>
+ * </ul>
+ * Both observed and synthetic data must be in event folders under obsDir and synDir (they can be the same folder).
+ * Resulting static correction entries will be created for each timewindow,
+ * thus specified by a (event, observer, component, timeframe)-pair.
  * <p>
- * The time shift value <i>t</i> for the ray path is for the observed
- * timewindow.<br>
- * (i.e. synthetic window [t1, t2], observed [t1-t, t2-t])
+ * The time shift value <i>t</i> for the ray path is for the observed timewindow
+ * (i.e. synthetic window [t1, t2], observed [t1-t, t2-t]).
  * <p>
  * The time shift values are computed as follows:
  * <blockquote>ワーキングディレクトリ以下のイベントたちの中にいく<br>
@@ -87,6 +89,9 @@ public class FujiStaticCorrection extends Operation {
      */
     private double sacSamplingHz;
 
+    /**
+     * the timewindow data file to work for
+     */
     private Path timewindowPath;
     /**
      * the directory of observed data
@@ -137,14 +142,14 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#components ");
             pw.println("##(double) sacSamplingHz (20)");
             pw.println("#sacSamplingHz cant change now");
+            pw.println("##Path of a timewindow file, must be set");
+            pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a root directory containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
             pw.println("#convolved ");
-            pw.println("##Path of a timewindow file, must be set");
-            pw.println("#timewindowPath timewindow.dat");
             pw.println("##(double) Threshold for peak finder (0.2)");
             pw.println("#threshold ");
             pw.println("##(double) searchRange [s] (10)");
@@ -167,10 +172,10 @@ public class FujiStaticCorrection extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
 
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "false");
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
 
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");
@@ -180,56 +185,19 @@ public class FujiStaticCorrection extends Operation {
         outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", tag, dateStr, ".dat"));
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("obsPath")) property.setProperty("obsPath", ".");
-        if (!property.containsKey("synPath")) property.setProperty("synPath", ".");
-        if (!property.containsKey("timewindowFilePath"))
-            throw new IllegalArgumentException("No timewindow file specified");
-        if (!property.containsKey("convolved")) property.setProperty("convolved", "false");
-        if (!property.containsKey("threshold")) property.setProperty("threshold", "0.2");
-        if (!property.containsKey("searchRange")) property.setProperty("searchRange", "10");
-        if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
-        if (!property.containsKey("mediantime")) property.setProperty("mediantime", "false");
-    }
-
-    private void set_old() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        String dateStr = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve("staticCorrection" + dateStr + ".dat");
-        staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        obsPath = getPath("obsPath");
-        if (!Files.exists(obsPath)) throw new NoSuchFileException("The obsPath " + obsPath + " does not exist");
-        synPath = getPath("synPath");
-        if (!Files.exists(synPath)) throw new NoSuchFileException("The synPath " + synPath + " does not exist");
-        timewindowFilePath = getPath("timewindowFilePath");
-        if (!Files.exists(timewindowFilePath))
-            throw new NoSuchFileException("The timewindow file " + timewindowFilePath + " does not exist");
-
-        convolved = Boolean.parseBoolean(property.getProperty("convolved"));
-        sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
-        searchRange = Double.parseDouble(property.getProperty("searchRange"));
-        threshold = Double.parseDouble(property.getProperty("threshold"));
-        mediantime = Boolean.parseBoolean(property.getProperty("mediantime"));
-    }
-*/
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath);
+        // gather all timewindows to be processed
+        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+                .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
+        // collect all events that exist in the timewindow set
+        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
+                .collect(Collectors.toSet());
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
-        eventDirs.stream().map(Worker::new).forEach(es::execute);
+        eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
         while (!es.isTerminated()) {
             ThreadAid.sleep(1000);
@@ -463,113 +431,42 @@ public class FujiStaticCorrection extends Operation {
             if (minLimit < Math.abs(u[ipeak])) return ipeak;
         return maxPoint;
     }
-/*
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
 
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-*/
-    private class Worker implements Runnable {
-        private EventFolder obsEventDir;
+    private class Worker extends DatasetAid.FilteredDatasetWorker {
 
-        private Path synEventPath;
-
-        private GlobalCMTID eventID;
-
-        private Worker(EventFolder eventDirectory) {
-            obsEventDir = eventDirectory;
-            eventID = obsEventDir.getGlobalCMTID();
-            synEventPath = synPath.resolve(eventID.toString());
+        private Worker(GlobalCMTID eventID) {
+            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
         }
 
         @Override
-        public void run() {
-            if (!Files.exists(synEventPath)) {
-                new NoSuchFileException(synEventPath.toString()).printStackTrace();
+        public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
+            Observer observer = timewindow.getObserver();
+            SACComponent component = timewindow.getComponent();
+
+            // check delta
+            double delta = 1 / sacSamplingHz;
+            if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
+                System.err.println(
+                        "!! Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA) + " , " +
+                                synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                 return;
             }
 
-            // collect observed files
-            Set<SACFileName> obsFiles;
+            // compute correction
             try {
-                (obsFiles = obsEventDir.sacFileSet()).removeIf(s -> !s.isOBS());
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                return;
+                double shift = 0;
+                if (!mediantime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timewindow);
+                else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timewindow);
+//                  double ratio = computeMaxRatio(obsSac, synSac, shift, window);
+                double ratio = computeP2PRatio(obsSac, synSac, 0., timewindow);
+                StaticCorrectionData correction = new StaticCorrectionData(observer, eventID, component,
+                        timewindow.getStartTime(), shift, ratio, timewindow.getPhases());
+                staticCorrectionSet.add(correction);
+            } catch (Exception e) {
+                System.err.println("!! " + timewindow + " is ignored because an error occurs.");
+                e.printStackTrace();
             }
-
-            // TreeMap<String, Double> timeshiftMap = new TreeMap<>();
-            for (SACFileName obsName : obsFiles) {
-                // check components
-                SACComponent component = obsName.getComponent();
-                if (!components.contains(component))
-                    continue;
-
-                // get observed
-                SACFileAccess obsSac;
-                try {
-                    obsSac = obsName.read();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    continue;
-                }
-                Observer observer = obsSac.getObserver();
-
-                // get synthetic
-                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
-                        : SACExtension.valueOfSynthetic(component);
-                SACFileName synName = new SACFileName(synEventPath.resolve(
-                        SACFileName.generate(observer, eventID, synExt)));
-                if (!synName.exists()) {
-                    System.err.println(synName + " does not exist. ");
-                    continue;
-                }
-                SACFileAccess synSac;
-                try {
-                    synSac = synName.read();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    continue;
-                }
-
-                double delta = 1 / sacSamplingHz;
-                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println(
-                            "Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA) + " , " +
-                                    synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                    continue;
-                }
-
-                // Pickup time windows of obsName
-                Set<TimewindowData> windows = sourceTimewindowSet.stream()
-                        .filter(info -> info.getObserver().equals(observer))
-                        .filter(info -> info.getGlobalCMTID().equals(eventID))
-                        .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
-
-                if (windows != null && !windows.isEmpty()) {
-                    for (TimewindowData window : windows) {
-                        try {
-                            double shift = 0;
-                            if (!mediantime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
-                            else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
-//							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
-                            double ratio = computeP2PRatio(obsSac, synSac, 0., window);
-                            StaticCorrectionData t = new StaticCorrectionData(observer, eventID, component,
-                                    window.getStartTime(), shift, ratio, window.getPhases());
-                            staticCorrectionSet.add(t);
-                        } catch (Exception e) {
-                            System.err.println(window + " is ignored because an error occurs");
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-            System.err.print(".");
         }
+
     }
 }

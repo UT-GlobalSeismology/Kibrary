@@ -214,6 +214,10 @@ public class SACMaker implements Runnable {
      * if required, true.
      */
     private boolean temporalDifferentiation;
+    /**
+     * whether to set SAC extension of output files as observed ones
+     */
+    private boolean asObserved;
     private SourceTimeFunction sourceTimeFunction;
     /**
      * true: PDE time, false: CMT time TODO scardec??
@@ -385,7 +389,7 @@ public class SACMaker implements Runnable {
             sm.setSourceTimeFunction(scardec.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
         }
         if (id != null) {
-            double halfDuration = id.getEvent().getHalfDuration();
+            double halfDuration = id.getEventData().getHalfDuration();
             sm.setSourceTimeFunction(stfshape.equals("boxcar") ?
                     SourceTimeFunction.boxcarSourceTimeFunction(oneSPC.np(), oneSPC.tlen(), 20, halfDuration) :
                     SourceTimeFunction.triangleSourceTimeFunction(oneSPC.np(), oneSPC.tlen(), 20, halfDuration));
@@ -410,11 +414,15 @@ public class SACMaker implements Runnable {
         this.temporalDifferentiation = temporalDifferentiation;
     }
 
+    public void setAsObserved(boolean asObserved) {
+        this.asObserved = asObserved;
+    }
+
     private void setInformation() {
         station = new Observer(primeSPC.getObserverID(), primeSPC.getObserverPosition());
         path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
         if (globalCMTID != null && beginDateTime == null)
-            beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();
+            beginDateTime = pde ? globalCMTID.getEventData().getPDETime() : globalCMTID.getEventData().getCMTTime();
         npts = findNPTS();
         lsmooth = findLsmooth();
         delta = primeSPC.tlen() / npts;
@@ -471,8 +479,12 @@ public class SACMaker implements Runnable {
         compute(body);
 
         for (SACComponent component : components) {
-            SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
-                    : SACExtension.valueOfSynthetic(component);
+            SACExtension ext;
+            if (asObserved)
+                ext = SACExtension.valueOfObserved(component);
+            else
+                ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
+                        : SACExtension.valueOfSynthetic(component);
             try {
                 sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
                         outPath.resolve(SACFileName.generate(station, globalCMTID, ext)));

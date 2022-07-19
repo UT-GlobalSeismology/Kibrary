@@ -15,7 +15,9 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -36,6 +38,13 @@ public class PartialIDMerge extends Operation {
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
+     * The first part of the name of output partial ID and waveform files
+     */
     private String nameRoot;
 
     private List<Path> partialIDPaths = new ArrayList<>();
@@ -61,23 +70,12 @@ public class PartialIDMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output partial ID and waveform files (partial)");
             pw.println("#nameRoot ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
             pw.println("##########From here on, list up pairs of the paths of a partial ID file and a partial waveform file.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
-                switch(i) {
-                case 1:
-                    pw.println("##1st pair");
-                    break;
-                case 2:
-                    pw.println("##2nd pair");
-                    break;
-                case 3:
-                    pw.println("##3rd pair");
-                    break;
-                default:
-                    pw.println("##" + i + "th pair");
-                    break;
-                }
+                pw.println("##" + MathAid.ordinalNumber(i) + " pair");
                 pw.println("#partialIDPath" + i + " partialID" + i + ".dat");
                 pw.println("#partialPath" + i + " partial" + i + ".dat");
             }
@@ -92,8 +90,8 @@ public class PartialIDMerge extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-
         nameRoot = property.parseStringSingle("nameRoot", "partial");
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         for (int i = 1; i <= MAX_PAIR; i++) {
             String partialIDKey = "partialIDPath" + i;
@@ -159,8 +157,8 @@ public class PartialIDMerge extends Operation {
         Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
 
         String dateStr = GadgetAid.getTemporaryString();
-        Path outputIDPath = workPath.resolve(nameRoot + "ID" + dateStr + ".dat");
-        Path outputWavePath = workPath.resolve(nameRoot + dateStr + ".dat");
+        Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", tag, dateStr, ".dat"));
+        Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, dateStr, ".dat"));
 
         System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
         try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases, voxelSet)) {

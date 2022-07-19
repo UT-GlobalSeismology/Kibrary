@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -89,11 +89,11 @@ public class FiniteDifferencePartial {
 				pw2.close();
 				pw3.close();
 				
-				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obsIds[i].getObserver().getPosition()))
+				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(obsIds[i].getObserver().getPosition()))
 						/ daz);
 				int icomp = obsIds[i].getSacComponent().valueOf();
 				double max = new ArrayRealVector(obs).subtract(new ArrayRealVector(syn)).getLInfNorm() * 0.167;
-				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsIds[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obsIds[i].getObserver().getPosition()));
 				azimuthPlotString[iaz][icomp-1] += String.format("'%s' u 1:($2/%.4e+%.3f) w l lc rgb 'black' lt 1 lw .5 noti,\\\n", outname, max, distance);
 			}
 			

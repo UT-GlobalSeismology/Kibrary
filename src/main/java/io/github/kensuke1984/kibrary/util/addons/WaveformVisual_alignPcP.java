@@ -65,7 +65,7 @@ public class WaveformVisual_alignPcP {
 			Path profileEventDir = profileDir.resolve(event.toString());
 			Files.createDirectory(profileEventDir);
 			
-			timetool.setSourceDepth(6371. - event.getEvent().getCmtLocation().getR());
+			timetool.setSourceDepth(6371. - event.getEventData().getCmtLocation().getR());
 		
 			for (SACComponent component : components) {
 				double[][] obsStack = new double[180][0];
@@ -119,11 +119,11 @@ public class WaveformVisual_alignPcP {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
-					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition()));
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition()));
 					int k = (int) distance;
 					int ked = (int) (distance / dEd);
 					
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 					int kaz = (int) (azimuth / dAz);
 					int kazsec = (int) (azimuth);
 					
@@ -329,8 +329,8 @@ public class WaveformVisual_alignPcP {
 				);
 		
 		ss += "gmt psxy -Rg -JW4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
-		double evLat = event.getEvent().getCmtLocation().getLatitude();
-		double evLon = event.getEvent().getCmtLocation().getLongitude();
+		double evLat = event.getEventData().getCmtLocation().getLatitude();
+		double evLon = event.getEventData().getCmtLocation().getLongitude();
 		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";

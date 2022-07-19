@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
@@ -11,7 +12,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACExtension;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
@@ -87,37 +93,35 @@ public final class DatasetAid {
     }
 
     /**
-     * Checks whether a given number of events is non-zero, and displays the number.
-     * @param num (int) Number of events
+     * Checks whether a given number of some object is non-zero, and displays the number.
+     * @param num (int) Number of some object
+     * @param singular (String) Singular form of name of object
+     * @param plural (String) Plural form of name of object
      * @return  (boolean) true of the number is non-zero
      *
      * @author otsuru
      * @since 2021/11/25
      */
-    public static boolean checkEventNum(int num) {
+    public static boolean checkNum(int num, String singular, String plural) {
         if (num == 0) {
-            System.err.println("No events found.");
+            System.err.println("No " + plural + " found.");
             return false;
-        } else if (num == 1) {
-            System.err.println("1 event is found.");
-            return true;
         } else {
-            System.err.println(num + " events are found.");
+            System.err.println(MathAid.switchSingularPlural(num, singular + " is", plural + " are") + " found.");
             return true;
         }
     }
 
     /**
      * Collect all SAC files inside event folders under a given folder.
-     * Errors in reading each event folder is just noticed. Such event folders
-     * will be ignored.
+     * Errors in reading each event folder is just noticed. Such event folders will be ignored.
      *
      * @param path of a folder containing event folders which have SAC files.
-     * @return <b>Unmodifiable</b> Set of sac in event folders under the path
+     * @return <b>Unmodifiable</b> Set of sac file names in event folders under the path
      * @throws IOException if an I/O error occurs.
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {
-        return Collections.unmodifiableSet(eventFolderSet(path).stream().flatMap(eDir -> {
+        Set<SACFileName> sacNameSet = Collections.unmodifiableSet(eventFolderSet(path).stream().flatMap(eDir -> {
             try {
                 return eDir.sacFileSet().stream();
             } catch (Exception e) {
@@ -125,6 +129,9 @@ public final class DatasetAid {
                 return Stream.empty();
             }
         }).collect(Collectors.toSet()));
+
+        checkNum(sacNameSet.size(), "sac file", "sac files");
+        return sacNameSet;
     }
 
     /**
@@ -151,4 +158,90 @@ public final class DatasetAid {
         ThreadAid.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
     }
 
+    /**
+     * An abstract class that can be used to execute tasks in filtered datasets for a set of timewindows.
+     * @author otsuru
+     * @since 2022/6/20
+     */
+    public abstract static class FilteredDatasetWorker implements Runnable {
+        protected GlobalCMTID eventID;
+        private Path obsEventPath;
+        private Path synEventPath;
+        private boolean convolved;
+        private Set<TimewindowData> sourceTimewindowSet;
+
+        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved, Set<TimewindowData> sourceTimewindowSet) {
+            this.eventID = eventID;
+            obsEventPath = obsPath.resolve(eventID.toString());
+            synEventPath = synPath.resolve(eventID.toString());
+            this.convolved = convolved;
+            this.sourceTimewindowSet = sourceTimewindowSet;
+        }
+
+        /**
+         * A class to implement the actual work that needs to be done to each timewindow
+         * @param timewindow
+         * @param obsSac
+         * @param synSac
+         */
+        public abstract void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac);
+
+        @Override
+        public void run() {
+            if (!Files.exists(obsEventPath)) {
+                new NoSuchFileException(obsEventPath.toString()).printStackTrace();
+                return;
+            }
+            if (!Files.exists(synEventPath)) {
+                new NoSuchFileException(synEventPath.toString()).printStackTrace();
+                return;
+            }
+
+            // pick out time windows of this event
+            Set<TimewindowData> timewindows = sourceTimewindowSet.stream()
+                    .filter(info -> info.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
+
+            for (TimewindowData timewindow : timewindows) {
+                Observer observer = timewindow.getObserver();
+                SACComponent component = timewindow.getComponent();
+
+                // get observed data
+                SACExtension obsExt = SACExtension.valueOfObserved(component);
+                SACFileName obsName = new SACFileName(obsEventPath.resolve(SACFileName.generate(observer, eventID, obsExt)));
+                if (!obsName.exists()) {
+                    System.err.println("!! " + obsName + " does not exist, skippping.");
+                    continue;
+                }
+                SACFileAccess obsSac;
+                try {
+                    obsSac = obsName.read();
+                } catch (Exception e) {
+                    System.err.println("!! Could not read " + obsName + " , skipping.");
+                    e.printStackTrace();
+                    continue;
+                }
+
+                // get synthetic data
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
+                        : SACExtension.valueOfSynthetic(component);
+                SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
+                if (!synName.exists()) {
+                    System.err.println("!! " + synName + " does not exist, skippping.");
+                    continue;
+                }
+                SACFileAccess synSac;
+                try {
+                    synSac = synName.read();
+                } catch (Exception e) {
+                    System.err.println("!! Could not read " + synName + " , skipping.");
+                    e.printStackTrace();
+                    continue;
+                }
+
+                actualWork(timewindow, obsSac, synSac);
+            }
+
+            System.err.print(".");
+        }
+    }
 }

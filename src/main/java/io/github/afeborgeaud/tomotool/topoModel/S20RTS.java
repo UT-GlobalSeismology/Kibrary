@@ -11,9 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.github.afeborgeaud.tomotool.math.Sph_specfem;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class S20RTS implements Seismic3Dmodel {
 
@@ -242,11 +242,11 @@ public class S20RTS implements Seismic3Dmodel {
     }
 
     public double getVs(double radius) {
-        return PolynomialStructure.PREM.getVshAt(radius);
+        return PolynomialStructure_old.PREM.getVshAt(radius);
     }
 
     public double getVp(double radius) {
-        return PolynomialStructure.PREM.getVphAt(radius);
+        return PolynomialStructure_old.PREM.getVphAt(radius);
     }
 
     @Override

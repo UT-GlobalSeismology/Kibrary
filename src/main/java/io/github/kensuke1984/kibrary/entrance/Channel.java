@@ -98,7 +98,7 @@ public class Channel {
     public static Channel[] listChannels(String[] network, GlobalCMTID id, ChronoUnit headUnit, int headAdjustment,
                                          ChronoUnit footUnit, int footAdjustment) {
         Channel[] channels = new Channel[network.length];
-        LocalDateTime cmtTime = id.getEvent().getCMTTime();
+        LocalDateTime cmtTime = id.getEventData().getCMTTime();
         LocalDateTime startTime = cmtTime.plus(headAdjustment, headUnit);
         LocalDateTime endTime = cmtTime.plus(footAdjustment, footUnit);
         for (int i = 0; i < network.length; i++)

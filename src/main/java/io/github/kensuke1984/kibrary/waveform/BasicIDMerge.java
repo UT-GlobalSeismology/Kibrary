@@ -7,19 +7,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -74,20 +74,7 @@ public class BasicIDMerge extends Operation {
             pw.println("##########From here on, list up pairs of the paths of a basic ID file and a basic waveform file.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
-                switch(i) {
-                case 1:
-                    pw.println("##1st pair");
-                    break;
-                case 2:
-                    pw.println("##2nd pair");
-                    break;
-                case 3:
-                    pw.println("##3rd pair");
-                    break;
-                default:
-                    pw.println("##" + i + "th pair");
-                    break;
-                }
+                pw.println("##" + MathAid.ordinalNumber(i) + " pair");
                 pw.println("#basicIDPath" + i + " actualID" + i + ".dat");
                 pw.println("#basicPath" + i + " actual" + i + ".dat");
             }
@@ -117,38 +104,6 @@ public class BasicIDMerge extends Operation {
             basicPaths.add(property.parsePath(basicKey, null, true, workPath));
         }
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("nameRoot")) property.setProperty("nameRoot", "actual");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        nameRoot = property.getProperty("nameRoot");
-
-        for (int i = 1; i <= MAX_PAIR; i++) {
-            String basicIDKey = "basicIDPath" + i;
-            String basicKey = "basicPath" + i;
-            if (!property.containsKey(basicIDKey) && !property.containsKey(basicKey)) {
-                continue;
-            } else if (!property.containsKey(basicIDKey) || !property.containsKey(basicKey)) {
-                throw new IllegalArgumentException("Basic ID file and basic waveform file must be set in pairs.");
-            }
-            Path basicIDPath = property.parsePath(basicIDKey, null, true, workPath);
-            Path basicPath = property.parsePath(basicKey, null, true, workPath);
-            if (!Files.exists(basicIDPath))
-                throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
-            if (!Files.exists(basicPath))
-                throw new NoSuchFileException("The basic waveform file " + basicPath + " does not exist");
-            basicIDPaths.add(property.parsePath(basicIDKey, null, true, workPath));
-            basicPaths.add(property.parsePath(basicKey, null, true, workPath));
-        }
-    }
-*/
 
     @Override
     public void run() throws IOException {
@@ -165,37 +120,19 @@ public class BasicIDMerge extends Operation {
         }
 
         // read BasicIDs from all input files
-        Set<BasicID> basicIDs = new HashSet<>();
+        List<BasicID> basicIDs = new ArrayList<>();
         for (int i = 0; i < pairNum; i++) {
             BasicID[] srcIDs = BasicIDFile.read(basicIDPaths.get(i), basicPaths.get(i));
-            Stream.of(srcIDs).forEach(id -> basicIDs.add(id));
+            Arrays.stream(srcIDs).forEach(id -> basicIDs.add(id));
         }
 
-        // extract set of observers, events, periods, and phases
+        // extract set of observers, events
         Set<Observer> observerSet = new HashSet<>();
         Set<GlobalCMTID> eventSet = new HashSet<>();
-        Set<double[]> periodSet = new HashSet<>();
-        Set<Phase> phaseSet = new HashSet<>();
-
         basicIDs.forEach(id -> {
             observerSet.add(id.getObserver());
             eventSet.add(id.getGlobalCMTID());
-            boolean add = true;
-            for (double[] periods : periodSet) {
-                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
-                    add = false;
-            }
-            if (add)
-                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
-            for (Phase phase : id.getPhases())
-                phaseSet.add(phase);
         });
-
-        double[][] periodRanges = new double[periodSet.size()][];
-        int j = 0;
-        for (double[] periods : periodSet)
-            periodRanges[j++] = periods;
-        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
 
         // output merged files
         String dateStr = GadgetAid.getTemporaryString();
@@ -205,21 +142,12 @@ public class BasicIDMerge extends Operation {
         Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, dateStr, ".dat"));
 
         System.err.println("Outputting in " + observerFilePath);
-        ObserverInformationFile.write(observerSet, workPath.resolve(observerFilePath));
+        ObserverListFile.write(observerSet, workPath.resolve(observerFilePath));
 
         System.err.println("Outputting in " + eventFilePath);
-        EventInformationFile.write(eventSet, workPath.resolve(eventFilePath));
+        EventListFile.write(eventSet, workPath.resolve(eventFilePath));
 
-        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {
-            basicIDs.forEach(id -> {
-                try {
-                    wdw.addBasicID(id);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+        BasicIDFile.write(basicIDs, outputIDPath, outputWavePath);
     }
 
 }

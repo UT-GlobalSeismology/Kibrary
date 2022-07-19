@@ -128,14 +128,14 @@ public class Complementation {
 //		double kLon = kichi.getLongitude();
 //		double mLat = michi.getLatitude();
 //		double mLon = michi.getLongitude();
-		double distance = michi.getDistance(kichi);
+		double distance = michi.computeDistance(kichi);
 		return 1/distance;
 //		double weight = 1/distance;
 //		return weight;
 	}
 	
 	private static double weightHorizontalEnhanced(FullPosition loc1, FullPosition loc2) {
-		double arcDistance = loc1.getEpicentralDistance(loc2) * (loc1.getR() + loc2.getR()) / 2.;
+		double arcDistance = loc1.calculateEpicentralDistance(loc2) * (loc1.getR() + loc2.getR()) / 2.;
 		double dR = Math.abs(loc1.getR() - loc2.getR());
 		arcDistance /= 4.;
 		
@@ -150,7 +150,7 @@ public class Complementation {
 	public FullPosition[] getNearest4(FullPosition[] locations, FullPosition location){
 //		double[] distance = distance(locations, location);
 //		Arrays.sort(distance); 
-		FullPosition[] sortLoc = location.getNearestLocation(locations);
+		FullPosition[] sortLoc = location.findNearestPosition(locations);
 		FullPosition[] near4 = new FullPosition[4];
 		for(int i=0;i<4;i++){
 			near4[i] = sortLoc[i];
@@ -161,7 +161,7 @@ public class Complementation {
 	public FullPosition[] getNearest4(FullPosition[] locations, FullPosition location, double maxSearchRange){
 //		double[] distance = distance(locations, location);
 //		Arrays.sort(distance); 
-		FullPosition[] sortLoc = location.getNearestLocation(locations, maxSearchRange);
+		FullPosition[] sortLoc = location.findNearestPosition(locations, maxSearchRange);
 		FullPosition[] near4 = new FullPosition[4];
 		for(int i=0;i<4;i++){
 			near4[i] = sortLoc[i];
@@ -173,7 +173,7 @@ public class Complementation {
 		double minDistance = Double.MAX_VALUE;
 		FullPosition[] nearest = new FullPosition[1];
 		for (FullPosition loc : locations) {
-			double distance = loc.getDistance(location);
+			double distance = loc.computeDistance(location);
 			if (distance < minDistance) {
 				minDistance = distance;
 				nearest[0] = loc;
@@ -184,7 +184,7 @@ public class Complementation {
 	
 	public FullPosition[] get8CellNodes(FullPosition[] locations, FullPosition location, double dR, double dL) {
 		FullPosition[] nodes = new FullPosition[8];
-		FullPosition[] sortLoc = location.getNearestLocation(locations);
+		FullPosition[] sortLoc = location.findNearestPosition(locations);
 		FullPosition nearest = sortLoc[0];
 		double lat = nearest.getLatitude();
 		double lon = nearest.getLongitude();
@@ -218,9 +218,9 @@ public class Complementation {
 		Set<FullPosition> fixedNodes = new HashSet<>();
 		fixedNodes.add(nodes[0]);
 		for (int i = 1; i < 8; i++) {
-			FullPosition[] nearests = nodes[i].getNearestLocation(locations);
+			FullPosition[] nearests = nodes[i].findNearestPosition(locations);
 			if (nearests.length > 0)
-				fixedNodes.add(nodes[i].getNearestLocation(locations)[0]);
+				fixedNodes.add(nodes[i].findNearestPosition(locations)[0]);
 		}
 		
 		return fixedNodes.toArray(new FullPosition[0]);
@@ -230,7 +230,7 @@ public class Complementation {
 		double[][] nodes = new double[3][];
 		for (int i = 0; i < 3; i++)
 			nodes[i] = new double[2];
-		FullPosition[] sortLoc = location.getNearestLocation(locations);
+		FullPosition[] sortLoc = location.findNearestPosition(locations);
 		FullPosition nearest = sortLoc[0];
 		double lat = nearest.getLatitude();
 		double lon = nearest.getLongitude();
@@ -263,7 +263,7 @@ public class Complementation {
 	 * @return nearest location with the same radius as this
 	 */
 	public FullPosition[] getNearestHorizontal4(FullPosition[] locations, FullPosition location){
-		FullPosition[] sortLoc = location.getNearestHorizontalLocation(locations);
+		FullPosition[] sortLoc = location.findNearestHorizontalPosition(locations);
 		FullPosition[] near4 = new FullPosition[4];
 		for(int i = 0; i < 4;i++)
 			near4[i] = sortLoc[i];
@@ -278,7 +278,7 @@ public class Complementation {
 	 */
 	private static double[] distance(FullPosition[] locations, FullPosition location){
 		 return IntStream.range(0, locations.length)
-				 .mapToDouble(i -> locations[i].getDistance(location))
+				 .mapToDouble(i -> locations[i].computeDistance(location))
 				 .toArray();
 	}
 	

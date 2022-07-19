@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -49,7 +49,7 @@ public class VelocityField3D {
 		
 		System.out.println("dL = " + dL);
 		
-		PolynomialStructure structure = PolynomialStructure.PREM;
+		PolynomialStructure_old structure = PolynomialStructure_old.PREM;
 //		PolynomialStructure structure = PolynomialStructure.PREM_PRIME;
 //		PolynomialStructure structure = PolynomialStructure.AK135;
 		System.out.println("Using structure " + structure.toString());
@@ -83,14 +83,14 @@ public class VelocityField3D {
 			System.out.println(depth);
 		
 		for (InverseMethodEnum inverse : ir.getInverseMethods()) {
-			if (!Files.exists(inversionResultPath.resolve(inverse.simple() + "_mean")))
-					Files.createDirectory(inversionResultPath.resolve(inverse.simple() + "_mean"));
+			if (!Files.exists(inversionResultPath.resolve(inverse.simpleName() + "_mean")))
+					Files.createDirectory(inversionResultPath.resolve(inverse.simpleName() + "_mean"));
 			
 			System.out.println(inverse);
 			
 			if (!jackknife) {
 				for (int i = 1; i <= n; i++) {
-					Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
+					Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocity" + inverse.simpleName() + i + ".txt");
 					
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 					
@@ -115,7 +115,7 @@ public class VelocityField3D {
 					pw.close();
 					
 					//write model for specfem
-					Path outpahSpecfem = inversionResultPath.resolve(inverse.simple() + "/" + "specfem_velocity" + inverse.simple() + i + ".txt");
+					Path outpahSpecfem = inversionResultPath.resolve(inverse.simpleName() + "/" + "specfem_velocity" + inverse.simpleName() + i + ".txt");
 					writeSpecfemPerturbationMap(outpahSpecfem, perturbations, dL, perturbationLayers);		
 				}
 				
@@ -149,7 +149,7 @@ public class VelocityField3D {
 					Map<FullPosition, List<PerturbationValue>> meanPerturbationMap = new HashMap<>();
 					
 					for (int ires = 0; ires < nRes; ires++) {
-						Path outpath = inversionResultPath.resolve(inverse.simple() + ires + "/" + "velocity" + inverse.simple() + i + ".txt");
+						Path outpath = inversionResultPath.resolve(inverse.simpleName() + ires + "/" + "velocity" + inverse.simpleName() + i + ".txt");
 						
 						Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i, ires);
 						
@@ -182,8 +182,8 @@ public class VelocityField3D {
 						pw.close();
 					}
 				
-					Path outpathMean = inversionResultPath.resolve(inverse.simple() + "_mean/" + "velocity" + inverse.simple() + i + "_mean" + ".txt");
-					Path outpathVar = inversionResultPath.resolve(inverse.simple() + "_mean/" + "velocity" + inverse.simple() + i + "_var" + ".txt");
+					Path outpathMean = inversionResultPath.resolve(inverse.simpleName() + "_mean/" + "velocity" + inverse.simpleName() + i + "_mean" + ".txt");
+					Path outpathVar = inversionResultPath.resolve(inverse.simpleName() + "_mean/" + "velocity" + inverse.simpleName() + i + "_var" + ".txt");
 					PrintWriter pwMean = new PrintWriter(Files.newBufferedWriter(outpathMean, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 					PrintWriter pwVar = new PrintWriter(Files.newBufferedWriter(outpathVar, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 					
@@ -225,7 +225,7 @@ public class VelocityField3D {
 	}
 	
 	private static Map<FullPosition, List<PerturbationValue>> toPerturbation(Map<UnknownParameter, Double> answerMap, Map<Double, Double> layerMap,
-			List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
+			List<UnknownParameter> parameterOrder, PolynomialStructure_old structure) {
 		Map<FullPosition, List<PerturbationValue>> perturbationMap = new HashMap<>();
 		List<FullPosition> locations = parameterOrder.stream().map(p -> p.getPosition()).distinct().collect(Collectors.toList());
 		
@@ -246,7 +246,7 @@ public class VelocityField3D {
 			double rmin = r - dR / 2.;
 			double rmax = r + dR / 2.;
 			
-			if (structure.equals(PolynomialStructure.AK135)) {
+			if (structure.equals(PolynomialStructure_old.AK135)) {
 				if (r == 6343.8) {
 					rmin = 6336.61;
 					rmax = Earth.EARTH_RADIUS;
@@ -259,7 +259,7 @@ public class VelocityField3D {
 		return perturbationMap;
 	}
 	
-	private static List<PerturbationValue> toPerturbation(Map<PartialType, Double> typeValueMap, double rmin, double rmax, PolynomialStructure structure) {
+	private static List<PerturbationValue> toPerturbation(Map<PartialType, Double> typeValueMap, double rmin, double rmax, PolynomialStructure_old structure) {
 		List<PerturbationValue> perturbations = new ArrayList<>();
 		Set<PartialType> partialTypes = typeValueMap.keySet();
 		
@@ -353,7 +353,7 @@ public class VelocityField3D {
 		return perturbations;
 	}
 	
-	public static double getSimpsonVsPerturbation(double r1, double r2, PolynomialStructure structure, double dMu) {
+	public static double getSimpsonVsPerturbation(double r1, double r2, PolynomialStructure_old structure, double dMu) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -370,7 +370,7 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
-	public static double getSimpsonVsPerturbationFromVs(double r1, double r2, PolynomialStructure structure, double dVs) {
+	public static double getSimpsonVsPerturbationFromVs(double r1, double r2, PolynomialStructure_old structure, double dVs) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -387,7 +387,7 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
-	public static double getSimpsonVpPerturbation(double r1, double r2, PolynomialStructure structure, double dMu, double dLambda) {
+	public static double getSimpsonVpPerturbation(double r1, double r2, PolynomialStructure_old structure, double dMu, double dLambda) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -404,7 +404,7 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
-	public static double getSimpsonVbPerturbation(double r1, double r2, PolynomialStructure structure, double dKappa) {
+	public static double getSimpsonVbPerturbation(double r1, double r2, PolynomialStructure_old structure, double dKappa) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -421,24 +421,24 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
-	private static double dvs(double r, double dMu, PolynomialStructure structure) {
+	private static double dvs(double r, double dMu, PolynomialStructure_old structure) {
 		double v0 = Math.sqrt(structure.computeMu(r) / structure.getRhoAt(r));
 		double v1 = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
 		return (v1 - v0) / v0;
 	}
 	
-	private static double dvsFromVs(double r, double dVs, PolynomialStructure structure) {
+	private static double dvsFromVs(double r, double dVs, PolynomialStructure_old structure) {
 		double v0 = Math.sqrt(structure.computeMu(r) / structure.getRhoAt(r));
 		return dVs / v0;
 	}
 	
-	private static double dvp(double r, double dMu, double dLambda, PolynomialStructure structure) {
+	private static double dvp(double r, double dMu, double dLambda, PolynomialStructure_old structure) {
 		double v0 = structure.getVphAt(r);
 		double v1 = Math.sqrt((structure.computeLambda(r) + dLambda + 2 * (structure.computeMu(r) + dMu)) / structure.getRhoAt(r));
 		return (v1 - v0) / v0;
 	}
 	
-	private static double dvb(double r, double dKappa, PolynomialStructure structure) {
+	private static double dvb(double r, double dKappa, PolynomialStructure_old structure) {
 		double v0 = structure.getVbAt(r);
 		double v1 = Math.sqrt((structure.computeKappa(r) + dKappa) / structure.getRhoAt(r));
 		return (v1 - v0) / v0;

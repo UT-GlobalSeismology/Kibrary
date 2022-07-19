@@ -49,13 +49,13 @@ public class TauPUtils {
     }
 
     public double getEpicentralDistance(HorizontalPosition staPos) {
-        return Math.toDegrees(sourceLoc.getGeographicalDistance(staPos));
+        return Math.toDegrees(sourceLoc.calculateGeographicalDistance(staPos));
     }
 
     public void calculate(HorizontalPosition staPos) {
 //		double geographicalDistance = Math.toDegrees(sourceLoc.getGeographicalDistance(staPos));
-        double distance = Math.toDegrees(sourceLoc.getEpicentralDistance(staPos));
-        double azimuthtmp = Math.toDegrees(sourceLoc.getGeographicalAzimuth(staPos));
+        double distance = Math.toDegrees(sourceLoc.calculateEpicentralDistance(staPos));
+        double azimuthtmp = Math.toDegrees(sourceLoc.calculateGeographicalAzimuth(staPos));
 
 
         rays = new ArrayList<TauPUtils.Ray>();
@@ -247,7 +247,7 @@ public class TauPUtils {
         }
 
         //Process raypath
-        double azimuth = Math.toDegrees(sourceLoc.getGeographicalAzimuth(staPos));
+        double azimuth = Math.toDegrees(sourceLoc.calculateGeographicalAzimuth(staPos));
         FullPosition[] raypath = new FullPosition[pathPoints.length];
         for (int i = 0; i < pathPoints.length; i++) {
             TimeDist td = pathPoints[i];

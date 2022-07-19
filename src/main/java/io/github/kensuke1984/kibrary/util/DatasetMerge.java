@@ -66,20 +66,7 @@ public class DatasetMerge extends Operation {
             pw.println("##########From here on, list up paths of dataset folders to merge.");
             pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left blank.");
             for (int i = 1; i <= MAX_IN; i++) {
-                switch(i) {
-                case 1:
-                    pw.println("##1st dataset");
-                    break;
-                case 2:
-                    pw.println("##2nd dataset");
-                    break;
-                case 3:
-                    pw.println("##3rd dataset");
-                    break;
-                default:
-                    pw.println("##" + i + "th dataset");
-                    break;
-                }
+                pw.println("##" + MathAid.ordinalNumber(i) + " dataset");
                 pw.println("#inPath" + i + " ");
             }
         }

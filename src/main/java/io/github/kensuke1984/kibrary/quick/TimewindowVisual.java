@@ -308,7 +308,7 @@ public class TimewindowVisual {
 						if (isObs)
 							obsName = new SACFileName(obsPath);
 						
-						double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getObserver().getPosition())
+						double distance = timewindow.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(timewindow.getObserver().getPosition())
 								* 180 / Math.PI;
 		//				double azimuth = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(timewindow.getStation().getPosition())
 		//						* 180 / Math.PI;
@@ -412,7 +412,7 @@ public class TimewindowVisual {
 //					Files.write(outpathBins, (verticalLine(t1, distance_azimuth.distance, .6, .2, "green", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
 				}
 				for (Path outpathBins : outpathList) {
-					int depth = (int) (Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR());
+					int depth = (int) (Earth.EARTH_RADIUS - id.getEventData().getCmtLocation().getR());
 					System.out.println(depth);
 					double[][] Scurve = StraveltimeCurveAK135(depth);
 					double[][] S2curve = S2traveltimeCurveAK135(depth);

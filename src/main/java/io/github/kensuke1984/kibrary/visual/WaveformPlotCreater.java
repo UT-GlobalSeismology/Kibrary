@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -25,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
  * Plots waveform data.
@@ -169,7 +169,7 @@ public class WaveformPlotCreater extends Operation {
            eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
                    .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
        }
-       if (!DatasetAid.checkEventNum(eventDirs.size())) {
+       if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
            return;
        }
 
@@ -210,9 +210,9 @@ public class WaveformPlotCreater extends Operation {
             return;
         }
 
-        List<BasicID> obsList = new ArrayList<>();
-        List<BasicID> synList = new ArrayList<>();
-        BasicIDFile.pairUp(ids, obsList, synList);
+        BasicIDPairUp pairer = new BasicIDPairUp(ids);
+        List<BasicID> obsList = pairer.getObsList();
+        List<BasicID> synList = pairer.getSynList();
 
         GnuplotFile gnuplot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
 
@@ -240,7 +240,7 @@ public class WaveformPlotCreater extends Operation {
                 BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
             }
 
-            gnuplot.addLabel(obsID.getObserver().getPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
+            gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");

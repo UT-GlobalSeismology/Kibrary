@@ -13,20 +13,20 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Operation to extract or eliminate timewindows from {@link TimewindowDataFile}
+ * Operation to extract or eliminate data entries from {@link DataEntryListFile}
  * depending on the geometries of each raypath.
  * <p>
- * A timewindow data file must be provided as input. A new timewindow data file will be created as the output.
+ * A data entry list file must be provided as input. A new data entry list file will be created as the output.
  *
  * @author otsuru
  * @since 2022/1/4
@@ -43,7 +43,7 @@ public class RaypathSelection extends Operation {
      */
     private String tag;
     /**
-     * Path of the output timewindow file
+     * Path of the output data entry list file
      */
     private Path outputSelectedPath;
     /**
@@ -52,9 +52,9 @@ public class RaypathSelection extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of the input timewindow file
+     * Path of the input data entry list file
      */
-    private Path timewindowPath;
+    private Path dataEntryPath;
 
     /**
      * Whether to eliminate certaion raypaths or to extract them
@@ -103,8 +103,8 @@ public class RaypathSelection extends Operation {
             pw.println("#tag ");
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components");
-            pw.println("##Path of a timewindow file, must be defined");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a data entry list file, must be defined");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##(boolean) Whether to eliminate the specified raypaths instead of extracting them (false)");
             pw.println("#eliminationMode");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");
@@ -154,7 +154,7 @@ public class RaypathSelection extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         eliminationMode = property.parseBoolean("eliminationMode", "false");
 
         lowerEventDepth = property.parseDouble("lowerEventDepth", "0");
@@ -187,127 +187,57 @@ public class RaypathSelection extends Operation {
             throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", tag, dateStr, ".dat"));
+        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedEntry", tag, dateStr, ".lst"));
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("timewindowFilePath"))
-            throw new IllegalArgumentException("No timewindow file specified");
-        if (!property.containsKey("eliminationMode")) property.setProperty("eliminationMode", "false");
-
-        if (!property.containsKey("lowerEventDepth")) property.setProperty("lowerEventDepth", "0");
-        if (!property.containsKey("upperEventDepth")) property.setProperty("upperEventDepth", "1000");
-        if (!property.containsKey("lowerEventLatitude")) property.setProperty("lowerEventLatitude", "-90");
-        if (!property.containsKey("upperEventLatitude")) property.setProperty("upperEventLatitude", "90");
-        if (!property.containsKey("lowerEventLongitude")) property.setProperty("lowerEventLongitude", "-180");
-        if (!property.containsKey("upperEventLongitude")) property.setProperty("upperEventLongitude", "180");
-        if (!property.containsKey("lowerObserverLatitude")) property.setProperty("lowerObserverLatitude", "-90");
-        if (!property.containsKey("upperObserverLatitude")) property.setProperty("upperObserverLatitude", "90");
-        if (!property.containsKey("lowerObserverLongitude")) property.setProperty("lowerObserverLongitude", "-180");
-        if (!property.containsKey("upperObserverLongitude")) property.setProperty("upperObserverLongitude", "180");
-        if (!property.containsKey("lowerDistance")) property.setProperty("lowerDistance", "0");
-        if (!property.containsKey("upperDistance")) property.setProperty("upperDistance", "180");
-        if (!property.containsKey("lowerAzimuth")) property.setProperty("lowerAzimuth", "0");
-        if (!property.containsKey("upperAzimuth")) property.setProperty("upperAzimuth", "360");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        timewindowFilePath = getPath("timewindowFilePath");
-        if (!Files.exists(timewindowFilePath))
-            throw new NoSuchFileException("The timewindow file " + timewindowFilePath + " does not exist");
-        eliminationMode = Boolean.parseBoolean(property.getProperty("eliminationMode"));
-
-        String dateStr = GadgetAid.getTemporaryString();
-        selectedTimewindowFilePath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
-
-        lowerEventDepth = Double.parseDouble(property.getProperty("lowerEventDepth"));
-        upperEventDepth = Double.parseDouble(property.getProperty("upperEventDepth"));
-        if (lowerEventDepth > upperEventDepth)
-            throw new IllegalArgumentException("Event depth range " + lowerEventDepth + " , " + upperEventDepth + " is invalid.");
-        lowerEventLatitude = Double.parseDouble(property.getProperty("lowerEventLatitude"));
-        upperEventLatitude = Double.parseDouble(property.getProperty("upperEventLatitude"));
-        if (lowerEventLatitude < -90 || lowerEventLatitude > upperEventLatitude || 90 < upperEventLatitude)
-            throw new IllegalArgumentException("Event latitude range " + lowerEventLatitude + " , " + upperEventLatitude + " is invalid.");
-        lowerEventLongitude = Double.parseDouble(property.getProperty("lowerEventLongitude"));
-        upperEventLongitude = Double.parseDouble(property.getProperty("upperEventLongitude"));
-        if (lowerEventLongitude < -180 || lowerEventLongitude > upperEventLongitude || 360 < upperEventLongitude)
-            throw new IllegalArgumentException("Event longitude range " + lowerEventLongitude + " , " + upperEventLongitude + " is invalid.");
-        lowerObserverLatitude = Double.parseDouble(property.getProperty("lowerObserverLatitude"));
-        upperObserverLatitude = Double.parseDouble(property.getProperty("upperObserverLatitude"));
-        if (lowerObserverLatitude < -90 || lowerObserverLatitude > upperObserverLatitude || 90 < upperObserverLatitude)
-            throw new IllegalArgumentException("Observer latitude range " + lowerObserverLatitude + " , " + upperObserverLatitude + " is invalid.");
-        lowerObserverLongitude = Double.parseDouble(property.getProperty("lowerObserverLongitude"));
-        upperObserverLongitude = Double.parseDouble(property.getProperty("upperObserverLongitude"));
-        if (lowerObserverLongitude < -180 || lowerObserverLongitude > upperObserverLongitude || 360 < upperObserverLongitude)
-            throw new IllegalArgumentException("Observer longitude range " + lowerObserverLongitude + " , " + upperObserverLongitude + " is invalid.");
-        lowerDistance = Double.parseDouble(property.getProperty("lowerDistance"));
-        upperDistance = Double.parseDouble(property.getProperty("upperDistance"));
-        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
-            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
-        lowerAzimuth = Double.parseDouble(property.getProperty("lowerAzimuth"));
-        upperAzimuth = Double.parseDouble(property.getProperty("upperAzimuth"));
-        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
-            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
-
-    }
-*/
 
     @Override
     public void run() throws IOException {
-        Set<TimewindowData> timewindowSet = TimewindowDataFile.read(timewindowPath);
-        Set<TimewindowData> selectedTimewindowSet = new HashSet<>();
+        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+        Set<DataEntry> selectedEntrySet = new HashSet<>();
 
-        for (TimewindowData window : timewindowSet) {
+        for (DataEntry entry : entrySet) {
             // components are checked regardless of mode (extraction or elimination)
-            if (!components.contains(window.getComponent())) continue;
+            if (!components.contains(entry.getComponent())) continue;
 
             // in extraction mode (eliminationMode=false), ignore raypaths that are not within range
             // in elimination mode (eliminationMode=true), select raypaths that are not within range
-            FullPosition eventPosition = window.getGlobalCMTID().getEvent().getCmtLocation();
+            FullPosition eventPosition = entry.getEvent().getEventData().getCmtLocation();
             if (eventPosition.isInRange(lowerEventLatitude, upperEventLatitude, lowerEventLongitude, upperEventLongitude)
                     == false) {
                 if (eliminationMode) {
-                    selectedTimewindowSet.add(window);
+                    selectedEntrySet.add(entry);
                 }
                 continue;
             }
             // TODO: event depth. conversion to radius has to be considered.
 
-            HorizontalPosition observerPosition = window.getObserver().getPosition();
+            HorizontalPosition observerPosition = entry.getObserver().getPosition();
             if (observerPosition.isInRange(lowerObserverLatitude, upperObserverLatitude, lowerObserverLongitude, upperObserverLongitude)
                     == false) {
                 if (eliminationMode) {
-                    selectedTimewindowSet.add(window);
+                    selectedEntrySet.add(entry);
                 }
                 continue;
             }
 
-            double distance = eventPosition.getEpicentralDistance(observerPosition) * 180. / Math.PI;
-            double azimuth = eventPosition.getAzimuth(observerPosition) * 180. / Math.PI;
+            double distance = eventPosition.calculateEpicentralDistance(observerPosition) * 180. / Math.PI;
+            double azimuth = eventPosition.calculateAzimuth(observerPosition) * 180. / Math.PI;
             if ((lowerDistance <= distance && distance <= upperDistance && MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth))
                     == false) {
                 if (eliminationMode) {
-                    selectedTimewindowSet.add(window);
+                    selectedEntrySet.add(entry);
                 }
                 continue;
             }
 
             if (!eliminationMode) {
-                selectedTimewindowSet.add(window);
+                selectedEntrySet.add(entry);
             }
         }
 
-        System.err.println("Outputting selected timewindows in " + outputSelectedPath);
-        TimewindowDataFile.write(selectedTimewindowSet, outputSelectedPath);
-        System.err.println(selectedTimewindowSet.size() + " timewindows were selected.");
+        System.err.println("Outputting selected entries in " + outputSelectedPath);
+        DataEntryListFile.writeFromSet(selectedEntrySet, outputSelectedPath);
+        System.err.println(selectedEntrySet.size() + " entries were selected.");
     }
 
 }

@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Information of observer,
  * consisting of station code, network code, and {@link HorizontalPosition}. <br>
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  * </p>
  * <p>
  * Station code and network code must be 8 or less letters.
@@ -27,10 +27,18 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * [network code is equal && station code is equal && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
  * If the network code is 'DSM', comparison of networks between instances is not done;
  * station code and horizontal position is considered.
+ * <p>
+ * At a single time moment, only one observer with the same network and station code exists.
+ * However, at different times, observers with the same name but different positions can exist.
+ * Therefore, the latitude and longitude are needed to specify a certain observer.
+ * On the other hand, network and station codes are useful for humans to recognize an observer.
+ * Hence, these 4 keys (network, station, latitude, longitude) shall be used to specify observers.
+ * Only inside folders of a single event can files be named using just network and station code
+ * (because a single event means a single time moment).
  *
  * @author Kensuke Konishi
  */
-public class Observer implements Comparable<Observer> {
+public final class Observer implements Comparable<Observer> {
 
     /**
      * network code for stations in synthetic datasets
@@ -42,7 +50,7 @@ public class Observer implements Comparable<Observer> {
     private static final int STA_LENGTH = 5;
     /**
      * maximum number of letters of network
-     * (length it may be 3 in case of 'DSM', but rightPad() won't cut it so it is OK.)
+     * (length may be 3 in case of 'DSM', but rightPad() won't cut it so it is OK.)
      */
     private static final int NET_LENGTH = 2;
 
@@ -129,18 +137,6 @@ public class Observer implements Comparable<Observer> {
         return new Observer(stationName, network, position);
     }
 
-    /**
-     * Sorting order is station &rarr; network &rarr; position.
-     */
-    @Override
-    public int compareTo(Observer o) {
-        int name = station.compareTo(o.station);
-        if (name != 0)
-            return name;
-        int net = network.compareTo(o.network);
-        return net != 0 ? net : position.compareTo(o.getPosition());
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -191,6 +187,18 @@ public class Observer implements Comparable<Observer> {
     }
 
     /**
+     * Sorting order is station &rarr; network &rarr; position.
+     */
+    @Override
+    public int compareTo(Observer o) {
+        int name = station.compareTo(o.station);
+        if (name != 0)
+            return name;
+        int net = network.compareTo(o.network);
+        return net != 0 ? net : position.compareTo(o.getPosition());
+    }
+
+    /**
      * @return the name of the station
      */
     public String getStation() {
@@ -232,10 +240,8 @@ public class Observer implements Comparable<Observer> {
     /**
      * @return (String) station network latitude longitude
      */
-    public String getPaddedInfoString() {
+    public String toPaddedInfoString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH)
                 + " " + position.toString();
-//            + StringUtils.leftPad(String.valueOf(position.getLatitude()), 9) + " "
-//            + StringUtils.leftPad(String.valueOf(position.getLongitude()), 9);
     }
 }

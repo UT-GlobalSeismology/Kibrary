@@ -5,18 +5,23 @@ import java.util.Arrays;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.data.EventInformationFile;
-import io.github.kensuke1984.kibrary.util.data.ObserverInformationFile;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
+import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
- * They are classes that can be run with only a few arguments.
+ * They are classes that can be run with just a few arguments.
  * <p>
  * Classes assigned here must contain methods usage() and run().
  * If no arguments are needed, usage() should return null.
@@ -31,11 +36,15 @@ enum Brooklyn {
     About(0, About.class),
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
-    EventInformationFile(5, EventInformationFile.class),
-    ObserverInformationFile(6, ObserverInformationFile.class),
+    PolynomialStructureFile(3, PolynomialStructureFile.class),
+    DataEntryListFile(4, DataEntryListFile.class),
+    EventListFile(5, EventListFile.class),
+    ObserverListFile(6, ObserverListFile.class),
+    ColorBinInformationFile(9, ColorBinInformationFile.class),
     // Data download 10
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),
+    LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
@@ -43,6 +52,7 @@ enum Brooklyn {
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
     // Partial 50
+    UnknownParameterSetter(51, UnknownParameterSetter.class),
     // Inversion 60
     // Temporal 100
     ;

@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Timewindow for a raypath (a pair of a source and a receiver).
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  * </p>
  * <p>
  * The information contains a component, a station and a global CMT ID.
@@ -112,7 +112,7 @@ public class TimewindowData extends Timewindow {
      * @author anselme
      */
     public double getAzimuthDegree() {
-        return Math.toDegrees(eventID.getEvent().getCmtLocation().getAzimuth(observer.getPosition()));
+        return Math.toDegrees(eventID.getEventData().getCmtLocation().calculateAzimuth(observer.getPosition()));
     }
 
     /**
@@ -120,13 +120,13 @@ public class TimewindowData extends Timewindow {
      * @author anselme
      */
     public double getDistanceDegree() {
-        return Math.toDegrees(eventID.getEvent().getCmtLocation().getEpicentralDistance(observer.getPosition()));
+        return Math.toDegrees(eventID.getEventData().getCmtLocation().calculateEpicentralDistance(observer.getPosition()));
     }
 
     @Override
     public String toString() {
         List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
-        return observer.getPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
+        return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
                 + startTime + " " + endTime + " " + String.join(",", phaseStrings);
     }
 

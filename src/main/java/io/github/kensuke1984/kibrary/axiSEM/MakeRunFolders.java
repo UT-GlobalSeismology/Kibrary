@@ -87,7 +87,7 @@ public class MakeRunFolders {
 					
 					Path eventFile = localDirPath.resolve("CMTSOLUTION");
 					GlobalCMTID id = eventFolder.getGlobalCMTID();
-					GlobalCMTAccess idData = id.getEvent();
+					GlobalCMTAccess idData = id.getEventData();
 					MomentTensor mt = idData.getCmt();
 					double pow = Math.pow(10, mt.getMtExp());
 					String s = String.format("PDE...%nevent name: %s%ntime shift: %.4f%nhalf duration: "

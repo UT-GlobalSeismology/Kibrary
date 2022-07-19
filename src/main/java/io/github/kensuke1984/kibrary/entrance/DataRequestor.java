@@ -227,7 +227,7 @@ public class DataRequestor extends Operation {
     @Override
     public void run() throws IOException {
         requestedEvents = listEvents();
-        if (!DatasetAid.checkEventNum(requestedEvents.size())) {
+        if (!DatasetAid.checkNum(requestedEvents.size(), "event", "events")) {
             return;
         }
         System.out.println("Label contains \"" + dateStr + "\"");

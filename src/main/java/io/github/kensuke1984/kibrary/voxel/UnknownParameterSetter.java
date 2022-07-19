@@ -5,7 +5,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -27,28 +35,54 @@ public class UnknownParameterSetter {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.err.println("Usage:");
-            System.err.println(" [voxelPath  partialTypes...] : creates unknown parameter file");
-            return;
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
+    }
 
-        Path voxelPath = Paths.get(args[0]);
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        options.addOption(Option.builder("v").longOpt("voxel").hasArg().argName("voxelFile").required()
+                .desc("Path of input voxel file").build());
+        options.addOption(Option.builder("p").longOpt("partials").hasArg().argName("partialTypes").required()
+                .desc("Partial types to make unknown parameters for, listed using commas").build());
+        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+                .desc("A tag to include in output file name.").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
 
         // partial types
         System.err.println("Working for:");
-        int nType = args.length - 1;
-        PartialType[] types = new PartialType[nType];
-        for (int i = 0; i < nType; i++) {
-            types[i] = PartialType.valueOf(args[i+1]);
+        PartialType[] types = Stream.of(cmdLine.getOptionValue("p").split(",")).map(PartialType::valueOf).toArray(PartialType[]::new);
+        for (int i = 0; i < types.length; i++) {
             System.err.println(" " + types[i]);
         }
 
-        output(voxelPath, types);
+        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
+
+        output(voxelPath, types, tag);
 
     }
 
-    private static void output(Path voxelPath, PartialType[] types) throws IOException {
+    private static void output(Path voxelPath, PartialType[] types, String tag) throws IOException {
         // read voxel information
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
@@ -63,7 +97,7 @@ public class UnknownParameterSetter {
         for (HorizontalPosition position : positions) {
             for (int i = 0; i < radii.length; i++) {
                 FullPosition pointPosition = position.toFullPosition(radii[i]);
-                double volume = getVolume(pointPosition, layerThicknesses[i], dLatitude, dLongitude);
+                double volume = Earth.getVolume(pointPosition, layerThicknesses[i], dLatitude, dLongitude);
                 for (PartialType type : types) {
                     Physical3DParameter parameter = new Physical3DParameter(type, pointPosition, volume);
                     parameterList.add(parameter);
@@ -74,7 +108,7 @@ public class UnknownParameterSetter {
         }
         System.err.println("\rFinished working for all " + numTotal + " voxels.");
 
-        Path outputPath = Paths.get("unknowns" + GadgetAid.getTemporaryString() + ".inf");
+        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("unknowns", tag, GadgetAid.getTemporaryString(), ".lst"));
         System.err.println("Outputting in "+ outputPath);
         UnknownParameterFile.write(parameterList, outputPath);
     }

@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.BufferedWriter;
@@ -36,8 +36,8 @@ public class QualityControlStack {
 			ir.getBasicIDList().stream()
 				.filter(bid -> bid.getGlobalCMTID().equals(idref))
 				.forEach(bid -> {
-					double distance = bid.getGlobalCMTID().getEvent().getCmtLocation()
-							.getEpicentralDistance(bid.getObserver().getPosition()) * 180 / Math.PI;
+					double distance = bid.getGlobalCMTID().getEventData().getCmtLocation()
+							.calculateEpicentralDistance(bid.getObserver().getPosition()) * 180 / Math.PI;
 					
 					if (distance >= 20 && distance < 40) {
 						try {

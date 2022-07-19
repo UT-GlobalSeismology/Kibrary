@@ -54,14 +54,12 @@ import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
  * @author anselme Added phase information
  */
 public final class PartialIDFile {
+    private PartialIDFile() {}
 
     /**
      * [byte] File size for an ID
      */
     public static final int oneIDByte = 50;
-
-    private PartialIDFile() {
-    }
 
     public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
             throws IOException {
@@ -82,7 +80,7 @@ public final class PartialIDFile {
                 double[] data = new double[ids[i].NPTS];
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
-                ids[i] = ids[i].setData(data);
+                ids[i] = ids[i].withData(data);
                 if (i % (ids.length / 20) == 0)
                     System.err.print("\rReading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
             }
@@ -102,7 +100,7 @@ public final class PartialIDFile {
                 double[] data = new double[idsNoData[i].NPTS];
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
-                idsNoData[i] = idsNoData[i].setData(data);
+                idsNoData[i] = idsNoData[i].withData(data);
 
                 if (i < partialIndexes.length - 1)
                     dis.skipBytes((cumulativeNPTS[partialIndexes[i+1]] - cumulativeNPTS[partialIndexes[i] + 1]) * 8);

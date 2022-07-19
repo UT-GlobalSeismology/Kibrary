@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import io.github.kensuke1984.kibrary.elasticparameter.ElasticModuli;
+import io.github.kensuke1984.kibrary.elastic.ElasticModuli;
 
 /**
  * Weighting factor in Geller &amp; Hara (1993) to compute 3-D partial

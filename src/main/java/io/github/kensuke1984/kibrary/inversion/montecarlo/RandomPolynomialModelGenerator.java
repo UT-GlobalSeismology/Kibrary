@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,12 +17,12 @@ import java.util.Random;
  * @author Kensuke Konishi
  * @version 0.1.1.1
  */
-class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructure> {
+class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructure_old> {
 
-    private final static PolynomialStructure INITIAL_STRUCTURE;
+    private final static PolynomialStructure_old INITIAL_STRUCTURE;
 
     static {
-        PolynomialStructure ps = PolynomialStructure.PREM;
+        PolynomialStructure_old ps = PolynomialStructure_old.PREM;
         ps = ps.addBoundaries(3530, 3580, 3630, 3680, 3730, 3780, 3830, 3880);
         PolynomialFunction polynomialFunction = new PolynomialFunction(new double[]{7.15, 0, 0, 0});
         INITIAL_STRUCTURE = ps.setVs(2, polynomialFunction).setVs(3, polynomialFunction).setVs(4, polynomialFunction)
@@ -32,7 +32,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
 
     private final Random RANDOM = new Random();
 
-    private static void outputModelValue(Path runPath, PolynomialStructure structure) throws IOException {
+    private static void outputModelValue(Path runPath, PolynomialStructure_old structure) throws IOException {
         double[] vs = ModelProbability.readVs(structure);
         double[] q = ModelProbability.readQ(structure);
         List<String> lines = new ArrayList<>();
@@ -43,8 +43,8 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
         Files.write(runPath.resolve("candidate.txt"), lines);
     }
 
-    private static PolynomialStructure createStructure(double[] percentage) {
-        PolynomialStructure structure = INITIAL_STRUCTURE;
+    private static PolynomialStructure_old createStructure(double[] percentage) {
+        PolynomialStructure_old structure = INITIAL_STRUCTURE;
         for (int i = 0; i < 8; i++)
             structure = structure
                     .setVs(i + 2, new PolynomialFunction(new double[]{7.15 * (1 + percentage[i] / 100), 0, 0, 0}));
@@ -53,7 +53,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
         return structure;
     }
 
-    private static double[] extractPercentage(PolynomialStructure structure) {
+    private static double[] extractPercentage(PolynomialStructure_old structure) {
         double[] percentage = new double[16];
         for (int i = 0; i < 8; i++)
             percentage[i] = structure.getVshOf(i + 2).value(0) / 7.15 * 100 - 100;
@@ -78,7 +78,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
             percentage[i] = value;
             value *= -1;
         }
-        PolynomialStructure ps1 = createStructure(percentage);
+        PolynomialStructure_old ps1 = createStructure(percentage);
         ps1.writePSV(p.resolve("opposite50.model"));
     }
 
@@ -88,7 +88,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
      * +- 10%<br> 8:3480-3530 Q<br> 9:3530-3580 Q<br> .<br> 15:3830-3880 Q<br>
      *
      */
-    private PolynomialStructure nextStructure(PolynomialStructure former) {
+    private PolynomialStructure_old nextStructure(PolynomialStructure_old former) {
         double[] percentage = extractPercentage(former);
         double[] changed = change(percentage);
         return createStructure(changed);
@@ -113,22 +113,22 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
     }
 
     @Override
-    public PolynomialStructure createNextModel(PolynomialStructure current) {
+    public PolynomialStructure_old createNextModel(PolynomialStructure_old current) {
         return nextStructure(current);
     }
 
     @Override
-    public PolynomialStructure firstModel() {
+    public PolynomialStructure_old firstModel() {
         return INITIAL_STRUCTURE;
     }
 
     @Override
-    public void write(Path path, PolynomialStructure model, OpenOption... options) throws IOException {
+    public void write(Path path, PolynomialStructure_old model, OpenOption... options) throws IOException {
         model.writePSV(path, options);
     }
 
     @Override
-    public String toString(PolynomialStructure model) {
+    public String toString(PolynomialStructure_old model) {
         return String.join("\n", model.toPSVlines());
     }
 

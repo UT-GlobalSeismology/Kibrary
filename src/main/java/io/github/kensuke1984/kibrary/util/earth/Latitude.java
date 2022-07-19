@@ -9,11 +9,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * Latitude [-90, 90].
  * The value is rounded off to the 4th decimal place.
  *<p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
  */
-class Latitude implements Comparable<Latitude> {
+final class Latitude implements Comparable<Latitude> {
 
     /**
      * the number of decimal places to round off the latitude value
@@ -23,22 +23,22 @@ class Latitude implements Comparable<Latitude> {
     /**
      * [-90, 90] geographic latitude [deg]
      */
-    private double geographicLatitude;
+    private final double geographicLatitude;
     /**
      * [-&pi;/2, &pi;/2] geocentric latitude [rad]
      */
-    private double geocentricLatitude;
+    private final double geocentricLatitude;
     /**
      * [0, &pi;] &theta; in spherical coordinates [rad]
      */
-    private double theta;
+    private final double theta;
 
     /**
      * Method to convert a (double) latitude value to a (double) theta value.
      * @param theta [rad] spherical coordinates [0, &pi;]
      * @return geographic latitude [deg]
      */
-    static double toLatitude(double theta) {
+    static double valueFor(double theta) {
         if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
                 "Invalid theta (must be[0, pi]): " + theta + " @" +
                         Thread.currentThread().getStackTrace()[1].getMethodName());
@@ -53,7 +53,7 @@ class Latitude implements Comparable<Latitude> {
      * @param geographicLatitude [deg] [-90, 90]
      */
     Latitude(double geographicLatitude) {
-        if (!checkLatitude(geographicLatitude)) throw new IllegalArgumentException(
+        if (!withinValidRange(geographicLatitude)) throw new IllegalArgumentException(
                 "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
@@ -67,13 +67,8 @@ class Latitude implements Comparable<Latitude> {
      * @param latitude [deg]
      * @return if the latitude is valid
      */
-    private static boolean checkLatitude(double latitude) {
+    private static boolean withinValidRange(double latitude) {
         return -90 <= latitude && latitude <= 90;
-    }
-
-    @Override
-    public int compareTo(Latitude o) {
-        return Double.compare(geographicLatitude, o.geographicLatitude);
     }
 
     @Override
@@ -97,28 +92,33 @@ class Latitude implements Comparable<Latitude> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
-        // return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
-        return MathAid.equalWithinEpsilon(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
+
+        return Precision.equals(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
+    }
+
+    @Override
+    public int compareTo(Latitude o) {
+        return Double.compare(geographicLatitude, o.geographicLatitude);
     }
 
     /**
      * @return geographic latitude [deg]
      */
-    public double getLatitude() {
+    double getLatitude() {
         return geographicLatitude;
     }
 
     /**
      * @return geocentric latitude [rad]
      */
-    public double getGeocentricLatitude() {
+    double getGeocentricLatitude() {
         return geocentricLatitude;
     }
 
     /**
      * @return theta [radian]
      */
-    public double getTheta() {
+    double getTheta() {
         return theta;
     }
 
@@ -135,8 +135,6 @@ class Latitude implements Comparable<Latitude> {
     @Override
     public String toString() {
         return MathAid.padToString(geographicLatitude, 3, PRECISION, " ");
-        //String format = "%" + (4 + PRECISION) + "." + PRECISION + "f";
-        //return String.format(format, geographicLatitude);
     }
 
     /**

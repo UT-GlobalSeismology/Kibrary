@@ -45,7 +45,7 @@ public class InfoFromTimewindow {
 			Observer sta = timewindow.getObserver();
 			usedStation.add(sta);
 			
-			System.out.println((6371. - event.getEvent().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(sta.getPosition())));
+			System.out.println((6371. - event.getEventData().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEventData().getCmtLocation().calculateEpicentralDistance(sta.getPosition())));
 		}
 		
 		for (Observer sta : usedStation)
@@ -53,10 +53,10 @@ public class InfoFromTimewindow {
 		
 		for (GlobalCMTID id : nTransverseMap.keySet()) {
 			System.out.println(id + " " + nTransverseMap.get(id));
-			double depth = 6371 - id.getEvent().getCmtLocation().getR();
-			double mw = id.getEvent().getCmt().getMw();
-			double duration = id.getEvent().getHalfDuration() * 2;
-			Files.write(eventFile, (id + " " + id.getEvent().getCmtLocation() + " " + mw + " " + duration + "\n").getBytes(), StandardOpenOption.APPEND);
+			double depth = 6371 - id.getEventData().getCmtLocation().getR();
+			double mw = id.getEventData().getCmt().getMw();
+			double duration = id.getEventData().getHalfDuration() * 2;
+			Files.write(eventFile, (id + " " + id.getEventData().getCmtLocation() + " " + mw + " " + duration + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}
 

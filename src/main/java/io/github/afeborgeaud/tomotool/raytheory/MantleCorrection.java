@@ -245,7 +245,7 @@ public class MantleCorrection {
             }
             double shift = -(ttdRef.getTraveltimePerturbationToPREM() - ttdDir.getTraveltimePerturbationToPREM());
 
-            bounces.add(ttdRef.getObserver().getPaddedInfoString() + " " + ttdRef.getGlobalCMTID().toString() + " " + ttdRef.getScatterPointList().get(0) + " " + shift);
+            bounces.add(ttdRef.getObserver().toPaddedInfoString() + " " + ttdRef.getGlobalCMTID().toString() + " " + ttdRef.getScatterPointList().get(0) + " " + shift);
 
             StaticCorrectionData correction = new StaticCorrectionData(ttdDir.getObserver(), ttdDir.getGlobalCMTID()
                     , window.getComponent(), 0., shift, 1., phase);

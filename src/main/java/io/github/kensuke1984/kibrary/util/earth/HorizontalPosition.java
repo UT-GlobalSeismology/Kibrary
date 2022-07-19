@@ -13,7 +13,8 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * <p>
  * Latitude Longitude
  * <p>
- * This class is <b>immutable</b>.
+ * This class is <b>almost IMMUTABLE</b> (expect that it is not a final class).
+ * Classes that extend this class must be <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
  */
@@ -71,15 +72,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     }
 
-    /**
-     * Sorting order is Latitude &rarr; Longitude
-     */
-    @Override
-    public int compareTo(HorizontalPosition o) {
-        int lat = latitude.compareTo(o.latitude);
-        return lat != 0 ? lat : longitude.compareTo(o.longitude);
-    }
-
     @Override
     public int hashCode() {
         int prime = 31;
@@ -99,10 +91,19 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
+     * Sorting order is Latitude &rarr; Longitude
+     */
+    @Override
+    public int compareTo(HorizontalPosition o) {
+        int lat = latitude.compareTo(o.latitude);
+        return lat != 0 ? lat : longitude.compareTo(o.longitude);
+    }
+
+    /**
      * @param position {@link HorizontalPosition} to compute azimuth with
      * @return positionとのazimuth [rad]
      */
-    public double getAzimuth(HorizontalPosition position) {
+    public double calculateAzimuth(HorizontalPosition position) {
         return Earth.getAzimuth(this, position);
     }
 
@@ -110,7 +111,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @param position {@link HorizontalPosition} to compute back azimuth with
      * @return positionとのback azimuth [rad]
      */
-    public double getBackAzimuth(HorizontalPosition position) {
+    public double calculateBackAzimuth(HorizontalPosition position) {
         return Earth.getBackAzimuth(this, position);
     }
 
@@ -118,15 +119,15 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @param horizontalPosition {@link HorizontalPosition}
      * @return epicentral distance [rad] between this and horizontalPosition
      */
-    public double getEpicentralDistance(HorizontalPosition horizontalPosition) {
+    public double calculateEpicentralDistance(HorizontalPosition horizontalPosition) {
         return Earth.getEpicentralDistance(horizontalPosition, this);
     }
 
-    public double getGeographicalAzimuth(HorizontalPosition position) {
+    public double calculateGeographicalAzimuth(HorizontalPosition position) {
         return Earth.getGeographicalAzimuth(this, position);
     }
 
-    public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
+    public double calculateGeographicalDistance(HorizontalPosition horizontalPosition) {
         return Earth.getGeographicalDistance(horizontalPosition, this);
     }
 
@@ -139,8 +140,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @return {@link HorizontalPosition} of the center between the position and
      * this
      */
-    public HorizontalPosition getMidpoint(HorizontalPosition position) {
-        double delta = getEpicentralDistance(position); // locとthis との震央距離
+    public HorizontalPosition calculateMidpoint(HorizontalPosition position) {
+        double delta = calculateEpicentralDistance(position); // locとthis との震央距離
         // System.out.println("delta: " + delta);
         // theta = ⊿/2の zx平面上の点
         XYZ midXYZ = new RThetaPhi(1, delta * 0.5, 0).toCartesian();
@@ -159,7 +160,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         midXYZ = midXYZ.rotateaboutZ(getPhi());
         RThetaPhi midRTP = midXYZ.toSphericalCoordinate();
         // System.out.println(midRTP);
-        return new HorizontalPosition(Latitude.toLatitude(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
+        return new HorizontalPosition(Latitude.valueFor(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
         // System.out.println(midLoc);
     }
 
@@ -184,7 +185,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @param position {@link HorizontalPosition} of target
      * @return 大円上での距離 精度はそこまでよくない
      */
-    public double getPath(HorizontalPosition position) {
+    public double calculatePath(HorizontalPosition position) {
         double distance;
         Ellipse e = new Ellipse(Earth.EQUATORIAL_RADIUS, Earth.POLAR_RADIUS);
 

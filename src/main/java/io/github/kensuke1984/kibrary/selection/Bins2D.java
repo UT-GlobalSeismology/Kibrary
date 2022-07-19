@@ -26,10 +26,10 @@ public class Bins2D {
 		
 		for (TimewindowData timewindow : timewindows) {
 			Observer station = timewindow.getObserver();
-			FullPosition eventLocation = event.getEvent().getCmtLocation();
-			double distance = station.getPosition().getEpicentralDistance(eventLocation)
+			FullPosition eventLocation = event.getEventData().getCmtLocation();
+			double distance = station.getPosition().calculateEpicentralDistance(eventLocation)
 					* 180. / Math.PI;
-			double azimuth = eventLocation.getAzimuth(station.getPosition()) * 180. / Math.PI;
+			double azimuth = eventLocation.calculateAzimuth(station.getPosition()) * 180. / Math.PI;
 			DistanceAzimuth distance_azimuth = getBinPosition(distance, azimuth);
 			
 			if (bins.containsKey(distance_azimuth)) {
@@ -61,10 +61,10 @@ public class Bins2D {
 	
 	public DistanceAzimuth getBinPosition(TimewindowData timewindow) {
 		Observer station = timewindow.getObserver();
-		FullPosition eventLocation = event.getEvent().getCmtLocation();
-		double distance = station.getPosition().getEpicentralDistance(eventLocation)
+		FullPosition eventLocation = event.getEventData().getCmtLocation();
+		double distance = station.getPosition().calculateEpicentralDistance(eventLocation)
 				* 180. / Math.PI;
-		double azimuth = eventLocation.getAzimuth(station.getPosition()) * 180. / Math.PI;
+		double azimuth = eventLocation.calculateAzimuth(station.getPosition()) * 180. / Math.PI;
 		
 		return getBinPosition(distance, azimuth);
 	}

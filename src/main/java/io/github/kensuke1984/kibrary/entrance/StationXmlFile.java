@@ -12,11 +12,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.math3.util.Precision;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Class for downloading and reading StationXML files.
@@ -161,7 +160,7 @@ class StationXmlFile {
         } else if (azimuth.isEmpty()) {
             // for channels of Z component, it is OK if azimuth is empty; it is set 0 here to prevent NumberFormatException
             // CAUTION: up is dip=-90, horizontal is dip=0
-            if (MathAid.equalWithinEpsilon(Double.parseDouble(dip), -90, 0.01)) {
+            if (Precision.equals(Double.parseDouble(dip), -90, 0.01)) {
                 azimuth = "0";
             } else {
                 System.err.println("!! Azimuth empty: " + xmlFile);

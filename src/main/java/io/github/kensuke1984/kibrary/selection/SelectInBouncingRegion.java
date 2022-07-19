@@ -43,10 +43,10 @@ public class SelectInBouncingRegion {
 			TauP_Time timetool = new TauP_Time("prem");
 			timetool.parsePhaseList("ScS");
 			for (TimewindowData window : timewindows) {
-				FullPosition eloc = window.getGlobalCMTID().getEvent().getCmtLocation();
+				FullPosition eloc = window.getGlobalCMTID().getEventData().getCmtLocation();
 				timetool.setSourceDepth(6371. - eloc.getR());
-				double distance = Math.toDegrees(eloc.getEpicentralDistance(window.getObserver().getPosition()));
-				double azimuth = Math.toDegrees(eloc.getAzimuth(window.getObserver().getPosition()));
+				double distance = Math.toDegrees(eloc.calculateEpicentralDistance(window.getObserver().getPosition()));
+				double azimuth = Math.toDegrees(eloc.calculateAzimuth(window.getObserver().getPosition()));
 				timetool.calculate(distance);
 				TimeDist timedist = Arrays.stream(timetool.getArrival(0).getPierce()).filter(td -> Math.abs(td.getDepth() - 2891) < 1e-3).findFirst().get();
 				if (Math.abs(timedist.getDepth() - 2891) > 0.5)

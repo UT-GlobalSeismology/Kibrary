@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -197,7 +197,7 @@ public class Profile_v2 {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+							double distance = id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
 								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"black\",\\\n"
@@ -314,9 +314,9 @@ public class Profile_v2 {
 					RealVector synVector = ir.syntheticOf(id).getYVector();
 					RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 					
-					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
 					int i = (int) distance;
 					int j = (int) (azimuth / 10);
 					

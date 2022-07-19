@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 /**
@@ -61,13 +62,15 @@ public class ExternalProcess {
     /**
      * Starts executing a command using ExternalProcess, and returns that instance.
      * @param command (String) The command to be executed, using spaces to separate words
-     * @param workpath (Path) Path of the working directory of the command
+     * @param workPath (Path) Path of the working directory of the command
      * @return (ExternalProcess)
      * @throws IOException
      */
-    public static ExternalProcess launch(String command, Path workpath) throws IOException {
+    public static ExternalProcess launch(String command, Path workPath) throws IOException {
         ProcessBuilder builder = new ProcessBuilder(command.split("\\s"));
-        builder.directory(workpath.toFile());
+        // for some reason, Path "" does not work, so change it to "."
+        Path fixedWorkPath = Paths.get("").equals(workPath) ? Paths.get(".") : workPath;
+        builder.directory(fixedWorkPath.toFile());
         return new ExternalProcess(builder.start());
     }
 

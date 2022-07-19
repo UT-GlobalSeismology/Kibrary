@@ -24,13 +24,13 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 /**
  * Utility for a function y = f(x)
  * <p>
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>.
  * </p>
  * TODO sorted
  *
  * @author Kensuke Konishi
  */
-public class Trace {
+public final class Trace {
 
     /**
      * fit X, Y in this to  y<sub>j</sub> = &sum;<sub>i</sub> (a<sub>i</sub> f<sub>i</sub> (x<sub>j</sub>))

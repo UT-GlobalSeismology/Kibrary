@@ -53,7 +53,7 @@ public class SPECFEMSetup {
 
     private void run() throws IOException {
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(inPath);
-        if (!DatasetAid.checkEventNum(eventDirs.size())) {
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         } else if (eventDirs.size() >= 10000) {
             // only 4 digits can be used for the run**** folder names
@@ -130,19 +130,15 @@ public class SPECFEMSetup {
         generateCmtSolutionFile(eventDir.getGlobalCMTID(), dataPath);
 
         // collect all observers of SAC files under eventDir
-        Set<Observer> observerSet = eventDir.sacFileSet().stream().map(name -> {
-                    try {
-                        return name.readHeader();
-                    } catch (Exception e2) {
-                        return null;
-                    }
-                }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
+        Set<Observer> observerSet = eventDir.sacFileSet().stream()
+                .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                .map(Observer::of).collect(Collectors.toSet());
         generateStationFile(observerSet, dataPath);
     }
 
     private void generateCmtSolutionFile(GlobalCMTID eventID, Path dataPath) throws IOException {
         Path cmtSolutionPath = dataPath.resolve("CMTSOLUTION");
-        GlobalCMTAccess event = eventID.getEvent();
+        GlobalCMTAccess event = eventID.getEventData();
         double latitude = event.getCmtLocation().getLatitude();
         double longitude = event.getCmtLocation().getLongitude();
         double depth = event.getCmtLocation().getDepth();
@@ -171,7 +167,7 @@ public class SPECFEMSetup {
     private void generateStationFile(Set<Observer> observerSet, Path dataPath) throws IOException {
         Path stationPath = dataPath.resolve("STATIONS");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stationPath))) {
-            observerSet.forEach(observer -> pw.println(observer.getPaddedInfoString() + "  0.0  0.0"));
+            observerSet.forEach(observer -> pw.println(observer.toPaddedInfoString() + "  0.0  0.0"));
         }
     }
 

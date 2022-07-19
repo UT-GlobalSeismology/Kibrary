@@ -28,34 +28,34 @@ public class PolynomialStructure implements VelocityStructure {
      * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
      */
     public static final PolynomialStructure PREM =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.PREM);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.PREM);
     /**
      * isotropic PREM by Dziewonski &amp; Anderson 1981
      */
     public static final PolynomialStructure ISO_PREM =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.ISO_PREM);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.ISO_PREM);
     /**
      * AK135 by Kennett <i>et al</i>. (1995)
      */
     public static final PolynomialStructure AK135 =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.AK135);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.AK135);
     /**
      * Homogeneous structure used for test purposes
      */
     public static final PolynomialStructure HOMOGEN =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.HOMOGEN);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.HOMOGEN);
     /**
      * 2019/12/7
      */
     private static final long serialVersionUID = -7292410325252292009L;
 
-    private final io.github.kensuke1984.kibrary.util.earth.PolynomialStructure STRUCTURE;
+    private final io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old STRUCTURE;
     /*
      * -radius x this is only for computations for bouncing points.
      */
     private final PolynomialFunction RADIUS_SUBTRACTION;
 
-    public PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
+    public PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old structure) {
         STRUCTURE = checkBoundaries(structure);
         if (!STRUCTURE.isDefault() && !checkStructure())
         	throw new RuntimeException(
@@ -64,11 +64,11 @@ public class PolynomialStructure implements VelocityStructure {
         RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
     }
 
-    private io.github.kensuke1984.kibrary.util.earth.PolynomialStructure checkBoundaries(
-            io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
+    private io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old checkBoundaries(
+            io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old structure) {
         double[] dBoundaries = IntStream.range(1, structure.getNzone()).mapToDouble(structure::getRMinOf)
                 .filter(r -> isDBoundary(r, structure)).toArray();
-        io.github.kensuke1984.kibrary.util.earth.PolynomialStructure newStructure = structure;
+        io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old newStructure = structure;
         double earthRadius = structure.getRMaxOf(structure.getNzone() - 1);
         for (double boundary : dBoundaries) {
             newStructure = newStructure.addBoundaries(boundary - D_BOUNDARY_ZONE, boundary + D_BOUNDARY_ZONE);
@@ -150,7 +150,7 @@ public class PolynomialStructure implements VelocityStructure {
      * If the functions and values(velocities and density) in the upper and lower boundaries are identical, false returns.
      */
     private static boolean isDBoundary(double r,
-                                       io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
+                                       io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old structure) {
         double rPlus = r + ComputationalMesh.EPS;
         double rMinus = r - ComputationalMesh.EPS;
         int upperZone = structure.zoneOf(rPlus);
@@ -181,7 +181,7 @@ public class PolynomialStructure implements VelocityStructure {
     private int[] rMinIndexOfDBoundary;
 
     public PolynomialStructure(Path path) throws IOException {
-        this(new io.github.kensuke1984.kibrary.util.earth.PolynomialStructure(path));
+        this(new io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old(path));
     }
 
     @Override

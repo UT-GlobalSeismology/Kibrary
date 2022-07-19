@@ -45,8 +45,8 @@ public class ReadUtils {
             cmtSea.setDepthRange(Math.max(0., depth - 35), depth + 35);
             GlobalCMTID id = null;
             try {
-                id = cmtSea.search().stream().filter(tmp -> tmp.getEvent().getCMTTime().getHour() - hour == 0
-                        && Math.abs(tmp.getEvent().getCMTTime().getMinute() - minute) <= 1)
+                id = cmtSea.search().stream().filter(tmp -> tmp.getEventData().getCMTTime().getHour() - hour == 0
+                        && Math.abs(tmp.getEventData().getCMTTime().getMinute() - minute) <= 1)
                         .findAny().get();
             } catch (RuntimeException e) {
                 System.out.println("No id found for " + line);

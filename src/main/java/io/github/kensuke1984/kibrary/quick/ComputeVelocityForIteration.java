@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class ComputeVelocityForIteration {
 
@@ -18,8 +18,8 @@ public class ComputeVelocityForIteration {
 		Path perturbationPath = workdir.resolve("cl4az0_it1.txt");
 		
 		
-		PolynomialStructure structure = PolynomialStructure.PREM;
-		structure = new PolynomialStructure(Paths.get("/work/anselme/POLY/cl4az0.poly"));
+		PolynomialStructure_old structure = PolynomialStructure_old.PREM;
+		structure = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/cl4az0.poly"));
 		
 		List<double[]> perturbations = Files.readAllLines(perturbationPath).stream().map(line -> {
 			String[] ss = line.trim().split("\\s+");

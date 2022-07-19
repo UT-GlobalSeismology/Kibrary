@@ -12,7 +12,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +55,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -79,11 +78,6 @@ public class AtAMaker implements Operation_old {
     private Properties PROPERTY;
 
     private Path workPath;
-    private Path outPath;
-
-    private String dateString;
-    private Path logPath;
-
     private Path fpPath;
     private Path bpPath;
     private Path timewindowPath;
@@ -107,7 +101,7 @@ public class AtAMaker implements Operation_old {
 
     private boolean backward;
 
-    private PolynomialStructure structure;
+    private PolynomialStructure_old structure;
 
     private int sourceTimeFunction;
 
@@ -213,6 +207,234 @@ public class AtAMaker implements Operation_old {
 
     private boolean threeD;
 
+    /* (non-Javadoc)
+     * @see io.github.kensuke1984.kibrary.Operation#getWorkPath()
+     */
+    @Override
+    public Path getWorkPath() {
+        return workPath;
+    }
+
+    /* (non-Javadoc)
+     * @see io.github.kensuke1984.kibrary.Operation#getProperties()
+     */
+    @Override
+    public Properties getProperties() {
+        return PROPERTY;
+    }
+
+    /**
+     * @param property
+     * @throws IOException
+     */
+    public AtAMaker(Properties property) throws IOException {
+        this.PROPERTY = (Properties) property.clone();
+
+        checkAndPutDefaults();
+        workPath = Paths.get(PROPERTY.getProperty("workPath"));
+        if (!Files.exists(workPath))
+            throw new RuntimeException("The workPath: " + workPath + " does not exist");
+
+        mode = PROPERTY.getProperty("mode").trim().toUpperCase();
+        if (!(mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")))
+                throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
+        System.out.println("Using mode " + mode);
+
+        //frequency ranges
+        double[] minFreqs = Stream.of(PROPERTY.getProperty("minFreq").trim().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+        double[] maxFreqs = Stream.of(PROPERTY.getProperty("maxFreq").trim().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+        if (minFreqs.length != maxFreqs.length)
+            throw new RuntimeException("Error: number of entries for minFreq and maxFreq differ");
+        frequencyRanges = new FrequencyRange[minFreqs.length];
+        for (int i = 0; i < minFreqs.length; i++) {
+            frequencyRanges[i] = new FrequencyRange(minFreqs[i], maxFreqs[i]);
+            System.out.println(frequencyRanges[i]);
+        }
+
+        //weighting types
+        weightingTypes = Stream.of(PROPERTY.getProperty("weightingTypes").trim().split("\\s+")).map(type -> WeightingType.valueOf(type))
+                 .collect(Collectors.toList()).toArray(new WeightingType[0]);
+            if (weightingTypes.length < 0)
+                throw new IllegalArgumentException("Error: weightingTypes must be set");
+//			if (weightingTypes.length > 1)
+//				throw new IllegalArgumentException("Error: only 1 weighting type can be set now");
+
+        //sac components
+        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+                .collect(Collectors.toList()).toArray(new SACComponent[0]);
+
+        //partial types
+        partialTypes = Arrays.stream(PROPERTY.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
+                .collect(Collectors.toSet()).toArray(new PartialType[0]);
+
+        System.out.print("Using partial types: ");
+        for (PartialType type : partialTypes)
+            System.out.print(type + " ");
+        System.out.println();
+
+        //correction types
+        correctionBootstrap = Boolean.parseBoolean(PROPERTY.getProperty("correctionBootstrap"));
+
+        if (!correctionBootstrap) {
+            correctionTypes = Stream.of(PROPERTY.getProperty("correctionTypes").trim().split("\\s+")).map(s -> StaticCorrectionType.valueOf(s.trim()))
+                .collect(Collectors.toList()).toArray(new StaticCorrectionType[0]);
+        }
+        else {
+            correctionTypes = new StaticCorrectionType[nSample];
+            for (int isample = 0; isample < nSample; isample++) {
+                correctionTypes[isample] = StaticCorrectionType.valueOf(String.format("RND%4d", isample));
+            }
+        }
+
+        //bpnames
+        bpPath = getPath("bpPath");
+        bpnames = SpcFileAid.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
+        if (mode.equals("PSV") || mode.equals("BOTH"))
+            bpnames_PSV = SpcFileAid.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
+        else
+            bpnames_PSV = null;
+
+        //basicIDs
+        computationFlag = Integer.parseInt(PROPERTY.getProperty("computationFlag"));
+
+        if (computationFlag != 3) {
+            rootWaveformPath = Paths.get(PROPERTY.getProperty("rootWaveformPath").trim());
+
+            if (!correctionBootstrap) {
+                if (PROPERTY.getProperty("rootWaveformPath").trim().equals(".")) {
+                    waveformIDPath = Stream.of(PROPERTY.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> Paths.get(s))
+                            .collect(Collectors.toList()).toArray(new Path[0]);
+                    waveformPath = Stream.of(PROPERTY.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
+                            .collect(Collectors.toList()).toArray(new Path[0]);
+                }
+                else {
+                    waveformIDPath = Stream.of(PROPERTY.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
+                            .collect(Collectors.toList()).toArray(new Path[0]);
+                    waveformPath = Stream.of(PROPERTY.getProperty("waveformPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
+                                .collect(Collectors.toList()).toArray(new Path[0]);
+                }
+            }
+            else {
+                waveformIDPath = new Path[nSample];
+                waveformPath = new Path[nSample];
+                for (int isample = 0; isample < nSample; isample++) {
+                    waveformIDPath[isample] = rootWaveformPath.resolve(String.format("waveformID_RND%4d.dat", isample));
+                    waveformPath[isample] = rootWaveformPath.resolve(String.format("waveform_RND%4d.dat", isample));
+                }
+            }
+
+            basicIDArray = new BasicID[waveformIDPath.length][];
+            for (int i = 0; i < waveformIDPath.length; i++) {
+                basicIDArray[i] = BasicIDFile.read(waveformIDPath[i], waveformPath[i]);
+            }
+        }
+        else {
+            basicIDArray = null;
+        }
+
+        // unknowns
+        unknownParameterPath = getPath("unknownParameterPath");
+        resamplingRate = Integer.parseInt(PROPERTY.getProperty("resamplingRate"));
+        if (PROPERTY.containsKey("verticalMappingFile"))
+            verticalMappingFile = Paths.get(PROPERTY.getProperty("verticalMappingFile").trim());
+        else
+            verticalMappingFile = null;
+        if (PROPERTY.containsKey("horizontalMappingFile"))
+            horizontalMappingFile = Paths.get(PROPERTY.getProperty("horizontalMappingFile").trim());
+        else
+            horizontalMappingFile = null;
+
+        numberOfBuffers = Integer.parseInt(PROPERTY.getProperty("numberOfBuffers"));
+
+            List<UnknownParameter> targetUnknowns = UnknownParameterFile.read(unknownParameterPath);
+            List<Double> lats = targetUnknowns.stream().map(p -> p.getPosition().getLatitude()).distinct().collect(Collectors.toList());
+            List<Double> lons = targetUnknowns.stream().map(p -> p.getPosition().getLatitude()).distinct().collect(Collectors.toList());
+            Collections.sort(lats);
+            Collections.sort(lons);
+            double dlat = Math.abs(lats.get(1) - lats.get(0));
+            double dlon = Math.abs(lons.get(1) - lons.get(0));
+            System.out.println("Target grid increments lat, lon = " + dlat + ", " + dlon);
+
+            if (resamplingRate >= 1) {
+                ResampleGrid sampler = new ResampleGrid(targetUnknowns, dlat, dlon, resamplingRate);
+                originalUnknownParameters = sampler.getResampledUnkowns().toArray(new UnknownParameter[0]);
+                originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
+                        .collect(Collectors.toList());
+                originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
+                        .collect(Collectors.toSet());
+
+                if (verticalMappingFile == null) throw new RuntimeException("Please set a verticalMappingFile");
+                System.out.println("Using 3-D mapping with resampler: " + verticalMappingFile + " " + resamplingRate);
+                threedMapping = new ThreeDParameterMapping(sampler, verticalMappingFile);
+                newUnknownParameters = threedMapping.getNewUnknowns();
+                horizontalMapping = null;
+            }
+            else if (verticalMappingFile != null && horizontalMappingFile != null) {
+                originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
+                originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
+                        .collect(Collectors.toList());
+                originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
+                        .collect(Collectors.toSet());
+                System.out.println("Using 3-D mapping with " + verticalMappingFile + " " + horizontalMappingFile);
+                threedMapping = new ThreeDParameterMapping(horizontalMappingFile, verticalMappingFile, originalUnknownParameters);
+                newUnknownParameters = threedMapping.getNewUnknowns();
+            }
+            else {
+                System.out.println("No mapping");
+                originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
+                mapping = new ParameterMapping(originalUnknownParameters);
+                newUnknownParameters = mapping.getUnknowns();
+                horizontalMapping = null;
+                threedMapping = null;
+                originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
+                        .collect(Collectors.toSet());
+                originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
+                        .collect(Collectors.toList());
+            }
+//		else {
+//			originalUnknownParameters = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
+//			newUnknownParameters = originalUnknownParameters;
+//			originalHorizontalPositions = null;
+//			originalUnkownRadii = Arrays.stream(originalUnknownParameters).map(p -> p.getLocation().getR())
+//					.collect(Collectors.toSet());
+//		}
+
+        nOriginalUnknown = originalUnknownParameters.length;
+        nNewUnknown = newUnknownParameters.length;
+
+        n0AtA = nNewUnknown * (nNewUnknown + 1) / 2;
+        int ntmp = n0AtA / numberOfBuffers;
+        n0AtABuffer = n0AtA - ntmp * (numberOfBuffers - 1);
+        bufferStartIndex = new int[numberOfBuffers];
+        for (int i = 0; i < numberOfBuffers; i++)
+            bufferStartIndex[i] = i * ntmp;
+
+        set();
+    }
+
+    /**
+     * @param args
+     *            [parameter file name]
+     */
+    public static void main(String[] args) throws IOException {
+        AtAMaker atam = new AtAMaker(Property_old.parse(args));
+        long startTime = System.nanoTime();
+
+        System.out.println(AtAMaker.class.getName() + " is going..");
+
+        // verify memory requirements
+//		AtAEntry entry = new AtAEntry();
+//		long size = SizeOf.sizeOf(entry);
+//		System.out.println("Size of one AtAEntry = " + SizeOf.humanReadable(size));
+//		System.out.println("Size of the AtA matrix = (nWeightingType * nFrequencyRanges * nUnknowns * 30 (buffer for different phases))^2");
+        //
+
+        atam.run();
+
+        System.out.println(AtAMaker.class.getName() + " finished in "
+                + GadgetAid.toTimeString(System.nanoTime() - startTime));
+    }
+
     private Path rootWaveformPath;
 
     private Path[] partialIDPaths;
@@ -225,56 +447,11 @@ public class AtAMaker implements Operation_old {
 
     private String mode;
 
-    Map<Phases, Integer> phaseMap;
-
-    AtomicInteger windowCounter;
-//	int windowCounter;
-
-    AtomicInteger totalWindowCounter;
-
-    Phases[] usedPhases;
-
-    Map<HorizontalPosition, SPCFileAccess> bpMap;
-
-    private final String stfcatName = "LSTF1.stfcat"; //LSTF1 ASTF1 ASTF2
-    private final List<String> stfcat = readSTFCatalogue(stfcatName);
-
-    private Path logfile;
-
-    private TimewindowData[] timewindowOrder;
-
-    private final int bufferMargin = 10;
-
-    private boolean doubledifference;
-
-    /**
-     * @param args
-     *            [parameter file name]
-     */
-    public static void main(String[] args) throws IOException {
-        AtAMaker atam = new AtAMaker(Property_old.parse(args));
-        long startTime = System.nanoTime();
-
-        System.err.println(AtAMaker.class.getName() + " is going..");
-
-        // verify memory requirements
-//		AtAEntry entry = new AtAEntry();
-//		long size = SizeOf.sizeOf(entry);
-//		System.out.println("Size of one AtAEntry = " + SizeOf.humanReadable(size));
-//		System.out.println("Size of the AtA matrix = (nWeightingType * nFrequencyRanges * nUnknowns * 30 (buffer for different phases))^2");
-        //
-
-        atam.run();
-
-        System.err.println(AtAMaker.class.getName() + " finished in "
-                + GadgetAid.toTimeString(System.nanoTime() - startTime));
-    }
-
     /**
      * @throws IOException
      */
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(AtAMaker.class.getSimpleName() + GadgetAid.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(AtAMaker.class.getName() + GadgetAid.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan AtAMaker");
             pw.println("##Number of processors used for parallel computation (1)");
@@ -375,208 +552,71 @@ public class AtAMaker implements Operation_old {
             pw.println("##Compute a double difference Kernel (false)");
             pw.println("#doubledifference");
         }
-        System.err.println(outPath + " is created.");
+        System.out.println(outPath + " is created.");
     }
 
     /**
-     * @param property
-     * @throws IOException
+     *
      */
-    public AtAMaker(Properties property) throws IOException {
-        this.PROPERTY = (Properties) property.clone();
-
-        checkAndPutDefaults();
-        workPath = Paths.get(PROPERTY.getProperty("workPath"));
-        if (!Files.exists(workPath))
-            throw new RuntimeException("The workPath: " + workPath + " does not exist");
-
-        mode = PROPERTY.getProperty("mode").trim().toUpperCase();
-        if (!(mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")))
-                throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
-        System.err.println("Using mode " + mode);
-
-        //frequency ranges
-        double[] minFreqs = Stream.of(PROPERTY.getProperty("minFreq").trim().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
-        double[] maxFreqs = Stream.of(PROPERTY.getProperty("maxFreq").trim().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
-        if (minFreqs.length != maxFreqs.length)
-            throw new RuntimeException("Error: number of entries for minFreq and maxFreq differ");
-        frequencyRanges = new FrequencyRange[minFreqs.length];
-        for (int i = 0; i < minFreqs.length; i++) {
-            frequencyRanges[i] = new FrequencyRange(minFreqs[i], maxFreqs[i]);
-            System.err.println(frequencyRanges[i]);
-        }
-
-        //weighting types
-        weightingTypes = Stream.of(PROPERTY.getProperty("weightingTypes").trim().split("\\s+")).map(type -> WeightingType.valueOf(type))
-                 .collect(Collectors.toList()).toArray(new WeightingType[0]);
-            if (weightingTypes.length < 0)
-                throw new IllegalArgumentException("Error: weightingTypes must be set");
-//			if (weightingTypes.length > 1)
-//				throw new IllegalArgumentException("Error: only 1 weighting type can be set now");
-
-        //sac components
-        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toList()).toArray(new SACComponent[0]);
-
-        //partial types
-        partialTypes = Arrays.stream(PROPERTY.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
-                .collect(Collectors.toSet()).toArray(new PartialType[0]);
-
-        System.err.print("Using partial types: ");
-        for (PartialType type : partialTypes)
-            System.err.print(type + " ");
-        System.err.println();
-
-        //correction types
-        correctionBootstrap = Boolean.parseBoolean(PROPERTY.getProperty("correctionBootstrap"));
-
-        if (!correctionBootstrap) {
-            correctionTypes = Stream.of(PROPERTY.getProperty("correctionTypes").trim().split("\\s+")).map(s -> StaticCorrectionType.valueOf(s.trim()))
-                .collect(Collectors.toList()).toArray(new StaticCorrectionType[0]);
-        }
-        else {
-            correctionTypes = new StaticCorrectionType[nSample];
-            for (int isample = 0; isample < nSample; isample++) {
-                correctionTypes[isample] = StaticCorrectionType.valueOf(String.format("RND%4d", isample));
-            }
-        }
-
-        //bpnames
-        bpPath = getPath("bpPath");
-        bpnames = SpcFileAid.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
-        if (mode.equals("PSV") || mode.equals("BOTH"))
-            bpnames_PSV = SpcFileAid.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFileName[0]);
-        else
-            bpnames_PSV = null;
-
-        //basicIDs
-        computationFlag = Integer.parseInt(PROPERTY.getProperty("computationFlag"));
-
-        if (computationFlag != 3) {
-            rootWaveformPath = Paths.get(PROPERTY.getProperty("rootWaveformPath").trim());
-
-            if (!correctionBootstrap) {
-                if (PROPERTY.getProperty("rootWaveformPath").trim().equals(".")) {
-                    waveformIDPath = Stream.of(PROPERTY.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> Paths.get(s))
-                            .collect(Collectors.toList()).toArray(new Path[0]);
-                    waveformPath = Stream.of(PROPERTY.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
-                            .collect(Collectors.toList()).toArray(new Path[0]);
-                }
-                else {
-                    waveformIDPath = Stream.of(PROPERTY.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
-                            .collect(Collectors.toList()).toArray(new Path[0]);
-                    waveformPath = Stream.of(PROPERTY.getProperty("waveformPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
-                                .collect(Collectors.toList()).toArray(new Path[0]);
-                }
-            }
-            else {
-                waveformIDPath = new Path[nSample];
-                waveformPath = new Path[nSample];
-                for (int isample = 0; isample < nSample; isample++) {
-                    waveformIDPath[isample] = rootWaveformPath.resolve(String.format("waveformID_RND%4d.dat", isample));
-                    waveformPath[isample] = rootWaveformPath.resolve(String.format("waveform_RND%4d.dat", isample));
-                }
-            }
-
-            basicIDArray = new BasicID[waveformIDPath.length][];
-            for (int i = 0; i < waveformIDPath.length; i++) {
-                basicIDArray[i] = BasicIDFile.read(waveformIDPath[i], waveformPath[i]);
-            }
-        }
-        else {
-            basicIDArray = null;
-        }
-
-        // unknowns
-        unknownParameterPath = getPath("unknownParameterPath");
-        resamplingRate = Integer.parseInt(PROPERTY.getProperty("resamplingRate"));
-        if (PROPERTY.containsKey("verticalMappingFile"))
-            verticalMappingFile = Paths.get(PROPERTY.getProperty("verticalMappingFile").trim());
-        else
-            verticalMappingFile = null;
-        if (PROPERTY.containsKey("horizontalMappingFile"))
-            horizontalMappingFile = Paths.get(PROPERTY.getProperty("horizontalMappingFile").trim());
-        else
-            horizontalMappingFile = null;
-
-        numberOfBuffers = Integer.parseInt(PROPERTY.getProperty("numberOfBuffers"));
-
-            List<UnknownParameter> targetUnknowns = UnknownParameterFile.read(unknownParameterPath);
-            List<Double> lats = targetUnknowns.stream().map(p -> p.getPosition().getLatitude()).distinct().collect(Collectors.toList());
-            List<Double> lons = targetUnknowns.stream().map(p -> p.getPosition().getLatitude()).distinct().collect(Collectors.toList());
-            Collections.sort(lats);
-            Collections.sort(lons);
-            double dlat = Math.abs(lats.get(1) - lats.get(0));
-            double dlon = Math.abs(lons.get(1) - lons.get(0));
-            System.err.println("Target grid increments lat, lon = " + dlat + ", " + dlon);
-
-            if (resamplingRate >= 1) {
-                ResampleGrid sampler = new ResampleGrid(targetUnknowns, dlat, dlon, resamplingRate);
-                originalUnknownParameters = sampler.getResampledUnkowns().toArray(new UnknownParameter[0]);
-                originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
-                        .collect(Collectors.toList());
-                originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
-                        .collect(Collectors.toSet());
-
-                if (verticalMappingFile == null) throw new RuntimeException("Please set a verticalMappingFile");
-                System.err.println("Using 3-D mapping with resampler: " + verticalMappingFile + " " + resamplingRate);
-                threedMapping = new ThreeDParameterMapping(sampler, verticalMappingFile);
-                newUnknownParameters = threedMapping.getNewUnknowns();
-                horizontalMapping = null;
-            }
-            else if (verticalMappingFile != null && horizontalMappingFile != null) {
-                originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
-                originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
-                        .collect(Collectors.toList());
-                originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
-                        .collect(Collectors.toSet());
-                System.err.println("Using 3-D mapping with " + verticalMappingFile + " " + horizontalMappingFile);
-                threedMapping = new ThreeDParameterMapping(horizontalMappingFile, verticalMappingFile, originalUnknownParameters);
-                newUnknownParameters = threedMapping.getNewUnknowns();
-            }
-            else {
-                System.err.println("No mapping");
-                originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
-                mapping = new ParameterMapping(originalUnknownParameters);
-                newUnknownParameters = mapping.getUnknowns();
-                horizontalMapping = null;
-                threedMapping = null;
-                originalUnkownRadii = targetUnknowns.stream().map(p -> p.getPosition().getR())
-                        .collect(Collectors.toSet());
-                originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getPosition().toHorizontalPosition()).distinct()
-                        .collect(Collectors.toList());
-            }
-//		else {
-//			originalUnknownParameters = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
-//			newUnknownParameters = originalUnknownParameters;
-//			originalHorizontalPositions = null;
-//			originalUnkownRadii = Arrays.stream(originalUnknownParameters).map(p -> p.getLocation().getR())
-//					.collect(Collectors.toSet());
-//		}
-
-        nOriginalUnknown = originalUnknownParameters.length;
-        nNewUnknown = newUnknownParameters.length;
-
-        n0AtA = nNewUnknown * (nNewUnknown + 1) / 2;
-        int ntmp = n0AtA / numberOfBuffers;
-        n0AtABuffer = n0AtA - ntmp * (numberOfBuffers - 1);
-        bufferStartIndex = new int[numberOfBuffers];
-        for (int i = 0; i < numberOfBuffers; i++)
-            bufferStartIndex[i] = i * ntmp;
-
-        set();
+    private void checkAndPutDefaults() {
+        if (!PROPERTY.containsKey("workPath"))
+            PROPERTY.setProperty("workPath", ".");
+        if (!PROPERTY.containsKey("rootWaveformPath"))
+            PROPERTY.setProperty("rootWaveformPath", ".");
+        if (!PROPERTY.containsKey("components"))
+            PROPERTY.setProperty("components", "Z R T");
+        if (!PROPERTY.containsKey("bpPath"))
+            PROPERTY.setProperty("bpPath", "BPcat/PREM");
+        if (!PROPERTY.containsKey("fpPath"))
+            PROPERTY.setProperty("fpPath", "FPinfo");
+        if (!PROPERTY.containsKey("modelName"))
+            PROPERTY.setProperty("modelName", "PREM");
+        if (!PROPERTY.containsKey("maxFreq"))
+            PROPERTY.setProperty("maxFreq", "0.08");
+        if (!PROPERTY.containsKey("minFreq"))
+            PROPERTY.setProperty("minFreq", "0.005");
+        if (!PROPERTY.containsKey("sourceTimeFunction"))
+            PROPERTY.setProperty("sourceTimeFunction", "2");
+        if (!PROPERTY.containsKey("partialTypes"))
+            PROPERTY.setProperty("partialTypes", "MU");
+        if (!PROPERTY.containsKey("partialSamplingHz"))
+            PROPERTY.setProperty("partialSamplingHz", "20");
+        if (!PROPERTY.containsKey("finalSamplingHz"))
+            PROPERTY.setProperty("finalSamplingHz", "1");
+        if (!PROPERTY.containsKey("filterNp"))
+            PROPERTY.setProperty("filterNp", "4");
+        if (!PROPERTY.containsKey("testBP")) PROPERTY.setProperty("testBP", "false");
+        if (!PROPERTY.containsKey("testFP")) PROPERTY.setProperty("testFP", "false");
+        if (!PROPERTY.containsKey("outPartial")) PROPERTY.setProperty("outPartial", "false");
+        if (!PROPERTY.containsKey("weightingTypes")) PROPERTY.setProperty("weightingTypes", "RECIPROCAL");
+        if(!PROPERTY.containsKey("thetaInfo")) PROPERTY.setProperty("thetaInfo", "1. 50. 1e-2");
+        if(!PROPERTY.containsKey("numberOfBuffers")) PROPERTY.setProperty("numberOfBuffers", "1");
+        if(!PROPERTY.containsKey("nproc")) PROPERTY.setProperty("nproc", "1");
+        if(!PROPERTY.containsKey("nwindowBuffer")) PROPERTY.setProperty("nwindowBuffer", "100");
+        if(!PROPERTY.containsKey("backward")) PROPERTY.setProperty("backward", "false");
+        if(!PROPERTY.containsKey("computationFlag")) PROPERTY.setProperty("computationFlag", "3");
+        if(!PROPERTY.containsKey("correctionBootstrap")) PROPERTY.setProperty("correctionBootstrap", "false");
+        if (!PROPERTY.containsKey("nSample")) PROPERTY.setProperty("nSample", "100");
+        if (!PROPERTY.containsKey("catalogueFP")) PROPERTY.setProperty("catalogueFP", "false");
+        if (!PROPERTY.containsKey("resamplingRate")) PROPERTY.setProperty("resamplingRate", "1");
+        if (!PROPERTY.containsKey("quickAndDirty")) PROPERTY.setProperty("quickAndDirty", "false");
+        if (!PROPERTY.containsKey("fastCompute")) PROPERTY.setProperty("fastCompute", "false");
+        if (!PROPERTY.containsKey("mode")) PROPERTY.setProperty("mode", "SH");
+        if (!PROPERTY.containsKey("threeD")) PROPERTY.setProperty("threeD", "true");
+        if (!PROPERTY.containsKey("doubledifference")) PROPERTY.setProperty("doubledifference", "false");
+        if (!PROPERTY.containsKey("tlen")) PROPERTY.setProperty("tlen", "3276.8");
+        if (!PROPERTY.containsKey("np")) PROPERTY.setProperty("np", "512");
     }
 
     /**
      * @throws IOException
      */
     private void set() throws IOException {
-        setOutput();
         fpPath = getPath("fpPath");
         timewindowPath = getPath("timewindowPath");
 
         if (PROPERTY.containsKey("qinf"))
-            structure = new PolynomialStructure(getPath("qinf"));
+            structure = new PolynomialStructure_old(getPath("qinf"));
         try {
             sourceTimeFunction = Integer.parseInt(PROPERTY.getProperty("sourceTimeFunction"));
         } catch (Exception e) {
@@ -611,7 +651,7 @@ public class AtAMaker implements Operation_old {
 
         bufferFiles = new Path[numberOfBuffers];
         for (int i = 0; i < numberOfBuffers; i++) {
-            Path path = outPath.resolve("ata_tmp_buffer_" + i + ".dat");
+            Path path = workPath.resolve("ata_tmp_buffer_" + i + ".dat");
             Files.deleteIfExists(path);
             bufferFiles[i] = path;
         }
@@ -624,7 +664,7 @@ public class AtAMaker implements Operation_old {
 
         nwindowBuffer = Integer.parseInt(PROPERTY.getProperty("nwindowBuffer"));
 
-        outpartialDir = outPath.resolve("partials");
+        outpartialDir = workPath.resolve("partials");
 
         backward = Boolean.parseBoolean(PROPERTY.getProperty("backward"));
 
@@ -642,58 +682,34 @@ public class AtAMaker implements Operation_old {
         doubledifference = Boolean.parseBoolean(PROPERTY.getProperty("doubledifference"));
     }
 
-    /**
-    *
-    */
-   private void checkAndPutDefaults() {
-       if (!PROPERTY.containsKey("workPath"))
-           PROPERTY.setProperty("workPath", ".");
-       if (!PROPERTY.containsKey("rootWaveformPath"))
-           PROPERTY.setProperty("rootWaveformPath", ".");
-       if (!PROPERTY.containsKey("components"))
-           PROPERTY.setProperty("components", "Z R T");
-       if (!PROPERTY.containsKey("bpPath"))
-           PROPERTY.setProperty("bpPath", "BPcat/PREM");
-       if (!PROPERTY.containsKey("fpPath"))
-           PROPERTY.setProperty("fpPath", "FPinfo");
-       if (!PROPERTY.containsKey("modelName"))
-           PROPERTY.setProperty("modelName", "PREM");
-       if (!PROPERTY.containsKey("maxFreq"))
-           PROPERTY.setProperty("maxFreq", "0.08");
-       if (!PROPERTY.containsKey("minFreq"))
-           PROPERTY.setProperty("minFreq", "0.005");
-       if (!PROPERTY.containsKey("sourceTimeFunction"))
-           PROPERTY.setProperty("sourceTimeFunction", "2");
-       if (!PROPERTY.containsKey("partialTypes"))
-           PROPERTY.setProperty("partialTypes", "MU");
-       if (!PROPERTY.containsKey("partialSamplingHz"))
-           PROPERTY.setProperty("partialSamplingHz", "20");
-       if (!PROPERTY.containsKey("finalSamplingHz"))
-           PROPERTY.setProperty("finalSamplingHz", "1");
-       if (!PROPERTY.containsKey("filterNp"))
-           PROPERTY.setProperty("filterNp", "4");
-       if (!PROPERTY.containsKey("testBP")) PROPERTY.setProperty("testBP", "false");
-       if (!PROPERTY.containsKey("testFP")) PROPERTY.setProperty("testFP", "false");
-       if (!PROPERTY.containsKey("outPartial")) PROPERTY.setProperty("outPartial", "false");
-       if (!PROPERTY.containsKey("weightingTypes")) PROPERTY.setProperty("weightingTypes", "RECIPROCAL");
-       if(!PROPERTY.containsKey("thetaInfo")) PROPERTY.setProperty("thetaInfo", "1. 50. 1e-2");
-       if(!PROPERTY.containsKey("numberOfBuffers")) PROPERTY.setProperty("numberOfBuffers", "1");
-       if(!PROPERTY.containsKey("nproc")) PROPERTY.setProperty("nproc", "1");
-       if(!PROPERTY.containsKey("nwindowBuffer")) PROPERTY.setProperty("nwindowBuffer", "100");
-       if(!PROPERTY.containsKey("backward")) PROPERTY.setProperty("backward", "false");
-       if(!PROPERTY.containsKey("computationFlag")) PROPERTY.setProperty("computationFlag", "3");
-       if(!PROPERTY.containsKey("correctionBootstrap")) PROPERTY.setProperty("correctionBootstrap", "false");
-       if (!PROPERTY.containsKey("nSample")) PROPERTY.setProperty("nSample", "100");
-       if (!PROPERTY.containsKey("catalogueFP")) PROPERTY.setProperty("catalogueFP", "false");
-       if (!PROPERTY.containsKey("resamplingRate")) PROPERTY.setProperty("resamplingRate", "1");
-       if (!PROPERTY.containsKey("quickAndDirty")) PROPERTY.setProperty("quickAndDirty", "false");
-       if (!PROPERTY.containsKey("fastCompute")) PROPERTY.setProperty("fastCompute", "false");
-       if (!PROPERTY.containsKey("mode")) PROPERTY.setProperty("mode", "SH");
-       if (!PROPERTY.containsKey("threeD")) PROPERTY.setProperty("threeD", "true");
-       if (!PROPERTY.containsKey("doubledifference")) PROPERTY.setProperty("doubledifference", "false");
-       if (!PROPERTY.containsKey("tlen")) PROPERTY.setProperty("tlen", "3276.8");
-       if (!PROPERTY.containsKey("np")) PROPERTY.setProperty("np", "512");
-   }
+
+    Map<Phases, Integer> phaseMap;
+
+    AtomicInteger windowCounter;
+//	int windowCounter;
+
+    AtomicInteger totalWindowCounter;
+
+    Phases[] usedPhases;
+
+    Map<HorizontalPosition, SPCFileAccess> bpMap;
+
+    private final String stfcatName = "LSTF1.stfcat"; //LSTF1 ASTF1 ASTF2
+    private final List<String> stfcat = readSTFCatalogue(stfcatName);
+
+    private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
+//		System.out.println("STF catalogue: " +  STFcatalogue);
+        return IOUtils.readLines(AtAMaker.class.getClassLoader().getResourceAsStream(STFcatalogue)
+                    , Charset.defaultCharset());
+    }
+
+    private Path logfile;
+
+    private TimewindowData[] timewindowOrder;
+
+    private final int bufferMargin = 10;
+
+    private boolean doubledifference;
 
     /* (non-Javadoc)
      * @see io.github.kensuke1984.kibrary.Operation#run()
@@ -701,7 +717,7 @@ public class AtAMaker implements Operation_old {
     @Override
     public void run() throws IOException {
         if (fastCompute)
-            System.err.println("Using fast compute mode");
+            System.out.println("Using fast compute mode");
 
         setTimewindows();
         setBandPassFilter();
@@ -715,17 +731,22 @@ public class AtAMaker implements Operation_old {
 
         totalWindowCounter = new AtomicInteger();
 
+        String tempString = GadgetAid.getTemporaryString();
+
+//		logfile = workPath.resolve("atam" + tempString + ".log");
+//		Files.createFile(logfile);
+
         partialIDPaths = new Path[nFreq];
         partialPaths = new Path[nFreq];
         for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-            partialPaths[ifreq] = outPath.resolve("partial_" + frequencyRanges[ifreq] +"_" + dateString + ".dat");
-            partialIDPaths[ifreq] = outPath.resolve("partialID_" + frequencyRanges[ifreq] +"_" + dateString + ".dat");
+            partialPaths[ifreq] = workPath.resolve("partial_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
+            partialIDPaths[ifreq] = workPath.resolve("partialID_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
         }
 
-        Path outUnknownPath = outPath.resolve("newUnknowns" + dateString + ".inf");
-        Path outOriginalUnknownPath = outPath.resolve("originalUnknowns" + dateString + ".inf");
-        Path outLayerPath = outPath.resolve("newPerturbationLayers" + dateString + ".inf");
-        Path outHorizontalPoints = outPath.resolve("newHorizontalPositions" + dateString + ".inf");
+        Path outUnknownPath = workPath.resolve("newUnknowns" + tempString + ".inf");
+        Path outOriginalUnknownPath = workPath.resolve("originalUnknowns" + tempString + ".inf");
+        Path outLayerPath = workPath.resolve("newPerturbationLayers" + tempString + ".inf");
+        Path outHorizontalPoints = workPath.resolve("newHorizontalPositions" + tempString + ".inf");
         outputUnknownParameters(outUnknownPath, newUnknownParameters);
         outputUnknownParameters(outOriginalUnknownPath, originalUnknownParameters);
         outputPerturbationLayers(outLayerPath);
@@ -735,7 +756,7 @@ public class AtAMaker implements Operation_old {
         nInteration = timewindowInformation.size() / nwindowBuffer;
         int newNwindowBuffer = nInteration == 0 ? timewindowInformation.size() : timewindowInformation.size() / nInteration;
         nwindowBufferLastIteration = timewindowInformation.size() - nInteration * newNwindowBuffer;
-        System.err.println("nWindowBuffer (new, new_lastIteration, previous) = " + newNwindowBuffer + " "
+        System.out.println("nWindowBuffer (new, new_lastIteration, previous) = " + newNwindowBuffer + " "
                 + nwindowBufferLastIteration + " " + nwindowBuffer);
         nwindowBuffer = newNwindowBuffer + bufferMargin;
 
@@ -750,7 +771,7 @@ public class AtAMaker implements Operation_old {
             phaseMap.put(usedPhases[i], i);
         }
 
-        Path outpartialDir = outPath.resolve("partials");
+        Path outpartialDir = workPath.resolve("partials");
         if (outPartial)
             Files.createDirectories(outpartialDir);
 
@@ -792,8 +813,8 @@ public class AtAMaker implements Operation_old {
             //compute data variance
             computeVariance();
             //write data variance
-            System.err.println("Writing residual variance...");
-            Path outpath =  outPath.resolve("residualVariance" +  dateString + ".dat");
+            System.out.println("Writing residual variance...");
+            Path outpath =  workPath.resolve("residualVariance" +  tempString + ".dat");
             ResidualVarianceFile.write(outpath, residualVarianceNumerator, residualVarianceDenominator, weightingTypes
                     , frequencyRanges, usedPhases, correctionTypes, npts);
         }
@@ -909,7 +930,7 @@ public class AtAMaker implements Operation_old {
             }
 
             for (Observer station : eventStations) {
-                System.err.println("Working for " + event + " " + station);
+                System.out.println("Working for " + event + " " + station);
 
                 Set<TimewindowData> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getObserver().equals(station))
                         .collect(Collectors.toSet());
@@ -933,23 +954,23 @@ public class AtAMaker implements Operation_old {
                 }
 
                 //--- compute partials
-//				System.err.println("Computing partials...");
+//				System.out.println("Computing partials...");
                 synchronized (this) {
                     int currentWindowCounter = windowCounter.get();
 
-    //				System.err.println(currentWindowCounter + " " + iterationCount + " " + nInteration + " " + nwindowBufferLastIteration);
+    //				System.out.println(currentWindowCounter + " " + iterationCount + " " + nInteration + " " + nwindowBufferLastIteration);
 
 //					if (threeD) {
                         if (catalogueFP) {
-                            System.err.println("FP catalogue");
+                            System.out.println("FP catalogue");
                             for (HorizontalPosition position : originalHorizontalPositions) {
                                 if (fastCompute) {
-                                    FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
+                                    FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
                                     HorizontalPosition bpSourceLoc = station.getPosition();
-                                    double distanceFP = fpSourceLoc.getEpicentralDistance(position);
-                                    double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(position);
+                                    double distanceFP = fpSourceLoc.calculateEpicentralDistance(position);
+                                    double az = fpSourceLoc.calculateAzimuth(bpSourceLoc) - fpSourceLoc.calculateAzimuth(position);
                                     double d = Math.toDegrees(Math.asin(distanceFP * Math.sin(az)));
-                                    System.err.println(d);
+                                    System.out.println(d);
                                     if (d < 10.)
                                         todo.add(Executors.callable(new FPWorker(position, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
                                 }
@@ -958,7 +979,7 @@ public class AtAMaker implements Operation_old {
                             }
                         }
                         else {
-                            System.err.println("Exact FP");
+                            System.out.println("Exact FP");
                             for (int ispc = 0; ispc < fpnames.size(); ispc++) {
                                 if (mode.equals("SH"))
                                     todo.add(Executors.callable(new FPWorker(fpnames.get(ispc)
@@ -969,12 +990,12 @@ public class AtAMaker implements Operation_old {
                                 else if (mode.equals("BOTH")) {
                                     HorizontalPosition position = fpnames.get(ispc).read().getObserverPosition();
                                     if (fastCompute) {
-                                        FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
+                                        FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
                                         HorizontalPosition bpSourceLoc = station.getPosition();
-                                        double distanceFP = fpSourceLoc.getEpicentralDistance(position);
-                                        double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(position);
+                                        double distanceFP = fpSourceLoc.calculateEpicentralDistance(position);
+                                        double az = fpSourceLoc.calculateAzimuth(bpSourceLoc) - fpSourceLoc.calculateAzimuth(position);
                                         double d = Math.toDegrees(Math.asin(distanceFP * Math.sin(az)));
-//										System.err.println(d);
+//										System.out.println(d);
                                         if (Math.abs(d) < 10.)
                                             todo.add(Executors.callable(new FPWorker(fpnames.get(ispc), fpnames_PSV.get(ispc)
                                                     , station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
@@ -1003,7 +1024,7 @@ public class AtAMaker implements Operation_old {
                     totalWindowCounter.addAndGet(orderedRecordTimewindows.size());
                 }
 
-                System.err.println(windowCounter.get() + " " + totalWindowCounter.get() + " " + timewindowInformation.size());
+                System.out.println(windowCounter.get() + " " + totalWindowCounter.get() + " " + timewindowInformation.size());
 
                 if ( (windowCounter.get() >= nwindowBuffer - bufferMargin && iterationCount < nInteration)
                         || (timewindowInformation.size() - totalWindowCounter.get() == 0 && iterationCount == nInteration) ) {
@@ -1014,11 +1035,11 @@ public class AtAMaker implements Operation_old {
                     windowCounter.set(0);
                     iterationCount++;
                     try {
-                        System.err.println("Computing " + todo.size() + " tasks");
+                        System.out.println("Computing " + todo.size() + " tasks");
                         long t1i = System.currentTimeMillis();
                         List<Future<Object>> answers = execs.invokeAll(todo);
                         long t1f = System.currentTimeMillis();
-                        System.err.println("Completed in " + (t1f-t1i)*1e-3 + " s");
+                        System.out.println("Completed in " + (t1f-t1i)*1e-3 + " s");
                         todo = new ArrayList<>();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -1029,9 +1050,9 @@ public class AtAMaker implements Operation_old {
                     if (!testBP) {
                         Runtime runtime = Runtime.getRuntime();
                         long usedMemory = runtime.totalMemory() - runtime.freeMemory();
-                        System.err.println("--> Used memory = " + usedMemory*1e-9 + "Gb");
+                        System.out.println("--> Used memory = " + usedMemory*1e-9 + "Gb");
 
-                        System.err.println("Computing AtA...");
+                        System.out.println("Computing AtA...");
 
                         for (int ibuff = 0; ibuff < numberOfBuffers; ibuff++) {
                             if (Files.exists(bufferFiles[ibuff])) {
@@ -1060,13 +1081,13 @@ public class AtAMaker implements Operation_old {
                             }
 
                             usedMemory = runtime.totalMemory() - runtime.freeMemory();
-                            System.err.println("--> Used memory = " + usedMemory*1e-9 + "Gb");
+                            System.out.println("--> Used memory = " + usedMemory*1e-9 + "Gb");
 
                             int n = ibuff < numberOfBuffers - 1 ? bufferStartIndex[ibuff + 1] : n0AtA;
 
-//							System.err.println(ibuff + " " + bufferStartIndex[ibuff] + " " + n);
+//							System.out.println(ibuff + " " + bufferStartIndex[ibuff] + " " + n);
 
-                            System.err.println(Runtime.getRuntime().availableProcessors() + " available processors for computation of AtA");
+                            System.out.println(Runtime.getRuntime().availableProcessors() + " available processors for computation of AtA");
                             List<Callable<Object>> todo2 = new ArrayList<Callable<Object>>();
                             for (int i0AtA = bufferStartIndex[ibuff]; i0AtA < n; i0AtA++) {
                                 if (!doubledifference)
@@ -1075,26 +1096,26 @@ public class AtAMaker implements Operation_old {
                                     todo2.add(Executors.callable(new AtADDWorker(bufferStartIndex[ibuff], i0AtA)));
                             }
                             try {
-                                System.err.println("Computing " + todo2.size() + " tasks");
+                                System.out.println("Computing " + todo2.size() + " tasks");
                                 List<Future<Object>> answers = execs.invokeAll(todo2);
                             } catch (InterruptedException e) {
                                     e.printStackTrace();
                             }
 
                             //--- write AtA
-                            System.err.println("Writing AtA buffer in " + bufferFiles[ibuff]);
+                            System.out.println("Writing AtA buffer in " + bufferFiles[ibuff]);
                             Files.deleteIfExists(bufferFiles[ibuff]);
                             AtAFile.write(ataBuffer, weightingTypes, frequencyRanges, newUnknownParameters, usedPhases, bufferFiles[ibuff]);
-                            System.err.println("Finished writting");
+                            System.out.println("Finished writting");
                         } // END AtA buffers loop
                     } // END IF test BP
                     } // END IF computation flag (compute AtA)
 
                     // write partials
                     if (computationFlag == 3) {
-                        System.err.println("Writing partials");
+                        System.out.println("Writing partials");
                         fillA(timewindowOrder);
-                        System.err.println("Done!");
+                        System.out.println("Done!");
                     }
 
                     //reset partials
@@ -1133,8 +1154,8 @@ public class AtAMaker implements Operation_old {
         //--- write Atd
         if (computationFlag == 1 || computationFlag == 2) {
         if (!testBP) {
-            System.err.println("Writing Atd...");
-            Path outputPath = outPath.resolve("atd" + dateString + ".dat");
+            System.out.println("Writing Atd...");
+            Path outputPath = workPath.resolve("atd" + tempString + ".dat");
 
             List<AtdEntry> atdEntryList = new ArrayList<>();
             for (int i = 0; i < nNewUnknown; i++) {
@@ -1169,34 +1190,6 @@ public class AtAMaker implements Operation_old {
         }
 
         //END
-    }
-
-    private void setOutput() throws IOException {
-        synchronized (AtAMaker.class) {
-            do {
-                  dateString = GadgetAid.getTemporaryString();
-                  outPath = workPath.resolve("assembled" + dateString);
-                  logPath = outPath.resolve("assembler" + dateString + ".log");
-                  if (!Files.exists(outPath))
-                      Files.createDirectories(outPath);
-                  System.err.println("Output directory is " + outPath);
-            } while (Files.exists(logPath));
-            Files.createFile(logPath);
-        }
-    }
-
-    private synchronized void writeLog(String line) throws IOException {
-        try (PrintWriter pw = new PrintWriter(
-                Files.newBufferedWriter(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-            pw.print(new Date() + " : ");
-            pw.println(line);
-        }
-    }
-
-    private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
-//		System.err.println("STF catalogue: " +  STFcatalogue);
-        return IOUtils.readLines(AtAMaker.class.getClassLoader().getResourceAsStream(STFcatalogue)
-                    , Charset.defaultCharset());
     }
 
     private void writeParialCorr(Path rootPath) throws IOException {
@@ -1277,7 +1270,7 @@ public class AtAMaker implements Operation_old {
                                     writers[ifreq].addPartialID(partialID);
 //								}
 //								else
-//									System.err.println(0);
+//									System.out.println(0);
                             }
                     }
                 }
@@ -1317,7 +1310,7 @@ public class AtAMaker implements Operation_old {
                                     writers[ifreq].addPartialID(partialID);
                                 }
                                 else
-                                    System.err.println(0);
+                                    System.out.println(0);
                             }
                     }
                 }
@@ -1457,27 +1450,27 @@ public class AtAMaker implements Operation_old {
 
     private void setSourceTimeFunctions(Set<GlobalCMTID> idSet) throws IOException {
         if (sourceTimeFunction == 0) {
-            System.err.println("No convolution");
+            System.out.println("No convolution");
             return;
         }
 
         userSourceTimeFunctions = new HashMap<>();
         idSet.forEach(id -> {
-            double halfDuration = id.getEvent().getHalfDuration();
+            double halfDuration = id.getEventData().getHalfDuration();
             SourceTimeFunction stf;
             switch (sourceTimeFunction) {
             case 1:
-                System.err.println("Using boxcar STF");
+                System.out.println("Using boxcar STF");
                 stf = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
                 break;
             case 2:
-                System.err.println("Using triangle STF");
+                System.out.println("Using triangle STF");
                 stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
                 break;
             case 3:
-                System.err.println("Using asymmetric triangle STF with user catalog");
-                double halfDuration1 = id.getEvent().getHalfDuration();
-                double halfDuration2 = id.getEvent().getHalfDuration();
+                System.out.println("Using asymmetric triangle STF with user catalog");
+                double halfDuration1 = id.getEventData().getHalfDuration();
+                double halfDuration2 = id.getEventData().getHalfDuration();
                 boolean found = false;
                   for (String str : stfcat) {
                       String[] stflist = str.split("\\s+");
@@ -1493,12 +1486,12 @@ public class AtAMaker implements Operation_old {
                   if (found)
                       stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
                   else
-                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
                 break;
             case 4:
                 throw new RuntimeException("Case 4 not implemented yet");
             case 5:
-                System.err.println("Using triangle STF with user catalog");
+                System.out.println("Using triangle STF with user catalog");
                 halfDuration = 0.;
                 double amplitudeCorrection = 1.;
                 found = false;
@@ -1514,7 +1507,7 @@ public class AtAMaker implements Operation_old {
                   if (found)
                       stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, 1. / amplitudeCorrection);
                   else
-                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
                   break;
             default:
                 throw new RuntimeException("Error: undefined source time function identifier (0: none, 1: boxcar, 2: triangle).");
@@ -1528,7 +1521,7 @@ public class AtAMaker implements Operation_old {
     }
 
     private void setBandPassFilter() throws IOException {
-        System.err.println("Designing filter.");
+        System.out.println("Designing filter.");
         filter = new ButterworthFilter[frequencyRanges.length];
 
         for (int i = 0; i < frequencyRanges.length; i++) {
@@ -1540,7 +1533,7 @@ public class AtAMaker implements Operation_old {
             BandPassFilter tmpfilter = new BandPassFilter(omegaH, omegaL, filterNp);
             tmpfilter.setBackward(backward);
 
-            System.err.println(tmpfilter.toString());
+            System.out.println(tmpfilter.toString());
 
             filter[i] = tmpfilter;
         }
@@ -1575,7 +1568,7 @@ public class AtAMaker implements Operation_old {
         double[] newRadii = null;
         double[] newLayerWidths = null;
 //		if (horizontalMapping != null) {
-//			System.err.println("Not implemented yet");
+//			System.out.println("Not implemented yet");
 //		}
         if (threedMapping != null) {
             newRadii = threedMapping.getNewRadii();
@@ -1728,26 +1721,26 @@ public class AtAMaker implements Operation_old {
             }
 
             if (!originalHorizontalPositions.contains(obsPos)) {
-                System.err.println("Position not contained " + obsPos);
+                System.out.println("Position not contained " + obsPos);
                 return;
             }
 
             FullPosition bpSourceLoc = station.getPosition().toFullPosition(Earth.EARTH_RADIUS);
-            FullPosition fpSourceLoc = event.getEvent().getCmtLocation();
-            double distanceBP = bpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
-            double distanceFP = fpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
+            FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+            double distanceBP = bpSourceLoc.calculateEpicentralDistance(obsPos) * 180. / Math.PI;
+            double distanceFP = fpSourceLoc.calculateEpicentralDistance(obsPos) * 180. / Math.PI;
 //			double distance = bpSourceLoc.getGeographicalDistance(obsPos) * 180. / Math.PI;
-            double phiBP = Math.PI - bpSourceLoc.getAzimuth(obsPos);
-            double phiFP = Math.PI - fpSourceLoc.getAzimuth(obsPos);
+            double phiBP = Math.PI - bpSourceLoc.calculateAzimuth(obsPos);
+            double phiFP = Math.PI - fpSourceLoc.calculateAzimuth(obsPos);
             if (Double.isNaN(phiBP))
                 throw new RuntimeException("PhiBP is NaN " + fpname + " " + station);
             if (Double.isNaN(phiFP))
                 throw new RuntimeException("PhiFP is NaN " + fpname + " " + station);
-//			System.err.println("phi= " + phi);
+//			System.out.println("phi= " + phi);
 
-            System.err.println(fpSourceLoc + " " + obsPos);
+            System.out.println(fpSourceLoc + " " + obsPos);
 
-//			System.err.println("geographic, geodetic distance = " + geocentricDistance + " " + distance);
+//			System.out.println("geographic, geodetic distance = " + geocentricDistance + " " + distance);
 
 
 //			if (fastCompute) {
@@ -1907,7 +1900,7 @@ public class AtAMaker implements Operation_old {
 
 //------------------------------------- testBP ------------------------------
             if (testBP) {
-                Path dirBP = outPath.resolve("bpwaves");
+                Path dirBP = workPath.resolve("bpwaves");
                 Files.createDirectories(dirBP);
                 for (int i = 0; i < bpSpc1.nbody(); i++) {
 
@@ -1920,7 +1913,7 @@ public class AtAMaker implements Operation_old {
 
                     SPCBody body = SPCBody.interpolate(body1, body2, body3, dhBP);
 
-//					System.err.println("DEBUG BP test: " +  body.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+//					System.out.println("DEBUG BP test: " +  body.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
 
 //					SPCBody body = bpSpc.getSpcBodyList().get(i);
 
@@ -1970,7 +1963,7 @@ public class AtAMaker implements Operation_old {
 //
 //----------------------------- test FP
             if (testFP) {
-                Path dirFP = outPath.resolve("fpwaves");
+                Path dirFP = workPath.resolve("fpwaves");
                 Files.createDirectories(dirFP);
                 for (int i = 0; i < fpSpc1.nbody(); i++) {
 
@@ -1983,7 +1976,7 @@ public class AtAMaker implements Operation_old {
 
                     SPCBody body = SPCBody.interpolate(body1, body2, body3, dhFP);
 
-//					System.err.println("DEBUG BP test: " +  body.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+//					System.out.println("DEBUG BP test: " +  body.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
 
 //					SPCBody body = bpSpc.getSpcBodyList().get(i);
 
@@ -2224,7 +2217,7 @@ public class AtAMaker implements Operation_old {
 
                 t1f = System.currentTimeMillis();
                 if ((++workProgressCounter) % progressStep == 0) {
-                    System.err.print(".");
+                    System.out.print(".");
                     workProgressCounter = 0;
                 }
             } // END bodyR loop
@@ -2440,19 +2433,4 @@ public class AtAMaker implements Operation_old {
         }
     }
 
-    /* (non-Javadoc)
-     * @see io.github.kensuke1984.kibrary.Operation#getWorkPath()
-     */
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    /* (non-Javadoc)
-     * @see io.github.kensuke1984.kibrary.Operation#getProperties()
-     */
-    @Override
-    public Properties getProperties() {
-        return PROPERTY;
-    }
 }

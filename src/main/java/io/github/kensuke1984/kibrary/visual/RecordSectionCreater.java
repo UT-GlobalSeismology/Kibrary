@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -29,6 +28,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
  * Creates record section for each event included in a BasicID file.
@@ -278,7 +278,7 @@ public class RecordSectionCreater extends Operation {
            eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
                    .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
        }
-       if (!DatasetAid.checkEventNum(eventDirs.size())) {
+       if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
            return;
        }
 
@@ -342,9 +342,9 @@ public class RecordSectionCreater extends Operation {
                 return;
             }
 
-            List<BasicID> obsList = new ArrayList<>();
-            List<BasicID> synList = new ArrayList<>();
-            BasicIDFile.pairUp(ids, obsList, synList);
+            BasicIDPairUp pairer = new BasicIDPairUp(ids);
+            List<BasicID> obsList = pairer.getObsList();
+            List<BasicID> synList = pairer.getSynList();
 
             if (createProfile) {
                 profilePlotSetup();
@@ -370,10 +370,10 @@ public class RecordSectionCreater extends Operation {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = obsID.getGlobalCMTID().getEvent().getCmtLocation()
-                        .getEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-                double azimuth = obsID.getGlobalCMTID().getEvent().getCmtLocation()
-                        .getAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                        .calculateEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                        .calculateAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance

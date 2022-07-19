@@ -12,6 +12,8 @@ import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
  * @author Kensuke Konishi
  */
 public final class Earth {
+    private Earth() {}
+
     /**
      * [km] Earth radius
      */
@@ -36,9 +38,6 @@ public final class Earth {
      * tire profile
      */
     public final static double N = 0.0016792443125758178;
-
-    private Earth() {
-    }
 
     /**
      * Compute a distance along a meridian between the equator and

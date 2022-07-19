@@ -107,7 +107,7 @@ public class DataAligner {
         // import event directories in working directory
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
         int n_total = eventDirs.size();
-        if (!DatasetAid.checkEventNum(n_total)) {
+        if (!DatasetAid.checkNum(n_total, "event", "events")) {
             return;
         }
 

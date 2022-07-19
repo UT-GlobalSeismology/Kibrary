@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -81,7 +81,7 @@ public class WriteWaveformsAndPartials {
 			pwEvent.println("#id latitude longitude radius variance");
 			d.getEventVariance().entrySet().forEach(entry -> {
 				pwEvent.println(
-						entry.getKey() + " " + entry.getKey().getEvent().getCmtLocation() + " " + entry.getValue());
+						entry.getKey() + " " + entry.getKey().getEventData().getCmtLocation() + " " + entry.getValue());
 			});
 			pwStation.println("#name network latitude longitude variance");
 			d.getStationVariance().entrySet().forEach(entry -> {
@@ -138,10 +138,10 @@ public class WriteWaveformsAndPartials {
 			String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
 					+ "." + i + ".txt";
 
-			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
+			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
-			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
 			// eventFolder.mkdir();
 			Path plotPath = eventFolder.resolve("recordOBS.plt");

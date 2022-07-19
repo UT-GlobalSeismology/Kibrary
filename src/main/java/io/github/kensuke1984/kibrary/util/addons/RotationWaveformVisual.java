@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.addons;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Trace;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -67,18 +67,18 @@ public class RotationWaveformVisual {
 			double[][] obsStack = new double[240][0];
 			double[][] synStack = new double[240][0];
 			
-			timeTool.setSourceDepth(6371. - event.getEvent().getCmtLocation().getR());
+			timeTool.setSourceDepth(6371. - event.getEventData().getCmtLocation().getR());
 			
 			for (int i = 0; i < ids_Z_event.size(); i++) {
 				BasicID idZ = ids_Z_event.get(i);
 				BasicID idR = ids_R_event.get(i);
 				
-				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(idZ.getObserver().getPosition()));
+				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(idZ.getObserver().getPosition()));
 				int k = (int) (distance * 2);
 				
 				timeTool.calcTime(distance);
 				double p = timeTool.getArrival(0).getRayParamDeg();
-				double theta = p * 6371. * PolynomialStructure.PREM.getVphAt(6371.);
+				double theta = p * 6371. * PolynomialStructure_old.PREM.getVphAt(6371.);
 				System.out.println(theta);
 				theta = Math.asin(Math.toRadians(theta));
 				

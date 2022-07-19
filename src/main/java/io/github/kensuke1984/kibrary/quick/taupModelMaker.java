@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D_deprec;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class taupModelMaker {
 
@@ -20,7 +20,7 @@ public class taupModelMaker {
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/1D_REFERENCE_MODEL/POLYNOMIALS/tnasna.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
-		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/cl4_high.poly"));
+		PolynomialStructure_old model = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/cl4_high.poly"));
 //		PolynomialStructure model = PolynomialStructure.AK135;
 		
 //		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0/inversion/alpha_03/lmi_s0_c06_cQ10/poly");
@@ -28,7 +28,7 @@ public class taupModelMaker {
 ////		int nR = Integer.parseInt(args[0]);
 		int nR = 5000;
 		
-		PolynomialStructure prem = PolynomialStructure.PREM;
+		PolynomialStructure_old prem = PolynomialStructure_old.PREM;
 		
 //		model = PolynomialStructure.ISO_PREM;
 		
@@ -244,12 +244,12 @@ public class taupModelMaker {
 //		System.out.println(isDiscontinous(model, 6356.000, 6345.516) + " " + (Earth.EARTH_RADIUS -  6356) + " " + (Earth.EARTH_RADIUS - 6345) + " " + (Earth.EARTH_RADIUS - model.getRMinOf(model.getiZoneOf(6356))));
 	}
 	
-	private static String TauPline(PolynomialStructure model, double r) {
+	private static String TauPline(PolynomialStructure_old model, double r) {
 		double depth = Earth.EARTH_RADIUS - r;
 		return String.format("%.4f %.4f %.4f %.4f\n", depth, model.getVphAt(r), model.getVshAt(r), model.getRhoAt(r));
 	}
 	
-	private static String stdline(PolynomialStructure model, double r) {
+	private static String stdline(PolynomialStructure_old model, double r) {
 		double Qmu = model.getQmuAt(r) == Double.POSITIVE_INFINITY ? Double.POSITIVE_INFINITY : model.getQmuAt(r);
 		return String.format("%.3f %.8f %.8f %.8f %.8f %.8f %.1f %.1f%n"
 				,Earth.EARTH_RADIUS - r
@@ -262,7 +262,7 @@ public class taupModelMaker {
 				,model.getQkappaAt(r));
 	}
 	
-	private static String AxiSEMline(PolynomialStructure model, double r) {
+	private static String AxiSEMline(PolynomialStructure_old model, double r) {
 		double Qmu = model.getQmuAt(r) == Double.POSITIVE_INFINITY ? 0. : model.getQmuAt(r);
 		return String.format("            %.0f.  %.2f  %.2f  %.2f    %.1f      %.1f  %.2f  %.2f  %.5f%n"
 				,r * 1e3
@@ -276,7 +276,7 @@ public class taupModelMaker {
 				,model.getEtaAt(r));
 	}
 	
-	public static void outputTauP(PolynomialStructure model, int nR) {
+	public static void outputTauP(PolynomialStructure_old model, int nR) {
 		for (int i = 0; i <= nR; i++) {
 			double dr = Earth.EARTH_RADIUS / nR;
 			double r = Earth.EARTH_RADIUS - i * dr;
@@ -301,7 +301,7 @@ public class taupModelMaker {
 		}
 	}
 	
-	public static void outputSTD(PolynomialStructure model, int nR, Path outpath) throws IOException {
+	public static void outputSTD(PolynomialStructure_old model, int nR, Path outpath) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			for (int i = 0; i <= nR; i++) {
 				double dr = Earth.EARTH_RADIUS / nR;
@@ -357,7 +357,7 @@ public class taupModelMaker {
 //		}
 //	}
 	
-	public static void outputAxiSEM(PolynomialStructure model, int nR) {
+	public static void outputAxiSEM(PolynomialStructure_old model, int nR) {
 		int iDisc = 1;
 		System.out.printf("ANELASTIC       T%n"
 				+ "ANISOTROPIC     T%n"
@@ -388,7 +388,7 @@ public class taupModelMaker {
 		}
 	}
 	
-	private static boolean isDiscontinous(PolynomialStructure model, double rPlus, double rMinus) {
+	private static boolean isDiscontinous(PolynomialStructure_old model, double rPlus, double rMinus) {
 		boolean res = false;
 		int n = (int) (rPlus - rMinus) * 10;
 		for (int i = 0; i < n; i++) {

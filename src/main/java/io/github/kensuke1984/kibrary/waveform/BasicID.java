@@ -120,27 +120,9 @@ public class BasicID {
      * @param data Waveform data to be replaced
      * @return BasicID with the input data
      */
-    public BasicID setData(double[] data) {
+    public BasicID withData(double[] data) {
         return new BasicID(TYPE, SAMPLINGHZ, START_TIME, NPTS, observer, event, COMPONENT, MIN_PERIOD,
                 MAX_PERIOD, PHASES, START_BYTE, CONVOLUTE, data);
-    }
-
-    @Override
-    public String toString() {
-        String basicString = observer.getPaddedInfoString() + " " + event.toPaddedString() + " "
-                + COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
-                + " " + MAX_PERIOD + " ";
-        if (PHASES == null)
-            basicString += "null" + " ";
-        else if (PHASES.length == 1)
-            basicString += PHASES[PHASES.length - 1] + " ";
-        else if (PHASES.length > 1) {
-            for (int i = 0; i < PHASES.length - 1; i++)
-                basicString += PHASES[i] + ",";
-            basicString += PHASES[PHASES.length - 1] + " ";
-        }
-        basicString += START_BYTE + " " + CONVOLUTE;
-        return basicString;
     }
 
     @Override
@@ -289,6 +271,24 @@ public class BasicID {
         double[] x = new double[DATA.length];
         Arrays.setAll(x, i -> START_TIME + i / SAMPLINGHZ);
         return new Trace(x, DATA);
+    }
+
+    @Override
+    public String toString() {
+        String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " "
+                + COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
+                + " " + MAX_PERIOD + " ";
+        if (PHASES == null)
+            basicString += "null" + " ";
+        else if (PHASES.length == 1)
+            basicString += PHASES[PHASES.length - 1] + " ";
+        else if (PHASES.length > 1) {
+            for (int i = 0; i < PHASES.length - 1; i++)
+                basicString += PHASES[i] + ",";
+            basicString += PHASES[PHASES.length - 1] + " ";
+        }
+        basicString += START_BYTE + " " + CONVOLUTE;
+        return basicString;
     }
 
 }

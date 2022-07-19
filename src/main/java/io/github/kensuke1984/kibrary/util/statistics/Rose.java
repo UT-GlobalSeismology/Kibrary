@@ -36,7 +36,7 @@ public class Rose {
 		double[][][] gridAzimuthHist = new double[nLat][nLon][nAz];
 		
 		for (BasicID id : ids) {
-			CrossSectionLine line = new CrossSectionLine(id.getGlobalCMTID().getEvent().getCmtLocation().toHorizontalPosition(), id.getObserver().getPosition(), deltaThetaRad);
+			CrossSectionLine line = new CrossSectionLine(id.getGlobalCMTID().getEventData().getCmtLocation().toHorizontalPosition(), id.getObserver().getPosition(), deltaThetaRad);
 			Set<HorizontalPosition> indices = Stream.of(line.getPositions()).map(pos -> {
 					int ilat = (int) ((pos.getLatitude() + 90) / dL);
 					int ilon = (int) ((pos.getLongitude() + 180) / dL);

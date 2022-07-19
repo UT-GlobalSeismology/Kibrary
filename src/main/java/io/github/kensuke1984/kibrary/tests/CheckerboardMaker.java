@@ -5,151 +5,226 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationVoxel;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.KnownParameter;
+import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Creates a checkerboard model file.
+ * Operation that creates a checkerboard model file.
  * @author otsuru
  * @since 2022/3/4
  */
-public class CheckerboardMaker {
+public class CheckerboardMaker extends Operation {
 
+    private final Property property;
+    /**
+     * Path of the work folder
+     */
+    private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String tag;
+
+    /**
+     * Path of voxel information file
+     */
     private Path voxelPath;
-    private double percentVs;
-    private boolean flipSignVs;
-    private double percentVp;
-    private boolean flipSignVp;
-    private PolynomialStructure prem;
+    /**
+     * Structure file to use instead of PREM
+     */
+    private Path structurePath;
+    /**
+     * Structure to use
+     */
+    private String structureName;
 
-    String dateStr;
+    private List<VariableType> variableTypes;
+    private double[] percents;
+    private boolean[] signFlips;
+    private List<PartialType> partialTypes;
 
-    List<Double> perturbationList = new ArrayList<>();
-    List<Double> perturbationList2 = new ArrayList<>();
-    List<Double> radiusList = new ArrayList<>();
-
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
     public static void main(String[] args) throws IOException {
-        if (args.length != 3 && args.length !=5) {
-            System.err.println("Usage: voxelInformationFile(Path) percentVs(double) flipSign(boolean)");
-            System.err.println("Usage: voxelInformationFile(Path) percentVs(double) flipSignVs(boolean) percentVp(double) flipSignVp(boolean)");
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
+    }
+
+    public static void writeDefaultPropertiesFile() throws IOException {
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("##Path of a working folder (.)");
+            pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#tag ");
+            pw.println("##Path of a voxel information file, must be set");
+            pw.println("#voxelPath voxel.inf");
+            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("#structurePath ");
+            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("#structureName ");
+            pw.println("##Variable types to perturb, listed using spaces, must be set.");
+            pw.println("#variableTypes ");
+            pw.println("##(double) Percentage of perturbation, listed using spaces in the order of partialTypes, must be set.");
+            pw.println("#percents ");
+            pw.println("##(boolean) Whether to flip the sign, listed using spaces in the order of partialTypes, must be set.");
+            pw.println("#signFlips ");
+            pw.println("##Partial types to set in model, listed using spaces, must be set.");
+            pw.println("#partialTypes ");
         }
+        System.err.println(outPath + " is created.");
+    }
 
-        CheckerboardMaker cm;
+    public CheckerboardMaker(Property property) throws IOException {
+        this.property = (Property) property.clone();
+    }
 
-        Path voxelPath = Paths.get(args[0]);
-        double percentVs = Double.parseDouble(args[1]);
-        boolean flipSignVs = Boolean.parseBoolean(args[2]);
-        PolynomialStructure prem = PolynomialStructure.PREM;
-        if (args.length == 3) {
-            cm = new CheckerboardMaker(voxelPath, percentVs, flipSignVs, 0, false, prem);
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        if (property.containsKey("structurePath")) {
+            structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
-            double percentVp = Double.parseDouble(args[3]);
-            boolean flipSignVp = Boolean.parseBoolean(args[4]);
-            cm = new CheckerboardMaker(voxelPath, percentVs, flipSignVs, percentVp, flipSignVp, prem);
+            structureName = property.parseString("structureName", "PREM");
         }
 
-        cm.velocityCheckerboard();
-        cm.writeModel();
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
+                .collect(Collectors.toList());
+        percents = property.parseDoubleArray("percents", null);
+        if (percents.length != variableTypes.size())
+            throw new IllegalArgumentException("Number of percents does not match number of variableTypes.");
+        signFlips = property.parseBooleanArray("signFlips", null);
+        if (signFlips.length != variableTypes.size())
+            throw new IllegalArgumentException("Number of signFlips does not match number of variableTypes.");
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
+                .collect(Collectors.toList());
     }
 
-    public CheckerboardMaker(Path voxelPath, double percentVs, boolean flipSignVs, double percentVp, boolean flipSignVp, PolynomialStructure prem) {
-        this.voxelPath = voxelPath;
-        this.percentVs = percentVs;
-        this.flipSignVs = flipSignVs;
-        this.percentVp = percentVp;
-        this.flipSignVp = flipSignVp;
-        this.prem = prem;
-        dateStr = GadgetAid.getTemporaryString();
-    }
+    @Override
+    public void run() throws IOException {
 
-    private void velocityCheckerboard() throws IOException {
+        // set structure to use
+        PolynomialStructure initialStructure = null;
+        if (structurePath != null) {
+            initialStructure = PolynomialStructureFile.read(structurePath);
+        } else {
+            initialStructure = PolynomialStructure.of(structureName);
+        }
+
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
-        //double[] layerThicknesses = file.getThicknesses();
+        double[] layerThicknesses = file.getThicknesses();
         double[] radii = file.getRadii();
         double dLatitude = file.getSpacingLatitude();
         double dLongitude = file.getSpacingLongitude();
         HorizontalPosition[] positions = file.getHorizontalPositions();
 
+        // set checkerboard model
+        System.err.println("Creating checkerboard perturbations.");
+        PerturbationModel model = new PerturbationModel();
         HorizontalPosition referencePosition = positions[0];
-        for (HorizontalPosition position : positions) {
+        for (HorizontalPosition horizontalPosition : positions) {
             for (int i = 0; i < radii.length; i++) {
+                FullPosition position = horizontalPosition.toFullPosition(radii[i]);
+                // find the sign shift with respect to referencePosition
                 int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude
                         + (position.getLongitude() - referencePosition.getLongitude()) / dLongitude) + i;
 
-                if ((numDiff % 2 == 1) ^ flipSignVs) { // ^ is XOR
-                    perturbationList.add(-percentVs);
-                } else {
-                    perturbationList.add(percentVs);
+                double volume = Earth.getVolume(position, layerThicknesses[i], dLatitude, dLongitude);
+                PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
+                for (int k = 0; k < variableTypes.size(); k++) {
+                    // CAUTION: (numdiff % 2) can be either 1 or -1 !!
+                    double percent = ((numDiff % 2 != 0) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
+                    voxel.setPercent(variableTypes.get(k), percent);
+                    // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
+                    voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
-                radiusList.add(radii[i]);
+                model.add(voxel);
             }
         }
 
-        Path vsPath = Paths.get("vs" + dateStr + ".inf");
-        System.err.println("Outputting shear velocity perturbations in " + vsPath);
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(vsPath))) {
-            perturbationList.forEach(pw::println);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        System.err.println("Outputting perturbation list files.");
+        for (VariableType variable : variableTypes) {
+            Path paramPath = outPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
+            PerturbationListFile.writePercentForType(variable, model, paramPath);
         }
 
-        // for Vp
-        if (percentVp != 0) {
-             Path vpPath = Paths.get("vp" + dateStr + ".inf");
-             System.err.println("Outputting compressional velocity perturbations in " + vpPath);
-             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(vpPath))) {
-                 if (flipSignVs ^ flipSignVp) {
-                     for (int i = 0; i < perturbationList.size(); i++) {
-                         double pl = perturbationList.get(i);
-                         perturbationList2.add(-pl);
-                     }
-                 } else {
-                     perturbationList2 = perturbationList;
-
-                 }
-                 perturbationList2.forEach(pw::println);
-             }
-        }
-
-    }
-
-    private void writeModel() throws IOException {
-        Path modelPath = Paths.get("model" + dateStr + ".inf");
-        System.err.println("Outputting modulus perturbations in " + modelPath);
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(modelPath))) {
-            for (int i = 0; i < perturbationList.size(); i++) {
-                pw.println(VdashToDeltaMu(perturbationList.get(i), radiusList.get(i)));
-            }
-            //for Vp
-            if (percentVp != 0) {
-                for (int i = 0; i < perturbationList2.size(); i++) {
-                    pw.println(VdashToDeltaLambda2Mu(perturbationList2.get(i), radiusList.get(i)));
-                }
+        // set known parameters
+        System.err.println("Setting checkerboard model parameters.");
+        List<KnownParameter> knowns = new ArrayList<>();
+        for (PartialType partial : partialTypes) {
+            for (PerturbationVoxel voxel : model.getVoxels()) {
+                UnknownParameter unknown = new Physical3DParameter(partial, voxel.getPosition(), voxel.getVolume());
+                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(VariableType.of(partial)));
+                knowns.add(known);
             }
         }
 
-    }
+        System.err.println("Outputting known parameter file.");
+        Path knownPath = outPath.resolve("model.lst");
+        KnownParameterFile.write(knowns, knownPath);
 
-    private double VdashToDeltaMu(double deltaVs, double radius){
-        double v = prem.getVshAt(radius);
-        double rho = prem.getRhoAt(radius);
-        double vDash = (1 + deltaVs * 0.01) * v;
-        double deltaMu = (rho * vDash * vDash) - prem.computeMu(radius);
-        return deltaMu;
+//
+//        List<UnknownParameter> parameters = UnknownParameterFile.read(unknownParameterPath).stream()
+//                .filter(param -> partialTypes.contains(param.getPartialType())).collect(Collectors.toList());
+//        if (parameters.isEmpty()) {
+//            System.err.println("No parameters with specified partialTypes exist.");
+//            return;
+//        }
+//
+//        double[] radii = parameters.stream().mapToDouble(param -> param.getPosition().getR()).distinct().sorted().toArray();
+//        double[] latitudes = parameters.stream().mapToDouble(param -> param.getPosition().getLatitude()).distinct().sorted().toArray();
+//        double[] longitudes = parameters.stream().mapToDouble(param -> param.getPosition().getLongitude()).distinct().sorted().toArray();
+//
+//        for (int i = 0; i < latitudes.length; i++) {
+//            for (int j = 0; j < longitudes.length; j++) {
+//                for (int k = 0; k < radii.length; k++) {
+//
+//                    FullPosition position = new FullPosition(latitudes[i], longitudes[j], radii[k]);
+//                    List<UnknownParameter> paramsHere = parameters.stream()
+//                            .filter(param -> param.getPosition().equals(position))
+//                            .collect(Collectors.toList());
+//
+//                    for (UnknownParameter param : paramsHere) {
+//
+//                    }
+//                }
+//            }
+//        }
     }
-
-    private double VdashToDeltaLambda2Mu(double deltaVp, double radius){
-        double vp = prem.getVphAt(radius);
-        double rho = prem.getRhoAt(radius);
-        double vDash = (1 + deltaVp * 0.01) * vp;
-        double deltaLambda2Mu = (rho * vDash * vDash) - (prem.computeLambda(radius) + 2*prem.computeMu(radius));
-        return deltaLambda2Mu;
-    }
-
 }

@@ -1,12 +1,12 @@
 package io.github.afeborgeaud.tomotool.raytheory;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class Kernel {
 
     public final static double core_radius = 3480.;
 
-    private PolynomialStructure structure;
+    private PolynomialStructure_old structure;
 
     private double vpMantle;
 
@@ -14,7 +14,7 @@ public class Kernel {
 
     private double vpCore;
 
-    public Kernel(PolynomialStructure structure) {
+    public Kernel(PolynomialStructure_old structure) {
         this.structure = structure;
         vpMantle = structure.getVphAt(3480.01);
         vsMantle = structure.getVshAt(3480.01);

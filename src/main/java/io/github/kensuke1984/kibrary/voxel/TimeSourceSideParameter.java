@@ -19,7 +19,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
 
     public TimeSourceSideParameter(GlobalCMTID id) {
         this.id = id;
-        this.pointLocation = id.getEvent().getCmtLocation();
+        this.pointLocation = id.getEventData().getCmtLocation();
     }
 
     @Override

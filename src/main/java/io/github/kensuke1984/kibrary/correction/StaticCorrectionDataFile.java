@@ -73,14 +73,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author anselme add phase information
  */
 public final class StaticCorrectionDataFile {
+    private StaticCorrectionDataFile() {}
 
     /**
      * The number of bytes for one time shift data
      */
     public static final int ONE_CORRECTION_BYTE = 37;
-
-    private StaticCorrectionDataFile() {
-    }
 
     /**
      * @param outPath       of an write file.
@@ -272,10 +270,10 @@ public final class StaticCorrectionDataFile {
         Set<StaticCorrectionData> scf = StaticCorrectionDataFile.read(filePath);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             scf.stream().sorted().forEach(corr -> {
-                double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
-                        .getAzimuth(corr.getObserver().getPosition()));
-                double distance = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation()
-                        .getEpicentralDistance(corr.getObserver().getPosition()));
+                double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtLocation()
+                        .calculateAzimuth(corr.getObserver().getPosition()));
+                double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtLocation()
+                        .calculateEpicentralDistance(corr.getObserver().getPosition()));
                 pw.println(corr.toString() + " " + azimuth + " " + distance);
             });
         }

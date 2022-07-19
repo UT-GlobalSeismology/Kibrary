@@ -19,6 +19,8 @@ import org.apache.commons.cli.Options;
  * @version 0.1.5
  */
 public class Environment {
+    private Environment() {}
+
     public static final Path KIBRARY_HOME;
     public static final Path KIBRARY_SHARE;
     public static final Path KIBRARY_BIN;

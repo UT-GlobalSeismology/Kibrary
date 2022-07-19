@@ -7,21 +7,27 @@ import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
-import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
-import io.github.kensuke1984.kibrary.model.VelocityModelMapper;
+import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
+import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
+import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.ModelMapper;
+import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
+import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
+import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
 import io.github.kensuke1984.kibrary.visual.WaveformPlotCreater;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
+import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
@@ -38,7 +44,7 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 enum Manhattan {
     // Environment & General 00
     DatasetMerge(1, DatasetMerge.class),
-    RaypathDistribution(6, RaypathDistribution.class),
+    RaypathMapper(6, RaypathMapper.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),
     DataLobby(14, DataLobby.class),
@@ -64,8 +70,15 @@ enum Manhattan {
     SensitivityKernelMapper(53, SensitivityKernelMapper.class),
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class),
-    VelocityModelMapper(62, VelocityModelMapper.class),
-    PseudoWaveformGenerator(65, PseudoWaveformGenerator.class),
+    InversionArranger(61, InversionArranger.class),
+    InversionSolver(62, InversionSolver.class),
+    ModelSetMapper(64, ModelSetMapper.class),
+    // Tests 70
+    CheckerboardMaker(71, CheckerboardMaker.class),
+    PerturbationMapper(72, PerturbationMapper.class),
+    ModelMapper(73, ModelMapper.class),
+    PseudoWaveformGenerator(75, PseudoWaveformGenerator.class),
+    BasicIDRebuilder(76, BasicIDRebuilder.class),
     // Temporal 100
     ;
 

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -58,6 +59,8 @@ public class SensitivityKernelMapper extends Operation {
      * path of partial data
      */
     protected Path partialPath;
+    private String mapRegion;
+    private double scale;
 
 
     /**
@@ -91,6 +94,10 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##(double) Range of scale (3)");
+            pw.println("#scale ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -117,6 +124,9 @@ public class SensitivityKernelMapper extends Operation {
 
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
+
+        if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        scale = property.parseDouble("scale", "3");
 
     }
 
@@ -164,7 +174,7 @@ public class SensitivityKernelMapper extends Operation {
                 pw.println(partial.getPerturbationLocation() + " " + cumulativeSensitivity * 1e31);
             }
 
-            MapperShellscript script = new MapperShellscript(radii, fileNameRoot);
+            PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
             script.write(observerPath);
 
         }

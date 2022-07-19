@@ -8,6 +8,9 @@ import java.util.List;
 
 import org.apache.commons.math3.complex.Complex;
 
+import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -32,7 +35,7 @@ public final class VSConversion {
      *            structure
      */
     public VSConversion(PolynomialStructure structure) {
-        this.structure = structure == null ? PolynomialStructure.PREM : structure;
+        this.structure = structure == null ? DefaultStructure.PREM : structure;
     }
 
     /**
@@ -62,7 +65,8 @@ public final class VSConversion {
         double[] bodyR = spectrum.getBodyR();
         for (int i = 0; i < spectrum.nbody(); i++) {
             double r = bodyR[i];
-            double fact = 2. * structure.getRhoAt(r) * structure.getVshAt(r);
+            ElasticMedium medium = structure.mediumAt(r);
+            double fact = 2. * medium.get(VariableType.RHO) * medium.get(VariableType.Vsh);
             SPCBody body = spectrum.getSpcBodyList().get(i);
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {

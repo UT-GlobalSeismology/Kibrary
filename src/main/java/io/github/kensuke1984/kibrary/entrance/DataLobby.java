@@ -170,74 +170,17 @@ public class DataLobby extends Operation {
         if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
             throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("datacenter")) property.setProperty("datacenter", "IRIS");
-        if (!property.containsKey("networks"))
-            throw new IllegalArgumentException("No information about networks");
-        if (!property.containsKey("channels")) property.setProperty("channels", "BH?");
-        if (!property.containsKey("headAdjustment"))
-            throw new IllegalArgumentException("No information about the head adjustment");
-        if (!property.containsKey("footAdjustment"))
-            throw new IllegalArgumentException("No information about the foot adjustment");
-        if (!property.containsKey("startDate"))
-            throw new IllegalArgumentException("No information about the start date");
-        if (!property.containsKey("endDate"))
-            throw new IllegalArgumentException("No information about the end date");
-        if (!property.containsKey("lowerMw")) property.setProperty("lowerMw", "5.5");
-        if (!property.containsKey("upperMw")) property.setProperty("upperMw", "7.3");
-        if (!property.containsKey("lowerDepth")) property.setProperty("lowerDepth", "100");
-        if (!property.containsKey("upperDepth")) property.setProperty("upperDepth", "700");
-        if (!property.containsKey("lowerLatitude")) property.setProperty("lowerLatitude", "-90");
-        if (!property.containsKey("upperLatitude")) property.setProperty("upperLatitude", "90");
-        if (!property.containsKey("lowerLongitude")) property.setProperty("lowerLongitude", "-180");
-        if (!property.containsKey("upperLongitude")) property.setProperty("upperLongitude", "180");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        datacenter = property.getProperty("datacenter");
-        networks = property.getProperty("networks"); //.split("\\s+");
-        channels = property.getProperty("channels"); //.split("\\s+");
-        headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
-        footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
-
-        startDate = LocalDate.parse(property.getProperty("startDate"));
-        endDate = LocalDate.parse(property.getProperty("endDate"));
-        if (startDate.isAfter(endDate))
-            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
-        lowerMw = Double.parseDouble(property.getProperty("lowerMw"));
-        upperMw = Double.parseDouble(property.getProperty("upperMw"));
-        if (lowerMw > upperMw)
-            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
-        lowerDepth = Double.parseDouble(property.getProperty("lowerDepth"));
-        upperDepth = Double.parseDouble(property.getProperty("upperDepth"));
-        if (lowerDepth > upperDepth)
-            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
-        lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
-        upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
-        lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
-        upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
-    }
-*/
 
     @Override
     public void run() throws IOException {
         requestedEvents = listEvents();
         int n_total = requestedEvents.size();
-        if (!DatasetAid.checkEventNum(n_total)) {
+        if (!DatasetAid.checkNum(n_total, "event", "events")) {
             return;
         }
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "dl", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         final AtomicInteger n = new AtomicInteger();
         requestedEvents.stream().sorted().forEach(event -> {

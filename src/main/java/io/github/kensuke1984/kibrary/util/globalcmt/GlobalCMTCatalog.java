@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * @version 0.1.8
  */
 public final class GlobalCMTCatalog {
+    private GlobalCMTCatalog() {}
 
     /**
      * The (symbolic link of) catalog to be referenced.
@@ -86,7 +87,6 @@ public final class GlobalCMTCatalog {
         }
         return catalogPath;
     }
-
 
     /**
      * Reads catalog file and returns NDKs inside.

@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import io.github.afeborgeaud.tomotool.raytheory.TauPUtils.Ray;
 import io.github.afeborgeaud.tomotool.topoModel.Seismic3Dmodel;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class Traveltime {
 
@@ -20,7 +20,7 @@ public class Traveltime {
 
     private String phaseList;
 
-    private PolynomialStructure structure;
+    private PolynomialStructure_old structure;
 
     private Kernel kernel;
 
@@ -49,10 +49,10 @@ public class Traveltime {
 
         switch (modelName) {
         case "prem":
-            structure = PolynomialStructure.ISO_PREM;
+            structure = PolynomialStructure_old.ISO_PREM;
             break;
         case "ak135":
-            structure = PolynomialStructure.AK135;
+            structure = PolynomialStructure_old.AK135;
             break;
         default:
             throw new RuntimeException("Model not implemented yet " + modelName);
@@ -137,10 +137,10 @@ public class Traveltime {
                 }
 
                 if (addPoint)
-                    thisRecordList.add(new TraveltimeData(raypathInformation.getObserver(), raypathInformation.getEvent()
+                    thisRecordList.add(new TraveltimeData(raypathInformation.getObserver(), raypathInformation.getEventData()
                             , phaseName, scatterPoints, traveltimes));
                 else
-                    thisRecordList.add(new TraveltimeData(raypathInformation.getObserver(), raypathInformation.getEvent()
+                    thisRecordList.add(new TraveltimeData(raypathInformation.getObserver(), raypathInformation.getEventData()
                             , phaseName, scatterPoints, new double[] {Double.NaN, Double.NaN, Double.NaN}));
             }
             measurements.add(thisRecordList);
@@ -194,10 +194,10 @@ public class Traveltime {
     // [0]: dt [1]: t
     private double[] calculateV(FullPosition[] raypath, String phaseName) {
         double[] traveltime = new double[3];
-        double d0 = raypath[0].getDistance(raypath[1]);
+        double d0 = raypath[0].computeDistance(raypath[1]);
         traveltime = add(traveltime, calculateOnePointV(d0, raypath[0], raypath[1], phaseName));
         for (int i = 1; i < raypath.length - 1; i++) {
-            d0 = raypath[i].getDistanceGeographical(raypath[i+1]);
+            d0 = raypath[i].computeDistanceGeographical(raypath[i+1]);
             traveltime = add(traveltime, calculateOnePointV(d0, raypath[i], raypath[i+1], phaseName));
         }
 
@@ -217,14 +217,14 @@ public class Traveltime {
             else {
                 times[0] = -l / seismic3Dmodel.getVs(loc.getR()) * seismic3Dmodel.getdlnVs(loc);
                 times[1] = l / seismic3Dmodel.getVs(loc.getR());
-                times[2] = l / PolynomialStructure.ISO_PREM.getVshAt(loc.getR());
+                times[2] = l / PolynomialStructure_old.ISO_PREM.getVshAt(loc.getR());
             }
         }
         else if (phaseName.equals("P") || phaseName.equals("PcP") || phaseName.equals("PKP") || phaseName.equals("PKKP") || phaseName.equals("PKKKP") || phaseName.equals("PKKKKP")
                 || phaseName.equals("PKPm") || phaseName.equals("PKKPm") || phaseName.equals("PKKKPm") || phaseName.equals("PKKKKPm")) {
             times[0] = -l / seismic3Dmodel.getVp(loc.getR()) * seismic3Dmodel.getdlnVp(loc);
             times[1] = l / seismic3Dmodel.getVp(loc.getR());
-            times[2] = l / PolynomialStructure.ISO_PREM.getVphAt(loc.getR());
+            times[2] = l / PolynomialStructure_old.ISO_PREM.getVphAt(loc.getR());
         }
         else
             throw new RuntimeException("Phase not implemented yet " + phaseName);
@@ -252,12 +252,12 @@ public class Traveltime {
             if (r1 < 3480. && r1 >= 1221.5) {
                 times[0] = -l / (seismic3Dmodel.getVp(r1) + seismic3Dmodel.getVp(r2)) * (seismic3Dmodel.getdlnVp(loc1.toFullPosition(r1)) + seismic3Dmodel.getdlnVp(loc2.toFullPosition(r2)));
                 times[1] = 2 * l / (seismic3Dmodel.getVp(r1) + seismic3Dmodel.getVp(r2));
-                times[2] = 2 * l / (PolynomialStructure.ISO_PREM.getVphAt(r1) + PolynomialStructure.ISO_PREM.getVphAt(r2));
+                times[2] = 2 * l / (PolynomialStructure_old.ISO_PREM.getVphAt(r1) + PolynomialStructure_old.ISO_PREM.getVphAt(r2));
             }
             else {
                 times[0] = -l / (seismic3Dmodel.getVs(r1) + seismic3Dmodel.getVs(r2)) * (seismic3Dmodel.getdlnVs(loc1.toFullPosition(r1)) + seismic3Dmodel.getdlnVs(loc2.toFullPosition(r2)));
                 times[1] = 2 * l / (seismic3Dmodel.getVs(r1) + seismic3Dmodel.getVs(r2));
-                times[2] = 2 * l / (PolynomialStructure.ISO_PREM.getVshAt(r1) + PolynomialStructure.ISO_PREM.getVshAt(r2));
+                times[2] = 2 * l / (PolynomialStructure_old.ISO_PREM.getVshAt(r1) + PolynomialStructure_old.ISO_PREM.getVshAt(r2));
             }
         }
         else if (phaseName.equals("PcS")) {
@@ -277,12 +277,12 @@ public class Traveltime {
             if (r1 < r2) {
                 times[0] = -l / (seismic3Dmodel.getVp(r1) + seismic3Dmodel.getVp(r2)) * (seismic3Dmodel.getdlnVp(loc1.toFullPosition(r1)) + seismic3Dmodel.getdlnVp(loc2.toFullPosition(r2)));
                 times[1] = 2 * l / (seismic3Dmodel.getVp(r1) + seismic3Dmodel.getVp(r2));
-                times[2] = 2 * l / (PolynomialStructure.ISO_PREM.getVphAt(r1) + PolynomialStructure.ISO_PREM.getVphAt(r2));
+                times[2] = 2 * l / (PolynomialStructure_old.ISO_PREM.getVphAt(r1) + PolynomialStructure_old.ISO_PREM.getVphAt(r2));
             }
             else {
                 times[0] = -l / (seismic3Dmodel.getVs(r1) + seismic3Dmodel.getVs(r2)) * (seismic3Dmodel.getdlnVs(loc1.toFullPosition(r1)) + seismic3Dmodel.getdlnVs(loc2.toFullPosition(r2)));
                 times[1] = 2 * l / (seismic3Dmodel.getVs(r1) + seismic3Dmodel.getVs(r2));
-                times[2] = 2 * l / (PolynomialStructure.ISO_PREM.getVshAt(r1) + PolynomialStructure.ISO_PREM.getVshAt(r2));
+                times[2] = 2 * l / (PolynomialStructure_old.ISO_PREM.getVshAt(r1) + PolynomialStructure_old.ISO_PREM.getVshAt(r2));
             }
         }
         else if (phaseName.equals("P") || phaseName.equals("PcP") || phaseName.equals("PKP") || phaseName.equals("PKKP") || phaseName.equals("PKKKP") || phaseName.equals("PKKKKP")
@@ -299,7 +299,7 @@ public class Traveltime {
             }
             times[0] = -l / (seismic3Dmodel.getVp(r1) + seismic3Dmodel.getVp(r2)) * (seismic3Dmodel.getdlnVp(loc1.toFullPosition(r1)) + seismic3Dmodel.getdlnVp(loc2.toFullPosition(r2)));
             times[1] = 2 * l / (seismic3Dmodel.getVp(r1) + seismic3Dmodel.getVp(r2));
-            times[2] = 2 * l / (PolynomialStructure.ISO_PREM.getVphAt(r1) + PolynomialStructure.ISO_PREM.getVphAt(r2));
+            times[2] = 2 * l / (PolynomialStructure_old.ISO_PREM.getVphAt(r1) + PolynomialStructure_old.ISO_PREM.getVphAt(r2));
         }
         else
             throw new RuntimeException("Phase not implemented yet " + phaseName);
@@ -319,7 +319,7 @@ public class Traveltime {
 
     public void writeEventInformation(Path outpath) throws IOException {
         PrintWriter pw = new PrintWriter(outpath.toFile());
-        raypathInformations.stream().map(r -> r.getEvent()).distinct().forEach(id -> pw.println(id + " " + id.getEvent().getCmtLocation()));
+        raypathInformations.stream().map(r -> r.getEventData()).distinct().forEach(id -> pw.println(id + " " + id.getEventData().getCmtLocation()));
         pw.close();
     }
 

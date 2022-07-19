@@ -8,20 +8,25 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * NDK format in Global CMT Catalog
- * This class is <b>IMMUTABLE</b> <br>
+ * NDK format in Global CMT Catalog.
+ * This class is <b>IMMUTABLE</b>.
+ * <p>
  * ==================================
+ * <p>
  * This file contains an explanation of the "ndk" file format used to store and
  * distribute the Global Centroid-Moment-Tensor (CMT) catalog (formerly the
  * Harvard CMT catalog).
  * <p>
  * The "ndk" format replaces the earlier "dek" format.
+ * <p>
  * ============================================================================
+ * <p>
  * 12345678901234567890123456789012345678901234567890123456789012345678901234567890
  * <p>
  * The format is ASCII and uses five 80-character lines per earthquake.
+ * <p>
  * ============================================================================
- * ==== <br>
+ * <p>
  * Notes (additional information):
  * <p>
  * (1) CMT event names follow two conventions. Older events use an 8-character
@@ -49,6 +54,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * constrain the vertical-dip-slip components of the moment tensor (Mrt and
  * Mrp), and we constrain these components to zero in the inversion. The
  * standard errors for Mrt and Mrp are set to zero in this case.
+ * <p>
  * ============================================================================
  *
  * @author Kensuke Konishi

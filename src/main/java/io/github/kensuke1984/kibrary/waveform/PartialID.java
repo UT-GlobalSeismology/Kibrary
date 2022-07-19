@@ -108,7 +108,7 @@ public class PartialID extends BasicID {
      * @return {@link PartialID} with the input data
      */
     @Override
-    public PartialID setData(double[] data) {
+    public PartialID withData(double[] data) {
         return new PartialID(observer, event, COMPONENT, SAMPLINGHZ, START_TIME, data.length, MIN_PERIOD, MAX_PERIOD,
                 PHASES, START_BYTE, CONVOLUTE, POINT_LOCATION, PARTIAL_TYPE, data);
     }

@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inversion.ConjugateGradientMethod;
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.NonNegativeLeastSquaresMethod;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.ConjugateGradientMethod;
+import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.NonNegativeLeastSquaresMethod;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -300,8 +300,8 @@ public class Weighting {
 	
 	public static double weightingAzimuthTZCA(BasicID obs) {
 		double weight = 1.;
-		FullPosition loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
-		double azimuth = Math.toDegrees(loc.getAzimuth(obs.getObserver().getPosition()));
+		FullPosition loc = obs.getGlobalCMTID().getEventData().getCmtLocation();
+		double azimuth = Math.toDegrees(loc.calculateAzimuth(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
 		
@@ -330,8 +330,8 @@ public class Weighting {
 	
 	public static double weightingDistanceTZCA(BasicID obs) {
 		double weight = 1.;
-		FullPosition loc = obs.getGlobalCMTID().getEvent().getCmtLocation();
-		double distance = Math.toDegrees(loc.getEpicentralDistance(obs.getObserver().getPosition()));
+		FullPosition loc = obs.getGlobalCMTID().getEventData().getCmtLocation();
+		double distance = Math.toDegrees(loc.calculateEpicentralDistance(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
 		
@@ -372,7 +372,7 @@ public class Weighting {
 	
 	public static double weightEventTZCA(BasicID obs) {
 		double weight = 1.;
-		FullPosition location = obs.getGlobalCMTID().getEvent().getCmtLocation();
+		FullPosition location = obs.getGlobalCMTID().getEventData().getCmtLocation();
 		
 		if (location.getLongitude() > -89)
 			weight = 1.5;

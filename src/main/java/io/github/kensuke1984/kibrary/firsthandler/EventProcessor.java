@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
@@ -21,7 +22,6 @@ import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -134,7 +134,7 @@ class EventProcessor implements Runnable {
         inputRespSetPath = eventDir.toPath().resolve("resp");
         outputPath = outPath.resolve(eventDir.getName());
 
-        event = eventDir.getGlobalCMTID().getEvent();
+        event = eventDir.getGlobalCMTID().getEventData();
 
         doneMergePath = outputPath.resolve("doneMerge");
         unMergedPath = outputPath.resolve("unMerged");
@@ -300,8 +300,8 @@ class EventProcessor implements Runnable {
                 // check whether the inclination of a [vertical|horizontal] channel is perfectly [vertical|horizontal]
                 // caution: up is inc=0, down is inc=180
                 // TODO: are there stations with downwards Z ?
-                if ((isVerticalChannel(sacFile.getChannel()) && MathAid.equalWithinEpsilon(inclination, 0, 0.01) == false)
-                        || (!isVerticalChannel(sacFile.getChannel()) && MathAid.equalWithinEpsilon(inclination, 90, 0.01) == false)) {
+                if ((isVerticalChannel(sacFile.getChannel()) && Precision.equals(inclination, 0, 0.01) == false)
+                        || (!isVerticalChannel(sacFile.getChannel()) && Precision.equals(inclination, 90, 0.01) == false)) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! invalid inclination : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
                     continue;
@@ -516,8 +516,6 @@ class EventProcessor implements Runnable {
                 }
 
                 int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-
-                ;
 
                 SacDeconvolution sd = new SacDeconvolution(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
 

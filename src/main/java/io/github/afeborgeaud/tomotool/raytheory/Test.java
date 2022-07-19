@@ -37,7 +37,7 @@ public class Test {
         for (List<TraveltimeData> measurements : timetool.getMeasurements()) {
             for (TraveltimeData m : measurements) {
                 System.out.println("Station: " + m.getObserver().getPosition());
-                System.out.println("Event: " + m.getGlobalCMTID().getEvent().getCmtLocation());
+                System.out.println("Event: " + m.getGlobalCMTID().getEventData().getCmtLocation());
                 System.out.println("Distance: " + m.getEpicentralDistance());
                 m.getScatterPointList().forEach(System.out::println);
                 System.out.println(m);
@@ -58,7 +58,7 @@ public class Test {
         for (List<TraveltimeData> measurements : timetool.getMeasurements()) {
             for (TraveltimeData m : measurements) {
                 System.out.println("Station: " + m.getObserver().getPosition());
-                System.out.println("Event: " + m.getGlobalCMTID().getEvent().getCmtLocation());
+                System.out.println("Event: " + m.getGlobalCMTID().getEventData().getCmtLocation());
                 System.out.println("Distance: " + m.getEpicentralDistance());
                 m.getScatterPointList().forEach(System.out::println);
                 System.out.println(m);

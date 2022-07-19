@@ -155,7 +155,7 @@ public class GlobalCMTSearch {
      * @param id Global CMT id
      */
     private static void printIDinformation(GlobalCMTID id) {
-        GlobalCMTAccess event = id.getEvent();
+        GlobalCMTAccess event = id.getEventData();
         FullPosition location = event.getCmtLocation();
         double lat = location.getLatitude();
         double lon = location.getLongitude();

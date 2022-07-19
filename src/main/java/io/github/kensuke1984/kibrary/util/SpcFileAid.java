@@ -21,9 +21,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class SpcFileAid {
-
-    private SpcFileAid() {
-    }
+    private SpcFileAid() {}
 
     /**
      * @param path {@link Path} to look for {@link FormattedSPCFileName} in
@@ -32,7 +30,7 @@ public final class SpcFileAid {
      */
     public static Set<SPCFileName> collectSpcFileName(Path path) throws IOException {
         try (Stream<Path> stream = Files.list(path)) {
-            return stream.filter(FormattedSPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toSet());
+            return stream.filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toSet());
         }
     }
 

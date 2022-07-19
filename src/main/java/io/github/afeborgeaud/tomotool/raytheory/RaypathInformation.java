@@ -39,15 +39,15 @@ public class RaypathInformation {
     }
 
     public double getDistanceDegree() {
-        return Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(observer.getPosition()));
+        return Math.toDegrees(event.getEventData().getCmtLocation().calculateEpicentralDistance(observer.getPosition()));
     }
 
     public double getAzimuthDegree() {
-        return Math.toDegrees(event.getEvent().getCmtLocation().getAzimuth(observer.getPosition()));
+        return Math.toDegrees(event.getEventData().getCmtLocation().calculateAzimuth(observer.getPosition()));
     }
 
     public FullPosition getCmtLocation() {
-        return event.getEvent().getCmtLocation();
+        return event.getEventData().getCmtLocation();
     }
 
     public HorizontalPosition getObserverPosition() {
@@ -58,7 +58,7 @@ public class RaypathInformation {
         return observer;
     }
 
-    public GlobalCMTID getEvent() {
+    public GlobalCMTID getEventData() {
         return event;
     }
 
@@ -102,7 +102,7 @@ public class RaypathInformation {
      */
     public static void writeRaypathInformation(List<RaypathInformation> rays, Path outpath) throws IOException {
         PrintWriter pw = new PrintWriter(outpath.toFile());
-        rays.stream().forEach(r -> pw.println(r.getEvent() + " " +
+        rays.stream().forEach(r -> pw.println(r.getEventData() + " " +
                 r.getObserver().toString() + " " + r.getObserver().getPosition()));
         pw.close();
     }
