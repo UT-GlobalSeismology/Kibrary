@@ -22,21 +22,73 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
+/**
+ *
+ * Compute manntle correction value (Ventosa & Romanowicz, 2015) at each raypath (event & observer pair).
+ * Raypath informations are referred from {@link TimewindowData}.
+ * Seismic 3D models which are referred to compute mantle corrections are {@link SEMUCBWM1}, {@link LLNLG3DJPS}, {@link S20RTS}.
+ * Phase should be ScS (relative differential traveltime between S and ScS) or PcP (relative differential traveltime between P and PcP).
+ * <p>
+ * The format of output file is same as {@link StaticCorrectionDataFile}.
+ * <p>
+ * bouncepoint.lst file includes following: obsever, event, bounce point position, and mantle correction value.
+ *
+ * @author anselm?
+ * @author satourei modified program
+ *
+ */
 public class MantleCorrection {
+    /**
+     * Path to input timewindow file
+     */
     private Path inputPath;
+    /**
+     * Seismic 3D model name
+     */
     private String threeDmodel;
+    /**
+     * phase name (ScS or PcP)
+     */
     private String phaseName;
 
+    /**
+     * Timewindow data
+     */
     private Set<TimewindowData> timewindows;
+    /**
+     * seismic 3D model
+     * Should be selected from {@link SEMUCBWM1}, {@link LLNLG3DJPS}, {@link S20RTS}.
+     */
     private Seismic3Dmodel seismic3Dmodel;
+    /**
+     * phase name ("ScS, S" or "PcP, P")
+     */
     private String phaseNames;
+    /**
+     * Phase (ScS or PcP)
+     */
     private Phase[] phase;
+    /**
+     * Model name to compute travel time
+     */
     private String modelName;
 
+    /**
+     * Path to output file
+     */
     private Path outPath;
+    /**
+     * Path to bouncepoint.lst
+     */
     private Path bouncepointPath;
 
+    /**
+     * Mantle correction value
+     */
     private Set<StaticCorrectionData> corrections = new HashSet<>();
+    /**
+     * Information of bounce points
+     */
     private Set<String> bounces = new HashSet<>();
 
     public static void main(String[] args) throws IOException {
@@ -127,6 +179,9 @@ public class MantleCorrection {
         //}
     }
 
+    /**
+     * Set path to output file and bounce point file
+     */
     private void setOutput() {
         switch (phaseName) {
         case "ScS":
@@ -142,6 +197,11 @@ public class MantleCorrection {
         }
     }
 
+    /**
+     * Compiute mantle correction value. Coputation is executed by using {@link Traveltime}.
+     * @param window
+     * @throws IOException
+     */
     public void Compute(TimewindowData window) throws IOException {
         List<RaypathInformation> raypathInformations = new ArrayList<>();
         raypathInformations.add(new RaypathInformation(window.getObserver(), window.getGlobalCMTID()));
@@ -193,6 +253,10 @@ public class MantleCorrection {
         }
     }
 
+    /**
+     * Write mantle correction to output file, and bounce point information to boiunce point file
+     * @throws IOException
+     */
     private void writeResult() throws IOException {
         PrintWriter pw = new PrintWriter(bouncepointPath.toFile());
         for (String bounce : bounces) {
