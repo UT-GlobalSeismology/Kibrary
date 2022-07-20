@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -144,21 +143,6 @@ public class DataSelection extends Operation {
     private Set<StaticCorrectionData> staticCorrectionSet;
     private List<DataSelectionInformation> selectionInformationList;
     private Set<TimewindowData> goodTimewindowSet;
-
-    /**
-     * ID for static correction and time window information Default is station
-     * name, global CMT id, component, start time.
-     */
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && s.getComponent() == t.getComponent() && Math.abs(t.getStartTime() - s.getSynStartTime()) < 1.01;
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPair_isotropic = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent())
-                    && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPairRecord = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && s.getComponent() == t.getComponent();
 
     /**
      * @param args  none to create a property file <br>
@@ -294,8 +278,11 @@ public class DataSelection extends Operation {
     }
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).collect(Collectors.toList());
-        if (corrs.size() != 1) throw new RuntimeException("Found no, or more than 1 static correction for window " + window);
+        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
+        if (corrs.size() > 1)
+            throw new RuntimeException("Found more than 1 static correction for window " + window);
+        if (corrs.size() == 0)
+            throw new RuntimeException("Found no static correction for window " + window);
         return corrs.get(0);
     }
 

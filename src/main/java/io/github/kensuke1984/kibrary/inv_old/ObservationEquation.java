@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
 import io.github.kensuke1984.kibrary.inversion.addons.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.Sensitivity;
 import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -63,7 +63,7 @@ public class ObservationEquation {
     private List<UnknownParameter> PARAMETER_LIST;
     private List<UnknownParameter> ORIGINAL_PARAMETER_LIST;
     private Dvector DVECTOR;
-    private Matrix a;
+    private ParallelizedMatrix a;
     private RealVector atd;
     private RealMatrix ata;
 
@@ -217,12 +217,12 @@ public class ObservationEquation {
         // model covariance matrix
         cm = new ModelCovarianceMatrix(parameterList, 0., correlationScaling, normalization, true);
 
-        Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+        ParallelizedMatrix identity = new ParallelizedMatrix(a.getColumnDimension(), a.getColumnDimension());
         for (int i = 0; i < a.getColumnDimension(); i++)
             identity.setEntry(i, i, 1.);
 
         RealMatrix tmpB = cm.rightMultiplyByL(a);
-        Matrix b = new Matrix(a.getRowDimension(), a.getColumnDimension());
+        ParallelizedMatrix b = new ParallelizedMatrix(a.getRowDimension(), a.getColumnDimension());
         for (int i = 0; i < a.getRowDimension(); i++) {
             for (int j = 0; j < a.getColumnDimension(); j++) {
                 b.setEntry(i, j, tmpB.getEntry(i, j));
@@ -274,12 +274,12 @@ public class ObservationEquation {
         // model covariance matrix
         cm = new ModelCovarianceMatrix(parameterList, cmV, cmH, normalization, true);
 
-        Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+        ParallelizedMatrix identity = new ParallelizedMatrix(a.getColumnDimension(), a.getColumnDimension());
         for (int i = 0; i < a.getColumnDimension(); i++)
             identity.setEntry(i, i, 1.);
 
         RealMatrix tmpB = cm.rightMultiplyByL(a);
-        Matrix b = new Matrix(tmpB.getRowDimension(), tmpB.getColumnDimension());
+        ParallelizedMatrix b = new ParallelizedMatrix(tmpB.getRowDimension(), tmpB.getColumnDimension());
         for (int i = 0; i < a.getRowDimension(); i++) {
             for (int j = 0; j < a.getColumnDimension(); j++) {
                 b.setEntry(i, j, tmpB.getEntry(i, j));
@@ -316,7 +316,7 @@ public class ObservationEquation {
      * @param atd_prev
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector, Matrix ata_prev, RealVector atd_prev) {
+    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector, ParallelizedMatrix ata_prev, RealVector atd_prev) {
         DVECTOR = dVector;
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
@@ -351,7 +351,7 @@ public class ObservationEquation {
      * @param a
      * @author anselme
      */
-    public ObservationEquation(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector dVector, Matrix a) {
+    public ObservationEquation(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector dVector, ParallelizedMatrix a) {
         DVECTOR = dVector;
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
@@ -411,7 +411,7 @@ public class ObservationEquation {
 
     public void applyModelCovarianceMatrix(ModelCovarianceMatrix cm) {
         this.cm = cm;
-        Matrix identity = new Matrix(ata.getRowDimension(), ata.getColumnDimension());
+        ParallelizedMatrix identity = new ParallelizedMatrix(ata.getRowDimension(), ata.getColumnDimension());
         for (int i = 0; i < ata.getColumnDimension(); i++)
             identity.setEntry(i, i, 1.);
 
@@ -437,7 +437,7 @@ public class ObservationEquation {
      * @param ids source for A
      */
     private void readA(PartialID[] ids) {
-        a = new Matrix(DVECTOR.getNpts(), PARAMETER_LIST.size());
+        a = new ParallelizedMatrix(DVECTOR.getNpts(), PARAMETER_LIST.size());
         // partialDataFile.readWaveform();
         long t = System.nanoTime();
         AtomicInteger count = new AtomicInteger();
@@ -478,7 +478,7 @@ public class ObservationEquation {
                 DVECTOR.getUsedStationSet().forEach(station -> PARAMETER_LIST.add(new TimeReceiverSideParameter(station, i.intValue())));
         }
 
-        a = new Matrix(DVECTOR.getNpts(), PARAMETER_LIST.size());
+        a = new ParallelizedMatrix(DVECTOR.getNpts(), PARAMETER_LIST.size());
         a.scalarMultiply(0);
 
         // partialDataFile.readWaveform();

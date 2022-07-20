@@ -9,43 +9,43 @@ import org.apache.commons.math3.linear.*;
  * @author Kensuke Konishi
  * @version 0.1.0.1
  */
-public class Matrix extends Array2DRowRealMatrix {
+public class ParallelizedMatrix extends Array2DRowRealMatrix {
 
     private static final long serialVersionUID = 1L;
 
-    public Matrix() {
+    public ParallelizedMatrix() {
         super();
     }
 
-    public Matrix(double[] arg0) {
+    public ParallelizedMatrix(double[] arg0) {
         super(arg0);
     }
 
-    public Matrix(double[][] arg0, boolean arg1) throws IllegalArgumentException, NullPointerException {
+    public ParallelizedMatrix(double[][] arg0, boolean arg1) throws IllegalArgumentException, NullPointerException {
         super(arg0, arg1);
     }
 
-    public Matrix(double[][] d) throws IllegalArgumentException, NullPointerException {
+    public ParallelizedMatrix(double[][] d) throws IllegalArgumentException, NullPointerException {
         super(d);
     }
 
-    public Matrix(int rowDimension, int columnDimension) throws IllegalArgumentException {
+    public ParallelizedMatrix(int rowDimension, int columnDimension) throws IllegalArgumentException {
         super(rowDimension, columnDimension);
     }
 
 
     @Override
-    public Matrix multiply(RealMatrix arg0) throws IllegalArgumentException {
+    public ParallelizedMatrix multiply(RealMatrix arg0) throws IllegalArgumentException {
         MatrixUtils.checkMultiplicationCompatible(this, arg0);
         return MatrixComputation.computeAB(this, arg0);
     }
 
     @Override
-    public Matrix preMultiply(RealMatrix m) throws DimensionMismatchException {
+    public ParallelizedMatrix preMultiply(RealMatrix m) throws DimensionMismatchException {
         return MatrixComputation.computeAB(m, this);
     }
 
-    public Matrix computeAtA() {
+    public ParallelizedMatrix computeAtA() {
         return MatrixComputation.computeAtA(this);
     }
 
@@ -65,7 +65,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     @Override
     public RealMatrix transpose() {
-        RealMatrix out = new Matrix(getColumnDimension(), getRowDimension());
+        RealMatrix out = new ParallelizedMatrix(getColumnDimension(), getRowDimension());
         walkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {
             /** {@inheritDoc} */
             @Override

@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  *
  * @author Kensuke Konishi
  * @since version 0.2.2
- * @version 2022/2/23 Moved & renamed from kibrary.inversion.CheckerBoardTest
+ * @version 2022/2/23 Moved & renamed from inversion.CheckerBoardTest to waveform.PseudoWaveformGenerator
  */
 public class PseudoWaveformGenerator extends Operation {
 
@@ -145,7 +145,7 @@ public class PseudoWaveformGenerator extends Operation {
 
         // assemble matrices (they should not be weighted)
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingType.IDENTITY);
-        Matrix a = assembler.getA();
+        ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 
         // calculate pseudo waveform

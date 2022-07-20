@@ -18,11 +18,11 @@ import java.util.stream.IntStream;
  */
 public class MatrixComputation {
 
-    public static Matrix computeAtA(RealMatrix a) {
+    public static ParallelizedMatrix computeAtA(RealMatrix a) {
         long start = System.nanoTime();
         System.err.print("Computing matrix multiplication AtA");
         int n = a.getColumnDimension();
-        Matrix ata = new Matrix(n, n);
+        ParallelizedMatrix ata = new ParallelizedMatrix(n, n);
 
         IntStream.range(0, n).parallel().forEach(i -> {
             IntStream.range(i, n).parallel().forEach(j -> {
@@ -63,13 +63,13 @@ public class MatrixComputation {
         return vector;
     }
 
-    public static Matrix computeAB(RealMatrix former, RealMatrix latter) throws DimensionMismatchException {
+    public static ParallelizedMatrix computeAB(RealMatrix former, RealMatrix latter) throws DimensionMismatchException {
         long start = System.nanoTime();
         MatrixUtils.checkMultiplicationCompatible(former, latter);
         System.err.print("computing matrix multiplication");
         int m = former.getRowDimension();
         int n = latter.getColumnDimension();
-        Matrix ab = new Matrix(m, n);
+        ParallelizedMatrix ab = new ParallelizedMatrix(m, n);
         IntStream.range(0, m).parallel().forEach(i -> IntStream.range(0, n).parallel()
                 .forEach(j -> ab.setEntry(i, j, computeMultiplication(i, j, former, latter))));
         System.err.println(", it took " + GadgetAid.toTimeString(System.nanoTime() - start));

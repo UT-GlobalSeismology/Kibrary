@@ -6,7 +6,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 public class MatrixAssembly {
 
     private final DVectorBuilder dVectorBuilder;
-    private final Matrix a;
+    private final ParallelizedMatrix a;
     private final RealVector d;
     private RealMatrix ata;
     private RealVector atd;
@@ -68,7 +68,7 @@ public class MatrixAssembly {
         return dVectorBuilder;
     }
 
-    public Matrix getA() {
+    public ParallelizedMatrix getA() {
         return a;
     }
 

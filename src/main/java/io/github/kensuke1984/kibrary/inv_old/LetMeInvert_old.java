@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
 import io.github.kensuke1984.kibrary.inversion.addons.RadialSecondOrderDifferentialOperator;
 import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -898,7 +898,7 @@ public class LetMeInvert_old extends Operation {
 
         }
         else {
-            Matrix atatmp = new Matrix(parameterList.size(), parameterList.size());
+            ParallelizedMatrix atatmp = new ParallelizedMatrix(parameterList.size(), parameterList.size());
             RealVector atdtmp = new ArrayRealVector(parameterList.size());
 
             int nIDPerStep = ((int) (ids.length / 2 / nStepsForLowMemoryMode)) * 2;

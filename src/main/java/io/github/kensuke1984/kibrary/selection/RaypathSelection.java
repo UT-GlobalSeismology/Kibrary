@@ -61,6 +61,8 @@ public class RaypathSelection extends Operation {
      */
     private boolean eliminationMode;
 
+    private double lowerEventMw;
+    private double upperEventMw;
     /**
      * not radius but distance from the surface
      */
@@ -109,6 +111,10 @@ public class RaypathSelection extends Operation {
             pw.println("#eliminationMode");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");
             pw.println("##########Selection criteria of events##########");
+            pw.println("##(double) Lower limit of Mw (0)");
+            pw.println("#lowerEventMw ");
+            pw.println("##(double) Upper limit of Mw (10)");
+            pw.println("#upperEventMw ");
             pw.println("##(double) Shallower limit of event DEPTH (0)");
             pw.println("#lowerEventDepth NOT SUPPORTED YET");
             pw.println("##(double) Deeper limit of event DEPTH (1000)");
@@ -157,6 +163,10 @@ public class RaypathSelection extends Operation {
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         eliminationMode = property.parseBoolean("eliminationMode", "false");
 
+        lowerEventMw = property.parseDouble("lowerMw", "0.");
+        upperEventMw = property.parseDouble("upperMw", "10.");
+        if (lowerEventMw > upperEventMw)
+            throw new IllegalArgumentException("Event magnitude range " + lowerEventMw + " , " + upperEventMw + " is invalid.");
         lowerEventDepth = property.parseDouble("lowerEventDepth", "0");
         upperEventDepth = property.parseDouble("upperEventDepth", "1000");
         if (lowerEventDepth > upperEventDepth)
@@ -201,6 +211,17 @@ public class RaypathSelection extends Operation {
 
             // in extraction mode (eliminationMode=false), ignore raypaths that are not within range
             // in elimination mode (eliminationMode=true), select raypaths that are not within range
+
+            // event magnitude
+            double eventMw = entry.getEvent().getEventData().getCmt().getMw();
+            if ((lowerEventMw <= eventMw && eventMw <= upperEventMw) == false) {
+                if (eliminationMode) {
+                    selectedEntrySet.add(entry);
+                }
+                continue;
+            }
+
+            // event position
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtLocation();
             if (eventPosition.isInRange(lowerEventLatitude, upperEventLatitude, lowerEventLongitude, upperEventLongitude)
                     == false) {
@@ -211,6 +232,7 @@ public class RaypathSelection extends Operation {
             }
             // TODO: event depth. conversion to radius has to be considered.
 
+            // observer position
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
             if (observerPosition.isInRange(lowerObserverLatitude, upperObserverLatitude, lowerObserverLongitude, upperObserverLongitude)
                     == false) {
@@ -220,6 +242,7 @@ public class RaypathSelection extends Operation {
                 continue;
             }
 
+            // distance and azimuth
             double distance = eventPosition.calculateEpicentralDistance(observerPosition) * 180. / Math.PI;
             double azimuth = eventPosition.calculateAzimuth(observerPosition) * 180. / Math.PI;
             if ((lowerDistance <= distance && distance <= upperDistance && MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth))

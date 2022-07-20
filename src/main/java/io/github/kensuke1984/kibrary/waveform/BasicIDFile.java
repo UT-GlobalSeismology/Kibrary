@@ -56,6 +56,9 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * This class also contains methods for exporting waveform data in ascii-format text files.
  * When the main method of this class is executed,
  * the input binary-format files can be exported in ascii format.
+ *
+ * @since a long time ago
+ * @version 2021/11/3 moved from waveformdata to waveform
  */
 public final class BasicIDFile {
     private BasicIDFile() {}

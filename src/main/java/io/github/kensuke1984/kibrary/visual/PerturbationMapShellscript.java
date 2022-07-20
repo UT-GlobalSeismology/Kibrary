@@ -16,6 +16,9 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  */
 public class PerturbationMapShellscript {
 
+    /**
+     * Number of panels to map in each row
+     */
     private static final int PANEL_PER_ROW = 4;
     /**
      * The interval of deciding map size
@@ -129,7 +132,7 @@ public class PerturbationMapShellscript {
                 if (i == radii.length - 1) {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
                             + "km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
-                } else if (i % PANEL_PER_ROW == 3) {
+                } else if (i % PANEL_PER_ROW == (PANEL_PER_ROW - 1)) {
                     pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
                             + "km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
                 } else {

@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -23,8 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * In short, time correction value is relative pick time in synthetic - the one
  * in observed.
  * <p>
- * Amplitude correction value (AMPLITUDE) is observed /
- * synthetic.
+ * Amplitude correction value (AMPLITUDE) is observed / synthetic.
  * <p>
  * Time shift is rounded off to the second decimal place.
  * <p>
@@ -86,6 +86,16 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         this.timeShift = Precision.round(timeShift, 2);
         this.amplitude = Precision.round(amplitudeRatio, 2);
         this.phases = phases;
+    }
+
+    /**
+     * Judges whether this static correction is for the given timewindow.
+     * @param t (TimewindowData) Timewindow to judge
+     * @return (boolean) true if the timewindow is the correct one
+     */
+    public boolean isForTimewindow(TimewindowData t) {
+        return (t.getObserver().equals(observer) && t.getGlobalCMTID().equals(eventID) && t.getComponent() == component
+                && Math.abs(t.getStartTime() - synStartTime) < TimewindowData.TIME_EPSILON);
     }
 
     @Override

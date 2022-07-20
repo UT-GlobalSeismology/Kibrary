@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -23,11 +22,16 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 
 /**
  * An operation to select or resample BasicIDs.
- * This allows for extraction of certain data to be used in the inversion,
+ * This allows for selection of certain data to be used in the inversion,
  * as well as for preparation of bootstrap or subsampling tests.
+ * <p>
+ * To select BasicIDs of certain raypaths, supply with a {@link DataEntryListFile} including a list of raypaths to be selected.
+ * Timewindows may be also selected by the phases that they must include.
  *
  * @author otsuru
  * @since 2022/7/13
@@ -56,14 +60,22 @@ public class BasicIDRebuilder extends Operation {
      * path of waveform data
      */
     private Path basicPath;
+    /**
+     * Path of a data entry file for selection
+     */
+    private Path dataEntryPath;
 
+    /**
+     * Phases that must be included in timewindows to be selected
+     */
     private String[] requiredPhases;
-    private double minDistance;
-    private double maxDistance;
-    private double minMw;
-    private double maxMw;
-
+    /**
+     * Whether to choose BasicIDs with duplication
+     */
     private boolean bootstrap;
+    /**
+     * How many of the BasicIDs to sample [%] (100% is the total number after selection)
+     */
     private double subsamplingPercent;
 
     private List<BasicID> obsIDs;
@@ -95,19 +107,14 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
             pw.println("#requiredPhases ");
-            pw.println("##(double) Minimum epicentral distance [deg] (0)");
-            pw.println("#minDistance ");
-            pw.println("##(double) Maximum epicentral distance [deg] (360)");
-            pw.println("#maxDistance ");
-            pw.println("##(double) Minimum Mw (0)");
-            pw.println("#minMw ");
-            pw.println("##(double) Maximum Mw (10)");
-            pw.println("#maxMw ");
             pw.println("##(boolean) Perform a bootstrap test (false)");
             pw.println("#bootstrap ");
             pw.println("##(double) Percent of basic IDs to use in subsampling test (100)");
+            pw.println("## Here, 100% is the number of basic IDs after selection.");
             pw.println("#subsamplingPercent ");
         }
         System.err.println(outPath + " is created.");
@@ -125,19 +132,12 @@ public class BasicIDRebuilder extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        }
 
         if (property.containsKey("requiredPhases"))
             requiredPhases = property.parseStringArray("requiredPhases", null);
-
-        minDistance = property.parseDouble("minDistance", "0.");
-        maxDistance = property.parseDouble("maxDistance", "360.");
-        if (minDistance < 0 || minDistance > maxDistance || 360 < maxDistance)
-            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
-
-        minMw = property.parseDouble("minMw", "0.");
-        maxMw = property.parseDouble("maxMw", "10.");
-        if (minMw > maxMw)
-            throw new IllegalArgumentException("Magnitude range " + minMw + " , " + maxMw + " is invalid.");
 
         bootstrap = property.parseBoolean("bootstrap", "false");
         subsamplingPercent = property.parseDouble("subsamplingPercent", "100");
@@ -180,13 +180,27 @@ public class BasicIDRebuilder extends Operation {
 
     }
 
-    private void selectByCriteria() {
+    private void selectByCriteria() throws IOException {
         List<BasicID> selectedObsIDs = new ArrayList<>();
         List<BasicID> selectedSynIDs = new ArrayList<>();
+
+        // read entry set to be used for selection
+        Set<DataEntry> entrySet = null;
+        if (dataEntryPath != null) {
+            entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+        }
 
         for (int i = 0; i < obsIDs.size(); i++) {
             BasicID obsID = obsIDs.get(i);
             BasicID synID = synIDs.get(i);
+
+            // check raypath
+            if (entrySet != null) {
+                DataEntry entry = new DataEntry(obsID.getGlobalCMTID(), obsID.getObserver(), obsID.getSacComponent());
+                if (!entrySet.contains(entry)) {
+                    continue;
+                }
+            }
 
             // check phases
             if (requiredPhases != null) {
@@ -195,19 +209,6 @@ public class BasicIDRebuilder extends Operation {
                 if (requiredPhaseSet.stream().allMatch(reqPhase -> phases.contains(reqPhase)) == false) {
                     continue;
                 }
-            }
-
-            // check distance
-            double distance = FastMath.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
-                    .calculateEpicentralDistance(obsID.getObserver().getPosition()));
-            if (distance < minDistance || distance > maxDistance) {
-                continue;
-            }
-
-            // check magnitude
-            double mw = obsID.getGlobalCMTID().getEventData().getCmt().getMw();
-            if (mw < minMw || mw > maxMw) {
-                continue;
             }
 
             // add basicID that passed criteria
