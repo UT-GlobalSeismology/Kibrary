@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * Operation for operating inversion.
  *
  * @author otsuru
- * @since 2022/4/28 recreated inversion.LetMeInvert
+ * @since 2022/4/28 recreated former inversion.LetMeInvert
  */
 public class LetMeInvert extends Operation {
 

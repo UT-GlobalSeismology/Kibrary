@@ -33,6 +33,11 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
  * Operation that creates a checkerboard model file.
+ * <p>
+ * Perturbations are applied to each voxel in the input voxel file.
+ * At each voxel, each given {@link VariableType} is perturbed.
+ * Then, the model parameter value for each {@link PartialType} is computed and exported as a {@link KnownParameterFile}.
+ *
  * @author otsuru
  * @since 2022/3/4
  */
@@ -64,6 +69,8 @@ public class CheckerboardMaker extends Operation {
     private List<VariableType> variableTypes;
     private double[] percents;
     private boolean[] signFlips;
+    private double[] suppressFlipLatitudes;
+    private double[] suppressFlipLongitudes;
     private List<PartialType> partialTypes;
 
     /**
@@ -97,6 +104,10 @@ public class CheckerboardMaker extends Operation {
             pw.println("#percents ");
             pw.println("##(boolean) Whether to flip the sign, listed using spaces in the order of partialTypes, must be set.");
             pw.println("#signFlips ");
+            pw.println("##Latitudes to suppress sign flip, listed using spaces, if needed.");
+            pw.println("#suppressFlipLatitudes ");
+            pw.println("##Longitudes to suppress sign flip, listed using spaces, if needed.");
+            pw.println("#suppressFlipLongitudes ");
             pw.println("##Partial types to set in model, listed using spaces, must be set.");
             pw.println("#partialTypes ");
         }
@@ -127,6 +138,12 @@ public class CheckerboardMaker extends Operation {
         signFlips = property.parseBooleanArray("signFlips", null);
         if (signFlips.length != variableTypes.size())
             throw new IllegalArgumentException("Number of signFlips does not match number of variableTypes.");
+
+        if (property.containsKey("suppressFlipLatitudes"))
+            suppressFlipLatitudes = property.parseDoubleArray("suppressFlipLatitudes", null);
+        if (property.containsKey("suppressFlipLongitudes"))
+            suppressFlipLongitudes = property.parseDoubleArray("suppressFlipLongitudes", null);
+
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
                 .collect(Collectors.toList());
     }
@@ -158,8 +175,9 @@ public class CheckerboardMaker extends Operation {
             for (int i = 0; i < radii.length; i++) {
                 FullPosition position = horizontalPosition.toFullPosition(radii[i]);
                 // find the sign shift with respect to referencePosition
-                int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude
-                        + (position.getLongitude() - referencePosition.getLongitude()) / dLongitude) + i;
+                int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude)
+                        + (int) Math.round((position.getLongitude() - referencePosition.getLongitude()) / dLongitude)
+                        + i + numForSuppressFlip(position);
 
                 double volume = Earth.getVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
@@ -197,33 +215,20 @@ public class CheckerboardMaker extends Operation {
         System.err.println("Outputting known parameter file.");
         Path knownPath = outPath.resolve("model.lst");
         KnownParameterFile.write(knowns, knownPath);
+    }
 
-//
-//        List<UnknownParameter> parameters = UnknownParameterFile.read(unknownParameterPath).stream()
-//                .filter(param -> partialTypes.contains(param.getPartialType())).collect(Collectors.toList());
-//        if (parameters.isEmpty()) {
-//            System.err.println("No parameters with specified partialTypes exist.");
-//            return;
-//        }
-//
-//        double[] radii = parameters.stream().mapToDouble(param -> param.getPosition().getR()).distinct().sorted().toArray();
-//        double[] latitudes = parameters.stream().mapToDouble(param -> param.getPosition().getLatitude()).distinct().sorted().toArray();
-//        double[] longitudes = parameters.stream().mapToDouble(param -> param.getPosition().getLongitude()).distinct().sorted().toArray();
-//
-//        for (int i = 0; i < latitudes.length; i++) {
-//            for (int j = 0; j < longitudes.length; j++) {
-//                for (int k = 0; k < radii.length; k++) {
-//
-//                    FullPosition position = new FullPosition(latitudes[i], longitudes[j], radii[k]);
-//                    List<UnknownParameter> paramsHere = parameters.stream()
-//                            .filter(param -> param.getPosition().equals(position))
-//                            .collect(Collectors.toList());
-//
-//                    for (UnknownParameter param : paramsHere) {
-//
-//                    }
-//                }
-//            }
-//        }
+    private int numForSuppressFlip(FullPosition position) {
+        int num = 0;
+        if (suppressFlipLatitudes != null) {
+            for (double lat : suppressFlipLatitudes) {
+                if (position.getLatitude() > lat) num++;
+            }
+        }
+        if (suppressFlipLongitudes != null) {
+            for (double lon : suppressFlipLongitudes) {
+                if (position.getLongitude() > lon) num++;
+            }
+        }
+        return num;
     }
 }
