@@ -110,7 +110,7 @@ public class Profile {
 	//					List<Trace> windowSyntraces = timewindow.stream().map(tw -> syndata.createTrace().cutWindow(tw)).collect(Collectors.toList());
 						
 						double maxObs = obsdata.createTrace().cutWindow(timewindow.get(0)).getYVector().getLInfNorm();
-						double distance = sacdata.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(sacdata.getObserver().getPosition())
+						double distance = sacdata.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(sacdata.getObserver().getPosition())
 								* 180. / Math.PI;
 						
 	//					double t0 = timewindow.get(0).getStartTime();

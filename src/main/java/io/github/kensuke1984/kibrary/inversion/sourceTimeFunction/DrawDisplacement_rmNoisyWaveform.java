@@ -102,8 +102,8 @@ class DrawDisplacement_rmNoisyWaveform{
 				Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 				for(TimewindowData timewindow : timewindows){
 					if(timewindow.getGlobalCMTID().equals(eventID) && timewindow.getComponent().equals(component)){
-        			if(timewindow.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
-        					timewindow.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
+        			if(timewindow.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
+        					timewindow.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
 						TimewindowData correctionTw = ReadStaticCorrection.getcorrection(eventID, timewindow, corrections);
 						Observer station = timewindow.getObserver();
 						double sttime = correctionTw.getStartTime() - 5.;

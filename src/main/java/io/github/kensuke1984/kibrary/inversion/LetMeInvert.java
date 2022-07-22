@@ -148,6 +148,7 @@ public class LetMeInvert extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
+        System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());

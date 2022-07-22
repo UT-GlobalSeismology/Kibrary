@@ -74,7 +74,7 @@ public class ComputeTimediffSScS {
 		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath).stream()
 			.filter(tw -> {
 					double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation()
-							.calculateEpicentralDistance(tw.getObserver().getPosition()));
+							.computeEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance || distance > maxDistance)
 						return false;
 					return true;

@@ -34,7 +34,7 @@ public class testTimewindowSet {
 		Observer station = new Observer("340A", "TA", new HorizontalPosition(31.41670036315918, -93.88960266113281));
 		
 		FullPosition loc = id.getEventData().getCmtLocation();
-		double distance = loc.calculateEpicentralDistance(station.getPosition()) * 180. / Math.PI ;
+		double distance = loc.computeEpicentralDistance(station.getPosition()) * 180. / Math.PI ;
 		
 //		System.out.println((Earth.EARTH_RADIUS - loc.getR()) + " " + distance);
 		

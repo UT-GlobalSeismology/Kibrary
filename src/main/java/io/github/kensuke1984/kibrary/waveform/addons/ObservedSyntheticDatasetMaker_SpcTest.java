@@ -397,7 +397,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation_old {
 		
 		timewindowInformationSet = TimewindowDataFile.read(timewindowPath)
 				.stream().filter(tw -> {
-					double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition()));
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance)
 						return false;
 					return true;
@@ -435,7 +435,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation_old {
 		if (timewindowRefPath != null)
 			timewindowRefInformationSet = TimewindowDataFile.read(timewindowRefPath)
 				.stream().filter(tw -> {
-					double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition()));
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(tw.getObserver().getPosition()));
 					if (distance < minDistance)
 						return false;
 					return true;

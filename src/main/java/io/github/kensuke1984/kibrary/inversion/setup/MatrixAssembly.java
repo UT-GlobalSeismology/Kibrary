@@ -7,6 +7,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -25,6 +26,7 @@ public class MatrixAssembly {
     private final DVectorBuilder dVectorBuilder;
     private final ParallelizedMatrix a;
     private final RealVector d;
+    private final double normalizedVariance;
     private RealMatrix ata;
     private RealVector atd;
 
@@ -62,6 +64,10 @@ public class MatrixAssembly {
         System.err.println("Assembling d vector");
         d = dVectorBuilder.buildWithWeight(weighting);
 
+        // compute variance
+        RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
+        normalizedVariance = MathAid.computeVariance(d, obs);
+
     }
 
     public DVectorBuilder getDVectorBuilder() {
@@ -70,6 +76,10 @@ public class MatrixAssembly {
 
     public ParallelizedMatrix getA() {
         return a;
+    }
+
+    public double getNormalizedVariance() {
+        return normalizedVariance;
     }
 
     public RealVector getAtd() {

@@ -140,8 +140,8 @@ public class WriteWaveformsAndPartials {
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
-			double gcarc = Precision.round(Math.toDegrees(eventLoc.calculateEpicentralDistance(stationPos)), 2);
-			double azimuth = Precision.round(Math.toDegrees(eventLoc.calculateAzimuth(stationPos)), 2);
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.computeEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.computeAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
 			// eventFolder.mkdir();
 			Path plotPath = eventFolder.resolve("recordOBS.plt");

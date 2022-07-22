@@ -67,10 +67,10 @@ public class Histogram {
                     ed = (new FullPosition(this.averageLoc.getLatitude(),
                             id.getGlobalCMTID().getEventData().getCmtLocation().getLongitude(),
                             id.getGlobalCMTID().getEventData().getCmtLocation().getR()))
-                            .calculateEpicentralDistance(staLoc)*180/Math.PI;
+                            .computeEpicentralDistance(staLoc)*180/Math.PI;
                 }
                 else
-                    ed = cmtLocation.calculateEpicentralDistance(staLoc)*180/Math.PI;
+                    ed = cmtLocation.computeEpicentralDistance(staLoc)*180/Math.PI;
 
 //                System.out.println(ed);
                 this.numberOfRecords[(int) (ed / interval)]++;

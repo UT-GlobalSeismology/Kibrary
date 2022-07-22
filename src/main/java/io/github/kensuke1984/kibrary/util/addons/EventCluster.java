@@ -225,7 +225,7 @@ public class EventCluster {
 	
 	public int getAzimuthIndex(HorizontalPosition pos) {
 		int iaz = -1;
-		double azimuth = Math.toDegrees(centerPosition.calculateAzimuth(pos));
+		double azimuth = Math.toDegrees(centerPosition.computeAzimuth(pos));
 		for (int i = 0; i < getNAzimuthSlices(); i++) {
 			double[] bounds = getAzimuthBound(i);
 			if (bounds[0] <= azimuth && bounds[1] > azimuth) iaz = i;

@@ -39,8 +39,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <li> an observer list file </li>
  * <li> a voxel information file </li>
  * </ul>
- * DSM input files for FP will be created to calculate for all (event, perturbationPoint)-pairs.
- * DSM input files for BP will be created to calculate for all (observerPosition, perturbationPoint)-pairs.
+ * DSM input files for FP will be created to compute for all (event, perturbationPoint)-pairs.
+ * DSM input files for BP will be created to compute for all (observerPosition, perturbationPoint)-pairs.
  * <p>
  * The resulting folders in output BP folder will be named by the position code of observers (see {@link HorizontalPosition#toCode}).
  * Observer position codes are used here instead of observer names to dodge the problem caused by
@@ -161,11 +161,11 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
+            pw.println("##Time length to be computed, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
+            pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
-            pw.println("##(boolean) Whether to use MPI in the subsequent DSM calculations (true)");
+            pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
             pw.println("#mpi ");
             pw.println("##(boolean) Whether to compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
             pw.println("#jointCMT ");

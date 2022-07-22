@@ -161,10 +161,24 @@ public final class DVectorBuilder {
 //    }
 
     /**
+     * Decomposes a full vector to smaller ones corresponding to the timewindows set in this class.
+     * Error occurs if the input is invalid.
+     * @param vector (RealVector) Full vector to separate
+     * @return (RealVector[]) Separated vectors for each time window.
+     */
+    public RealVector[] separate(RealVector vector) {
+        if (vector.getDimension() != npts)
+            throw new IllegalArgumentException("The length of input vector " + vector.getDimension() + " is invalid, should be " + npts);
+        RealVector[] vectors = new RealVector[nTimeWindow];
+        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVecs[i].getDimension()));
+        return vectors;
+    }
+
+    /**
      * Builds and returns the d vector.
      * It will be weighed as Wd = [weight diagonal matrix](obsVector - synVector)
      * @param weighting (Weighting)
-     * @return (RealVector) d
+     * @return (RealVector) Wd
      */
     public RealVector buildWithWeight(Weighting weighting) {
         RealVector v = new ArrayRealVector(npts);
@@ -177,18 +191,6 @@ public final class DVectorBuilder {
     }
 
     /**
-     * @param vector to separate
-     * @return Separated vectors for each time window. Error occurs if the input is invalid.
-     */
-    public RealVector[] separate(RealVector vector) {
-        if (vector.getDimension() != npts)
-            throw new RuntimeException("The length of input vector " + vector.getDimension() + " is invalid, should be " + npts);
-        RealVector[] vectors = new RealVector[nTimeWindow];
-        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVecs[i].getDimension()));
-        return vectors;
-    }
-
-    /**
      * Builds and returns the full synthetic vector
      * @return (RealVector) syn
      */
@@ -196,6 +198,44 @@ public final class DVectorBuilder {
         RealVector v = new ArrayRealVector(npts);
         for (int i = 0; i < nTimeWindow; i++) {
             v.setSubVector(startPoints[i], synVecs[i]);
+        }
+        return v;
+    }
+
+    /**
+     * Builds and returns the full synthetic vector, weighted
+     * @param weighting (Weighting)
+     * @return (RealVector) W * syn
+     */
+    public RealVector fullSynVecWithWeight(Weighting weighting) {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], synVecs[i].ebeMultiply(weighting.get(i)));
+        }
+        return v;
+    }
+
+    /**
+     * Builds and returns the full observed vector
+     * @return (RealVector) obs
+     */
+    public RealVector fullObsVec() {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], obsVecs[i]);
+        }
+        return v;
+    }
+
+    /**
+     * Builds and returns the full observed vector, weighted
+     * @param weighting (Weighting)
+     * @return (RealVector) W * obs
+     */
+    public RealVector fullObsVecWithWeight(Weighting weighting) {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], obsVecs[i].ebeMultiply(weighting.get(i)));
         }
         return v;
     }

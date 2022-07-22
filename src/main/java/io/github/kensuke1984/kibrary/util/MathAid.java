@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
 /**
@@ -20,6 +21,16 @@ public final class MathAid {
     public static double computeAIC(double variance, int n, int k) {
         final double log2pi = Math.log(2 * Math.PI);
         return n * (log2pi + Math.log(variance) + 1) + 2 * k + 2;
+    }
+
+    /**
+     * Compute the normalized variance of residual waveform
+     * @param d (RealVector) Residual waveform
+     * @param obs (RealVector) Observed waveform
+     * @return (double) normalized variance
+     */
+    public static double computeVariance(RealVector d, RealVector obs) {
+        return d.dotProduct(d) / obs.dotProduct(obs);
     }
 
     /**

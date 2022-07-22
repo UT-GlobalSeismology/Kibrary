@@ -191,7 +191,7 @@ public class DividePerAzimuth {
 		
 		double[] minMax = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
 		stations.stream().forEach(station -> {
-			double azimuth = averageEventPosition.calculateAzimuth(station.getPosition());
+			double azimuth = averageEventPosition.computeAzimuth(station.getPosition());
 			if (azimuth < minMax[0])
 				minMax[0] = azimuth;
 			if (azimuth > minMax[1])
@@ -227,7 +227,7 @@ public class DividePerAzimuth {
 		Set<Observer> stations = info.stream().map(tw -> tw.getObserver())
 				.collect(Collectors.toSet());
 		stations.stream().forEach(station -> {
-			double azimuth = averageEventPosition.calculateAzimuth(station.getPosition());
+			double azimuth = averageEventPosition.computeAzimuth(station.getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			
@@ -269,7 +269,7 @@ public class DividePerAzimuth {
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
-			double azimuth = averageEventPosition.calculateAzimuth(tw.getObserver().getPosition());
+			double azimuth = averageEventPosition.computeAzimuth(tw.getObserver().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			double ratio = (azimuth - azimuthRange[0]) / (azimuthRange[1] - azimuthRange[0]);
@@ -296,7 +296,7 @@ public class DividePerAzimuth {
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
-			double azimuth = averageEventPosition.calculateAzimuth(tw.getObserver().getPosition());
+			double azimuth = averageEventPosition.computeAzimuth(tw.getObserver().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			azimuth *= 180. / Math.PI;
@@ -335,8 +335,8 @@ public class DividePerAzimuth {
 			
 			for (TimewindowData tw : info) {
 				HorizontalPosition evtLoc = tw.getGlobalCMTID().getEventData().getCmtLocation();
-				double azimuth = tw.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(tw.getObserver().getPosition());
-				double distance = tw.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(tw.getObserver().getPosition());
+				double azimuth = tw.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(tw.getObserver().getPosition());
+				double distance = tw.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(tw.getObserver().getPosition());
 				
 				//
 				timetool.setSourceDepth(6371. - tw.getGlobalCMTID().getEventData().getCmtLocation().getR());
@@ -361,8 +361,8 @@ public class DividePerAzimuth {
 				double lon = SphericalCoords.lonFor( evtLoc.getLatitude(),  evtLoc.getLongitude(), distance, azimuth);
 				HorizontalPosition bottomingPosition = new HorizontalPosition(lat, lon);
 				
-				azimuth = averageEventPosition.calculateAzimuth(bottomingPosition);
-				distance = averageEventPosition.calculateEpicentralDistance(bottomingPosition);
+				azimuth = averageEventPosition.computeAzimuth(bottomingPosition);
+				distance = averageEventPosition.computeEpicentralDistance(bottomingPosition);
 				
 				if (rotate)
 					azimuth = unfold(azimuth);
@@ -412,7 +412,7 @@ public class DividePerAzimuth {
 			double lon = SphericalCoords.lonFor(averageEventPosition.getLatitude(), averageEventPosition.getLongitude(), 70, azimuth);
 			HorizontalPosition endPosition = new HorizontalPosition(lat, lon);
 //					averageEventPosition.fromAzimuth(azimuth, 70.);
-			System.out.println(azimuth + " " + (averageEventPosition.calculateAzimuth(endPosition) * 180 / Math.PI));
+			System.out.println(azimuth + " " + (averageEventPosition.computeAzimuth(endPosition) * 180 / Math.PI));
 			Files.write(outpath, (averageEventPosition + " " + endPosition + " " + azimuth + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}

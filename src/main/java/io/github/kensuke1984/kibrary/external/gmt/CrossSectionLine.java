@@ -63,8 +63,8 @@ public class CrossSectionLine {
 	
 	public CrossSectionLine(HorizontalPosition startPoint, HorizontalPosition endPoint, double deltaThetaRad) {
 		this.centerLocation = null;
-		this.theta = startPoint.calculateEpicentralDistance(endPoint);
-		this.azimuth = startPoint.calculateAzimuth(endPoint);
+		this.theta = startPoint.computeEpicentralDistance(endPoint);
+		this.azimuth = startPoint.computeAzimuth(endPoint);
 		this.deltaTheta = deltaThetaRad;
 		this.startPoint = startPoint;
 		this.endPoint = endPoint;

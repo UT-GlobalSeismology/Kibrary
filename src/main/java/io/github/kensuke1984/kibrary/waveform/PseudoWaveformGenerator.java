@@ -148,17 +148,17 @@ public class PseudoWaveformGenerator extends Operation {
         ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 
-        // calculate pseudo waveform
+        // compute pseudo waveform
         RealVector pseudoD = a.operate(m);
         DVectorBuilder dVectorBuilder = assembler.getDVectorBuilder();
-        RealVector pseudoObs = dVectorBuilder.fullSynVec().add(pseudoD);
+        RealVector pseudoWaveform = dVectorBuilder.fullSynVec().add(pseudoD);
 
         // output
         String dateStr = GadgetAid.getTemporaryString();
         Path pseudoIDPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudoID", tag, dateStr, ".dat"));
         Path pseudoPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudo", tag, dateStr, ".dat"));
         System.err.println("Outputting in " + pseudoIDPath + " , " + pseudoPath);
-        output(pseudoObs, dVectorBuilder, pseudoIDPath, pseudoPath);
+        output(pseudoWaveform, dVectorBuilder, pseudoIDPath, pseudoPath);
     }
 
     public void output(RealVector pseudoVec, DVectorBuilder dVectorBuilder, Path outIDPath, Path outDataPath) throws IOException {

@@ -27,11 +27,11 @@ public class TraveltimeData {
     }
 
     public double getEpicentralDistance() {
-        return Math.toDegrees(event.getEventData().getCmtLocation().calculateGeographicalDistance(observer.getPosition()));
+        return Math.toDegrees(event.getEventData().getCmtLocation().computeGeographicalDistance(observer.getPosition()));
     }
 
     public double getAzimuth() {
-        return Math.toDegrees(event.getEventData().getCmtLocation().calculateGeographicalAzimuth(observer.getPosition()));
+        return Math.toDegrees(event.getEventData().getCmtLocation().computeGeographicalAzimuth(observer.getPosition()));
     }
 
     public List<ScatterPoint> getScatterPointList() {

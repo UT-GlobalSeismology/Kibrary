@@ -281,7 +281,7 @@ public class PhaseEnvelope implements Operation_old {
 			//							for (int i = 0; i < timewindows.length; i++)
 			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
 										
-										double distance = obssac.getEventLocation().calculateEpicentralDistance(obssac.getObserver().getPosition())
+										double distance = obssac.getEventLocation().computeEpicentralDistance(obssac.getObserver().getPosition())
 											* 180 / Math.PI;
 										double eventR = obssac.getEventLocation().getR();
 										
@@ -647,7 +647,7 @@ public class PhaseEnvelope implements Operation_old {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
 			SACFileAccess sd = sfn.read();
-			double distance = sd.getEventLocation().calculateEpicentralDistance(sd.getObserver().getPosition())
+			double distance = sd.getEventLocation().computeEpicentralDistance(sd.getObserver().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();
 			Phase[] phases = null;

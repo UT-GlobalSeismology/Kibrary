@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
@@ -51,6 +52,7 @@ enum Brooklyn {
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
+    VarianceComputer(45, VarianceComputer.class),
     // Partial 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
     // Inversion 60
