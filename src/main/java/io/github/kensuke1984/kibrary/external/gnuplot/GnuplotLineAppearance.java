@@ -67,6 +67,6 @@ public class GnuplotLineAppearance {
 
     @Override
     public String toString() {
-        return "w lines dt " + dashtype + " lc rgb \"" + linecolor.nameColorName() + "\" lw " + linewidth;
+        return "dt " + dashtype + " lc rgb \"" + linecolor.nameColorName() + "\" lw " + linewidth;
     }
 }

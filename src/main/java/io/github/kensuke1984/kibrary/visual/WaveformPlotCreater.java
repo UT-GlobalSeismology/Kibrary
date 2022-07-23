@@ -10,14 +10,18 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
+import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
+import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -52,20 +56,32 @@ public class WaveformPlotCreater extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * {@link Path} of a basic ID file
+     * Path of a basic ID file
      */
     private Path basicIDPath;
     /**
-     * {@link Path} of a basic waveform file
+     * Path of a basic waveform file
      */
     private Path basicPath;
+    /**
+     * Path of a travel time information file
+     */
+    private Path travelTimePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
-
+    /**
+     * Whether to export individual files for each component
+     */
     private boolean splitComponents;
+
+
+    /**
+     * Set of information of travel times
+     */
+    private Set<TravelTimeInformation> travelTimeInfoSet;
 
     /**
      * @param args  none to create a property file <br>
@@ -90,6 +106,8 @@ public class WaveformPlotCreater extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a travel time information file, if plotting travel times");
+            pw.println("#travelTimePath travelTime.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to export individual files for each component (true)");
@@ -110,6 +128,9 @@ public class WaveformPlotCreater extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
+
+        if (property.containsKey("travelTimePath"))
+            travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -137,6 +158,11 @@ public class WaveformPlotCreater extends Operation {
        }
        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
            return;
+       }
+
+       // read travel time information
+       if (travelTimePath != null) {
+           travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
        }
 
        for (EventFolder eventDir : eventDirs) {
@@ -171,7 +197,7 @@ public class WaveformPlotCreater extends Operation {
      * @param fileNameRoot (String) The root of file names of output plot and graph files
      * @throws IOException
      */
-    private static void createPlot(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
+    private void createPlot(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
         if (ids.length == 0) {
             return;
         }
@@ -211,6 +237,21 @@ public class WaveformPlotCreater extends Operation {
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
+
+            if (travelTimeInfoSet != null) {
+                travelTimeInfoSet.stream()
+                        .filter(info -> info.getEvent().equals(obsID.getGlobalCMTID()) && info.getObserver().equals(obsID.getObserver()))
+                        .forEach(info -> {
+                            Map<Phase, Double> usePhaseMap = info.getUsePhases();
+                            for (Double time : usePhaseMap.values()) {
+                                gnuplot.addVerticalLine(time, synAppearance); // TODO change appearance
+                            }
+                            Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
+                            for (Double time : avoidPhaseMap.values()) {
+                                gnuplot.addVerticalLine(time, originalAppearance); // TODO change appearance
+                            } //TODO add labels of phase name
+                        });
+            }
 
             // this is not done for the last obsID because we don't want an extra blank page to be created
             if ((i + 1) < obsList.size()) {

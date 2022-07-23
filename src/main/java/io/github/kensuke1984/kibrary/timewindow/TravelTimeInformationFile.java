@@ -6,11 +6,19 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.external.TauPPhase;
+import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * @author otsuru
@@ -19,8 +27,15 @@ import io.github.kensuke1984.kibrary.external.TauPPhase;
 public class TravelTimeInformationFile {
 
     /**
+     * Number of Strings at the head of each line to specify event and observer
+     */
+    private static int N_ENTRY_TAG = 1 + 4;
+
+    /**
      * Writes a file with information of travel times.
-     * @param observerSet Set of observers
+     * @param usePhases Set of phases that are used in timewindow
+     * @param avoidPhases Set of phases that are avoided in timewindow
+     * @param informationSet Set of travel time information
      * @param outputPath     of write file
      * @param options     for write
      * @throws IOException if an I/O error occurs
@@ -33,24 +48,27 @@ public class TravelTimeInformationFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# usePhases...");
             useList.forEach(phase -> pw.print(phase + " "));
+            pw.println();
+
             pw.println("# avoidPhases...");
             avoidList.forEach(phase -> pw.print(phase + " "));
+            pw.println();
 
             pw.println("# eventID station network latitude longitude travelTimes...");
             informationSet.stream().forEach(info -> {
-                pw.print(info.getEvent() + " " + info.getObserver().toPaddedInfoString());
+                pw.print(info.getEvent().toPaddedString() + " " + info.getObserver().toPaddedInfoString());
                 for (Phase phase : useList) {
-                    TauPPhase phaseData = info.dataFor(phase);
-                    if (phaseData != null) {
-                        pw.print(" " + phaseData.getTravelTime());
+                    Double travelTime = info.timeOf(phase);
+                    if (travelTime != null) {
+                        pw.print(" " + travelTime);
                     } else {
                         pw.print(" -");
                     }
                 }
                 for (Phase phase : avoidList) {
-                    TauPPhase phaseData = info.dataFor(phase);
-                    if (phaseData != null) {
-                        pw.print(" " + phaseData.getTravelTime());
+                    Double travelTime = info.timeOf(phase);
+                    if (travelTime != null) {
+                        pw.print(" " + travelTime);
                     } else {
                         pw.print(" -");
                     }
@@ -58,6 +76,43 @@ public class TravelTimeInformationFile {
                 pw.println();
             });
         }
+    }
+
+    public static Set<TravelTimeInformation> read(Path inputPath) throws IOException {
+        Set<TravelTimeInformation> informationSet = new HashSet<>();
+        InformationFileReader reader = new InformationFileReader(inputPath, true);
+
+        // read 1st and 2nd lines
+        List<Phase> useList = Arrays.stream(reader.next().split("\\s+")).map(Phase::create).collect(Collectors.toList());
+        List<Phase> avoidList = Arrays.stream(reader.next().split("\\s+")).map(Phase::create).collect(Collectors.toList());
+
+        // read rest of file
+        String line;
+        while ((line = reader.next()) != null) {
+            String[] parts = line.split("\\s+");
+            if (parts.length != N_ENTRY_TAG + useList.size() + avoidList.size()) throw new IllegalArgumentException("Illegal line");
+
+            GlobalCMTID event = new GlobalCMTID(parts[0]);
+            HorizontalPosition position = new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]));
+            Observer observer = new Observer(parts[1], parts[2], position);
+
+            Map<Phase, Double> usePhaseTimes = new HashMap<>();
+            for (int i = 0; i < useList.size(); i++) {
+                String valString = parts[N_ENTRY_TAG + i];
+                if (valString != "-") {
+                    usePhaseTimes.put(useList.get(i), Double.parseDouble(valString));
+                }
+            }
+            Map<Phase, Double> avoidPhaseTimes = new HashMap<>();
+            for (int i = 0; i < avoidList.size(); i++) {
+                String valString = parts[N_ENTRY_TAG + useList.size() + i];
+                if (!valString.equals("-")) {
+                    avoidPhaseTimes.put(avoidList.get(i), Double.parseDouble(valString));
+                }
+            }
+            informationSet.add(new TravelTimeInformation(event, observer, usePhaseTimes, avoidPhaseTimes));
+        }
+        return informationSet;
     }
 
 }

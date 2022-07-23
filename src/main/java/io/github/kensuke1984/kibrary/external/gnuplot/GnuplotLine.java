@@ -8,44 +8,44 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
  */
 class GnuplotLine {
 
-    /**
-     * Name of file that contains data to be plotted.
-     */
-    private String fileName;
-
-    /**
-     * データをどう使うか　using ????? の　???の分
-     * （例　1:3, 1:($3+$1)）
-     */
-    private String plotPart;
+    private String content;
 
     private GnuplotLineAppearance appearance;
 
     private String title;
 
     /**
-     * @param fileName
-     * @param plotPart
+     * @param function
      * @param appearance
      * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
      */
-    GnuplotLine(String fileName, String plotPart, GnuplotLineAppearance appearance, String title) {
-        this.fileName = fileName;
-        this.plotPart = plotPart;
+    GnuplotLine(String function, GnuplotLineAppearance appearance, String title) {
+        content = function;
         this.appearance = appearance;
         this.title = title;
     }
 
     /**
-     * @param fileName
+     * @param fileName (String) Name of file that contains data to be plotted.
+     * @param plotPart (String) The part after "using" (ex. 1:3, 1:($3+$1) )
+     * @param appearance
+     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     */
+    GnuplotLine(String fileName, String plotPart, GnuplotLineAppearance appearance, String title) {
+        content = "\"" + fileName + "\"" + " u " + plotPart;
+        this.appearance = appearance;
+        this.title = title;
+    }
+
+    /**
+     * @param fileName (String) Name of file that contains data to be plotted.
      * @param columnX
      * @param columnY
      * @param appearance
      * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
      */
     GnuplotLine(String fileName, int columnX, int columnY, GnuplotLineAppearance appearance, String title) {
-        this.fileName = fileName;
-        this.plotPart = columnX + ":" + columnY;
+        content = "\"" + fileName + "\"" + " u " + columnX + ":" + columnY;
         this.appearance = appearance;
         this.title = title;
     }
@@ -53,11 +53,9 @@ class GnuplotLine {
     @Override
     public String toString() {
         if (title.isEmpty()) {
-            return "\"" + fileName + "\"" + " u " + plotPart + " " + appearance.toString() + " notitle";
+            return content + " w lines " + appearance.toString() + " notitle";
         } else {
-            return "\"" + fileName + "\"" + " u " + plotPart + " " + appearance.toString() + " title \"" + title + "\"";
+            return content + " w lines " + appearance.toString() + " title \"" + title + "\"";
         }
     }
-
-
 }

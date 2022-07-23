@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -21,31 +22,48 @@ public final class TravelTimeInformation {
 
     private final GlobalCMTID event;
     private final Observer observer;
-    private final Set<TauPPhase> usePhases;
-    private final Set<TauPPhase> avoidPhases;
+    private final Map<Phase, Double> usePhaseTimes;
+    private final Map<Phase, Double> avoidPhaseTimes;
 
     public TravelTimeInformation(GlobalCMTID event, Observer observer, Set<TauPPhase> usePhases, Set<TauPPhase> avoidPhases) {
         this.event = event;
         this.observer = observer;
-        this.usePhases = new HashSet<>(usePhases);
-        this.avoidPhases = new HashSet<>(avoidPhases);
-   }
+        usePhaseTimes = new HashMap<>();
+        usePhases.forEach(phase -> {
+            // if there are phases with same name, keep the faster one (This is done because Map overwrites value of same key) TODO should try to keep all
+            if (usePhaseTimes.containsKey(phase.getPhaseName()) && usePhaseTimes.get(phase.getPhaseName()) < phase.getTravelTime()) return;
+            usePhaseTimes.put(phase.getPhaseName(), phase.getTravelTime());
+        });
+        avoidPhaseTimes = new HashMap<>();
+        avoidPhases.forEach(phase -> {
+            // if there are phases with same name, keep the faster one (This is done because Map overwrites value of same key) TODO should try to keep all
+            if (avoidPhaseTimes.containsKey(phase.getPhaseName()) && avoidPhaseTimes.get(phase.getPhaseName()) < phase.getTravelTime()) return;
+            avoidPhaseTimes.put(phase.getPhaseName(), phase.getTravelTime());
+        });
+    }
+
+    public TravelTimeInformation(GlobalCMTID event, Observer observer, Map<Phase, Double> usePhaseTimes, Map<Phase, Double> avoidPhaseTimes) {
+        this.event = event;
+        this.observer = observer;
+        this.usePhaseTimes = usePhaseTimes;
+        this.avoidPhaseTimes = avoidPhaseTimes;
+    }
 
     /**
-     * Returns data for a specified phase.
+     * Returns travel time of a specified phase.
      * If data for that phase does not exist, null is returned.
      * @param phaseToFind
-     * @return (TauPPhase) Information for a phase. null if it does not exist.
+     * @return (Double) Travel time of a phase. null if it does not exist.
      */
-    public TauPPhase dataFor(Phase phaseToFind) {
-        for (TauPPhase phase : usePhases) {
-            if (phase.getPhaseName().equals(phaseToFind)) {
-                return phase;
+    public Double timeOf(Phase phaseToFind) {
+        for (Phase phase : usePhaseTimes.keySet()) {
+            if (phase.equals(phaseToFind)) {
+                return usePhaseTimes.get(phase);
             }
         }
-        for (TauPPhase phase : avoidPhases) {
-            if (phase.getPhaseName().equals(phaseToFind)) {
-                return phase;
+        for (Phase phase : avoidPhaseTimes.keySet()) {
+            if (phase.equals(phaseToFind)) {
+                return avoidPhaseTimes.get(phase);
             }
         }
         return null;
@@ -59,12 +77,12 @@ public final class TravelTimeInformation {
         return observer;
     }
 
-    public Set<TauPPhase> getUsePhases() {
-        return new HashSet<>(usePhases);
+    public Map<Phase, Double> getUsePhases() {
+        return new HashMap<>(usePhaseTimes);
     }
 
-    public Set<TauPPhase> getAvoidPhases() {
-        return new HashSet<>(avoidPhases);
+    public Map<Phase, Double> getAvoidPhases() {
+        return new HashMap<>(avoidPhaseTimes);
     }
 
 

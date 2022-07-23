@@ -5,11 +5,14 @@ import java.util.List;
 
 class GnuplotField {
 
-    private List<GnuplotLine> lines = new ArrayList<GnuplotLine>();
-    private List<GnuplotLabel> labels = new ArrayList<GnuplotLabel>();
+    private List<GnuplotLine> lines = new ArrayList<>();
+    private List<GnuplotLabel> labels = new ArrayList<>();
+    private List<GnuplotArrow> arrows = new ArrayList<>();
 
     GnuplotField(){
     }
+
+    // ----------line----------
 
     void addLine(GnuplotLine line) {
         lines.add(line);
@@ -23,6 +26,8 @@ class GnuplotField {
         return lines.get(num);
     }
 
+    // ----------label----------
+
     void addLabel(GnuplotLabel label) {
         this.labels.add(label);
     }
@@ -34,4 +39,19 @@ class GnuplotField {
     GnuplotLabel label(int index) {
         return labels.get(index);
     }
+
+    // ----------arrow----------
+
+    void addArrow(GnuplotArrow arrow) {
+        this.arrows.add(arrow);
+    }
+
+    int numArrow() {
+        return arrows.size();
+    }
+
+    GnuplotArrow arrow(int index) {
+        return arrows.get(index);
+    }
+
 }

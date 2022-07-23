@@ -99,6 +99,9 @@ public class GnuplotFile {
     private int bmargin;
     private boolean marginVFlag = false;
 
+    /**
+     * Whether any drawing has started, because then, output file cannot be changed.
+     */
     private boolean drawStarted = false;
     private List<GnuplotPage> pages = new ArrayList<GnuplotPage>();
 
@@ -185,6 +188,11 @@ public class GnuplotFile {
                         pw.println(" set label " + (label + 1) + " " + pages.get(k).field(j).label(label).toString());
                     }
 
+                    // each arrow
+                    for (int arrow = 0; arrow < pages.get(k).field(j).numArrow(); arrow++) {
+                        pw.println(" set arrow " + (arrow + 1) + " " + pages.get(k).field(j).arrow(arrow).toString());
+                    }
+
                     // each line
                     for (int i = 0; i < pages.get(k).field(j).numLine(); i++) {
                         if (i == 0) {
@@ -212,6 +220,19 @@ public class GnuplotFile {
     }
 
     /**
+     * @param function (String)
+     * @param plotPart (String) The content of the "using" part.
+     * @param appearance ({@link GnuplotAppearance})
+     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     */
+    public void addLine(String function, GnuplotLineAppearance appearance, String title) {
+        drawStarted = true;
+        // add line to current page
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLine(new GnuplotLine(function, appearance, title));
+    }
+
+    /**
      * @param fileName (String)
      * @param plotPart (String) The content of the "using" part.
      * @param appearance ({@link GnuplotAppearance})
@@ -236,6 +257,17 @@ public class GnuplotFile {
         // add line to current page
         GnuplotPage page = pages.get(pages.size() - 1);
         page.field(page.numField() - 1).addLine(new GnuplotLine(fileName, columnX, columnY, appearance, title));
+    }
+
+    /**
+     * @param posX (double)
+     * @param appearance ({@link GnuplotAppearance})
+     */
+    public void addVerticalLine(double posX, GnuplotLineAppearance appearance) {
+        drawStarted = true;
+        // add line to current page
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addArrow(new GnuplotArrow(posX, appearance));
     }
 
     /**

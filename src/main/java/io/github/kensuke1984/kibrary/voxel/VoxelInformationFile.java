@@ -103,15 +103,15 @@ public class VoxelInformationFile {
         if (layerThicknesses.length != voxelRadii.length)
             throw new IllegalArgumentException("The number of layers and radii does not match.");
 
-        String[] part = reader.next().split("\\s+");
-        dLatitude = Double.parseDouble(part[0]);
-        dLongitude = Double.parseDouble(part[1]);
+        String[] parts = reader.next().split("\\s+");
+        dLatitude = Double.parseDouble(parts[0]);
+        dLongitude = Double.parseDouble(parts[1]);
 
         List<HorizontalPosition> positionList = new ArrayList<>();
         String line;
         while ((line = reader.next()) != null) {
-            part = line.split("\\s+");
-            HorizontalPosition position = new HorizontalPosition(Double.parseDouble(part[0]), Double.parseDouble(part[1]));
+            parts = line.split("\\s+");
+            HorizontalPosition position = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
             positionList.add(position);
         }
         voxelPositions = positionList.toArray(new HorizontalPosition[0]);
