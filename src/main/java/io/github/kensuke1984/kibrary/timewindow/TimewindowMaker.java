@@ -78,13 +78,17 @@ public class TimewindowMaker extends Operation {
      */
     private String tag;
     /**
-     * Path of the output file
+     * Path of the output timewindow file
      */
-    private Path outputPath;
+    private Path outTimewindowPath;
     /**
      * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの TODO:本当？
      */
-    private Path invalidList;
+    private Path invalidListPath;
+    /**
+     * Path of the output travel time file
+     */
+    private Path outTravelTimePath;
     /**
      * set of {@link SACComponent}
      */
@@ -122,6 +126,7 @@ public class TimewindowMaker extends Operation {
     private String model;
 
     private Set<TimewindowData> timewindowSet;
+    private Set<TravelTimeInformation> travelTimeSet;
     private double[][] catalogue_sS;
     private double[][] catalogue_pP;
 
@@ -195,9 +200,11 @@ public class TimewindowMaker extends Operation {
         catalogue_pP = readCatalogue(catalogueName_pP);
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", tag, dateStr, ".dat"));
-        invalidList = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", tag, dateStr, ".txt"));
+        outTimewindowPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", tag, dateStr, ".dat"));
+        invalidListPath = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", tag, dateStr, ".txt"));
+        outTravelTimePath = workPath.resolve(DatasetAid.generateOutputFileName("travelTime", tag, dateStr, ".inf"));
         timewindowSet = Collections.synchronizedSet(new HashSet<>());
+        travelTimeSet = Collections.synchronizedSet(new HashSet<>());
     }
 
     private static Set<Phase> phaseSet(String arg) {
@@ -208,7 +215,7 @@ public class TimewindowMaker extends Operation {
     @Override
     public void run() throws IOException {
         System.out.println("Using exFrontShift = " + EX_FRONT_SHIFT);
-        System.err.println("Invalid files, if any, will be listed in " + invalidList);
+        System.err.println("Invalid files, if any, will be listed in " + invalidListPath);
         ThreadAid.runEventProcess(workPath, eventDir -> {
             try {
                 eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
@@ -236,10 +243,13 @@ public class TimewindowMaker extends Operation {
             System.err.println("No timewindow is created.");
         }
         else {
-            System.err.println("Outputting in " + outputPath);
-            TimewindowDataFile.write(timewindowSet, outputPath);
+            System.err.println("Outputting timewindows in " + outTimewindowPath);
+            TimewindowDataFile.write(timewindowSet, outTimewindowPath);
             System.err.println(timewindowSet.size() + " timewindows were made.");
         }
+
+        System.err.println("Outputting travel time information in " + outTravelTimePath);
+        TravelTimeInformationFile.write(usePhases, exPhases, travelTimeSet, outTravelTimePath);
     }
 
     /**
@@ -360,6 +370,10 @@ public class TimewindowMaker extends Operation {
                     window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases)))
                     .filter(tw ->  tw.getLength() > minLength)
                     .forEach(timewindowSet::add);
+
+            // add travel time information
+            travelTimeSet.add(new TravelTimeInformation(event, observer, usePhases, exPhases));
+
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
@@ -426,7 +440,7 @@ public class TimewindowMaker extends Operation {
             Timewindow[] window = createTimeWindows(iniPhaseTime, finPhaseTime, exPhaseTimes, EX_FRONT_SHIFT);
 
             if (window == null) {
-                writeInvalid(sacFileName, "Fail to create timewindow");
+                writeInvalid(sacFileName, "Failed to create timewindow");
                 return;
             }
 
@@ -446,6 +460,10 @@ public class TimewindowMaker extends Operation {
                     wind -> new TimewindowData(wind.getStartTime(), wind.getEndTime(), observer, event, component, containPhases(wind, usePhases)))
                     .filter(tw ->  tw.getLength() > minLength)
                     .forEach(timewindowSet::add);
+
+            // add travel time information
+            travelTimeSet.add(new TravelTimeInformation(event, observer, usePhases, exPhases));
+
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
@@ -683,9 +701,9 @@ public class TimewindowMaker extends Operation {
             double delta = sacFile.getValue(SACHeaderEnum.DELTA);
             double e = sacFile.getValue(SACHeaderEnum.E);
             // station of SacFile
-            Observer station = sacFile.getObserver();
+            Observer observer = sacFile.getObserver();
             // global cmt id of SacFile
-            GlobalCMTID id = sacFileName.getGlobalCMTID();
+            GlobalCMTID event = sacFileName.getGlobalCMTID();
             // component of SacFile
             SACComponent component = sacFileName.getComponent();
 
@@ -694,7 +712,7 @@ public class TimewindowMaker extends Operation {
                 .map(Phase::create).collect(Collectors.toSet());
             Set<TauPPhase> usePhases_ = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, tmpUsePhases, model);
             Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
-                    window -> new TimewindowData(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases_)))
+                    window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases_)))
                     .filter(tw -> tw.getPhases().length > 0)
                     .forEach(tw -> {
                         if (tw.endTime - tw.startTime >= 30.) {
@@ -703,6 +721,10 @@ public class TimewindowMaker extends Operation {
                         else
                             System.out.println("Ignored length<30s " + tw);
                     });
+
+            // add travel time information
+            travelTimeSet.add(new TravelTimeInformation(event, observer, usePhases, exPhases));
+
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
@@ -1049,7 +1071,7 @@ public class TimewindowMaker extends Operation {
      */
     private synchronized void writeInvalid(SACFileName sacFileName, String reason) throws IOException {
         try (PrintWriter pw = new PrintWriter(
-                Files.newBufferedWriter(invalidList, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+                Files.newBufferedWriter(invalidListPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
             pw.println(sacFileName + " : " + reason);
         }
     }

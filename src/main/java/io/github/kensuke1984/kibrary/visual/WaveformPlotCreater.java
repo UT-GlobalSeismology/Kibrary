@@ -117,40 +117,6 @@ public class WaveformPlotCreater extends Operation {
         }
         splitComponents = property.parseBoolean("splitComponents", "true");
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", ".");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("basicIDPath"))
-            throw new IllegalArgumentException("There is no information about basicIDPath.");
-        if (!property.containsKey("basicPath"))
-            throw new IllegalArgumentException("There is no information about basicPath.");
-        if (!property.containsKey("tendEvents")) property.setProperty("tendEvents", "");
-        if (!property.containsKey("splitComponents")) property.setProperty("splitComponents", "true");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        basicIDPath = getPath("basicIDPath");
-        if (!Files.exists(basicIDPath))
-            throw new NoSuchFileException("The basic ID file " + basicIDPath + " does not exist");
-        basicPath = getPath("basicPath");
-        if (!Files.exists(basicPath))
-            throw new NoSuchFileException("The basic waveform file " + basicPath + " does not exist");
-
-        if (!property.getProperty("tendEvents").isEmpty()) {
-            tendEvents = Arrays.stream(property.getProperty("tendEvents").split("\\s+")).map(GlobalCMTID::new)
-                    .collect(Collectors.toSet());
-        }
-
-        splitComponents = Boolean.parseBoolean(property.getProperty("splitComponents"));
-    }
-*/
 
    @Override
    public void run() throws IOException {

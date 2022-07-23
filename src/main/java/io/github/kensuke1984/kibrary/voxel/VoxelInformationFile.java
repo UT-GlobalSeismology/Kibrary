@@ -19,7 +19,9 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * File of voxel information.
  * <p>
  * The file should be as below: <br>
- * r1 r2 r3..... rn (Radii cannot have duplicate values, they will be sorted)<br>
+ * h1 h2 h3..... hn (Layer thicknesses, from the ones closer to the center of planet)<br>
+ * r1 r2 r3..... rn (Radii cannot have duplicate values, must be sorted)<br>
+ * dLat dLon<br>
  * lat1 lon1<br>
  * lat2 lon2<br>
  * .<br>
