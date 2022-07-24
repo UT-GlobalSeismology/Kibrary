@@ -34,9 +34,10 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * Plots waveform data.
  * For each event, a pdf file with waveforms for all observers will be created.
  * Each plot includes the original observed waveform, the shifted observed waveform, and the synthetic waveform.
+ * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
  * <p>
- * Waveform data for each observer must be written in txt files under event directories.
- * Output pdf files will be created under each of the existing event directories.
+ * Waveform data for each observer will be written in txt files under event directories, if they do not exist already.
+ * Output pdf files will be created under each of the event directories.
  *
  * @author otsuru
  * @since 2021/12/10

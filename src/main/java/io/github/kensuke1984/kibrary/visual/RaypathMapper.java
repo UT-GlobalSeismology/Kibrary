@@ -85,7 +85,7 @@ public class RaypathMapper extends Operation {
     private boolean cutAtPiercePoint;
     private Phase piercePhase;
     private double pierceDepth;
-    private String model;
+    private String structureName;
 
     private int colorMode;
     private static final int BIN_DISTANCE = 1;
@@ -149,8 +149,8 @@ public class RaypathMapper extends Operation {
             pw.println("#piercePhase ");
             pw.println("##(double) Depth to compute pierce points for [km] (2491)");
             pw.println("#pierceDepth ");
-            pw.println("##(String) Name of model to use for calculating pierce points (prem)");
-            pw.println("#model ");
+            pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
+            pw.println("#structureName ");
             pw.println("##########Settings for mapping");
             pw.println("##Mode of coloring of raypaths {0: single color, 1: bin by distance, 2: bin by azimuth,");
             pw.println("## 3: bin by back azimuth, 4: bin by turning-point-azimuth} (0)");
@@ -194,7 +194,7 @@ public class RaypathMapper extends Operation {
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
         piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
         pierceDepth = property.parseDouble("pierceDepth", "2491");
-        model = property.parseString("model", "prem");
+        structureName = property.parseString("structureName", "prem");
 
         colorMode = property.parseInt("colorMode", "0");
         if (colorMode > 0)
@@ -313,7 +313,7 @@ public class RaypathMapper extends Operation {
         System.err.println("Calculating pierce points ...");
 
         raypaths.forEach(ray -> {
-            if (ray.computePiercePoints(model, piercePhase, pierceDepth)) {
+            if (ray.computePiercePoints(structureName, piercePhase, pierceDepth)) {
                 turningPointLines.add(ray.getTurningPoint().toHorizontalPosition().toString());
                 insideLines.add(lineFor(ray.getEnterPoint(), ray.getLeavePoint(), ray));
                 outsideLines.add(lineFor(ray.getSource(), ray.getEnterPoint(), ray));
