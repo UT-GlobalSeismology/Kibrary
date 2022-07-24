@@ -86,7 +86,6 @@ public class WaveformPlotCreater extends Operation {
      */
     private double timeLength;
 
-
     /**
      * Set of information of travel times
      */
@@ -153,11 +152,11 @@ public class WaveformPlotCreater extends Operation {
 
    @Override
    public void run() throws IOException {
-       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+       BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+       basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent())).toArray(BasicID[]::new);
 
        // get all events included in basicIDs
-       Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
-               .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       Set<GlobalCMTID> allEvents = Arrays.stream(basicIDs).map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
        // eventDirs of events to be used
        Set<EventFolder> eventDirs;
        if (tendEvents.isEmpty()) {
@@ -183,18 +182,18 @@ public class WaveformPlotCreater extends Operation {
 
            if (splitComponents) {
                for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                   BasicID[] useIds = Arrays.stream(basicIDs).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                            && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
-                           .collect(Collectors.toList()).toArray(new BasicID[0]);
+                           .toArray(BasicID[]::new);
 
                    String fileNameRoot = "plot_" + eventDir.toString() + "_" + component.toString();
                    createPlot(eventDir, useIds, fileNameRoot);
                }
            } else {
-               BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
+               BasicID[] useIds = Arrays.stream(basicIDs).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
-                       .collect(Collectors.toList()).toArray(new BasicID[0]);
+                       .toArray(BasicID[]::new);
 
                String fileNameRoot = "plot_" + eventDir.toString();
                createPlot(eventDir, useIds, fileNameRoot);
@@ -223,6 +222,8 @@ public class WaveformPlotCreater extends Operation {
         GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
         GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
+        GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
         GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
         GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
 
@@ -254,9 +255,11 @@ public class WaveformPlotCreater extends Operation {
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
 
             // plot waveforms
+            gnuplot.addLine("0", zeroAppearance, "");
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
+            gnuplot.addLine(filename, "3:($2-$4)", resAppearance, "residual");
 
             // add vertical lines and labels of travel times
             if (travelTimeInfoSet != null) {

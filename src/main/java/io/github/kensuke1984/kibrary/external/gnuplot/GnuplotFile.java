@@ -243,7 +243,7 @@ public class GnuplotFile {
 
     /**
      * @param fileName (String)
-     * @param plotPart (String) The content of the "using" part.
+     * @param plotPart (String) The content of the "using" part. (ex. 1:3, 1:($3+$1) )
      * @param appearance ({@link GnuplotAppearance})
      * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
      */

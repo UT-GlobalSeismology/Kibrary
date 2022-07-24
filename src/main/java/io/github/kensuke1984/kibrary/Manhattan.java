@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
+import io.github.kensuke1984.kibrary.visual.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
@@ -68,6 +69,7 @@ enum Manhattan {
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class),
     PartialIDMerge(52, PartialIDMerge.class),
     SensitivityKernelMapper(53, SensitivityKernelMapper.class),
+    PartialWaveformPlotter(54, PartialWaveformPlotter.class),
     // Inversion 60
     LetMeInvert(60, LetMeInvert.class),
     InversionArranger(61, InversionArranger.class),
