@@ -44,6 +44,10 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class WaveformPlotCreater extends Operation {
 
     private static final int NUM_PER_PAGE = 12;
+    /**
+     * The time margin in the plot before the start time of the synthetic waveform.
+     */
+    private static final double FRONT_MARGIN = 10;
 
     private final Property property;
     /**
@@ -76,6 +80,10 @@ public class WaveformPlotCreater extends Operation {
      * Whether to export individual files for each component
      */
     private boolean splitComponents;
+    /**
+     * The time length to plot
+     */
+    private double timeLength;
 
 
     /**
@@ -112,6 +120,8 @@ public class WaveformPlotCreater extends Operation {
             pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to export individual files for each component (true)");
             pw.println("#splitComponents ");
+            pw.println("##(double) Time length of each plot [s] (150)");
+            pw.println("#timeLength ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -137,6 +147,7 @@ public class WaveformPlotCreater extends Operation {
                     .collect(Collectors.toSet());
         }
         splitComponents = property.parseBoolean("splitComponents", "true");
+        timeLength = property.parseDouble("timeLength", "150");
     }
 
    @Override
@@ -211,6 +222,8 @@ public class WaveformPlotCreater extends Operation {
         GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
         GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
+        GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
 
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
@@ -232,24 +245,33 @@ public class WaveformPlotCreater extends Operation {
                 BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
             }
 
+            // set xrange
+            gnuplot.setXrange(synID.getStartTime() - FRONT_MARGIN, synID.getStartTime() - FRONT_MARGIN + timeLength);
+
+            // display data of timewindow
             gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
+
+            // plot waveforms
             gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
             gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
             gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
 
+            // add vertical lines and labels of travel times
             if (travelTimeInfoSet != null) {
                 travelTimeInfoSet.stream()
                         .filter(info -> info.getEvent().equals(obsID.getGlobalCMTID()) && info.getObserver().equals(obsID.getObserver()))
                         .forEach(info -> {
                             Map<Phase, Double> usePhaseMap = info.getUsePhases();
-                            for (Double time : usePhaseMap.values()) {
-                                gnuplot.addVerticalLine(time, synAppearance); // TODO change appearance
+                            for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
+                                gnuplot.addVerticalLine(entry.getValue(), usePhaseAppearance);
+                                gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
                             }
                             Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
-                            for (Double time : avoidPhaseMap.values()) {
-                                gnuplot.addVerticalLine(time, originalAppearance); // TODO change appearance
-                            } //TODO add labels of phase name
+                            for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
+                                gnuplot.addVerticalLine(entry.getValue(), avoidPhaseAppearance);
+                                gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
+                            }
                         });
             }
 

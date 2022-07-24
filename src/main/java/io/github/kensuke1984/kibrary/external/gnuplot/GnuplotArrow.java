@@ -8,9 +8,9 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
  */
 public class GnuplotArrow {
 
-    private String content;
+    private final String content;
 
-    private GnuplotLineAppearance appearance;
+    private final GnuplotLineAppearance appearance;
 
     GnuplotArrow(double posX, GnuplotLineAppearance appearance) {
         content = "from first " + posX + ", graph 0 rto graph 0,1";

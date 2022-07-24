@@ -429,7 +429,8 @@ public class TimewindowMaker extends Operation {
                 for (TauPPhase exPhase : exPhases) {
                     double exPhaseTime = exPhase.getTravelTime();
                     if (iniPhaseTime <= (exPhaseTime + rearShift) && (exPhaseTime - EX_FRONT_SHIFT) <= finPhaseTime) {
-                        writeInvalid(sacFileName, exPhase.getPhaseName().toString() + " arrive between " + initialPhase.getPhaseName().toString() + " and " + finalPhase.getPhaseName().toString());
+                        writeInvalid(sacFileName, exPhase.getPhaseName().toString() + " arrive between or near "
+                                + initialPhase.getPhaseName().toString() + " and " + finalPhase.getPhaseName().toString());
                         return;
                     }
                     exPhaseTimes[i] = exPhaseTime;

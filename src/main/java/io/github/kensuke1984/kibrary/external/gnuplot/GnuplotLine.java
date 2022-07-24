@@ -8,11 +8,11 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
  */
 class GnuplotLine {
 
-    private String content;
+    private final String content;
 
-    private GnuplotLineAppearance appearance;
+    private final GnuplotLineAppearance appearance;
 
-    private String title;
+    private final String title;
 
     /**
      * @param function

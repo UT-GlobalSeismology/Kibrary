@@ -178,32 +178,41 @@ public class GnuplotFile {
 
                 // each field
                 for (int j = 0; j < pages.get(k).numField(); j++) {
+                    GnuplotField field = pages.get(k).field(j);
 
-                    if (pages.get(k).field(j).numLine() == 0) continue;
+                    if (field.numLine() == 0) continue;
+
+                    // plot range
+                    if (field.hasXrange()) {
+                        pw.println("set xrange " + field.getXrange());
+                    }
+                    if (field.hasYrange()) {
+                        pw.println("set yrange [" + field.getYrange());
+                    }
 
                     // each label
-                    if (pages.get(k).field(j).numLabel() == 0) {
+                    if (field.numLabel() == 0) {
                         pw.println(" unset label");
-                    } else for (int label = 0; label < pages.get(k).field(j).numLabel(); label++) {
-                        pw.println(" set label " + (label + 1) + " " + pages.get(k).field(j).label(label).toString());
+                    } else for (int label = 0; label < field.numLabel(); label++) {
+                        pw.println(" set label " + (label + 1) + " " + field.label(label).toString());
                     }
 
                     // each arrow
-                    for (int arrow = 0; arrow < pages.get(k).field(j).numArrow(); arrow++) {
-                        pw.println(" set arrow " + (arrow + 1) + " " + pages.get(k).field(j).arrow(arrow).toString());
+                    for (int arrow = 0; arrow < field.numArrow(); arrow++) {
+                        pw.println(" set arrow " + (arrow + 1) + " " + field.arrow(arrow).toString());
                     }
 
                     // each line
-                    for (int i = 0; i < pages.get(k).field(j).numLine(); i++) {
+                    for (int i = 0; i < field.numLine(); i++) {
                         if (i == 0) {
                             pw.print(" plot ");
                         } else {
                             pw.print("      ");
                         }
 
-                        pw.print(pages.get(k).field(j).line(i).toString());
+                        pw.print(field.line(i).toString());
 
-                        if (i == pages.get(k).field(j).numLine() - 1) {
+                        if (i == field.numLine() - 1) {
                             pw.println();
                         } else {
                             pw.println(",\\");
@@ -295,6 +304,76 @@ public class GnuplotFile {
         GnuplotPage page = pages.get(pages.size() - 1);
         page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinateX, posX, coordinateY, posY));
     }
+
+    /**
+     * @param label (String)
+     * @param coordinate (String) The coordinate system used to specify position, from "first", "second", "graph", "screen", or "character".
+     * @param posX (double)
+     * @param posY (double)
+     * @param color (GnuplotColorName)
+     */
+    public void addLabel(String label, String coordinate, double posX, double posY, GnuplotColorName color) {
+        drawStarted = true;
+        // add label to current field
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinate, posX, posY, color));
+    }
+    /**
+     * @param label (String)
+     * @param coordinateX (String) The coordinate system used to specify posX, from "first", "second", "graph", "screen", or "character".
+     * @param posX (double)
+     * @param coordinateY (String) The coordinate system used to specify posY, from "first", "second", "graph", "screen", or "character".
+     * @param posY (double)
+     * @param color (GnuplotColorName)
+     */
+    public void addLabel(String label, String coordinateX, double posX, String coordinateY, double posY, GnuplotColorName color) {
+        drawStarted = true;
+        // add label to current field
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLabel(new GnuplotLabel(label, coordinateX, posX, coordinateY, posY, color));
+    }
+
+
+    /**
+     * Sets xrange to the current field.
+     * @param xmin
+     * @param xmax
+     */
+    public void setXrange(double xmin, double xmax) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setXrange(xmin, xmax);
+    }
+
+    /**
+     * Sets a limit to the range of autoscaling for the x-axis of the current field.
+     * @param xminLimit
+     * @param xmaxLimit
+     */
+    public void setXrangeLimit(double xminLimit, double xmaxLimit) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setXrangeLimit(xminLimit, xmaxLimit);
+    }
+
+    /**
+     * Sets yrange to the current field.
+     * @param ymin
+     * @param ymax
+     */
+    public void setYrange(double ymin, double ymax) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setYrange(ymin, ymax);
+    }
+
+    /**
+     * Sets a limit to the range of autoscaling for the y-axis of the current field.
+     * @param yminLimit
+     * @param ymaxLimit
+     */
+    public void setYrangeLimit(double yminLimit, double ymaxLimit) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setYrangeLimit(yminLimit, ymaxLimit);
+    }
+
 
     public void nextField() {
         drawStarted = true;
@@ -418,7 +497,7 @@ public class GnuplotFile {
         return ratio;
     }
 
-    public void setXrange(double xmin, double xmax) {
+    public void setCommonXrange(double xmin, double xmax) {
         if (xmax <= xmin) throw new IllegalArgumentException("Input xmin xmax " + xmin + " " + xmax + " are invalid");
         this.xmin = xmin;
         this.xmax = xmax;
@@ -427,11 +506,11 @@ public class GnuplotFile {
 
     /**
      * Sets a limit to the range of autoscaling for the x-axis.
-     * If {@link #setXrange(double, double)} is used, this will be ignored.
+     * If {@link #setCommonXrange(double, double)} is used, this will be ignored.
      * @param xminLimit
      * @param xmaxLimit
      */
-    public void setXrangeLimit(double xminLimit, double xmaxLimit) {
+    public void setCommonXrangeLimit(double xminLimit, double xmaxLimit) {
         if (xmaxLimit <= xminLimit)
             throw new IllegalArgumentException("Input xminLimit xmaxLimit " + xminLimit + " " + xmaxLimit + " are invalid");
         this.xminLimit = xminLimit;
@@ -439,7 +518,7 @@ public class GnuplotFile {
         xrangeLimitFlag = true;
     }
 
-    public void setYrange(double ymin, double ymax) {
+    public void setCommonYrange(double ymin, double ymax) {
         if (ymax <= ymin) throw new IllegalArgumentException("Input ymin ymax " + ymin + " " + ymax + " are invalid");
         this.ymin = ymin;
         this.ymax = ymax;
@@ -448,11 +527,11 @@ public class GnuplotFile {
 
     /**
      * Sets a limit to the range of autoscaling for the y-axis.
-     * If {@link #setYrange(double, double)} is used, this will be ignored.
+     * If {@link #setCommonYrange(double, double)} is used, this will be ignored.
      * @param yminLimit
      * @param ymaxLimit
      */
-    public void setYrangeLimit(double yminLimit, double ymaxLimit) {
+    public void setCommonYrangeLimit(double yminLimit, double ymaxLimit) {
         if (ymaxLimit <= yminLimit)
             throw new IllegalArgumentException("Input yminLimit ymaxLimit " + yminLimit + " " + ymaxLimit + " are invalid");
         this.yminLimit = yminLimit;
