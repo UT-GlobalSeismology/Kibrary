@@ -172,6 +172,8 @@ public final class PartialIDFile {
         }
     }
 
+///////////////TODO : change or delete following
+
     /**
      * Creates lists of stations, events, partials.(if they don't exist) Options:
      * -a: show all IDs
@@ -339,4 +341,7 @@ public final class PartialIDFile {
             return true;
         }
     }
+
+///////////////change up to here
+
 }

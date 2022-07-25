@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,6 +16,9 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -21,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
@@ -30,6 +36,9 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  */
 public class PartialWaveformPlotter extends Operation {
 
+    /**
+     * Number of fields per page on output pdf file
+     */
     private static final int NUM_PER_PAGE = 12;
     /**
      * The time margin in the plot before the start time of the synthetic waveform.
@@ -74,6 +83,10 @@ public class PartialWaveformPlotter extends Operation {
     private double[] tendVoxelLatitudes;
     private double[] tendVoxelLongitudes;
     private double[] tendVoxelRadii;
+    /**
+     * The time length to plot
+     */
+    private double timeLength;
 
     /**
      * Set of information of travel times
@@ -118,6 +131,8 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#tendVoxelLongitudes ");
             pw.println("##(double) Radii of voxels to work for, listed using spaces, must be set.");
             pw.println("#tendVoxelRadii ");
+            pw.println("##(double) Time length of each plot [s] (150)");
+            pw.println("#timeLength ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -145,6 +160,8 @@ public class PartialWaveformPlotter extends Operation {
         tendVoxelLatitudes = property.parseDoubleArray("tendVoxelLatitudes", null);
         tendVoxelLongitudes = property.parseDoubleArray("tendVoxelLongitudes", null);
         tendVoxelRadii = property.parseDoubleArray("tendVoxelRadii", null);
+
+        timeLength = property.parseDouble("timeLength", "150");
 
     }
 
@@ -177,6 +194,7 @@ public class PartialWaveformPlotter extends Operation {
                            id.getSacComponent().equals(component)
                            && id.getGlobalCMTID().equals(event)
                            && id.getObserver().toString().equals(observerName))
+                           .sorted(Comparator.comparing(PartialID::getVoxelPosition))
                            .toArray(PartialID[]::new);
                    if (useIDs.length == 0) continue;
 
@@ -230,5 +248,80 @@ public class PartialWaveformPlotter extends Operation {
            return;
        }
 
+       // output data in text file
+       String filename = BasicIDFile.getWaveformTxtFileName(ids[0]);
+       outputWaveformTxt(rayPath.resolve(filename), ids);
+
+       GnuplotFile gnuplot = new GnuplotFile(rayPath.resolve(fileNameRoot + ".plt"));
+
+       GnuplotLineAppearance partialAppearance = new GnuplotLineAppearance(1, GnuplotColorName.green, 1);
+       GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
+
+       gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+       gnuplot.setMarginH(15, 5);
+       gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
+       gnuplot.setKey(true, "top right");
+
+       int i;
+       for (i = 0; i < ids.length; i++) {
+           PartialID id = ids[i];
+
+           // set xrange
+           gnuplot.setXrange(id.getStartTime() - FRONT_MARGIN, id.getStartTime() - FRONT_MARGIN + timeLength);
+
+           // display data of timewindow
+           gnuplot.addLabel(id.getObserver().toPaddedInfoString() + " " + id.getSacComponent().toString(), "graph", 0.01, 0.95);
+           gnuplot.addLabel(id.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
+           gnuplot.addLabel(id.getVoxelPosition().toString(), "graph", 0.01, 0.75);
+
+           // plot waveforms
+           gnuplot.addLine("0", zeroAppearance, "");
+           gnuplot.addLine(filename, 1, i + 2, partialAppearance, "partial");
+
+           // this is not done for the last obsID because we don't want an extra blank page to be created
+           if ((i + 1) < ids.length) {
+               if ((i + 1) % NUM_PER_PAGE == 0) {
+                   gnuplot.nextPage();
+               } else {
+                   gnuplot.nextField();
+               }
+           }
+
+       }
+       // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
+       while(i % NUM_PER_PAGE != 0) {
+           i++;
+           gnuplot.nextField();
+       }
+
+       gnuplot.write();
+       if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
    }
+
+   /**
+     * @param outputPath (Path) Output text file
+     * @param ids (PartialID[]) Partial IDs, must have same start time and sampling Hz.
+     * @throws IOException
+     */
+    private static void outputWaveformTxt(Path outputPath, PartialID[] ids) throws IOException {
+       double startTime = ids[0].getStartTime();
+       double samplingHz = ids[0].getSamplingHz();
+       List<double[]> dataList = Arrays.stream(ids).map(PartialID::getData).collect(Collectors.toList());
+
+       try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath))){
+
+           // each time step
+           for (int j = 0; j < dataList.get(0).length; j++) {
+               double time = startTime + j * samplingHz;
+               pwTrace.print(time);
+
+               // each Partial ID
+               for (int k = 0; k < ids.length; k++) {
+                   pwTrace.print(" " + dataList.get(k)[j]);
+               }
+               pwTrace.println();
+           }
+       }
+   }
+
 }

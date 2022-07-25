@@ -44,6 +44,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  */
 public class BasicWaveformPlotter extends Operation {
 
+    /**
+     * Number of fields per page on output pdf file
+     */
     private static final int NUM_PER_PAGE = 12;
     /**
      * The time margin in the plot before the start time of the synthetic waveform.
