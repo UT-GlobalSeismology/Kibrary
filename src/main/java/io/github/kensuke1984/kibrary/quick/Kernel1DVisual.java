@@ -49,7 +49,7 @@ public class Kernel1DVisual {
 				
 				Path filePath2 = dir11.resolve(partial.getObserver()
 						+ "_" + new Phases(partial.getPhases()).toString()
-						+ "_" + (int) partial.getPerturbationLocation().getR()
+						+ "_" + (int) partial.getVoxelPosition().getR()
 						+ "_" + partial.getPartialType()
 						+ "_" + partial.getSacComponent()
 						+ String.format("_kernel1DTemporal_snapshots_t0%d.txt", (int) t0));
@@ -66,7 +66,7 @@ public class Kernel1DVisual {
 						Files.createFile(filePath);
 					
 					Files.write(filePath, String.format("%.5f %.5f %.5e\n", distance
-							, partial.getPerturbationLocation().getR()
+							, partial.getVoxelPosition().getR()
 							, data[i]).getBytes(), StandardOpenOption.APPEND);
 					
 					Files.write(filePath2, String.format("%.5f %.5e\n", t, data[i]).getBytes(), StandardOpenOption.APPEND);

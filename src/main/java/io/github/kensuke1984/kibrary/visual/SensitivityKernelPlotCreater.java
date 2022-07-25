@@ -97,11 +97,11 @@ public class SensitivityKernelPlotCreater {
                         double cumulativeSensitivity = 0.;
 
                         PrintWriter writer2 = new PrintWriter(new FileWriter(filePath.toString(), true));
-                        double lat = partial.getPerturbationLocation().getLatitude();
-                        double lon = partial.getPerturbationLocation().getLongitude();
+                        double lat = partial.getVoxelPosition().getLatitude();
+                        double lon = partial.getVoxelPosition().getLongitude();
                         if (lon < 0)
                             lon += 360.;
-                        double r = partial.getPerturbationLocation().getR();
+                        double r = partial.getVoxelPosition().getR();
                         writer2.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
                         BufferedWriter writer2_s = Files.newBufferedWriter(filePath_sensitivity, StandardOpenOption.APPEND);
                         writer2_s.write(String.format("%.3f %.3f %.1f ", lat, lon, r));

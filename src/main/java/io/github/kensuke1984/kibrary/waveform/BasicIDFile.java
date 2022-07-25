@@ -129,17 +129,17 @@ public final class BasicIDFile {
         long dataSize = Files.size(dataPath);
         long t = System.nanoTime();
         BasicID lastID = ids[ids.length - 1];
-        if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
+        if (dataSize != lastID.startByte + lastID.npts * 8)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
         try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(dataPath))) {
             byte[][] bytes = new byte[ids.length][];
-            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].NPTS * 8]);
+            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * 8]);
             for (int i = 0; i < ids.length; i++)
                 bis.read(bytes[i]);
             IntStream.range(0, ids.length).parallel().forEach(i -> {
                 BasicID id = ids[i];
                 ByteBuffer bb = ByteBuffer.wrap(bytes[i]);
-                double[] data = new double[id.NPTS];
+                double[] data = new double[id.npts];
                 for (int j = 0; j < data.length; j++)
                     data[j] = bb.getDouble();
                 ids[i] = id.withData(data);

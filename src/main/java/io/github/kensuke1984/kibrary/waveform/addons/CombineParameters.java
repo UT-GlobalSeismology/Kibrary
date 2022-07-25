@@ -92,7 +92,7 @@ public class CombineParameters {
 								
 								double weight = 1.;
 								
-								List<PartialID> tmpIDList = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getPosition())
+								List<PartialID> tmpIDList = stationPartials.stream().parallel().filter(par -> par.getVoxelPosition().equals(unknown.getPosition())
 										&& par.getPartialType().equals(unknown.getPartialType())).collect(Collectors.toList());
 								if (tmpIDList.size() != 1)
 									throw new RuntimeException("Found more than one partialID " + tmpIDList.size());
@@ -105,7 +105,7 @@ public class CombineParameters {
 							
 							PartialID tmpPartial = new PartialID(refID.getObserver(), refID.getGlobalCMTID(), refID.getSacComponent(), refID.getSamplingHz()
 									, refID.getStartTime(), refID.getNpts(), refID.getMinPeriod(), refID.getMaxPeriod(), refID.getPhases(), refID.getStartByte()
-									, refID.isConvolute(), newUnknowns[inew].getPosition(), newUnknowns[inew].getPartialType(), dataVector.toArray());
+									, refID.isConvolved(), newUnknowns[inew].getPosition(), newUnknowns[inew].getPartialType(), dataVector.toArray());
 							try {
 								writer.addPartialID(tmpPartial);
 							} catch (IOException e) {

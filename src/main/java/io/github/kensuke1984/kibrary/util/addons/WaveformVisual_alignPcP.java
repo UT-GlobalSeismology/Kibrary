@@ -136,9 +136,9 @@ public class WaveformVisual_alignPcP {
 							&& syn.getObserver().equals(id.getObserver()) && id.getSacComponent().equals(syn.getSacComponent()))
 							.findFirst().get();
 					
-					Trace synTrace = synID.getTrace().shiftX(-timeScS);
+					Trace synTrace = synID.toTrace().shiftX(-timeScS);
 					
-					Trace trace = id.getTrace().shiftX(-timeScS + (synID.getStartTime() - id.getStartTime()));
+					Trace trace = id.toTrace().shiftX(-timeScS + (synID.getStartTime() - id.getStartTime()));
 					
 					obsStack[k] = add(obsStack[k], id.getData());
 					obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], id.getData());

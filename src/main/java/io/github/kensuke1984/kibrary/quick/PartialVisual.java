@@ -39,7 +39,7 @@ public class PartialVisual {
 //			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211327A")))
 //				continue;
 			
-			FullPosition loc = partial.getPerturbationLocation();
+			FullPosition loc = partial.getVoxelPosition();
 //			Path outpath = Paths.get(String.format("%.1f-%.1f/%s.%s.%s.%.0f.%d.txt", partial.getMinPeriod(), partial.getMaxPeriod()
 //					, partial.getStation().toString(), partial.getGlobalCMTID().toString(), partial.getSacComponent().toString(), loc.getR(), (int) partial.getStartTime()));
 			

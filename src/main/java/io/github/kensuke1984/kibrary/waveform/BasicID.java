@@ -42,31 +42,31 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  */
 public class BasicID {
 
-    protected final WaveformType TYPE;
-    protected final double SAMPLINGHZ;
-    protected final double START_TIME;
-    protected final int NPTS;
+    protected final WaveformType type;
+    protected final double samplingHz;
+    protected final double startTime;
+    protected final int npts;
     protected final Observer observer;
     protected final GlobalCMTID event;
-    protected final SACComponent COMPONENT;
-    protected final Phase[] PHASES;
+    protected final SACComponent component;
+    protected final Phase[] phases;
     /**
      * [s] if the data has not been applied a filter, 0
      */
-    protected final double MIN_PERIOD;
+    protected final double minPeriod;
     /**
      * [s] if the data has not been applied a filter, {@link Double#POSITIVE_INFINITY}
      */
-    protected final double MAX_PERIOD;
+    protected final double maxPeriod;
     /**
      * byte where this data starts
      */
-    protected final long START_BYTE;
-    protected final boolean CONVOLUTE;
+    protected final long startByte;
+    protected final boolean convolved;
     /**
      * waveform
      */
-    private final double[] DATA;
+    private final double[] data;
 
     /**
      * @param waveFormType Type of waveform data.
@@ -80,38 +80,27 @@ public class BasicID {
      * @param maxPeriod    [s] minimum period of the applied filter if none, {@link Double#POSITIVE_INFINITY}
      * @param phases	   Array of phases
      * @param startByte    [byte] where the waveform data for this ID starts in the file
-     * @param convolute    If the data is convolute.
+     * @param convolved    If the data is convolved.
      * @param waveformData the waveform data for this ID.
      */
     public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Observer observer,
             GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases, long startByte,
-            boolean convolute, double... waveformData) {
-        this.TYPE = waveFormType;
-        this.SAMPLINGHZ = Precision.round(samplingHz, 3);
-        this.START_TIME = Precision.round(startTime, 3);
-        this.NPTS = npts;
+            boolean convolved, double... waveformData) {
+        this.type = waveFormType;
+        this.samplingHz = Precision.round(samplingHz, 3);
+        this.startTime = Precision.round(startTime, 3);
+        this.npts = npts;
         this.observer = observer;
         this.event = globalCMTID;
-        this.COMPONENT = sacComponent;
-        this.PHASES = phases;
-        this.MIN_PERIOD = Precision.round(minPeriod, 3);
-        this.MAX_PERIOD = Precision.round(maxPeriod, 3);
-        this.START_BYTE = startByte;
-        this.CONVOLUTE = convolute;
+        this.component = sacComponent;
+        this.phases = phases;
+        this.minPeriod = Precision.round(minPeriod, 3);
+        this.maxPeriod = Precision.round(maxPeriod, 3);
+        this.startByte = startByte;
+        this.convolved = convolved;
         if (waveformData.length != 0 && waveformData.length != npts)
             throw new IllegalArgumentException("Input waveform data length is invalid");
-        this.DATA = waveformData.clone();
-    }
-
-    public boolean containsData() {
-        return DATA != null;
-    }
-
-    /**
-     * @return Arrays of waveform data
-     */
-    public double[] getData() {
-        return DATA.clone();
+        this.data = waveformData.clone();
     }
 
      /**
@@ -121,8 +110,8 @@ public class BasicID {
      * @return BasicID with the input data
      */
     public BasicID withData(double[] data) {
-        return new BasicID(TYPE, SAMPLINGHZ, START_TIME, NPTS, observer, event, COMPONENT, MIN_PERIOD,
-                MAX_PERIOD, PHASES, START_BYTE, CONVOLUTE, data);
+        return new BasicID(type, samplingHz, startTime, npts, observer, event, component, minPeriod,
+                maxPeriod, phases, startByte, convolved, data);
     }
 
     @Override
@@ -130,18 +119,18 @@ public class BasicID {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((event == null) ? 0 : event.hashCode());
-        result = prime * result + (CONVOLUTE ? 1231 : 1237);
+        result = prime * result + (convolved ? 1231 : 1237);
         long temp;
-        temp = Double.doubleToLongBits(MAX_PERIOD);
+        temp = Double.doubleToLongBits(maxPeriod);
         result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(MIN_PERIOD);
+        temp = Double.doubleToLongBits(minPeriod);
         result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + NPTS;
-        result = prime * result + ((COMPONENT == null) ? 0 : COMPONENT.hashCode());
-        result = prime * result + ((TYPE == null) ? 0 : TYPE.hashCode());
-        temp = Double.doubleToLongBits(SAMPLINGHZ);
+        result = prime * result + npts;
+        result = prime * result + ((component == null) ? 0 : component.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        temp = Double.doubleToLongBits(samplingHz);
         result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(START_TIME);
+        temp = Double.doubleToLongBits(startTime);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         result = prime * result + ((observer == null) ? 0 : observer.hashCode());
         return result;
@@ -160,14 +149,14 @@ public class BasicID {
         if (event == null) {
             if (other.event != null) return false;
         } else if (!event.equals(other.event)) return false;
-        if (CONVOLUTE != other.CONVOLUTE) return false;
-        if (Double.doubleToLongBits(MAX_PERIOD) != Double.doubleToLongBits(other.MAX_PERIOD)) return false;
-        if (Double.doubleToLongBits(MIN_PERIOD) != Double.doubleToLongBits(other.MIN_PERIOD)) return false;
-        if (NPTS != other.NPTS) return false;
-        if (COMPONENT != other.COMPONENT) return false;
-        if (TYPE != other.TYPE) return false;
-        if (Double.doubleToLongBits(SAMPLINGHZ) != Double.doubleToLongBits(other.SAMPLINGHZ)) return false;
-        if (Double.doubleToLongBits(START_TIME) != Double.doubleToLongBits(other.START_TIME)) return false;
+        if (convolved != other.convolved) return false;
+        if (Double.doubleToLongBits(maxPeriod) != Double.doubleToLongBits(other.maxPeriod)) return false;
+        if (Double.doubleToLongBits(minPeriod) != Double.doubleToLongBits(other.minPeriod)) return false;
+        if (npts != other.npts) return false;
+        if (component != other.component) return false;
+        if (type != other.type) return false;
+        if (Double.doubleToLongBits(samplingHz) != Double.doubleToLongBits(other.samplingHz)) return false;
+        if (Double.doubleToLongBits(startTime) != Double.doubleToLongBits(other.startTime)) return false;
         if (observer == null) {
             if (other.observer != null) return false;
         } else if (!observer.equals(other.observer)) return false;
@@ -201,28 +190,28 @@ public class BasicID {
 
 
     public WaveformType getWaveformType() {
-        return TYPE;
+        return type;
     }
 
     /**
      * @return Sampling Hz [hz]
      */
     public double getSamplingHz() {
-        return SAMPLINGHZ;
+        return samplingHz;
     }
 
     /**
      * @return [s]
      */
     public double getStartTime() {
-        return START_TIME;
+        return startTime;
     }
 
     /**
      * @return Number of data points
      */
     public int getNpts() {
-        return NPTS;
+        return npts;
     }
 
     public Observer getObserver() {
@@ -234,19 +223,19 @@ public class BasicID {
     }
 
     public SACComponent getSacComponent() {
-        return COMPONENT;
+        return component;
     }
 
     public double getMinPeriod() {
-        return MIN_PERIOD;
+        return minPeriod;
     }
 
     public double getMaxPeriod() {
-        return MAX_PERIOD;
+        return maxPeriod;
     }
 
     public Phase[] getPhases() {
-        return PHASES;
+        return phases;
     }
 
     /**
@@ -254,40 +243,51 @@ public class BasicID {
      * @return [byte]
      */
     public long getStartByte() {
-        return START_BYTE;
+        return startByte;
     }
 
     /**
-     * @return If this ID is convolute.
+     * @return If this ID is convolved
      */
-    public boolean isConvolute() {
-        return CONVOLUTE;
+    public boolean isConvolved() {
+        return convolved;
+    }
+
+    public boolean containsData() {
+        return data != null;
+    }
+
+    /**
+     * @return Arrays of waveform data
+     */
+    public double[] getData() {
+        return data.clone();
     }
 
     /**
      * @return Trace of the waveform for this ID.
      */
-    public Trace getTrace() {
-        double[] x = new double[DATA.length];
-        Arrays.setAll(x, i -> START_TIME + i / SAMPLINGHZ);
-        return new Trace(x, DATA);
+    public Trace toTrace() {
+        double[] x = new double[data.length];
+        Arrays.setAll(x, i -> startTime + i / samplingHz);
+        return new Trace(x, data);
     }
 
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " "
-                + COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
-                + " " + MAX_PERIOD + " ";
-        if (PHASES == null)
+                + component + " " + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod
+                + " " + maxPeriod + " ";
+        if (phases == null)
             basicString += "null" + " ";
-        else if (PHASES.length == 1)
-            basicString += PHASES[PHASES.length - 1] + " ";
-        else if (PHASES.length > 1) {
-            for (int i = 0; i < PHASES.length - 1; i++)
-                basicString += PHASES[i] + ",";
-            basicString += PHASES[PHASES.length - 1] + " ";
+        else if (phases.length == 1)
+            basicString += phases[phases.length - 1] + " ";
+        else if (phases.length > 1) {
+            for (int i = 0; i < phases.length - 1; i++)
+                basicString += phases[i] + ",";
+            basicString += phases[phases.length - 1] + " ";
         }
-        basicString += START_BYTE + " " + CONVOLUTE;
+        basicString += startByte + " " + convolved;
         return basicString;
     }
 

@@ -1040,7 +1040,7 @@ public class Dvector {
             case TAKEUCHIKOBAYASHI: // double[] weighting already set in sort()
                 break;
             case FINAL:
-                Trace obstrace = obsIDs[i].getTrace();
+                Trace obstrace = obsIDs[i].toTrace();
                 weighting[i] *= obstrace.getMaxValue() > -obstrace.getMinValue() ? 1. / obstrace.getMaxValue() : -1. / obstrace.getMinValue();
                 break;
             default:
@@ -1213,9 +1213,9 @@ public class Dvector {
             double[] data = Arrays.copyOfRange(id.getData(), nStart, nEnd);
             double[] synData = Arrays.copyOfRange(synID.getData(), nStart, nEnd);
             obsIDs[i] = new BasicID(id.getWaveformType(), id.getSamplingHz(), id.getStartTime(), n, id.getObserver()
-                , id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolute(), data);
+                , id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolved(), data);
             synIDs[i] = new BasicID(synID.getWaveformType(), synID.getSamplingHz(), synID.getStartTime(), n, synID.getObserver()
-                    , synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(), synID.getMaxPeriod(), synID.getPhases(), synID.getStartByte(), synID.isConvolute(), synData);
+                    , synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(), synID.getMaxPeriod(), synID.getPhases(), synID.getStartByte(), synID.isConvolved(), synData);
         }
         read();
     }

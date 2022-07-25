@@ -71,7 +71,7 @@ final class AMatrixBuilder {
                 return;
 
             // find which unknown parameter this partialID corresponds to
-            int column = findColumn(id.getPartialType(), id.getPerturbationLocation(),
+            int column = findColumn(id.getPartialType(), id.getVoxelPosition(),
                     id.getObserver(), id.getGlobalCMTID(), id.getPhases());
             if (column < 0) {
                 return;

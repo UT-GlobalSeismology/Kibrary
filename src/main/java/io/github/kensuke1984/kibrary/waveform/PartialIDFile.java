@@ -67,17 +67,17 @@ public final class PartialIDFile {
         long t = System.nanoTime();
         long dataSize = Files.size(dataPath);
         PartialID lastID = ids[ids.length - 1];
-        if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
+        if (dataSize != lastID.startByte + lastID.npts * 8)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
         int counter = 0;
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
             for (int i = 0; i < ids.length; i++) {
                 if (!chooser.test(ids[i])) {
-                    dis.skipBytes(ids[i].NPTS * 8);
+                    dis.skipBytes(ids[i].npts * 8);
                     ids[i] = null;
                     continue;
                 }
-                double[] data = new double[ids[i].NPTS];
+                double[] data = new double[ids[i].npts];
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
                 ids[i] = ids[i].withData(data);
@@ -97,7 +97,7 @@ public final class PartialIDFile {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
             dis.skipBytes(cumulativeNPTS[partialIndexes[0]] * 8);
             for (int i = 0; i < partialIndexes.length; i++) {
-                double[] data = new double[idsNoData[i].NPTS];
+                double[] data = new double[idsNoData[i].npts];
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
                 idsNoData[i] = idsNoData[i].withData(data);
@@ -216,7 +216,7 @@ public final class PartialIDFile {
         Path outPath = Paths.get(header + ".par");
         if (Files.exists(outPath)) return;
         List<String> lines =
-                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.PARTIAL_TYPE, id.POINT_LOCATION, 1))
+                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.partialType, id.voxelPosition, 1))
                         .distinct().map(Physical3DParameter::toString).sorted().collect(Collectors.toList());
         Files.write(outPath, lines);
         System.err.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");

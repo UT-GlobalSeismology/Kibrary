@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * If one is convoluted or observed, true<br>
  * Position of a waveform for the ID<br>
  * partial type<br>
- * Location of a perturbation point: latitude, longitude, radius
+ * Position of a perturbation point: latitude, longitude, radius
  *
  *
  *
@@ -42,50 +42,39 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 public class PartialID extends BasicID {
 
     /**
-     * location of perturbation
+     * position of perturbation
      */
-    protected final FullPosition POINT_LOCATION;
+    protected final FullPosition voxelPosition;
     /**
      * type of parameter
      */
-    protected final PartialType PARTIAL_TYPE;
-
-    @Override
-    public String toString() {
-        String partialString = observer.getStation() + " " + observer.getNetwork() + " " + event + " " + COMPONENT + " " + SAMPLINGHZ + " "
-                + START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " ";
-        for (int i = 0; i < PHASES.length - 1; i++)
-            partialString += PHASES[i] + ",";
-        partialString += PHASES[PHASES.length - 1];
-        partialString += " " + START_BYTE + " " + CONVOLUTE + " "
-                + POINT_LOCATION + " " + PARTIAL_TYPE;
-        return partialString;
-    }
-
-    public FullPosition getPerturbationLocation() {
-        return POINT_LOCATION;
-    }
+    protected final PartialType partialType;
 
     public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
             double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
-            FullPosition perturbationLocation, PartialType partialType, double... waveformData) {
+            FullPosition voxelPosition, PartialType partialType, double... waveformData) {
         super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
                 phases, startByte, isConvolved, waveformData);
-        PARTIAL_TYPE = partialType;
-        POINT_LOCATION = perturbationLocation;
+        this.partialType = partialType;
+        this.voxelPosition = voxelPosition;
     }
 
-
-    public PartialType getPartialType() {
-        return PARTIAL_TYPE;
+    /**
+     * @param data to be set
+     * @return {@link PartialID} with the input data
+     */
+    @Override
+    public PartialID withData(double[] data) {
+        return new PartialID(observer, event, component, samplingHz, startTime, data.length, minPeriod, maxPeriod,
+                phases, startByte, convolved, voxelPosition, partialType, data);
     }
 
     @Override
     public int hashCode() {
         int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((PARTIAL_TYPE == null) ? 0 : PARTIAL_TYPE.hashCode());
-        result = prime * result + ((POINT_LOCATION == null) ? 0 : POINT_LOCATION.hashCode());
+        result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
+        result = prime * result + ((voxelPosition == null) ? 0 : voxelPosition.hashCode());
         return result;
     }
 
@@ -95,22 +84,31 @@ public class PartialID extends BasicID {
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         PartialID other = (PartialID) obj;
-        if (PARTIAL_TYPE != other.PARTIAL_TYPE) return false;
-        if (POINT_LOCATION == null) {
-            if (other.POINT_LOCATION != null) return false;
-        } else if (!POINT_LOCATION.equals(other.POINT_LOCATION)) return false;
+        if (partialType != other.partialType) return false;
+        if (voxelPosition == null) {
+            if (other.voxelPosition != null) return false;
+        } else if (!voxelPosition.equals(other.voxelPosition)) return false;
         return true;
     }
 
+    public FullPosition getVoxelPosition() {
+        return voxelPosition;
+    }
 
-    /**
-     * @param data to be set
-     * @return {@link PartialID} with the input data
-     */
+    public PartialType getPartialType() {
+        return partialType;
+    }
+
     @Override
-    public PartialID withData(double[] data) {
-        return new PartialID(observer, event, COMPONENT, SAMPLINGHZ, START_TIME, data.length, MIN_PERIOD, MAX_PERIOD,
-                PHASES, START_BYTE, CONVOLUTE, POINT_LOCATION, PARTIAL_TYPE, data);
+    public String toString() {
+        String partialString = observer.getStation() + " " + observer.getNetwork() + " " + event + " " + component + " " + samplingHz + " "
+                + startTime + " " + npts + " " + minPeriod + " " + maxPeriod + " ";
+        for (int i = 0; i < phases.length - 1; i++)
+            partialString += phases[i] + ",";
+        partialString += phases[phases.length - 1];
+        partialString += " " + startByte + " " + convolved + " "
+                + voxelPosition + " " + partialType;
+        return partialString;
     }
 
 }

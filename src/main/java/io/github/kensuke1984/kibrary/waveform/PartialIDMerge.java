@@ -138,7 +138,7 @@ public class PartialIDMerge extends Operation {
         partialIDs.forEach(id -> {
             observerSet.add(id.getObserver());
             eventSet.add(id.getGlobalCMTID());
-            voxelSet.add(id.getPerturbationLocation());
+            voxelSet.add(id.getVoxelPosition());
             boolean add = true;
             for (double[] periods : periodSet) {
                 if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])

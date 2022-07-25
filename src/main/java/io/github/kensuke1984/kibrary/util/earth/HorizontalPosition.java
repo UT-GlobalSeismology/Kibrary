@@ -20,6 +20,15 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
+    /**
+     * margin to decide whether two latitudes are the same value
+     */
+    public static double LATITUDE_EPSILON = Math.pow(10, -Latitude.PRECISION)/2;
+    /**
+     * margin to decide whether two longitudes are the same value
+     */
+    public static double LONGITUDE_EPSILON = Math.pow(10, -Longitude.PRECISION)/2;
+
     private final Latitude latitude;
     private final Longitude longitude;
 

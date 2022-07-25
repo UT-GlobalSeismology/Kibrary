@@ -10,12 +10,15 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -151,7 +154,8 @@ public class PartialWaveformPlotter extends Operation {
        partialIDs = Arrays.stream(partialIDs).filter(id ->
                components.contains(id.getSacComponent())
                && tendEvents.contains(id.getGlobalCMTID())
-               && tendObserverNames.contains(id.getObserver().toString()))
+               && tendObserverNames.contains(id.getObserver().toString())
+               && checkPosition(id.getVoxelPosition()))
                .toArray(PartialID[]::new);
 
        // read travel time information
@@ -183,6 +187,42 @@ public class PartialWaveformPlotter extends Operation {
            }
        }
 
+   }
+
+   private boolean checkPosition(FullPosition position) {
+
+       // check latitude
+       double latitude = position.getLatitude();
+       boolean flag = false;
+       for (double tendLatitude : tendVoxelLatitudes) {
+           if (Precision.equals(latitude, tendLatitude, FullPosition.LATITUDE_EPSILON)) {
+               flag = true;
+               break;
+           }
+       }
+       if (flag == false) return false;
+
+       // check longitude
+       double longitude = position.getLongitude();
+       flag = false;
+       for (double tendLongitude : tendVoxelLongitudes) {
+           if (Precision.equals(longitude, tendLongitude, FullPosition.LONGITUDE_EPSILON)) {
+               flag = true;
+               break;
+           }
+       }
+       if (flag == false) return false;
+
+       // check radius
+       double radius = position.getR();
+       flag = false;
+       for (double tendRadius : tendVoxelRadii) {
+           if (Precision.equals(radius, tendRadius, FullPosition.RADIUS_EPSILON)) {
+               flag = true;
+               break;
+           }
+       }
+       return flag;
    }
 
    private void createPlot(Path rayPath, PartialID[] ids, String fileNameRoot) throws IOException {

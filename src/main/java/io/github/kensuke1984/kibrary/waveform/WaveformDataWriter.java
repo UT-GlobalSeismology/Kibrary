@@ -236,7 +236,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
             throw new RuntimeException("No such observer: " + basicID.observer + " " + basicID);
         }
 
-        switch (basicID.TYPE) { // if it is obs 1Byte
+        switch (basicID.type) { // if it is obs 1Byte
         case OBS:
             idStream.writeBoolean(true);
             break;
@@ -250,9 +250,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
         addWaveform(basicID.getData());
         idStream.writeShort(ista);
         idStream.writeShort(globalCMTIDMap.get(basicID.event));
-        idStream.writeByte(basicID.COMPONENT.valueOf());
-        idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
-        Phase[] phases = basicID.PHASES;
+        idStream.writeByte(basicID.component.valueOf());
+        idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod));
+        Phase[] phases = basicID.phases;
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
             if (i < phases.length) {
                 idStream.writeShort(phaseMap.get(phases[i]));
@@ -267,7 +267,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz
 
         // if its convolute  true for obs
-        idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.CONVOLUTE); // 1Byte
+        idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.convolved); // 1Byte
         idStream.writeLong(startByte); // data address 8 Byte
 
     }
@@ -285,16 +285,16 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addPartialID(PartialID partialID) throws IOException {
-        if (partialID.TYPE != WaveformType.PARTIAL) throw new RuntimeException(
+        if (partialID.type != WaveformType.PARTIAL) throw new RuntimeException(
                     "This is not a partial derivative. " + Thread.currentThread().getStackTrace()[1].getMethodName());
         if (mode != 1) throw new RuntimeException("No Partial please, would you.");
         long startByte = dataLength;
         addWaveform(partialID.getData());
         idStream.writeShort(observerMap.get(partialID.observer));
         idStream.writeShort(globalCMTIDMap.get(partialID.event));
-        idStream.writeByte(partialID.COMPONENT.valueOf());
-        idStream.writeByte(getIndexOfRange(partialID.MIN_PERIOD, partialID.MAX_PERIOD));
-        Phase[] phases = partialID.PHASES;
+        idStream.writeByte(partialID.component.valueOf());
+        idStream.writeByte(getIndexOfRange(partialID.minPeriod, partialID.maxPeriod));
+        Phase[] phases = partialID.phases;
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
             if (i < phases.length) {
                 idStream.writeShort(phaseMap.get(phases[i]));
@@ -302,14 +302,14 @@ public class WaveformDataWriter implements Closeable, Flushable {
             else
                 idStream.writeShort(-1);
         }
-        idStream.writeFloat((float) partialID.START_TIME); // start time 4 Byte
-        idStream.writeInt(partialID.NPTS); // データポイント数 4 Byte
-        idStream.writeFloat((float) partialID.SAMPLINGHZ); // sampling Hz 4 Byte
+        idStream.writeFloat((float) partialID.startTime); // start time 4 Byte
+        idStream.writeInt(partialID.npts); // データポイント数 4 Byte
+        idStream.writeFloat((float) partialID.samplingHz); // sampling Hz 4 Byte
         // convolutionされているか
-        idStream.writeBoolean(partialID.CONVOLUTE); // 1Byte
+        idStream.writeBoolean(partialID.convolved); // 1Byte
         idStream.writeLong(startByte); // データの格納場所 8 Byte
         // partial type 1 Byte
         idStream.writeByte(partialID.getPartialType().getValue());
-        idStream.writeShort(perturbationLocationMap.get(partialID.POINT_LOCATION));
+        idStream.writeShort(perturbationLocationMap.get(partialID.getVoxelPosition()));
     }
 }

@@ -145,7 +145,7 @@ public class WaveformVisual_specfem {
 					String filename = id.getObserver() + "." + event.toString() + "." + component + ".obs.txt";
 					Path outpath = profileEventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
-					Trace trace = id.getTrace();
+					Trace trace = id.toTrace();
 					for (int j = 0; j < trace.getLength(); j++)
 						pw.println(trace.getXAt(j) + " " + trace.getYAt(j));
 					pw.close();
@@ -153,7 +153,7 @@ public class WaveformVisual_specfem {
 					String filenameInit = initID.getObserver() + "." + event.toString() + "." + component + ".initSyn.txt";
 					Path outpathInit = profileEventDir.resolve(filenameInit);
 					pw = new PrintWriter(outpathInit.toFile());
-					trace = initID.getTrace();
+					trace = initID.toTrace();
 					for (int j = 0; j < trace.getLength(); j++)
 						pw.println(trace.getXAt(j) + " " + trace.getYAt(j));
 					pw.close();
@@ -161,12 +161,12 @@ public class WaveformVisual_specfem {
 					String filenameSpecfem = specfemID.getObserver() + "." + event.toString() + "." + component + ".specfemSyn.txt";
 					Path outpathSpecfem = profileEventDir.resolve(filenameSpecfem);
 					pw = new PrintWriter(outpathSpecfem.toFile());
-					trace = specfemID.getTrace();
+					trace = specfemID.toTrace();
 					for (int j = 0; j < trace.getLength(); j++)
 						pw.println(trace.getXAt(j) + " " + trace.getYAt(j));
 					pw.close();
 					
-					double max = id.getTrace().getYVector().getLInfNorm();
+					double max = id.toTrace().getYVector().getLInfNorm();
 					pwPlot.println("'" + filename + "' u 0:($2/" + max*2 + "+" + distance + ") w l lw .5 lc rgb 'red',\\");
 					pwPlot.println("'" + filenameInit + "' u 0:($2/" + max*2 + "+" + distance + ") w l lw .5 lc rgb 'black',\\");
 					pwPlot.println("'" + filenameSpecfem + "' u 0:($2/" + max*2 + "+" + distance + ") w l lw .5 lc rgb 'blue',\\");

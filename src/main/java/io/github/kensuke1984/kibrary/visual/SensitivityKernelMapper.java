@@ -134,7 +134,7 @@ public class SensitivityKernelMapper extends Operation {
     public void run() throws IOException {
 
         PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
-        double[] radii = Arrays.stream(partials).mapToDouble(partial -> partial.getPerturbationLocation().getR()).distinct().sorted().toArray();
+        double[] radii = Arrays.stream(partials).mapToDouble(partial -> partial.getVoxelPosition().getR()).distinct().sorted().toArray();
 
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", tag, GadgetAid.getTemporaryString());
@@ -171,7 +171,7 @@ public class SensitivityKernelMapper extends Operation {
                 Files.createFile(filePath);
 
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath, StandardOpenOption.APPEND))) {
-                pw.println(partial.getPerturbationLocation() + " " + cumulativeSensitivity * 1e31);
+                pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * 1e31);
             }
 
             PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct

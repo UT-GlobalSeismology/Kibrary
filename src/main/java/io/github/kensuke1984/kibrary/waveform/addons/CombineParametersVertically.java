@@ -96,7 +96,7 @@ public class CombineParametersVertically {
 	//							System.out.println("------\n" + unknown.getLocation());
 	//							stationPartials.stream().forEach(par -> System.out.println(par.getPerturbationLocation()));
 								
-								PartialID tmpID = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getPosition())
+								PartialID tmpID = stationPartials.stream().parallel().filter(par -> par.getVoxelPosition().equals(unknown.getPosition())
 										&& par.getPartialType().equals(unknown.getPartialType())).findFirst().get();
 								dataVector = dataVector.add(new ArrayRealVector(tmpID.getData()).mapMultiply(weight));
 								
@@ -105,7 +105,7 @@ public class CombineParametersVertically {
 							
 							PartialID tmpPartial = new PartialID(refID.getObserver(), refID.getGlobalCMTID(), refID.getSacComponent(), refID.getSamplingHz()
 									, refID.getStartTime(), refID.getNpts(), refID.getMinPeriod(), refID.getMaxPeriod(), refID.getPhases(), refID.getStartByte()
-									, refID.isConvolute(), newUnknowns[inew].getPosition(), newUnknowns[inew].getPartialType(), dataVector.toArray());
+									, refID.isConvolved(), newUnknowns[inew].getPosition(), newUnknowns[inew].getPartialType(), dataVector.toArray());
 							try {
 								writer.addPartialID(tmpPartial);
 							} catch (IOException e) {

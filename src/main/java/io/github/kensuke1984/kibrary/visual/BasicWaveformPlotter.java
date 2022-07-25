@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * @author otsuru
  * @since 2021/12/10
  */
-public class WaveformPlotCreater extends Operation {
+public class BasicWaveformPlotter extends Operation {
 
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -126,7 +126,7 @@ public class WaveformPlotCreater extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public WaveformPlotCreater(Property property) throws IOException {
+    public BasicWaveformPlotter(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 

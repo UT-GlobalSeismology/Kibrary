@@ -65,7 +65,7 @@ public class FiniteDifferencePartial {
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
 				
-				String endstring = obsIds[i].isConvolute() ? "sc" : "s";
+				String endstring = obsIds[i].isConvolved() ? "sc" : "s";
 				String outname = obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
 				String outfile = dir1 + "/" + outname;
 				String outfile2 = dir1 + "/" + obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent() + endstring;

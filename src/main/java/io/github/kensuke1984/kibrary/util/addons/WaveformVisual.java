@@ -143,7 +143,7 @@ public class WaveformVisual {
 					String filename = id.getObserver() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
 					Path outpath = profileEventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
-					Trace trace = id.getTrace();
+					Trace trace = id.toTrace();
 					for (int i = 0; i < trace.getLength(); i++)
 						pw.println(trace.getXAt(i) + " " + trace.getYAt(i));
 					pw.close();

@@ -30,6 +30,10 @@ public final class FullPosition extends HorizontalPosition {
      */
     private static final int R_PRECISION = 6;
     /**
+     * margin to decide whether two radii are the same value
+     */
+    public static double RADIUS_EPSILON = Math.pow(10, -R_PRECISION)/2;
+    /**
      * [0, &infin;) radius [km]
      */
     private final double R;

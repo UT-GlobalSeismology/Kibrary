@@ -443,7 +443,7 @@ public class ObservationEquation {
         AtomicInteger count = new AtomicInteger();
         Arrays.stream(ids).parallel().forEach(id -> {
             if (count.get() == DVECTOR.getNTimeWindow() * PARAMETER_LIST.size()) return;
-            int column = whatNumber(id.getPartialType(), id.getPerturbationLocation(), null, null, null);
+            int column = whatNumber(id.getPartialType(), id.getVoxelPosition(), null, null, null);
             if (column < 0) return;
             // 偏微分係数id[i]が何番目のタイムウインドウにあるか
             int k = DVECTOR.whichTimewindow(id);
@@ -498,7 +498,7 @@ public class ObservationEquation {
         Arrays.stream(ids).parallel().forEach(id -> {
             if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == DVECTOR.getNTimeWindow() * nn)
                 return;
-            int column = whatNumber(id.getPartialType(), id.getPerturbationLocation(),
+            int column = whatNumber(id.getPartialType(), id.getVoxelPosition(),
                     id.getObserver(), id.getGlobalCMTID(), id.getPhases());
             if (column < 0) {
 //				System.out.println("Unknown not found in file for " + id.getPerturbationLocation());

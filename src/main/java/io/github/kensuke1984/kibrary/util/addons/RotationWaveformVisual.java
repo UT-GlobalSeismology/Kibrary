@@ -82,7 +82,7 @@ public class RotationWaveformVisual {
 				System.out.println(theta);
 				theta = Math.asin(Math.toRadians(theta));
 				
-				Rotator rotator = new Rotator(idR.getTrace(), idZ.getTrace());
+				Rotator rotator = new Rotator(idR.toTrace(), idZ.toTrace());
 				Trace trace = rotator.rotate(theta);
 				
 				if (idZ.getWaveformType().equals(WaveformType.OBS))
