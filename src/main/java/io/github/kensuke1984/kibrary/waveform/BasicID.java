@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -41,6 +41,12 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  *
  */
 public class BasicID {
+
+    /**
+     * Margin to decide whether two IDs have the same minPeriod or maxPeriod.
+     * Period value should be around 5~200, so a value around 0.1 for epsilon should be enough.
+     */
+    public static final double PERIOD_EPSILON = 0.1;
 
     protected final WaveformType type;
     protected final double samplingHz;
@@ -164,27 +170,21 @@ public class BasicID {
     }
 
     /**
-     * Judges whether id0 and id1 has the same
-     * component, npts, sampling Hz, start time, max period, min period, observer, and global cmt id.
-     * This method ignores whether the input IDs are observed or synthetic. TODO start time
+     * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
+     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
+     * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
      *
      * @param id0 {@link BasicID}
      * @param id1 {@link BasicID}
      * @return if the IDs are same
      */
     public static boolean isPair(BasicID id0, BasicID id1) {
-        boolean res = false;
-        if (id0.getPhases() == null && id1.getPhases() == null) // for compatibility with old format of BasicID
-            res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-                    && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                    && id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20.
-                    && id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
-        else {
-            res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-                && id0.getSacComponent() == id1.getSacComponent()
-                && id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
-                && id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
-        }
+        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+                && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
+                && id0.getSamplingHz() == id1.getSamplingHz()
+                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
+                && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
         return res;
     }
 

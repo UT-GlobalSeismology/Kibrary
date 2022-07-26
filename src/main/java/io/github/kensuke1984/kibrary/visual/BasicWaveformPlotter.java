@@ -31,9 +31,10 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
- * Plots waveform data.
+ * Plots waveform data from a set of {@link BasicIDFile}.
  * For each event, a pdf file with waveforms for all observers will be created.
  * Each plot includes the original observed waveform, the shifted observed waveform, and the synthetic waveform.
+ * The residual waveform can also be plotted.
  * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
  * <p>
  * Waveform data for each observer will be written in txt files under event directories, if they do not exist already.
@@ -88,6 +89,7 @@ public class BasicWaveformPlotter extends Operation {
      * The time length to plot
      */
     private double timeLength;
+    private boolean plotResiduals;
 
     /**
      * Set of information of travel times
@@ -113,9 +115,9 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic ID file, must be defined");
+            pw.println("##Path of a basic ID file, must be set");
             pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be defined");
+            pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
             pw.println("##Path of a travel time information file, if plotting travel times");
             pw.println("#travelTimePath travelTime.inf");
@@ -125,6 +127,8 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#splitComponents ");
             pw.println("##(double) Time length of each plot [s] (150)");
             pw.println("#timeLength ");
+            pw.println("##(boolean) Whether to plot residual waveforms (true)");
+            pw.println("#plotResiduals ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -151,6 +155,7 @@ public class BasicWaveformPlotter extends Operation {
         }
         splitComponents = property.parseBoolean("splitComponents", "true");
         timeLength = property.parseDouble("timeLength", "150");
+        plotResiduals = property.parseBoolean("plotResiduals", "true");
     }
 
    @Override
@@ -245,8 +250,8 @@ public class BasicWaveformPlotter extends Operation {
             BasicID synID = synList.get(i);
 
             // output waveform data to text file if it has not already been done so
-            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
-            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+            String fileName = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(fileName))) {
                 BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
             }
 
@@ -259,10 +264,10 @@ public class BasicWaveformPlotter extends Operation {
 
             // plot waveforms
             gnuplot.addLine("0", zeroAppearance, "");
-            gnuplot.addLine(filename, 1, 2, originalAppearance, "original");
-            gnuplot.addLine(filename, 3, 2, shiftedAppearance, "shifted");
-            gnuplot.addLine(filename, 3, 4, synAppearance, "synthetic");
-            gnuplot.addLine(filename, "3:($2-$4)", resAppearance, "residual");
+            gnuplot.addLine(fileName, 1, 2, originalAppearance, "original");
+            gnuplot.addLine(fileName, 3, 2, shiftedAppearance, "shifted");
+            gnuplot.addLine(fileName, 3, 4, synAppearance, "synthetic");
+            if (plotResiduals) gnuplot.addLine(fileName, "3:($2-$4)", resAppearance, "residual");
 
             // add vertical lines and labels of travel times
             if (travelTimeInfoSet != null) {

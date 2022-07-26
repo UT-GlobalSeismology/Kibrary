@@ -430,7 +430,7 @@ public class ActualWaveformCompiler extends Operation {
    private void readPeriodRanges() {
         try {
             List<double[]> ranges = new ArrayList<>();
-            Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+            Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet()); // TODO is this limit(20) OK?
             for (SACFileName name : sacfilenames) {
                 if (!name.isOBS()) continue;
                 SACHeaderAccess header = name.readHeader();

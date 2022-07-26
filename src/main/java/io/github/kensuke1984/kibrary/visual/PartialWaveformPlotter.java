@@ -9,11 +9,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
@@ -26,11 +28,14 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
+ *
  * @author otsuru
  * @since 2022/7/24
  */
@@ -68,6 +73,14 @@ public class PartialWaveformPlotter extends Operation {
      */
     private Path partialPath;
     /**
+     * Path of a basic ID file
+     */
+    private Path basicIDPath;
+    /**
+     * Path of a basic waveform file
+     */
+    private Path basicPath;
+    /**
      * Path of a travel time information file
      */
     private Path travelTimePath;
@@ -87,11 +100,16 @@ public class PartialWaveformPlotter extends Operation {
      * The time length to plot
      */
     private double timeLength;
+    /**
+     * How much to scale down the residual waveform
+     */
+    private double residualScale;
 
     /**
      * Set of information of travel times
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
+    private BasicID[] basicIDs;
 
 
     /**
@@ -119,6 +137,10 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
+            pw.println("##Path of a basic ID file, if plotting residual waveform");
+            pw.println("#basicIDPath actualID.dat");
+            pw.println("##Path of a basic waveform file, if plotting residual waveform");
+            pw.println("#basicPath actual.dat");
             pw.println("##Path of a travel time information file, if plotting travel times");
             pw.println("#travelTimePath travelTime.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
@@ -133,6 +155,8 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#tendVoxelRadii ");
             pw.println("##(double) Time length of each plot [s] (150)");
             pw.println("#timeLength ");
+            pw.println("##(double) How much to scale down the residual waveform (10000000)");
+            pw.println("#residualScale ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -150,7 +174,10 @@ public class PartialWaveformPlotter extends Operation {
 
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
-
+        if (property.containsKey("basicIDPath") && property.containsKey("basicPath")) {
+            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+            basicPath = property.parsePath("basicPath", null, true, workPath);
+        }
         if (property.containsKey("travelTimePath"))
             travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
 
@@ -162,7 +189,7 @@ public class PartialWaveformPlotter extends Operation {
         tendVoxelRadii = property.parseDoubleArray("tendVoxelRadii", null);
 
         timeLength = property.parseDouble("timeLength", "150");
-
+        residualScale = property.parseDouble("residualScale", "10000000");
     }
 
    @Override
@@ -174,6 +201,11 @@ public class PartialWaveformPlotter extends Operation {
                && tendObserverNames.contains(id.getObserver().toString())
                && checkPosition(id.getVoxelPosition()))
                .toArray(PartialID[]::new);
+
+       // read basicIDs
+       if (basicIDPath != null && basicPath != null) {
+           basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+       }
 
        // read travel time information
        if (travelTimePath != null) {
@@ -200,11 +232,9 @@ public class PartialWaveformPlotter extends Operation {
 
                    String fileNameRoot = "plot_" + event + "_" + observerName + "_" + component;
                    createPlot(rayPath, useIDs, fileNameRoot);
-
                }
            }
        }
-
    }
 
    private boolean checkPosition(FullPosition position) {
@@ -248,14 +278,35 @@ public class PartialWaveformPlotter extends Operation {
            return;
        }
 
-       // output data in text file
-       String filename = BasicIDFile.getWaveformTxtFileName(ids[0]);
-       outputWaveformTxt(rayPath.resolve(filename), ids);
+       // output partial data in text file
+       String fileName = "partialWaveforms." + ids[0].getSacComponent() + ".txt";
+       outputWaveformTxt(rayPath.resolve(fileName), ids);
+
+       // output waveform data to text file
+       boolean wroteBasic = false;
+       String basicFileName = null;
+       if (basicIDs != null) {
+           BasicID[] pairIDs = Arrays.stream(basicIDs).filter(basic -> BasicID.isPair(basic, ids[0])).toArray(BasicID[]::new);
+           if (pairIDs.length != 2) {
+               System.err.println(pairIDs.length);
+               for (BasicID basic : pairIDs) System.err.println(basic);
+               System.err.println("Failed to find basicIDs for " + ids[0].getGlobalCMTID() + " " + ids[0].getObserver() + " " + ids[0].getSacComponent());
+           } else {
+               BasicID obsID = (pairIDs[0].getWaveformType() == WaveformType.OBS) ? pairIDs[0] : pairIDs[1];
+               BasicID synID = (pairIDs[0].getWaveformType() == WaveformType.SYN) ? pairIDs[0] : pairIDs[1];
+               basicFileName = BasicIDFile.getWaveformTxtFileName(obsID);
+               BasicIDFile.outputWaveformTxt(rayPath, obsID, synID);
+               wroteBasic = true;
+           }
+       }
 
        GnuplotFile gnuplot = new GnuplotFile(rayPath.resolve(fileNameRoot + ".plt"));
 
        GnuplotLineAppearance partialAppearance = new GnuplotLineAppearance(1, GnuplotColorName.green, 1);
+       GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
        GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
+       GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
+       GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
 
        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
        gnuplot.setMarginH(15, 5);
@@ -276,7 +327,26 @@ public class PartialWaveformPlotter extends Operation {
 
            // plot waveforms
            gnuplot.addLine("0", zeroAppearance, "");
-           gnuplot.addLine(filename, 1, i + 2, partialAppearance, "partial");
+           gnuplot.addLine(fileName, 1, i + 2, partialAppearance, "partial");
+           if (wroteBasic) gnuplot.addLine(basicFileName, "3:(($2-$4)/" + residualScale + ")", resAppearance, "residual");
+
+           // add vertical lines and labels of travel times
+           if (travelTimeInfoSet != null) {
+               travelTimeInfoSet.stream()
+                       .filter(info -> info.getEvent().equals(id.getGlobalCMTID()) && info.getObserver().equals(id.getObserver()))
+                       .forEach(info -> {
+                           Map<Phase, Double> usePhaseMap = info.getUsePhases();
+                           for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
+                               gnuplot.addVerticalLine(entry.getValue(), usePhaseAppearance);
+                               gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
+                           }
+                           Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
+                           for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
+                               gnuplot.addVerticalLine(entry.getValue(), avoidPhaseAppearance);
+                               gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
+                           }
+                       });
+           }
 
            // this is not done for the last obsID because we don't want an extra blank page to be created
            if ((i + 1) < ids.length) {

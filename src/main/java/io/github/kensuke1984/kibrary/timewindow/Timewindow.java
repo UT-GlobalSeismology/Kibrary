@@ -15,9 +15,13 @@ import org.apache.commons.math3.util.Precision;
 public class Timewindow implements Comparable<Timewindow> {
 
     /**
-     * margin to decide whether two timewindows have the same startTime and/or endTime
+     * Margin to decide whether two timewindows have the same startTime and/or endTime
      */
     public static final double TIME_EPSILON = 0.1;
+    /**
+     * Margin of startTime to decide whether two timewindows are pairs, taking into account the timeshifts due to corrections
+     */
+    public static final double TIME_SHIFT_MAX = 20;
 
     /**
      * starting time round off to the third decimal place
