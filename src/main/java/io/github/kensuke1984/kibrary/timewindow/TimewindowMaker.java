@@ -123,7 +123,10 @@ public class TimewindowMaker extends Operation {
      * exPhaseがusePhaseに割って入る時にTimewindowを分けるか(trueではtimewindowを捨てる)
      */
     private boolean separateWindow;
-    private String model;
+    /**
+     * Name of structure to compute travel times
+     */
+    private String structureName;
 
     private Set<TimewindowData> timewindowSet;
     private Set<TravelTimeInformation> travelTimeSet;
@@ -167,8 +170,8 @@ public class TimewindowMaker extends Operation {
             pw.println("#corridor ");
             pw.println("##(boolean) Separate timewindows when timewindows of usePahses aren't overlapped or exPhases arrive between usePhases (false)");
             pw.println("#separateWindow ");
-            pw.println("##(String) Model to compute travel times using TauP (prem)");
-            pw.println("#model ");
+            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("#structureName ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -192,10 +195,10 @@ public class TimewindowMaker extends Operation {
         minLength = property.parseDouble("minLength", "0");
         corridor = property.parseBoolean("corridor", "false");
         separateWindow = property.parseBoolean("separateWindow","false");
-        model = property.parseString("model", "prem").toLowerCase();
+        structureName = property.parseString("structureName", "prem").toLowerCase();
 
-        String catalogueName_sS =  "firstAppearance_sS." + model + ".catalogue";
-        String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";
+        String catalogueName_sS =  "firstAppearance_sS." + structureName + ".catalogue";
+        String catalogueName_pP =  "firstAppearance_pP." + structureName + ".catalogue";
         catalogue_sS = readCatalogue(catalogueName_sS);
         catalogue_pP = readCatalogue(catalogueName_pP);
 
@@ -271,7 +274,7 @@ public class TimewindowMaker extends Operation {
         double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 
         try {
-            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, model);
+            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, structureName);
 
             // use only the first arrival in case of triplication
             Map<Phase, List<TauPPhase>> nameToPhase = new HashMap<>();
@@ -310,7 +313,7 @@ public class TimewindowMaker extends Operation {
             double[] phaseTime = toTravelTime(usePhases);
 
             Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
-                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases, model);
+                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases, structureName);
             double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
 
             boolean firstAppearance = false;
@@ -395,7 +398,7 @@ public class TimewindowMaker extends Operation {
         double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 
         try {
-            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, model);
+            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, structureName);
 
             if (!majorArc)
                 usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
@@ -421,7 +424,7 @@ public class TimewindowMaker extends Operation {
             double finPhaseTime = finalPhase.getTravelTime();
 
             Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
-                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases, model);
+                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases, structureName);
             double[] exPhaseTimes = exPhases.isEmpty() ? null : new double[exPhases.size()];
 
             if (!exPhases.isEmpty()) {
@@ -586,7 +589,7 @@ public class TimewindowMaker extends Operation {
 //          else
                 usePhasesCorridor = Arrays.stream("s S ScS Sdiff sS sScS sSdiff SS sSS".split(" "))
                 .map(Phase::create).collect(Collectors.toSet());
-            List<TauPPhase> usePhasesList = TauPTimeReader.getTauPPhaseList(eventR, epicentralDistance, usePhasesCorridor, model);
+            List<TauPPhase> usePhasesList = TauPTimeReader.getTauPPhaseList(eventR, epicentralDistance, usePhasesCorridor, structureName);
             if (!majorArc) {
                 usePhasesList.removeIf(phase -> phase.getPuristDistance() >= 180.);
             }
@@ -598,7 +601,7 @@ public class TimewindowMaker extends Operation {
                 exPhasesCorridor = Arrays.stream("SSS sSSS SSSS sSSSS".split(" "))
                 .map(Phase::create).collect(Collectors.toSet());
             Set<TauPPhase> exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
-                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, structureName);
             if (usePhases.isEmpty()) {
                 writeInvalid(sacFileName, "usePhase is empty");
                 return;
@@ -615,14 +618,14 @@ public class TimewindowMaker extends Operation {
             this.rearShift = 70.;
             usePhasesCorridor = Arrays.stream("ScSScS sScSScS".split(" "))
                     .map(Phase::create).collect(Collectors.toSet());
-            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, structureName);
             if (!majorArc) {
                 usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
             }
             exPhasesCorridor = Arrays.stream("SSS sSSS SSSS sSSSS SSSSS sSSSSS SSSSSS sSSSSSS".split(" "))
                     .map(Phase::create).collect(Collectors.toSet());
             exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
-                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, structureName);
             if (usePhases.isEmpty()) {
                 writeInvalid(sacFileName, "Neither ScS2 nor sScS2 phase arrive");
                 return;
@@ -639,13 +642,13 @@ public class TimewindowMaker extends Operation {
             this.rearShift = 75.;
             usePhasesCorridor = Arrays.stream("ScSScSScS sScSScSScS".split(" "))
                     .map(Phase::create).collect(Collectors.toSet());
-            usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+            usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, structureName);
             if (!majorArc) {
                 usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
             }
             exPhasesCorridor = Collections.emptySet();
             exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
-                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, structureName);
             if (usePhases.isEmpty()) {
                 writeInvalid(sacFileName, "Neither ScS3 nor sScS3 phase arrive");
                 return;
@@ -711,7 +714,7 @@ public class TimewindowMaker extends Operation {
             // window fix
             Set<Phase> tmpUsePhases = Arrays.stream("s S ScS Sdiff sS sScS sSdiff SS sSS SSS sSSS SSSS sSSSS ScSScS sScSScS ScSScSScS sScSScSScS".split(" "))
                 .map(Phase::create).collect(Collectors.toSet());
-            Set<TauPPhase> usePhases_ = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, tmpUsePhases, model);
+            Set<TauPPhase> usePhases_ = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, tmpUsePhases, structureName);
             Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
                     window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases_)))
                     .filter(tw -> tw.getPhases().length > 0)
