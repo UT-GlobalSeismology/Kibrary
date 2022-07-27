@@ -155,7 +155,7 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#tendVoxelRadii ");
             pw.println("##(double) Time length of each plot [s] (150)");
             pw.println("#timeLength ");
-            pw.println("##(double) How much to scale down the residual waveform (10000000)");
+            pw.println("##(double) How much to scale down the residual waveform (1e7)");
             pw.println("#residualScale ");
         }
         System.err.println(outPath + " is created.");
@@ -189,7 +189,7 @@ public class PartialWaveformPlotter extends Operation {
         tendVoxelRadii = property.parseDoubleArray("tendVoxelRadii", null);
 
         timeLength = property.parseDouble("timeLength", "150");
-        residualScale = property.parseDouble("residualScale", "10000000");
+        residualScale = property.parseDouble("residualScale", "1e7");
     }
 
    @Override
@@ -302,7 +302,7 @@ public class PartialWaveformPlotter extends Operation {
 
        GnuplotFile gnuplot = new GnuplotFile(rayPath.resolve(fileNameRoot + ".plt"));
 
-       GnuplotLineAppearance partialAppearance = new GnuplotLineAppearance(1, GnuplotColorName.green, 1);
+       GnuplotLineAppearance partialAppearance = new GnuplotLineAppearance(1, GnuplotColorName.dark_green, 1);
        GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
        GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
        GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
@@ -328,7 +328,7 @@ public class PartialWaveformPlotter extends Operation {
            // plot waveforms
            gnuplot.addLine("0", zeroAppearance, "");
            gnuplot.addLine(fileName, 1, i + 2, partialAppearance, "partial");
-           if (wroteBasic) gnuplot.addLine(basicFileName, "3:(($2-$4)/" + residualScale + ")", resAppearance, "residual");
+           if (wroteBasic) gnuplot.addLine(basicFileName, "3:(($2-$4)/" + residualScale + ")", resAppearance, "residual/" + residualScale);
 
            // add vertical lines and labels of travel times
            if (travelTimeInfoSet != null) {

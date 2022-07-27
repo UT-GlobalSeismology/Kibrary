@@ -47,8 +47,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  *
  * @author otsuru
  * @since 2021/12/11
+ * @version 2022/7/27 renamed from RecordSectionCreater to BasicRecordSectionCreator and separated BasicBinnedStackCreator
  */
-public class RecordSectionCreater extends Operation {
+public class BasicRecordSectionCreator extends Operation {
 
     private final Property property;
     /**
@@ -80,6 +81,10 @@ public class RecordSectionCreater extends Operation {
     private boolean createProfile;
     private boolean createBinStack;
     private double binWidth;
+    /**
+     * Name of phase to align the record section
+     */
+    private String alignPhase;
     /**
      * apparent velocity to use when reducing time [s/deg]
      */
@@ -128,6 +133,8 @@ public class RecordSectionCreater extends Operation {
             pw.println("#createBinStack ");
             pw.println("##(double) The width of each bin [deg] (1.0)");
             pw.println("#binWidth ");
+            pw.println("##Phase name to use for alignment. When unset, the following reductionSlowness will be used.");
+            pw.println("#alignPhase ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness ");
             pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
@@ -153,7 +160,7 @@ public class RecordSectionCreater extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public RecordSectionCreater(Property property) throws IOException {
+    public BasicRecordSectionCreator(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -224,7 +231,6 @@ public class RecordSectionCreater extends Operation {
                        && id.getSacComponent().equals(component))
                        .sorted(Comparator.comparing(BasicID::getObserver))
                        .toArray(BasicID[]::new);
-                       //.collect(Collectors.toList()).toArray(new BasicID[0]);
 
                String fileNameRoot;
                if (tag == null) {

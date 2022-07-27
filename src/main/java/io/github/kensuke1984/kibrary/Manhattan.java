@@ -18,13 +18,13 @@ import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
-import io.github.kensuke1984.kibrary.visual.RecordSectionCreater;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
@@ -63,7 +63,7 @@ enum Manhattan {
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),
     BasicWaveformPlotter(42, BasicWaveformPlotter.class),
-    RecordSectionCreater(43, RecordSectionCreater.class),
+    BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
     // Partial 50
     ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class),
     PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class),
