@@ -1,9 +1,11 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.sc.seis.TauP.Arrival;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -39,6 +41,24 @@ public final class TravelTimeInformation {
             // if there are phases with same name, keep the faster one (This is done because Map overwrites value of same key) TODO should try to keep all
             if (avoidPhaseTimes.containsKey(phase.getPhaseName()) && avoidPhaseTimes.get(phase.getPhaseName()) < phase.getTravelTime()) return;
             avoidPhaseTimes.put(phase.getPhaseName(), phase.getTravelTime());
+        });
+    }
+    public TravelTimeInformation(GlobalCMTID event, Observer observer, List<Arrival> useArrivals, List<Arrival> avoidArrivals) {
+        this.event = event;
+        this.observer = observer;
+        usePhaseTimes = new HashMap<>();
+        useArrivals.forEach(arrival -> {
+            // if there are phases with same name, keep the faster one (This is done because Map overwrites value of same key) TODO should try to keep all
+            Phase phase = Phase.create(arrival.getPhase().getName());
+            if (usePhaseTimes.containsKey(phase) && usePhaseTimes.get(phase) < arrival.getTime()) return;
+            usePhaseTimes.put(phase, arrival.getTime());
+        });
+        avoidPhaseTimes = new HashMap<>();
+        avoidArrivals.forEach(arrival -> {
+            // if there are phases with same name, keep the faster one (This is done because Map overwrites value of same key) TODO should try to keep all
+            Phase phase = Phase.create(arrival.getPhase().getName());
+            if (avoidPhaseTimes.containsKey(phase) && avoidPhaseTimes.get(phase) < arrival.getTime()) return;
+            avoidPhaseTimes.put(phase, arrival.getTime());
         });
     }
 

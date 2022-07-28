@@ -245,6 +245,7 @@ public class BasicRecordSectionCreator extends Operation {
                Files.createDirectories(eventDir.toPath());
 
                // set event to taup_time tool
+               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
                if (alignPhase != null || displayPhases != null) {
                    timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtLocation().getDepth());
                }
