@@ -236,12 +236,10 @@ public class TimewindowMaker extends Operation {
                 eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
                         .forEach(sfn -> {
                     try {
-                        if (!separateWindow)
-                             makeMergedTimeWindow(sfn, timeTool);
-                        else if (corridor)
-                             makeTimeWindowForCorridor(sfn);
+                        if (corridor)
+                            makeTimeWindowForCorridor(sfn);
                         else
-                             makeSeparatableTimeWindow(sfn);
+                            makeTimeWindow(sfn, timeTool);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -269,142 +267,58 @@ public class TimewindowMaker extends Operation {
         TravelTimeInformationFile.write(usePhases, exPhases, travelTimeSet, outTravelTimePath);
     }
 
-    /**
-     * Make timewindows.
-     * <p>
-     * In case of triplication, use only the first arrival
-     * To use for sS, pP phases for the MTZ, read a catalog of travel times.
-     *
-     * @param sacFileName
-     * @throws IOException
-     * @author Kensuke Konishi
-     * @author anselme add contents for sS in MTZ
-     */
-    private void makeSeparatableTimeWindow(SACFileName sacFileName) throws IOException {
-        SACFileAccess sacFile = sacFileName.read();
-        // 震源深さ radius
-        double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP); //TODO: depth to radius
-        // 震源観測点ペアの震央距離
-        double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
+    private double[] avoidPhaseTimeFromCatalogue(List<Arrival> useArrivals, double epicentralDistance, double eventDepth) {
+        double[] exPhaseTime = new double[0];
 
-        try {
-            Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, structureName);
+        if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("pP")) && !this.usePhases.contains(Phase.PcP)
+                && this.usePhases.contains(Phase.P)) {
+            if (epicentralDistance > 30)
+                throw new RuntimeException("Unexpected: pP should exist for epicentral distance " + epicentralDistance);
 
-            // use only the first arrival in case of triplication
-            Map<Phase, List<TauPPhase>> nameToPhase = new HashMap<>();
-            for (TauPPhase phase : usePhases) {
-                if (!nameToPhase.containsKey(phase.getPhaseName())) {
-                    List<TauPPhase> list = new ArrayList<>();
-                    list.add(phase);
-                    nameToPhase.put(phase.getPhaseName(), list);
-                }
-                else {
-                    List<TauPPhase> list = nameToPhase.get(phase.getPhaseName());
-                    list.add(phase);
-                    nameToPhase.put(phase.getPhaseName(), list);
-                }
-            }
-            usePhases.clear();
-            for (Phase phase : nameToPhase.keySet()) {
-                TauPPhase firstArrival = nameToPhase.get(phase).get(0);
-                for (TauPPhase taupphase : nameToPhase.get(phase)) {
-                    if (taupphase.getTravelTime() < firstArrival.getTravelTime())
-                        firstArrival = taupphase;
-                }
-                usePhases.add(firstArrival);
-            }
+            double minDepth = catalogue_pP[0][0];
+            double dDepth = catalogue_pP[0][2];
+            int icat = (int) ((eventDepth - minDepth) / dDepth) + 1;
 
-            usePhases.forEach(phase -> phase.getDistance());
-            // major arc
-            if (!majorArc) {
-                usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
-            }
+            double differentialTime = catalogue_pP[icat][2] - catalogue_pP[icat][3];
+            double Ptime = useArrivals.stream()
+                    .filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(Phase.P))
+                    .map(arrival -> arrival.getTime()).findFirst().get();
 
-            if (usePhases.isEmpty()) {
-                writeInvalid(sacFileName, "No usePhases arrive");
-                return;
-            }
-            double[] phaseTime = toTravelTime(usePhases);
-
-            Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
-                    : TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases, structureName);
-            double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
-
-            boolean firstAppearance = false;
-            if (exPhaseTime == null) {
-                firstAppearance = true;
-                if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("pP")) && !this.usePhases.contains(Phase.PcP)
-                        && this.usePhases.contains(Phase.P)) {
-                    if (epicentralDistance > 30)
-                        throw new RuntimeException("Unexpected: pP should exist for epicentral distance " + epicentralDistance);
-
-                    double minDepth = catalogue_pP[0][0];
-                    double dDepth = catalogue_pP[0][2];
-                    int icat = (int) (((6371. - eventR) - minDepth) / dDepth) + 1;
-
-                    double differentialTime = catalogue_pP[icat][2] - catalogue_pP[icat][3];
-                    double Ptime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
-
-                    exPhaseTime = new double[] {Ptime + differentialTime};
-                }
-
-                if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("sS")) && !this.usePhases.contains(Phase.ScS)
-                        && this.usePhases.contains(Phase.S)) {
-                    if (epicentralDistance > 30)
-                        throw new RuntimeException("Unexpected: sS should exist for epicentral distance " + epicentralDistance);
-
-                    double minDepth = catalogue_sS[0][0];
-                    double dDepth = catalogue_sS[0][2];
-                    int icat = (int) (((6371. - eventR) - minDepth) / dDepth) + 1;
-
-                    double differentialTime = catalogue_sS[icat][2] - catalogue_sS[icat][3];
-                    double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
-
-                    exPhaseTime = new double[] {Stime + differentialTime};
-                }
-            }
-
-            Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, EX_FRONT_SHIFT);
-
-            if (windows == null) {
-                writeInvalid(sacFileName, "Failed to create timewindow");
-                return;
-            }
-
-            // System.out.println(sacFile.getValue(SacHeaderEnum.E));
-            // delta (time step) in SacFile
-            double delta = sacFile.getValue(SACHeaderEnum.DELTA);
-            double e = sacFile.getValue(SACHeaderEnum.E);
-            // station of SacFile
-            Observer observer = sacFile.getObserver();
-            // global cmt id of SacFile
-            GlobalCMTID event = sacFileName.getGlobalCMTID();
-            // component of SacFile
-            SACComponent component = sacFileName.getComponent();
-
-            // window fix
-            Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
-                    window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component, containPhases(window, usePhases)))
-                    .filter(tw ->  tw.getLength() > minLength)
-                    .forEach(timewindowSet::add);
-
-            // add travel time information
-            travelTimeSet.add(new TravelTimeInformation(event, observer, usePhases, exPhases));
-
-        } catch (RuntimeException e) {
-            e.printStackTrace();
+            exPhaseTime = new double[] {Ptime + differentialTime};
         }
+
+        if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("sS")) && !this.usePhases.contains(Phase.ScS)
+                && this.usePhases.contains(Phase.S)) {
+            if (epicentralDistance > 30)
+                throw new RuntimeException("Unexpected: sS should exist for epicentral distance " + epicentralDistance);
+
+            double minDepth = catalogue_sS[0][0];
+            double dDepth = catalogue_sS[0][2];
+            int icat = (int) ((eventDepth - minDepth) / dDepth) + 1;
+
+            double differentialTime = catalogue_sS[icat][2] - catalogue_sS[icat][3];
+            double Stime = useArrivals.stream()
+                    .filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(Phase.S))
+                    .map(arrival -> arrival.getTime()).findFirst().get();
+
+            exPhaseTime = new double[] {Stime + differentialTime};
+        }
+
+        return exPhaseTime;
     }
 
     /**
      * Make a timewindow which contains all usePhases.
+     * In case of triplication of usePhases, use only the first arrival
      * When exPhases arrive between or close to usePhases, a timewindow is discarded
+     * To use for sS, pP phases for the MTZ, read a catalog of travel times.
      * TODO check for SKS phase
      * @param sacFileName
+     * @param timeTool {@link TauP_Time} instance to use
      * @throws IOException
      * @author rei
      */
-    private void makeMergedTimeWindow(SACFileName sacFileName, TauP_Time timeTool) throws IOException, TauModelException {
+    private void makeTimeWindow(SACFileName sacFileName, TauP_Time timeTool) throws IOException, TauModelException {
         SACFileAccess sacFile = sacFileName.read();
         // 震源観測点ペアの震央距離
         double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
@@ -415,13 +329,13 @@ public class TimewindowMaker extends Operation {
             List<Arrival> arrivals = timeTool.getArrivals();
             List<Arrival> useArrivals = new ArrayList<>();
             List<Arrival> avoidArrivals = new ArrayList<>();
-            for (Arrival arrival : arrivals) {
-                if (usePhases.contains(Phase.create(arrival.getPhase().getName()))) {
-                    useArrivals.add(arrival);
-                } else if (exPhases.contains(Phase.create(arrival.getPhase().getName()))) {
-                    avoidArrivals.add(arrival);
-                }
+            // for usePhases, use only the first arrival in case of triplication
+            for (Phase phase : usePhases) {
+                arrivals.stream().filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(phase)).findFirst().ifPresent(useArrivals::add);
             }
+            // for avoidPhases, use all arrivals
+            arrivals.stream().filter(arrival -> exPhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(avoidArrivals::add);
+            // refine useArrivals
             if (!majorArc) {
                 useArrivals.removeIf(arrival -> arrival.getDistDeg() >= 180.);
             }
@@ -430,32 +344,47 @@ public class TimewindowMaker extends Operation {
                 return;
             }
 
-            // find first and last usePhase arrival time
-            Arrival firstUseArrival = null;
-            Arrival lastUseArrival = null;
-            for (Arrival arrival : useArrivals) {
-                if (firstUseArrival == null || arrival.getTime() < firstUseArrival.getTime())
-                    firstUseArrival = arrival;
-                if (lastUseArrival == null || arrival.getTime() > lastUseArrival.getTime())
-                    lastUseArrival = arrival;
-            }
-            double firstUseTime = firstUseArrival.getTime();
-            double lastUseTime = lastUseArrival.getTime();
+            Timewindow[] windows;
+            if (separateWindow) {
+                // create window
+                double[] usePhaseTimes = useArrivals.stream().mapToDouble(Arrival::getTime).toArray();
+                double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
 
-            // check if an avoidPhase is between or near usePhases
-            for (Arrival arrival : avoidArrivals) {
-                double avoidTime = arrival.getTime();
-                if (firstUseTime <= (avoidTime + rearShift) && (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
-                    writeInvalid(sacFileName, arrival.getPhase().toString() + " arrives between or near "
-                            + firstUseArrival.getPhase().toString() + " and " + lastUseArrival.getPhase().toString());
-                    return;
+//                if (avoidPhaseTimes.length == 0) {
+//                    // 震源深さ depth
+//                    double eventDepth = sacFile.getValue(SACHeaderEnum.EVDP);
+//                    avoidPhaseTimes = avoidPhaseTimeFromCatalogue(useArrivals, epicentralDistance, eventDepth); // TODO is this needed?
+//                }
+
+                windows = createTimeWindows(usePhaseTimes, avoidPhaseTimes, EX_FRONT_SHIFT);
+            } else {
+                // find first and last usePhase arrival time
+                Arrival firstUseArrival = null;
+                Arrival lastUseArrival = null;
+                for (Arrival arrival : useArrivals) {
+                    if (firstUseArrival == null || arrival.getTime() < firstUseArrival.getTime())
+                        firstUseArrival = arrival;
+                    if (lastUseArrival == null || arrival.getTime() > lastUseArrival.getTime())
+                        lastUseArrival = arrival;
                 }
-            }
+                double firstUseTime = firstUseArrival.getTime();
+                double lastUseTime = lastUseArrival.getTime();
 
-            // create window
-            double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
-            Timewindow[] window = createTimeWindows(firstUseTime, lastUseTime, avoidPhaseTimes, EX_FRONT_SHIFT);
-            if (window == null) {
+                // check if an avoidPhase is between or near usePhases
+                for (Arrival arrival : avoidArrivals) {
+                    double avoidTime = arrival.getTime();
+                    if (firstUseTime <= (avoidTime + rearShift) && (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
+                        writeInvalid(sacFileName, arrival.getPhase().toString() + " arrives between or near "
+                                + firstUseArrival.getPhase().toString() + " and " + lastUseArrival.getPhase().toString());
+                        return;
+                    }
+                }
+
+                // create window
+                double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
+                windows = createTimeWindows(firstUseTime, lastUseTime, avoidPhaseTimes, EX_FRONT_SHIFT);
+            }
+            if (windows == null) {
                 writeInvalid(sacFileName, "Failed to create timewindow");
                 return;
             }
@@ -471,7 +400,7 @@ public class TimewindowMaker extends Operation {
             SACComponent component = sacFileName.getComponent();
 
             // window fix
-            Arrays.stream(window).map(wind -> fix(wind, delta)).filter(wind -> wind.getEndTime() <= e).map(
+            Arrays.stream(windows).map(wind -> fix(wind, delta)).filter(wind -> wind.getEndTime() <= e).map(
                     wind -> new TimewindowData(wind.getStartTime(), wind.getEndTime(), observer, event, component, containPhases(wind, useArrivals)))
                     .filter(tw ->  tw.getLength() > minLength)
                     .forEach(timewindowSet::add);
@@ -834,7 +763,7 @@ public class TimewindowMaker extends Operation {
         Timewindow[] windows = Arrays.stream(phaseTime)
                 .mapToObj(time -> new Timewindow(time - frontShift, time + rearShift)).sorted()
                 .toArray(Timewindow[]::new);
-        Timewindow[] exWindows = exPhaseTime == null ? null
+        Timewindow[] exWindows = exPhaseTime.length == 0 ? null
                 : Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - exFrontShift, time + rearShift))
                         .sorted().toArray(Timewindow[]::new);
 
