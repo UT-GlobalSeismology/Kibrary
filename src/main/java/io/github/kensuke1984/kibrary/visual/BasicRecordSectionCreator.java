@@ -10,12 +10,14 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
@@ -51,6 +53,23 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * @version 2022/7/27 renamed from visual.RecordSectionCreater to visual.BasicRecordSectionCreator and separated visual.BasicBinnedStackCreator
  */
 public class BasicRecordSectionCreator extends Operation {
+
+    /**
+     * The interval of exporting travel times
+     */
+    private static final double TRAVEL_TIME_INTERVAL = 2;
+    /**
+     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
+     */
+    private static final int GRAPH_SIZE_INTERVAL = 2;
+    /**
+     * How much space to provide at the rim of the graph in the y axis
+     */
+    private static final int Y_AXIS_RIM = 2;
+    /**
+     * How much space to provide at the rim of the graph in the time axis
+     */
+    private static final int TIME_RIM = 10;
 
     private final Property property;
     /**
@@ -237,7 +256,6 @@ public class BasicRecordSectionCreator extends Operation {
            // set up taup_time tool
            if (alignPhase != null || displayPhases != null) {
                timeTool = new TauP_Time(structureName);
-               timeTool.parsePhaseList(alignPhase);
            }
 
            for (EventFolder eventDir : eventDirs) {
@@ -250,20 +268,14 @@ public class BasicRecordSectionCreator extends Operation {
                    timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtLocation().getDepth());
                }
 
+               // create plot for each component
                for (SACComponent component : components) {
                    BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                            && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .toArray(BasicID[]::new);
 
-                   String fileNameRoot;
-                   if (tag == null) {
-                       fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
-                   } else {
-                       fileNameRoot = "profile_" + tag + "_" + eventDir.toString() + "_" + component.toString();
-                   }
-
-                   Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
+                   Plotter plotter = new Plotter(eventDir, useIds, component);
                    plotter.plot();
                }
            }
@@ -283,10 +295,11 @@ public class BasicRecordSectionCreator extends Operation {
     private class Plotter {
         private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
 
-        private EventFolder eventDir;
-        private BasicID[] ids;
-        private String fileNameRoot;
+        private final EventFolder eventDir;
+        private final BasicID[] ids;
+        private final SACComponent component;
 
         private GnuplotFile profilePlot;
         private double obsMeanMax;
@@ -297,36 +310,43 @@ public class BasicRecordSectionCreator extends Operation {
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(EventFolder eventDir, BasicID[] ids, String fileNameRoot) {
+        private Plotter(EventFolder eventDir, BasicID[] ids, SACComponent component) {
             this.eventDir = eventDir;
             this.ids = ids;
-            this.fileNameRoot = fileNameRoot;
+            this.component = component;
         }
 
         public void plot() throws IOException, TauModelException {
+            // prepare IDs
             if (ids.length == 0) {
                 return;
             }
-
             BasicIDPairUp pairer = new BasicIDPairUp(ids);
             List<BasicID> obsList = pairer.getObsList();
             List<BasicID> synList = pairer.getSynList();
 
+            // set up plotter
             profilePlotSetup();
 
             // calculate the average of the maximum amplitudes of waveforms
             obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
             synMeanMax = synList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
 
+            // variables to find the minimum and maximum distance for this event
+            double minTime = Double.MAX_VALUE;
+            double maxTime = -Double.MAX_VALUE;
+            double minDistance = Double.MAX_VALUE;
+            double maxDistance = -Double.MAX_VALUE;
+
             // for each pair of observed and synthetic waveforms
             for (int i = 0; i < obsList.size(); i++) {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
-                        .computeEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtLocation()
-                        .computeAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                        .computeEpicentralDistance(obsID.getObserver().getPosition()));
+                double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                        .computeAzimuth(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
@@ -334,24 +354,61 @@ public class BasicRecordSectionCreator extends Operation {
                     continue;
                 }
 
+                // Compute reduce time by distance or phase travel time.
+                double reduceTime = 0;
+                if (alignPhase != null) {
+                    timeTool.clearPhaseNames();
+                    timeTool.parsePhaseList(alignPhase);
+                    timeTool.calculate(distance);
+                    if (timeTool.getNumArrivals() < 1) {
+                        System.err.println("Could not get arrival time of " + alignPhase + " for " + obsID + " , skipping.");
+                        return;
+                    }
+                    reduceTime = timeTool.getArrival(0).getTime();
+                } else {
+                    reduceTime = reductionSlowness * distance;
+                }
+
+                // update ranges
+                double startTime = synID.getStartTime() - reduceTime;
+                double endTime = synID.getStartTime() + synID.getNpts() / synID.getSamplingHz() - reduceTime;
+                if (startTime < minTime) minTime = startTime;
+                if (endTime > maxTime) maxTime = endTime;
+                if (distance < minDistance) minDistance = distance;
+                if (distance > maxDistance) maxDistance = distance;
+
                 // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
                 if (flipAzimuth == true && 180 <= azimuth) {
-                    profilePlotContent(obsID, synID, distance, azimuth - 360);
+                    profilePlotContent(obsID, synID, distance, azimuth - 360, reduceTime);
                 } else {
-                    profilePlotContent(obsID, synID, distance, azimuth);
+                    profilePlotContent(obsID, synID, distance, azimuth, reduceTime);
                 }
             }
 
-            // plot travel times
+            // set ranges
+            if (minDistance > maxDistance || minTime > maxTime) return;
+            int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
+            int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
+            profilePlot.setCommonYrange(startDistance, endDistance);
+            profilePlot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
+
+            // add  travel time curves
             if (displayPhases != null) {
-                //TODO
+                plotTravelTimeCurve(startDistance, endDistance);
             }
 
+            // plot
             profilePlot.write();
             if (!profilePlot.execute()) System.err.println("gnuplot failed!!");
         }
 
         private void profilePlotSetup() {
+            String fileNameRoot;
+            if (tag == null) {
+                fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
+            } else {
+                fileNameRoot = "profile_" + tag + "_" + eventDir.toString() + "_" + component.toString();
+            }
             profilePlot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
 
             profilePlot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
@@ -375,7 +432,7 @@ public class BasicRecordSectionCreator extends Operation {
             }
         }
 
-        private void profilePlotContent(BasicID obsID, BasicID synID, double distance, double azimuth)
+        private void profilePlotContent(BasicID obsID, BasicID synID, double distance, double azimuth, double reduceTime)
                 throws IOException, TauModelException {
 
             // output waveform data to text file if it has not already been done so
@@ -391,19 +448,6 @@ public class BasicRecordSectionCreator extends Operation {
             double synMax = synDataVector.getLInfNorm();
             double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
             double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-
-            // Compute reduce time by distance or phase travel time.
-            double reduceTime = 0;
-            if (alignPhase != null) { //TODO use TravelTimeInformationFile instead?
-                timeTool.calculate(distance);
-                if (timeTool.getNumArrivals() < 1) {
-                    System.err.println("Could not get arrival time of " + alignPhase + " for " + obsID + " , skipping.");
-                    return;
-                }
-                reduceTime = timeTool.getArrival(0).getTime();
-            } else {
-                reduceTime = reductionSlowness * distance;
-            }
 
             // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
             String obsUsingString;
@@ -437,6 +481,60 @@ public class BasicRecordSectionCreator extends Operation {
                 return synMeanMax / ampScale;
             default:
                 throw new IllegalArgumentException("Input AmpStyle is unknown.");
+            }
+        }
+
+        private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
+            int iNum = (int) Math.round((endDistance - startDistance) / TRAVEL_TIME_INTERVAL) + 1;
+
+            // calculate travel times for all phases to display, and the phase to align if it is specified
+            timeTool.clearPhaseNames();
+            timeTool.setPhaseNames(displayPhases);
+            if (alignPhase != null) timeTool.appendPhaseName(alignPhase);
+            Double[][] travelTimes = new Double[displayPhases.length][iNum];
+            Double[] alignTimes = new Double[iNum];
+            for (int i = 0; i < iNum; i++) {
+                double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
+                timeTool.calculate(distance);
+                List<Arrival> arrivals = timeTool.getArrivals();
+                for (int p = 0; p < displayPhases.length; p++) {
+                    String phase = displayPhases[p];
+                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
+                    if (arrivalOpt.isPresent()) {
+                        travelTimes[p][i] = arrivalOpt.get().getTime();
+                    }
+                }
+                if (alignPhase != null) {
+                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(alignPhase)).findFirst();
+                    if (arrivalOpt.isPresent()) {
+                        alignTimes[i] = arrivalOpt.get().getTime();
+                    }
+                }
+            }
+
+            // output file and add curve
+            for (int p = 0; p < displayPhases.length; p++) {
+                String phase = displayPhases[p];
+                String curveFileName = "curve_" + eventDir.toString() + "_" + component + "_" + phase + ".txt";
+                Path curvePath = eventDir.toPath().resolve(curveFileName);
+                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
+                    for (int i = 0; i < iNum; i++) {
+                        // write only at distances where travel time exists
+                        if (travelTimes[p][i] != null) {
+                            double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
+                            // reduce time by alignPhase or reductionSlowness
+                            if (alignPhase != null) {
+                                // write only at distances where travel time of alignPhase exists
+                                if (alignTimes[i] != null)
+                                    pw.println(distance + " " + (travelTimes[p][i] - alignTimes[i]));
+                            } else {
+                                double reduceTime = reductionSlowness * distance;
+                                pw.println(distance + " " + (travelTimes[p][i] - reduceTime));
+                            }
+                        }
+                    }
+                }
+                profilePlot.addLine(curveFileName, 2, 1, phaseAppearance, phase);
             }
         }
     }
