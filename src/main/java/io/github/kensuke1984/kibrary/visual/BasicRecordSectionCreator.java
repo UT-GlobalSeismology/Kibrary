@@ -57,7 +57,7 @@ public class BasicRecordSectionCreator extends Operation {
     /**
      * The interval of exporting travel times
      */
-    private static final double TRAVEL_TIME_INTERVAL = 2;
+    private static final double TRAVEL_TIME_INTERVAL = 1;
     /**
      * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
      */
@@ -111,7 +111,7 @@ public class BasicRecordSectionCreator extends Operation {
     /**
      * Name of phase to align the record section
      */
-    private String alignPhase;
+    private String[] alignPhases;
     /**
      * apparent velocity to use when reducing time [s/deg]
      */
@@ -169,8 +169,9 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
-            pw.println("##Phase name to use for alignment. When unset, the following reductionSlowness will be used.");
-            pw.println("#alignPhase ");
+            pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
+            pw.println("## When multiple phases are set, the fastest arrival of them will be used for alignment.");
+            pw.println("#alignPhases ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness ");
             pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
@@ -215,8 +216,8 @@ public class BasicRecordSectionCreator extends Operation {
 
         if (property.containsKey("displayPhases") && byAzimuth == false)
             displayPhases = property.parseStringArray("displayPhases", null);
-        if (property.containsKey("alignPhase"))
-            alignPhase = property.parseString("alignPhase", null);
+        if (property.containsKey("alignPhases"))
+            alignPhases = property.parseStringArray("alignPhases", null);
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
         structureName = property.parseString("structureName", "prem").toLowerCase();
 
@@ -254,7 +255,7 @@ public class BasicRecordSectionCreator extends Operation {
            }
 
            // set up taup_time tool
-           if (alignPhase != null || displayPhases != null) {
+           if (alignPhases != null || displayPhases != null) {
                timeTool = new TauP_Time(structureName);
            }
 
@@ -264,7 +265,7 @@ public class BasicRecordSectionCreator extends Operation {
 
                // set event to taup_time tool
                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
-               if (alignPhase != null || displayPhases != null) {
+               if (alignPhases != null || displayPhases != null) {
                    timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtLocation().getDepth());
                }
 
@@ -356,12 +357,11 @@ public class BasicRecordSectionCreator extends Operation {
 
                 // Compute reduce time by distance or phase travel time.
                 double reduceTime = 0;
-                if (alignPhase != null) {
-                    timeTool.clearPhaseNames();
-                    timeTool.parsePhaseList(alignPhase);
+                if (alignPhases != null) {
+                    timeTool.setPhaseNames(alignPhases);
                     timeTool.calculate(distance);
                     if (timeTool.getNumArrivals() < 1) {
-                        System.err.println("Could not get arrival time of " + alignPhase + " for " + obsID + " , skipping.");
+                        System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for " + obsID + " , skipping.");
                         return;
                     }
                     reduceTime = timeTool.getArrival(0).getTime();
@@ -418,8 +418,8 @@ public class BasicRecordSectionCreator extends Operation {
             profilePlot.unsetKey();
 
             profilePlot.setTitle(eventDir.toString());
-            if (alignPhase != null) {
-                profilePlot.setXlabel("Time aligned on " + alignPhase + "-wave arrival (s)");
+            if (alignPhases != null) {
+                profilePlot.setXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
             } else {
                 profilePlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
@@ -488,9 +488,8 @@ public class BasicRecordSectionCreator extends Operation {
             int iNum = (int) Math.round((endDistance - startDistance) / TRAVEL_TIME_INTERVAL) + 1;
 
             // calculate travel times for all phases to display, and the phase to align if it is specified
-            timeTool.clearPhaseNames();
             timeTool.setPhaseNames(displayPhases);
-            if (alignPhase != null) timeTool.appendPhaseName(alignPhase);
+            for (String phase : alignPhases) timeTool.appendPhaseName(phase);
             Double[][] travelTimes = new Double[displayPhases.length][iNum];
             Double[] alignTimes = new Double[iNum];
             for (int i = 0; i < iNum; i++) {
@@ -504,8 +503,9 @@ public class BasicRecordSectionCreator extends Operation {
                         travelTimes[p][i] = arrivalOpt.get().getTime();
                     }
                 }
-                if (alignPhase != null) {
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(alignPhase)).findFirst();
+                if (alignPhases != null) {
+                    List<String> alignPhaseList = Arrays.asList(alignPhases);
+                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> alignPhaseList.contains(arrival.getPhase().getName())).findFirst();
                     if (arrivalOpt.isPresent()) {
                         alignTimes[i] = arrivalOpt.get().getTime();
                     }
@@ -523,7 +523,7 @@ public class BasicRecordSectionCreator extends Operation {
                         if (travelTimes[p][i] != null) {
                             double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
                             // reduce time by alignPhase or reductionSlowness
-                            if (alignPhase != null) {
+                            if (alignPhases != null) {
                                 // write only at distances where travel time of alignPhase exists
                                 if (alignTimes[i] != null)
                                     pw.println(distance + " " + (travelTimes[p][i] - alignTimes[i]));
