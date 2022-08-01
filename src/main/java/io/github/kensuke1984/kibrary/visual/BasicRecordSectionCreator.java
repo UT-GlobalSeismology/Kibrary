@@ -36,7 +36,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
  * Creates record section for each event included in a {@link BasicIDFile}.
- * Time-shift is applied to observed waveform when being plotted.
+ * Time-shift from corrections is applied to observed waveform when being plotted.
+ * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
+ * Travel time curves can be drawn on the graph.
  * <p>
  * A pair of a basic ID file and basic waveform file is required as input.
  * <p>
@@ -109,11 +111,11 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private String[] displayPhases;
     /**
-     * Name of phase to align the record section
+     * Names of phases to use to align the record section. The fastest of these arrivals is used.
      */
     private String[] alignPhases;
     /**
-     * apparent velocity to use when reducing time [s/deg]
+     * apparent slowness to use when reducing time [s/deg]
      */
     private double reductionSlowness;
     /**
@@ -125,7 +127,6 @@ public class BasicRecordSectionCreator extends Operation {
     private double upperDistance;
     private double lowerAzimuth;
     private double upperAzimuth;
-
 
     private TauP_Time timeTool;
 
@@ -487,9 +488,11 @@ public class BasicRecordSectionCreator extends Operation {
         private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
             int iNum = (int) Math.round((endDistance - startDistance) / TRAVEL_TIME_INTERVAL) + 1;
 
-            // calculate travel times for all phases to display, and the phase to align if it is specified
+            // set names of all phases to display, and the phase to align if it is specified
             timeTool.setPhaseNames(displayPhases);
             for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+
+            // calculate travel times and store in arrays
             Double[][] travelTimes = new Double[displayPhases.length][iNum];
             Double[] alignTimes = new Double[iNum];
             for (int i = 0; i < iNum; i++) {
@@ -517,6 +520,7 @@ public class BasicRecordSectionCreator extends Operation {
                 String phase = displayPhases[p];
                 String curveFileName = "curve_" + eventDir.toString() + "_" + component + "_" + phase + ".txt";
                 Path curvePath = eventDir.toPath().resolve(curveFileName);
+                boolean wrotePhaseLabel = false;
                 try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
                     for (int i = 0; i < iNum; i++) {
                         // write only at distances where travel time exists
@@ -525,11 +529,22 @@ public class BasicRecordSectionCreator extends Operation {
                             // reduce time by alignPhase or reductionSlowness
                             if (alignPhases != null) {
                                 // write only at distances where travel time of alignPhase exists
-                                if (alignTimes[i] != null)
+                                if (alignTimes[i] != null) {
                                     pw.println(distance + " " + (travelTimes[p][i] - alignTimes[i]));
+                                }
+                                // add label at first appearance
+                                if (wrotePhaseLabel == false) {
+                                    profilePlot.addLabel(phase, "first", travelTimes[p][i] - alignTimes[i], distance, GnuplotColorName.turquoise);
+                                    wrotePhaseLabel = true;
+                                }
                             } else {
                                 double reduceTime = reductionSlowness * distance;
                                 pw.println(distance + " " + (travelTimes[p][i] - reduceTime));
+                                // add label at first appearance
+                                if (wrotePhaseLabel == false) {
+                                    profilePlot.addLabel(phase, "first", travelTimes[p][i] - reduceTime, distance, GnuplotColorName.turquoise);
+                                    wrotePhaseLabel = true;
+                                }
                             }
                         }
                     }
