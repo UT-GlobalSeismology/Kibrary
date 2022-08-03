@@ -8,9 +8,16 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import org.apache.commons.math3.linear.RealMatrix;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
+import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
+import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -31,10 +38,6 @@ public class PartialWaveformEvaluator extends Operation {
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String tag;
-    /**
-     * Path of the output folder
-     */
-    private Path outPath;
 
     /**
      * path of basic ID file
@@ -58,6 +61,9 @@ public class PartialWaveformEvaluator extends Operation {
     private Path unknownParameterPath;
 
     private WeightingType weightingType;
+
+    private double minDiagonalAmplitude;
+    private double minCorrelation;
 
     /**
      * @param args  none to create a property file <br>
@@ -90,6 +96,10 @@ public class PartialWaveformEvaluator extends Operation {
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weightingType ");
+            pw.println("##(double) minDiagonalAmplitude");
+            pw.println("#minDiagonalAmplitude ");
+            pw.println("##(double) minCorrelation (0.75)");
+            pw.println("#minCorrelation ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -110,7 +120,8 @@ public class PartialWaveformEvaluator extends Operation {
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
-
+        minDiagonalAmplitude = property.parseDouble("minDiagonalAmplitude", "5");
+        minCorrelation = property.parseDouble("minCorrelation", "0.75");
     }
 
     @Override
@@ -121,6 +132,28 @@ public class PartialWaveformEvaluator extends Operation {
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
+        // assemble matrices
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+        RealMatrix ata = assembler.getAta();
+
+        // output unknown parameter with large diagonal component and correlation
+        MultigridDesign multigrid = new MultigridDesign();
+        for (int i = 0; i < parameterList.size(); i++) {
+            for (int j = 0; j < parameterList.size(); j++) {
+                if (i == j) continue;
+                double coeff = ata.getEntry(i, j) * ata.getEntry(i, j) / ata.getEntry(i, i) / ata.getEntry(j, j);
+                if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation) {
+                    System.out.println(i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
+                    System.out.println(" - " + parameterList.get(i));
+                    System.out.println(" - " + parameterList.get(j));
+                    multigrid.addFusion(parameterList.get(i), parameterList.get(j));
+                }
+            }
+        }
+
+        // output multigrid design file
+        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("multigrid", tag, GadgetAid.getTemporaryString(), ".inf"));
+        MultigridInformationFile.write(multigrid, outputPath);
     }
 
 }
