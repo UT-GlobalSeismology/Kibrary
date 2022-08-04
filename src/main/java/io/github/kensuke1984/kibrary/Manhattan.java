@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
+import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
@@ -64,23 +65,25 @@ enum Manhattan {
     BasicIDMerge(41, BasicIDMerge.class),
     BasicWaveformPlotter(42, BasicWaveformPlotter.class),
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
-    // Partial 50
-    ThreeDPartialDSMSetup(50, ThreeDPartialDSMSetup.class),
-    PartialWaveformAssembler3D(51, PartialWaveformAssembler3D.class),
-    PartialIDMerge(52, PartialIDMerge.class),
-    SensitivityKernelMapper(53, SensitivityKernelMapper.class),
-    PartialWaveformPlotter(54, PartialWaveformPlotter.class),
-    // Inversion 60
-    LetMeInvert(60, LetMeInvert.class),
-    InversionArranger(61, InversionArranger.class),
-    InversionSolver(62, InversionSolver.class),
-    ModelSetMapper(64, ModelSetMapper.class),
-    // Tests 70
-    CheckerboardMaker(71, CheckerboardMaker.class),
-    PerturbationMapper(72, PerturbationMapper.class),
-    ModelMapper(73, ModelMapper.class),
-    PseudoWaveformGenerator(75, PseudoWaveformGenerator.class),
-    BasicIDRebuilder(76, BasicIDRebuilder.class),
+    // Voxel 50
+    MultigridDesigner(53, MultigridDesigner.class),
+    // Partial 60
+    ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
+    PartialWaveformAssembler3D(61, PartialWaveformAssembler3D.class),
+    PartialIDMerge(62, PartialIDMerge.class),
+    SensitivityKernelMapper(63, SensitivityKernelMapper.class),
+    PartialWaveformPlotter(64, PartialWaveformPlotter.class),
+    // Inversion 70
+    LetMeInvert(70, LetMeInvert.class),
+    InversionArranger(71, InversionArranger.class),
+    InversionSolver(72, InversionSolver.class),
+    ModelSetMapper(74, ModelSetMapper.class),
+    // Tests 80
+    CheckerboardMaker(81, CheckerboardMaker.class),
+    PerturbationMapper(82, PerturbationMapper.class),
+    ModelMapper(83, ModelMapper.class),
+    PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
+    BasicIDRebuilder(86, BasicIDRebuilder.class),
     // Temporal 100
     ;
 

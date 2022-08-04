@@ -17,7 +17,7 @@ public class MultigridInformationFile {
     private MultigridInformationFile() {}
 
     /**
-     * @param parameterList List of unknown parameters
+     * @param design (MultigridDesign)
      * @param outPath       for write
      * @param options       for write
      * @throws IOException if an I/O error occurs
@@ -38,4 +38,15 @@ public class MultigridInformationFile {
         }
     }
 
+    /**
+     * @param path of a multigrid information file.
+     * @return (MultigridDesign) design of multigrid
+     * @throws IOException if an I/O error occurs.
+     */
+    public static MultigridDesign read(Path path) throws IOException {
+        MultigridDesign multigrid = new MultigridDesign();
+
+
+        return multigrid;
+    }
 }

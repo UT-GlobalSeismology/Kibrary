@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.waveform;
+package io.github.kensuke1984.kibrary.multigrid;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
 
@@ -14,20 +16,25 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
-import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
-import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialID;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Computes correlation between partial waveforms of each unknown parameter.
+ * Computes correlation between partial waveforms of each unknown parameter, and creates a multigrid design.
+ *
+ * TODO when A~B and B~C (A~C may or may not be true)
  *
  * @author otsuru
  * @since 2022/8/1
  */
-public class PartialWaveformEvaluator extends Operation {
+public class MultigridDesigner extends Operation {
 
     private final Property property;
     /**
@@ -59,6 +66,10 @@ public class PartialWaveformEvaluator extends Operation {
      * Path of unknown parameter file
      */
     private Path unknownParameterPath;
+    /**
+     * Partial types of parameters to be fused
+     */
+    private List<PartialType> partialTypes;
 
     private WeightingType weightingType;
 
@@ -94,6 +105,8 @@ public class PartialWaveformEvaluator extends Operation {
             pw.println("#partialPath partial.dat");
             pw.println("##Path of an unknown parameter list file, must be set");
             pw.println("#unknownParameterPath unknowns.lst");
+            pw.println("##Partial types of parameters to fuse. If not set, all partial types will be used.");
+            pw.println("#partialTypes ");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weightingType ");
             pw.println("##(double) minDiagonalAmplitude");
@@ -104,7 +117,7 @@ public class PartialWaveformEvaluator extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public PartialWaveformEvaluator(Property property) throws IOException {
+    public MultigridDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -119,6 +132,9 @@ public class PartialWaveformEvaluator extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
+        if (property.containsKey("partialTypes"))
+            partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
+                    .collect(Collectors.toList());
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
         minDiagonalAmplitude = property.parseDouble("minDiagonalAmplitude", "5");
         minCorrelation = property.parseDouble("minCorrelation", "0.75");
@@ -126,6 +142,7 @@ public class PartialWaveformEvaluator extends Operation {
 
     @Override
     public void run() throws IOException {
+        String dateStr = GadgetAid.getTemporaryString();
 
         // read input
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
@@ -137,22 +154,33 @@ public class PartialWaveformEvaluator extends Operation {
         RealMatrix ata = assembler.getAta();
 
         // output unknown parameter with large diagonal component and correlation
+        Path logPath = workPath.resolve("multigridDesigner" + dateStr + ".log");
         MultigridDesign multigrid = new MultigridDesign();
-        for (int i = 0; i < parameterList.size(); i++) {
-            for (int j = 0; j < parameterList.size(); j++) {
-                if (i == j) continue;
-                double coeff = ata.getEntry(i, j) * ata.getEntry(i, j) / ata.getEntry(i, i) / ata.getEntry(j, j);
-                if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation) {
-                    System.out.println(i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
-                    System.out.println(" - " + parameterList.get(i));
-                    System.out.println(" - " + parameterList.get(j));
-                    multigrid.addFusion(parameterList.get(i), parameterList.get(j));
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(logPath))) {
+            GadgetAid.dualPrintln(pw, "# i j AtA(i,i) AtA(i,j) coeff");
+
+            for (int i = 0; i < parameterList.size(); i++) {
+                if (partialTypes != null && partialTypes.contains(parameterList.get(i).getPartialType()) == false)
+                    continue;
+
+                for (int j = 0; j < parameterList.size(); j++) {
+                    if (i == j) continue;
+                    if (partialTypes != null && partialTypes.contains(parameterList.get(j).getPartialType()) == false)
+                        continue;
+
+                    double coeff = ata.getEntry(i, j) * ata.getEntry(i, j) / ata.getEntry(i, i) / ata.getEntry(j, j);
+                    if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation) {
+                        GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
+                        GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));
+                        GadgetAid.dualPrintln(pw, " - " + parameterList.get(j));
+                        multigrid.addFusion(parameterList.get(i), parameterList.get(j));
+                    }
                 }
             }
         }
 
         // output multigrid design file
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("multigrid", tag, GadgetAid.getTemporaryString(), ".inf"));
+        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("multigrid", tag, dateStr, ".inf"));
         MultigridInformationFile.write(multigrid, outputPath);
     }
 

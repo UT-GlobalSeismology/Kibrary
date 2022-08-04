@@ -53,8 +53,9 @@ enum Brooklyn {
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
     VarianceComputer(45, VarianceComputer.class),
-    // Partial 50
+    // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
+    // Partial 50
     // Inversion 60
     // Temporal 100
     ;
