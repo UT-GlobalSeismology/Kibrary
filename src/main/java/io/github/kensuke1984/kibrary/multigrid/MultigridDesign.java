@@ -47,6 +47,20 @@ public class MultigridDesign {
         fusedParameters.add(fusedParam);
     }
 
+    public void add(List<UnknownParameter> originalParams, UnknownParameter fusedParam) {
+        if (originalParams.size() == 0) return;
+        PartialType type = fusedParam.getPartialType();
+        for (UnknownParameter param : originalParams) {
+            if (param.getPartialType() != type) {
+                System.err.println("Cannot fuse parameters due to partial type mismatch.");
+                return;
+            }
+        }
+
+        originalParameters.add(originalParams);
+        fusedParameters.add(fusedParam);
+    }
+
     public List<List<UnknownParameter>> getOriginalParameters() {
         return new ArrayList<>(originalParameters);
     }
@@ -55,6 +69,16 @@ public class MultigridDesign {
         return new ArrayList<>(fusedParameters);
     }
 
-
+    /**
+     * Checks if the specified parameter is contained as one of the original parameters to be fused.
+     * @param param
+     * @return (boolean) true if the parameter is to be fused
+     */
+    public boolean fuses(UnknownParameter param) {
+        for (List<UnknownParameter> paramList : originalParameters) {
+            if (paramList.contains(param)) return true;
+        }
+        return false;
+    }
 
 }

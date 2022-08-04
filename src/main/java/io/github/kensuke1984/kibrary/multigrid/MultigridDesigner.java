@@ -180,8 +180,15 @@ public class MultigridDesigner extends Operation {
         }
 
         // output multigrid design file
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("multigrid", tag, dateStr, ".inf"));
-        MultigridInformationFile.write(multigrid, outputPath);
+        Path outputMultigridPath = workPath.resolve(DatasetAid.generateOutputFileName("multigrid", tag, dateStr, ".inf"));
+        MultigridInformationFile.write(multigrid, outputMultigridPath);
+
+        // output unknown parameter file
+        List<UnknownParameter> fusedParameterList = parameterList.stream()
+                .filter(param -> !multigrid.fuses(param)).collect(Collectors.toList());
+        fusedParameterList.addAll(multigrid.getFusedParameters());
+        Path outputUnknownsPath = workPath.resolve(DatasetAid.generateOutputFileName("unknowns", tag, dateStr, ".lst"));
+        UnknownParameterFile.write(fusedParameterList, outputUnknownsPath);
     }
 
 }

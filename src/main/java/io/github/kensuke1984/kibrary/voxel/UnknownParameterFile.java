@@ -70,7 +70,7 @@ public class UnknownParameterFile {
         return pars;
     }
 
-    static UnknownParameter constructParameterFromParts(String[] parts) {
+    public static UnknownParameter constructParameterFromParts(String[] parts) {
         PartialType type = PartialType.valueOf(parts[0]);
         UnknownParameter unknown;
         switch (type) {
