@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -59,6 +60,23 @@ public class MultigridDesign {
 
         originalParameters.add(originalParams);
         fusedParameters.add(fusedParam);
+    }
+
+    public List<KnownParameter> reverseFusion(List<KnownParameter> inputKnowns) {
+        List<KnownParameter> reversedKnowns = new ArrayList<>();
+        for (KnownParameter known : inputKnowns) {
+            if (fusedParameters.contains(known.getParameter())) {
+                int index = fusedParameters.indexOf(known.getParameter());
+                List<UnknownParameter> correspondingParams = originalParameters.get(index);
+                // for each of the corresponding original parameters, form a KnownParameter with the result value of fused grid
+                for (UnknownParameter param : correspondingParams) {
+                    reversedKnowns.add(new KnownParameter(param, known.getValue()));
+                }
+            } else {
+                reversedKnowns.add(known);
+            }
+        }
+        return reversedKnowns;
     }
 
     public List<List<UnknownParameter>> getOriginalParameters() {

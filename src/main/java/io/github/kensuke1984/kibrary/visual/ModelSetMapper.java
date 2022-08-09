@@ -15,6 +15,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
+import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -54,6 +56,10 @@ public class ModelSetMapper extends Operation {
      */
     private Path structurePath;
     private String structureName;
+    /**
+     * Path of a {@link MultigridInformationFile}
+     */
+    private Path multigridPath;
     private Set<VariableType> variableTypes;
     /**
      * Solvers for equation
@@ -88,6 +94,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of an initial structure model used (PREM)");
             pw.println("#structureName ");
+            pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
+            pw.println("#multigridPath ");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
@@ -117,6 +125,8 @@ public class ModelSetMapper extends Operation {
         } else {
             structureName = property.parseString("structureName", "PREM");
         }
+        if (property.containsKey("multigridPath"))
+            multigridPath = property.parsePath("multigridPath", null, true, workPath);
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -145,9 +155,16 @@ public class ModelSetMapper extends Operation {
                 .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
+        // read multigrid file
+        MultigridDesign multigrid = null;
+        if (multigridPath != null) {
+            multigrid = MultigridInformationFile.read(multigridPath);
+        }
+
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
+        // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
@@ -162,6 +179,9 @@ public class ModelSetMapper extends Operation {
             for (int k = 1; k <= maxNum; k++){
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 List<KnownParameter> answers = KnownParameterFile.read(answerPath);
+
+                if (multigridPath != null) answers = multigrid.reverseFusion(answers);
+
                 PerturbationModel model = new PerturbationModel(answers, structure);
 
                 Path outBasisPath = outPath.resolve(method.simpleName() + k);

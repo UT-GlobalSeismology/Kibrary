@@ -42,9 +42,13 @@ public class MultigridDesigner extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String tag;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
 
     /**
      * path of basic ID file
@@ -153,8 +157,12 @@ public class MultigridDesigner extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         RealMatrix ata = assembler.getAta();
 
+        // prepare output folder
+        outPath = DatasetAid.createOutputFolder(workPath, "multigrid", tag, dateStr);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
         // output unknown parameter with large diagonal component and correlation
-        Path logPath = workPath.resolve("multigridDesigner" + dateStr + ".log");
+        Path logPath = outPath.resolve("multigridDesigner.log");
         MultigridDesign multigrid = new MultigridDesign();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(logPath))) {
             GadgetAid.dualPrintln(pw, "# i j AtA(i,i) AtA(i,j) coeff");
@@ -180,14 +188,14 @@ public class MultigridDesigner extends Operation {
         }
 
         // output multigrid design file
-        Path outputMultigridPath = workPath.resolve(DatasetAid.generateOutputFileName("multigrid", tag, dateStr, ".inf"));
+        Path outputMultigridPath = outPath.resolve("multigrid.inf");
         MultigridInformationFile.write(multigrid, outputMultigridPath);
 
         // output unknown parameter file
         List<UnknownParameter> fusedParameterList = parameterList.stream()
                 .filter(param -> !multigrid.fuses(param)).collect(Collectors.toList());
         fusedParameterList.addAll(multigrid.getFusedParameters());
-        Path outputUnknownsPath = workPath.resolve(DatasetAid.generateOutputFileName("unknowns", tag, dateStr, ".lst"));
+        Path outputUnknownsPath = outPath.resolve("unknowns.lst");
         UnknownParameterFile.write(fusedParameterList, outputUnknownsPath);
     }
 
