@@ -19,6 +19,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inv_old.InverseProblem;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
+import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -155,6 +157,8 @@ public class LetMeInvert extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // solve inversion and output
+        AtAFile.write(ata, outPath.resolve("ata.lst"));
+        AtdFile.write(atd, outPath.resolve("atd.lst"));
         UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
         for (InverseMethodEnum method : inverseMethods) {
             InverseProblem inverseProblem = method.formProblem(ata, atd);

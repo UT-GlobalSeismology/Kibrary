@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -51,6 +53,10 @@ public class MultigridDesigner extends Operation {
     private Path outPath;
 
     /**
+     * path of ata file
+     */
+    private Path ataPath;
+    /**
      * path of basic ID file
      */
     private Path basicIDPath;
@@ -77,8 +83,9 @@ public class MultigridDesigner extends Operation {
 
     private WeightingType weightingType;
 
-    private double minDiagonalAmplitude;
     private double minCorrelation;
+    private double minAmpRatio;
+    private double minDiagonalAmplitude;
 
     /**
      * @param args  none to create a property file <br>
@@ -99,24 +106,31 @@ public class MultigridDesigner extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#tag ");
-            pw.println("##Path of a basic ID file, must be set");
+            pw.println("##########If this section is set, the next section is not neeeded.");
+            pw.println("##Path of an AtA file");
+            pw.println("#ataPath ata.lst");
+            pw.println("##########If the previous section is set, this section is not neeeded.");
+            pw.println("##Path of a basic ID file");
             pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
+            pw.println("##Path of a basic waveform file");
             pw.println("#basicPath actual.dat");
-            pw.println("##Path of a partial ID file, must be set");
+            pw.println("##Path of a partial ID file");
             pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file, must be set");
+            pw.println("##Path of a partial waveform file");
             pw.println("#partialPath partial.dat");
-            pw.println("##Path of an unknown parameter list file, must be set");
+            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
+            pw.println("#weightingType ");
+            pw.println("##########Other settings.");
+            pw.println("##Path of an unknown parameter list file, must be set and must match ata file if it is used");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Partial types of parameters to fuse. If not set, all partial types will be used.");
             pw.println("#partialTypes ");
-            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
-            pw.println("#weightingType ");
-            pw.println("##(double) minDiagonalAmplitude");
-            pw.println("#minDiagonalAmplitude ");
-            pw.println("##(double) minCorrelation (0.75)");
+            pw.println("##(double) Minimum value of correlation for a pair of voxels to be fused (0.8)");
             pw.println("#minCorrelation ");
+            pw.println("##(double) Minimum value of amplitude ratio for a pair of voxels to be fused (0.9)");
+            pw.println("#minAmpRatio ");
+            pw.println("##(double) Minimum diagonal component amplitude of AtA for a voxel to be fused (0)");
+            pw.println("#minDiagonalAmplitude ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -130,32 +144,45 @@ public class MultigridDesigner extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
-        basicPath = property.parsePath("basicPath", null, true, workPath);
-        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
-        partialPath = property.parsePath("partialPath", null, true, workPath);
+        if (property.containsKey("ataPath")) {
+            ataPath = property.parsePath("ataPath", null, true, workPath);
+        } else {
+            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+            basicPath = property.parsePath("basicPath", null, true, workPath);
+            partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
+            partialPath = property.parsePath("partialPath", null, true, workPath);
+        }
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
         if (property.containsKey("partialTypes"))
             partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
                     .collect(Collectors.toList());
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
-        minDiagonalAmplitude = property.parseDouble("minDiagonalAmplitude", "5");
-        minCorrelation = property.parseDouble("minCorrelation", "0.75");
+        minCorrelation = property.parseDouble("minCorrelation", "0.8");
+        minAmpRatio = property.parseDouble("minAmpRatio", "0.9");
+        minDiagonalAmplitude = property.parseDouble("minDiagonalAmplitude", "0");
     }
 
     @Override
     public void run() throws IOException {
         String dateStr = GadgetAid.getTemporaryString();
 
-        // read input
-        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+        // read input and construct AtA
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
+        RealMatrix ata;
+        if (ataPath != null) {
+            ata = AtAFile.read(ataPath);
+            if (ata.getColumnDimension() != parameterList.size())
+                throw new IllegalArgumentException("AtA size does not match number of parameters.");
+        } else {
+            // read input
+            BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+            PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
 
-        // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
-        RealMatrix ata = assembler.getAta();
+            // assemble matrices
+            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+            ata = assembler.getAta();
+        }
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "multigrid", tag, dateStr);
@@ -176,8 +203,9 @@ public class MultigridDesigner extends Operation {
                     if (partialTypes != null && partialTypes.contains(parameterList.get(j).getPartialType()) == false)
                         continue;
 
-                    double coeff = ata.getEntry(i, j) * ata.getEntry(i, j) / ata.getEntry(i, i) / ata.getEntry(j, j);
-                    if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation) {
+                    double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
+                    double ampRatio = FastMath.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
+                    if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation && ampRatio > minAmpRatio && ampRatio < 1 / minAmpRatio) {
                         GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(j));

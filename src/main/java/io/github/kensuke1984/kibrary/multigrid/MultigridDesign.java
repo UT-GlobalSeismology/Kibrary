@@ -32,6 +32,10 @@ public class MultigridDesign {
                 System.err.println("Cannot fuse parameters due to partial type mismatch.");
                 return;
             }
+            if (fuses(param)) {
+                // skip if a parameter is already contained in originalParameters  TODO: this should be changed when combining 3 or more parameters
+                return;
+            }
         }
 
         // add original parameters
