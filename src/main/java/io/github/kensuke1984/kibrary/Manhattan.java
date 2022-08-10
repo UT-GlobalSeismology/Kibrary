@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
+import io.github.kensuke1984.kibrary.multigrid.MultigridPartialsForger;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
@@ -73,6 +74,7 @@ enum Manhattan {
     PartialIDMerge(62, PartialIDMerge.class),
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
+    MultigridPartialsForger(67, MultigridPartialsForger.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
