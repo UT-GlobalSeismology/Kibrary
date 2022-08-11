@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
- *
+ * A class that holds information of voxels that are changed before and after fusing voxels for multigrid inversion.
  * TODO this is currently only for 3D parameters
  *
  * @author otsuru

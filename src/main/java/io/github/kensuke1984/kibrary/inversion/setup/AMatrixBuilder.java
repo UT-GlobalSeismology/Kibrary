@@ -139,6 +139,7 @@ final class AMatrixBuilder {
         for (int i = 0; i < parameterList.size(); i++) {
             if (parameterList.get(i).getPartialType() != type)
                 continue;
+
             switch (type) {
             case TIME_SOURCE:
                 if (event.equals( ((TimeSourceSideParameter) parameterList.get(i)).getGlobalCMTID() ))

@@ -74,6 +74,8 @@ public final class BasicIDFile {
      * @param outputIDPath
      * @param outputWavePath
      * @throws IOException
+     *
+     * @author otsuru
      */
     public static void write(List<BasicID> basicIDs, Path outputIDPath, Path outputWavePath) throws IOException {
 
@@ -114,15 +116,10 @@ public final class BasicIDFile {
 
     /**
      * Reads both the ID file and the waveform file.
-     * @param idPath
-     *            {@link Path} of an ID file, if it does not exist, an
-     *            IOException
-     * @param dataPath
-     *            {@link Path} of an data file, if it does not exist, an
-     *            IOException
+     * @param idPath (Path) An ID file, if it does not exist, an IOException
+     * @param dataPath (Path) A data file, if it does not exist, an IOException
      * @return Array of {@link BasicID} containing waveform data
-     * @throws IOException
-     *             if an I/O error happens,
+     * @throws IOException if an I/O error occurs
      */
     public static BasicID[] read(Path idPath, Path dataPath) throws IOException {
         BasicID[] ids = read(idPath);
@@ -151,8 +148,7 @@ public final class BasicIDFile {
 
     /**
      * Reads only the ID file (and not the waveform file).
-     *
-     * @param idPath {@link Path} of an ID file
+     * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @return Array of {@link BasicID} without waveform data
      * @throws IOException if an I/O error occurs
      */

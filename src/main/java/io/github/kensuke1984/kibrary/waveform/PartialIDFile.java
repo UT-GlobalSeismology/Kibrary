@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 
@@ -60,6 +61,74 @@ public final class PartialIDFile {
      * [byte] File size for an ID
      */
     public static final int oneIDByte = 50;
+
+    /**
+     * Write partialIDs into ID file and waveform file.
+     * @param partialIDs
+     * @param outputIDPath
+     * @param outputWavePath
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2022/8/11
+     */
+    public static void write(List<PartialID> partialIDs, Path outputIDPath, Path outputWavePath) throws IOException {
+
+        // extract set of observers, events, voxels, periods, and phases
+        Set<Observer> observerSet = new HashSet<>();
+        Set<GlobalCMTID> eventSet = new HashSet<>();
+        Set<FullPosition> voxelPositionSet = new HashSet<>();
+        Set<double[]> periodSet = new HashSet<>();
+        Set<Phase> phaseSet = new HashSet<>();
+
+        partialIDs.forEach(id -> {
+            observerSet.add(id.getObserver());
+            eventSet.add(id.getGlobalCMTID());
+            voxelPositionSet.add(id.getVoxelPosition());
+            boolean add = true;
+            for (double[] periods : periodSet) {
+                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
+                    add = false;
+            }
+            if (add)
+                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
+            for (Phase phase : id.getPhases())
+                phaseSet.add(phase);
+        });
+
+        double[][] periodRanges = new double[periodSet.size()][];
+        int j = 0;
+        for (double[] periods : periodSet)
+            periodRanges[j++] = periods;
+        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
+
+        // output
+        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
+        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath,
+                observerSet, eventSet, periodRanges, phases, voxelPositionSet)) {
+            partialIDs.forEach(id -> {
+                try {
+                    if (id.getWaveformType().equals(WaveformType.PARTIAL) == false) {
+                        throw new IllegalStateException(id.toString() + "is not a partial, it is a " + id.getWaveformType().toString());
+                    }
+                    wdw.addPartialID(id);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+
+    /**
+     * Reads both the ID file and the waveform file.
+     * @param idPath (Path) An ID file, if it does not exist, an IOException
+     * @param dataPath (Path) A data file, if it does not exist, an IOException
+     * @return Array of {@link PartialID} containing waveform data
+     * @throws IOException if an I/O error occurs
+     */
+    public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
+        return read(idPath, dataPath, id -> true);
+    }
 
     public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
             throws IOException {
@@ -111,7 +180,8 @@ public final class PartialIDFile {
     }
 
     /**
-     * @param idPath {@link Path} of an ID file.
+     * Reads only the ID file (and not the waveform file).
+     * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @return Array of {@link PartialID} without waveform data
      * @throws IOException if an I/O error occurs
      */
@@ -172,6 +242,52 @@ public final class PartialIDFile {
         }
     }
 
+    /**
+     * An ID information contains<br>
+     * observer number(2)<br>
+     * event number(2)<br>
+     * component(1)<br>
+     * period range(1) <br>
+     * phases numbers (10*2)<br>
+     * start time(4)<br>
+     * number of points(4)<br>
+     * sampling hz(4) <br>
+     * convoluted(or observed) or not(1)<br>
+     * position of a waveform for the ID in the datafile(8)<br>
+     * type of partial(1)<br>
+     * point of perturbation(2)
+     *
+     * @param bytes
+     *            for one ID
+     * @return an ID written in the bytes
+     */
+    private static PartialID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] ids, double[][] periodRanges,
+             Phase[] phases, FullPosition[] perturbationLocations) {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        Observer observer = observers[bb.getShort()];
+        GlobalCMTID eventID = ids[bb.getShort()];
+        SACComponent component = SACComponent.getComponent(bb.get());
+        double[] period = periodRanges[bb.get()];
+        Set<Phase> tmpset = new HashSet<>();
+        for (int i = 0; i < 10; i++) {
+            short iphase = bb.getShort();
+            if (iphase != -1)
+                tmpset.add(phases[iphase]);
+        }
+        Phase[] usablephases = new Phase[tmpset.size()];
+        usablephases = tmpset.toArray(usablephases);
+        double startTime = bb.getFloat(); // starting time
+        int npts = bb.getInt(); // データポイント数
+        double samplingHz = bb.getFloat();
+        boolean isConvolved = 0 < bb.get();
+        long startByte = bb.getLong();
+        PartialType partialType = PartialType.getType(bb.get());
+        FullPosition perturbationLocation = perturbationLocations[bb.getShort()];
+        return new PartialID(observer, eventID, component, samplingHz, startTime, npts, period[0], period[1],
+                usablephases, startByte, isConvolved, perturbationLocation, partialType);
+    }
+
+
 ///////////////TODO : change or delete following
 
     /**
@@ -231,55 +347,6 @@ public final class PartialIDFile {
                 .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
         Files.write(outPath, lines);
         System.err.println(outPath + " is created as a list of stations.");
-    }
-
-    /**
-     * An ID information contains<br>
-     * observer number(2)<br>
-     * event number(2)<br>
-     * component(1)<br>
-     * period range(1) <br>
-     * phases numbers (10*2)<br>
-     * start time(4)<br>
-     * number of points(4)<br>
-     * sampling hz(4) <br>
-     * convoluted(or observed) or not(1)<br>
-     * position of a waveform for the ID in the datafile(8)<br>
-     * type of partial(1)<br>
-     * point of perturbation(2)
-     *
-     * @param bytes
-     *            for one ID
-     * @return an ID written in the bytes
-     */
-    private static PartialID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] ids, double[][] periodRanges,
-             Phase[] phases, FullPosition[] perturbationLocations) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        Observer observer = observers[bb.getShort()];
-        GlobalCMTID eventID = ids[bb.getShort()];
-        SACComponent component = SACComponent.getComponent(bb.get());
-        double[] period = periodRanges[bb.get()];
-        Set<Phase> tmpset = new HashSet<>();
-        for (int i = 0; i < 10; i++) {
-            short iphase = bb.getShort();
-            if (iphase != -1)
-                tmpset.add(phases[iphase]);
-        }
-        Phase[] usablephases = new Phase[tmpset.size()];
-        usablephases = tmpset.toArray(usablephases);
-        double startTime = bb.getFloat(); // starting time
-        int npts = bb.getInt(); // データポイント数
-        double samplingHz = bb.getFloat();
-        boolean isConvolved = 0 < bb.get();
-        long startByte = bb.getLong();
-        PartialType partialType = PartialType.getType(bb.get());
-        FullPosition perturbationLocation = perturbationLocations[bb.getShort()];
-        return new PartialID(observer, eventID, component, samplingHz, startTime, npts, period[0], period[1],
-                usablephases, startByte, isConvolved, perturbationLocation, partialType);
-    }
-
-    public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
-        return read(idPath, dataPath, id -> true);
     }
 
     private static void outputGlobalCMTID(String header, PartialID[] ids) throws IOException {

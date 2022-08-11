@@ -39,6 +39,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
+ * @since a long time ago
+ * @author Kensuke Konishi
  */
 public class BasicID {
 

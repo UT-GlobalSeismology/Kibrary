@@ -104,11 +104,11 @@ public class WaveformDataWriter implements Closeable, Flushable {
      *                           to use ranges [10, 30] and [50,100] then the periodRanges
      *                           should be new double[][]{{10,30},{50,100}}
      * @param phases			 Array of phase names
-     * @param perturbationPoints must contain all information of the IDs to write
+     * @param voxelPositions must contain all information of the IDs to write
      * @throws IOException if an error occurs
      */
     public WaveformDataWriter(Path idPath, Path dataPath, Set<Observer> observerSet, Set<GlobalCMTID> globalCMTIDSet,
-            double[][] periodRanges, Phase[] phases, Set<FullPosition> perturbationPoints) throws IOException {
+            double[][] periodRanges, Phase[] phases, Set<FullPosition> voxelPositions) throws IOException {
         this.idPath = idPath;
         this.dataPath = dataPath;
         if (checkDuplication(periodRanges)) throw new RuntimeException("Input periodRanges have duplication.");
@@ -120,7 +120,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeShort(globalCMTIDSet.size());
         idStream.writeShort(periodRanges.length);
         idStream.writeShort(phases.length);
-        if (perturbationPoints != null) idStream.writeShort(perturbationPoints.size());
+        if (voxelPositions != null) idStream.writeShort(voxelPositions.size());
         makeObserverMap(observerSet);
         makeGlobalCMTIDMap(globalCMTIDSet);
         for (int i = 0; i < periodRanges.length; i++) {
@@ -128,8 +128,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
             idStream.writeDouble(periodRanges[i][1]);
         }
         makePhaseMap(phases);
-        if (perturbationPoints != null) makePerturbationMap(perturbationPoints);
-        mode = (perturbationPoints == null ? 0 : 1);
+        if (voxelPositions != null) makePerturbationMap(voxelPositions);
+        mode = (voxelPositions == null ? 0 : 1);
     }
 
     private static boolean checkDuplication(double[][] periodRanges) {

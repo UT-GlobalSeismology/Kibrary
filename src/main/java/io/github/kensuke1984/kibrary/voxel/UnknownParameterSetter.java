@@ -113,18 +113,4 @@ public class UnknownParameterSetter {
         UnknownParameterFile.write(parameterList, outputPath);
     }
 
-    private static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
-        double r = point.getR();
-        if (r <= 0) {
-            System.err.println("location has no R information or invalid R: " + r);
-        }
-        double latitude = point.getLatitude();// 地理緯度
-        double longitude = point.getLongitude();
-        double startA = Earth.getExtendedShaft(point.toFullPosition(r - 0.5 * dr));
-        double endA = Earth.getExtendedShaft(point.toFullPosition(r + 0.5 * dr));
-        double v = Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
-                longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
-
-        return v;
-    }
 }

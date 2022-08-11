@@ -889,7 +889,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 FullPosition location = bp.getObserverPosition().toFullPosition(bp.getBodyR()[ibody]);
 //				System.err.println(location);
 
-                if (!perturbationLocationSet.contains(location))
+                if (!voxelPositionSet.contains(location))
                     continue;
                     for (SACComponent component : components) {
                         if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
@@ -958,7 +958,7 @@ public class PartialWaveformAssembler3D extends Operation {
         Path datasetPath = outPath.resolve("partial.dat");
 
         partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
-                phases, perturbationLocationSet);
+                phases, voxelPositionSet);
         writeLog("Creating " + idPath + " " + datasetPath);
         System.err.println("Creating " + idPath + " " + datasetPath);
 
@@ -970,7 +970,7 @@ public class PartialWaveformAssembler3D extends Operation {
     private Set<GlobalCMTID> eventSet;
     private double[][] periodRanges;
     private Phase[] phases;
-    private Set<FullPosition> perturbationLocationSet;
+    private Set<FullPosition> voxelPositionSet;
 
     /**
      * Reads timewindow information include observer and GCMTid
@@ -1041,16 +1041,16 @@ public class PartialWaveformAssembler3D extends Operation {
 
     private void readPerturbationPoints() throws IOException {
         System.err.println("Reading perutbation points");
-        perturbationLocationSet = new VoxelInformationFile(voxelPath).fullPositionSet();
+        voxelPositionSet = new VoxelInformationFile(voxelPath).fullPositionSet();
 
         if (timePartialPath != null) {
             if (observerSet.isEmpty() || eventSet.isEmpty())
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
-            observerSet.forEach(observer -> perturbationLocationSet.add(new FullPosition(observer.getPosition().getLatitude(),
+            observerSet.forEach(observer -> voxelPositionSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            eventSet.forEach(id -> perturbationLocationSet.add(id.getEventData().getCmtLocation()));
+            eventSet.forEach(id -> voxelPositionSet.add(id.getEventData().getCmtLocation()));
         }
-        writeLog(perturbationLocationSet.size() + " perturbation points are found in " + voxelPath);
+        writeLog(voxelPositionSet.size() + " voxel points are found in " + voxelPath);
     }
 
 

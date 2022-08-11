@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * One ID volume:{@link PartialIDFile#oneIDByte}
  * </p>
  *
- * @version 0.2.0.1.1
+ * @since version 0.2.0.1.1
  * @author Kensuke Konishi
  *
  */
