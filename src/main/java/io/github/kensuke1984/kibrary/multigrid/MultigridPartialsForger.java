@@ -79,8 +79,8 @@ public class MultigridPartialsForger extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
-            pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
-            pw.println("#multigridPath ");
+            pw.println("##Path of a multigrid information file, must be set");
+            pw.println("#multigridPath multigrid.inf");
         }
         System.err.println(outPath + " is created.");
     }

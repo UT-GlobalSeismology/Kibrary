@@ -54,7 +54,7 @@ public class MultigridInformationFile {
         List<UnknownParameter> originalParams = new ArrayList<>();
         while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
-            String[] unknownParts = Arrays.stream(parts).skip(0).toArray(String[]::new);
+            String[] unknownParts = Arrays.stream(parts).skip(1).toArray(String[]::new);
             if (parts[0].equals("-")) {
                 originalParams.add(UnknownParameterFile.constructParameterFromParts(unknownParts));
             } else if (parts[0].equals("+")) {
