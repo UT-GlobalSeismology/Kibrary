@@ -17,8 +17,8 @@ import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -764,6 +764,14 @@ public class ThreeDPartialMaker {
             bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
                     , bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
             fpBody = fp.getSpcBodyList().get(iBodyFp);
+
+            //TODO
+           // if (fp.getObserverID().equals("XY100") && iBodyBp == 0 && iBodyFp == 0) {
+           //     System.err.println(component + " " + type);
+           //     for (int k = 0; k < bpBody.getNumberOfComponent(); k++)
+           //         System.err.println("DEBUG BP: " +  bpBody.getSpcComponent(k).getValueInFrequencyDomain()[512]);
+           //     System.err.println();
+           // }
 //			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
         }
         else {

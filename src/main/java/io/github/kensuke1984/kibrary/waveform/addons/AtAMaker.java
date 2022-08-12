@@ -78,6 +78,7 @@ public class AtAMaker implements Operation_old {
     private Properties PROPERTY;
 
     private Path workPath;
+    private Path outPath;
     private Path fpPath;
     private Path bpPath;
     private Path timewindowPath;
@@ -612,6 +613,9 @@ public class AtAMaker implements Operation_old {
      * @throws IOException
      */
     private void set() throws IOException {
+        outPath = workPath.resolve("assembled" + GadgetAid.getTemporaryString());
+        Files.createDirectories(outPath);
+
         fpPath = getPath("fpPath");
         timewindowPath = getPath("timewindowPath");
 
@@ -739,14 +743,14 @@ public class AtAMaker implements Operation_old {
         partialIDPaths = new Path[nFreq];
         partialPaths = new Path[nFreq];
         for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-            partialPaths[ifreq] = workPath.resolve("partial_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
-            partialIDPaths[ifreq] = workPath.resolve("partialID_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
+            partialPaths[ifreq] = outPath.resolve("partial_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
+            partialIDPaths[ifreq] = outPath.resolve("partialID_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
         }
 
-        Path outUnknownPath = workPath.resolve("newUnknowns" + tempString + ".inf");
-        Path outOriginalUnknownPath = workPath.resolve("originalUnknowns" + tempString + ".inf");
-        Path outLayerPath = workPath.resolve("newPerturbationLayers" + tempString + ".inf");
-        Path outHorizontalPoints = workPath.resolve("newHorizontalPositions" + tempString + ".inf");
+        Path outUnknownPath = outPath.resolve("newUnknowns" + tempString + ".inf");
+        Path outOriginalUnknownPath = outPath.resolve("originalUnknowns" + tempString + ".inf");
+        Path outLayerPath = outPath.resolve("newPerturbationLayers" + tempString + ".inf");
+        Path outHorizontalPoints = outPath.resolve("newHorizontalPositions" + tempString + ".inf");
         outputUnknownParameters(outUnknownPath, newUnknownParameters);
         outputUnknownParameters(outOriginalUnknownPath, originalUnknownParameters);
         outputPerturbationLayers(outLayerPath);
@@ -1460,15 +1464,15 @@ public class AtAMaker implements Operation_old {
             SourceTimeFunction stf;
             switch (sourceTimeFunction) {
             case 1:
-                System.out.println("Using boxcar STF");
+                System.out.println("Using boxcar STF"); //TODO
                 stf = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
                 break;
             case 2:
-                System.out.println("Using triangle STF");
+                //System.out.println("Using triangle STF"); //TODO
                 stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
                 break;
             case 3:
-                System.out.println("Using asymmetric triangle STF with user catalog");
+                System.out.println("Using asymmetric triangle STF with user catalog"); //TODO
                 double halfDuration1 = id.getEventData().getHalfDuration();
                 double halfDuration2 = id.getEventData().getHalfDuration();
                 boolean found = false;
@@ -1491,7 +1495,7 @@ public class AtAMaker implements Operation_old {
             case 4:
                 throw new RuntimeException("Case 4 not implemented yet");
             case 5:
-                System.out.println("Using triangle STF with user catalog");
+                System.out.println("Using triangle STF with user catalog"); //TODO
                 halfDuration = 0.;
                 double amplitudeCorrection = 1.;
                 found = false;
@@ -1713,10 +1717,16 @@ public class AtAMaker implements Operation_old {
                 }
                 else if (mode.equals("BOTH")) {
                     fpSpc = fpname.read();
-                    fpSpc_PSV = fpname_PSV.read();
+                    try { //TODO
+                        fpSpc_PSV = fpname_PSV.read();
+                    } catch(IOException e) { //TODO
+                        System.err.println(fpname_PSV); //TODO
+                        System.err.println(e); //TODO
+                    } //TODO
                     obsPos = fpSpc.getObserverPosition();
                     bodyR = fpSpc.getBodyR();
                     obsName = fpname.getStationCode();
+
                 }
             }
 
@@ -1737,8 +1747,6 @@ public class AtAMaker implements Operation_old {
             if (Double.isNaN(phiFP))
                 throw new RuntimeException("PhiFP is NaN " + fpname + " " + station);
 //			System.out.println("phi= " + phi);
-
-            System.out.println(fpSourceLoc + " " + obsPos);
 
 //			System.out.println("geographic, geodetic distance = " + geocentricDistance + " " + distance);
 
@@ -1788,6 +1796,9 @@ public class AtAMaker implements Operation_old {
                     bpname3_PSV = bpnames_PSV[ipointBP + 2];
                 }
             }
+            //TODO
+            //System.err.println(fpSourceLoc + " " + obsPos + " SH " + bpname1 + " " + bpname2 + " " + bpname1);
+            //System.err.println("PSV " + " " + bpname1_PSV + " " + bpname2_PSV + " " + bpname3_PSV);
 
             SPCFileName fpname1 = null;
             SPCFileName fpname2 = null;
@@ -1895,6 +1906,12 @@ public class AtAMaker implements Operation_old {
                     }
                 }
             }
+
+            //TODO
+            //if (obsName.equals("XY100")) {
+                //for (int k = 0; k < bpSpc1.getSpcBodyList().get(0).getNumberOfComponent(); k++)
+                                //System.out.println("DEBUG BP: " +  bpSpc1.getSpcBodyList().get(0).getSpcComponent(k).getValueInFrequencyDomain()[512]);
+            //}
 
             t1f = System.currentTimeMillis();
 
@@ -2181,11 +2198,11 @@ public class AtAMaker implements Operation_old {
                                         } // END write partials
 
                                         double tmpatd = 0;
-                                        for (int k = 0; k < cutU.length; k++) {
-                                            cutU[k] *= weight * weightUnknown;
-                                            if (computationFlag != 3)
-                                                tmpatd += cutU[k] * residual[k];
-                                        }
+                                        //for (int k = 0; k < cutU.length; k++) {
+                                        //    cutU[k] *= weight * weightUnknown;
+                                        //    if (computationFlag != 3)
+                                        //        tmpatd += cutU[k] * residual[k];
+                                        //}
 
                                         partials[iunknown][iweight][ifreq][windowCounter] = cutU;
 
