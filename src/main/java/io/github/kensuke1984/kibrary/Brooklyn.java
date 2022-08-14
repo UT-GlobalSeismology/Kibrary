@@ -15,7 +15,9 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.visual.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
+import io.github.kensuke1984.kibrary.visual.DistanceHistogram;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
@@ -53,6 +55,8 @@ enum Brooklyn {
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
     VarianceComputer(45, VarianceComputer.class),
+    DistanceHistogram(48, DistanceHistogram.class),
+    AzimuthHistogram(49, AzimuthHistogram.class),
     // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
     // Partial 50
