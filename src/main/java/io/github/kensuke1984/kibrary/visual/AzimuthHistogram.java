@@ -23,11 +23,15 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
+ * Creates histogram of records in a dataset by azimuth.
+ * A {@link DataEntryListFile} is used as input.
+ * <p>
+ * By default, the number of records in the range [180:360) are overlapped on range [0:180).
+ * (ex. A record with azimuth 240 is counted as having azimuth 60.)
+ * This can be suppressed by setting the "expand" option.
+ *
  * @since a long time ago
  * @version 2022/8/12 renamed and moved from util.statistics.HistogramAzimuth to visual.AzimuthHistogram
- *
- * TODO flip 180-360 onto 0-180
- * TODO azimuth range to plot in
  */
 public class AzimuthHistogram {
 
@@ -68,6 +72,8 @@ public class AzimuthHistogram {
                 .desc("Minimum azimuth in histogram (0)").build());
         options.addOption(Option.builder("M").longOpt("maxAzimuth").hasArg().argName("maxAzimuth")
                 .desc("Maximum azimuth in histogram (180)").build());
+        options.addOption(Option.builder("e").longOpt("expand")
+                .desc("Expand azimuth range to [0:360), not overlapping onto [0:180) range").build());
 
         return options;
     }
@@ -91,6 +97,7 @@ public class AzimuthHistogram {
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 10;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
+        boolean expand = cmdLine.hasOption("e");
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
@@ -98,6 +105,7 @@ public class AzimuthHistogram {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtLocation();
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
             double azimuth = Math.toDegrees(eventPosition.computeAzimuth(observerPosition));
+            if (!expand && azimuth > 180) azimuth -= 180;
             numberOfRecords[(int) (azimuth / interval)]++;
         }
 

@@ -97,7 +97,7 @@ public class UnknownParameterSetter {
         for (HorizontalPosition position : positions) {
             for (int i = 0; i < radii.length; i++) {
                 FullPosition pointPosition = position.toFullPosition(radii[i]);
-                double volume = Earth.getVolume(pointPosition, layerThicknesses[i], dLatitude, dLongitude);
+                double volume = Earth.computeVolume(pointPosition, layerThicknesses[i], dLatitude, dLongitude);
                 for (PartialType type : types) {
                     Physical3DParameter parameter = new Physical3DParameter(type, pointPosition, volume);
                     parameterList.add(parameter);

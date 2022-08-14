@@ -71,7 +71,7 @@ public class Raypath {
         sourcePosition = source;
         receiverPosition = receiver;
         azimuth = source.computeAzimuth(receiver);
-        epicentralDistance = Earth.getEpicentralDistance(source, receiver);
+        epicentralDistance = Earth.computeEpicentralDistance(source, receiver);
         backAzimuth = source.computeBackAzimuth(receiver);
     }
 

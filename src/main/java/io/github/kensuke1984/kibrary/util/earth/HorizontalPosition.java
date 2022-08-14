@@ -110,26 +110,26 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * @param position {@link HorizontalPosition} to compute azimuth with
-     * @return positionとのazimuth [rad]
+     * @return positionとのazimuth [rad] [0:2pi)
      */
     public double computeAzimuth(HorizontalPosition position) {
-        return Earth.getAzimuth(this, position);
+        return Earth.computeAzimuth(this, position);
     }
 
     /**
      * @param position {@link HorizontalPosition} to compute back azimuth with
-     * @return positionとのback azimuth [rad]
+     * @return positionとのback azimuth [rad] [0:2pi)
      */
     public double computeBackAzimuth(HorizontalPosition position) {
-        return Earth.getBackAzimuth(this, position);
+        return Earth.computeBackAzimuth(this, position);
     }
 
     /**
      * @param horizontalPosition {@link HorizontalPosition}
-     * @return epicentral distance [rad] between this and horizontalPosition
+     * @return epicentral distance [rad] between this and horizontalPosition [0:pi]
      */
     public double computeEpicentralDistance(HorizontalPosition horizontalPosition) {
-        return Earth.getEpicentralDistance(horizontalPosition, this);
+        return Earth.computeEpicentralDistance(horizontalPosition, this);
     }
 
     public double computeGeographicalAzimuth(HorizontalPosition position) {

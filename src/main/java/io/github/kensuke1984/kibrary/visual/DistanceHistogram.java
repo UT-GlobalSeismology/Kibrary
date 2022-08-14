@@ -23,6 +23,9 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
+ * Creates histogram of records in a dataset by epicentral distance.
+ * A {@link DataEntryListFile} is used as input.
+ *
  * @since a long time ago
  * @version 2022/8/12 renamed and moved from util.statistics.Histogram to visual.DistanceHistogram
  */

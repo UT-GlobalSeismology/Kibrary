@@ -179,7 +179,7 @@ public class CheckerboardMaker extends Operation {
                         + (int) Math.round((position.getLongitude() - referencePosition.getLongitude()) / dLongitude)
                         + i + numForSuppressFlip(position);
 
-                double volume = Earth.getVolume(position, layerThicknesses[i], dLatitude, dLongitude);
+                double volume = Earth.computeVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < variableTypes.size(); k++) {
                     // CAUTION: (numdiff % 2) can be either 1 or -1 !!

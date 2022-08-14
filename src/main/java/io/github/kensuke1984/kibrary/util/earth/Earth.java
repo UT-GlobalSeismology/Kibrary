@@ -152,7 +152,7 @@ public final class Earth {
     }
 
     /**
-     * 長軸a 緯度 経度 に囲まれた領域の体積を求める<br>
+     * Compute volume within an input range.
      *
      * @param startA         [km] start of major axis [0,endA)
      * @param endA           [km] end of major axis (startA, ∞]
@@ -162,7 +162,7 @@ public final class Earth {
      * @param endLongitude   [deg] [startLongitude, 180]
      * @return 長軸startAからendAまでの楕円弧 緯度 経度 に囲まれた領域の体積
      */
-    public static double getVolume(double startA, double endA, double startLatitude, double endLatitude,
+    public static double computeVolume(double startA, double endA, double startLatitude, double endLatitude,
                                    double startLongitude, double endLongitude) {
         // radius
         if (endA <= startA || startA < 0)
@@ -206,7 +206,7 @@ public final class Earth {
     }
 
     /**
-     * Compute volume with in an input range.
+     * Compute volume within an input range.
      * Note that, for instance, the range is [point-0.5*dX, point+0.5*dX]
      *
      * @param point      center location
@@ -215,7 +215,7 @@ public final class Earth {
      * @param dLongitude [deg]
      * @return volume [km<sup>3</sup>]
      */
-    public static double getVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
+    public static double computeVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
         double r = point.getR();
         if (r <= 0) throw new IllegalArgumentException("location has an invalid R: " + r);
 
@@ -223,7 +223,7 @@ public final class Earth {
         double longitude = point.getLongitude();
         double startA = getExtendedShaft(point.toFullPosition(r - 0.5 * dr));
         double endA = getExtendedShaft(point.toFullPosition(r + 0.5 * dr));
-        return getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
+        return computeVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
                 longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
     }
 
@@ -305,9 +305,9 @@ public final class Earth {
      *
      * @param pos1 {@link HorizontalPosition} of a point
      * @param pos2 {@link HorizontalPosition} of a point
-     * @return [rad] epicentral distance between pos1 and pos2
+     * @return [rad] epicentral distance between pos1 and pos2 [0:pi]
      */
-    public static double getEpicentralDistance(HorizontalPosition pos1, HorizontalPosition pos2) {
+    public static double computeEpicentralDistance(HorizontalPosition pos1, HorizontalPosition pos2) {
 
         double theta1 = pos1.getTheta();
         double theta2 = pos2.getTheta();
@@ -322,14 +322,14 @@ public final class Earth {
     /**
      * @param eq      {@link HorizontalPosition} of source
      * @param station {@link HorizontalPosition} of station
-     * @return [rad] azimuth of the station from the eq
+     * @return [rad] azimuth of the station from the eq [0:2pi)
      */
-    public static double getAzimuth(HorizontalPosition eq, HorizontalPosition station) {
+    public static double computeAzimuth(HorizontalPosition eq, HorizontalPosition station) {
         double e = eq.getTheta();
         double s = station.getTheta();
         // System.out.println("eq:"+e+" station: "+s);
         double deltaPhi = -eq.getPhi() + station.getPhi();
-        double delta = getEpicentralDistance(eq, station);
+        double delta = computeEpicentralDistance(eq, station);
         double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi)) /
                 FastMath.sin(delta);
         if (1 < cos) cos = 1;
@@ -342,13 +342,13 @@ public final class Earth {
     /**
      * @param sourcePos   {@link HorizontalPosition} of a source
      * @param receiverPos {@link HorizontalPosition} of a receiver
-     * @return [rad] Back azimuth of the receiver from the source
+     * @return [rad] Back azimuth of the receiver from the source [0:2pi)
      */
-    public static double getBackAzimuth(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
+    public static double computeBackAzimuth(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
         double e = sourcePos.getTheta();
         double s = receiverPos.getTheta();
         double deltaPhi = sourcePos.getPhi() - receiverPos.getPhi();
-        double delta = getEpicentralDistance(sourcePos, receiverPos);
+        double delta = computeEpicentralDistance(sourcePos, receiverPos);
         double cos = (FastMath.cos(e) * FastMath.sin(s) - FastMath.sin(e) * FastMath.cos(s) * FastMath.cos(deltaPhi)) /
                 FastMath.sin(delta);
         double sin = FastMath.sin(e) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
