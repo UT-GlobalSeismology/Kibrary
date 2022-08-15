@@ -6,7 +6,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 
 /**
  * Conjugate gradient method

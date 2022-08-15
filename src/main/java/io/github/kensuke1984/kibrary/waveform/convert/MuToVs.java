@@ -41,12 +41,12 @@ public class MuToVs {
 		PolynomialStructure_old structure = PolynomialStructure_old.PREM;
 		
 		List<PartialID> partialsVs = partialsMU.stream().map(p -> {
-			double r = p.getPerturbationLocation().getR();
+			double r = p.getVoxelPosition().getR();
 			double[] vsData = new ArrayRealVector(p.getData()).mapMultiply(2 * structure.getRhoAt(r) * structure.getVshAt(r)).toArray();
 			
 			PartialID parVs = new PartialID(p.getObserver(), p.getGlobalCMTID(), p.getSacComponent(), p.getSamplingHz(),
 					p.getStartTime(), p.getNpts(), p.getMinPeriod(), p.getMaxPeriod(),
-					p.getPhases(), p.getStartByte(), p.isConvolute(), p.getPerturbationLocation()
+					p.getPhases(), p.getStartByte(), p.isConvolved(), p.getVoxelPosition()
 					, PartialType.Vs, vsData);
 			return parVs;
 		}).collect(Collectors.toList());
@@ -69,7 +69,7 @@ public class MuToVs {
 			periodRanges[i] = periodRangeList.get(i);
 		}
 		
-		Set<FullPosition> locationSet = partialsMU.stream().map(p -> p.getPerturbationLocation()).collect(Collectors.toSet());
+		Set<FullPosition> locationSet = partialsMU.stream().map(p -> p.getVoxelPosition()).collect(Collectors.toSet());
 		
 		WaveformDataWriter writer = new WaveformDataWriter(outID, out, stationSet, globalCMTIDSet, periodRanges, phases, locationSet);
 		
@@ -95,7 +95,7 @@ public class MuToVs {
 	
 	private static int whichUnknown(PartialID partial, FullPosition[] locations) {
 		for (int i = 0; i < locations.length; i++) {
-			if (partial.getPerturbationLocation().equals(locations[i])) {
+			if (partial.getVoxelPosition().equals(locations[i])) {
 				return i;
 			}
 		}

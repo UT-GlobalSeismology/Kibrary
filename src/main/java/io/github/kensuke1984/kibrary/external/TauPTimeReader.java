@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
  * TODO TauP のクラスから直接呼び出す
  *
  * @author Kensuke Konishi
- *
+ * @deprecated use TauP_Time in the taup java library; it should be much faster
  */
 public final class TauPTimeReader {
 

@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
  * @author otsuru
  * @since 2022/7/6 created based on part of inversion.Dvector
  */
-final class Weighting {
+public final class Weighting {
 
     private final RealVector[] weightingVecs;
 
@@ -28,7 +28,7 @@ final class Weighting {
     private final WeightingType weightingType;
     private final List<DataSelectionInformation> selectionInfo; // TODO apply
 
-    Weighting(DVectorBuilder dVector, WeightingType weightingType, List<DataSelectionInformation> selectionInfo) {
+    public Weighting(DVectorBuilder dVector, WeightingType weightingType, List<DataSelectionInformation> selectionInfo) {
         this.dVector = dVector;
         this.weightingType = weightingType;
         this.selectionInfo = selectionInfo;
@@ -68,7 +68,7 @@ final class Weighting {
         return weightingVectors;
     }
 
-    RealVector get(int i) {
+    public RealVector get(int i) {
         return weightingVecs[i].copy();
     }
 

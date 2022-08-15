@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
+import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -51,6 +53,10 @@ public class ModelMapper extends Operation {
      */
     private Path structurePath;
     private String structureName;
+    /**
+     * Path of a {@link MultigridInformationFile}
+     */
+    private Path multigridPath;
     private Set<VariableType> variableTypes;
 
     private String mapRegion;
@@ -81,6 +87,8 @@ public class ModelMapper extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of an initial structure model used (PREM)");
             pw.println("#structureName ");
+            pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
+            pw.println("#multigridPath ");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
@@ -106,6 +114,8 @@ public class ModelMapper extends Operation {
         } else {
             structureName = property.parseString("structureName", "PREM");
         }
+        if (property.containsKey("multigridPath"))
+            multigridPath = property.parsePath("multigridPath", null, true, workPath);
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -125,11 +135,19 @@ public class ModelMapper extends Operation {
             structure = PolynomialStructure.of(structureName);
         }
 
-        // read model
+        // read knowns
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
         Set<FullPosition> positions = KnownParameter.extractParameterList(knowns).stream()
                 .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
+
+        // read and apply multigrid file
+        if (multigridPath != null) {
+            MultigridDesign multigrid = MultigridInformationFile.read(multigridPath);
+            knowns = multigrid.reverseFusion(knowns);
+        }
+
+        // build model
         PerturbationModel model = new PerturbationModel(knowns, structure);
 
         // decide map region

@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 /**
  * Operation to draw map of raypaths, events, observers, and voxel points.
  * <p>
- * In cutAtPiercePoint mode, pierce points are calculated using TauP and exported in list files.
+ * In cutAtPiercePoint mode, pierce points are computed using TauP and exported in list files.
  * By reusing the output folder, these pierce point files can be reused to save the time to compute them again.
  * <p>
  * This class uses GMT to draw raypaths.
@@ -85,7 +85,7 @@ public class RaypathMapper extends Operation {
     private boolean cutAtPiercePoint;
     private Phase piercePhase;
     private double pierceDepth;
-    private String model;
+    private String structureName;
 
     private int colorMode;
     private static final int BIN_DISTANCE = 1;
@@ -145,12 +145,12 @@ public class RaypathMapper extends Operation {
             pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
             pw.println("#cutAtPiercePoint ");
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
-            pw.println("##Phase to calculate pierce points for (ScS)");
+            pw.println("##Phase to compute pierce points for (ScS)");
             pw.println("#piercePhase ");
-            pw.println("##(double) Depth to calculate pierce points for [km] (2491)");
+            pw.println("##(double) Depth to compute pierce points for [km] (2491)");
             pw.println("#pierceDepth ");
-            pw.println("##(String) Name of model to use for calculating pierce points (prem)");
-            pw.println("#model ");
+            pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
+            pw.println("#structureName ");
             pw.println("##########Settings for mapping");
             pw.println("##Mode of coloring of raypaths {0: single color, 1: bin by distance, 2: bin by azimuth,");
             pw.println("## 3: bin by back azimuth, 4: bin by turning-point-azimuth} (0)");
@@ -194,7 +194,7 @@ public class RaypathMapper extends Operation {
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
         piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
         pierceDepth = property.parseDouble("pierceDepth", "2491");
-        model = property.parseString("model", "prem");
+        structureName = property.parseString("structureName", "prem");
 
         colorMode = property.parseInt("colorMode", "0");
         if (colorMode > 0)
@@ -207,7 +207,7 @@ public class RaypathMapper extends Operation {
 
         // error prevention
         if (cutAtPiercePoint == false && colorMode == BIN_MIDAZIMUTH)
-            throw new IllegalArgumentException("Cannot calculate midazimuth without cutAtPiercePoint");
+            throw new IllegalArgumentException("Cannot compute midazimuth without cutAtPiercePoint");
 
         setName();
     }
@@ -313,7 +313,7 @@ public class RaypathMapper extends Operation {
         System.err.println("Calculating pierce points ...");
 
         raypaths.forEach(ray -> {
-            if (ray.calculatePiercePoints(model, piercePhase, pierceDepth)) {
+            if (ray.computePiercePoints(structureName, piercePhase, pierceDepth)) {
                 turningPointLines.add(ray.getTurningPoint().toHorizontalPosition().toString());
                 insideLines.add(lineFor(ray.getEnterPoint(), ray.getLeavePoint(), ray));
                 outsideLines.add(lineFor(ray.getSource(), ray.getEnterPoint(), ray));
@@ -351,7 +351,7 @@ public class RaypathMapper extends Operation {
                 + (int) Math.floor(FastMath.toDegrees(raypath.getBackAzimuth()));
         // midazimuth can be obtained only when turning point is already known
         if (raypath.hasCalculatedTurningPoint()) {
-            line = line + " " + (int) Math.floor(FastMath.toDegrees(raypath.calculateMidAzimuth()));
+            line = line + " " + (int) Math.floor(FastMath.toDegrees(raypath.computeMidAzimuth()));
         }
         return line;
     }

@@ -159,8 +159,8 @@ public class Profile_alignPcP {
 			String[] eachMisfitString = new String[] {""};
 			
 			Comparator<BasicID> compareByDistance = (BasicID o1, BasicID o2) -> {
-				double d1 = o1.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(o1.getObserver().getPosition());
-				double d2 = o2.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(o2.getObserver().getPosition());
+				double d1 = o1.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(o1.getObserver().getPosition());
+				double d2 = o2.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(o2.getObserver().getPosition());
             	return Double.compare(d1, d2);
 				};
 			
@@ -209,7 +209,7 @@ public class Profile_alignPcP {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
+							double distance = id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							double ypos = counter.getAndIncrement() * 6.;
 							double norm = maxObs /= 3.;
@@ -341,9 +341,9 @@ public class Profile_alignPcP {
 					RealVector synVector = synTrace.getYVector();
 					RealVector bornVector = bornTrace.getYVector();
 					
-					double distance = id.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					

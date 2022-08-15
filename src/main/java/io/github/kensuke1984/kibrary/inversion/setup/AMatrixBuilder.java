@@ -10,7 +10,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -57,9 +57,9 @@ final class AMatrixBuilder {
      * @param weighting (Weighting)
      * @return (Matrix) A
      */
-    Matrix buildWithWeight(Weighting weighting) {
+    ParallelizedMatrix buildWithWeight(Weighting weighting) {
 
-        Matrix a = new Matrix(dVector.getNpts(), parameterList.size());
+        ParallelizedMatrix a = new ParallelizedMatrix(dVector.getNpts(), parameterList.size());
         a.scalarMultiply(0);
 
         long t = System.nanoTime();
@@ -71,7 +71,7 @@ final class AMatrixBuilder {
                 return;
 
             // find which unknown parameter this partialID corresponds to
-            int column = findColumn(id.getPartialType(), id.getPerturbationLocation(),
+            int column = findColumn(id.getPartialType(), id.getVoxelPosition(),
                     id.getObserver(), id.getGlobalCMTID(), id.getPhases());
             if (column < 0) {
                 return;
@@ -139,6 +139,7 @@ final class AMatrixBuilder {
         for (int i = 0; i < parameterList.size(); i++) {
             if (parameterList.get(i).getPartialType() != type)
                 continue;
+
             switch (type) {
             case TIME_SOURCE:
                 if (event.equals( ((TimeSourceSideParameter) parameterList.get(i)).getGlobalCMTID() ))

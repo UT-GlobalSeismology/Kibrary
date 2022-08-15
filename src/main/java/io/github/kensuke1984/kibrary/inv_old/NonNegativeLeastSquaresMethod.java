@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inv_old;
 
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,14 +21,14 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 	
 	public static void main(String[] args) {
 		// x^2 + 2x + 3
-		Matrix a1 = new Matrix(4, 3);
+		ParallelizedMatrix a1 = new ParallelizedMatrix(4, 3);
 		a1.setColumn(0, new double[] {1, 0, 4, 4});
 		a1.setColumn(1, new double[] {1, 0, 2, -2});
 		a1.setColumn(2, new double[] {1, 1, 1, 1});
 		RealVector d1 = new ArrayRealVector(new double[] {6.2, 2.9, 10.5, 2.8});
 		
 		// x^2 + 2x - 0.1
-		Matrix a2 = new Matrix(4, 3);
+		ParallelizedMatrix a2 = new ParallelizedMatrix(4, 3);
 		a2.setColumn(0, new double[] {1, 0, 4, 4});
 		a2.setColumn(1, new double[] {1, 0, 2, -2});
 		a2.setColumn(2, new double[] {1, 1, 1, 1});
@@ -64,7 +64,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 	
 	private final int MAX_ITERATION;
 	
-	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d, int MAX_ITERATION) {
+	public NonNegativeLeastSquaresMethod(ParallelizedMatrix a, RealVector d, int MAX_ITERATION) {
 		this.d = d;
 		this.a = a;
 		this.ata = a.computeAtA();
@@ -78,7 +78,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		L = IntStream.range(0, atd.getDimension()).boxed().collect(Collectors.toSet());
 	}
 	
-	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d) {
+	public NonNegativeLeastSquaresMethod(ParallelizedMatrix a, RealVector d) {
 		this.d = d;
 		this.a = a;
 		this.ata = a.computeAtA();
@@ -93,7 +93,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		L = IntStream.range(0, atd.getDimension()).boxed().collect(Collectors.toSet());
 	}
 	
-	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d, RealVector x) {
+	public NonNegativeLeastSquaresMethod(ParallelizedMatrix a, RealVector d, RealVector x) {
 		this.d = d;
 		this.a = a;
 		this.ata = a.computeAtA();
@@ -165,7 +165,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 				RealVector bPrime = d.subtract(a.operate(xPrime));
 				
 				// a' (aPrime)
-				Matrix aPrime = new Matrix(a.getRowDimension(), jPrimeToj.size());
+				ParallelizedMatrix aPrime = new ParallelizedMatrix(a.getRowDimension(), jPrimeToj.size());
 				for (int i = 0; i < jPrimeToj.size(); i++)
 					aPrime.setColumnVector(i, a.getColumnVector(jPrimeToj.get(i).intValue()));
 				

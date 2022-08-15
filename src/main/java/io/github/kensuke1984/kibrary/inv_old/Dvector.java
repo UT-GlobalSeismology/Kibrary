@@ -226,7 +226,7 @@ public class Dvector {
                 if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
                     throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
                 double distance = Math.toDegrees(obs.getGlobalCMTID().getEventData().getCmtLocation()
-                        .calculateEpicentralDistance(obs.getObserver().getPosition()));
+                        .computeEpicentralDistance(obs.getObserver().getPosition()));
                 double a = 3.;
                 double w = (a-1) / (91-67) * (91-distance) + 1.;
                 return 1. / obsVec.getLInfNorm() * w;
@@ -240,7 +240,7 @@ public class Dvector {
                     return 0.;
                 }
                 double d = Math.toDegrees(obs.getGlobalCMTID().getEventData().getCmtLocation()
-                        .calculateEpicentralDistance(obs.getObserver().getPosition()));
+                        .computeEpicentralDistance(obs.getObserver().getPosition()));
                 double w = 1. * Math.cos((d - 70) / (78 - d) * Math.PI / 2.) + 1.;
                 if (d > 78 || d < 70) w = 1.;
                 return 1. / obsVec.getLInfNorm() * w;
@@ -560,7 +560,7 @@ public class Dvector {
      */
     private double weightingEpicentralDistanceDpp(BasicID obs) {
         double weight = 1.;
-        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 
         double maxWeight = 2.;
 
@@ -596,7 +596,7 @@ public class Dvector {
      */
     public double weightingAzimuthDpp(BasicID obs) {
         double weight = 1.;
-        double azimuth = obs.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double azimuth = obs.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
 
         double maxWeight = 2.;
 
@@ -634,7 +634,7 @@ public class Dvector {
      */
     private double weightingEpicentralDistanceTZ(BasicID obs) {
         double weight = 1.;
-        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 
 //		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
 //		histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
@@ -654,7 +654,7 @@ public class Dvector {
      */
     public double weightingAzimuthTZ(BasicID obs) {
         double weight = 1.;
-        double azimuth = obs.getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double azimuth = obs.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
 
 //		histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
 //			, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
@@ -678,7 +678,7 @@ public class Dvector {
      */
     private static double weightingEpicentralDistance(BasicID obs) {
         double weight = 1.;
-        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
         Phases phases = new Phases(obs.getPhases());
 
 //		double[][] histogram = new double[][] { {45, 0.741}, {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
@@ -1040,7 +1040,7 @@ public class Dvector {
             case TAKEUCHIKOBAYASHI: // double[] weighting already set in sort()
                 break;
             case FINAL:
-                Trace obstrace = obsIDs[i].getTrace();
+                Trace obstrace = obsIDs[i].toTrace();
                 weighting[i] *= obstrace.getMaxValue() > -obstrace.getMinValue() ? 1. / obstrace.getMaxValue() : -1. / obstrace.getMinValue();
                 break;
             default:
@@ -1213,9 +1213,9 @@ public class Dvector {
             double[] data = Arrays.copyOfRange(id.getData(), nStart, nEnd);
             double[] synData = Arrays.copyOfRange(synID.getData(), nStart, nEnd);
             obsIDs[i] = new BasicID(id.getWaveformType(), id.getSamplingHz(), id.getStartTime(), n, id.getObserver()
-                , id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolute(), data);
+                , id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolved(), data);
             synIDs[i] = new BasicID(synID.getWaveformType(), synID.getSamplingHz(), synID.getStartTime(), n, synID.getObserver()
-                    , synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(), synID.getMaxPeriod(), synID.getPhases(), synID.getStartByte(), synID.isConvolute(), synData);
+                    , synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(), synID.getMaxPeriod(), synID.getPhases(), synID.getStartByte(), synID.isConvolved(), synData);
         }
         read();
     }

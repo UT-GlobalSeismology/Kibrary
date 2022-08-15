@@ -47,8 +47,8 @@ public class LambdaMuToLambda2MuMu {
 		List<PartialID> partialsMUPrime = new ArrayList<>();
 		List<PartialID> partialsLambda2mu = new ArrayList<>();
 		
-		final FullPosition[] locations = partialsMU.stream().map(p -> p.getPerturbationLocation()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
-		final PartialID[] partialsOrder = partialsMU.stream().parallel().filter(p -> p.getPerturbationLocation().equals(locations[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
+		final FullPosition[] locations = partialsMU.stream().map(p -> p.getVoxelPosition()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
+		final PartialID[] partialsOrder = partialsMU.stream().parallel().filter(p -> p.getVoxelPosition().equals(locations[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
 		
 		int[] indexOrderedMU = new int[partialsMU.size()];
 		int[] indexOrderedLambda = new int[partialsMU.size()];
@@ -92,7 +92,7 @@ public class LambdaMuToLambda2MuMu {
 			PartialID partialLambda = partialsLambda.get(indexOrderedLambda[i]);
 			if (!(partialLambda.getGlobalCMTID().equals(partialMU.getGlobalCMTID())
 					&& partialLambda.getObserver().equals(partialMU.getObserver())
-					&& partialLambda.getPerturbationLocation().equals(partialMU.getPerturbationLocation())
+					&& partialLambda.getVoxelPosition().equals(partialMU.getVoxelPosition())
 					&& partialLambda.getSacComponent().equals(partialMU.getSacComponent())
 					&& new Phases(partialLambda.getPhases()).equals(new Phases(partialMU.getPhases())))) {
 				System.out.println(partialMU + " ::: " + partialLambda);
@@ -107,12 +107,12 @@ public class LambdaMuToLambda2MuMu {
 			
 			PartialID parMuPrime = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
-					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
+					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolved(), partialLambda.getVoxelPosition()
 					, PartialType.MU, muPrimeData);
 			
 			PartialID parLambda2mu = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
-					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
+					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolved(), partialLambda.getVoxelPosition()
 					, PartialType.LAMBDA2MU, lambdaData);
 			
 			partialsMUPrime.add(parMuPrime);
@@ -171,7 +171,7 @@ public class LambdaMuToLambda2MuMu {
 	
 	private static int whichUnknown(PartialID partial, FullPosition[] locations) {
 		for (int i = 0; i < locations.length; i++) {
-			if (partial.getPerturbationLocation().equals(locations[i])) {
+			if (partial.getVoxelPosition().equals(locations[i])) {
 				return i;
 			}
 		}

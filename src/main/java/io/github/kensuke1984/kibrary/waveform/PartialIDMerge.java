@@ -7,21 +7,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * Operation for merging pairs of partial ID files and partial waveform files.
@@ -122,58 +115,17 @@ public class PartialIDMerge extends Operation {
         }
 
         // read PartialIDs from all input files
-        Set<PartialID> partialIDs = new HashSet<>();
+        List<PartialID> partialIDs = new ArrayList<>();
         for (int i = 0; i < pairNum; i++) {
             PartialID[] srcIDs = PartialIDFile.read(partialIDPaths.get(i), partialPaths.get(i));
             Stream.of(srcIDs).forEach(id -> partialIDs.add(id));
         }
 
-        // extract set of voxels, observers, events, periods, and phases
-        Set<FullPosition> voxelSet = new HashSet<>();
-        Set<Observer> observerSet = new HashSet<>();
-        Set<GlobalCMTID> eventSet = new HashSet<>();
-        Set<double[]> periodSet = new HashSet<>();
-        Set<Phase> phaseSet = new HashSet<>();
-
-        partialIDs.forEach(id -> {
-            observerSet.add(id.getObserver());
-            eventSet.add(id.getGlobalCMTID());
-            voxelSet.add(id.getPerturbationLocation());
-            boolean add = true;
-            for (double[] periods : periodSet) {
-                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
-                    add = false;
-            }
-            if (add)
-                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
-            for (Phase phase : id.getPhases())
-                phaseSet.add(phase);
-        });
-
-        double[][] periodRanges = new double[periodSet.size()][];
-        int j = 0;
-        for (double[] periods : periodSet)
-            periodRanges[j++] = periods;
-        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
-
         String dateStr = GadgetAid.getTemporaryString();
         Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", tag, dateStr, ".dat"));
         Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, dateStr, ".dat"));
 
-        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases, voxelSet)) {
-            partialIDs.forEach(id -> {
-                try {
-                    if (! id.getWaveformType().equals(WaveformType.PARTIAL)) {
-                        System.out.println(id.toString() + "is not a partial, it is a " + id.getWaveformType().toString());
-                        throw new RuntimeException();
-                    }
-                    wdw.addPartialID(id);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+        PartialIDFile.write(partialIDs, outputIDPath, outputWavePath);
 
     }
 }

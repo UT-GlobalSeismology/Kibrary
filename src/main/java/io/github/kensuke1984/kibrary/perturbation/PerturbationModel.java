@@ -86,8 +86,4 @@ public class PerturbationModel {
         return voxelList;
     }
 
-//    public PerturbationModel(Map<FullPosition, Double> modelMap, PolynomialStructure oneDStructure) {
-//
-//    }
-
 }

@@ -40,13 +40,13 @@ public class Raypath {
     private final HorizontalPosition receiverPosition;
 
     /**
-     * whether attempt to calculate turning and piercing points has been made
+     * whether attempt to compute turning and piercing points has been made
      */
-    private boolean calculatedPiercePoints;
+    private boolean computedPiercePoints;
     /**
-     * whether attempt to calculate turning point has been made
+     * whether attempt to compute turning point has been made
      */
-    private boolean calculatedTurningPoint;
+    private boolean computedTurningPoint;
     /**
      * the bottoming point of raypath
      */
@@ -70,9 +70,9 @@ public class Raypath {
     public Raypath(FullPosition source, HorizontalPosition receiver) {
         sourcePosition = source;
         receiverPosition = receiver;
-        azimuth = source.calculateAzimuth(receiver);
-        epicentralDistance = Earth.getEpicentralDistance(source, receiver);
-        backAzimuth = source.calculateBackAzimuth(receiver);
+        azimuth = source.computeAzimuth(receiver);
+        epicentralDistance = Earth.computeEpicentralDistance(source, receiver);
+        backAzimuth = source.computeBackAzimuth(receiver);
     }
 
     /**
@@ -81,9 +81,9 @@ public class Raypath {
      * @param phase
      * @return (boolean) true if calculation succeeded
      */
-    public boolean calculateTurningPoint(String model, Phase phase) {
+    public boolean computeTurningPoint(String model, Phase phase) {
         Info info = TauPPierceReader.getTurningInfo(sourcePosition, receiverPosition, model, phase);
-        calculatedTurningPoint = true;
+        computedTurningPoint = true;
 
         if (info != null) {
             turnPosition = info.getTurningPoint();
@@ -100,10 +100,10 @@ public class Raypath {
      * @param pierceDepth
      * @return (boolean) true if calculation succeeded
      */
-    public boolean calculatePiercePoints(String model, Phase phase, double pierceDepth) {
+    public boolean computePiercePoints(String model, Phase phase, double pierceDepth) {
         Info info = TauPPierceReader.getPierceInfo(sourcePosition, receiverPosition, model, pierceDepth, phase);
-        calculatedPiercePoints = true;
-        calculatedTurningPoint = true;
+        computedPiercePoints = true;
+        computedTurningPoint = true;
 
         if (info != null) {
             enterPosition = info.getEnterPoint();
@@ -122,26 +122,26 @@ public class Raypath {
      * @since 2022/4/22
      */
     public FullPosition getTurningPoint() {
-        if (calculatedTurningPoint) return turnPosition;
-        else throw new IllegalStateException("Turning point is not yet calculated");
+        if (computedTurningPoint) return turnPosition;
+        else throw new IllegalStateException("Turning point is not yet computed");
     }
     public FullPosition getEnterPoint() {
-        if (calculatedPiercePoints) return enterPosition;
-        else throw new IllegalStateException("Pierce points are not yet calculated");
+        if (computedPiercePoints) return enterPosition;
+        else throw new IllegalStateException("Pierce points are not yet computed");
     }
     public FullPosition getLeavePoint() {
-        if (calculatedPiercePoints) return leavePosition;
-        else throw new IllegalStateException("Pierce points are not yet calculated");
+        if (computedPiercePoints) return leavePosition;
+        else throw new IllegalStateException("Pierce points are not yet computed");
     }
 
     /**
      * Calculate the azimuth of the raypath at the turning point.
-     * The turning point must be already calculated.
+     * The turning point must be already computed.
      * @return (double) azimuth at turning point
      */
-    public double calculateMidAzimuth() {
-        if (calculatedTurningPoint) return turnPosition.calculateAzimuth(receiverPosition);
-        else throw new IllegalStateException("Turning point is not yet calculated");
+    public double computeMidAzimuth() {
+        if (computedTurningPoint) return turnPosition.computeAzimuth(receiverPosition);
+        else throw new IllegalStateException("Turning point is not yet computed");
     }
 
     /**
@@ -239,10 +239,10 @@ public class Raypath {
     }
 
     public boolean hasCalculatedTurningPoint() {
-        return calculatedTurningPoint;
+        return computedTurningPoint;
     }
 
     public boolean hasCalculatedPiercePoints() {
-        return calculatedPiercePoints;
+        return computedPiercePoints;
     }
 }

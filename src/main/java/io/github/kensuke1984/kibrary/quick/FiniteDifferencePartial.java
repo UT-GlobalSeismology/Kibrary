@@ -65,7 +65,7 @@ public class FiniteDifferencePartial {
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
 				
-				String endstring = obsIds[i].isConvolute() ? "sc" : "s";
+				String endstring = obsIds[i].isConvolved() ? "sc" : "s";
 				String outname = obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
 				String outfile = dir1 + "/" + outname;
 				String outfile2 = dir1 + "/" + obsIds[i].getObserver() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent() + endstring;
@@ -89,11 +89,11 @@ public class FiniteDifferencePartial {
 				pw2.close();
 				pw3.close();
 				
-				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().calculateAzimuth(obsIds[i].getObserver().getPosition()))
+				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(obsIds[i].getObserver().getPosition()))
 						/ daz);
 				int icomp = obsIds[i].getSacComponent().valueOf();
 				double max = new ArrayRealVector(obs).subtract(new ArrayRealVector(syn)).getLInfNorm() * 0.167;
-				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(obsIds[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obsIds[i].getObserver().getPosition()));
 				azimuthPlotString[iaz][icomp-1] += String.format("'%s' u 1:($2/%.4e+%.3f) w l lc rgb 'black' lt 1 lw .5 noti,\\\n", outname, max, distance);
 			}
 			

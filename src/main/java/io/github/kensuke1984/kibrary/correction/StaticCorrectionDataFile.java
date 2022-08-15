@@ -271,9 +271,9 @@ public final class StaticCorrectionDataFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             scf.stream().sorted().forEach(corr -> {
                 double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtLocation()
-                        .calculateAzimuth(corr.getObserver().getPosition()));
+                        .computeAzimuth(corr.getObserver().getPosition()));
                 double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtLocation()
-                        .calculateEpicentralDistance(corr.getObserver().getPosition()));
+                        .computeEpicentralDistance(corr.getObserver().getPosition()));
                 pw.println(corr.toString() + " " + azimuth + " " + distance);
             });
         }

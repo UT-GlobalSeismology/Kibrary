@@ -119,7 +119,7 @@ public class CCPartialMaker {
 					List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
 					
 					for (int iUnknown = 0; iUnknown < partialsI.size(); iUnknown++) {
-						if (!partialsI.get(iUnknown).getPerturbationLocation().equals(partialsJ.get(iUnknown).getPerturbationLocation()))
+						if (!partialsI.get(iUnknown).getVoxelPosition().equals(partialsJ.get(iUnknown).getVoxelPosition()))
 							throw new RuntimeException("Location mismatch");
 						todo.add(Executors.callable(new Worker(staI, staJ, iUnknown)));
 					}
@@ -295,7 +295,7 @@ public class CCPartialMaker {
 			}
 			
 			Physical3DParameter unknownParameter = new Physical3DParameter(partialsI.get(iUnknown).getPartialType(),
-					partialsI.get(iUnknown).getPerturbationLocation(), 50.);
+					partialsI.get(iUnknown).getVoxelPosition(), 50.);
 			CCPartial tmp = new CCPartial(staI, staJ, unknownParameter, new Trace(xs, data));
 			
 			synchronized (ccPartials) {

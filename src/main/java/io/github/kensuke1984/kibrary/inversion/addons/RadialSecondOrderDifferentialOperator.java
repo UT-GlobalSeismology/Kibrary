@@ -10,14 +10,14 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 public class RadialSecondOrderDifferentialOperator {
 
-	private Matrix D2;
+	private ParallelizedMatrix D2;
 	
 	List<Double> coeffs;
 	
@@ -51,7 +51,7 @@ public class RadialSecondOrderDifferentialOperator {
 		this.types = types;
 		this.parameters = parameters;
 		this.coeffs = coeffs;
-		D2 = new Matrix(m, m);
+		D2 = new ParallelizedMatrix(m, m);
 		compute();
 	}
 	

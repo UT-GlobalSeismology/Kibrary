@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.Physical1DParameter;
@@ -242,9 +242,9 @@ public class TriangleRadialSpline {
 		UnknownParameterFile.write(newUnknowns.stream().collect(Collectors.toList()), outPath);
 	}
 	
-	public Matrix computeNewA(RealMatrix a) {
+	public ParallelizedMatrix computeNewA(RealMatrix a) {
 		int nNewUnknowns = newUnknowns.size();
-		Matrix newA = new Matrix(a.getRowDimension(), nNewUnknowns);
+		ParallelizedMatrix newA = new ParallelizedMatrix(a.getRowDimension(), nNewUnknowns);
 		
 		for (int i = 0; i < nNewUnknowns; i++) {
 			if (newUnknowns.get(i).getPartialType().isTimePartial())

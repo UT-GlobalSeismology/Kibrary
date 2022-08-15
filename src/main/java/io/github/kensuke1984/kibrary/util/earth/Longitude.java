@@ -21,7 +21,7 @@ final class Longitude implements Comparable<Longitude> {
     /**
      * the number of decimal places to round off the longitude value
      */
-    private static final int PRECISION = 4;
+    static final int PRECISION = 4;
 
     /**
      * [-180, 180) geographic longitude [deg]

@@ -1104,7 +1104,7 @@ public class PartialWaveformAssembler1D implements Operation_old {
                     try {
                         par2 = par2list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
                             && par.getObserver().equals(par0.getObserver())
-                            && par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+                            && par.getVoxelPosition().equals(par0.getVoxelPosition())
                             && par.getMinPeriod() == par0.getMinPeriod()
                             && par.getMaxPeriod() == par0.getMaxPeriod()
                             && new Phases(par.getPhases()).equals(phases)
@@ -1112,7 +1112,7 @@ public class PartialWaveformAssembler1D implements Operation_old {
                             .findFirst().get();
                         parQ = parQlist.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
                                 && par.getObserver().equals(par0.getObserver())
-                                && par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+                                && par.getVoxelPosition().equals(par0.getVoxelPosition())
                                 && par.getMinPeriod() == par0.getMinPeriod()
                                 && par.getMaxPeriod() == par0.getMaxPeriod()
                                 && new Phases(par.getPhases()).equals(phases)
@@ -1132,7 +1132,7 @@ public class PartialWaveformAssembler1D implements Operation_old {
                     if (!par0.getSacComponent().equals(SACComponent.T)) {
                         PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
                                 && par.getObserver().equals(par0.getObserver())
-                                && par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+                                && par.getVoxelPosition().equals(par0.getVoxelPosition())
                                 && par.getMinPeriod() == par0.getMinPeriod()
                                 && par.getMaxPeriod() == par0.getMaxPeriod()
                                 && new Phases(par.getPhases()).equals(phases)
@@ -1141,7 +1141,7 @@ public class PartialWaveformAssembler1D implements Operation_old {
                         data1 = par1.getData();
                     }
 
-                    double r = par0.getPerturbationLocation().getR();
+                    double r = par0.getVoxelPosition().getR();
 
                     ElasticMedium medium = structure.mediumAt(r);
                     double mu = medium.get(VariableType.MU);
@@ -1166,27 +1166,27 @@ public class PartialWaveformAssembler1D implements Operation_old {
 
                     PartialID partialRho = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
                             , par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-                            , par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, dataRho);
+                            , par0.getPhases(), par0.getStartByte(), par0.isConvolved(), par0.getVoxelPosition(), PartialType.PAR00, dataRho);
 
                     PartialID partialVp = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
                             , par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-                            , par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVP, dataVp);
+                            , par0.getPhases(), par0.getStartByte(), par0.isConvolved(), par0.getVoxelPosition(), PartialType.PARVP, dataVp);
 
                     PartialID partialVs = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
                             , par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-                            , par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVS, dataVs);
+                            , par0.getPhases(), par0.getStartByte(), par0.isConvolved(), par0.getVoxelPosition(), PartialType.PARVS, dataVs);
 
                     PartialID partialM = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
                             , par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-                            , par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARM, dataM);
+                            , par0.getPhases(), par0.getStartByte(), par0.isConvolved(), par0.getVoxelPosition(), PartialType.PARM, dataM);
 
                     PartialID partialG = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
                             , par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-                            , par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARG, dataG);
+                            , par0.getPhases(), par0.getStartByte(), par0.isConvolved(), par0.getVoxelPosition(), PartialType.PARG, dataG);
 
                     PartialID partialQ = new PartialID(par0.getObserver(), par0.getGlobalCMTID(), par0.getSacComponent()
                             , par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-                            , par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARQ, dataQ);
+                            , par0.getPhases(), par0.getStartByte(), par0.isConvolved(), par0.getVoxelPosition(), PartialType.PARQ, dataQ);
 
                     pdw.addPartialID(partialM);
                     pdw.addPartialID(partialG);

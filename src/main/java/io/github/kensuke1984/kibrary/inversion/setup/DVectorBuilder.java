@@ -6,11 +6,9 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
 
 /**
  * Class for building d vector in Am=d.
@@ -104,31 +102,6 @@ public final class DVectorBuilder {
     }
 
     /**
-     * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
-     * They are regarded as same if component, npts, sampling Hz, start time, max & min period, observer, globalCMTID are same.
-     * This method ignores whether the input IDs are observed or synthetic. TODO start time
-     *
-     * @param id0 {@link BasicID}
-     * @param id1 {@link BasicID}
-     * @return if the IDs are same
-     */
-    private static boolean isPair(BasicID id0, BasicID id1) {
-        boolean res = false;
-        if (id0.getPhases() == null && id1.getPhases() == null) // for compatibility with old format of BasicID
-            res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-                    && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                    && id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20.
-                    && id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
-        else {
-            res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-                && id0.getSacComponent() == id1.getSacComponent()
-                && id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
-                && id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
-        }
-        return res;
-    }
-
-    /**
      * Look for the index for the input ID.
      * If the input is obs, the search is for obs, while if the input is syn or partial, the search is in syn.
      *
@@ -137,7 +110,7 @@ public final class DVectorBuilder {
      */
     public int whichTimewindow(BasicID id) {
         BasicID[] ids = id.getWaveformType() == WaveformType.OBS ? obsIDs : synIDs;
-        return IntStream.range(0, ids.length).filter(i -> isPair(id, ids[i])).findAny().orElse(-1);
+        return IntStream.range(0, ids.length).filter(i -> BasicID.isPair(id, ids[i])).findAny().orElse(-1);
     }
 
     /**
@@ -161,10 +134,24 @@ public final class DVectorBuilder {
 //    }
 
     /**
+     * Decomposes a full vector to smaller ones corresponding to the timewindows set in this class.
+     * Error occurs if the input is invalid.
+     * @param vector (RealVector) Full vector to separate
+     * @return (RealVector[]) Separated vectors for each time window.
+     */
+    public RealVector[] separate(RealVector vector) {
+        if (vector.getDimension() != npts)
+            throw new IllegalArgumentException("The length of input vector " + vector.getDimension() + " is invalid, should be " + npts);
+        RealVector[] vectors = new RealVector[nTimeWindow];
+        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVecs[i].getDimension()));
+        return vectors;
+    }
+
+    /**
      * Builds and returns the d vector.
      * It will be weighed as Wd = [weight diagonal matrix](obsVector - synVector)
      * @param weighting (Weighting)
-     * @return (RealVector) d
+     * @return (RealVector) Wd
      */
     public RealVector buildWithWeight(Weighting weighting) {
         RealVector v = new ArrayRealVector(npts);
@@ -177,18 +164,6 @@ public final class DVectorBuilder {
     }
 
     /**
-     * @param vector to separate
-     * @return Separated vectors for each time window. Error occurs if the input is invalid.
-     */
-    public RealVector[] separate(RealVector vector) {
-        if (vector.getDimension() != npts)
-            throw new RuntimeException("The length of input vector " + vector.getDimension() + " is invalid, should be " + npts);
-        RealVector[] vectors = new RealVector[nTimeWindow];
-        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVecs[i].getDimension()));
-        return vectors;
-    }
-
-    /**
      * Builds and returns the full synthetic vector
      * @return (RealVector) syn
      */
@@ -196,6 +171,44 @@ public final class DVectorBuilder {
         RealVector v = new ArrayRealVector(npts);
         for (int i = 0; i < nTimeWindow; i++) {
             v.setSubVector(startPoints[i], synVecs[i]);
+        }
+        return v;
+    }
+
+    /**
+     * Builds and returns the full synthetic vector, weighted
+     * @param weighting (Weighting)
+     * @return (RealVector) W * syn
+     */
+    public RealVector fullSynVecWithWeight(Weighting weighting) {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], synVecs[i].ebeMultiply(weighting.get(i)));
+        }
+        return v;
+    }
+
+    /**
+     * Builds and returns the full observed vector
+     * @return (RealVector) obs
+     */
+    public RealVector fullObsVec() {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], obsVecs[i]);
+        }
+        return v;
+    }
+
+    /**
+     * Builds and returns the full observed vector, weighted
+     * @param weighting (Weighting)
+     * @return (RealVector) W * obs
+     */
+    public RealVector fullObsVecWithWeight(Weighting weighting) {
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++) {
+            v.setSubVector(startPoints[i], obsVecs[i].ebeMultiply(weighting.get(i)));
         }
         return v;
     }

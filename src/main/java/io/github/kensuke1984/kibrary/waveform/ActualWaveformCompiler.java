@@ -15,7 +15,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -73,6 +72,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * This class does not apply a digital filter, but extracts information about the passband written in SAC files.
  *
+ * @since a long time ago
+ * @version 2021/11/3 renamed from waveformdata.ObservedSyntheticDatasetMaker to waveform.ActualWaveformCompiler
  */
 public class ActualWaveformCompiler extends Operation {
 
@@ -103,11 +104,11 @@ public class ActualWaveformCompiler extends Operation {
     private double finalSamplingHz;
 
     /**
-     * {@link Path} of a root folder containing observed dataset
+     * Path of a root folder containing observed dataset
      */
     private Path obsPath;
     /**
-     * {@link Path} of a root folder containing synthetic dataset
+     * Path of a root folder containing synthetic dataset
      */
     private Path synPath;
     /**
@@ -116,11 +117,11 @@ public class ActualWaveformCompiler extends Operation {
      */
     private boolean convolved;
     /**
-     * {@link Path} of a timewindow information file
+     * Path of a timewindow information file
      */
     private Path timewindowPath;
     /**
-     * {@link Path} of a timewindow information file for a reference phase use to correct spectral amplitude
+     * Path of a timewindow information file for a reference phase use to correct spectral amplitude
      */
     private Path timewindowRefPath;
     /**
@@ -132,11 +133,11 @@ public class ActualWaveformCompiler extends Operation {
      */
     private boolean correctAmplitude;
     /**
-     * {@link Path} of a data entry file
+     * Path of a data entry file
      */
     private Path dataEntryPath;
     /**
-     * {@link Path} of a static correction file
+     * Path of a static correction file
      */
     private Path staticCorrectionPath;
     /**
@@ -144,7 +145,7 @@ public class ActualWaveformCompiler extends Operation {
      */
     private boolean correctMantle;
     /**
-     * {@link Path} of time shifts due to the 3-D mantle
+     * Path of time shifts due to the 3-D mantle
      */
     private Path mantleCorrectionPath;
 
@@ -189,26 +190,6 @@ public class ActualWaveformCompiler extends Operation {
      * number of OUTPUT pairs. (excluding ignored traces)
      */
     private AtomicInteger numberOfPairs = new AtomicInteger();
-    /**
-     * ID for static correction and time window information Default is station
-     * name, global CMT id, component.
-     */
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPair = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
-
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPair2 = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && s.getComponent() == t.getComponent();
-
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPair_isotropic = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                && (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent())
-                && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
-
-    private BiPredicate<StaticCorrectionData, TimewindowData> isPair_record = (s,
-            t) -> s.getObserver().equals(t.getObserver()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-                    && s.getComponent() == t.getComponent();
 
     /**
      * @param args  none to create a property file <br>
@@ -341,9 +322,10 @@ public class ActualWaveformCompiler extends Operation {
        // read static correction data
        if (correctTime || correctAmplitude) {
            Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
+           // choose only static corrections that have a pair timewindow
            staticCorrectionSet = tmpset.stream()
                    .filter(c -> sourceTimewindowSet.parallelStream()
-                           .map(t -> isPair_record.test(c, t)).distinct().collect(Collectors.toSet()).contains(true))
+                           .map(t -> c.isForTimewindow(t)).distinct().collect(Collectors.toSet()).contains(true))
                    .collect(Collectors.toSet());
 
            // average amplitude correction
@@ -448,7 +430,7 @@ public class ActualWaveformCompiler extends Operation {
    private void readPeriodRanges() {
         try {
             List<double[]> ranges = new ArrayList<>();
-            Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+            Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet()); // TODO is this limit(20) OK?
             for (SACFileName name : sacfilenames) {
                 if (!name.isOBS()) continue;
                 SACHeaderAccess header = name.readHeader();
@@ -468,7 +450,7 @@ public class ActualWaveformCompiler extends Operation {
 
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
+        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
         if (corrs.size() > 1)
             throw new RuntimeException("Found more than 1 static correction for window " + window);
         if (corrs.size() == 0)
@@ -481,7 +463,7 @@ public class ActualWaveformCompiler extends Operation {
      * @return
      */
     private StaticCorrectionData getMantleCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
+        List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
         if (corrs.size() > 1)
             throw new RuntimeException("Found more than 1 mantle correction for window " + window);
         if (corrs.size() == 0)

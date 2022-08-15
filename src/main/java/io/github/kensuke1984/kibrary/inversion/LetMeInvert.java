@@ -19,6 +19,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inv_old.InverseProblem;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
+import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -33,7 +35,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * Operation for operating inversion.
  *
  * @author otsuru
- * @since 2022/4/28 recreated inversion.LetMeInvert
+ * @since 2022/4/28 recreated former inversion.LetMeInvert
  */
 public class LetMeInvert extends Operation {
 
@@ -148,12 +150,15 @@ public class LetMeInvert extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
+        System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // solve inversion and output
+        AtAFile.write(ata, outPath.resolve("ata.lst"));
+        AtdFile.write(atd, outPath.resolve("atd.lst"));
         UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
         for (InverseMethodEnum method : inverseMethods) {
             InverseProblem inverseProblem = method.formProblem(ata, atd);

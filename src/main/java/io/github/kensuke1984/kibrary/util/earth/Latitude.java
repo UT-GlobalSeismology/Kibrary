@@ -18,7 +18,7 @@ final class Latitude implements Comparable<Latitude> {
     /**
      * the number of decimal places to round off the latitude value
      */
-    private static final int PRECISION = 4;
+    static final int PRECISION = 4;
 
     /**
      * [-90, 90] geographic latitude [deg]

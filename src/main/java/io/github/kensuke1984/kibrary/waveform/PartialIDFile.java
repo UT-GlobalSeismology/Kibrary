@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 
@@ -61,23 +62,91 @@ public final class PartialIDFile {
      */
     public static final int oneIDByte = 50;
 
+    /**
+     * Write partialIDs into ID file and waveform file.
+     * @param partialIDs
+     * @param outputIDPath
+     * @param outputWavePath
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2022/8/11
+     */
+    public static void write(List<PartialID> partialIDs, Path outputIDPath, Path outputWavePath) throws IOException {
+
+        // extract set of observers, events, voxels, periods, and phases
+        Set<Observer> observerSet = new HashSet<>();
+        Set<GlobalCMTID> eventSet = new HashSet<>();
+        Set<FullPosition> voxelPositionSet = new HashSet<>();
+        Set<double[]> periodSet = new HashSet<>();
+        Set<Phase> phaseSet = new HashSet<>();
+
+        partialIDs.forEach(id -> {
+            observerSet.add(id.getObserver());
+            eventSet.add(id.getGlobalCMTID());
+            voxelPositionSet.add(id.getVoxelPosition());
+            boolean add = true;
+            for (double[] periods : periodSet) {
+                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
+                    add = false;
+            }
+            if (add)
+                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
+            for (Phase phase : id.getPhases())
+                phaseSet.add(phase);
+        });
+
+        double[][] periodRanges = new double[periodSet.size()][];
+        int j = 0;
+        for (double[] periods : periodSet)
+            periodRanges[j++] = periods;
+        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
+
+        // output
+        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
+        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath,
+                observerSet, eventSet, periodRanges, phases, voxelPositionSet)) {
+            partialIDs.forEach(id -> {
+                try {
+                    if (id.getWaveformType().equals(WaveformType.PARTIAL) == false) {
+                        throw new IllegalStateException(id.toString() + "is not a partial, it is a " + id.getWaveformType().toString());
+                    }
+                    wdw.addPartialID(id);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+
+    /**
+     * Reads both the ID file and the waveform file.
+     * @param idPath (Path) An ID file, if it does not exist, an IOException
+     * @param dataPath (Path) A data file, if it does not exist, an IOException
+     * @return Array of {@link PartialID} containing waveform data
+     * @throws IOException if an I/O error occurs
+     */
+    public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
+        return read(idPath, dataPath, id -> true);
+    }
+
     public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
             throws IOException {
         PartialID[] ids = read(idPath);
         long t = System.nanoTime();
         long dataSize = Files.size(dataPath);
         PartialID lastID = ids[ids.length - 1];
-        if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
+        if (dataSize != lastID.startByte + lastID.npts * 8)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
         int counter = 0;
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
             for (int i = 0; i < ids.length; i++) {
                 if (!chooser.test(ids[i])) {
-                    dis.skipBytes(ids[i].NPTS * 8);
+                    dis.skipBytes(ids[i].npts * 8);
                     ids[i] = null;
                     continue;
                 }
-                double[] data = new double[ids[i].NPTS];
+                double[] data = new double[ids[i].npts];
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
                 ids[i] = ids[i].withData(data);
@@ -97,7 +166,7 @@ public final class PartialIDFile {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
             dis.skipBytes(cumulativeNPTS[partialIndexes[0]] * 8);
             for (int i = 0; i < partialIndexes.length; i++) {
-                double[] data = new double[idsNoData[i].NPTS];
+                double[] data = new double[idsNoData[i].npts];
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
                 idsNoData[i] = idsNoData[i].withData(data);
@@ -111,7 +180,8 @@ public final class PartialIDFile {
     }
 
     /**
-     * @param idPath {@link Path} of an ID file.
+     * Reads only the ID file (and not the waveform file).
+     * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @return Array of {@link PartialID} without waveform data
      * @throws IOException if an I/O error occurs
      */
@@ -173,65 +243,6 @@ public final class PartialIDFile {
     }
 
     /**
-     * Creates lists of stations, events, partials.(if they don't exist) Options:
-     * -a: show all IDs
-     * --debug: create debug files
-     *
-     * @param args [options] [parameter file name]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        if (args.length == 1) {
-            PartialID[] ids = read(Paths.get(args[0]));
-            String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
-            outputStations(header, ids);
-            outputGlobalCMTID(header, ids);
-            outputPerturbationPoints(header, ids);
-        } else if (args.length == 2 && args[0].equals("-a")) {
-            PartialID[] ids = read(Paths.get(args[1]));
-            Arrays.stream(ids).forEach(System.out::println);
-        } else if (args.length == 2 && args[0].equals("--debug")) {
-            PartialID[] ids = read(Paths.get(args[1]));
-            Set<PartialType> types = new HashSet<>();
-            for (PartialID id : ids)
-                types.add(id.getPartialType());
-            for (PartialType type : types) {
-                List<ObserverEvent> tmpList = Arrays.stream(ids).parallel().filter(id -> id.getPartialType().equals(type))
-                        .map(id -> new ObserverEvent(id.getObserver(), id.getGlobalCMTID(), id.getStartTime()))
-                        .distinct().collect(Collectors.toList());
-                Collections.sort(tmpList);
-                Path outPath = Paths.get(type + ".inf");
-                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
-                    tmpList.forEach(tmp -> pw.println(tmp));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            System.out.println("usage:[-a | --debug] [id file name]\n if \"-a\", show all IDs\n if \"--debug\", makes station-event list for all partial types");
-        }
-    }
-
-    private static void outputPerturbationPoints(String header, PartialID[] pids) throws IOException {
-        Path outPath = Paths.get(header + ".par");
-        if (Files.exists(outPath)) return;
-        List<String> lines =
-                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.PARTIAL_TYPE, id.POINT_LOCATION, 1))
-                        .distinct().map(Physical3DParameter::toString).sorted().collect(Collectors.toList());
-        Files.write(outPath, lines);
-        System.err.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");
-    }
-
-    private static void outputStations(String header, PartialID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".station");
-        if (Files.exists(outPath)) return;
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct()
-                .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
-        Files.write(outPath, lines);
-        System.err.println(outPath + " is created as a list of stations.");
-    }
-
-    /**
      * An ID information contains<br>
      * observer number(2)<br>
      * event number(2)<br>
@@ -276,8 +287,66 @@ public final class PartialIDFile {
                 usablephases, startByte, isConvolved, perturbationLocation, partialType);
     }
 
-    public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
-        return read(idPath, dataPath, id -> true);
+
+///////////////TODO : change or delete following
+
+    /**
+     * Creates lists of stations, events, partials.(if they don't exist) Options:
+     * -a: show all IDs
+     * --debug: create debug files
+     *
+     * @param args [options] [parameter file name]
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 1) {
+            PartialID[] ids = read(Paths.get(args[0]));
+            String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
+            outputStations(header, ids);
+            outputGlobalCMTID(header, ids);
+            outputPerturbationPoints(header, ids);
+        } else if (args.length == 2 && args[0].equals("-a")) {
+            PartialID[] ids = read(Paths.get(args[1]));
+            Arrays.stream(ids).forEach(System.out::println);
+        } else if (args.length == 2 && args[0].equals("--debug")) {
+            PartialID[] ids = read(Paths.get(args[1]));
+            Set<PartialType> types = new HashSet<>();
+            for (PartialID id : ids)
+                types.add(id.getPartialType());
+            for (PartialType type : types) {
+                List<ObserverEvent> tmpList = Arrays.stream(ids).parallel().filter(id -> id.getPartialType().equals(type))
+                        .map(id -> new ObserverEvent(id.getObserver(), id.getGlobalCMTID(), id.getStartTime()))
+                        .distinct().collect(Collectors.toList());
+                Collections.sort(tmpList);
+                Path outPath = Paths.get(type + ".inf");
+                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+                    tmpList.forEach(tmp -> pw.println(tmp));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            System.out.println("usage:[-a | --debug] [id file name]\n if \"-a\", show all IDs\n if \"--debug\", makes station-event list for all partial types");
+        }
+    }
+
+    private static void outputPerturbationPoints(String header, PartialID[] pids) throws IOException {
+        Path outPath = Paths.get(header + ".par");
+        if (Files.exists(outPath)) return;
+        List<String> lines =
+                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.partialType, id.voxelPosition, 1))
+                        .distinct().map(Physical3DParameter::toString).sorted().collect(Collectors.toList());
+        Files.write(outPath, lines);
+        System.err.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");
+    }
+
+    private static void outputStations(String header, PartialID[] ids) throws IOException {
+        Path outPath = Paths.get(header + ".station");
+        if (Files.exists(outPath)) return;
+        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct()
+                .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
+        Files.write(outPath, lines);
+        System.err.println(outPath + " is created as a list of stations.");
     }
 
     private static void outputGlobalCMTID(String header, PartialID[] ids) throws IOException {
@@ -339,4 +408,7 @@ public final class PartialIDFile {
             return true;
         }
     }
+
+///////////////change up to here
+
 }

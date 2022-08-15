@@ -971,8 +971,8 @@ public class AtAMaker implements Operation_old {
                                 if (fastCompute) {
                                     FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
                                     HorizontalPosition bpSourceLoc = station.getPosition();
-                                    double distanceFP = fpSourceLoc.calculateEpicentralDistance(position);
-                                    double az = fpSourceLoc.calculateAzimuth(bpSourceLoc) - fpSourceLoc.calculateAzimuth(position);
+                                    double distanceFP = fpSourceLoc.computeEpicentralDistance(position);
+                                    double az = fpSourceLoc.computeAzimuth(bpSourceLoc) - fpSourceLoc.computeAzimuth(position);
                                     double d = Math.toDegrees(Math.asin(distanceFP * Math.sin(az)));
                                     System.out.println(d);
                                     if (d < 10.)
@@ -996,8 +996,8 @@ public class AtAMaker implements Operation_old {
                                     if (fastCompute) {
                                         FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
                                         HorizontalPosition bpSourceLoc = station.getPosition();
-                                        double distanceFP = fpSourceLoc.calculateEpicentralDistance(position);
-                                        double az = fpSourceLoc.calculateAzimuth(bpSourceLoc) - fpSourceLoc.calculateAzimuth(position);
+                                        double distanceFP = fpSourceLoc.computeEpicentralDistance(position);
+                                        double az = fpSourceLoc.computeAzimuth(bpSourceLoc) - fpSourceLoc.computeAzimuth(position);
                                         double d = Math.toDegrees(Math.asin(distanceFP * Math.sin(az)));
 //										System.out.println(d);
                                         if (Math.abs(d) < 10.)
@@ -1737,11 +1737,11 @@ public class AtAMaker implements Operation_old {
 
             FullPosition bpSourceLoc = station.getPosition().toFullPosition(Earth.EARTH_RADIUS);
             FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
-            double distanceBP = bpSourceLoc.calculateEpicentralDistance(obsPos) * 180. / Math.PI;
-            double distanceFP = fpSourceLoc.calculateEpicentralDistance(obsPos) * 180. / Math.PI;
+            double distanceBP = bpSourceLoc.computeEpicentralDistance(obsPos) * 180. / Math.PI;
+            double distanceFP = fpSourceLoc.computeEpicentralDistance(obsPos) * 180. / Math.PI;
 //			double distance = bpSourceLoc.getGeographicalDistance(obsPos) * 180. / Math.PI;
-            double phiBP = Math.PI - bpSourceLoc.calculateAzimuth(obsPos);
-            double phiFP = Math.PI - fpSourceLoc.calculateAzimuth(obsPos);
+            double phiBP = Math.PI - bpSourceLoc.computeAzimuth(obsPos);
+            double phiFP = Math.PI - fpSourceLoc.computeAzimuth(obsPos);
             if (Double.isNaN(phiBP))
                 throw new RuntimeException("PhiBP is NaN " + fpname + " " + station);
             if (Double.isNaN(phiFP))

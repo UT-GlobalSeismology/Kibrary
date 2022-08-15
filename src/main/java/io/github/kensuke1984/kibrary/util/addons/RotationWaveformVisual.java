@@ -73,7 +73,7 @@ public class RotationWaveformVisual {
 				BasicID idZ = ids_Z_event.get(i);
 				BasicID idR = ids_R_event.get(i);
 				
-				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(idZ.getObserver().getPosition()));
+				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(idZ.getObserver().getPosition()));
 				int k = (int) (distance * 2);
 				
 				timeTool.calcTime(distance);
@@ -82,7 +82,7 @@ public class RotationWaveformVisual {
 				System.out.println(theta);
 				theta = Math.asin(Math.toRadians(theta));
 				
-				Rotator rotator = new Rotator(idR.getTrace(), idZ.getTrace());
+				Rotator rotator = new Rotator(idR.toTrace(), idZ.toTrace());
 				Trace trace = rotator.rotate(theta);
 				
 				if (idZ.getWaveformType().equals(WaveformType.OBS))

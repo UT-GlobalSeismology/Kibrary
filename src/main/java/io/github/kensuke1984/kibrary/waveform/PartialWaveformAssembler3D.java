@@ -41,8 +41,8 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -237,7 +237,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#bpPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
-            pw.println("##The mode of spc files that have been calculated, from {PSV, SH, BOTH} (SH)");
+            pw.println("##The mode of spc files that have been computed, from {PSV, SH, BOTH} (SH)");
             pw.println("#mode ");
             pw.println("##(boolean) Whether to interpolate fp and bp from a catalogue (false)");
             pw.println("#catalogue ");
@@ -246,9 +246,9 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("##Type of source time function from {0:none, 1:boxcar, 2:triangle, 3: asymmetric triangle (user catalog), 4: coming soon, 5: symmetric triangle (user catalog)} (0)");
             pw.println("## or folder name containing *.stf if you want to use your own GLOBALCMTID.stf");
             pw.println("#sourceTimeFunction ");
-            pw.println("##Time length to be calculated, must be a power of 2 over 10 (3276.8)");
+            pw.println("##Time length to be computed, must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be calculated in frequency domain, must be a power of 2 (512)");
+            pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
             pw.println("##(double) Minimum value of passband (0.005)");
             pw.println("#minFreq ");
@@ -889,7 +889,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 FullPosition location = bp.getObserverPosition().toFullPosition(bp.getBodyR()[ibody]);
 //				System.err.println(location);
 
-                if (!perturbationLocationSet.contains(location))
+                if (!voxelPositionSet.contains(location))
                     continue;
                     for (SACComponent component : components) {
                         if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
@@ -958,7 +958,7 @@ public class PartialWaveformAssembler3D extends Operation {
         Path datasetPath = outPath.resolve("partial.dat");
 
         partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
-                phases, perturbationLocationSet);
+                phases, voxelPositionSet);
         writeLog("Creating " + idPath + " " + datasetPath);
         System.err.println("Creating " + idPath + " " + datasetPath);
 
@@ -970,7 +970,7 @@ public class PartialWaveformAssembler3D extends Operation {
     private Set<GlobalCMTID> eventSet;
     private double[][] periodRanges;
     private Phase[] phases;
-    private Set<FullPosition> perturbationLocationSet;
+    private Set<FullPosition> voxelPositionSet;
 
     /**
      * Reads timewindow information include observer and GCMTid
@@ -1041,16 +1041,16 @@ public class PartialWaveformAssembler3D extends Operation {
 
     private void readPerturbationPoints() throws IOException {
         System.err.println("Reading perutbation points");
-        perturbationLocationSet = new VoxelInformationFile(voxelPath).fullPositionSet();
+        voxelPositionSet = new VoxelInformationFile(voxelPath).fullPositionSet();
 
         if (timePartialPath != null) {
             if (observerSet.isEmpty() || eventSet.isEmpty())
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
-            observerSet.forEach(observer -> perturbationLocationSet.add(new FullPosition(observer.getPosition().getLatitude(),
+            observerSet.forEach(observer -> voxelPositionSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            eventSet.forEach(id -> perturbationLocationSet.add(id.getEventData().getCmtLocation()));
+            eventSet.forEach(id -> voxelPositionSet.add(id.getEventData().getCmtLocation()));
         }
-        writeLog(perturbationLocationSet.size() + " perturbation points are found in " + voxelPath);
+        writeLog(voxelPositionSet.size() + " voxel points are found in " + voxelPath);
     }
 
 

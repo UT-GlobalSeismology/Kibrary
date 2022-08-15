@@ -308,7 +308,7 @@ public class TimewindowVisual {
 						if (isObs)
 							obsName = new SACFileName(obsPath);
 						
-						double distance = timewindow.getGlobalCMTID().getEventData().getCmtLocation().calculateEpicentralDistance(timewindow.getObserver().getPosition())
+						double distance = timewindow.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(timewindow.getObserver().getPosition())
 								* 180 / Math.PI;
 		//				double azimuth = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(timewindow.getStation().getPosition())
 		//						* 180 / Math.PI;

@@ -20,6 +20,15 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
+    /**
+     * margin to decide whether two latitudes are the same value
+     */
+    public static double LATITUDE_EPSILON = Math.pow(10, -Latitude.PRECISION)/2;
+    /**
+     * margin to decide whether two longitudes are the same value
+     */
+    public static double LONGITUDE_EPSILON = Math.pow(10, -Longitude.PRECISION)/2;
+
     private final Latitude latitude;
     private final Longitude longitude;
 
@@ -101,33 +110,33 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * @param position {@link HorizontalPosition} to compute azimuth with
-     * @return positionとのazimuth [rad]
+     * @return positionとのazimuth [rad] [0:2pi)
      */
-    public double calculateAzimuth(HorizontalPosition position) {
-        return Earth.getAzimuth(this, position);
+    public double computeAzimuth(HorizontalPosition position) {
+        return Earth.computeAzimuth(this, position);
     }
 
     /**
      * @param position {@link HorizontalPosition} to compute back azimuth with
-     * @return positionとのback azimuth [rad]
+     * @return positionとのback azimuth [rad] [0:2pi)
      */
-    public double calculateBackAzimuth(HorizontalPosition position) {
-        return Earth.getBackAzimuth(this, position);
+    public double computeBackAzimuth(HorizontalPosition position) {
+        return Earth.computeBackAzimuth(this, position);
     }
 
     /**
      * @param horizontalPosition {@link HorizontalPosition}
-     * @return epicentral distance [rad] between this and horizontalPosition
+     * @return epicentral distance [rad] between this and horizontalPosition [0:pi]
      */
-    public double calculateEpicentralDistance(HorizontalPosition horizontalPosition) {
-        return Earth.getEpicentralDistance(horizontalPosition, this);
+    public double computeEpicentralDistance(HorizontalPosition horizontalPosition) {
+        return Earth.computeEpicentralDistance(horizontalPosition, this);
     }
 
-    public double calculateGeographicalAzimuth(HorizontalPosition position) {
+    public double computeGeographicalAzimuth(HorizontalPosition position) {
         return Earth.getGeographicalAzimuth(this, position);
     }
 
-    public double calculateGeographicalDistance(HorizontalPosition horizontalPosition) {
+    public double computeGeographicalDistance(HorizontalPosition horizontalPosition) {
         return Earth.getGeographicalDistance(horizontalPosition, this);
     }
 
@@ -140,8 +149,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @return {@link HorizontalPosition} of the center between the position and
      * this
      */
-    public HorizontalPosition calculateMidpoint(HorizontalPosition position) {
-        double delta = calculateEpicentralDistance(position); // locとthis との震央距離
+    public HorizontalPosition computeMidpoint(HorizontalPosition position) {
+        double delta = computeEpicentralDistance(position); // locとthis との震央距離
         // System.out.println("delta: " + delta);
         // theta = ⊿/2の zx平面上の点
         XYZ midXYZ = new RThetaPhi(1, delta * 0.5, 0).toCartesian();
@@ -185,7 +194,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @param position {@link HorizontalPosition} of target
      * @return 大円上での距離 精度はそこまでよくない
      */
-    public double calculatePath(HorizontalPosition position) {
+    public double computePath(HorizontalPosition position) {
         double distance;
         Ellipse e = new Ellipse(Earth.EQUATORIAL_RADIUS, Earth.POLAR_RADIUS);
 

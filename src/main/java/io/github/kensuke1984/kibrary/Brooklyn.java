@@ -15,9 +15,12 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.visual.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
+import io.github.kensuke1984.kibrary.visual.DistanceHistogram;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
 
 /**
  * An enum where all {@link Summon}able classes in Kibrary should be assigned to.
@@ -51,8 +54,12 @@ enum Brooklyn {
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
-    // Partial 50
+    VarianceComputer(45, VarianceComputer.class),
+    DistanceHistogram(48, DistanceHistogram.class),
+    AzimuthHistogram(49, AzimuthHistogram.class),
+    // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
+    // Partial 50
     // Inversion 60
     // Temporal 100
     ;
