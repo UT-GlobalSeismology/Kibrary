@@ -329,10 +329,16 @@ public class TimewindowMaker extends Operation {
             List<Arrival> arrivals = timeTool.getArrivals();
             List<Arrival> useArrivals = new ArrayList<>();
             List<Arrival> avoidArrivals = new ArrayList<>();
-            // for usePhases, use only the first arrival in case of triplication
-            for (Phase phase : usePhases) {
-                arrivals.stream().filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(phase)).findFirst().ifPresent(useArrivals::add);
+            if (separateWindow) {
+                // for usePhases, use only the first arrival in case of triplication
+                for (Phase phase : usePhases) {
+                    arrivals.stream().filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(phase)).findFirst().ifPresent(useArrivals::add);
+                }
+            } else {
+                // for usePhases, use all arrivals if timewindows are not separated
+                 arrivals.stream().filter(arrival -> usePhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(useArrivals::add);
             }
+
             // for avoidPhases, use all arrivals
             arrivals.stream().filter(arrival -> exPhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(avoidArrivals::add);
             // refine useArrivals
@@ -374,8 +380,8 @@ public class TimewindowMaker extends Operation {
                 for (Arrival arrival : avoidArrivals) {
                     double avoidTime = arrival.getTime();
                     if (firstUseTime <= (avoidTime + rearShift) && (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
-                        writeInvalid(sacFileName, arrival.getPhase().toString() + " arrives between or near "
-                                + firstUseArrival.getPhase().toString() + " and " + lastUseArrival.getPhase().toString());
+                        writeInvalid(sacFileName, arrival.getPhase().getName() + " arrives between or near "
+                                + firstUseArrival.getPhase().getName() + " and " + lastUseArrival.getPhase().getName());
                         return;
                     }
                 }
