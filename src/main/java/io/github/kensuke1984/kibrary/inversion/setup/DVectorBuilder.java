@@ -114,24 +114,24 @@ public final class DVectorBuilder {
     }
 
     /**
+     * Conposes a full vector from smaller ones corresponding to the timewindows set in this class.
      * Every vector must have the same length as the corresponding timewindow.
      *
      * @param vectors to combine
      * @return combined vectors
      */
-//    private RealVector combine(RealVector[] vectors) {
-//        if (vectors.length != nTimeWindow)
-//            throw new RuntimeException("the number of input vectors is invalid");
-//        for (int i = 0; i < nTimeWindow; i++)
-//            if (vectors[i].getDimension() != obsVec[i].getDimension())
-//                throw new RuntimeException("input vector is invalid");
-//
-//        RealVector v = new ArrayRealVector(npts);
-//        for (int i = 0; i < nTimeWindow; i++)
-//            v.setSubVector(startPoints[i], vectors[i]);
-//
-//        return v;
-//    }
+    public RealVector compose(RealVector[] vectors) {
+        if (vectors.length != nTimeWindow)
+            throw new IllegalArgumentException("the number of input vectors is invalid");
+        for (int i = 0; i < nTimeWindow; i++)
+            if (vectors[i].getDimension() != obsVecs[i].getDimension())
+                throw new IllegalArgumentException("input vector is invalid");
+
+        RealVector v = new ArrayRealVector(npts);
+        for (int i = 0; i < nTimeWindow; i++)
+            v.setSubVector(startPoints[i], vectors[i]);
+        return v;
+    }
 
     /**
      * Decomposes a full vector to smaller ones corresponding to the timewindows set in this class.
@@ -139,7 +139,7 @@ public final class DVectorBuilder {
      * @param vector (RealVector) Full vector to separate
      * @return (RealVector[]) Separated vectors for each time window.
      */
-    public RealVector[] separate(RealVector vector) {
+    public RealVector[] decompose(RealVector vector) {
         if (vector.getDimension() != npts)
             throw new IllegalArgumentException("The length of input vector " + vector.getDimension() + " is invalid, should be " + npts);
         RealVector[] vectors = new RealVector[nTimeWindow];
@@ -219,6 +219,10 @@ public final class DVectorBuilder {
      */
     public int nptsOfWindow(int i) {
         return obsIDs[i].getNpts();
+    }
+
+    public int[] nptsArray() {
+        return IntStream.range(0, nTimeWindow).map(i -> obsIDs[i].getNpts()).toArray();
     }
 
     /**
