@@ -57,8 +57,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
  * See {@link TimewindowDataFile}.
  * <p>
- * Information of parameters used in data selection will be written in ascii format in "dataSelection*.lst".
- * See {@link DataSelectionInformationFile}.
+ * Information of data features used in data selection will be written in ascii format in "dataFeature*.lst".
+ * See {@link DataFeatureListFile}.
  * <p>
  * Timewindows with no phases will be written in standard output.
  *
@@ -80,7 +80,7 @@ public class DataSelection extends Operation {
     /**
      * Path of the output information file
      */
-    private Path outputInformationPath;
+    private Path outputFeaturePath;
     /**
      * Path of the output timewindow file
      */
@@ -125,11 +125,11 @@ public class DataSelection extends Operation {
      */
     private double maxCorrelation;
     /**
-     * Minimum variance
+     * Minimum normalized variance
      */
     private double minVariance;
     /**
-     * Maximum variance
+     * Maximum normalized variance
      */
     private double maxVariance;
     /**
@@ -141,7 +141,7 @@ public class DataSelection extends Operation {
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private List<DataSelectionInformation> selectionInformationList;
+    private List<DataFeature> dataFeatureList;
     private Set<TimewindowData> goodTimewindowSet;
 
     /**
@@ -184,9 +184,9 @@ public class DataSelection extends Operation {
             pw.println("#minCorrelation ");
             pw.println("##(double) Upper threshold of correlation (minCorrelation:1] (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) Lower threshold of variance [0:maxVariance) (0)");
+            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance) (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) Upper threshold of variance (minVariance:) (2)");
+            pw.println("##(double) Upper threshold of normalized variance (minVariance:) (2)");
             pw.println("#maxVariance ");
             pw.println("##(double) Threshold of amplitude ratio (upper limit) [1:) (2)");
             pw.println("#ratio ");
@@ -228,7 +228,7 @@ public class DataSelection extends Operation {
         minVariance = property.parseDouble("minVariance", "0");
         maxVariance = property.parseDouble("maxVariance", "2");
         if (minVariance < 0 || minVariance > maxVariance)
-            throw new IllegalArgumentException("Variance range " + minVariance + " , " + maxVariance + " is invalid.");
+            throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
         ratio = property.parseDouble("ratio", "2");
         if (ratio < 1)
             throw new IllegalArgumentException("Ratio threshold " + ratio + " is invalid, must be >= 1.");
@@ -238,9 +238,9 @@ public class DataSelection extends Operation {
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputInformationPath = workPath.resolve(DatasetAid.generateOutputFileName("dataSelection", tag, dateStr, ".lst"));
+        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", tag, dateStr, ".lst"));
         outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", tag, dateStr, ".dat"));
-        selectionInformationList = Collections.synchronizedList(new ArrayList<>());
+        dataFeatureList = Collections.synchronizedList(new ArrayList<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
@@ -267,8 +267,8 @@ public class DataSelection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println("Outputting values of criteria in " + outputInformationPath);
-        DataSelectionInformationFile.write(selectionInformationList, outputInformationPath);
+        System.err.println("Outputting values of criteria in " + outputFeaturePath);
+        DataFeatureListFile.write(dataFeatureList, outputFeaturePath);
 
         System.err.println("Outputting selected timewindows in " + outputSelectedPath);
         TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
@@ -347,7 +347,7 @@ public class DataSelection extends Operation {
         if (window.getPhases().length == 0) {
             System.out.println("No phase: " + window);
         } else {
-            selectionInformationList.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio, isok));
+            dataFeatureList.add(new DataFeature(window, var, cor, maxRatio, minRatio, absRatio, SNratio, isok));
         }
 
         return isok;

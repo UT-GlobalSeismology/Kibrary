@@ -20,27 +20,27 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 
 /**
- * File containing information of data selection. Ascii-format.
+ * File containing information of data features. Ascii-format.
  *
- *
- *
+ * @since a long time ago
+ * @version 2022/8/27 renamed from selection.DataSelectionInformationFile to selection.DataFeatureListFile
  */
-public class DataSelectionInformationFile {
-    private DataSelectionInformationFile() {}
+public class DataFeatureListFile {
+    private DataFeatureListFile() {}
 
-    public static void write(List<DataSelectionInformation> infoList, Path outpath) throws IOException {
+    public static void write(List<DataFeature> infoList, Path outpath) throws IOException {
         PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outpath,
                         StandardOpenOption.CREATE, StandardOpenOption.APPEND));
 
         writer.println("#station, network, lat, lon, event, component, start time, end time, phases, max ratio, min ratio, abs ratio, variance, cc, SN ratio, selected");
-        for (DataSelectionInformation info : infoList)
+        for (DataFeature info : infoList)
             writer.println(info);
 
         writer.close();
     }
 
-    public static List<DataSelectionInformation> read(Path infoPath) throws IOException {
-        List<DataSelectionInformation> infoList = new ArrayList<>();
+    public static List<DataFeature> read(Path infoPath) throws IOException {
+        List<DataFeature> infoList = new ArrayList<>();
 
         Files.readAllLines(infoPath).stream().forEach(line -> {
             String[] s = line.split("\\s+");
@@ -50,7 +50,7 @@ public class DataSelectionInformationFile {
             TimewindowData timewindow = new TimewindowData(Double.parseDouble(s[6]), Double.parseDouble(s[7]), observer,
                     new GlobalCMTID(s[4]), SACComponent.valueOf(s[5]), phases);
 
-            DataSelectionInformation info = new DataSelectionInformation(timewindow, Double.parseDouble(s[12]),
+            DataFeature info = new DataFeature(timewindow, Double.parseDouble(s[12]),
                     Double.parseDouble(s[13]), Double.parseDouble(s[9]), Double.parseDouble(s[10]),
                     Double.parseDouble(s[11]), Double.parseDouble(s[14]), Boolean.parseBoolean(s[15]));
 
@@ -67,7 +67,7 @@ public class DataSelectionInformationFile {
         });
     }
 
-    public static void outputHistograms(Path rootpath, List<DataSelectionInformation> infoList) throws IOException {
+    public static void outputHistograms(Path rootpath, List<DataFeature> infoList) throws IOException {
         double dVar = 0.1;
         double dCC = 0.1;
         double dRatio = 0.1;
@@ -84,7 +84,7 @@ public class DataSelectionInformationFile {
         Path corPath = rootpath.resolve("histogram_cc" + GadgetAid.getTemporaryString() + ".dat");
         Path ratioPath = rootpath.resolve("histogram_ratio" + GadgetAid.getTemporaryString() + ".dat");
 
-        for (DataSelectionInformation info : infoList) {
+        for (DataFeature info : infoList) {
             if (info.getVariance() > maxVar
                  || info.getCC() > maxCC
                  || info.getAbsRatio() > maxRatio)

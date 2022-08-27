@@ -10,11 +10,11 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
-import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 
 /**
- * Operation that creates hisograms of variance, amplitude ratio, and cross correlation
+ * Operation that creates hisograms of normalized variance, amplitude ratio, and cross correlation
  * between observed and synthetic waveforms.
  *
  * @author otsuru
@@ -33,9 +33,9 @@ public class DataFeatureHistogram extends Operation {
     private String tag;
 
     /**
-     * Path of a data selection information file
+     * Path of a data feature list file
      */
-    private Path dataSelectionPath;
+    private Path dataFeaturePath;
 
     /**
      * Minimum correlation coefficient
@@ -77,8 +77,8 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
             pw.println("#tag ");
-            pw.println("##Path of a data selection information file, must be set");
-            pw.println("#dataSelectionPath ");
+            pw.println("##Path of a data feature list file, must be set");
+            pw.println("#dataFeaturePath ");
             pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation) (0)");
             pw.println("#minCorrelation ");
             pw.println("##(double) Upper threshold of correlation (minCorrelation:1] (1)");
@@ -102,7 +102,7 @@ public class DataFeatureHistogram extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
-        dataSelectionPath = property.parsePath("dataSelectionPath", null, true, workPath);
+        dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
 
         minCorrelation = property.parseDouble("minCorrelation", "0");
         maxCorrelation = property.parseDouble("maxCorrelation", "1");
@@ -120,7 +120,7 @@ public class DataFeatureHistogram extends Operation {
 
    @Override
    public void run() throws IOException {
-       List<DataSelectionInformation> selectionInfo = DataSelectionInformationFile.read(dataSelectionPath);
+       List<DataFeature> selectionInfo = DataFeatureListFile.read(dataFeaturePath);
 
    }
 

@@ -2,7 +2,15 @@ package io.github.kensuke1984.kibrary.selection;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 
-public class DataSelectionInformation {
+/**
+ * Information of values that represent the difference between observed and synthetic waveforms,
+ * such as normalized variance, amplitude ratio, and cross correlation.
+ *
+ * @author otsuru
+ * @since a long time ago
+ * @version 2022/8/27 renamed from selection.DataSelectionInformation to selection.DataFeature
+ */
+public class DataFeature {
 
     private TimewindowData timewindow;
 
@@ -21,7 +29,7 @@ public class DataSelectionInformation {
     private boolean selected;
 
 
-    public DataSelectionInformation(TimewindowData timewindow, double variance, double cc,
+    public DataFeature(TimewindowData timewindow, double variance, double cc,
             double maxRatio, double minRatio, double absRatio, double SNratio, boolean selected) {
         this.timewindow = timewindow;
         this.variance = variance;

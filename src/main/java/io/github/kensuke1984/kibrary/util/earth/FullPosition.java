@@ -140,6 +140,7 @@ public final class FullPosition extends HorizontalPosition {
     }
 
     /**
+     * Compute straight-line distance to another position.
      * @param location {@link FullPosition} to compute distance with
      * @return [km] one-line distance from the location
      */
