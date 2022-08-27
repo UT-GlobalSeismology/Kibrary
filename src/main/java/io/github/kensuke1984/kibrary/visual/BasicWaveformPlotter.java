@@ -73,6 +73,10 @@ public class BasicWaveformPlotter extends Operation {
      */
     private Path basicPath;
     /**
+     * Path of folder containing event folders with waveform txt files
+     */
+    private Path referencePath;
+    /**
      * Path of a travel time information file
      */
     private Path travelTimePath;
@@ -119,6 +123,9 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a waveform folder, when also plotting reference waveforms");
+            pw.println("## It must contain event folders with waveform txt files. Only observed waveforms will be plotted.");
+            pw.println("#referencePath ");
             pw.println("##Path of a travel time information file, if plotting travel times");
             pw.println("#travelTimePath travelTime.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
@@ -145,7 +152,8 @@ public class BasicWaveformPlotter extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
-
+        if (property.containsKey("referencePath"))
+            referencePath = property.parsePath("referencePath", null, true, workPath);
         if (property.containsKey("travelTimePath"))
             travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
 
@@ -230,6 +238,7 @@ public class BasicWaveformPlotter extends Operation {
         GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
         GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
         GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
         GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
         GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
@@ -264,9 +273,18 @@ public class BasicWaveformPlotter extends Operation {
 
             // plot waveforms
             gnuplot.addLine("0", zeroAppearance, "");
-            gnuplot.addLine(fileName, 1, 2, originalAppearance, "original");
-            gnuplot.addLine(fileName, 3, 2, shiftedAppearance, "shifted");
-            gnuplot.addLine(fileName, 3, 4, synAppearance, "synthetic");
+            if (referencePath != null) {
+                // when reference (the actual observed) exists, plot the actual (shifted) observed in black and the new (obtained) in blue
+                Path referenceFilePath = Paths.get("..").resolve(referencePath).resolve(eventDir.toString()).resolve(fileName);
+                gnuplot.addLine(referenceFilePath.toString(), 3, 2, shiftedAppearance, "observed");
+                gnuplot.addLine(fileName, 3, 4, synAppearance, "initial");
+                gnuplot.addLine(fileName, 3, 2, resultAppearance, "result");
+            } else {
+                // otherwise, plot the original observed (before timeshift) in gray and shifted observed in black
+                gnuplot.addLine(fileName, 1, 2, originalAppearance, "original");
+                gnuplot.addLine(fileName, 3, 2, shiftedAppearance, "shifted");
+                gnuplot.addLine(fileName, 3, 4, synAppearance, "synthetic");
+            }
             if (plotResiduals) gnuplot.addLine(fileName, "3:($2-$4)", resAppearance, "residual");
 
             // add vertical lines and labels of travel times

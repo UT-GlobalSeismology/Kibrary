@@ -19,9 +19,11 @@ import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.BasicWaveformPlotter;
+import io.github.kensuke1984.kibrary.visual.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.PartialWaveformPlotter;
@@ -47,6 +49,7 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 enum Manhattan {
     // Environment & General 00
     DatasetMerge(1, DatasetMerge.class),
+    PolynomialStructurePerturber(2, PolynomialStructurePerturber.class),
     RaypathMapper(6, RaypathMapper.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),
@@ -66,6 +69,7 @@ enum Manhattan {
     BasicIDMerge(41, BasicIDMerge.class),
     BasicWaveformPlotter(42, BasicWaveformPlotter.class),
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
+    DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     MultigridDesigner(53, MultigridDesigner.class),
     // Partial 60

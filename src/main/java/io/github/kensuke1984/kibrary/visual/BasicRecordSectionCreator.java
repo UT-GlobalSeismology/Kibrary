@@ -88,11 +88,11 @@ public class BasicRecordSectionCreator extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * {@link Path} of a basic ID file
+     * Path of a basic ID file
      */
     private Path basicIDPath;
     /**
-     * {@link Path} of a basic file
+     * Path of a basic file
      */
     private Path basicPath;
 
@@ -151,9 +151,9 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#tag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic ID file, must be defined");
+            pw.println("##Path of a basic ID file, must be set");
             pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be defined");
+            pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");

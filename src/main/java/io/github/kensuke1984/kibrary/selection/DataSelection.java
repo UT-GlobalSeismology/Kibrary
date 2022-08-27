@@ -117,11 +117,11 @@ public class DataSelection extends Operation {
      */
     private double maxStaticShift;
     /**
-     * Minimum correlation coefficients
+     * Minimum correlation coefficient
      */
     private double minCorrelation;
     /**
-     * Maximum correlation coefficients
+     * Maximum correlation coefficient
      */
     private double maxCorrelation;
     /**
@@ -133,7 +133,7 @@ public class DataSelection extends Operation {
      */
     private double maxVariance;
     /**
-     * amplitude のしきい値
+     * Threshold of amplitude ratio
      */
     private double ratio;
     private double minSNratio;
@@ -178,19 +178,19 @@ public class DataSelection extends Operation {
             pw.println("##Path of a static correction file");
             pw.println("## If you do not want to consider static correction, then comment out the next line.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
+            pw.println("##(double) Threshold of static correction time shift (10.)");
             pw.println("#maxStaticShift ");
-            pw.println("##(double) minCorrelation (0)");
+            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation) (0)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) maxCorrelation (1)");
+            pw.println("##(double) Upper threshold of correlation (minCorrelation:1] (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) minVariance (0)");
+            pw.println("##(double) Lower threshold of variance [0:maxVariance) (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) maxVariance (2)");
-            pw.println("#maxVarianc e");
-            pw.println("##(double) ratio (2)");
+            pw.println("##(double) Upper threshold of variance (minVariance:) (2)");
+            pw.println("#maxVariance ");
+            pw.println("##(double) Threshold of amplitude ratio (upper limit) [1:) (2)");
             pw.println("#ratio ");
-            pw.println("##(double) minSNratio (0)");
+            pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNratio ");
             pw.println("##(boolean) Whether to exclude surface wave (false)");
             pw.println("#excludeSurfaceWave ");
@@ -219,12 +219,22 @@ public class DataSelection extends Operation {
         }
 
         maxStaticShift = property.parseDouble("maxStaticShift", "10.");
+        if (maxStaticShift < 0)
+            throw new IllegalArgumentException("Static shift threshold " + maxStaticShift + " is invalid, must be >= 0.");
         minCorrelation = property.parseDouble("minCorrelation", "0");
         maxCorrelation = property.parseDouble("maxCorrelation", "1");
+        if (minCorrelation < -1 || minCorrelation > maxCorrelation || 1 < maxCorrelation)
+            throw new IllegalArgumentException("Correlation range " + minCorrelation + " , " + maxCorrelation + " is invalid.");
         minVariance = property.parseDouble("minVariance", "0");
         maxVariance = property.parseDouble("maxVariance", "2");
+        if (minVariance < 0 || minVariance > maxVariance)
+            throw new IllegalArgumentException("Variance range " + minVariance + " , " + maxVariance + " is invalid.");
         ratio = property.parseDouble("ratio", "2");
+        if (ratio < 1)
+            throw new IllegalArgumentException("Ratio threshold " + ratio + " is invalid, must be >= 1.");
         minSNratio = property.parseDouble("minSNratio", "0");
+        if (minSNratio < 0)
+            throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
