@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 
 /**
  * Information of values that represent the difference between observed and synthetic waveforms,
- * such as normalized variance, amplitude ratio, and cross correlation.
+ * such as normalized variance, amplitude ratio, and correlation coefficient.
  *
  * @author otsuru
  * @since a long time ago
@@ -16,7 +16,7 @@ public class DataFeature {
 
     private double variance;
 
-    private double cc;
+    private double correlation;
 
     private double maxRatio;
 
@@ -24,20 +24,20 @@ public class DataFeature {
 
     private double absRatio;
 
-    private double SNratio;
+    private double snRatio;
 
     private boolean selected;
 
 
-    public DataFeature(TimewindowData timewindow, double variance, double cc,
-            double maxRatio, double minRatio, double absRatio, double SNratio, boolean selected) {
+    public DataFeature(TimewindowData timewindow, double variance, double correlation,
+            double maxRatio, double minRatio, double absRatio, double snRatio, boolean selected) {
         this.timewindow = timewindow;
         this.variance = variance;
-        this.cc = cc;
+        this.correlation = correlation;
         this.maxRatio = maxRatio;
         this.minRatio = minRatio;
         this.absRatio = absRatio;
-        this.SNratio = SNratio;
+        this.snRatio = snRatio;
         this.selected = selected;
     }
 
@@ -49,8 +49,8 @@ public class DataFeature {
         return variance;
     }
 
-    public double getCC() {
-        return cc;
+    public double getCorrelation() {
+        return correlation;
     }
 
     public double getMaxRatio() {
@@ -65,8 +65,8 @@ public class DataFeature {
         return absRatio;
     }
 
-    public double getSNratio() {
-        return SNratio;
+    public double getSNRatio() {
+        return snRatio;
     }
 
     public boolean isSelected() {
@@ -76,6 +76,6 @@ public class DataFeature {
     @Override
     public String toString() {
         return timewindow.toString() + " " + maxRatio + " " + minRatio + " " + absRatio + " " +
-                variance + " " + cc + " " + SNratio + " " + selected;
+                variance + " " + correlation + " " + snRatio + " " + selected;
     }
 }

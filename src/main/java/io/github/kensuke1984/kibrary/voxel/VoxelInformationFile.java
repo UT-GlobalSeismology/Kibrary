@@ -57,17 +57,17 @@ public class VoxelInformationFile {
      * @param spacingLatitude (double) [deg]
      * @param spacingLongitude (double) [deg]
      * @param voxelPositions (HorizontalPosition[])
-     * @param outPath     of write file
+     * @param outputPath     of write file
      * @param options     for write
      * @throws IOException if an I/O error occurs
      */
     public static void write(double[] layerThicknesses, double[] voxelRadii,
             double spacingLatitude, double spacingLongitude, HorizontalPosition[] voxelPositions,
-            Path outPath, OpenOption... options) throws IOException {
+            Path outputPath, OpenOption... options) throws IOException {
         if (layerThicknesses.length != voxelRadii.length)
             throw new IllegalArgumentException("The number of layers and radii does not match.");
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# thicknesses of each layer [km]");
             for (double thickness : layerThicknesses) {
                 pw.print(thickness + " ");

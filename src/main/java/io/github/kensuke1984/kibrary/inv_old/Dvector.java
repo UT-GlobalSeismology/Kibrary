@@ -1012,7 +1012,7 @@ public class Dvector {
             case RECIPROCAL_FREQ:
                 if (info != null) {
                     System.err.println("Using Signal-to-Noise ratio from the data selection information file");
-                    weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
+                    weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNRatio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
                 }
                 else {
                     weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]);// * periodWeight.get(obsIDs[i].getMinPeriod());

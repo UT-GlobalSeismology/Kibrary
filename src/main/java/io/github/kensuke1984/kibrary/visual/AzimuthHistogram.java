@@ -112,12 +112,12 @@ public class AzimuthHistogram {
         // output
         String fileNameRoot = "azimuthHistogram";
         Path outPath = Paths.get("");
-        printHistogram(outPath, fileNameRoot, interval, numberOfRecords);
+        writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
         createScript(outPath, fileNameRoot, interval, minimum, maximum, xtics);
 
     }
 
-    public static void printHistogram(Path outPath, String fileNameRoot, double interval, int[] numberOfRecords) throws IOException {
+    private static void writeHistogramData(Path outPath, String fileNameRoot, double interval, int[] numberOfRecords) throws IOException {
         Path txtPath = outPath.resolve(fileNameRoot + ".txt");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
             for (int i = 0; i < numberOfRecords.length; i++) {
@@ -126,7 +126,7 @@ public class AzimuthHistogram {
         }
     }
 
-    public static void createScript(Path outPath, String fileNameRoot, double interval, double minimum, double maximum, double xtics) throws IOException {
+    private static void createScript(Path outPath, String fileNameRoot, double interval, double minimum, double maximum, double xtics) throws IOException {
         Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {

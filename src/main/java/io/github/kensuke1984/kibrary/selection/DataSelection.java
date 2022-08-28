@@ -133,7 +133,7 @@ public class DataSelection extends Operation {
      */
     private double maxVariance;
     /**
-     * Threshold of amplitude ratio
+     * Threshold of amplitude ratio (upper limit; lower limit is its inverse)
      */
     private double ratio;
     private double minSNratio;
@@ -180,15 +180,15 @@ public class DataSelection extends Operation {
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift (10.)");
             pw.println("#maxStaticShift ");
-            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation) (0)");
+            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) Upper threshold of correlation (minCorrelation:1] (1)");
+            pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance) (0)");
+            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance] (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) Upper threshold of normalized variance (minVariance:) (2)");
+            pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
             pw.println("#maxVariance ");
-            pw.println("##(double) Threshold of amplitude ratio (upper limit) [1:) (2)");
+            pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
             pw.println("#ratio ");
             pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNratio ");
@@ -231,7 +231,7 @@ public class DataSelection extends Operation {
             throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
         ratio = property.parseDouble("ratio", "2");
         if (ratio < 1)
-            throw new IllegalArgumentException("Ratio threshold " + ratio + " is invalid, must be >= 1.");
+            throw new IllegalArgumentException("Amplitude ratio threshold " + ratio + " is invalid, must be >= 1.");
         minSNratio = property.parseDouble("minSNratio", "0");
         if (minSNratio < 0)
             throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");

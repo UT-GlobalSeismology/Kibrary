@@ -63,14 +63,14 @@ public class KnownParameterFile {
     }
 
     /**
-     * @param path of a known parameter file.
+     * @param inputPath (Path) a known parameter file.
      * @return <b>unmodifiable</b> List of known parameters in the path
      * @throws IOException if an I/O error occurs.
      */
-    public static List<KnownParameter> read(Path path) throws IOException {
+    public static List<KnownParameter> read(Path inputPath) throws IOException {
         List<KnownParameter> pars = new ArrayList<>();
 
-        InformationFileReader reader = new InformationFileReader(path, true);
+        InformationFileReader reader = new InformationFileReader(inputPath, true);
         while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             UnknownParameter unknown = UnknownParameterFile.constructParameterFromParts(parts);
@@ -81,7 +81,7 @@ public class KnownParameterFile {
         for (int i = 0; i < pars.size() - 1; i++)
             for (int j = i + 1; j < pars.size(); j++)
                 if (pars.get(i).equals(pars.get(j)))
-                    System.err.println("!Caution there is duplication in " + path);
+                    System.err.println("!Caution there is duplication in " + inputPath);
         return Collections.unmodifiableList(pars);
     }
 
