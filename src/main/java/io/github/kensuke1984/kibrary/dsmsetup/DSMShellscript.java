@@ -84,6 +84,7 @@ class DSMShellscript {
         String enterFolder;
         String exitFolder;
         String programName;
+        String mvString;
 
         switch (type) {
         case SYNTHETIC:
@@ -91,18 +92,21 @@ class DSMShellscript {
             enterFolder = "./*[A-Z]";
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "tipsv" : "tish");
+            mvString = null;
             break;
         case PF:
             fileNameRoot = "runFP_" + mode;
-            enterFolder = "./FPinfo/*[A-Z]";
+            enterFolder = "./FPqueue/*[A-Z]";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvfp" : "shfp");
+            mvString = "mv $j FPinfo";
             break;
         case PB:
             fileNameRoot = "runBP_" + mode;
-            enterFolder = "./BPinfo/[M-Q]*";
+            enterFolder = "./BPqueue/[M-Q]*";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
+            mvString = "mv $j BPinfo";
             break;
         default:
             throw new IllegalArgumentException("This SPCType is not supported yet.");
@@ -132,6 +136,14 @@ class DSMShellscript {
             pw.println("  done");
             pw.println("  wait");
             pw.println("done");
+
+            if (mvString != null) {
+                pw.println("  ");
+                pw.println("for j in " + enterFolder);
+                pw.println("do");
+                pw.println("  " + mvString);
+                pw.println("done");
+            }
         }
     }
 

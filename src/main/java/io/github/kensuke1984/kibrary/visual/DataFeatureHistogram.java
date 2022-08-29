@@ -8,6 +8,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
@@ -15,6 +17,7 @@ import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 /**
  * Operation that creates hisograms of normalized variance, amplitude ratio, and cross correlation
@@ -113,7 +116,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
             pw.println("#tag ");
             pw.println("##Path of a data feature list file, must be set");
-            pw.println("#dataFeaturePath ");
+            pw.println("#dataFeaturePath dataFeature.lst");
             pw.println("##(double) Lower bound of correlation coefficient to plot [-1:correlationUpperBound) (-1)");
             pw.println("#correlationLowerBound ");
             pw.println("##(double) Upper bound of correlation coefficient to plot (correlationLowerBound:1] (1)");
@@ -192,6 +195,11 @@ public class DataFeatureHistogram extends Operation {
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        createHistograms(featureList);
+   }
+
+   private void extractFeatures(BasicID[] basicIDs) {
+
+       new ArrayRealVector(basicIDs[0].getData(), false);
    }
 
    private void createHistograms(List<DataFeature> featureList) throws IOException {

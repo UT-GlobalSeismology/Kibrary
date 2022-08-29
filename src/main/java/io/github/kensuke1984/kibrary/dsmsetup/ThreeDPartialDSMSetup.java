@@ -65,6 +65,10 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private Path workPath;
     /**
+     * Path of an output foler to reuse, if reusing any
+     */
+    private Path reusePath;
+    /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String tag;
@@ -147,6 +151,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##To reuse FP & BP pools that have already been created, set the folder containing them");
+            pw.println("#reusePath threeDPartial");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#tag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
@@ -184,6 +190,8 @@ public class ThreeDPartialDSMSetup extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("reusePath"))
+            reusePath = property.parsePath("reusePath", null, true, workPath);
         if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
         header = property.parseStringSingle("header", "PREM");
 
@@ -230,6 +238,11 @@ public class ThreeDPartialDSMSetup extends Operation {
         Set<Observer> observerSet = ObserverListFile.read(observerPath);
         System.err.println("Number of observers read in: " + observerSet.size());
 
+        if (eventSet.size() == 0 && observerSet.size() == 0) {
+            return;
+        }
+
+        // set structure
         PolynomialStructure structure = null;
         if (structurePath != null) {
             structure = PolynomialStructureFile.read(structurePath);
@@ -237,132 +250,147 @@ public class ThreeDPartialDSMSetup extends Operation {
             structure = PolynomialStructure.of(structureName);
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, GadgetAid.getTemporaryString());
+        // set outPath
+        if (reusePath != null) {
+            outPath = reusePath;
+            System.err.println("Reusing " + reusePath);
+        } else {
+            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, GadgetAid.getTemporaryString());
+            property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+            FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
+            createPointInformationFile();
+        }
 
-        if (property != null)
-            property.write(outPath.resolve("threeddsm.properties"));
-
-        Path bpPath = outPath.resolve("BPinfo");
-        Path fpPath = outPath.resolve("FPinfo");
+        Path fpQueuePath = outPath.resolve("FPqueue");
+        Path bpQueuePath = outPath.resolve("BPqueue");
+        Path fpPoolPath = outPath.resolve("FPinfo");
+        Path bpPoolPath = outPath.resolve("BPinfo");
         Path fpCatPath = outPath.resolve("FPcat");
         Path bpCatPath = outPath.resolve("BPcat");
-        createPointInformationFile();
+        Files.createDirectories(fpPoolPath);
+        Files.createDirectories(bpPoolPath);
 
 
-        // FP
+        //---------FP----------//
+
         System.err.println("Making information files for the events (fp) ...");
         int n = 0;
-        for (GlobalCMTID eventID : eventSet) {
-            GlobalCMTAccess event;
-            try {
-                event = eventID.getEventData();
+        for (GlobalCMTID event : eventSet) {
+            GlobalCMTAccess eventData = event.getEventData();
 
-                // joint CMT inversion
-                if (jointCMT) {
-                    int mtEXP = 25;
-                    double mw = 1.;
-                    MomentTensor[] mts = new MomentTensor[6];
-                    mts[0] = new MomentTensor(1., 0., 0., 0., 0., 0., mtEXP, mw);
-                    mts[1] = new MomentTensor(0., 1., 0., 0., 0., 0., mtEXP, mw);
-                    mts[2] = new MomentTensor(0., 0., 1., 0., 0., 0., mtEXP, mw);
-                    mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
-                    mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
-                    mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
+            // joint CMT inversion
+            if (jointCMT) {
+                int mtEXP = 25;
+                double mw = 1.;
+                MomentTensor[] mts = new MomentTensor[6];
+                mts[0] = new MomentTensor(1., 0., 0., 0., 0., 0., mtEXP, mw);
+                mts[1] = new MomentTensor(0., 1., 0., 0., 0., 0., mtEXP, mw);
+                mts[2] = new MomentTensor(0., 0., 1., 0., 0., 0., mtEXP, mw);
+                mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
+                mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
+                mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
 
-                    for (int i = 0; i < 6; i++) {
-                        event.setCMT(mts[i]);
-                        FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationRadii, perturbationPositions);
-                        Path infPath = fpPath.resolve(event.toString() + "_mt" + i);
-                        Files.createDirectories(infPath.resolve(header));
-                        fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
-                        fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+                for (int i = 0; i < 6; i++) {
+                    // If computation for this event & mt already exists in the FP pool, skip
+                    Path mtPoolPath = fpPoolPath.resolve(event.toString() + "_mt" + i);
+                    if (Files.exists(mtPoolPath)) {
+                        System.err.println(" " + event.toString() + " : " + mtPoolPath + " already exists, skipping.");
+                        continue;
                     }
-                }
-                else {
-                    FPInputFile fp = new FPInputFile(event, header, structure, tlen, np, perturbationRadii, perturbationPositions);
-                    Path infPath = fpPath.resolve(event.toString());
-                    Files.createDirectories(infPath.resolve(header));
-                    fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
-                    fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
 
-                    if (catalogue) {
-                         Path catInfPath = fpCatPath.resolve(event.toString());
-                         Files.createDirectories(catInfPath.resolve(header));
-                         fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
-                         fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
-                    }
+                    eventData.setCMT(mts[i]);
+                    Path mtQueuePath = fpQueuePath.resolve(event.toString() + "_mt" + i);
+                    FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, perturbationRadii, perturbationPositions);
+                    Files.createDirectories(mtQueuePath.resolve(header));
+                    fp.writeSHFP(mtQueuePath.resolve(header + "_SH.inf"));
+                    fp.writePSVFP(mtQueuePath.resolve(header + "_PSV.inf"));
                 }
-                n++;
-            } catch (RuntimeException e) {  // TODO: is this needed?
-                System.err.println(e.getMessage());
+
+            } else {
+                // If computation for this event already exists in the FP pool, skip
+                Path eventPoolPath = fpPoolPath.resolve(event.toString());
+                if (Files.exists(eventPoolPath)) {
+                    System.err.println(" " + event.toString() + " : " + eventPoolPath + " already exists, skipping.");
+                    continue;
+                }
+
+                // Prepare files in FPqueue
+                Path eventQueuePath = fpQueuePath.resolve(event.toString());
+                FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, perturbationRadii, perturbationPositions);
+                Files.createDirectories(eventQueuePath.resolve(header));
+                fp.writeSHFP(eventQueuePath.resolve(header + "_SH.inf"));
+                fp.writePSVFP(eventQueuePath.resolve(header + "_PSV.inf"));
+
+                if (catalogue) {
+                     Path catInfPath = fpCatPath.resolve(event.toString());
+                     Files.createDirectories(catInfPath.resolve(header));
+                     fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
+                     fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
+                }
             }
+            n++;
         }
-        System.err.println(n + " sources created in " + fpPath);
+        System.err.println(n + " sources created in " + fpQueuePath);
+
         // output shellscripts for execution of psvfp and shfp
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
         shellFP.write(SPCType.PF, SPCMode.PSV);
         shellFP.write(SPCType.PF, SPCMode.SH);
         System.err.println("After this finishes, please run " + outPath + "/runFP_PSV.sh and " + outPath + "/runFP_SH.sh");
 
-        // BP
+
+        //---------BP----------//
+
         System.err.println("Making information files for the observers (bp) ...");
         n = 0;
         for (Observer observer : observerSet) {
-            // System.out.println(str);
-            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationRadii, perturbationPositions);
-            Path infPath = bpPath.resolve(observer.getPosition().toCode());
-
-            // In case observers with same position but different name exist
-            if (Files.exists(infPath)) {
-                System.err.println(" " + observer.toString() + " : " + infPath + " already exists, skipping.");
+            // If computation for this observer already exists in the BP pool, skip
+            Path observerPoolPath = bpPoolPath.resolve(observer.getPosition().toCode());
+            if (Files.exists(observerPoolPath)) {
+                System.err.println(" " + observer.toString() + " : " + observerPoolPath + " already exists, skipping.");
                 continue;
             }
 
-            Files.createDirectories(infPath.resolve(header));
-            bp.writeSHBP(infPath.resolve(header + "_SH.inf"));
-            bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
+            // In case observers with same position but different name exist, skip
+            Path observerQueuePath = bpQueuePath.resolve(observer.getPosition().toCode());
+            if (Files.exists(observerQueuePath)) {
+                System.err.println(" " + observer.toString() + " : " + observerQueuePath + " already exists, skipping.");
+                continue;
+            }
+
+            // Prepare files in BPqueue
+            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationRadii, perturbationPositions);
+            Files.createDirectories(observerQueuePath.resolve(header));
+            bp.writeSHBP(observerQueuePath.resolve(header + "_SH.inf"));
+            bp.writePSVBP(observerQueuePath.resolve(header + "_PSV.inf"));
             n++;
         }
-        System.err.println(n + " sources created in " + bpPath);
+        System.err.println(n + " sources created in " + bpQueuePath);
+
         if (catalogue) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, perturbationRadii, perturbationPositions);
-            Path catInfPath = bpCatPath;
-            Files.createDirectories(catInfPath.resolve(header));
-            bp.writeSHBPCat(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
-            bp.writePSVBPCat(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
+            Files.createDirectories(bpCatPath.resolve(header));
+            bp.writeSHBPCat(bpCatPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
+            bp.writePSVBPCat(bpCatPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
         }
+
         // output shellscripts for execution of psvbp and shbp
         DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
         shellBP.write(SPCType.PB, SPCMode.PSV);
         shellBP.write(SPCType.PB, SPCMode.SH);
         System.err.println("After this finishes, please run " + outPath + "/runBP_PSV.sh and " + outPath + "/runBP_SH.sh");
 
-        // TODO
-        if (fpPath.toFile().delete() && bpPath.toFile().delete()) {
-            Files.delete(outPath.resolve("horizontalPoint.inf"));
-            Files.delete(outPath.resolve("perturbationPoint.inf"));
-            Files.delete(outPath);
-        } else {
-            // FileUtils.moveFileToDirectory(getParameterPath().toFile(),
-            // outputPath.toFile(), false);
-            FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
-        }
-
     }
 
     /**
-     * Creates files, horizontalPoint.inf and information perturbationPoint
+     * Creates voxelPointCode.lst
      */
     private void createPointInformationFile() throws IOException {
-        Path horizontalPointPath = outPath.resolve("voxelPointCode.inf");
-        Path perturbationPointPath = outPath.resolve("perturbationPoint.inf"); //TODO unneeded?
-        try (PrintWriter hpw = new PrintWriter(Files.newBufferedWriter(horizontalPointPath));
-                PrintWriter ppw = new PrintWriter(Files.newBufferedWriter(perturbationPointPath))) {
+        Path horizontalPointPath = outPath.resolve("voxelPointCode.lst");
+        try (PrintWriter hpw = new PrintWriter(Files.newBufferedWriter(horizontalPointPath))) {
             int figure = String.valueOf(perturbationPositions.length).length();
             for (int i = 0; i < perturbationPositions.length; i++) {
                 hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + perturbationPositions[i]);
-                for (double aPerturbationR : perturbationRadii)
-                    ppw.println(perturbationPositions[i] + " " + aPerturbationR);
             }
         }
     }

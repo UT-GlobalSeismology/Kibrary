@@ -128,7 +128,7 @@ public class Complementation {
 //		double kLon = kichi.getLongitude();
 //		double mLat = michi.getLatitude();
 //		double mLon = michi.getLongitude();
-		double distance = michi.computeDistance(kichi);
+		double distance = michi.computeStraightDistance(kichi);
 		return 1/distance;
 //		double weight = 1/distance;
 //		return weight;
@@ -173,7 +173,7 @@ public class Complementation {
 		double minDistance = Double.MAX_VALUE;
 		FullPosition[] nearest = new FullPosition[1];
 		for (FullPosition loc : locations) {
-			double distance = loc.computeDistance(location);
+			double distance = loc.computeStraightDistance(location);
 			if (distance < minDistance) {
 				minDistance = distance;
 				nearest[0] = loc;
@@ -278,7 +278,7 @@ public class Complementation {
 	 */
 	private static double[] distance(FullPosition[] locations, FullPosition location){
 		 return IntStream.range(0, locations.length)
-				 .mapToDouble(i -> locations[i].computeDistance(location))
+				 .mapToDouble(i -> locations[i].computeStraightDistance(location))
 				 .toArray();
 	}
 	

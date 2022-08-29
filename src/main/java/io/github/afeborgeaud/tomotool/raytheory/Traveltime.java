@@ -194,10 +194,10 @@ public class Traveltime {
     // [0]: dt [1]: t
     private double[] calculateV(FullPosition[] raypath, String phaseName) {
         double[] traveltime = new double[3];
-        double d0 = raypath[0].computeDistance(raypath[1]);
+        double d0 = raypath[0].computeStraightDistance(raypath[1]);
         traveltime = add(traveltime, calculateOnePointV(d0, raypath[0], raypath[1], phaseName));
         for (int i = 1; i < raypath.length - 1; i++) {
-            d0 = raypath[i].computeDistanceGeographical(raypath[i+1]);
+            d0 = raypath[i].computeStraightDistanceGeographical(raypath[i+1]);
             traveltime = add(traveltime, calculateOnePointV(d0, raypath[i], raypath[i+1], phaseName));
         }
 
