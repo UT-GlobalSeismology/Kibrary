@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -52,6 +53,7 @@ enum Brooklyn {
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
+    TimewindowSubtract(35, TimewindowSubtract.class),
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
     VarianceComputer(45, VarianceComputer.class),

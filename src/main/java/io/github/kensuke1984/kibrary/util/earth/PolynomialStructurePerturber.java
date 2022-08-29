@@ -92,7 +92,7 @@ public class PolynomialStructurePerturber extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        nameRoot = property.parseStringSingle("nameRoot", "structure");
+        nameRoot = property.parseStringSingle("nameRoot", "PREM");
         if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
 
         if (property.containsKey("structurePath")) {

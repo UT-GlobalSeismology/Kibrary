@@ -51,6 +51,9 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * Therefore, observer positions are used instead to distinguish an observer.
  * "Observers with different names but same position" can also exist, but they do not cause problems here
  * because the same BP waveform can be used for both of them.)
+ * <p>
+ * By reusing the output folder, computation for events and observers that have already been computed for can be skipped.
+ * When doing so, all computation settings (besides events and observers) should be kept the same.
  *
  * @author Kensuke Konishi
  * @since version 0.2.2.1
@@ -386,7 +389,7 @@ public class ThreeDPartialDSMSetup extends Operation {
      * Creates voxelPointCode.lst
      */
     private void createPointInformationFile() throws IOException {
-        Path horizontalPointPath = outPath.resolve("voxelPointCode.lst");
+        Path horizontalPointPath = outPath.resolve("voxelPointCode.txt");
         try (PrintWriter hpw = new PrintWriter(Files.newBufferedWriter(horizontalPointPath))) {
             int figure = String.valueOf(perturbationPositions.length).length();
             for (int i = 0; i < perturbationPositions.length; i++) {
