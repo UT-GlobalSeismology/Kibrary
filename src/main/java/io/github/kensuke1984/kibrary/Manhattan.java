@@ -28,6 +28,7 @@ import io.github.kensuke1984.kibrary.visual.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
+import io.github.kensuke1984.kibrary.visual.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
@@ -50,6 +51,7 @@ enum Manhattan {
     // Environment & General 00
     DatasetMerge(1, DatasetMerge.class),
     PolynomialStructurePerturber(2, PolynomialStructurePerturber.class),
+    PolynomialStructurePlotter(3, PolynomialStructurePlotter.class),
     RaypathMapper(6, RaypathMapper.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),

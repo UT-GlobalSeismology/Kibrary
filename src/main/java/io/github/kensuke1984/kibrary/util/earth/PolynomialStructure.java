@@ -379,7 +379,11 @@ public final class PolynomialStructure {
      * @return (double) a value x to the input r for polynomial functions
      */
     private double xFor(double r) {
-        return r / rmax[nZone - 1];
+        return r / planetRadius();
+    }
+
+    public double planetRadius() {
+        return rmax[nZone - 1];
     }
 
     /**

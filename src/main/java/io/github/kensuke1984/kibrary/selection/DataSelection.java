@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.util.Precision;
 
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -311,43 +310,26 @@ public class DataSelection extends Operation {
                 foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
-    private boolean check(Observer observer, GlobalCMTID id, SACComponent component,
-            TimewindowData window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
-        if (obsU.getDimension() < synU.getDimension())
-            synU = synU.getSubVector(0, obsU.getDimension() - 1);
-        else if (synU.getDimension() < obsU.getDimension())
-            obsU = obsU.getSubVector(0, synU.getDimension() - 1);
+    private boolean check(TimewindowData window, RealVector obsU, RealVector synU, double snRatio) throws IOException {
+        DataFeature feature = DataFeature.create(window, obsU, synU, snRatio, false);
 
-        // check
-        double synMax = synU.getMaxValue();
-        double synMin = synU.getMinValue();
-        double obsMax = obsU.getMaxValue();
-        double obsMin = obsU.getMinValue();
-        double obs2 = obsU.dotProduct(obsU);
-        double syn2 = synU.dotProduct(synU);
-        double cor = obsU.dotProduct(synU);
-        cor /= Math.sqrt(obs2 * syn2);
-        double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
-        var /= obs2;
-        double maxRatio = Precision.round(synMax / obsMax, 2);
-        double minRatio = Precision.round(synMin / obsMin, 2);
-        double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
-
-        absRatio = Precision.round(absRatio, 2);
-        var = Precision.round(var, 2);
-        cor = Precision.round(cor, 2);
-
-        SNratio = Precision.round(SNratio, 2);
+        double minRatio = feature.getMinRatio();
+        double maxRatio = feature.getMaxRatio();
+        double absRatio = feature.getAbsRatio();
+        double cor = feature.getCorrelation();
+        double var = feature.getVariance();
+        double sn = feature.getSNRatio();
 
         boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
                 || ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
                 || var < minVariance || maxVariance < var
-                || SNratio < minSNratio);
+                || sn < minSNratio);
+        feature.setSelected(isok);
 
         if (window.getPhases().length == 0) {
             System.out.println("No phase: " + window);
         } else {
-            dataFeatureList.add(new DataFeature(window, var, cor, maxRatio, minRatio, absRatio, SNratio, isok));
+            dataFeatureList.add(feature);
         }
 
         return isok;
@@ -464,7 +446,7 @@ public class DataSelection extends Operation {
                 double signal = obsU.getNorm() / (timewindow.getEndTime() - timewindow.getStartTime());
                 double SNratio = signal / noise;
 
-                if (check(observer, eventID, component, timewindow, obsU, synU, SNratio)) {
+                if (check(timewindow, obsU, synU, SNratio)) {
                     if (Stream.of(timewindow.getPhases()).filter(p -> p == null).count() > 0) {
                         System.out.println("!! No phase: " + timewindow);
                     }
