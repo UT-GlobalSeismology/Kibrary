@@ -130,15 +130,16 @@ public final class PartialIDFile {
         return read(idPath, dataPath, id -> true);
     }
 
-    public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
-            throws IOException {
+    public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser) throws IOException {
+        // Read IDs
         PartialID[] ids = read(idPath);
+
+        // Read waveforms
         long t = System.nanoTime();
         long dataSize = Files.size(dataPath);
         PartialID lastID = ids[ids.length - 1];
         if (dataSize != lastID.startByte + lastID.npts * 8)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
-        int counter = 0;
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
             for (int i = 0; i < ids.length; i++) {
                 if (!chooser.test(ids[i])) {
@@ -151,12 +152,12 @@ public final class PartialIDFile {
                     data[j] = dis.readDouble();
                 ids[i] = ids[i].withData(data);
                 if (i % (ids.length / 20) == 0)
-                    System.err.print("\rReading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
+                    System.err.print("\r Reading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
             }
-            System.err.println("\rReading partial data ... 100.0 %");
+            System.err.println("\r Reading partial data ... 100.0 %");
         }
         if (chooser != null) ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
-        System.err.println("Partial data are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
+        System.err.println(" Partial waveforms read in " + GadgetAid.toTimeString(System.nanoTime() - t));
         return ids;
     }
 
@@ -187,57 +188,60 @@ public final class PartialIDFile {
      */
     public static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
+            System.err.println("Reading partialID file: " + idPath);
+            long t = System.nanoTime();
             long fileSize = Files.size(idPath);
+
+            // Read header
+            // short * 5
             Observer[] observers = new Observer[dis.readShort()];
             GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
             double[][] periodRanges = new double[dis.readShort()][2];
             Phase[] phases = new Phase[dis.readShort()];
-            FullPosition[] perturbationLocations = new FullPosition[dis.readShort()];
-            // 4 * short
-//			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
-//					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
-            int headerBytes = 5 * 2 + (8 + 8 + 8 * 2) * observers.length + 15 * cmtIDs.length + 8 * 2 * periodRanges.length
-                    + 16 * phases.length + 8 * 3 * perturbationLocations.length;
+            FullPosition[] voxelPositions = new FullPosition[dis.readShort()];
+            // calculate number of bytes in header
+            int headerBytes = 2 * 5 + (8 + 8 + 8 * 2) * observers.length + 15 * cmtIDs.length + 8 * 2 * periodRanges.length
+                    + 16 * phases.length + 8 * 3 * voxelPositions.length;
             long idParts = fileSize - headerBytes;
             if (idParts % oneIDByte != 0)
-                throw new RuntimeException(idPath + " is not valid..");
-            // name(8),network(8),position(8*2)
+                throw new RuntimeException(idPath + " is invalid.");
+            // station(8),network(8),position(8*2)
             byte[] observerBytes = new byte[32];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
                 observers[i] = Observer.createObserver(observerBytes);
             }
+            // eventID(15)
             byte[] cmtIDBytes = new byte[15];
             for (int i = 0; i < cmtIDs.length; i++) {
                 dis.read(cmtIDBytes);
                 cmtIDs[i] = new GlobalCMTID(new String(cmtIDBytes).trim());
             }
+            // period(8*2)
             for (int i = 0; i < periodRanges.length; i++) {
                 periodRanges[i][0] = dis.readDouble();
                 periodRanges[i][1] = dis.readDouble();
             }
+            // phase(16)
             byte[] phaseBytes = new byte[16];
             for (int i = 0; i < phases.length; i++) {
                 dis.read(phaseBytes);
                 phases[i] = Phase.create(new String(phaseBytes).trim());
             }
-            for (int i = 0; i < perturbationLocations.length; i++) {
-//				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
-                perturbationLocations[i] = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+            // position(8*3)
+            for (int i = 0; i < voxelPositions.length; i++) {
+                voxelPositions[i] = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
             }
-            int nid = (int) (idParts / oneIDByte);
-            System.err.println("Reading partialID file: " + idPath);
 
-            long t = System.nanoTime();
+            // Read IDs
+            int nid = (int) (idParts / oneIDByte);
             byte[][] bytes = new byte[nid][oneIDByte];
-            System.out.println(nid);
             for (int i = 0; i < nid; i++)
                 dis.read(bytes[i]);
             PartialID[] ids = new PartialID[nid];
             IntStream.range(0, nid).parallel()
-                .forEach(i -> ids[i] = createID(bytes[i], observers, cmtIDs, periodRanges, phases, perturbationLocations));
-            System.err
-                    .println(ids.length + " partial IDs are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
+                .forEach(i -> ids[i] = createID(bytes[i], observers, cmtIDs, periodRanges, phases, voxelPositions));
+            System.err.println(" " + ids.length + " partialIDs are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
             return ids;
         }
     }

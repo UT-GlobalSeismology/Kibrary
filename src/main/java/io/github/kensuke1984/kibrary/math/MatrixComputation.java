@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.math;
 
+import java.util.stream.IntStream;
+
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -7,8 +9,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-
-import java.util.stream.IntStream;
 
 /**
  * Computations of matrix and vector
@@ -20,7 +20,7 @@ public class MatrixComputation {
 
     public static ParallelizedMatrix computeAtA(RealMatrix a) {
         long start = System.nanoTime();
-        System.err.print("Computing matrix multiplication AtA");
+        System.err.print(" Computing matrix multiplication AtA");
         int n = a.getColumnDimension();
         ParallelizedMatrix ata = new ParallelizedMatrix(n, n);
 
@@ -66,7 +66,7 @@ public class MatrixComputation {
     public static ParallelizedMatrix computeAB(RealMatrix former, RealMatrix latter) throws DimensionMismatchException {
         long start = System.nanoTime();
         MatrixUtils.checkMultiplicationCompatible(former, latter);
-        System.err.print("computing matrix multiplication");
+        System.err.print(" Computing matrix multiplication");
         int m = former.getRowDimension();
         int n = latter.getColumnDimension();
         ParallelizedMatrix ab = new ParallelizedMatrix(m, n);

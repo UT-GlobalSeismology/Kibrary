@@ -79,6 +79,11 @@ public class LetMeInvert extends Operation {
      * Solvers for equation
      */
     private Set<InverseMethodEnum> inverseMethods;
+    /**
+    * α for AIC 独立データ数:n/α
+    */
+    private double[] alpha;
+    private int evaluateNum;
 
     /**
      * @param args  none to create a property file <br>
@@ -113,6 +118,10 @@ public class LetMeInvert extends Operation {
             pw.println("#weightingType ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
             pw.println("#inverseMethods ");
+            pw.println("##The empirical redundancy parameter alpha to compute AIC for, listed using spaces (1 100 1000)");
+            pw.println("#alpha ");
+            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC (100)");
+            pw.println("#evaluateNum ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -136,6 +145,9 @@ public class LetMeInvert extends Operation {
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
+        if (property.containsKey("alpha")) alpha = property.parseDoubleArray("alpha", "1 100 1000");
+        evaluateNum = property.parseInt("evaluateNum", "100");
+
     }
 
     @Override
@@ -150,20 +162,32 @@ public class LetMeInvert extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
+        int dLength = assembler.getD().getDimension();
+        double dNorm = assembler.getD().getNorm();
+        double obsNorm = assembler.getObs().getNorm();
         System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        // solve inversion and output
+        // output matrices
         AtAFile.write(ata, outPath.resolve("ata.lst"));
         AtdFile.write(atd, outPath.resolve("atd.lst"));
         UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
+
+        // solve inversion and evaluate
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dNorm, obsNorm, dLength);
         for (InverseMethodEnum method : inverseMethods) {
+            Path outMethodPath = outPath.resolve(method.simpleName());
+
+            // solve problem
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();
-            inverseProblem.outputAnswers(parameterList, outPath.resolve(method.simpleName()));
+            inverseProblem.outputAnswers(parameterList, outMethodPath);
+
+            // compute normalized variance and AIC
+            evaluation.evaluate(inverseProblem.getANS(), evaluateNum, alpha, outMethodPath);
         }
 
     }

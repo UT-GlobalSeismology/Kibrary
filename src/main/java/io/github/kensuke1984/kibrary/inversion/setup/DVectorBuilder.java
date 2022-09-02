@@ -65,7 +65,7 @@ public final class DVectorBuilder {
         obsVecs = new RealVector[nTimeWindow];
         synVecs = new RealVector[nTimeWindow];
         startPoints = new int[nTimeWindow];
-        System.err.println(nTimeWindow + " timewindows are used");
+        System.err.println(" " + nTimeWindow + " timewindows are used");
 
         npts = read();
     }

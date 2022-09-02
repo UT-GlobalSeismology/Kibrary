@@ -26,6 +26,7 @@ public class MatrixAssembly {
     private final DVectorBuilder dVectorBuilder;
     private final ParallelizedMatrix a;
     private final RealVector d;
+    private final RealVector obs;
     private final double normalizedVariance;
     private RealMatrix ata;
     private RealVector atd;
@@ -65,7 +66,7 @@ public class MatrixAssembly {
         d = dVectorBuilder.buildWithWeight(weighting);
 
         // compute variance
-        RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
+        obs = dVectorBuilder.fullObsVecWithWeight(weighting);
         normalizedVariance = MathAid.computeVariance(d, obs);
 
     }
@@ -76,6 +77,14 @@ public class MatrixAssembly {
 
     public ParallelizedMatrix getA() {
         return a;
+    }
+
+    public RealVector getD() {
+        return d;
+    }
+
+    public RealVector getObs() {
+        return obs;
     }
 
     public double getNormalizedVariance() {
