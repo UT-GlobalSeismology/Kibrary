@@ -124,9 +124,15 @@ public final class SpcFileAid {
         return list;
     }
 
-    public static List<SPCFileName> collectOrderedUBSHSpcFileName(Path path) throws IOException {
+    /**
+     * @param path
+     * @return
+     * @throws IOException
+     * @author rei
+     */
+    public static List<SPCFileName> collectOrderedUFUBSHSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
-        List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("UB...SH.spc")).collect(Collectors.toList());
+        List<Path> paths = Files.list(path).filter(p -> (p.getFileName().toString().endsWith("UB...SH.spc")) || p.getFileName().toString().endsWith("UF...SH.spc")).collect(Collectors.toList());
         int n = paths.size();
         int ndigits = 1;
         String formatter = null;
@@ -266,9 +272,15 @@ public final class SpcFileAid {
         return list;
     }
 
-    public static List<SPCFileName> collectOrderedUBPSVSpcFileName(Path path) throws IOException {
+    /**
+     * @param path
+     * @return
+     * @throws IOException
+     * @author rei
+     */
+    public static List<SPCFileName> collectOrderedUFUBPSVSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
-        List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith("UB...PSV.spc")).collect(Collectors.toList());
+        List<Path> paths = Files.list(path).filter(p -> (p.getFileName().toString().endsWith("UB...PSV.spc")) || p.getFileName().toString().endsWith("UF...PSV.spc")).collect(Collectors.toList());
         int n = paths.size();
         int ndigits = 1;
         String formatter = null;
