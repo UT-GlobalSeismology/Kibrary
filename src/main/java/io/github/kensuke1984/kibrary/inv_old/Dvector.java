@@ -26,7 +26,7 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -98,7 +98,7 @@ public class Dvector {
      */
     private Map<Observer, Double> stationVariance;
     private boolean atLeastThreeRecordsPerStation;
-    List<DataSelectionInformation> selectionInfo;
+    List<DataFeature> selectionInfo;
     /**
      * Synthetic
      */
@@ -162,7 +162,7 @@ public class Dvector {
      * @author anselme
      */
     public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType,
-            boolean atLeastThreeRecordsPerStation, List<DataSelectionInformation> selectionInfo) {
+            boolean atLeastThreeRecordsPerStation, List<DataFeature> selectionInfo) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         ids = basicIDs;
         if (!check(ids))
@@ -479,7 +479,7 @@ public class Dvector {
         };
         WeightingType weigthingType = WeightingType.RECIPROCAL;
         boolean atLeastThreeRecordsPerStation = false;
-        List<DataSelectionInformation> selectionInfo = null;
+        List<DataFeature> selectionInfo = null;
 
         List<BasicID> idList = Stream.of(basicIDs).collect(Collectors.toList());
 
@@ -980,7 +980,7 @@ public class Dvector {
             this.npts += npts;
             start += npts;
 
-            DataSelectionInformation info = null;
+            DataFeature info = null;
             if (selectionInfo != null) {
                 GlobalCMTID id = obsIDs[i].getGlobalCMTID();
                 Observer station = obsIDs[i].getObserver();
@@ -1012,7 +1012,7 @@ public class Dvector {
             case RECIPROCAL_FREQ:
                 if (info != null) {
                     System.err.println("Using Signal-to-Noise ratio from the data selection information file");
-                    weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
+                    weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNRatio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
                 }
                 else {
                     weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]);// * periodWeight.get(obsIDs[i].getMinPeriod());

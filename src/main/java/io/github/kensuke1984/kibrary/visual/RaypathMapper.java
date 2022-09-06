@@ -66,6 +66,10 @@ public class RaypathMapper extends Operation {
      */
     private Path workPath;
     /**
+     * Path of an output foler to reuse, if reusing any
+     */
+    private Path reusePath;
+    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String tag;
@@ -78,7 +82,6 @@ public class RaypathMapper extends Operation {
      */
     private Path outPath;
 
-    private Path reusePath;
     private Path dataEntryPath;
     private Path voxelPath;
 

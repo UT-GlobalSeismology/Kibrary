@@ -38,25 +38,25 @@ public class UnknownParameterFile {
 
     /**
      * @param parameterList List of unknown parameters
-     * @param outPath       for write
+     * @param outputPath       for write
      * @param options       for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(List<UnknownParameter> parameterList, Path outPath, OpenOption... options)
+    public static void write(List<UnknownParameter> parameterList, Path outputPath, OpenOption... options)
             throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             parameterList.forEach(pw::println);
         }
     }
 
     /**
-     * @param path of an unknown parameter file.
+     * @param inputPath of an unknown parameter file.
      * @return <b>unmodifiable</b> List of unknown parameters in the path //TODO this is now modifiable
      * @throws IOException if an I/O error occurs.
      */
-    public static List<UnknownParameter> read(Path path) throws IOException {
+    public static List<UnknownParameter> read(Path inputPath) throws IOException {
         List<UnknownParameter> pars = new ArrayList<>();
-        InformationFileReader reader = new InformationFileReader(path, true);
+        InformationFileReader reader = new InformationFileReader(inputPath, true);
         while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             pars.add(constructParameterFromParts(parts));
@@ -65,7 +65,7 @@ public class UnknownParameterFile {
         for (int i = 0; i < pars.size() - 1; i++)
             for (int j = i + 1; j < pars.size(); j++)
                 if (pars.get(i).equals(pars.get(j)))
-                    System.err.println("!Caution there is duplication in " + path);
+                    System.err.println("!Caution there is duplication in " + inputPath);
 //		return Collections.unmodifiableList(pars); //TODO why not this?
         return pars;
     }

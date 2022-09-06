@@ -14,6 +14,8 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
@@ -25,9 +27,13 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
- * Checkerboard test
+ * Operation to create born-waveforms for a 3D model.
+ * To be used for creating pseudo-waveforms for checkerboard tests, etc.
  * <p>
- * Creates born-waveforms for checkerboard tests
+ * The created pseudo-waveform can be set as either the observed or synthetic waveform in the output {@link BasicIDFile},
+ * depending on the setting.
+ * <p>
+ * White noise can be added to the waveform.
  *
  * @author Kensuke Konishi
  * @since version 0.2.2
@@ -153,6 +159,9 @@ public class PseudoWaveformGenerator extends Operation {
         DVectorBuilder dVectorBuilder = assembler.getDVectorBuilder();
         RealVector pseudoWaveform = dVectorBuilder.fullSynVec().add(pseudoD);
 
+        // add noise
+        if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
+
         // output
         String dateStr = GadgetAid.getTemporaryString();
         Path pseudoIDPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudoID", tag, dateStr, ".dat"));
@@ -161,8 +170,8 @@ public class PseudoWaveformGenerator extends Operation {
         output(pseudoWaveform, dVectorBuilder, pseudoIDPath, pseudoPath);
     }
 
-    public void output(RealVector pseudoVec, DVectorBuilder dVectorBuilder, Path outIDPath, Path outDataPath) throws IOException {
-        RealVector[] pseudoObsParts = dVectorBuilder.separate(pseudoVec);
+    private void output(RealVector pseudoVec, DVectorBuilder dVectorBuilder, Path outIDPath, Path outDataPath) throws IOException {
+        RealVector[] pseudoObsParts = dVectorBuilder.decompose(pseudoVec);
 
         List<BasicID> basicIDs = new ArrayList<>();
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
@@ -182,26 +191,30 @@ public class PseudoWaveformGenerator extends Operation {
         BasicIDFile.write(basicIDs, outIDPath, outDataPath);
     }
 
-//    public RealVector computeRandomNoise() {
-//        Dvector dVector = eq.getDVector();
-//        RealVector[] noiseV = new RealVector[dVector.getNTimeWindow()];
-//        int[] pts = dVector.getLengths();
-//        double minFreq = 0.05;
-//        double maxFreq = 0.01;
-//        int np = 6;
-//        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * minFreq, 2 * Math.PI * 0.05 * maxFreq, np);
-//        for (int i = 0; i < dVector.getNTimeWindow(); i++) {
-//            // System.out.println(i);
-//            double[] u = RandomNoiseMaker.create(noisePower, 20, 3276.8, 512).getY();
-//            u = bpf.applyFilter(u);
-//            int startT = (int) dVector.getObsIDs()[i].getStartTime() * 20; // 6*4=20
-//            noiseV[i] = new ArrayRealVector(pts[i]);
-////			System.out.println(new ArrayRealVector(u).getLInfNorm());
-//            for (int j = 0; j < pts[i]; j++)
-//                noiseV[i].setEntry(j, u[j * 20 + startT]);
-//        }
-//        // pseudoD = pseudoD.add(randomD);
-//        return dVector.combine(noiseV);
-//    }
+    private RealVector createRandomNoise(DVectorBuilder dVectorBuilder) {
+        RealVector[] noiseV = new RealVector[dVectorBuilder.getNTimeWindow()];
+
+        // settings ; TODO: enable these values to be set
+        int[] pts = dVectorBuilder.nptsArray();
+        int sacSamplingHz = 20;
+        int finalSamplingHz = 1;
+        double delta = 1.0 / sacSamplingHz;
+        int step = (int) (sacSamplingHz / finalSamplingHz);
+        double maxFreq = 0.05;
+        double minFreq = 0.01;
+        int np = 6;
+
+        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
+        for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
+            double[] u = RandomNoiseMaker.create(noisePower, sacSamplingHz, 3276.8, 512).getY();
+            u = bpf.applyFilter(u);
+            int startT = (int) dVectorBuilder.getObsID(i).getStartTime() * sacSamplingHz;
+            noiseV[i] = new ArrayRealVector(pts[i]);
+            for (int j = 0; j < pts[i]; j++)
+                noiseV[i].setEntry(j, u[j * step + startT]);
+        }
+
+        return dVectorBuilder.compose(noiseV);
+    }
 
 }

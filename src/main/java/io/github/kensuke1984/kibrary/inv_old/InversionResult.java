@@ -188,7 +188,7 @@ public class InversionResult {
         double[] r = new double[nPoints];
         double rTotal = 0;
         for (int iPoint = 0; iPoint < nPoints; iPoint++) {
-            r[iPoint] = Math.pow(nearLocations[iPoint].computeDistance(location), nPower);
+            r[iPoint] = Math.pow(nearLocations[iPoint].computeStraightDistance(location), nPower);
             rTotal += 1 / r[iPoint];
         }
         double value = 0;

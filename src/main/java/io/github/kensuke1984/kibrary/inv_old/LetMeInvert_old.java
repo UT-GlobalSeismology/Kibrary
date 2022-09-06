@@ -39,8 +39,8 @@ import io.github.kensuke1984.kibrary.inversion.addons.RadialSecondOrderDifferent
 import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
-import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
-import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -161,7 +161,7 @@ public class LetMeInvert_old extends Operation {
     private int[] clusterIndex;
 
 
-    private List<DataSelectionInformation> selectionInfo;
+    private List<DataFeature> selectionInfo;
     private ObservationEquation eq;
     private ObservationEquation eqA, eqB;
     private double mul;
@@ -454,7 +454,7 @@ public class LetMeInvert_old extends Operation {
 
         if (dataSelectionInformationPath != null) {
             System.out.println("Using dataSelectionInformationFile " + dataSelectionInformationPath);
-            selectionInfo = DataSelectionInformationFile.read(dataSelectionInformationPath);
+            selectionInfo = DataFeatureListFile.read(dataSelectionInformationPath);
         }
 
         Predicate<BasicID> chooser = null;

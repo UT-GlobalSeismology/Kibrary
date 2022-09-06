@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.util.Precision;
 
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -57,8 +56,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
  * See {@link TimewindowDataFile}.
  * <p>
- * Information of parameters used in data selection will be written in ascii format in "dataSelection*.lst".
- * See {@link DataSelectionInformationFile}.
+ * Information of data features used in data selection will be written in ascii format in "dataFeature*.lst".
+ * See {@link DataFeatureListFile}.
  * <p>
  * Timewindows with no phases will be written in standard output.
  *
@@ -80,7 +79,7 @@ public class DataSelection extends Operation {
     /**
      * Path of the output information file
      */
-    private Path outputInformationPath;
+    private Path outputFeaturePath;
     /**
      * Path of the output timewindow file
      */
@@ -117,23 +116,23 @@ public class DataSelection extends Operation {
      */
     private double maxStaticShift;
     /**
-     * Minimum correlation coefficients
+     * Minimum correlation coefficient
      */
     private double minCorrelation;
     /**
-     * Maximum correlation coefficients
+     * Maximum correlation coefficient
      */
     private double maxCorrelation;
     /**
-     * Minimum variance
+     * Minimum normalized variance
      */
     private double minVariance;
     /**
-     * Maximum variance
+     * Maximum normalized variance
      */
     private double maxVariance;
     /**
-     * amplitude のしきい値
+     * Threshold of amplitude ratio (upper limit; lower limit is its inverse)
      */
     private double ratio;
     private double minSNratio;
@@ -141,7 +140,7 @@ public class DataSelection extends Operation {
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private List<DataSelectionInformation> selectionInformationList;
+    private List<DataFeature> dataFeatureList;
     private Set<TimewindowData> goodTimewindowSet;
 
     /**
@@ -178,19 +177,19 @@ public class DataSelection extends Operation {
             pw.println("##Path of a static correction file");
             pw.println("## If you do not want to consider static correction, then comment out the next line.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
+            pw.println("##(double) Threshold of static correction time shift (10.)");
             pw.println("#maxStaticShift ");
-            pw.println("##(double) minCorrelation (0)");
+            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) maxCorrelation (1)");
+            pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) minVariance (0)");
+            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance] (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) maxVariance (2)");
-            pw.println("#maxVarianc e");
-            pw.println("##(double) ratio (2)");
+            pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
+            pw.println("#maxVariance ");
+            pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
             pw.println("#ratio ");
-            pw.println("##(double) minSNratio (0)");
+            pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNratio ");
             pw.println("##(boolean) Whether to exclude surface wave (false)");
             pw.println("#excludeSurfaceWave ");
@@ -219,18 +218,28 @@ public class DataSelection extends Operation {
         }
 
         maxStaticShift = property.parseDouble("maxStaticShift", "10.");
+        if (maxStaticShift < 0)
+            throw new IllegalArgumentException("Static shift threshold " + maxStaticShift + " is invalid, must be >= 0.");
         minCorrelation = property.parseDouble("minCorrelation", "0");
         maxCorrelation = property.parseDouble("maxCorrelation", "1");
+        if (minCorrelation < -1 || minCorrelation > maxCorrelation || 1 < maxCorrelation)
+            throw new IllegalArgumentException("Correlation range " + minCorrelation + " , " + maxCorrelation + " is invalid.");
         minVariance = property.parseDouble("minVariance", "0");
         maxVariance = property.parseDouble("maxVariance", "2");
+        if (minVariance < 0 || minVariance > maxVariance)
+            throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
         ratio = property.parseDouble("ratio", "2");
+        if (ratio < 1)
+            throw new IllegalArgumentException("Amplitude ratio threshold " + ratio + " is invalid, must be >= 1.");
         minSNratio = property.parseDouble("minSNratio", "0");
+        if (minSNratio < 0)
+            throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputInformationPath = workPath.resolve(DatasetAid.generateOutputFileName("dataSelection", tag, dateStr, ".lst"));
+        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", tag, dateStr, ".lst"));
         outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", tag, dateStr, ".dat"));
-        selectionInformationList = Collections.synchronizedList(new ArrayList<>());
+        dataFeatureList = Collections.synchronizedList(new ArrayList<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
@@ -257,8 +266,8 @@ public class DataSelection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println("Outputting values of criteria in " + outputInformationPath);
-        DataSelectionInformationFile.write(selectionInformationList, outputInformationPath);
+        System.err.println("Outputting values of criteria in " + outputFeaturePath);
+        DataFeatureListFile.write(dataFeatureList, outputFeaturePath);
 
         System.err.println("Outputting selected timewindows in " + outputSelectedPath);
         TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
@@ -301,43 +310,26 @@ public class DataSelection extends Operation {
                 foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
-    private boolean check(Observer observer, GlobalCMTID id, SACComponent component,
-            TimewindowData window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
-        if (obsU.getDimension() < synU.getDimension())
-            synU = synU.getSubVector(0, obsU.getDimension() - 1);
-        else if (synU.getDimension() < obsU.getDimension())
-            obsU = obsU.getSubVector(0, synU.getDimension() - 1);
+    private boolean check(TimewindowData window, RealVector obsU, RealVector synU, double snRatio) throws IOException {
+        DataFeature feature = DataFeature.create(window, obsU, synU, snRatio, false);
 
-        // check
-        double synMax = synU.getMaxValue();
-        double synMin = synU.getMinValue();
-        double obsMax = obsU.getMaxValue();
-        double obsMin = obsU.getMinValue();
-        double obs2 = obsU.dotProduct(obsU);
-        double syn2 = synU.dotProduct(synU);
-        double cor = obsU.dotProduct(synU);
-        cor /= Math.sqrt(obs2 * syn2);
-        double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
-        var /= obs2;
-        double maxRatio = Precision.round(synMax / obsMax, 2);
-        double minRatio = Precision.round(synMin / obsMin, 2);
-        double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
-
-        absRatio = Precision.round(absRatio, 2);
-        var = Precision.round(var, 2);
-        cor = Precision.round(cor, 2);
-
-        SNratio = Precision.round(SNratio, 2);
+        double minRatio = feature.getMinRatio();
+        double maxRatio = feature.getMaxRatio();
+        double absRatio = feature.getAbsRatio();
+        double cor = feature.getCorrelation();
+        double var = feature.getVariance();
+        double sn = feature.getSNRatio();
 
         boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
                 || ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
                 || var < minVariance || maxVariance < var
-                || SNratio < minSNratio);
+                || sn < minSNratio);
+        feature.setSelected(isok);
 
         if (window.getPhases().length == 0) {
             System.out.println("No phase: " + window);
         } else {
-            selectionInformationList.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio, isok));
+            dataFeatureList.add(feature);
         }
 
         return isok;
@@ -454,7 +446,7 @@ public class DataSelection extends Operation {
                 double signal = obsU.getNorm() / (timewindow.getEndTime() - timewindow.getStartTime());
                 double SNratio = signal / noise;
 
-                if (check(observer, eventID, component, timewindow, obsU, synU, SNratio)) {
+                if (check(timewindow, obsU, synU, SNratio)) {
                     if (Stream.of(timewindow.getPhases()).filter(p -> p == null).count() > 0) {
                         System.out.println("!! No phase: " + timewindow);
                     }

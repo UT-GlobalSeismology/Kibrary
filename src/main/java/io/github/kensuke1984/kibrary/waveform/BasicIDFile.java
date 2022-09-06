@@ -122,9 +122,12 @@ public final class BasicIDFile {
      * @throws IOException if an I/O error occurs
      */
     public static BasicID[] read(Path idPath, Path dataPath) throws IOException {
+        // Read IDs
         BasicID[] ids = read(idPath);
-        long dataSize = Files.size(dataPath);
+
+        // Read waveforms
         long t = System.nanoTime();
+        long dataSize = Files.size(dataPath);
         BasicID lastID = ids[ids.length - 1];
         if (dataSize != lastID.startByte + lastID.npts * 8)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
@@ -142,7 +145,7 @@ public final class BasicIDFile {
                 ids[i] = id.withData(data);
             });
         }
-        System.err.println("Reading waveforms done in " + GadgetAid.toTimeString(System.nanoTime() - t));
+        System.err.println(" Basic waveforms read in " + GadgetAid.toTimeString(System.nanoTime() - t));
         return ids;
     }
 
@@ -154,49 +157,56 @@ public final class BasicIDFile {
      */
     public static BasicID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
+            System.err.println("Reading basicID file: " + idPath);
             long t = System.nanoTime();
             long fileSize = Files.size(idPath);
+
             // Read header
+            // short * 4
             Observer[] observers = new Observer[dis.readShort()];
             GlobalCMTID[] events = new GlobalCMTID[dis.readShort()];
             double[][] periodRanges = new double[dis.readShort()][2];
             Phase[] phases = new Phase[dis.readShort()];
+            // calculate number of bytes in header
             int headerBytes = 2 * 4 + (8 + 8 + 8 * 2) * observers.length + 15 * events.length
                     + 16 * phases.length + 8 * 2 * periodRanges.length;
             long idParts = fileSize - headerBytes;
             if (idParts % ONE_ID_BYTE != 0)
-                throw new RuntimeException(idPath + " is invalid");
-            // name(8),network(8),position(8*2)
+                throw new RuntimeException(idPath + " is invalid.");
+            // station(8),network(8),position(8*2)
             byte[] observerBytes = new byte[32];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
                 observers[i] = Observer.createObserver(observerBytes);
             }
+            // eventID(15)
             byte[] eventBytes = new byte[15];
             for (int i = 0; i < events.length; i++) {
                 dis.read(eventBytes);
                 events[i] = new GlobalCMTID(new String(eventBytes).trim());
             }
+            // period(8*2)
             for (int i = 0; i < periodRanges.length; i++) {
                 periodRanges[i][0] = dis.readDouble();
                 periodRanges[i][1] = dis.readDouble();
             }
+            // phase(16)
             byte[] phaseBytes = new byte[16];
             for (int i = 0; i < phases.length; i++) {
                 dis.read(phaseBytes);
                 phases[i] = Phase.create(new String(phaseBytes).trim());
             }
 
+            // Read IDs
             int nid = (int) (idParts / ONE_ID_BYTE);
-            BasicID[] ids = new BasicID[nid];
             byte[][] bytes = new byte[nid][ONE_ID_BYTE];
             for (int i = 0; i < nid; i++)
                 dis.read(bytes[i]);
+            BasicID[] ids = new BasicID[nid];
             IntStream.range(0, nid).parallel().forEach(i -> {
                 ids[i] = createID(bytes[i], observers, events, periodRanges, phases);
             });
-            System.err.println(
-                    "Reading " + ids.length + " basic IDs done in " + GadgetAid.toTimeString(System.nanoTime() - t));
+            System.err.println(" " + ids.length + " basicIDs are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
             return ids;
         }
     }

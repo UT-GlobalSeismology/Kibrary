@@ -45,9 +45,9 @@ public class BasicIDPairUp {
                 if (tempSynList.get(i).equals(tempSynList.get(j)))
                     throw new RuntimeException("Duplicate synthetic IDs detected");
 
-        System.err.println("Number of obs IDs before pairing with syn IDs: " + tempObsList.size());
+        System.err.println(" Number of obs IDs before pairing with syn IDs: " + tempObsList.size());
         if (tempObsList.size() != tempSynList.size())
-            System.err.println("The numbers of observed IDs " + tempObsList.size() + " and " + " synthetic IDs "
+            System.err.println(" The numbers of observed IDs " + tempObsList.size() + " and " + " synthetic IDs "
                     + tempSynList.size() + " are different ");
 
         // pair up each syn with obs
@@ -64,13 +64,13 @@ public class BasicIDPairUp {
                 }
             }
             if (!foundPair) {
-                System.err.println("Didn't find OBS for " + tempSynList.get(i));
+                System.err.println(" Didn't find OBS for " + tempSynList.get(i));
             }
         }
 
         if (resultObsList.size() != resultSynList.size())
             throw new RuntimeException("unanticipated");
-        System.err.println("Number of pairs created: " + resultObsList.size());
+        System.err.println(" Number of pairs created: " + resultObsList.size());
 
         obsList = Collections.unmodifiableList(resultObsList);
         synList = Collections.unmodifiableList(resultSynList);

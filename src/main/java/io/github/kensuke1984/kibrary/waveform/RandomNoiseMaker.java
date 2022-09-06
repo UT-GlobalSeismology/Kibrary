@@ -1,4 +1,6 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.waveform;
+
+import java.util.Arrays;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
@@ -7,19 +9,35 @@ import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.util.data.Trace;
 
-import java.util.Arrays;
-
 /**
  * 波形のノイズを作る
  * <p>
  * １、samplingHzとtlenとnpを設定 ２、周波数空間でランダム波形作成 ３、実空間に戻す
  *
  * @author Kensuke Konishi
- * @version 0.1.0 ランダム波形作成を並列化
+ * @since version 0.1.0 ランダム波形作成を並列化
  */
 public final class RandomNoiseMaker {
+    private RandomNoiseMaker() {}
 
-    private RandomNoiseMaker() {
+    /**
+     * @param amplitude  of noize
+     * @param samplingHz [Hz] of noize
+     * @param tlen       [s] time length of noize
+     * @param np         the number of step in frequency domain. (must be a power of 2)
+     * @return Trace of time and noize
+     */
+    public static Trace create(double amplitude, double samplingHz, double tlen, int np) {
+        Complex[] spectorU = createRandomComplex(amplitude, samplingHz, tlen, np);
+        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+        Complex[] timeU = fft.transform(spectorU, TransformType.INVERSE);
+        int npts = 2 * np * findLsmooth(samplingHz, tlen, np);
+        double[] noise = new double[npts];
+        double[] time = new double[npts];
+        for (int i = 0; i < npts; i++)
+            noise[i] = timeU[i].getReal();
+        Arrays.setAll(time, j -> j / samplingHz);
+        return new Trace(time, noise);
     }
 
     /**
@@ -44,26 +62,6 @@ public final class RandomNoiseMaker {
             spectorU[ii] = spectorU[jj].conjugate();
         }
         return spectorU;
-    }
-
-    /**
-     * @param amplitude  of noize
-     * @param samplingHz [Hz] of noize
-     * @param tlen       [s] time length of noize
-     * @param np         the number of step in frequency domain. (must be a power of 2)
-     * @return Trace of time and noize
-     */
-    public static Trace create(double amplitude, double samplingHz, double tlen, int np) {
-        Complex[] spectorU = createRandomComplex(amplitude, samplingHz, tlen, np);
-        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-        Complex[] timeU = fft.transform(spectorU, TransformType.INVERSE);
-        int npts = 2 * np * findLsmooth(samplingHz, tlen, np);
-        double[] noise = new double[npts];
-        double[] time = new double[npts];
-        for (int i = 0; i < npts; i++)
-            noise[i] = timeU[i].getReal();
-        Arrays.setAll(time, j -> j / samplingHz);
-        return new Trace(time, noise);
     }
 
     /**

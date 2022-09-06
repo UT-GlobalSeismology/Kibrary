@@ -269,6 +269,8 @@ public final class PolynomialStructure {
 
     /**
      * Add perturbation of a certain parameter to an arbitrary layer.
+     * This returns a new instance; the original instance is unchanged.
+     *
      * @param r1 (double) Lower radius of layer to add perturbation to
      * @param r2 (double) Upper radius of layer to add perturbation to
      * @param variable (VariableType) The parameter to perburb
@@ -319,11 +321,19 @@ public final class PolynomialStructure {
             case RHO:
                 rhoNew[izone] = rhoNew[izone].multiply(p0);
                 break;
+            case Vp:
+                vpvNew[izone] = vpvNew[izone].multiply(p0);
+                vphNew[izone] = vphNew[izone].multiply(p0);
+                break;
             case Vpv:
                 vpvNew[izone] = vpvNew[izone].multiply(p0);
                 break;
             case Vph:
                 vphNew[izone] = vphNew[izone].multiply(p0);
+                break;
+            case Vs:
+                vsvNew[izone] = vsvNew[izone].multiply(p0);
+                vshNew[izone] = vshNew[izone].multiply(p0);
                 break;
             case Vsv:
                 vsvNew[izone] = vsvNew[izone].multiply(p0);
@@ -347,7 +357,6 @@ public final class PolynomialStructure {
 
         return new PolynomialStructure(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
                 rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
-
     }
 
     /**
@@ -370,7 +379,11 @@ public final class PolynomialStructure {
      * @return (double) a value x to the input r for polynomial functions
      */
     private double xFor(double r) {
-        return r / rmax[nZone - 1];
+        return r / planetRadius();
+    }
+
+    public double planetRadius() {
+        return rmax[nZone - 1];
     }
 
     /**

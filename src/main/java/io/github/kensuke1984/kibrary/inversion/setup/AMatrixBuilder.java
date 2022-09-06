@@ -90,7 +90,7 @@ final class AMatrixBuilder {
             // check partial data
             double max = new ArrayRealVector(partial).getLInfNorm();
             if (Double.isNaN(max)) {
-                System.out.println("Caution partial is NaN: " + id);
+                System.err.println(" Caution partial is NaN: " + id);
             }
             if (partial.length != dVector.nptsOfWindow(k)) {
                 System.err.println(id + " " + partial.length + " " + dVector.nptsOfWindow(k));
@@ -110,7 +110,7 @@ final class AMatrixBuilder {
         });
 
         if (count.get() != dVector.getNTimeWindow() * nUnknowns) {
-            System.out.println("Printing BasicIDs that are not in the partialID set...");
+            System.err.println("Printing BasicIDs that are not in the partialID set...");
             //TODO
 //            Set<id_station> idStationSet
 //                = Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getObserver()))
@@ -124,7 +124,7 @@ final class AMatrixBuilder {
             throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " != " +
                     dVector.getNTimeWindow() + " * (" + nUnknowns + ")");
         }
-        System.err.println("A is read and built in " + GadgetAid.toTimeString(System.nanoTime() - t));
+        System.err.println(" A is read and built in " + GadgetAid.toTimeString(System.nanoTime() - t));
 
         return a;
     }

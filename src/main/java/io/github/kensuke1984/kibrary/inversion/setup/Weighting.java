@@ -7,7 +7,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
-import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
 
 /**
  * Weighting to be applied to A matrix and d vector in Am=d.
@@ -26,12 +26,12 @@ public final class Weighting {
 
     private final DVectorBuilder dVector;
     private final WeightingType weightingType;
-    private final List<DataSelectionInformation> selectionInfo; // TODO apply
+    private final List<DataFeature> dataFeatures; // TODO apply
 
-    public Weighting(DVectorBuilder dVector, WeightingType weightingType, List<DataSelectionInformation> selectionInfo) {
+    public Weighting(DVectorBuilder dVector, WeightingType weightingType, List<DataFeature> dataFeatures) {
         this.dVector = dVector;
         this.weightingType = weightingType;
-        this.selectionInfo = selectionInfo;
+        this.dataFeatures = dataFeatures;
 
         this.weightingVecs = setWeights();
 
