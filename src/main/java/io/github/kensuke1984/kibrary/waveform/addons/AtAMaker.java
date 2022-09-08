@@ -965,7 +965,7 @@ public class AtAMaker implements Operation_old {
                             System.out.println("FP catalogue");
                             for (HorizontalPosition position : originalHorizontalPositions) {
                                 if (fastCompute) {
-                                    FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+                                    FullPosition fpSourceLoc = event.getEventData().getCmtPosition();
                                     HorizontalPosition bpSourceLoc = station.getPosition();
                                     double distanceFP = fpSourceLoc.computeEpicentralDistance(position);
                                     double az = fpSourceLoc.computeAzimuth(bpSourceLoc) - fpSourceLoc.computeAzimuth(position);
@@ -990,7 +990,7 @@ public class AtAMaker implements Operation_old {
                                 else if (mode.equals("BOTH")) {
                                     HorizontalPosition position = fpnames.get(ispc).read().getObserverPosition();
                                     if (fastCompute) {
-                                        FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+                                        FullPosition fpSourceLoc = event.getEventData().getCmtPosition();
                                         HorizontalPosition bpSourceLoc = station.getPosition();
                                         double distanceFP = fpSourceLoc.computeEpicentralDistance(position);
                                         double az = fpSourceLoc.computeAzimuth(bpSourceLoc) - fpSourceLoc.computeAzimuth(position);
@@ -1726,7 +1726,7 @@ public class AtAMaker implements Operation_old {
             }
 
             FullPosition bpSourceLoc = station.getPosition().toFullPosition(Earth.EARTH_RADIUS);
-            FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+            FullPosition fpSourceLoc = event.getEventData().getCmtPosition();
             double distanceBP = bpSourceLoc.computeEpicentralDistance(obsPos) * 180. / Math.PI;
             double distanceFP = fpSourceLoc.computeEpicentralDistance(obsPos) * 180. / Math.PI;
 //			double distance = bpSourceLoc.getGeographicalDistance(obsPos) * 180. / Math.PI;

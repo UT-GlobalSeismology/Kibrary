@@ -293,9 +293,9 @@ public class BasicBinnedStackCreator extends Operation {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double distance = obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
                 // skip waveform if distance or azimuth is out of bounds

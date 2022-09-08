@@ -41,7 +41,7 @@ public class Kernel1DVisual {
 				
 				double[] data = partial.getData();
 				double samplingHz = partial.getSamplingHz();
-				double distance = partial.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(partial.getObserver().getPosition())
+				double distance = partial.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(partial.getObserver().getPosition())
 						* 180. / Math.PI;
 				if (samplingHz != 1.)
 					throw new RuntimeException("SamplingHz != 1 not yet supported");

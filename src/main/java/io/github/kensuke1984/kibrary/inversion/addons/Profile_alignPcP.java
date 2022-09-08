@@ -159,8 +159,8 @@ public class Profile_alignPcP {
 			String[] eachMisfitString = new String[] {""};
 			
 			Comparator<BasicID> compareByDistance = (BasicID o1, BasicID o2) -> {
-				double d1 = o1.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(o1.getObserver().getPosition());
-				double d2 = o2.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(o2.getObserver().getPosition());
+				double d1 = o1.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(o1.getObserver().getPosition());
+				double d2 = o2.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(o2.getObserver().getPosition());
             	return Double.compare(d1, d2);
 				};
 			
@@ -209,7 +209,7 @@ public class Profile_alignPcP {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
+							double distance = id.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							double ypos = counter.getAndIncrement() * 6.;
 							double norm = maxObs /= 3.;
@@ -328,7 +328,7 @@ public class Profile_alignPcP {
 				double bornVariance = 0;
 				double obsNorm = 0;
 				
-				timetool.setSourceDepth(6371. - event.getEventData().getCmtLocation().getR());
+				timetool.setSourceDepth(6371. - event.getEventData().getCmtPosition().getR());
 				
 				for (BasicID id : tmpObs) {
 					if (!Stream.of(id.getPhases()).collect(Collectors.toSet()).contains(phase))
@@ -341,9 +341,9 @@ public class Profile_alignPcP {
 					RealVector synVector = synTrace.getYVector();
 					RealVector bornVector = bornTrace.getYVector();
 					
-					double distance = id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -382,9 +382,9 @@ public class Profile_alignPcP {
 				}
 					double tmpSyn = synVariance / obsNorm;
 					double tmpBorn =  bornVariance / obsNorm;
-					double lat = event.getEventData().getCmtLocation().getLatitude();
-					double lon = event.getEventData().getCmtLocation().getLongitude();
-					double depth = 6371. - event.getEventData().getCmtLocation().getR();
+					double lat = event.getEventData().getCmtPosition().getLatitude();
+					double lon = event.getEventData().getCmtPosition().getLongitude();
+					double depth = 6371. - event.getEventData().getCmtPosition().getR();
 					pw4.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + " " + lat + " " + lon + " " + depth + " " + event.getEventData().getCmt().getMw());
 					
 				Path outPlot = stackPath.resolve(event + ".plt");
@@ -644,8 +644,8 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 				);
 		
 		ss += "gmt psxy -R-170/-52/-41/75 -JQ270/4.4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
-		double evLat = event.getEventData().getCmtLocation().getLatitude();
-		double evLon = event.getEventData().getCmtLocation().getLongitude();
+		double evLat = event.getEventData().getCmtPosition().getLatitude();
+		double evLon = event.getEventData().getCmtPosition().getLongitude();
 		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";

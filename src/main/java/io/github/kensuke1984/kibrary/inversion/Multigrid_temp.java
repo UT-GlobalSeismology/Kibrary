@@ -21,7 +21,7 @@ public class Multigrid_temp {
         timeTool.setAddDepths("2861,2871");
         String[] phaseNames = "S,ScS".split(",");
         timeTool.setPhaseNames(phaseNames);
-        timeTool.setSourceDepth(new GlobalCMTID("201506231218A").getEventData().getCmtLocation().getDepth()); //TODO use this for later calculation
+        timeTool.setSourceDepth(new GlobalCMTID("201506231218A").getEventData().getCmtPosition().getDepth()); //TODO use this for later calculation
 
         timeTool.calculate(80);
         List<Arrival> arrivals = timeTool.getArrivals();

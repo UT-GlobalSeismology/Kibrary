@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.TauPPierceReader;
+import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -285,10 +285,10 @@ public class RaypathSelection extends Operation {
         Set<DataEntry> selectedEntrySet = new HashSet<>();
 
         // compute turning points if needed
-        TauPPierceReader pierceTool = null;
+        TauPPierceWrapper pierceTool = null;
         if (selectTurningPosition || selectTurningAzimuth) {
             try {
-                pierceTool = new TauPPierceReader(structureName, turningPointPhase);
+                pierceTool = new TauPPierceWrapper(structureName, turningPointPhase);
                 pierceTool.compute(entrySet);
             } catch (TauModelException e) {
                 throw new RuntimeException(e);
@@ -315,7 +315,7 @@ public class RaypathSelection extends Operation {
             // event magnitude and position
             double eventMw = entry.getEvent().getEventData().getCmt().getMw();
             boolean magnitudeCheck = (lowerEventMw <= eventMw && eventMw <= upperEventMw);
-            FullPosition eventPosition = entry.getEvent().getEventData().getCmtLocation();
+            FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
             boolean horizontalCheck = eventPosition.isInRange(lowerEventLatitude, upperEventLatitude, lowerEventLongitude, upperEventLongitude);
             double depth = eventPosition.getDepth();
             boolean verticalCheck = (lowerEventDepth <= depth && depth <= upperEventDepth);

@@ -28,22 +28,22 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  *
  * @author Kensuke Konishi
  * @since version 0.3.2.1
- * @version 2022/9/8
+ * @version 2022/9/8 renamed from external.TauPPierceReader to external.TauPPierceWrapper
  */
-public final class TauPPierceReader {
+public final class TauPPierceWrapper {
 
     private TauP_Pierce timeTool;
     private Map<DataEntry, List<Raypath>> entryMap;
 
-    public TauPPierceReader(String structureName, String phaseName) throws TauModelException {
+    public TauPPierceWrapper(String structureName, String phaseName) throws TauModelException {
         this(structureName, phaseName, null);
     }
 
-    public TauPPierceReader(String structureName, String[] phaseNames) throws TauModelException {
+    public TauPPierceWrapper(String structureName, String[] phaseNames) throws TauModelException {
         this(structureName, phaseNames, null);
     }
 
-    public TauPPierceReader(String structureName, String phaseName, double[] pierceRadii) throws TauModelException {
+    public TauPPierceWrapper(String structureName, String phaseName, double[] pierceRadii) throws TauModelException {
         timeTool = new TauP_Pierce(structureName);
 
         String[] phaseNames = {phaseName};
@@ -55,7 +55,7 @@ public final class TauPPierceReader {
         }
     }
 
-    public TauPPierceReader(String structureName, String[] phaseNames, double[] pierceRadii) throws TauModelException {
+    public TauPPierceWrapper(String structureName, String[] phaseNames, double[] pierceRadii) throws TauModelException {
         timeTool = new TauP_Pierce(structureName);
 
         timeTool.setPhaseNames(phaseNames);
@@ -80,7 +80,7 @@ public final class TauPPierceReader {
         for (GlobalCMTID event : events) {
 
             // set event depth
-            FullPosition eventPosition = event.getEventData().getCmtLocation();
+            FullPosition eventPosition = event.getEventData().getCmtPosition();
             timeTool.setSourceDepth(eventPosition.getDepth());
 
             // collect entries for this event, and run computation for each

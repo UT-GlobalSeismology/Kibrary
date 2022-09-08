@@ -11,10 +11,13 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -64,6 +67,7 @@ public class AzimuthHistogram {
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
                 .desc("Components to use, listed using commas (Z,R,T)").build());
+        // histogram visual
         options.addOption(Option.builder("i").longOpt("interval").hasArg().argName("interval")
                 .desc("Interval of azimuth in histogram (5)").build());
         options.addOption(Option.builder("x").longOpt("xtics").hasArg().argName("xtics")
@@ -74,6 +78,18 @@ public class AzimuthHistogram {
                 .desc("Maximum azimuth in histogram (180)").build());
         options.addOption(Option.builder("e").longOpt("expand")
                 .desc("Expand azimuth range to [0:360), not overlapping onto [0:180) range").build());
+        // type of azimuth to use
+        OptionGroup azimuthOption = new OptionGroup();
+        azimuthOption.addOption(Option.builder("b").longOpt("back")
+                .desc("Use back azimuth").build());
+        azimuthOption.addOption(Option.builder("t").longOpt("back")
+                .desc("Use turning point azimuth").build());
+        options.addOptionGroup(azimuthOption);
+        // TauP settings
+        options.addOption(Option.builder("s").longOpt("structure").hasArg().argName("structure")
+                .desc("Name of structure to use to compute turning point (prem)").build());
+        options.addOption(Option.builder("p").longOpt("phase").hasArg().argName("phase")
+                .desc("Name of phase to use to compute turning point (ScS)").build());
 
         return options;
     }
@@ -84,7 +100,6 @@ public class AzimuthHistogram {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
         Set<SACComponent> components = cmdLine.hasOption("c")
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
@@ -98,19 +113,58 @@ public class AzimuthHistogram {
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
         boolean expand = cmdLine.hasOption("e");
+        boolean useBackAzimuth = cmdLine.hasOption("b");
+        boolean useTurningAzimuth = cmdLine.hasOption("t");
+        String structureName = cmdLine.hasOption("s") ? cmdLine.getOptionValue("s") : "prem";
+        String turningPointPhase = cmdLine.hasOption("p") ? cmdLine.getOptionValue("p") : "ScS";
+
+        // if using turning point azimuth, compute using TauPPierce
+        TauPPierceWrapper pierceTool = null;
+        if (useTurningAzimuth) {
+            try {
+                pierceTool = new TauPPierceWrapper(structureName, turningPointPhase);
+                pierceTool.compute(entrySet);
+            } catch (TauModelException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
         for (DataEntry entry : entrySet) {
-            FullPosition eventPosition = entry.getEvent().getEventData().getCmtLocation();
+            FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
-            double azimuth = Math.toDegrees(eventPosition.computeAzimuth(observerPosition));
+
+            double azimuth;
+            if (useTurningAzimuth) {
+                if (pierceTool.hasRaypaths(entry)) {
+                    // When there are several raypaths for a given phase name, the first arrival is chosen.
+                    // When there are multiple bottoming points for a raypath, the first one is used.
+                    // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
+                    azimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
+                } else {
+                    System.err.println("Cannot compute turning point for " + entry + ", skipping.");
+                    continue;
+                }
+            } else if (useBackAzimuth) {
+                azimuth = eventPosition.computeBackAzimuthDeg(observerPosition);
+            } else {
+                azimuth = eventPosition.computeAzimuthDeg(observerPosition);
+            }
+
             if (!expand && azimuth > 180) azimuth -= 180;
             numberOfRecords[(int) (azimuth / interval)]++;
         }
 
         // output
-        String fileNameRoot = "azimuthHistogram";
+        String fileNameRoot;
+        if (useTurningAzimuth) {
+            fileNameRoot = "turningAzimuthHistogram";
+        } else if (useBackAzimuth) {
+            fileNameRoot = "backAzimuthHistogram";
+        } else {
+            fileNameRoot = "azimuthHistogram";
+        }
         Path outPath = Paths.get("");
         writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
         createScript(outPath, fileNameRoot, interval, minimum, maximum, xtics);

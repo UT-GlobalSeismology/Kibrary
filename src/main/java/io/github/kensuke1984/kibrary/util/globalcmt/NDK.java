@@ -377,7 +377,7 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public FullPosition getCmtLocation() {
+    public FullPosition getCmtPosition() {
         return centroidLocation;
     }
 
@@ -395,7 +395,7 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public FullPosition getPDELocation() {
+    public FullPosition getPDEPosition() {
         return hypocenterLocation;
     }
 

@@ -231,7 +231,7 @@ public class TimewindowMaker extends Operation {
                 String[] phaseNames = Stream.concat(usePhases.stream(), exPhases.stream()).map(Phase::toString).toArray(String[]::new);
                 TauP_Time timeTool = new TauP_Time(structureName);
                 timeTool.setPhaseNames(phaseNames);
-                timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtLocation().getDepth()); //TODO use this for later calculation
+                timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtPosition().getDepth()); //TODO use this for later calculation
 
                 eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
                         .forEach(sfn -> {

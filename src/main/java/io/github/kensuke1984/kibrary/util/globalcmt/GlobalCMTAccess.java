@@ -19,13 +19,13 @@ public interface GlobalCMTAccess {
 
     MomentTensor getCmt();
 
-    FullPosition getCmtLocation();
+    FullPosition getCmtPosition();
 
     LocalDateTime getCMTTime();
 
     double getHalfDuration();
 
-    FullPosition getPDELocation();
+    FullPosition getPDEPosition();
 
     LocalDateTime getPDETime();
 

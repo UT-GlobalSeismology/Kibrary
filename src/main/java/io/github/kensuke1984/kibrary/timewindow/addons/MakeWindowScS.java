@@ -98,7 +98,7 @@ public class MakeWindowScS {
 		
 		for (EventFolder eventFolder : eventFolderSet) {
 			System.out.println(eventFolder);
-			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEventData().getCmtLocation().getR());
+			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEventData().getCmtPosition().getR());
 			
 			Set<SACFileName> obsNames = eventFolder.sacFileSet();
 			obsNames.removeIf(sfn -> !sfn.isOBS());

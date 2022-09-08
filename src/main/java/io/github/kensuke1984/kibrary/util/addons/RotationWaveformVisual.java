@@ -67,13 +67,13 @@ public class RotationWaveformVisual {
 			double[][] obsStack = new double[240][0];
 			double[][] synStack = new double[240][0];
 			
-			timeTool.setSourceDepth(6371. - event.getEventData().getCmtLocation().getR());
+			timeTool.setSourceDepth(6371. - event.getEventData().getCmtPosition().getR());
 			
 			for (int i = 0; i < ids_Z_event.size(); i++) {
 				BasicID idZ = ids_Z_event.get(i);
 				BasicID idR = ids_R_event.get(i);
 				
-				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(idZ.getObserver().getPosition()));
+				double distance = Math.toDegrees(idZ.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(idZ.getObserver().getPosition()));
 				int k = (int) (distance * 2);
 				
 				timeTool.calcTime(distance);

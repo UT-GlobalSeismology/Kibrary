@@ -95,7 +95,7 @@ public class DistanceHistogram {
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
         for (DataEntry entry : entrySet) {
-            FullPosition eventPosition = entry.getEvent().getEventData().getCmtLocation();
+            FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
             double epicentralDistance = Math.toDegrees(eventPosition.computeEpicentralDistance(observerPosition));
             numberOfRecords[(int) (epicentralDistance / interval)]++;

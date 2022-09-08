@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.TauPPierceReader;
+import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -307,10 +307,10 @@ public class RaypathMapper extends Operation {
     private void outputRaypathSegments(Set<DataEntry> validEntrySet) throws IOException {
         System.err.println("Calculating pierce points ...");
 
-        TauPPierceReader pierceTool = null;
+        TauPPierceWrapper pierceTool = null;
         try {
             double[] pierceRadii = {lowerPierceRadius, upperPierceRadius};
-            pierceTool = new TauPPierceReader(structureName, piercePhase, pierceRadii);
+            pierceTool = new TauPPierceWrapper(structureName, piercePhase, pierceRadii);
             pierceTool.compute(validEntrySet);
         } catch (TauModelException e) {
             throw new RuntimeException(e);
@@ -529,7 +529,7 @@ public class RaypathMapper extends Operation {
 
             Set<GlobalCMTID> events = EventListFile.read(outPath.resolve(eventFileName));
             for (GlobalCMTID event : events) {
-                HorizontalPosition pos = event.getEventData().getCmtLocation();
+                HorizontalPosition pos = event.getEventData().getCmtPosition();
                 if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
                 if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
                 if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();

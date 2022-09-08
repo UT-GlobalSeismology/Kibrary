@@ -44,8 +44,8 @@ public class BouncingPointInformation {
 		
 		for (TimewindowData timewindow : timewindows) {
 			GlobalCMTID event = timewindow.getGlobalCMTID();
-			double evtLat = event.getEventData().getCmtLocation().getLatitude();
-			double evtLon = event.getEventData().getCmtLocation().getLongitude();
+			double evtLat = event.getEventData().getCmtPosition().getLatitude();
+			double evtLon = event.getEventData().getCmtPosition().getLongitude();
 			
 			int index = -1;
 			if (clusters.stream().filter(c -> c.getID().equals(event)).count() > 0)
@@ -53,13 +53,13 @@ public class BouncingPointInformation {
 			else
 				continue;
 			
-			double distance = Math.toDegrees(event.getEventData().getCmtLocation().computeEpicentralDistance(timewindow.getObserver().getPosition()));
+			double distance = Math.toDegrees(event.getEventData().getCmtPosition().computeEpicentralDistance(timewindow.getObserver().getPosition()));
 			if (distance > maxdistance)
 				continue;
 			
-			double azimuth = Math.toDegrees(event.getEventData().getCmtLocation().computeAzimuth(timewindow.getObserver().getPosition()));
+			double azimuth = Math.toDegrees(event.getEventData().getCmtPosition().computeAzimuth(timewindow.getObserver().getPosition()));
 			
-			timetool.setSourceDepth(6371. - event.getEventData().getCmtLocation().getR());
+			timetool.setSourceDepth(6371. - event.getEventData().getCmtPosition().getR());
 			timetool.calculate(distance);
 			Arrival arrivalS = timetool.getArrival(0);
 			Arrival arrivalScS = timetool.getArrival(1);

@@ -267,7 +267,7 @@ public class BasicRecordSectionCreator extends Operation {
                // set event to taup_time tool
                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
                if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtLocation().getDepth());
+                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtPosition().getDepth());
                }
 
                // create plot for each component
@@ -345,9 +345,9 @@ public class BasicRecordSectionCreator extends Operation {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeEpicentralDistance(obsID.getObserver().getPosition()));
-                double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeAzimuth(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds

@@ -69,7 +69,7 @@ public class ComputeSTF {
 		for (EventFolder eventFolder : eventFolderSet) {
 			System.out.println(eventFolder.getGlobalCMTID());
 			
-			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEventData().getCmtLocation().getR());
+			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEventData().getCmtPosition().getR());
 			
 //			Set<TimewindowInformation> thisWindows = timewindows.stream()
 //					.filter(tw -> tw.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))

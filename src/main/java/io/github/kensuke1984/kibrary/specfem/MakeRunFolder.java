@@ -118,17 +118,17 @@ public class MakeRunFolder {
 						+ " " + pdeTime.getDayOfMonth() + " " + pdeTime.getHour()
 						+ " " + pdeTime.getMinute() + " " + pdeTime.getSecond()
 						+ "." + String.format("%.0f", pdeTime.getNano() * 1e-8)
-						+ " " + String.format("%.2f", idData.getPDELocation().getLatitude())
-						+ " " + String.format("%.2f", idData.getPDELocation().getLongitude())
-						+ " " + String.format("%.2f", (6371. - idData.getPDELocation().getR()))
+						+ " " + String.format("%.2f", idData.getPDEPosition().getLatitude())
+						+ " " + String.format("%.2f", idData.getPDEPosition().getLongitude())
+						+ " " + String.format("%.2f", (6371. - idData.getPDEPosition().getR()))
 						+ " " + idData.getMb() + " " + idData.getMs()
 						+ " " + idData.getGeographicalLocationName()
 					, id.toString()
 					, idData.getTimeDifference()
 					, idData.getHalfDuration()
-					, idData.getCmtLocation().getLatitude()
-					, idData.getCmtLocation().getLongitude()
-					, Earth.EARTH_RADIUS - idData.getCmtLocation().getR()
+					, idData.getCmtPosition().getLatitude()
+					, idData.getCmtPosition().getLongitude()
+					, Earth.EARTH_RADIUS - idData.getCmtPosition().getR()
 					, mt.getMrr() * pow
 					, mt.getMtt() * pow
 					, mt.getMpp() * pow

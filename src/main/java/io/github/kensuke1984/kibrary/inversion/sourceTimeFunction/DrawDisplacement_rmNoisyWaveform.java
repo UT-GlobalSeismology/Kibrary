@@ -102,8 +102,8 @@ class DrawDisplacement_rmNoisyWaveform{
 				Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 				for(TimewindowData timewindow : timewindows){
 					if(timewindow.getGlobalCMTID().equals(eventID) && timewindow.getComponent().equals(component)){
-        			if(timewindow.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
-        					timewindow.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
+        			if(timewindow.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI > 30. &&
+        					timewindow.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(timewindow.getObserver().getPosition())*180./Math.PI < 90.){
 						TimewindowData correctionTw = ReadStaticCorrection.getcorrection(eventID, timewindow, corrections);
 						Observer station = timewindow.getObserver();
 						double sttime = correctionTw.getStartTime() - 5.;
@@ -164,7 +164,7 @@ class DrawDisplacement_rmNoisyWaveform{
 			pwfile.println("gmt pstext -R -J -O -K -P -F+jLB+f8p,Helvetica -N >> $outputps <<END");
         	pwfile.println("14 27 " + eventID);
         	pwfile.println("14 25 Mw of GCMT is " + eventID.getEventData().getCmt().getMw());
-        	pwfile.println("14 23 Depth of GCMT is " + String.format("%.1f", (6371-eventID.getEventData().getCmtLocation().getR())) + " km");
+        	pwfile.println("14 23 Depth of GCMT is " + String.format("%.1f", (6371-eventID.getEventData().getCmtPosition().getR())) + " km");
         	pwfile.println("14 21 Half duration of GCMT is " + eventID.getEventData().getHalfDuration() + " s");
         	pwfile.println("END");
 			

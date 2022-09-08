@@ -93,7 +93,7 @@ public class Tradeoff {
 //			Dvector dVector = new Dvector(waveforms);
 			
 			Predicate<BasicID> chooser = id -> {
-				double distance = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition()));
+				double distance = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition()));
 				if (distance < minDistance)
 					return false;
 				return true;

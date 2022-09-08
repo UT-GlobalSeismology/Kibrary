@@ -81,7 +81,7 @@ public class WriteWaveformsAndPartials {
 			pwEvent.println("#id latitude longitude radius variance");
 			d.getEventVariance().entrySet().forEach(entry -> {
 				pwEvent.println(
-						entry.getKey() + " " + entry.getKey().getEventData().getCmtLocation() + " " + entry.getValue());
+						entry.getKey() + " " + entry.getKey().getEventData().getCmtPosition() + " " + entry.getValue());
 			});
 			pwStation.println("#name network latitude longitude variance");
 			d.getStationVariance().entrySet().forEach(entry -> {
@@ -138,7 +138,7 @@ public class WriteWaveformsAndPartials {
 			String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
 					+ "." + i + ".txt";
 
-			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
+			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtPosition();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.computeEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.computeAzimuth(stationPos)), 2);

@@ -72,7 +72,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtPosition();
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
                     " r0(km), lat, lon (deg)");
@@ -117,7 +117,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtPosition();
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
                     " r0(km), lat, lon (deg)");

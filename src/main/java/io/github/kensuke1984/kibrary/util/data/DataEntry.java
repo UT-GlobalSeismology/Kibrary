@@ -84,7 +84,7 @@ public class DataEntry implements Comparable<DataEntry> {
     }
 
     public Raypath toRaypath(String phase) {
-        return new Raypath(phase, event.getEventData().getCmtLocation(), observer.getPosition());
+        return new Raypath(phase, event.getEventData().getCmtPosition(), observer.getPosition());
     }
 
     @Override

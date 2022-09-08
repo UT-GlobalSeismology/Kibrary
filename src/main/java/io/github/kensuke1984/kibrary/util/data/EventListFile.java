@@ -53,7 +53,7 @@ public class EventListFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# GCMTID latitude longitude radius");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtLocation());
+                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition());
             });
         }
     }

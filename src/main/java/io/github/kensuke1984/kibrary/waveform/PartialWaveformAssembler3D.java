@@ -649,7 +649,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
                     cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtLocation(), PartialType.TIME_SOURCE,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
                     cutU);
 
             try {
@@ -1048,7 +1048,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
             observerSet.forEach(observer -> voxelPositionSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            eventSet.forEach(id -> voxelPositionSet.add(id.getEventData().getCmtLocation()));
+            eventSet.forEach(id -> voxelPositionSet.add(id.getEventData().getCmtPosition()));
         }
         writeLog(voxelPositionSet.size() + " voxel points are found in " + voxelPath);
     }

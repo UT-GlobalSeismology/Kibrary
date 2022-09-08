@@ -94,15 +94,15 @@ class CMTSeaKK {
 				Files.createFile(outpath);
 				
 				for (GlobalCMTID i : id) {
-					double distance_min = i.getEventData().getCmtLocation().computeEpicentralDistance(new HorizontalPosition(58, -155))
+					double distance_min = i.getEventData().getCmtPosition().computeEpicentralDistance(new HorizontalPosition(58, -155))
 							* 180 / Math.PI;
-					double distance_max = i.getEventData().getCmtLocation().computeEpicentralDistance(new HorizontalPosition(69, -155))
+					double distance_max = i.getEventData().getCmtPosition().computeEpicentralDistance(new HorizontalPosition(69, -155))
 							* 180 / Math.PI;
 					if (distance_min >= 65 && distance_max <= 100)
 						Files.write(outpath, (i.toString() + " "
-								+ i.getEventData().getCmtLocation().getLatitude() + " "
-								+ i.getEventData().getCmtLocation().getLongitude() + " "
-								+ (6371 - i.getEventData().getCmtLocation().getR()) + " "
+								+ i.getEventData().getCmtPosition().getLatitude() + " "
+								+ i.getEventData().getCmtPosition().getLongitude() + " "
+								+ (6371 - i.getEventData().getCmtPosition().getR()) + " "
 								+ i.getEventData().getCmt().getMw() + " "
 								+ distance_min + " " + distance_max
 								+ "\n").getBytes(), StandardOpenOption.APPEND);

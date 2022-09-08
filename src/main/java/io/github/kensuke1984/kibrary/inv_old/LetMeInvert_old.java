@@ -504,7 +504,7 @@ public class LetMeInvert_old extends Operation {
                 if (!clusterKeep)
                     return false;
                 double distance = id.getGlobalCMTID().getEventData()
-                        .getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
+                        .getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition())
                         * 180. / Math.PI;
                 if (distance < minDistance || distance > maxDistance)
                     return false;
@@ -521,7 +521,7 @@ public class LetMeInvert_old extends Operation {
             System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
             chooser = id -> {
                 double distance = id.getGlobalCMTID().getEventData()
-                        .getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
+                        .getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition())
                         * 180. / Math.PI;
                 if (distance < minDistance || distance > maxDistance)
                     return false;
@@ -1471,7 +1471,7 @@ public class LetMeInvert_old extends Operation {
             pwEvent.println("#id latitude longitude radius variance");
             d.getEventVariance().entrySet().forEach(entry -> {
                 pwEvent.println(
-                        entry.getKey() + " " + entry.getKey().getEventData().getCmtLocation() + " " + entry.getValue());
+                        entry.getKey() + " " + entry.getKey().getEventData().getCmtPosition() + " " + entry.getValue());
             });
             pwObserver.println("#station network latitude longitude variance");
             d.getStationVariance().entrySet().forEach(entry -> {
@@ -1528,7 +1528,7 @@ public class LetMeInvert_old extends Operation {
             String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
                     + "." + i + ".txt";
 
-            HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
+            HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtPosition();
             HorizontalPosition observerPos = obsIDs[i].getObserver().getPosition();
             double gcarc = Precision.round(Math.toDegrees(eventLoc.computeEpicentralDistance(observerPos)), 2);
             double azimuth = Precision.round(Math.toDegrees(eventLoc.computeAzimuth(observerPos)), 2);
@@ -1616,7 +1616,7 @@ public class LetMeInvert_old extends Operation {
                     + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
             Path plotFile = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/record.plt");
             Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
-            HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
+            HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtPosition();
             HorizontalPosition observerPos = obsIDs[i].getObserver().getPosition();
             double gcarc = Precision.round(Math.toDegrees(eventLoc.computeEpicentralDistance(observerPos)), 2);
             double azimuth = Precision.round(Math.toDegrees(eventLoc.computeAzimuth(observerPos)), 2);
@@ -2038,10 +2038,10 @@ public class LetMeInvert_old extends Operation {
                 GlobalCMTAccess event = id.getGlobalCMTID().getEventData();
                 Observer observer = id.getObserver();
                 double epicentralDistance = Math
-                        .toDegrees(observer.getPosition().computeEpicentralDistance(event.getCmtLocation()));
-                double azimuth = Math.toDegrees(observer.getPosition().computeAzimuth(event.getCmtLocation()));
+                        .toDegrees(observer.getPosition().computeEpicentralDistance(event.getCmtPosition()));
+                double azimuth = Math.toDegrees(observer.getPosition().computeAzimuth(event.getCmtPosition()));
                 pw.println(
-                        observer + " " + observer.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
+                        observer + " " + observer.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtPosition()
                                 + " " + Precision.round(epicentralDistance, 2) + " " + Precision.round(azimuth, 2));
             });
 

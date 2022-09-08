@@ -100,7 +100,7 @@ public class MakeRunFolders {
 //								, idData.getCmtLocation().getLongitude()
 								, 90.
 								, 0.
-								, Earth.EARTH_RADIUS - idData.getCmtLocation().getR()
+								, Earth.EARTH_RADIUS - idData.getCmtPosition().getR()
 								, mt.getMrr() * pow
 								, mt.getMtt() * pow
 								, mt.getMpp() * pow
@@ -119,8 +119,8 @@ public class MakeRunFolders {
 						}
 					});
 					Path stationFile = localDirPath.resolve("STATIONS");
-					RealVector axis = getRotationAxisToNorthPole(idData.getCmtLocation());
-					double angle = idData.getCmtLocation().getTheta();
+					RealVector axis = getRotationAxisToNorthPole(idData.getCmtPosition());
+					double angle = idData.getCmtPosition().getTheta();
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
 						for (Observer sta : stationSet) {
 							FullPosition rotatedStation 

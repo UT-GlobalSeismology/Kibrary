@@ -46,7 +46,7 @@ public class SeisTomoPy {
 			if (!id.getWaveformType().equals(WaveformType.SYN))
 				continue;
 			Observer station = id.getObserver();
-			FullPosition evtloc = id.getGlobalCMTID().getEventData().getCmtLocation();
+			FullPosition evtloc = id.getGlobalCMTID().getEventData().getCmtPosition();
 			String phaseString = "S";
 			if (id.getSacComponent().equals(SACComponent.Z))
 				phaseString = "P";
