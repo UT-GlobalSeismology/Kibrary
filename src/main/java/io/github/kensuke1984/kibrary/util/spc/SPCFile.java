@@ -429,7 +429,7 @@ public class SPCFile implements SPCFileAccess {
     }
 
     @Override
-    public FullPosition getSourceLocation() {
+    public FullPosition getSourcePosition() {
         return sourceLocation;
     }
 

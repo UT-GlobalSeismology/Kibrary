@@ -19,15 +19,14 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.correction.SCARDEC;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
@@ -224,8 +223,7 @@ public class SACMaker implements Runnable {
      */
     private boolean pde;
     private LocalDateTime beginDateTime;
-    private Observer station;
-    private Raypath path;
+    private Observer observer;
     private int lsmooth;
     private double delta;
     private int npts;
@@ -306,9 +304,9 @@ public class SACMaker implements Runnable {
             isOK = false;
         }
 
-        if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
+        if (!spc1.getSourcePosition().equals(spc2.getSourcePosition())) {
             System.err.println("locations of sources of input spcfiles are different");
-            System.err.println(spc1.getSourceLocation() + " " + spc2.getSourceLocation());
+            System.err.println(spc1.getSourcePosition() + " " + spc2.getSourcePosition());
             isOK = false;
         }
 
@@ -419,8 +417,7 @@ public class SACMaker implements Runnable {
     }
 
     private void setInformation() {
-        station = new Observer(primeSPC.getObserverID(), primeSPC.getObserverPosition());
-        path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
+        observer = new Observer(primeSPC.getObserverID(), primeSPC.getObserverPosition());
         if (globalCMTID != null && beginDateTime == null)
             beginDateTime = pde ? globalCMTID.getEventData().getPDETime() : globalCMTID.getEventData().getCMTTime();
         npts = findNPTS();
@@ -455,7 +452,7 @@ public class SACMaker implements Runnable {
                 // System.out.println(component);
                 SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
                         : SACExtension.valueOfSynthetic(component);
-                SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(station + "."
+                SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(observer + "."
                         + globalCMTID + "." + primeSPC.getSpcFileType() + "..." + bodyR + "." + ext));
                 if (sacFileName.exists()) {
                     System.err.println(sacFileName + " already exists..");
@@ -487,7 +484,7 @@ public class SACMaker implements Runnable {
                         : SACExtension.valueOfSynthetic(component);
             try {
                 sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-                        outPath.resolve(SACFileName.generate(station, globalCMTID, ext)));
+                        outPath.resolve(SACFileName.generate(observer, globalCMTID, ext)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -503,7 +500,7 @@ public class SACMaker implements Runnable {
                         : SACExtension.valueOfTemporalPartial(component);
                 try {
                     sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
-                            outPath.resolve(SACFileName.generate(station, globalCMTID, extT)));
+                            outPath.resolve(SACFileName.generate(observer, globalCMTID, extT)));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -520,13 +517,14 @@ public class SACMaker implements Runnable {
         if (beginDateTime != null) sac.setEventTime(beginDateTime);
         sac.setValue(SACHeaderEnum.B, 0);
 
-        sac.setObserver(station);
-        sac.setEventLocation(primeSPC.getSourceLocation());
+        sac.setObserver(observer);
+        FullPosition eventPosition = primeSPC.getSourcePosition();
+        sac.setEventLocation(eventPosition);
         sac.setSACString(SACHeaderEnum.KEVNM, primeSPC.getSourceID());
 
-        sac.setValue(SACHeaderEnum.GCARC, FastMath.toDegrees(path.getEpicentralDistance()));
-        sac.setValue(SACHeaderEnum.AZ, FastMath.toDegrees(path.getAzimuth()));
-        sac.setValue(SACHeaderEnum.BAZ, FastMath.toDegrees(path.getBackAzimuth()));
+        sac.setValue(SACHeaderEnum.GCARC, eventPosition.computeEpicentralDistanceDeg(observer.getPosition()));
+        sac.setValue(SACHeaderEnum.AZ, eventPosition.computeAzimuthDeg(observer.getPosition()));
+        sac.setValue(SACHeaderEnum.BAZ, eventPosition.computeBackAzimuthDeg(observer.getPosition()));
 
         sac.setInt(SACHeaderEnum.NPTS, npts);
         sac.setValue(SACHeaderEnum.E, delta * npts);

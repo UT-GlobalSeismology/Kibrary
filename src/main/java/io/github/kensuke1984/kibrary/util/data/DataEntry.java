@@ -83,8 +83,8 @@ public class DataEntry implements Comparable<DataEntry> {
         return component;
     }
 
-    public Raypath toRaypath() {
-        return new Raypath(event.getEventData().getCmtLocation(), observer.getPosition());
+    public Raypath toRaypath(String phase) {
+        return new Raypath(phase, event.getEventData().getCmtLocation(), observer.getPosition());
     }
 
     @Override

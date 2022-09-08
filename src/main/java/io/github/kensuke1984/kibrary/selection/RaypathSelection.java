@@ -11,17 +11,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.util.FastMath;
-
-import io.github.kensuke1984.anisotime.Phase;
+import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
-import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -31,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * depending on the geometries of each raypath.
  * <p>
  * A data entry list file must be provided as input. A new data entry list file will be created as the output.
+ *
  *
  * @author otsuru
  * @since 2022/1/4
@@ -83,18 +82,26 @@ public class RaypathSelection extends Operation {
     private double upperObserverLatitude;
     private double lowerObserverLongitude;
     private double upperObserverLongitude;
+    private double lowerTurningLatitude;
+    private double upperTurningLatitude;
+    private double lowerTurningLongitude;
+    private double upperTurningLongitude;
     private double lowerDistance;
     private double upperDistance;
     private double lowerAzimuth;
     private double upperAzimuth;
     private double lowerBackAzimuth;
     private double upperBackAzimuth;
-    private double lowerMidAzimuth;
-    private double upperMidAzimuth;
+    private double lowerTurningAzimuth;
+    private double upperTurningAzimuth;
     /**
-     * Whether criteria for mid-azimuth exists
+     * Whether criteria for turning point position exists
      */
-    private boolean selectMidAzimuth;
+    private boolean selectTurningPosition;
+    /**
+     * Whether criteria for turning point azimuth exists
+     */
+    private boolean selectTurningAzimuth;
     /**
      * Name of structure to use for calculating turning point
      */
@@ -102,7 +109,7 @@ public class RaypathSelection extends Operation {
     /**
      * Phase to use when computing turning point
      */
-    private Phase turningPointPhase;
+    private String turningPointPhase;
 
     /**
      * @param args  none to create a property file <br>
@@ -139,23 +146,32 @@ public class RaypathSelection extends Operation {
             pw.println("#lowerEventDepth NOT SUPPORTED YET");
             pw.println("##(double) Deeper limit of event DEPTH (1000)");
             pw.println("#upperEventDepth NOT SUPPORTED YET");
-            pw.println("##(double) Lower limit of event latitude [deg] [-90:upperLatitude) (-90)");
+            pw.println("##(double) Lower limit of event latitude [deg] [-90:upperEventLatitude) (-90)");
             pw.println("#lowerEventLatitude");
-            pw.println("##(double) Upper limit of event latitude [deg] (lowerLatitude:90] (90)");
+            pw.println("##(double) Upper limit of event latitude [deg] (lowerEventLatitude:90] (90)");
             pw.println("#upperEventLatitude");
-            pw.println("##(double) Lower limit of event longitude [deg] [-180:upperLongitude) (-180)");
+            pw.println("##(double) Lower limit of event longitude [deg] [-180:upperEventLongitude) (-180)");
             pw.println("#lowerEventLongitude");
-            pw.println("##(double) Upper limit of event longitude [deg] (lowerLongitude:360] (180)");
+            pw.println("##(double) Upper limit of event longitude [deg] (lowerEventLongitude:360] (180)");
             pw.println("#upperEventLongitude");
             pw.println("##########Selection criteria of observers##########");
-            pw.println("##(double) Lower limit of observer latitude [deg] [-90:upperLatitude) (-90)");
+            pw.println("##(double) Lower limit of observer latitude [deg] [-90:upperObserverLatitude) (-90)");
             pw.println("#lowerObserverLatitude");
-            pw.println("##(double) Upper limit of observer latitude [deg] (lowerLatitude:90] (90)");
+            pw.println("##(double) Upper limit of observer latitude [deg] (lowerObserverLatitude:90] (90)");
             pw.println("#upperObserverLatitude");
-            pw.println("##(double) Lower limit of observer longitude [deg] [-180:upperLongitude) (-180)");
+            pw.println("##(double) Lower limit of observer longitude [deg] [-180:upperObserverLongitude) (-180)");
             pw.println("#lowerObserverLongitude");
-            pw.println("##(double) Upper limit of observer longitude [deg] (lowerLongitude:360] (180)");
+            pw.println("##(double) Upper limit of observer longitude [deg] (lowerObserverLongitude:360] (180)");
             pw.println("#upperObserverLongitude");
+            pw.println("##########Selection criteria of turning points##########");
+            pw.println("##(double) Lower limit of turning point latitude [deg] [-90:upperTurningLatitude) (-90)");
+            pw.println("#lowerTurningLatitude");
+            pw.println("##(double) Upper limit of turning point latitude [deg] (lowerTurningLatitude:90] (90)");
+            pw.println("#upperTurningLatitude");
+            pw.println("##(double) Lower limit of turning point longitude [deg] [-180:upperTurningLongitude) (-180)");
+            pw.println("#lowerTurningLongitude");
+            pw.println("##(double) Upper limit of turning point longitude [deg] (lowerTurningLongitude:360] (180)");
+            pw.println("#upperTurningLongitude");
             pw.println("##########Selection criteria of raypaths##########");
             pw.println("##(double) Lower limit of epicentral distance range [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance 70");
@@ -169,11 +185,11 @@ public class RaypathSelection extends Operation {
             pw.println("#lowerBackAzimuth");
             pw.println("##(double) Upper limit of back azimuth range [deg] (lowerBackAzimuth:360] (360)");
             pw.println("#upperBackAzimuth");
-            pw.println("##(double) Lower limit of turning azimuth range [deg] [-360:upperMidAzimuth) (0)");
-            pw.println("#lowerMidAzimuth");
-            pw.println("##(double) Upper limit of turning azimuth range [deg] (lowerMidAzimuth:360] (360)");
-            pw.println("#upperMidAzimuth");
-            pw.println("##########When lowerMidAzimuth or upperMidAzimuth is set, the following is used:##########");
+            pw.println("##(double) Lower limit of turning point azimuth range [deg] [-360:upperTurningAzimuth) (0)");
+            pw.println("#lowerTurningAzimuth");
+            pw.println("##(double) Upper limit of turning point azimuth range [deg] (lowerTurningAzimuth:360] (360)");
+            pw.println("#upperTurningAzimuth");
+            pw.println("##########When criteria for turning points are set, the following is used:##########");
             pw.println("##(String) Name of structure to use for calculating turning point (prem)");
             pw.println("#structureName ");
             pw.println("##Phase to compute turning point for (ScS)");
@@ -212,6 +228,7 @@ public class RaypathSelection extends Operation {
         upperEventLongitude = property.parseDouble("upperEventLongitude", "180");
         if (lowerEventLongitude < -180 || lowerEventLongitude > upperEventLongitude || 360 < upperEventLongitude)
             throw new IllegalArgumentException("Event longitude range " + lowerEventLongitude + " , " + upperEventLongitude + " is invalid.");
+
         lowerObserverLatitude = property.parseDouble("lowerObserverLatitude", "-90");
         upperObserverLatitude = property.parseDouble("upperObserverLatitude", "90");
         if (lowerObserverLatitude < -90 || lowerObserverLatitude > upperObserverLatitude || 90 < upperObserverLatitude)
@@ -220,6 +237,19 @@ public class RaypathSelection extends Operation {
         upperObserverLongitude = property.parseDouble("upperObserverLongitude", "180");
         if (lowerObserverLongitude < -180 || lowerObserverLongitude > upperObserverLongitude || 360 < upperObserverLongitude)
             throw new IllegalArgumentException("Observer longitude range " + lowerObserverLongitude + " , " + upperObserverLongitude + " is invalid.");
+
+        if (property.containsKey("lowerTurningLatitude") || property.containsKey("upperTurningLatitude") ||
+                property.containsKey("lowerTurningLongitude") || property.containsKey("upperTurningLongitude")) {
+            selectTurningPosition = true;
+        }
+        lowerTurningLatitude = property.parseDouble("lowerTurningLatitude", "-90");
+        upperTurningLatitude = property.parseDouble("upperTurningLatitude", "90");
+        if (lowerTurningLatitude < -90 || lowerTurningLatitude > upperTurningLatitude || 90 < upperTurningLatitude)
+            throw new IllegalArgumentException("Turning point latitude range " + lowerTurningLatitude + " , " + upperTurningLatitude + " is invalid.");
+        lowerTurningLongitude = property.parseDouble("lowerTurningLongitude", "-180");
+        upperTurningLongitude = property.parseDouble("upperTurningLongitude", "180");
+        if (lowerTurningLongitude < -180 || lowerTurningLongitude > upperTurningLongitude || 360 < upperTurningLongitude)
+            throw new IllegalArgumentException("Turning point longitude range " + lowerTurningLongitude + " , " + upperTurningLongitude + " is invalid.");
 
         lowerDistance = property.parseDouble("lowerDistance", "0");
         upperDistance = property.parseDouble("upperDistance", "180");
@@ -233,15 +263,17 @@ public class RaypathSelection extends Operation {
         upperBackAzimuth = property.parseDouble("upperBackAzimuth", "360");
         if (lowerBackAzimuth < -360 || lowerBackAzimuth > upperBackAzimuth || 360 < upperBackAzimuth)
             throw new IllegalArgumentException("Back-azimuth range " + lowerBackAzimuth + " , " + upperBackAzimuth + " is invalid.");
-        if (property.containsKey("lowerMidAzimuth") || property.containsKey("upperMidAzimuth"))
-            selectMidAzimuth = true;
-        lowerMidAzimuth = property.parseDouble("lowerMidAzimuth", "0");
-        upperMidAzimuth = property.parseDouble("upperMidAzimuth", "360");
-        if (lowerMidAzimuth < -360 || lowerMidAzimuth > upperMidAzimuth || 360 < upperMidAzimuth)
-            throw new IllegalArgumentException("Mid-azimuth range " + lowerMidAzimuth + " , " + upperMidAzimuth + " is invalid.");
+
+        if (property.containsKey("lowerTurningAzimuth") || property.containsKey("upperTurningAzimuth")) {
+            selectTurningAzimuth = true;
+        }
+        lowerTurningAzimuth = property.parseDouble("lowerTurningAzimuth", "0");
+        upperTurningAzimuth = property.parseDouble("upperTurningAzimuth", "360");
+        if (lowerTurningAzimuth < -360 || lowerTurningAzimuth > upperTurningAzimuth || 360 < upperTurningAzimuth)
+            throw new IllegalArgumentException("Turning point azimuth range " + lowerTurningAzimuth + " , " + upperTurningAzimuth + " is invalid.");
 
         structureName = property.parseString("structureName", "prem");
-        turningPointPhase = Phase.create(property.parseString("turningPointPhase", "ScS"));
+        turningPointPhase = property.parseString("turningPointPhase", "ScS");
 
         String dateStr = GadgetAid.getTemporaryString();
         outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedEntry", tag, dateStr, ".lst"));
@@ -251,6 +283,17 @@ public class RaypathSelection extends Operation {
     public void run() throws IOException {
         Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
         Set<DataEntry> selectedEntrySet = new HashSet<>();
+
+        // compute turning points if needed
+        TauPPierceReader pierceTool = null;
+        if (selectTurningPosition || selectTurningAzimuth) {
+            try {
+                pierceTool = new TauPPierceReader(structureName, turningPointPhase);
+                pierceTool.compute(entrySet);
+            } catch (TauModelException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         for (DataEntry entry : entrySet) {
             // components are checked regardless of mode (extraction or elimination)
@@ -283,27 +326,43 @@ public class RaypathSelection extends Operation {
                 continue;
             }
 
-            // distance and azimuth
+            // distance, azimuth, back-azimuth
             double distance = eventPosition.computeEpicentralDistance(observerPosition) * 180. / Math.PI;
             boolean distanceCheck = (lowerDistance <= distance && distance <= upperDistance);
             double azimuth = eventPosition.computeAzimuth(observerPosition) * 180. / Math.PI;
             boolean azimuthCheck = MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth);
             double backAzimuth = eventPosition.computeBackAzimuth(observerPosition) * 180. / Math.PI;
             boolean backAzimuthCheck = MathAid.checkAngleRange(backAzimuth, lowerBackAzimuth, upperBackAzimuth);
-            boolean midAzimuthCheck = true;
-            if (selectMidAzimuth) {
-                Raypath raypath = new Raypath(eventPosition, observerPosition);
-                raypath.computeTurningPoint(structureName, turningPointPhase);
-                double midAzimuth = FastMath.toDegrees(raypath.computeMidAzimuth());
-                midAzimuthCheck = MathAid.checkAngleRange(midAzimuth, lowerMidAzimuth, upperMidAzimuth);
-            }
-            if ((distanceCheck && azimuthCheck && backAzimuthCheck && midAzimuthCheck) == false) {
+            if ((distanceCheck && azimuthCheck && backAzimuthCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
                 }
                 continue;
             }
 
+            // turning point position and its azimuth
+            if (selectTurningPosition || selectTurningAzimuth) {
+                boolean turningPositionCheck = false;
+                boolean turningAzimuthCheck = false;
+                // conduct check when raypath of the specified phaseName exists; otherwise, false
+                if (pierceTool.hasRaypaths(entry)) {
+                    // When there are several raypaths for a given phase name, the first arrival is chosen.
+                    // When there are multiple bottoming points for a raypath, the first one is used.
+                    // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
+                    FullPosition turningPosition = pierceTool.get(entry, 0).findTurningPoint(0);
+                    turningPositionCheck = turningPosition.isInRange(lowerTurningLatitude, upperTurningLatitude, lowerTurningLongitude, upperTurningLongitude);
+                    double turningAzimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
+                    turningAzimuthCheck = MathAid.checkAngleRange(turningAzimuth, lowerTurningAzimuth, upperTurningAzimuth);
+                }
+                if ((turningPositionCheck && turningAzimuthCheck) == false) {
+                    if (eliminationMode) {
+                        selectedEntrySet.add(entry);
+                    }
+                    continue;
+                }
+            }
+
+            // the entry is selected, so add it
             if (!eliminationMode) {
                 selectedEntrySet.add(entry);
             }

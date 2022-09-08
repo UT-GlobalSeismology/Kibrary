@@ -13,11 +13,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.math3.util.FastMath;
-
-import io.github.kensuke1984.anisotime.Phase;
+import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.external.TauPPierceReader;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -86,8 +85,9 @@ public class RaypathMapper extends Operation {
     private Path voxelPath;
 
     private boolean cutAtPiercePoint;
-    private Phase piercePhase;
-    private double pierceDepth;
+    private String piercePhase;
+    private double lowerPierceRadius;
+    private double upperPierceRadius;
     private String structureName;
 
     private int colorMode;
@@ -150,8 +150,10 @@ public class RaypathMapper extends Operation {
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
             pw.println("##Phase to compute pierce points for (ScS)");
             pw.println("#piercePhase ");
-            pw.println("##(double) Depth to compute pierce points for [km] (2491)");
-            pw.println("#pierceDepth ");
+            pw.println("##(double) Lower radius to compute pierce points for [km] (3480)");
+            pw.println("#lowerPierceRadius ");
+            pw.println("##(double) Upper radius to compute pierce points for [km] (3880)");
+            pw.println("#upperPierceRadius ");
             pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
             pw.println("#structureName ");
             pw.println("##########Settings for mapping");
@@ -195,8 +197,9 @@ public class RaypathMapper extends Operation {
         }
 
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
-        piercePhase = Phase.create(property.parseString("piercePhase", "ScS"));
-        pierceDepth = property.parseDouble("pierceDepth", "2491");
+        piercePhase = property.parseString("piercePhase", "ScS");
+        lowerPierceRadius = property.parseDouble("lowerPierceRadius", "3480");
+        upperPierceRadius = property.parseDouble("upperPierceRadius", "3880");
         structureName = property.parseString("structureName", "prem");
 
         colorMode = property.parseInt("colorMode", "0");
@@ -233,8 +236,10 @@ public class RaypathMapper extends Operation {
 
         if (reusePath != null) {
             checkReusePath();
-        } else {
+        } else if (dataEntryPath != null){
             readAndOutput();
+        } else {
+            throw new IllegalStateException("Input folder or file not set");
         }
 
         if (voxelPath != null) {
@@ -269,22 +274,11 @@ public class RaypathMapper extends Operation {
     }
 
     private void readAndOutput() throws IOException {
-        Set<GlobalCMTID> events;
-        Set<Observer> observers;
-        Set<Raypath> raypaths;
-
-        if (dataEntryPath != null) {
-            Set<DataEntry> validEntrySet = DataEntryListFile.readAsSet(dataEntryPath)
-                    .stream().filter(entry -> components.contains(entry.getComponent()))
-                    .collect(Collectors.toSet());
-            events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
-            observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
-            raypaths = validEntrySet.stream().map(DataEntry::toRaypath).collect(Collectors.toSet());
-        } else {
-            throw new IllegalStateException("Input folder or file not set");
-        }
-
-        DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
+        Set<DataEntry> validEntrySet = DataEntryListFile.readAsSet(dataEntryPath)
+                .stream().filter(entry -> components.contains(entry.getComponent()))
+                .collect(Collectors.toSet());
+        Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
+        Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
         outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", tag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -293,40 +287,52 @@ public class RaypathMapper extends Operation {
         ObserverListFile.write(observers, outPath.resolve(observerFileName));
 
         if (cutAtPiercePoint) {
-            outputRaypathSegments(raypaths);
+            outputRaypathSegments(validEntrySet);
         } else {
-            outputRaypaths(raypaths);
+            outputRaypaths(validEntrySet);
         }
     }
 
-    private void outputRaypaths(Set<Raypath> raypaths) throws IOException {
-        List<String> raypathLines = new ArrayList<>();
+    private void outputRaypaths(Set<DataEntry> validEntrySet) throws IOException {
+        Set<Raypath> raypaths = validEntrySet.stream().map(entry -> entry.toRaypath(piercePhase)).collect(Collectors.toSet());
+        DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
 
+        List<String> raypathLines = new ArrayList<>();
         raypaths.forEach(ray -> {
-            raypathLines.add(lineFor(ray.getSource(), ray.getReceiver(), ray));
+            raypathLines.add(lineFor(ray, ray));
         });
         Files.write(outPath.resolve(raypathFileName), raypathLines);
     }
 
-    private void outputRaypathSegments(Set<Raypath> raypaths) throws IOException {
+    private void outputRaypathSegments(Set<DataEntry> validEntrySet) throws IOException {
+        System.err.println("Calculating pierce points ...");
+
+        TauPPierceReader pierceTool = null;
+        try {
+            double[] pierceRadii = {lowerPierceRadius, upperPierceRadius};
+            pierceTool = new TauPPierceReader(structureName, piercePhase, pierceRadii);
+            pierceTool.compute(validEntrySet);
+        } catch (TauModelException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<Raypath> allRaypaths = pierceTool.getAll();
         List<String> turningPointLines = new ArrayList<>();
         List<String> insideLines = new ArrayList<>();
         List<String> outsideLines = new ArrayList<>();
+        for (Raypath raypath : allRaypaths) {
+            // add all bottom turning points
+            List<FullPosition> turningPoints = raypath.findTurningPoints();
+            turningPoints.forEach(pos -> turningPointLines.add(pos.toHorizontalPosition().toString()));
+            // add all raypath segments inside layer
+            List<Raypath> insideSegments = raypath.clipInsideLayer(lowerPierceRadius, upperPierceRadius);
+            insideSegments.forEach(segment -> insideLines.add(lineFor(raypath, segment)));
+            // add all raypath segments outside layer
+            List<Raypath> outsideSegments = raypath.clipOutsideLayer(lowerPierceRadius, upperPierceRadius);
+            outsideSegments.forEach(segment -> outsideLines.add(lineFor(raypath, segment)));
+        }
 
-        System.err.println("Calculating pierce points ...");
-
-        raypaths.forEach(ray -> {
-            if (ray.computePiercePoints(structureName, piercePhase, pierceDepth)) {
-                turningPointLines.add(ray.getTurningPoint().toHorizontalPosition().toString());
-                insideLines.add(lineFor(ray.getEnterPoint(), ray.getLeavePoint(), ray));
-                outsideLines.add(lineFor(ray.getSource(), ray.getEnterPoint(), ray));
-                outsideLines.add(lineFor(ray.getLeavePoint(), ray.getReceiver(), ray));
-            } else {
-                System.err.println("Pierce point calculation for " + ray + "failed.");
-            }
-        });
-
-        System.err.println("Calculation of raypath segments for " + turningPointLines.size() + " raypaths succeeded.");
+        System.err.println("Calculation of raypath segments for " + allRaypaths.size() + " raypaths succeeded.");
 
         Files.write(outPath.resolve(turningPointFileName), turningPointLines);
         Files.write(outPath.resolve(insideFileName), insideLines);
@@ -334,27 +340,26 @@ public class RaypathMapper extends Operation {
     }
 
     /**
-     * Output line: lat1 lon1 lat2 lon2 dist azimuth backazimuth (midazimuth)
-     * @param point1
-     * @param point2
-     * @param raypath
-     * @return
+     * Creates output line for a raypath segment.
+     * Output line: lat1 lon1 lat2 lon2 dist azimuth backAzimuth (turningAzimuth)
+     *
+     * @param raypath (Raypath) The whole raypath
+     * @param raypathSegment (Raypath) The raypath segment
+     * @return (String) Output line for the raypath segment
      */
-    private static String lineFor(FullPosition point1, HorizontalPosition point2, Raypath raypath) {
-        // turn point2 into HorizontalPosition if it is FullPosition
-        HorizontalPosition point2h = point2;
-        if (point2 instanceof FullPosition) point2h = ((FullPosition) point2).toHorizontalPosition();
-
+    private static String lineFor(Raypath raypath, Raypath raypathSegment) {
         // create output line
-        // only output latitude and longitude, not radius, because point2 may be HorizontalPosition or FullPosition
+        // Only output latitude and longitude, without radius.
         // Math.floor is used because intervals will be set by integer, as "int_i <= val < int_{i+1}"
-        String line = point1.toHorizontalPosition() + " " + point2h + " "
-                + (int) Math.floor(FastMath.toDegrees(raypath.getEpicentralDistance())) + " "
-                + (int) Math.floor(FastMath.toDegrees(raypath.getAzimuth())) + " "
-                + (int) Math.floor(FastMath.toDegrees(raypath.getBackAzimuth()));
-        // midazimuth can be obtained only when turning point is already known
-        if (raypath.hasCalculatedTurningPoint()) {
-            line = line + " " + (int) Math.floor(FastMath.toDegrees(raypath.computeMidAzimuth()));
+        String line = raypathSegment.getSource().toHorizontalPosition() + " "
+                + raypathSegment.getReceiver().toHorizontalPosition() + " "
+                + (int) Math.floor(raypath.getEpicentralDistanceDeg()) + " "
+                + (int) Math.floor(raypath.getAzimuthDeg()) + " "
+                + (int) Math.floor(raypath.getBackAzimuthDeg());
+        // Turning point azimuth can be obtained only when turning point has been computed for.
+        // The first turning point on the raypath is used.
+        if (raypath.findTurningPoint(0) != null) {
+            line = line + " " + (int) Math.floor(raypath.computeTurningAzimuthDeg(0));
         }
         return line;
     }

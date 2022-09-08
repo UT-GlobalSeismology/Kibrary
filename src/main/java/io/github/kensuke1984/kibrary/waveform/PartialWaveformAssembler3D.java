@@ -799,7 +799,7 @@ public class PartialWaveformAssembler3D extends Operation {
 //				perturbationRs[i] = perturbationLocations[i].getR();
 
             String observerSourceCode = bp.getSourceID();
-            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
+            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourcePosition()))
                 throw new RuntimeException("There may be a station with the same name but other networks.");
 
             if (bp.tlen() != tlen || bp.np() != np)

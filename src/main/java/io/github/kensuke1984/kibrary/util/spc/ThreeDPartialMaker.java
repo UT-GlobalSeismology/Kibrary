@@ -463,11 +463,11 @@ public class ThreeDPartialMaker {
         int np = bp.np();
         int nbody = bp.nbody();
         double omegai = bp.omegai();
-        HorizontalPosition observerPosition = bp.getSourceLocation();
+        HorizontalPosition observerPosition = bp.getSourcePosition();
         String observerID = bp.getSourceID(); //TODO check it
 //		String observerName = bp.getObserverID();
         String observerNetwork = bp.getNetworkCode();
-        FullPosition sourceLocation = fp.getSourceLocation();
+        FullPosition sourceLocation = fp.getSourcePosition();
         String sourceID = fp.getSourceID();
         double[] bodyR = bp.getBodyR();
         List<SPCBody> spcBodyList = new ArrayList<>(nbody);
@@ -521,7 +521,7 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            public FullPosition getSourceLocation() {
+            public FullPosition getSourcePosition() {
                 return sourceLocation;
             }
 
@@ -850,8 +850,8 @@ public class ThreeDPartialMaker {
      * （北極に持って行って、東西南北ベースに力を入れているのでそれを大円内に戻す）
      */
     private void setAngles() {
-        HorizontalPosition event = fp.getSourceLocation();
-        HorizontalPosition station = bp.getSourceLocation();
+        HorizontalPosition event = fp.getSourcePosition();
+        HorizontalPosition station = bp.getSourcePosition();
         HorizontalPosition point = bp.getObserverPosition();
         angleForTensor = Earth.computeAzimuth(point, station) - Earth.computeAzimuth(point, event);
 

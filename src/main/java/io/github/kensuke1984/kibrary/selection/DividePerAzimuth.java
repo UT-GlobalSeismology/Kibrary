@@ -446,7 +446,7 @@ public class DividePerAzimuth {
 			double azimuth = azimuths.get(i);
 			if (azimuth >= 360.)
 				azimuth = azimuth - 360.;
-			HorizontalPosition endPosition = averageEventPosition.fromAzimuth(azimuth, 90.);
+			HorizontalPosition endPosition = averageEventPosition.pointAlongAzimuth(azimuth, 90.);
 //			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
 			Files.write(outpath, (averageEventPosition + " " + endPosition + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
