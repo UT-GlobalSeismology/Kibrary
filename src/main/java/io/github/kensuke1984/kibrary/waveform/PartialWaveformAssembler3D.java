@@ -318,8 +318,8 @@ public class PartialWaveformAssembler3D extends Operation {
                 throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
         System.err.println("Using mode " + mode);
 
-//        if (catalogue)
-//            readBpCatNames();
+        if (catalogue)
+            readBpCatNames();
 
         setSourceTimeFunction();
 
@@ -939,34 +939,34 @@ public class PartialWaveformAssembler3D extends Operation {
             dhBP[1] = (distanceBP - theta2) / dtheta;
             dhBP[2] = (distanceBP - theta3) / dtheta;
 
-            String formatter = "XY%0" + Integer.toString(bpCatNum).length() + "d";
-            String catName = String.format(formatter, ipointBP + 1);
-            String catName2 = String.format(formatter, ipointBP + 2);
-            String catName3 = String.format(formatter, ipointBP + 3);
-
-            bp = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
-                    phiBP, voxelPos, observerPos, voxelName);
-            bp2 = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName2 + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
-                    phiBP, voxelPos, observerPos, voxelName);
-            bp3 = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName3 + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
-                    phiBP, voxelPos, observerPos, voxelName);
-            if (mode.equals("BOTH")) {
-                bp_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName + ".340A_TA.PB...PSV.spc")),
-                        phiBP, voxelPos, observerPos, voxelName);
-                bp2_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName2 + ".340A_TA.PB...PSV.spc")),
-                        phiBP, voxelPos, observerPos, voxelName);
-                bp3_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName3 + ".340A_TA.PB...PSV.spc")),
-                        phiBP, voxelPos, observerPos, voxelName);
-            }
-
-//            bp = SPCFile.getInstance(bpNames[ipointBP], phiBP, voxelPos, observerPos, voxelName);
-//            bp2 = SPCFile.getInstance(bpNames[ipointBP + 1], phiBP, voxelPos, observerPos, voxelName);
-//            bp3 = SPCFile.getInstance(bpNames[ipointBP + 2], phiBP, voxelPos, observerPos, voxelName);
+//            String formatter = "XY%0" + Integer.toString(bpCatNum).length() + "d";
+//            String catName = String.format(formatter, ipointBP + 1);
+//            String catName2 = String.format(formatter, ipointBP + 2);
+//            String catName3 = String.format(formatter, ipointBP + 3);
+//
+//            bp = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
+//                    phiBP, voxelPos, observerPos, voxelName);
+//            bp2 = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName2 + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
+//                    phiBP, voxelPos, observerPos, voxelName);
+//            bp3 = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName3 + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
+//                    phiBP, voxelPos, observerPos, voxelName);
 //            if (mode.equals("BOTH")) {
-//                bp_other = SPCFile.getInstance(bpNames_PSV[ipointBP], phiBP, voxelPos, observerPos, voxelName);
-//                bp2_other = SPCFile.getInstance(bpNames_PSV[ipointBP + 1], phiBP, voxelPos, observerPos, voxelName);
-//                bp3_other = SPCFile.getInstance(bpNames_PSV[ipointBP + 2], phiBP, voxelPos, observerPos, voxelName);
+//                bp_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName + ".340A_TA.PB...PSV.spc")),
+//                        phiBP, voxelPos, observerPos, voxelName);
+//                bp2_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName2 + ".340A_TA.PB...PSV.spc")),
+//                        phiBP, voxelPos, observerPos, voxelName);
+//                bp3_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName3 + ".340A_TA.PB...PSV.spc")),
+//                        phiBP, voxelPos, observerPos, voxelName);
 //            }
+
+            bp = SPCFile.getInstance(bpNames[ipointBP], phiBP, voxelPos, observerPos, voxelName);
+            bp2 = SPCFile.getInstance(bpNames[ipointBP + 1], phiBP, voxelPos, observerPos, voxelName);
+            bp3 = SPCFile.getInstance(bpNames[ipointBP + 2], phiBP, voxelPos, observerPos, voxelName);
+            if (mode.equals("BOTH")) {
+                bp_other = SPCFile.getInstance(bpNames_PSV[ipointBP], phiBP, voxelPos, observerPos, voxelName);
+                bp2_other = SPCFile.getInstance(bpNames_PSV[ipointBP + 1], phiBP, voxelPos, observerPos, voxelName);
+                bp3_other = SPCFile.getInstance(bpNames_PSV[ipointBP + 2], phiBP, voxelPos, observerPos, voxelName);
+            }
         }
     }
 
