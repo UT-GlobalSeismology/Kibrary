@@ -82,7 +82,7 @@ public class AzimuthHistogram {
         OptionGroup azimuthOption = new OptionGroup();
         azimuthOption.addOption(Option.builder("b").longOpt("back")
                 .desc("Use back azimuth").build());
-        azimuthOption.addOption(Option.builder("t").longOpt("back")
+        azimuthOption.addOption(Option.builder("t").longOpt("turning")
                 .desc("Use turning point azimuth").build());
         options.addOptionGroup(azimuthOption);
         // TauP settings
@@ -158,16 +158,20 @@ public class AzimuthHistogram {
 
         // output
         String fileNameRoot;
+        String xlabel;
         if (useTurningAzimuth) {
             fileNameRoot = "turningAzimuthHistogram";
+            xlabel = "Turning point azimuth";
         } else if (useBackAzimuth) {
             fileNameRoot = "backAzimuthHistogram";
+            xlabel = "Back azimuth";
         } else {
             fileNameRoot = "azimuthHistogram";
+            xlabel = "Azimuth";
         }
         Path outPath = Paths.get("");
         writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
-        createScript(outPath, fileNameRoot, interval, minimum, maximum, xtics);
+        createScript(outPath, fileNameRoot, xlabel, interval, minimum, maximum, xtics);
 
     }
 
@@ -180,12 +184,13 @@ public class AzimuthHistogram {
         }
     }
 
-    private static void createScript(Path outPath, String fileNameRoot, double interval, double minimum, double maximum, double xtics) throws IOException {
+    private static void createScript(Path outPath, String fileNameRoot, String xlabel,
+            double interval, double minimum, double maximum, double xtics) throws IOException {
         Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set term pngcairo enhanced font 'Helvetica,14'");
-            pw.println("set xlabel 'Azimuth (deg)'");
+            pw.println("set xlabel '" + xlabel + " (deg)'");
             pw.println("set ylabel 'Number of records'");
             pw.println("set xrange [" + minimum + ":" + maximum + "]");
             pw.println("set xtics " + xtics + " nomirror");

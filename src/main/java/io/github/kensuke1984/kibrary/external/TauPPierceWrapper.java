@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 public final class TauPPierceWrapper {
 
     private TauP_Pierce timeTool;
-    private Map<DataEntry, List<Raypath>> entryMap;
+    private Map<DataEntry, List<Raypath>> entryMap = new HashMap<>();
 
     public TauPPierceWrapper(String structureName, String phaseName) throws TauModelException {
         this(structureName, phaseName, null);
@@ -87,7 +88,7 @@ public final class TauPPierceWrapper {
             Set<DataEntry> eventEntries = entrySet.stream().filter(entry -> entry.getEvent().equals(event)).collect(Collectors.toSet());
             for (DataEntry entry : eventEntries) {
                 HorizontalPosition observerPosition = entry.getObserver().getPosition();
-                double distance = eventPosition.computeEpicentralDistance(observerPosition);
+                double distance = eventPosition.computeEpicentralDistanceDeg(observerPosition);
                 timeTool.calculate(distance);
                 List<Arrival> arrivals = timeTool.getArrivals();
 

@@ -40,7 +40,7 @@ final class Latitude implements Comparable<Latitude> {
      */
     static double valueFor(double theta) {
         if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
-                "Invalid theta (must be[0, pi]): " + theta + " @" +
+                "Invalid theta (must be in [0, pi]): " + theta + " @" +
                         Thread.currentThread().getStackTrace()[1].getMethodName());
 
         double geocentric = 0.5 * Math.PI - theta;
@@ -54,7 +54,7 @@ final class Latitude implements Comparable<Latitude> {
      */
     Latitude(double geographicLatitude) {
         if (!withinValidRange(geographicLatitude)) throw new IllegalArgumentException(
-                "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
+                "The input latitude: " + geographicLatitude + " is invalid (must be in [-90, 90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
         geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));

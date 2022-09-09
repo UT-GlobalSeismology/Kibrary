@@ -277,6 +277,8 @@ public class RaypathMapper extends Operation {
         Set<DataEntry> validEntrySet = DataEntryListFile.readAsSet(dataEntryPath)
                 .stream().filter(entry -> components.contains(entry.getComponent()))
                 .collect(Collectors.toSet());
+        DatasetAid.checkNum(validEntrySet.size(), "entry", "entries");
+
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
@@ -295,7 +297,6 @@ public class RaypathMapper extends Operation {
 
     private void outputRaypaths(Set<DataEntry> validEntrySet) throws IOException {
         Set<Raypath> raypaths = validEntrySet.stream().map(entry -> entry.toRaypath(piercePhase)).collect(Collectors.toSet());
-        DatasetAid.checkNum(raypaths.size(), "raypath", "raypaths");
 
         List<String> raypathLines = new ArrayList<>();
         raypaths.forEach(ray -> {
@@ -305,8 +306,6 @@ public class RaypathMapper extends Operation {
     }
 
     private void outputRaypathSegments(Set<DataEntry> validEntrySet) throws IOException {
-        System.err.println("Calculating pierce points ...");
-
         TauPPierceWrapper pierceTool = null;
         try {
             double[] pierceRadii = {lowerPierceRadius, upperPierceRadius};
@@ -332,7 +331,7 @@ public class RaypathMapper extends Operation {
             outsideSegments.forEach(segment -> outsideLines.add(lineFor(raypath, segment)));
         }
 
-        System.err.println("Calculation of raypath segments for " + allRaypaths.size() + " raypaths succeeded.");
+        System.err.println("Computation of raypath segments for " + allRaypaths.size() + " raypaths succeeded.");
 
         Files.write(outPath.resolve(turningPointFileName), turningPointLines);
         Files.write(outPath.resolve(insideFileName), insideLines);

@@ -251,28 +251,29 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @author anselme
      */
     public HorizontalPosition pointAlongAzimuth(double azimuthDeg, double distanceDeg) {
-        double alpha = Math.toRadians(azimuthDeg);
-        double GCARC = Math.toRadians(distanceDeg);
+        double azimuth = Math.toRadians(azimuthDeg);
+        double distance = Math.toRadians(distanceDeg);
 
-        double costheta = Math.cos(GCARC) * Math.cos(getTheta())
-                + Math.sin(GCARC) * Math.sin(getTheta()) * Math.cos(alpha);
-        double sintheta = Math.sqrt(1 - costheta * costheta);
+        // colatitude of current position
+        double thetaO = getTheta();
+        // cosine of colatitude of result position, from spherical law of cosines
+        double cosThetaP = Math.cos(distance) * Math.cos(thetaO)
+                + Math.sin(distance) * Math.sin(thetaO) * Math.cos(azimuth);
+        // colatitude of result position
+        double thetaP = Math.acos(cosThetaP);
 
-        double theta = Math.acos(costheta);
+        // cosine of longitude difference, from spherical law of cosines
+        double cosDPhi = (Math.cos(distance) - Math.cos(thetaO) * Math.cos(thetaP)) / (Math.sin(thetaO) * Math.sin(thetaP));
+        // sine of longitude difference, from spherical law of sines
+        double sinDPhi = Math.sin(distance) * Math.sin(azimuth) / Math.sin(thetaP);
+        // longitude of result position
+        double phiP = getPhi() + Math.atan2(sinDPhi, cosDPhi);
 
-        double tmpCos = Math.min( (Math.cos(GCARC) - Math.cos(getTheta()) * costheta)
-                    / (Math.sin(getTheta()) * sintheta)
-                , 1.);
-        tmpCos = Math.max(tmpCos, -1.);
-
-        double phi = getPhi() - Math.acos( tmpCos );
-
-        double lat = 90 - theta * 180 / Math.PI;
-        double lon = phi * 180 / Math.PI;
-
-        if (lon < -180)
-            lon = lon + 360;
-
+        // set result position
+        double lat = 90 - Math.toDegrees(thetaP);
+        double lon = Math.toDegrees(phiP);
+        if (lon < -180) lon += 360;
+        if (lon > 180) lon -= 360;
         return new HorizontalPosition(lat, lon);
     }
 

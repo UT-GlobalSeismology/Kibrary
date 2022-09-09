@@ -95,13 +95,13 @@ public class Raypath {
                 // do nothing if raypath is still at the borders
             } else if (startIndex >= 0 && (positions.get(i).getR() < lowerRadius || upperRadius < positions.get(i).getR())) {
                 // once the raypath goes away from layer, clip from startIndex to the previous index
-                if (i - 1 > startIndex) clippedRaypaths.add(clip(startIndex, i - 1));
+                if (i - 1 > startIndex) clippedRaypaths.add(clip(startIndex, i));
                 startIndex = -1;
             }
         }
         // if end point is still within layer, add the final clip
         if (startIndex >= 0 && (nPoint - 1 > startIndex)) {
-            clippedRaypaths.add(clip(startIndex, nPoint - 1));
+            clippedRaypaths.add(clip(startIndex, nPoint));
         }
 
         return clippedRaypaths;
@@ -132,7 +132,7 @@ public class Raypath {
                 // do nothing if raypath is still at the lower border
             } else if (startBelowIndex >= 0 && positions.get(i).getR() > lowerRadius) {
                 // once the raypath goes above the lower border, clip from startBelowIndex to the previous index
-                if (i - 1 > startBelowIndex) clippedRaypaths.add(clip(startBelowIndex, i - 1));
+                if (i - 1 > startBelowIndex) clippedRaypaths.add(clip(startBelowIndex, i));
                 startBelowIndex = -1;
             }
             if (startAboveIndex < 0 && Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON)) {
@@ -142,28 +142,32 @@ public class Raypath {
                 // do nothing if raypath is still at the upper border
             } else if (startAboveIndex >= 0 && positions.get(i).getR() < upperRadius) {
                 // once the raypath goes below the upper border, clip from startAboveIndex to the previous index
-                if (i - 1 > startAboveIndex) clippedRaypaths.add(clip(startAboveIndex, i - 1));
+                if (i - 1 > startAboveIndex) clippedRaypaths.add(clip(startAboveIndex, i));
                 startAboveIndex = -1;
             }
         }
         // if end point is still outside layer, add the final clip
         if (startBelowIndex >= 0 && (nPoint - 1 > startBelowIndex)) {
-            clippedRaypaths.add(clip(startBelowIndex, nPoint - 1));
+            clippedRaypaths.add(clip(startBelowIndex, nPoint));
         } else if (startAboveIndex >= 0 && (nPoint - 1 > startAboveIndex)) {
-            clippedRaypaths.add(clip(startAboveIndex, nPoint - 1));
+            clippedRaypaths.add(clip(startAboveIndex, nPoint));
         }
 
         return clippedRaypaths;
     }
 
-    private Raypath clip(int start, int end) {
-        if (end - start <= 0) throw new IllegalArgumentException("Raypath must include at least 1 segment");
-        double[] clippedDistances = new double[end - start + 1];
-        List<FullPosition> clippedPositions = new ArrayList<>();
-        for (int i = start; i <= end; i++) {
-            clippedDistances[i] = distancesDeg[i] - distancesDeg[start];
-            clippedPositions.add(positions.get(i));
+    /**
+     * @param from (int) index to start clipping from (includes this index)
+     * @param to (int) index to clip up to (does not include this index)
+     * @return (Raypath) Clipped raypath
+     */
+    private Raypath clip(int from, int to) {
+        if (to - from <= 1) throw new IllegalArgumentException("Raypath must include at least 1 segment");
+        double[] clippedDistances = new double[to - from];
+        for (int i = from; i < to; i++) {
+            clippedDistances[i - from] = distancesDeg[i] - distancesDeg[from];
         }
+        List<FullPosition> clippedPositions = positions.subList(from, to);
         return new Raypath(phase, clippedDistances, clippedPositions);
     }
 
