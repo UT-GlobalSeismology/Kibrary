@@ -104,6 +104,10 @@ class EventProcessor implements Runnable {
      */
     private double coordinateGrid = 0.01;
     /**
+     * The maximum length of output time series
+     */
+    private double maxTlen;
+    /**
      * if remove intermediate files
      */
     private boolean removeIntermediateFiles = true;
@@ -167,7 +171,7 @@ class EventProcessor implements Runnable {
      * @param grid (double) threshold to judge which stations are in the same position
      * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
-    void setParameters(double minD, double maxD, double minLa, double maxLa, double minLo, double maxLo, double grid, boolean remove) {
+    void setParameters(double minD, double maxD, double minLa, double maxLa, double minLo, double maxLo, double grid, double maxT, boolean remove) {
         minDistance = minD;
         maxDistance = maxD;
         minLatitude = minLa;
@@ -175,6 +179,7 @@ class EventProcessor implements Runnable {
         minLongitude = minLo;
         maxLongitude = maxLo;
         coordinateGrid = grid;
+        maxTlen = maxT;
         removeIntermediateFiles = remove;
     }
 
@@ -444,7 +449,7 @@ class EventProcessor implements Runnable {
                 sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
-                sm.trim();
+                sm.trim((int) Math.ceil(maxTlen * SAMPLING_HZ));
 
                 // move SAC files after treatment into the merged folder
                 FileAid.moveToDirectory(sacPath, doneModifyPath, true);

@@ -71,6 +71,10 @@ public class DataKitchen extends Operation {
      */
     private double coordinateGrid;
     /**
+     * The maximum length of output time series
+     */
+    private double maxTlen;
+    /**
      * if remove intermediate file
      */
     private boolean removeIntermediateFile;
@@ -112,9 +116,13 @@ public class DataKitchen extends Operation {
             pw.println("#maxLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg] (0.01)"); // = about 1 km
             pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
-            pw.println("#coordinateGrid");
+            pw.println("#coordinateGrid ");
+            pw.println("##(double) The maximum length of output time series (3276.8)");
+            pw.println("## This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
+            pw.println("## The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
+            pw.println("#maxTlen ");
             pw.println("##(boolean) If this is true, remove intermediate files (true)");
-            pw.println("#removeIntermediateFile");
+            pw.println("#removeIntermediateFile ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -161,8 +169,8 @@ public class DataKitchen extends Operation {
         if (coordinateGrid < 0)
             throw new IllegalArgumentException("coordinateGrid must be non-negative.");
 
+        maxTlen = property.parseDouble("maxTlen", "3276.8");
         removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
-
     }
 
     @Override
@@ -193,7 +201,7 @@ public class DataKitchen extends Operation {
 
         // set parameters
         eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
-                minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
+                minLongitude, maxLongitude, coordinateGrid, maxTlen, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);
