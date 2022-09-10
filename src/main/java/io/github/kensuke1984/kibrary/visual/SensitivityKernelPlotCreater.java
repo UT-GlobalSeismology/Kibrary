@@ -74,7 +74,7 @@ public class SensitivityKernelPlotCreater {
                         double[] data = partial.getData();
                         double t0 = partial.getStartTime();
 
-                        String phaselist = null;
+                        String phaselist = "";
 
                         for (Phase phase : partial.getPhases()) {
                             phaselist = phaselist + phase;

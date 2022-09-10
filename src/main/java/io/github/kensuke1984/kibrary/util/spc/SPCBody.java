@@ -90,6 +90,7 @@ public class SPCBody {
     }
 
     /**
+     * Interpolate wave field by using Lagrange interpolation
      * @param body1
      * @param body2
      * @param body3
@@ -97,6 +98,7 @@ public class SPCBody {
      * @return
      * @author anselme
      */
+    //TODO Compare with another interpolation method
     public static SPCBody interpolate(SPCBody body1, SPCBody body2, SPCBody body3, double[] dh) {
         SPCBody s = body1.copy();
 //		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;

@@ -282,6 +282,15 @@ public class SPCFile implements SPCFileAccess {
                                 u[k] = new Complex(tmpReal, tmpImag);
                             }
                         }
+                      //TODO
+                      //  if (observerName.equals("XY100"))
+                      //  if (ip == 512) {
+                      //      System.err.println(spcFileName.toString());
+                      //      System.err.println(specFile.observerID + " " + phi);
+                      //      for (int k = 0; k < specFile.nComponent; k++) {
+                      //          System.err.println(u[k].getReal() + " " + u[k].getImaginary());
+                      //      }
+                      //  }
                     }
                     else if (specFile.spcFileType.equals(SPCType.PBPSVCAT)) {
                         for (int k = 0; k < specFile.nComponent; k++) {

@@ -50,6 +50,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -60,13 +61,13 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * Operation that assembles partial waveforms from SPC files created by shfp、shbp、psvfp, and psvbp.
  * <p>
  * SPC files for FP must be inside fpPath/eventDir/modelName/.
- * SPC files for BP must be inside bpPath/observerPositionCode/modelName/.
+ * SPC files for BP must be inside bpPath/observerPositionCode/modelName/ (default) or bpPath/modelName (when using epicentral distance catalogue).
  * For information about observerPositionCode, see {@link HorizontalPosition#toCode}.
  * Input SPC file names should take the form:
  * (point name).(observerPositionCode or eventID).(PB or PF)...(sh or psv).spc
  * <p>
  * A timewindow data file, a voxel information file, and a set of partialTypes to work for must be specified.
- * TODO organize this program file and decide which set of data is worked for.
+ * organize this program file and decide which set of data is worked for.
  *
  * <p>
  * halfDurationはevent informationファイルから読み取る
@@ -141,10 +142,17 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private String modelName;
     private String mode;
+
+    /**
+     *  For epicentral distance catalogue
+     */
     private boolean catalogue;
     private double thetamin;
     private double thetamax;
     private double dtheta;
+    private int bpCatNum;
+    private SPCFileName[] bpNames;
+    private SPCFileName[] bpNames_PSV;
 
     /**
      * 0:none, 1:boxcar, 2:triangle.
@@ -233,7 +241,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#partialTypes ");
             pw.println("##Path of a forward propagate spc folder (FPinfo)");
             pw.println("#fpPath ");
-            pw.println("##Path of a back propagate spc folder (BPinfo)");
+            pw.println("##Path of a back propagate spc folder (default:BPinfo, catalogue:BPcat)");
             pw.println("#bpPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
@@ -281,19 +289,6 @@ public class PartialWaveformAssembler3D extends Operation {
         if (partialSamplingHz % finalSamplingHz != 0)
             throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
-        voxelPath = property.parsePath("voxelPath", null, true, workPath);
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
-                .collect(Collectors.toSet());
-        fpPath = property.parsePath("fpPath", "FPinfo", true, workPath);
-        bpPath = property.parsePath("bpPath", "BPinfo", true, workPath);
-        modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
-
-        mode = property.parseString("mode", "SH").toUpperCase();
-        if ((mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")) == false)
-                throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
-        System.err.println("Using mode " + mode);
-
         catalogue = property.parseBoolean("catalogue", "false");
         if (catalogue) {
             double[] tmpthetainfo = Stream.of(property.parseStringArray("thetaRange", null))
@@ -301,7 +296,30 @@ public class PartialWaveformAssembler3D extends Operation {
             thetamin = tmpthetainfo[0];
             thetamax = tmpthetainfo[1];
             dtheta = tmpthetainfo[2];
+
+            bpCatNum = (int) ((thetamax - thetamin) / dtheta) + 1;
         }
+
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
+                .collect(Collectors.toSet());
+        fpPath = property.parsePath("fpPath", "FPinfo", true, workPath);
+        if (catalogue) {
+            bpPath = property.parsePath("bpPath", "BPcat", true, workPath);
+        } else {
+            bpPath = property.parsePath("bpPath", "BPinfo", true, workPath);
+        }
+
+        modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
+
+        mode = property.parseString("mode", "SH").toUpperCase();
+        if ((mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")) == false)
+                throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
+        System.err.println("Using mode " + mode);
+
+        if (catalogue)
+            readBpCatNames();
 
         setSourceTimeFunction();
 
@@ -318,6 +336,16 @@ public class PartialWaveformAssembler3D extends Operation {
         if (property.containsKey("qinf")) {
             structure = PolynomialStructureFile.read(property.parsePath("qinf", null, true, workPath));
         }
+    }
+
+    private void readBpCatNames() throws IOException {
+        if (mode.equals("SH"))
+            bpNames = SpcFileAid.collectOrderedSHSpcFileName(bpPath.resolve(modelName)).toArray(new FormattedSPCFileName[0]);
+        else if (mode.equals("PSV"))
+            bpNames = SpcFileAid.collectOrderedPSVSpcFileName(bpPath.resolve(modelName)).toArray(new FormattedSPCFileName[0]);
+        else if (mode.equals("BOTH"))
+            bpNames = SpcFileAid.collectOrderedSHSpcFileName(bpPath.resolve(modelName)).toArray(new FormattedSPCFileName[0]);
+            bpNames_PSV = SpcFileAid.collectOrderedPSVSpcFileName(bpPath.resolve(modelName)).toArray(new FormattedSPCFileName[0]);
     }
 
     private void setSourceTimeFunction() throws IOException {
@@ -363,163 +391,83 @@ public class PartialWaveformAssembler3D extends Operation {
         // sacdataを何ポイントおきに取り出すか
         step = (int) (partialSamplingHz / finalSamplingHz);
         setPartialFile();
-        int bpnum = 0;
+        int fpnum = 0;
         setSourceTimeFunctions();
 
         // time partials for each event
         if (timePartialPath != null) {
-            ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-            Set<EventFolder> timePartialEventDirs = DatasetAid.eventFolderSet(timePartialPath);
-            for (EventFolder eventDir : timePartialEventDirs) {
-                execs.execute(new WorkerTimePartial(eventDir));
-                System.err.println("Working for time partials for " + eventDir);
-            }
-            execs.shutdown();
-            while (!execs.isTerminated()) {
-                try {
-                    Thread.sleep(100);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            partialDataWriter.flush();
-            System.err.println();
+            computeTimePartial(N_THREADS);
         }
 
         int num = 0;
-        for (Observer observer : observerSet) {
-            System.err.println("Working for " + observer.toString() + " " + ++num + "/" + observerSet.size());
+        for (GlobalCMTID event : eventSet) {
+            System.err.println("Working for " + event.toString() + " " + ++num + "/" + eventSet.size());
 
-            Path bpObserverPath = bpPath.resolve(observer.getPosition().toCode());
-            Path bpModelPath = bpObserverPath.resolve(modelName);
-
-            // Set of global cmt IDs for the components and station in the timewindow.
-            Set<GlobalCMTID> idSet = timewindowInformation.stream()
-                    .filter(info -> components.contains(info.getComponent()))
-                    .filter(info -> info.getObserver().equals(observer)).map(TimewindowData::getGlobalCMTID)
-                    .collect(Collectors.toSet());
-
-            if (idSet.isEmpty())
+         // Set of observers for the components and events in the timewindow.
+            Set<Observer> observerSet = readObserver(event);
+            if (observerSet.isEmpty())
                 continue;
 
-            // spectorfile in bpObserverFolder
-            List<SPCFileName> bpNames = null;
-            List<SPCFileName> bpNames_PSV = null;
+            Path fpEventPath = fpPath.resolve(event.toString());
+            Path fpModelPath = fpEventPath.resolve(modelName);
+            // spectorfile in fpModelFolder
+            List<SPCFileName> fpNames = null;
+            List<SPCFileName> fpNames_PSV = null;
 
             for (PartialType type : partialTypes) {
+
                 if (type.isTimePartial())
                     continue;
-
-                if (type.isDensity()) {
+                else if (type.isDensity()) {
                     if (mode.equals("SH"))
-                        bpNames = SpcFileAid.collectOrderedUBSHSpcFileName(bpModelPath);
+                        fpNames = SpcFileAid.collectOrderedUFUBSHSpcFileName(fpModelPath);
                     else if (mode.equals("PSV"))
-                        bpNames = SpcFileAid.collectOrderedUBPSVSpcFileName(bpModelPath);
+                        fpNames = SpcFileAid.collectOrderedUFUBPSVSpcFileName(fpModelPath);
                     else if (mode.equals("BOTH")) {
-                        bpNames = SpcFileAid.collectOrderedUBSHSpcFileName(bpModelPath);
-                        bpNames_PSV = SpcFileAid.collectOrderedUBPSVSpcFileName(bpModelPath);
+                        fpNames = SpcFileAid.collectOrderedUFUBSHSpcFileName(fpModelPath);
+                        fpNames_PSV = SpcFileAid.collectOrderedUFUBPSVSpcFileName(fpModelPath);
                     }
-                    writeLog(bpNames.size() + " bpfiles are found");
-                }
-                else {
+                } else {
                     if (mode.equals("SH"))
-                        bpNames = SpcFileAid.collectOrderedSHSpcFileName(bpModelPath);
+                        fpNames = SpcFileAid.collectOrderedSHSpcFileName(fpModelPath);
                     else if (mode.equals("PSV"))
-                        bpNames = SpcFileAid.collectOrderedPSVSpcFileName(bpModelPath);
+                        fpNames = SpcFileAid.collectOrderedPSVSpcFileName(fpModelPath);
                     else if (mode.equals("BOTH")) {
-                        bpNames = SpcFileAid.collectOrderedSHSpcFileName(bpModelPath);
-                        bpNames_PSV = SpcFileAid.collectOrderedPSVSpcFileName(bpModelPath);
+                        fpNames = SpcFileAid.collectOrderedSHSpcFileName(fpModelPath);
+                        fpNames_PSV = SpcFileAid.collectOrderedPSVSpcFileName(fpModelPath);
                     }
-                    writeLog(bpNames.size() + " bpfiles are found");
                 }
+                writeLog(fpNames.size() + " fpfiles are found");
 
-                // stationに対するタイムウインドウが存在するfp内のmodelフォルダ
-                Path[] fpModelPaths = null;
+                for (Observer observer : observerSet) {
+//                    System.err.println("Working for " + event + " " + observer + " " + observer.getPosition());
 
-                //TODO apply for jointCMT
-//                List<Path[]> fpPathList = null;
-//                 if (!jointCMT) {
-                fpModelPaths = idSet.stream().map(id -> fpPath.resolve(id + "/" + modelName))
-                    .filter(Files::exists).toArray(Path[]::new);
-//            }
-//            else {
-//                fpPathList = collectFP_jointCMT(idSet);
-//            }
-
-                // create ThreadPool for each bpFiles in bpFolder
-                ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-                for (int i = 0; i < bpNames.size(); i++) {
-                    SPCFileName bpName = bpNames.get(i);
-                    SPCFileName bpName_PSV = null;
-                    if (mode.equals("BOTH"))
-                        bpName_PSV = bpNames_PSV.get(i);
-
-                    // 摂動点の名前
-                    SPCFileAccess bp = bpName.read();
-                    SPCFileAccess bp_PSV = null;
-                    if (mode.equals("BOTH"))
-                        bp_PSV = bpName_PSV.read();
-                    String pointName = bp.getObserverID();
-
-                    // At each fp model folder, read fp files corresponding to bp file
-//    				if (!jointCMT)
-//	    			{
-                    for (Path fpModelPath : fpModelPaths) {
-                        String eventName = fpModelPath.getParent().getFileName().toString();
-
-                        SPCFileName fpName;
-                        SPCFileName fpName_PSV = null;
-                        if (type.isDensity()) {
-                            fpName = new FormattedSPCFileName(fpModelPath.resolve(pointName + "." + eventName + ".UF..." + bpName.getMode() + ".spc"));
-                            if (mode.equals("BOTH")) {
-                                fpName_PSV = new FormattedSPCFileName(
-                                        fpModelPath.resolve(pointName + "." + eventName + ".UF..." + "PSV" + ".spc"));
-                                if (!fpName_PSV.exists()) {
-                                    System.err.println("Fp file not found " + fpName_PSV);
-                                    continue;
-                                }
-                            }
-                        }
-                        else {
-                            fpName = new FormattedSPCFileName(fpModelPath.resolve(pointName + "." + eventName + ".PF..." + bpName.getMode() + ".spc"));
-                            if (mode.equals("BOTH")) {
-                                fpName_PSV = new FormattedSPCFileName(
-                                        fpModelPath.resolve(pointName + "." + eventName + ".PF..." + "PSV" + ".spc"));
-                                if (!fpName_PSV.exists()) {
-                                    System.err.println("Fp file not found " + fpName_PSV);
-                                    continue;
-                                }
-                            }
-
-                        }
-                        if (!fpName.exists()) {
-                            System.err.println("Fp file not found " + fpName);
-                            continue;
-                        }
-
+                    // create ThreadPool for each bpFiles in bpFolder
+                    ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+                    for (int i = 0; i < fpNames.size(); i++) {
                         PartialComputation pc = null;
                         if (mode.equals("BOTH"))
-                            pc = new PartialComputation(bp, bp_PSV, observer, fpName, fpName_PSV, type);
+                            pc = new PartialComputation(fpNames.get(i), fpNames_PSV.get(i), observer, event, type);
                         else
-                            pc = new PartialComputation(bp, observer, fpName, type);
+                            pc = new PartialComputation(fpNames.get(i), observer, event, type);
 
                         execs.execute(pc);
                     }
-                }
-                execs.shutdown();
-                while (!execs.isTerminated()) {
-                    try {
-                    Thread.sleep(100);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                 }
-                partialDataWriter.flush();
-                //System.err.println();
-                writeLog(touchedSet.size() + " events are processed");
-                writeLog(bpnum++ + "th " + bpObserverPath + " for " + observer + " was done ");
-            }
-        }
+                    execs.shutdown();
+                    while (!execs.isTerminated()) {
+                        try {
+                        Thread.sleep(100);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                     }
+                    partialDataWriter.flush();
+                    //System.err.println();
+                    writeLog(touchedSet.size() + " events are processed");
+                    writeLog(fpnum++ + "th " + fpEventPath + " for " + event + " was done ");
+                } // end observer loop
+            } // end partila type loop
+        } // end event loop
         terminate();
     }
 
@@ -677,67 +625,68 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private class PartialComputation implements Runnable {
 
-        private SPCFileAccess bp;
-        private SPCFileAccess bp_other;
-        private SPCFileName fpname;
-        private SPCFileName fpname_other;
+        private SPCFileName fpName;
+        private SPCFileName fpName_other;
         private SPCFileAccess fp;
         private SPCFileAccess fp_other;
+        private SPCFileAccess bp;
+        private SPCFileAccess bp_other;
+
+        /**
+         * use only for catalogue mode
+         */
+        private SPCFileAccess bp2;
+        private SPCFileAccess bp2_other;
+        private SPCFileAccess bp3;
+        private SPCFileAccess bp3_other;
+
         private Observer observer;
-        private GlobalCMTID id;
+        private GlobalCMTID event;
+        private HorizontalPosition voxelPosition;
         private String mode;
         private PartialType type;
 
-        private void checkMode(SPCFileAccess bp, SPCFileName fpFile) {
-            if (bp.getSpcFileName().getMode().equals(SPCMode.SH)
-                    && fpFile.getMode().equals(SPCMode.SH)) {
-                this.bp = bp;
-                fpname = fpFile;
-                bp_other = null;
-                fpname_other = null;
-                mode = "SH";
-            }
-            else if (bp.getSpcFileName().getMode().equals(SPCMode.PSV)
-                    && fpFile.getMode().equals(SPCMode.PSV)) {
-                this.bp = bp;
-                fpname = fpFile;
-                bp_other = null;
-                fpname_other = null;
-                mode = "PSV";
-            }
-            else
-                throw new RuntimeException("Mode misatch " + bp.getSpcFileName() +  " " + fpFile);
-        }
+        /**
+         * Coefficients for interpolation
+         */
+        private double[] dhBP = new double[3];
 
         /**
          * @param fp
          * @param bpFile
          */
-        private PartialComputation(SPCFileAccess bp, Observer observer, SPCFileName fpFile, PartialType type) {
-            checkMode(bp, fpFile);
+        private PartialComputation(SPCFileName fpName, Observer observer, GlobalCMTID event, PartialType type) {
+            this.fpName = fpName;
             this.observer = observer;
-//			fpname = fpFile;
-            id = new GlobalCMTID(fpFile.getSourceID());
+            this.event = event;
             this.type = type;
+            if (fpName.getMode().equals(SPCMode.SH))
+                mode = "SH";
+            else if (fpName.getMode().equals(SPCMode.PSV))
+                mode = "PSV";
+            else
+                throw new RuntimeException("Invalid mode : " + fpName);
         }
 
-        private PartialComputation(SPCFileAccess bp_SH, SPCFileAccess bp_PSV, Observer observer, SPCFileName fpFile_SH, SPCFileName fpFile_PSV, PartialType type) {
-            this.bp = bp_PSV;
-            fpname = fpFile_PSV;
-            bp_other = bp_SH;
-            fpname_other = fpFile_SH;
+        private PartialComputation(SPCFileName fpName_SH, SPCFileName fpName_PSV, Observer observer, GlobalCMTID event, PartialType type) {
+            fpName = fpName_SH;
+            fpName_other = fpName_PSV;
             this.observer = observer;
+            this.event = event;
+            this.type = type;
             mode = "BOTH";
-//			fpname = fpFile;
-            id = new GlobalCMTID(fpname.getSourceID());
-            this.type = type;
-            if (!checkPair(bp, bp_other))
-                throw new RuntimeException("SH and PSV bp files are not a pair" + bp + " " + bp_other);
         }
 
-        private boolean checkPair(SPCFileAccess bp1, SPCFileAccess bp2) {
+        /**
+         * check two spc files are for same voxel
+         *
+         * @param spc1
+         * @param spc2
+         * @return
+         */
+        private boolean checkPair(SPCFileAccess spc1, SPCFileAccess spc2) {
             boolean res = true;
-            if (!bp1.getObserverPosition().equals(bp2.getObserverPosition()))
+            if (!spc1.getObserverPosition().equals(spc2.getObserverPosition()))
                 res = false;
             return res;
         }
@@ -786,48 +735,52 @@ public class PartialWaveformAssembler3D extends Operation {
         }
 
         private SourceTimeFunction getSourceTimeFunction() {
-            return sourceTimeFunction == 0 ? null : userSourceTimeFunctions.get(id);
+            return sourceTimeFunction == 0 ? null : userSourceTimeFunctions.get(event);
         }
 
         private boolean shiftConvolution;
 
         @Override
         public void run() {
-//			Location[] perturbationLocations = perturbationLocationSet.stream().toArray(Location[]::new);
-//			double[] perturbationRs = new double[perturbationLocations.length];
-//			for (int i = 0; i < perturbationRs.length; i++)
-//				perturbationRs[i] = perturbationLocations[i].getR();
-
-            String observerSourceCode = bp.getSourceID();
-            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourcePosition()))
-                throw new RuntimeException("There may be a station with the same name but other networks.");
-
-            if (bp.tlen() != tlen || bp.np() != np)
-                throw new RuntimeException("BP for " + observer + " has invalid tlen or np: " + tlen + " " + bp.tlen() + " " + np + " " + bp.np());
-            GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
-
-            touchedSet.add(id);
-
-            // Pickup timewindows
-            Set<TimewindowData> timewindowList = timewindowInformation.stream()
-                    .filter(info -> info.getObserver().getPosition().toCode().equals(observerSourceCode))
-                    .filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
-
-//            System.err.println(id + " " + timewindowList.size() + " " + observerSourceCode);
-
-            // timewindow情報のないときスキップ
-            if (timewindowList.isEmpty())
-                return;
+            // Count the number of events
+            touchedSet.add(event);
 
             // System.out.println("I am " + Thread.currentThread().getName());
+            // Read fp file
             try {
-                fp = fpname.read();
-                if (mode.equals("BOTH"))
-                    fp_other = fpname_other.read();
+                fp = fpName.read();
+                if (mode.equals("BOTH")) {
+                    fp_other = fpName_other.read();
+                    checkPair(fp, fp_other);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return;
             }
+
+            if (fp.tlen() != tlen || fp.np() != np)
+                throw new RuntimeException("FP for " + event + " has invalid tlen or np: " + tlen + " " + fp.tlen() + " " + np + " " + fp.np());
+
+            // Read bp correspond to fp and observer
+            try {
+                if (catalogue) {
+                    getBpCat();
+                } else {
+                    getBp();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            // Pickup timewindows
+            Set<TimewindowData> timewindowList = timewindowInformation.stream()
+                    .filter(info -> info.getObserver().equals(observer))
+                    .filter(info -> info.getGlobalCMTID().equals(event)).collect(Collectors.toSet());
+            if (timewindowList.isEmpty())
+                return;
+
+//          System.err.println(id + " " + timewindowList.size() + " " + observerSourceCode);
 
             if (!checkPair(bp, fp))
                 throw new RuntimeException("BP and FP files are not a pair" + bp + " " + fp);
@@ -835,54 +788,38 @@ public class PartialWaveformAssembler3D extends Operation {
                 if (!checkPair(bp_other, fp_other))
                     throw new RuntimeException("BP and FP files are not a pair" + bp_other + " " + fp_other);
             }
+            if (catalogue) {
+                if (!checkPair(bp2, fp))
+                    throw new RuntimeException("BP and FP files are not a pair" + bp2 + " " + fp);
+                if (!checkPair(bp3, fp))
+                    throw new RuntimeException("BP and FP files are not a pair" + bp3 + " " + fp);
+                if (mode.equals("BOTH")) {
+                    if (!checkPair(bp2_other, fp_other))
+                        throw new RuntimeException("BP and FP files are not a pair" + bp2_other + " " + fp_other);
+                    if (!checkPair(bp3_other, fp_other))
+                        throw new RuntimeException("BP and FP files are not a pair" + bp3_other + " " + fp_other);
+                }
+            }
 
             ThreeDPartialMaker threedPartialMaker = null;
-            if (mode.equals("BOTH")) {
-                threedPartialMaker = new ThreeDPartialMaker(fp, fp_other, bp, bp_other);
+            if (catalogue) {
+                if (mode.equals("BOTH")) {
+                    threedPartialMaker = new ThreeDPartialMaker(fp, fp_other, bp, bp_other, bp2, bp2_other, bp3, bp3_other, dhBP);
+                } else {
+                    threedPartialMaker = new ThreeDPartialMaker(fp, bp, bp2, bp3, dhBP);
+                }
+            } else {
+                if (mode.equals("BOTH")) {
+                    threedPartialMaker = new ThreeDPartialMaker(fp, fp_other, bp, bp_other);
+                } else {
+                    threedPartialMaker = new ThreeDPartialMaker(fp, bp);
+                }
             }
-            else {
-                threedPartialMaker = new ThreeDPartialMaker(fp, bp);
-            }
+
             threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
 
             if (structure != null)
                 threedPartialMaker.setStructure(structure);
-
-////			if (bp.getSourceLocation().getLongitude() == fp.getObserverPosition().getLongitude()) {
-//			if (fp.getObserverPosition().getLongitude() == 14.5) {
-////				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + bp.getSourceLocation().getLongitude()
-////						+ "." + fp.getSourceID() + ".txt");
-//				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + fp.getBodyR()[0]
-//						+ "." + ".txt");
-//				try {
-//					Files.deleteIfExists(path);
-//					Files.createFile(path);
-//					int lsmooth = (int) (0.5 * 3276.8 * 20. / 512.);
-//					int j = Integer.highestOneBit(lsmooth);
-//					if (j < lsmooth)
-//						j *= 2;
-//					lsmooth = j;
-//					SpcBody fpBody = fp.getSpcBodyList().get(0);
-//					SpcBody bpBody = bp.getSpcBodyList().get(0);
-//
-//					System.out.println("To time domain lmsooth=" + lsmooth);
-//					fpBody.toTimeDomain(lsmooth);
-//					bpBody.toTimeDomain(lsmooth);
-//
-//					double[] fpserieT = fpBody.getTimeseries(SACComponent.T); //wrong should be SpcComponent no SACComponent
-//					double[] bpserieT = bpBody.getTimeseries(SACComponent.T);
-//					double[] fpserieR = fpBody.getTimeseries(SACComponent.R);
-//					double[] bpserieR = bpBody.getTimeseries(SACComponent.R);
-////					System.out.println("FP serie has npts=" + fpserie.length);
-////					System.out.println("BP serie has npts=" + bpserie.length);
-//
-//					for (int i = 0; i < fpserieT.length / 20; i++) {
-//						Files.write(path, (i + " " + fpserieT[i * 20] + " " + bpserieT[i * 20] + " " + fpserieR[i * 20] + " " + bpserieR[i * 20] + "\n").getBytes(), StandardOpenOption.APPEND);
-//					}
-//				} catch (IOException e) {
-//					e.printStackTrace();
-//				}
-//			}
 
             // i番目の深さの偏微分波形を作る
             for (int ibody = 0, nbody = bp.nbody(); ibody < nbody; ibody++) {
@@ -906,7 +843,6 @@ public class PartialWaveformAssembler3D extends Operation {
                             u = filter.applyFilter(u);
                             double[] cutU = sampleOutput(u, info);
 
-
                             //DEBUG
                             if (location.getR() == 5581 && location.getLongitude() == 14.5) {
                                 Path outpath = Paths.get("par_" + type + "_5581_14.5_" + new Phases(info.getPhases()) + "_" + component + ".txt");
@@ -922,7 +858,7 @@ public class PartialWaveformAssembler3D extends Operation {
                             }
                             //
 
-                            PartialID pid = new PartialID(observer, id, component, finalSamplingHz, info.getStartTime(),
+                            PartialID pid = new PartialID(observer, event, component, finalSamplingHz, info.getStartTime(),
                                     cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
                                     cutU);
 //							System.err.println(pid.getPerturbationLocation());
@@ -935,6 +871,101 @@ public class PartialWaveformAssembler3D extends Operation {
                             }
                         });
                     }
+            }
+        }
+
+        /**
+         * get bp files correspond to the fp files.
+         * @throws IOException
+         */
+        private void getBp() throws IOException {
+             Path bpModelPath = bpPath.resolve(observer.getPosition().toCode() + "/" + modelName);
+
+             String observerID = bpModelPath.getParent().getFileName().toString();
+             String pointName = fp.getObserverID();
+
+             SPCFileName bpName;
+             SPCFileName bpName_PSV = null;
+             if (type.isDensity()) {
+                 bpName = new FormattedSPCFileName(bpModelPath.resolve(pointName + "." + observerID + ".UB..." + fpName.getMode() + ".spc"));
+                 if (mode.equals("BOTH"))
+                     bpName_PSV = new FormattedSPCFileName(bpModelPath.resolve(pointName + "." + observerID + ".UB...PSV.spc"));
+             } else {
+                 bpName = new FormattedSPCFileName(bpModelPath.resolve(pointName + "." + observerID + ".PB..." + fpName.getMode() + ".spc"));
+                 if (mode.equals("BOTH"))
+                     bpName_PSV = new FormattedSPCFileName(bpModelPath.resolve(pointName + "." + observerID + ".PB...PSV.spc"));
+             }
+             if (!bpName.exists())
+                 throw new RuntimeException("Bp file not found " + bpName);
+             if (mode.equals("BOTH") && !bpName_PSV.exists())
+                 throw new RuntimeException("Bp file not found " + bpName_PSV);
+                 bp = bpName.read();
+                 bp_other = mode.equals("BOTH") ?  bpName_PSV.read() : null;
+
+             if (!observer.getPosition().toFullPosition(0).equals(bp.getSourcePosition()))
+                 throw new RuntimeException("There may be a station with the same name but other networks.");
+         }
+
+        /**
+         * Read bp catalogue files correspond to fp files.
+         * For iterpolation, get 3 bp files.
+         * @throws IOException
+         */
+        private void getBpCat() throws IOException {
+            Path bpModelPath = bpPath.resolve(modelName);
+            HorizontalPosition voxelPos = fp.getObserverPosition();
+            String voxelName = fp.getObserverID();
+            FullPosition observerPos = observer.getPosition().toFullPosition(Earth.EARTH_RADIUS);
+            double distanceBP = observerPos.computeEpicentralDistance(voxelPos) * 180. / Math.PI;
+            double phiBP = Math.PI - observerPos.computeAzimuth(voxelPos);
+            if (Double.isNaN(phiBP))
+                throw new RuntimeException("PhiBP is NaN " + fpName + " " + observer);
+
+            // Gain index of epicentral distance catalogue
+            int ipointBP = (int) ((distanceBP - thetamin) / dtheta);
+            if (ipointBP < 0) {
+                System.err.println("Warning: BP distance = " + distanceBP + " is smaller than thetamin: " + fpName);
+                ipointBP = 0;
+            } else if (ipointBP > bpCatNum - 3) {
+                System.err.println("Warning: BP distance = " + distanceBP + " is greater than thetamax: " + fpName);
+                ipointBP = bpCatNum - 3;
+            }
+
+            // Compute coefficients for interpolation
+            double theta1 = thetamin + ipointBP * dtheta;
+            double theta2 = theta1 + dtheta;
+            double theta3 = theta2 + dtheta;
+            dhBP[0] = (distanceBP - theta1) / dtheta;
+            dhBP[1] = (distanceBP - theta2) / dtheta;
+            dhBP[2] = (distanceBP - theta3) / dtheta;
+
+//            String formatter = "XY%0" + Integer.toString(bpCatNum).length() + "d";
+//            String catName = String.format(formatter, ipointBP + 1);
+//            String catName2 = String.format(formatter, ipointBP + 2);
+//            String catName3 = String.format(formatter, ipointBP + 3);
+//
+//            bp = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
+//                    phiBP, voxelPos, observerPos, voxelName);
+//            bp2 = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName2 + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
+//                    phiBP, voxelPos, observerPos, voxelName);
+//            bp3 = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName3 + ".340A_TA.PB..." + fpName.getMode() + ".spc")),
+//                    phiBP, voxelPos, observerPos, voxelName);
+//            if (mode.equals("BOTH")) {
+//                bp_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName + ".340A_TA.PB...PSV.spc")),
+//                        phiBP, voxelPos, observerPos, voxelName);
+//                bp2_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName2 + ".340A_TA.PB...PSV.spc")),
+//                        phiBP, voxelPos, observerPos, voxelName);
+//                bp3_other = SPCFile.getInstance(new FormattedSPCFileName(bpModelPath.resolve(catName3 + ".340A_TA.PB...PSV.spc")),
+//                        phiBP, voxelPos, observerPos, voxelName);
+//            }
+
+            bp = SPCFile.getInstance(bpNames[ipointBP], phiBP, voxelPos, observerPos, voxelName);
+            bp2 = SPCFile.getInstance(bpNames[ipointBP + 1], phiBP, voxelPos, observerPos, voxelName);
+            bp3 = SPCFile.getInstance(bpNames[ipointBP + 2], phiBP, voxelPos, observerPos, voxelName);
+            if (mode.equals("BOTH")) {
+                bp_other = SPCFile.getInstance(bpNames_PSV[ipointBP], phiBP, voxelPos, observerPos, voxelName);
+                bp2_other = SPCFile.getInstance(bpNames_PSV[ipointBP + 1], phiBP, voxelPos, observerPos, voxelName);
+                bp3_other = SPCFile.getInstance(bpNames_PSV[ipointBP + 2], phiBP, voxelPos, observerPos, voxelName);
             }
         }
     }
@@ -991,27 +1022,28 @@ public class PartialWaveformAssembler3D extends Operation {
                 .distinct().toArray(Phase[]::new);
 
         // TODO should be unneeded
-        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
-            System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
-            Map<String, List<Observer>> nameToObserver = new HashMap<>();
-            observerSet.forEach(obs -> {
-                if (nameToObserver.containsKey(obs.toString())) {
-                    List<Observer> tmp = nameToObserver.get(obs.toString());
-                    tmp.add(obs);
-                    nameToObserver.put(obs.toString(), tmp);
-                }
-                else {
-                    List<Observer> tmp = new ArrayList<>();
-                    tmp.add(obs);
-                    nameToObserver.put(obs.toString(), tmp);
-                }
-            });
-            nameToObserver.forEach((name, sta) -> {
-                if (sta.size() > 1) {
-                    sta.stream().forEach(s -> System.out.println(s));
-                }
-            });
-        }
+        // this part is moved to method readObserver(GlobalCMTID event)
+//        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
+//            System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
+//            Map<String, List<Observer>> nameToObserver = new HashMap<>();
+//            observerSet.forEach(obs -> {
+//                if (nameToObserver.containsKey(obs.toString())) {
+//                    List<Observer> tmp = nameToObserver.get(obs.toString());
+//                    tmp.add(obs);
+//                    nameToObserver.put(obs.toString(), tmp);
+//                }
+//                else {
+//                    List<Observer> tmp = new ArrayList<>();
+//                    tmp.add(obs);
+//                    nameToObserver.put(obs.toString(), tmp);
+//                }
+//            });
+//            nameToObserver.forEach((name, sta) -> {
+//                if (sta.size() > 1) {
+//                    sta.stream().forEach(s -> System.out.println(s));
+//                }
+//            });
+//        }
 
         boolean fpExistence = eventSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
         boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve(observer.getPosition().toCode())));
@@ -1020,7 +1052,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 .forEach(id -> System.err.println(id));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
-        if (!bpExistence) {
+        if (!catalogue && !bpExistence) {
             observerSet.stream().filter(observer -> !Files.exists(bpPath.resolve(observer.getPosition().toCode())))
                 .forEach(observer -> System.err.println(observer));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
@@ -1195,6 +1227,25 @@ public class PartialWaveformAssembler3D extends Operation {
         });
     }
 
+    private void computeTimePartial(int N_THREADS) throws IOException {
+        ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+        Set<EventFolder> timePartialEventDirs = DatasetAid.eventFolderSet(timePartialPath);
+        for (EventFolder eventDir : timePartialEventDirs) {
+            execs.execute(new WorkerTimePartial(eventDir));
+            System.err.println("Working for time partials for " + eventDir);
+        }
+        execs.shutdown();
+        while (!execs.isTerminated()) {
+            try {
+                Thread.sleep(100);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        partialDataWriter.flush();
+        System.err.println();
+    }
+
     private String dateString;
 
     private WaveformDataWriter partialDataWriter;
@@ -1258,6 +1309,45 @@ public class PartialWaveformAssembler3D extends Operation {
             }
         }));
         writeLog(userSourceTimeFunctions.size() + " stf files are found in " + sourceTimeFunctionPath);
+    }
+
+    /**
+     * Get observers correspond to a event by reading timewindow information file.
+     * @param event
+     * @return observerSet
+     * @throws IOException
+     */
+    private Set<Observer> readObserver(GlobalCMTID event) throws IOException {
+        Set<Observer> observerSet = timewindowInformation.stream()
+         .filter(info -> components.contains(info.getComponent()))
+         .filter(info -> info.getGlobalCMTID().equals(event)).map(TimewindowData::getObserver)
+         .collect(Collectors.toSet());
+
+        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()) {
+            System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
+            Map<String, List<Observer>> nameToObserver = new HashMap<>();
+            observerSet.forEach(obs -> {
+                if (nameToObserver.containsKey(obs.toString())) {
+                    List<Observer> tmp = nameToObserver.get(obs.toString());
+                    tmp.add(obs);
+                    nameToObserver.put(obs.toString(), tmp);
+                }
+                else {
+                    List<Observer> tmp = new ArrayList<>();
+                    tmp.add(obs);
+                    nameToObserver.put(obs.toString(), tmp);
+                }
+            });
+            nameToObserver.forEach((name, sta) -> {
+                if (sta.size() > 1) {
+                    sta.stream().forEach(s -> System.out.println(s));
+                }
+            });
+        }
+
+        writeLog(observerSet.size() + " stations are found in " + event + " .");
+        return observerSet;
+
     }
 
     private void terminate() throws IOException {
