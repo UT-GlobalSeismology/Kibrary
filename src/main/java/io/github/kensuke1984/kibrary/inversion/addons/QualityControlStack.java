@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 import java.io.BufferedWriter;
@@ -31,7 +31,7 @@ public class QualityControlStack {
 			if (!Files.exists(outputFolder))
 				Files.createDirectories(outputFolder);
 			
-			InversionResult ir = new InversionResult(root);
+			InversionResult_old ir = new InversionResult_old(root);
 			
 			ir.getBasicIDList().stream()
 				.filter(bid -> bid.getGlobalCMTID().equals(idref))

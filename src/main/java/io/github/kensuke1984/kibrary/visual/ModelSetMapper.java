@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
 import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;

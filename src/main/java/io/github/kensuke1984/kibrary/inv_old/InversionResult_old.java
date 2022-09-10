@@ -19,6 +19,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -39,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
  * @author Kensuke Konishi
  * @version 0.1.2.1
  */
-public class InversionResult {
+public class InversionResult_old {
 
     private Path rootPath;
     /**
@@ -80,7 +81,7 @@ public class InversionResult {
      * @param rootPath of an inversion
      * @throws IOException if an I/O error occurs
      */
-    public InversionResult(Path rootPath) throws IOException {
+    public InversionResult_old(Path rootPath) throws IOException {
         this.rootPath = rootPath;
         inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simpleName()).toFile().exists())
             .collect(Collectors.toSet());
@@ -97,7 +98,7 @@ public class InversionResult {
      * @throws IOException
      * @author anselme
      */
-    public InversionResult(Path rootPath, boolean minimal) throws IOException {
+    public InversionResult_old(Path rootPath, boolean minimal) throws IOException {
         this.rootPath = rootPath;
         inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simpleName()).toFile().exists())
             .collect(Collectors.toSet());
@@ -114,7 +115,7 @@ public class InversionResult {
      * @throws IOException
      * @author anselme
      */
-    public InversionResult(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {
+    public InversionResult_old(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {
         this.rootPath = rootPath;
         this.inverseMethods = inverseMethods;
         readVarianceMap();

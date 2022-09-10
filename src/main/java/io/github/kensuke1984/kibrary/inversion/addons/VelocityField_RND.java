@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -122,7 +122,7 @@ public class VelocityField_RND {
 		
 		for (int isample = 0; isample < nSample; isample++) {
 			Path inversionResultPath = Paths.get(String.format("lmi_RND%04d", isample));
-			InversionResult ir = new InversionResult(inversionResultPath, true);
+			InversionResult_old ir = new InversionResult_old(inversionResultPath, true);
 			List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 			List<UnknownParameter> originalUnknowns = ir.getOriginalUnknownParameterList();
 			TriangleRadialSpline trs = null;

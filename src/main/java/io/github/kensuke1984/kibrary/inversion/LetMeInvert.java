@@ -16,12 +16,12 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InverseProblem;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseProblem;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;

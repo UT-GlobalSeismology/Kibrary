@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_old;
+package io.github.kensuke1984.kibrary.inversion.solve;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
@@ -17,7 +17,7 @@ import org.apache.commons.math3.linear.RealVector;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class PreconditionedConjugateGradientMethod extends InverseProblem {
+public class ConstrainedConjugateGradientMethod extends InverseProblem {
 
 	public RealMatrix getP() {
 		return p;
@@ -33,11 +33,7 @@ public class PreconditionedConjugateGradientMethod extends InverseProblem {
 	 */
 	private RealMatrix p;
 	
-	private RealVector m;
-	
-	private RealMatrix z;
-	
-	private RealMatrix r;
+	private RealMatrix h;
 
 	/**
 	 * AtAδm= AtD を解く
@@ -47,53 +43,62 @@ public class PreconditionedConjugateGradientMethod extends InverseProblem {
 	 * @param atd
 	 *            AtD
 	 */
-	public PreconditionedConjugateGradientMethod(RealMatrix ata, RealVector atd, RealVector m) {
+	public ConstrainedConjugateGradientMethod(RealMatrix ata, RealVector atd, RealMatrix h) {
 		this.ata = ata;
 		this.atd = atd;
-		this.m = m;
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
-		z = MatrixUtils.createRealMatrix(column, column);
-		r = MatrixUtils.createRealMatrix(column, column);
+		this.h = h;
 	}
-	
-	private RealVector multiply(RealVector a, RealVector b) {
-		RealVector c = new ArrayRealVector(a.getDimension());
-		for (int i = 0; i < a.getDimension(); i++)
-			c.setEntry(i, a.getEntry(i) * b.getEntry(i));
-		return c;
-	}
+
 
 	public void compute() {
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
-		System.err.println("Solving by CG method.");
-		r.setColumnVector(0, atd); // r_k = Atd -AtAm_k (A35)
+		System.err.println("Solving by Constrained CG method.");
 		
-		z.setColumnVector(0, multiply(m, r.getColumnVector(0)));
-		p.setColumnVector(0, z.getColumnVector(0));
+		RealVector r0 = atd.mapMultiply(-1); // r_k = Atd -AtAm_k (A35)
 		
-//		RealVector atap = ata.operate(p.getColumnVector(0));
+		RealVector z0 = h.operate(r0);
 		
-//		a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
+		p.setColumnVector(0, z0.mapMultiply(-1));
+		
+		RealVector atap = ata.operate(p.getColumnVector(0));
+		
+		a.setEntry(0, -r0.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
-//		ans.setColumnVector(0, new ArrayRealVector());
+		ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
+		
+		RealVector z;
+		RealVector r;
 		
 		// ///////
-		for (int i = 0; i < ata.getColumnDimension() - 1; i++) {
-			RealVector atap = ata.operate(p.getColumnVector(i));
+		for (int i = 1; i < ata.getColumnDimension(); i++) {
+			r = r0.add(atap.mapMultiply(a.getEntry(i - 1)));
 			
-			a.setEntry(i, r.getColumnVector(i).dotProduct(z.getColumnVector(i)) / p.getColumnVector(i).dotProduct(atap));
-			ans.setColumnVector(i + 1, ans.getColumnVector(i).add(p.getColumnVector(i).mapMultiply(a.getEntry(i))));
-			r.setColumnVector(i + 1, r.getColumnVector(i).subtract(atap.mapMultiply(a.getEntry(i))));
+			z = h.operate(r);
+
+//			double atapr = atap.dotProduct(r); // p AtA r
+//			double patap = p.getColumnVector(i - 1).dotProduct(atap); // ptatap
 			
-			z.setColumnVector(i + 1, multiply(m, r.getColumnVector(i + 1)));
-			double b = z.getColumnVector(i + 1).dotProduct(r.getColumnVector(i + 1)) / z.getColumnVector(i).dotProduct(r.getColumnVector(i));
-			p.setColumnVector(i + 1, z.getColumnVector(i + 1).add(p.getColumnVector(i).mapMultiply(b)));
+			double b = r.dotProduct(z) / r0.dotProduct(z0);
+			
+			p.setColumnVector(i, z.mapMultiply(-1).add(p.getColumnVector(i - 1).mapMultiply(b)));
+
+			atap = ata.operate(p.getColumnVector(i));
+			double paap = p.getColumnVector(i).dotProduct(atap);
+			double rp = r.dotProduct(p.getColumnVector(i));
+
+			a.setEntry(i, -rp / paap);
+
+			ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(a.getEntry(i)).add(ans.getColumnVector(i - 1)));
+			
+			r0 = r;
+			z0 = z;
 		}
 	}
 
@@ -147,5 +152,22 @@ public class PreconditionedConjugateGradientMethod extends InverseProblem {
 	@Override
 	InverseMethodEnum getEnum() {
 		return InverseMethodEnum.CONJUGATE_GRADIENT;
+	}
+	
+	public static RealMatrix projectorRectangle(int nUnknown, int nCombine) {
+		RealMatrix h = MatrixUtils.createRealMatrix(nUnknown, nUnknown);
+		
+		int n = nUnknown / nCombine;
+		
+		for (int i = 0; i < n - 1; i++) {
+			int itmp = i * nCombine;
+			for (int j = 0; j < nCombine; j++) {
+				for (int k = 0; k < nCombine; k++) {
+					h.setEntry(itmp + j, itmp + k, 1. / nCombine);
+				}
+			}
+		}
+		
+		return h;
 	}
 }

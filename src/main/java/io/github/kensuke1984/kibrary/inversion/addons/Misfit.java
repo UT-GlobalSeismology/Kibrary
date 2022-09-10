@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -21,7 +21,7 @@ public class Misfit {
 		Path waveformPath = Paths.get(args[1]);
 		BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
 		
-		Dvector dVector = new Dvector(ids, id -> true, WeightingType.IDENTITY);
+		Dvector_old dVector = new Dvector_old(ids, id -> true, WeightingType.IDENTITY);
 		RealVector obs = dVector.getObs();
 		RealVector syn = dVector.getSyn();
 		

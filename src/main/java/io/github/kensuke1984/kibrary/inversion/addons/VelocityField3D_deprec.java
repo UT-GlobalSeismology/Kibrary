@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -158,7 +158,7 @@ public class VelocityField3D_deprec {
 				layerMap.put(r, d);
 			});
 		
-		InversionResult ir = new InversionResult(inversionResultPath, true);
+		InversionResult_old ir = new InversionResult_old(inversionResultPath, true);
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 		List<UnknownParameter> originalUnknowns = ir.getOriginalUnknownParameterList();
 		TriangleRadialSpline trs = null;
@@ -787,7 +787,7 @@ public class VelocityField3D_deprec {
 			layerMap.put(r, d);
 		});
 		
-		InversionResult ir = new InversionResult(inversionResultPath);
+		InversionResult_old ir = new InversionResult_old(inversionResultPath);
 		
 		int n = ir.getNumberOfUnknowns() < maxNumVector ? ir.getNumberOfUnknowns() : maxNumVector;
 		

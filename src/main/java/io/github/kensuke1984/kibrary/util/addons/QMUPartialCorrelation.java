@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.addons;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
-import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation_old;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
@@ -35,9 +35,9 @@ public class QMUPartialCorrelation {
 		PartialID[] partialIDs = PartialIDFile.read(idPath, dataPath);
 		List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownsPath);
 		BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicDataPath);
-		Dvector dVector = new Dvector(basicIDs);
+		Dvector_old dVector = new Dvector_old(basicIDs);
 		
-		ObservationEquation equation = new ObservationEquation(partialIDs, unknowns, dVector, false, false, null, null, null, null);
+		ObservationEquation_old equation = new ObservationEquation_old(partialIDs, unknowns, dVector, false, false, null, null, null, null);
 		RealMatrix ata = equation.getAtA();
 		
 		Path outpath = Paths.get("parMU_Q_correlation.inf");

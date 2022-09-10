@@ -86,7 +86,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  *
  * @author Kensuke Konishi
  * @since version 2.3.0.5
- * @version 2021/12/24 renamed from PartialDatasetMaker_v2
+ * @version 2021/12/24 renamed from waveformdata.PartialDatasetMaker_v2 to waveform.PartialWaveformAssembler3D
  */
 public class PartialWaveformAssembler3D extends Operation {
 
@@ -206,6 +206,14 @@ public class PartialWaveformAssembler3D extends Operation {
     private int step;
     private Set<TimewindowData> timewindowInformation;
     private Set<GlobalCMTID> touchedSet = new HashSet<>();
+
+    private String dateString;
+
+    private WaveformDataWriter partialDataWriter;
+
+    private Path logPath;
+
+    private boolean jointCMT;
 
 
     /**
@@ -471,152 +479,6 @@ public class PartialWaveformAssembler3D extends Operation {
         terminate();
     }
 
-    private class WorkerTimePartial implements Runnable {
-
-        private EventFolder eventDir;
-        private GlobalCMTID id;
-
-        @Override
-        public void run() {
-            try {
-                writeLog("Running on " + id);
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-            Path timePartialFolder = eventDir.toPath();
-
-            if (!Files.exists(timePartialFolder)) {
-                throw new RuntimeException(timePartialFolder + " does not exist...");
-            }
-
-            Set<SACFileName> sacnameSet;
-            try {
-                sacnameSet = eventDir.sacFileSet()
-                        .stream()
-                        .filter(sacname -> sacname.isTemporalPartial())
-                        .collect(Collectors.toSet());
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                return;
-            }
-
-//			System.out.println(sacnameSet.size());
-//			sacnameSet.forEach(name -> System.out.println(name));
-
-            Set<TimewindowData> timewindowCurrentEvent = timewindowInformation
-                    .stream()
-                    .filter(tw -> tw.getGlobalCMTID().equals(id))
-                    .collect(Collectors.toSet());
-
-            // すべてのsacファイルに対しての処理
-            for (SACFileName sacname : sacnameSet) {
-                try {
-                    addTemporalPartial(sacname, timewindowCurrentEvent);
-                } catch (ClassCastException e) {
-                    // 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
-                    System.err.println(sacname + "is not 1D partial.");
-                    continue;
-                } catch (Exception e) {
-                    System.err.println(sacname + " is invalid.");
-                    e.printStackTrace();
-                    try {
-                        writeLog(sacname + " is invalid.");
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    continue;
-                }
-            }
-            System.err.print(".");
-//
-        }
-
-        private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
-            Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
-                    .filter(info -> info.getObserver().getStation().equals(sacname.getStationCode())) //TODO this may not get unique observer
-                    .collect(Collectors.toSet());
-            if (tmpTws.size() == 0) {
-                return;
-            }
-
-            System.err.println(sacname + " (time partials)");
-
-            SACFileAccess sacdata = sacname.read();
-            Observer station = sacdata.getObserver();
-
-            for (SACComponent component : components) {
-                Set<TimewindowData> tw = tmpTws.stream()
-                        .filter(info -> info.getObserver().equals(station))
-                        .filter(info -> info.getGlobalCMTID().equals(id))
-                        .filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
-
-                if (tw.isEmpty()) {
-                    tmpTws.forEach(window -> {
-                        System.err.println(window);
-                        System.err.println(window.getObserver().getPosition());
-                    });
-                    System.err.println(station.getPosition());
-                    System.err.println("Ignoring empty timewindow " + sacname + " " + station);
-                    continue;
-                }
-
-                for (TimewindowData t : tw) {
-                    double[] filteredUt = sacdata.createTrace().getY();
-                    cutAndWrite(station, filteredUt, t);
-                }
-            }
-        }
-        /**
-         * @param u
-         *            partial waveform
-         * @param timewindowInformation
-         *            cut information
-         * @return u cut by considering sampling Hz
-         */
-        private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {
-            int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
-            // 書きだすための波形
-            int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
-                    * finalSamplingHz);
-            double[] sampleU = new double[outnpts];
-            // cutting a waveform for outputting
-            Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
-
-            return sampleU;
-        }
-
-        private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t) {
-
-            double[] cutU = sampleOutput(filteredUt, t);
-            FullPosition stationLocation = new FullPosition(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
-
-            if (sourceTimeFunction == -1)
-                System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
-
-            PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
-                    cutU);
-            PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
-                    cutU);
-
-            try {
-                if (partialTypes.contains(PartialType.TIME_RECEIVER))
-                    partialDataWriter.addPartialID(PIDReceiverSide);
-                if (partialTypes.contains(PartialType.TIME_SOURCE))
-                    partialDataWriter.addPartialID(PIDSourceSide);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        private WorkerTimePartial(EventFolder eventDir) {
-            this.eventDir = eventDir;
-            id = eventDir.getGlobalCMTID();
-        };
-    }
-
-
     /**
      * 一つのBackPropagationに対して、あるFPを与えた時の計算をさせるスレッドを作る
      *
@@ -692,8 +554,7 @@ public class PartialWaveformAssembler3D extends Operation {
         }
 
         /**
-         * cut partial derivative in [start-ext, start+ext] The ext is for
-         * filtering .
+         * Cut partial derivative in [start-ext, start+ext]. The ext is for filtering.
          *
          * @param u
          * @param property
@@ -701,12 +562,10 @@ public class PartialWaveformAssembler3D extends Operation {
          */
         private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
             int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
-            // cutstartが振り切れた場合0 からにする
-            if (cutstart < 0)
-                return null;
             int cutend = (int) (timewindowInformation.getEndTime() * partialSamplingHz) + ext;
             Complex[] cut = new Complex[cutend - cutstart];
-            Arrays.parallelSetAll(cut, i -> new Complex(u[i + cutstart]));
+            // if cutstart < 0 (i.e. before event time), zero-pad the beginning part
+            Arrays.parallelSetAll(cut, i -> (i + cutstart < 0 ? new Complex(0) : new Complex(u[i + cutstart])));
 
             return cut;
         }
@@ -843,7 +702,7 @@ public class PartialWaveformAssembler3D extends Operation {
                             u = filter.applyFilter(u);
                             double[] cutU = sampleOutput(u, info);
 
-                            //DEBUG
+                            //DEBUG  TODO erase!
                             if (location.getR() == 5581 && location.getLongitude() == 14.5) {
                                 Path outpath = Paths.get("par_" + type + "_5581_14.5_" + new Phases(info.getPhases()) + "_" + component + ".txt");
                                 try {
@@ -1246,13 +1105,151 @@ public class PartialWaveformAssembler3D extends Operation {
         System.err.println();
     }
 
-    private String dateString;
 
-    private WaveformDataWriter partialDataWriter;
+    private class WorkerTimePartial implements Runnable {
 
-    private Path logPath;
+        private EventFolder eventDir;
+        private GlobalCMTID id;
 
-    private boolean jointCMT;
+        @Override
+        public void run() {
+            try {
+                writeLog("Running on " + id);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            Path timePartialFolder = eventDir.toPath();
+
+            if (!Files.exists(timePartialFolder)) {
+                throw new RuntimeException(timePartialFolder + " does not exist...");
+            }
+
+            Set<SACFileName> sacnameSet;
+            try {
+                sacnameSet = eventDir.sacFileSet()
+                        .stream()
+                        .filter(sacname -> sacname.isTemporalPartial())
+                        .collect(Collectors.toSet());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                return;
+            }
+
+//          System.out.println(sacnameSet.size());
+//          sacnameSet.forEach(name -> System.out.println(name));
+
+            Set<TimewindowData> timewindowCurrentEvent = timewindowInformation
+                    .stream()
+                    .filter(tw -> tw.getGlobalCMTID().equals(id))
+                    .collect(Collectors.toSet());
+
+            // すべてのsacファイルに対しての処理
+            for (SACFileName sacname : sacnameSet) {
+                try {
+                    addTemporalPartial(sacname, timewindowCurrentEvent);
+                } catch (ClassCastException e) {
+                    // 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
+                    System.err.println(sacname + "is not 1D partial.");
+                    continue;
+                } catch (Exception e) {
+                    System.err.println(sacname + " is invalid.");
+                    e.printStackTrace();
+                    try {
+                        writeLog(sacname + " is invalid.");
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    continue;
+                }
+            }
+            System.err.print(".");
+//
+        }
+
+        private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+            Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
+                    .filter(info -> info.getObserver().getStation().equals(sacname.getStationCode())) //TODO this may not get unique observer
+                    .collect(Collectors.toSet());
+            if (tmpTws.size() == 0) {
+                return;
+            }
+
+            System.err.println(sacname + " (time partials)");
+
+            SACFileAccess sacdata = sacname.read();
+            Observer station = sacdata.getObserver();
+
+            for (SACComponent component : components) {
+                Set<TimewindowData> tw = tmpTws.stream()
+                        .filter(info -> info.getObserver().equals(station))
+                        .filter(info -> info.getGlobalCMTID().equals(id))
+                        .filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
+
+                if (tw.isEmpty()) {
+                    tmpTws.forEach(window -> {
+                        System.err.println(window);
+                        System.err.println(window.getObserver().getPosition());
+                    });
+                    System.err.println(station.getPosition());
+                    System.err.println("Ignoring empty timewindow " + sacname + " " + station);
+                    continue;
+                }
+
+                for (TimewindowData t : tw) {
+                    double[] filteredUt = sacdata.createTrace().getY();
+                    cutAndWrite(station, filteredUt, t);
+                }
+            }
+        }
+        /**
+         * @param u
+         *            partial waveform
+         * @param timewindowInformation
+         *            cut information
+         * @return u cut by considering sampling Hz
+         */
+        private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {
+            int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
+            // 書きだすための波形
+            int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
+                    * finalSamplingHz);
+            double[] sampleU = new double[outnpts];
+            // cutting a waveform for outputting
+            Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
+
+            return sampleU;
+        }
+
+        private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t) {
+
+            double[] cutU = sampleOutput(filteredUt, t);
+            FullPosition stationLocation = new FullPosition(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
+
+            if (sourceTimeFunction == -1)
+                System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
+
+            PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
+                    cutU);
+            PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
+                    cutU);
+
+            try {
+                if (partialTypes.contains(PartialType.TIME_RECEIVER))
+                    partialDataWriter.addPartialID(PIDReceiverSide);
+                if (partialTypes.contains(PartialType.TIME_SOURCE))
+                    partialDataWriter.addPartialID(PIDSourceSide);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private WorkerTimePartial(EventFolder eventDir) {
+            this.eventDir = eventDir;
+            id = eventDir.getGlobalCMTID();
+        };
+    }
 
     /*
      * sort timewindows comparing stations

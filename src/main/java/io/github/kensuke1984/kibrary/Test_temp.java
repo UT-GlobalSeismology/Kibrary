@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion;
+package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
 import java.util.List;
@@ -7,13 +7,9 @@ import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Pierce;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
-public class Multigrid_temp {
-
-    private static PolynomialStructure_old initialStructure = PolynomialStructure_old.PREM;
-
+public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
 

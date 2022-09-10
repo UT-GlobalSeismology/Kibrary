@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -38,7 +38,7 @@ public class FiniteDifferencePartial {
 			
 			BasicID[] ids = BasicIDFile.read(idPath, dataPath);
 			Predicate<BasicID> chooser = id -> true;
-			Dvector dVector = new Dvector(ids, chooser, WeightingType.IDENTITY);
+			Dvector_old dVector = new Dvector_old(ids, chooser, WeightingType.IDENTITY);
 			
 			BasicID[] obsIds = dVector.getObsIDs();
 			BasicID[] synIds = dVector.getSynIDs();

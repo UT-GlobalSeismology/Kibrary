@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -93,7 +93,7 @@ public class Profile_alignScS_fromref {
 			PrintWriter pw4 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("eventVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 			pw4.println("# Event synVariance bornVariance varianceReduction(syn - born) lat lon depth Mw");
 			
-			InversionResult ir = new InversionResult(inversionResultPath);
+			InversionResult_old ir = new InversionResult_old(inversionResultPath);
 			List<BasicID> obsList = ir.getBasicIDList().stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 				.collect(Collectors.toList());
 			Set<GlobalCMTID> events = ir.idSet();
@@ -101,7 +101,7 @@ public class Profile_alignScS_fromref {
 			double mul = read_mul(inversionResultPath);
 			ir.set_mul(mul);
 			
-			InversionResult irRef = new InversionResult(inversionResultPathReference);
+			InversionResult_old irRef = new InversionResult_old(inversionResultPathReference);
 			
 			irRef.set_mul(mul);
 			
@@ -578,7 +578,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		pw.close();
 	}
 	
-	public static void process_id(BasicID id, InversionResult ir, InversionResult irRef,
+	public static void process_id(BasicID id, InversionResult_old ir, InversionResult_old irRef,
 			InverseMethodEnum method, int methodOrder, MisfitData misfitdata, OutputString outputString,
 			boolean spc, double mul) throws IOException {
 		Path bornPath = null;

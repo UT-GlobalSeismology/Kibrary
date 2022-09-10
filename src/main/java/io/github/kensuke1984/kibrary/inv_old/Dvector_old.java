@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @version 0.2.2.2
  * @deprecated use DVectorBuilder
  */
-public class Dvector {
+public class Dvector_old {
 
     /**
      * Predicate for choosing dataset. Observed IDs are used for the choice.
@@ -140,7 +140,7 @@ public class Dvector {
     private double obsNormSquare;
     protected static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
-    public Dvector() {
+    public Dvector_old() {
     }
 
     /**
@@ -149,7 +149,7 @@ public class Dvector {
      *
      * @param basicIDs must contain waveform data
      */
-    public Dvector(BasicID[] basicIDs) {
+    public Dvector_old(BasicID[] basicIDs) {
         this(basicIDs, id -> true, WeightingType.RECIPROCAL);
     }
 
@@ -161,7 +161,7 @@ public class Dvector {
      * @param selectionInfo
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType,
             boolean atLeastThreeRecordsPerStation, List<DataFeature> selectionInfo) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         ids = basicIDs;
@@ -350,7 +350,7 @@ public class Dvector {
      * @param weigthingType
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {
         this(basicIDs, chooser, weigthingType, false, null);
     }
 
@@ -365,7 +365,7 @@ public class Dvector {
      * @param atLeastThreeRecordsPerStation
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             ToDoubleBiFunction<BasicID, BasicID> weightingFunction, boolean atLeastThreeRecordsPerStation) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         ids = basicIDs;
@@ -389,7 +389,7 @@ public class Dvector {
      *                          synthetic are used.
      * @param weightingFunction {@link ToDoubleBiFunction} (observed, synthetic). If null, the reciprocal of the max value in observed is a weighting value.
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             ToDoubleBiFunction<BasicID, BasicID> weightingFunction) {
         this(basicIDs, chooser, weightingFunction, false);
     }
@@ -402,7 +402,7 @@ public class Dvector {
      * @param atLeastThreeRecordsPerStation
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             WeightingType weightingType, double[] weighting, boolean atLeastThreeRecordsPerStation) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         double minW = Double.MAX_VALUE;
@@ -449,7 +449,7 @@ public class Dvector {
      * @param weighting
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             WeightingType weightingType, double[] weighting) {
         this(basicIDs, chooser, weightingType, weighting, false);
     }
@@ -491,11 +491,11 @@ public class Dvector {
         for (GlobalCMTID event : events) {
             BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
                     .collect(Collectors.toList()).toArray(new BasicID[0]);
-            Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+            Dvector_old dvector = new Dvector_old(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
             Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
         }
 
-        Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+        Dvector_old dvector = new Dvector_old(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 
 //		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
 //		dvector.outWeighting(Paths.get("."));
@@ -727,8 +727,8 @@ public class Dvector {
     }
 
     @Override
-    public Dvector clone() {
-        Dvector dvector = new Dvector();
+    public Dvector_old clone() {
+        Dvector_old dvector = new Dvector_old();
         dvector.dVec = dVec.clone();
         dvector.ids = ids.clone();
         dvector.CHOOSER = CHOOSER;

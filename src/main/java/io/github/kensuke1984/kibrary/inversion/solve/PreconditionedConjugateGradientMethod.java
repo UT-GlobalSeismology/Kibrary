@@ -1,12 +1,10 @@
-package io.github.kensuke1984.kibrary.inv_old;
+package io.github.kensuke1984.kibrary.inversion.solve;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
-import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 
 /**
  * Conjugate gradient method
@@ -19,7 +17,7 @@ import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class NonlinearConjugateGradientMethod extends InverseProblem {
+public class PreconditionedConjugateGradientMethod extends InverseProblem {
 
 	public RealMatrix getP() {
 		return p;
@@ -35,11 +33,11 @@ public class NonlinearConjugateGradientMethod extends InverseProblem {
 	 */
 	private RealMatrix p;
 	
-	private RealMatrix am;
+	private RealVector m;
 	
-	private RealVector u;
+	private RealMatrix z;
 	
-	private RealVector s0;
+	private RealMatrix r;
 
 	/**
 	 * AtAδm= AtD を解く
@@ -49,94 +47,54 @@ public class NonlinearConjugateGradientMethod extends InverseProblem {
 	 * @param atd
 	 *            AtD
 	 */
-	public NonlinearConjugateGradientMethod(RealMatrix ata, RealMatrix am, RealVector s0, RealVector u) {
+	public PreconditionedConjugateGradientMethod(RealMatrix ata, RealVector atd, RealVector m) {
 		this.ata = ata;
+		this.atd = atd;
+		this.m = m;
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
-		this.am = am;
-		this.s0 = s0;
-		this.u = u;
+		z = MatrixUtils.createRealMatrix(column, column);
+		r = MatrixUtils.createRealMatrix(column, column);
 	}
-
+	
+	private RealVector multiply(RealVector a, RealVector b) {
+		RealVector c = new ArrayRealVector(a.getDimension());
+		for (int i = 0; i < a.getDimension(); i++)
+			c.setEntry(i, a.getEntry(i) * b.getEntry(i));
+		return c;
+	}
 
 	public void compute() {
 		int column = ata.getColumnDimension();
+		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
-		System.err.println("Solving by nonlinear CG method.");
+		a = new ArrayRealVector(column);
+		System.err.println("Solving by CG method.");
+		r.setColumnVector(0, atd); // r_k = Atd -AtAm_k (A35)
 		
-		RealMatrix amt = am.transpose();
+		z.setColumnVector(0, multiply(m, r.getColumnVector(0)));
+		p.setColumnVector(0, z.getColumnVector(0));
 		
-		RealVector x0 = new ArrayRealVector(column);
-		System.out.println(costFunction(x0));
-		RealVector dx = costFunctionGradient(x0, amt).mapMultiply(-1).mapMultiply(1.e-4);
-		RealVector x1 = lineSearch(dx, x0);
+//		RealVector atap = ata.operate(p.getColumnVector(0));
 		
-		ans.setColumnVector(0, x1);
-		
-		int nmax = ata.getColumnDimension();
-		
-		RealVector s0 = dx;
-		RealVector s1;
-		RealVector dx0;
+//		a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
+
+//		ans.setColumnVector(0, new ArrayRealVector());
 		
 		// ///////
-		for (int i = 1; i < nmax; i++) {
-			x0 = x1;
-			dx0 = dx;
-			dx = costFunctionGradient(x0, amt).mapMultiply(-1).mapMultiply(1.e-4);
+		for (int i = 0; i < ata.getColumnDimension() - 1; i++) {
+			RealVector atap = ata.operate(p.getColumnVector(i));
 			
-//			double beta = dx.dotProduct(dx.subtract(dx0)) / dx0.dotProduct(dx0);
-//			if (beta < 0) beta = 0;
-//			s1 = dx.add(s0.mapMultiply(beta));
-//			x1 = lineSearch(s1, x0);
+			a.setEntry(i, r.getColumnVector(i).dotProduct(z.getColumnVector(i)) / p.getColumnVector(i).dotProduct(atap));
+			ans.setColumnVector(i + 1, ans.getColumnVector(i).add(p.getColumnVector(i).mapMultiply(a.getEntry(i))));
+			r.setColumnVector(i + 1, r.getColumnVector(i).subtract(atap.mapMultiply(a.getEntry(i))));
 			
-			x1 = lineSearch(dx, x0);
-			
-			ans.setColumnVector(i, x1);
-//			s0 = s1;
+			z.setColumnVector(i + 1, multiply(m, r.getColumnVector(i + 1)));
+			double b = z.getColumnVector(i + 1).dotProduct(r.getColumnVector(i + 1)) / z.getColumnVector(i).dotProduct(r.getColumnVector(i));
+			p.setColumnVector(i + 1, z.getColumnVector(i + 1).add(p.getColumnVector(i).mapMultiply(b)));
 		}
-	}
-	
-	private RealVector costFunctionGradient(RealVector m, RealMatrix amt) {
-		RealVector ans = null;
-		
-		RealVector s = s0.add(am.operate(m));
-		RealVector p1 = amt.operate(u);
-		RealVector p2 = ata.operate(m).add(amt.operate(s0));
-		
-		ans = p1.add(p2.mapMultiply(-u.dotProduct(s) / s.dotProduct(s))).mapDivide(u.getNorm() * s.getNorm())
-				.mapMultiply(-1);
-		
-		return ans;
-	}
-	
-	private double costFunction(RealVector m) {
-		RealVector s = s0.add(am.operate(m));
-		return 1. - u.dotProduct(s) / (u.getNorm() * s.getNorm());
-	}
-	
-	private RealVector lineSearch(RealVector dx, RealVector x) {
-		double alpha0 = 1e-2;
-		double alpha1 = 1e2;
-		double dalpha = 1e-2;
-		int n = (int) ((alpha1 - alpha0) / dalpha);
-		double cost = Double.MAX_VALUE;
-		RealVector ans = null;
-		double ansalpha = 0;
-		for (int i = 0; i < n; i++) {
-			double alpha = i * dalpha + alpha0;
-			double costi = costFunction(x.add(dx.mapMultiply(alpha)));
-			if (costi < cost) {
-				cost = costi;
-				ans = x.add(dx.mapMultiply(alpha));
-				ansalpha = alpha;
-			}
-//			System.out.println(costi);
-		}
-		System.out.println("ansalpha = " + ansalpha);
-		return ans;
 	}
 
 	@Override

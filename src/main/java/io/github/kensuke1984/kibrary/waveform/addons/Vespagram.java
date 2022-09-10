@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -238,7 +238,7 @@ public class Vespagram {
 		for (int i = 0; i < synList.size(); i++) {
 			boolean foundPair = false;
 			for (int j = 0; j < obsList.size(); j++) {
-				if (Dvector.isPair(synList.get(i), obsList.get(j))) {
+				if (Dvector_old.isPair(synList.get(i), obsList.get(j))) {
 					useObsList.add(obsList.get(j));
 					useSynList.add(synList.get(i));
 					foundPair = true;

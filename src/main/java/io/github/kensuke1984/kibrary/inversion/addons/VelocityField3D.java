@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
@@ -54,7 +54,7 @@ public class VelocityField3D {
 //		PolynomialStructure structure = PolynomialStructure.AK135;
 		System.out.println("Using structure " + structure.toString());
 		
-		InversionResult ir = new InversionResult(inversionResultPath, true);
+		InversionResult_old ir = new InversionResult_old(inversionResultPath, true);
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 		
 		// read layer thickness
