@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -25,6 +26,13 @@ public class AtdFile {
         }
     }
 
+    public static void writeDInfo(int dLength, double dNorm, double obsNorm, Path outputPath, OpenOption... options) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
+            pw.println("# dLength dNorm obsNorm");
+            pw.println(dLength + " " + dNorm + " " + obsNorm);
+        }
+    }
+
     public static RealVector read(Path path) throws IOException {
         InformationFileReader reader = new InformationFileReader(path, true);
 
@@ -40,4 +48,8 @@ public class AtdFile {
         return atd;
     }
 
+    public static double[] readDInfo(Path path) throws IOException {
+        InformationFileReader reader = new InformationFileReader(path, true);
+        return Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+    }
 }

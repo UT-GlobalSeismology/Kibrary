@@ -83,6 +83,9 @@ public class LetMeInvert extends Operation {
     * α for AIC 独立データ数:n/α
     */
     private double[] alpha;
+    /**
+     * Maximum number of basis vectors to evaluate variance and AIC
+     */
     private int evaluateNum;
 
     /**
@@ -145,9 +148,8 @@ public class LetMeInvert extends Operation {
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        if (property.containsKey("alpha")) alpha = property.parseDoubleArray("alpha", "1 100 1000");
+        alpha = property.parseDoubleArray("alpha", "1 100 1000");
         evaluateNum = property.parseInt("evaluateNum", "100");
-
     }
 
     @Override
@@ -156,10 +158,10 @@ public class LetMeInvert extends Operation {
         // read input
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         int dLength = assembler.getD().getDimension();
@@ -174,22 +176,22 @@ public class LetMeInvert extends Operation {
         // output matrices
         AtAFile.write(ata, outPath.resolve("ata.lst"));
         AtdFile.write(atd, outPath.resolve("atd.lst"));
-        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
+        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
 
         // solve inversion and evaluate
-        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dNorm, obsNorm, dLength);
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dLength, dNorm, obsNorm);
         for (InverseMethodEnum method : inverseMethods) {
             Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();
-            inverseProblem.outputAnswers(parameterList, outMethodPath);
+            inverseProblem.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
             evaluation.evaluate(inverseProblem.getANS(), evaluateNum, alpha, outMethodPath);
         }
-
     }
 
 }

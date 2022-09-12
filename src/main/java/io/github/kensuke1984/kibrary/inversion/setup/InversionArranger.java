@@ -119,7 +119,6 @@ public class InversionArranger extends Operation {
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
-
     }
 
     @Override
@@ -128,21 +127,25 @@ public class InversionArranger extends Operation {
         // read input
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+
+        // assemble matrices
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingType);
+        RealMatrix ata = assembler.getAta();
+        RealVector atd = assembler.getAtd();
+        int dLength = assembler.getD().getDimension();
+        double dNorm = assembler.getD().getNorm();
+        double obsNorm = assembler.getObs().getNorm();
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
-        RealMatrix ata = assembler.getAta();
-        RealVector atd = assembler.getAtd();
-
         // output
         AtAFile.write(ata, outPath.resolve("ata.lst"));
         AtdFile.write(atd, outPath.resolve("atd.lst"));
-        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
+        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
     }
 
 }

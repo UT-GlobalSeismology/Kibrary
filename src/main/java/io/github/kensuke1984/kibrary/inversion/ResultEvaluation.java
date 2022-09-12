@@ -17,16 +17,16 @@ public class ResultEvaluation {
 
     private final RealMatrix ata;
     private final RealVector atd;
+    private final int dLength;
     private final double dNorm;
     private final double obsNorm;
-    private final int dLength;
 
-    public ResultEvaluation(RealMatrix ata, RealVector atd, double dNorm, double obsNorm, int dLength) {
+    public ResultEvaluation(RealMatrix ata, RealVector atd, int dLength, double dNorm, double obsNorm) {
         this.ata = ata;
         this.atd = atd;
+        this.dLength = dLength;
         this.dNorm = dNorm;
         this.obsNorm = obsNorm;
-        this.dLength = dLength;
     }
 
     public void evaluate(RealMatrix ans, int maxNum, double[] alpha, Path outPath) throws IOException {

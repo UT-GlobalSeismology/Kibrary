@@ -231,7 +231,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         // read voxel information
         VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
         perturbationRadii = vif.getRadii();
-        perturbationPositions = vif.getHorizontalPositions();
+        perturbationPositions = vif.getHorizontalPositions().toArray(new HorizontalPosition[0]);
 
         // read event information
         Set<GlobalCMTID> eventSet = EventListFile.read(eventPath);

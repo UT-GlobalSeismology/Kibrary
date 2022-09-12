@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.HorizontalPiece;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
@@ -163,15 +164,18 @@ public class CheckerboardMaker extends Operation {
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
         double[] radii = file.getRadii();
-        double dLatitude = file.getSpacingLatitude();
-        double dLongitude = file.getSpacingLongitude();
-        HorizontalPosition[] positions = file.getHorizontalPositions();
+        List<HorizontalPiece> pieces = file.getHorizontalPieces();
 
         // set checkerboard model
         System.err.println("Creating checkerboard perturbations.");
         PerturbationModel model = new PerturbationModel();
-        HorizontalPosition referencePosition = positions[0];
-        for (HorizontalPosition horizontalPosition : positions) {
+        HorizontalPosition referencePosition = pieces.get(0).getPosition();
+        for (HorizontalPiece piece : pieces) {
+            // extract information of each horizontal piece
+            HorizontalPosition horizontalPosition = piece.getPosition();
+            double dLatitude = piece.getDLatitude();
+            double dLongitude = piece.getDLongitude();
+            // loop for each layer
             for (int i = 0; i < radii.length; i++) {
                 FullPosition position = horizontalPosition.toFullPosition(radii[i]);
                 // find the sign shift with respect to referencePosition
@@ -179,6 +183,7 @@ public class CheckerboardMaker extends Operation {
                         + (int) Math.round((position.getLongitude() - referencePosition.getLongitude()) / dLongitude)
                         + i + numForSuppressFlip(position);
 
+                // construct voxel
                 double volume = Earth.computeVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < variableTypes.size(); k++) {

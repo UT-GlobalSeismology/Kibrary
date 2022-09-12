@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
@@ -243,8 +242,8 @@ public class RaypathMapper extends Operation {
         }
 
         if (voxelPath != null) {
-            HorizontalPosition[] perturbationPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
-            List<String> perturbationLines = Stream.of(perturbationPositions).map(HorizontalPosition::toString).collect(Collectors.toList());
+            List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+            List<String> perturbationLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
             Files.write(outPath.resolve(perturbationFileName), perturbationLines);
         }
 
