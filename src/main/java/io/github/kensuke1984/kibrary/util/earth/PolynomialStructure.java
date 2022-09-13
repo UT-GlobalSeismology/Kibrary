@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
  * Every depth is written in <b>radius</b>.
  * The radii used as the variable x in polynomial functions should be normalized to the planet radius.
  * <p>
- * This class is <b>IMMUTABLE</b> <br>.
+ * This class is <b>IMMUTABLE</b>.
  * Caution that member arrays are mutable, so they must be cloned in constructors and getters.
  * ({@link PolynomialFunction} is supposedly immutable, so they do not have to be cloned.)
  * <p>

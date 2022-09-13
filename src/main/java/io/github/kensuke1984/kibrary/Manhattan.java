@@ -31,6 +31,7 @@ import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
+import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
@@ -73,6 +74,7 @@ enum Manhattan {
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
+    VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
     MultigridDesigner(53, MultigridDesigner.class),
     // Partial 60
     ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),

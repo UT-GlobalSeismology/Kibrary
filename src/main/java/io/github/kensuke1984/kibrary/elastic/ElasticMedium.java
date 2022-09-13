@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Class for computing unknown parameters of isotropic and transversely isotropic (TI) media
- * when some parameters are already known.
- *<p>
+ * Class that holds a set of elastic parameters for of a block of homogenious isotropic or transversely isotropic (TI) medium.
+ * Unknown parameters that can be computed from given parameters are automatically computed.
+ * <p>
  * Relationships between parameters are as follows:
  * <ul>
  * <li> A = &rho;V<sub>PH</sub><sup>2</sup> </li>
@@ -21,11 +21,13 @@ import java.util.Map;
  * <li> &kappa; = &lambda; + 2/3 &mu; (bulk modulus) </li>
  * <li> Vb = sqrt(&kappa; / &rho;) </li>
  * </ul>
+ * <p>
+ * CAUTION, this class is <b>NOT IMMUTABLE</b>.
  *
  * @author otsuru
  * @since 2022//4/11
  */
-public class ElasticMedium {
+public class ElasticMedium implements Cloneable {
 
     private Map<VariableType, Double> variableMap = new HashMap<>();
     private boolean isAddingIsotropicModuli;
@@ -360,6 +362,17 @@ public class ElasticMedium {
             double kappa = variableMap.get(VariableType.KAPPA);
             double vb = Math.sqrt(kappa/rho);
             variableMap.put(VariableType.Vb, vb);
+        }
+    }
+
+    @Override
+    public ElasticMedium clone() {
+        try {
+            ElasticMedium newInstance = (ElasticMedium) super.clone();
+            newInstance.variableMap = new HashMap<>(this.variableMap);
+            return newInstance;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
         }
     }
 

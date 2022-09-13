@@ -38,6 +38,10 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * Perturbations are applied to each voxel in the input voxel file.
  * At each voxel, each given {@link VariableType} is perturbed.
  * Then, the model parameter value for each {@link PartialType} is computed and exported as a {@link KnownParameterFile}.
+ * <p>
+ * For the checkerboard pattern to be created properly,
+ * dLatitudes must all be uniform,
+ * and dLongitudes must be uniform at each latitude.
  *
  * @author otsuru
  * @since 2022/3/4

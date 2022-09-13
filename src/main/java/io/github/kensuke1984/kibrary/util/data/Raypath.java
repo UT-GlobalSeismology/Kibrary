@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * @since a long time ago
  * @version 2022/9/8 Modified almost whole file.
  */
-public class Raypath {
+public final class Raypath {
 
     /**
      * Name of phase
