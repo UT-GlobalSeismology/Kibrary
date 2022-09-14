@@ -90,10 +90,10 @@ public class PerturbationModel {
      * @param oneDStructure
      * @return
      */
-    public PerturbationModel withInitialStructureAs(PolynomialStructure oneDStructure) {
+    public PerturbationModel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         List<PerturbationVoxel> newVoxelList = new ArrayList<>();
         for (PerturbationVoxel voxel : this.voxelList) {
-            newVoxelList.add(voxel.withInitialStructureAs(oneDStructure));
+            newVoxelList.add(voxel.withReferenceStructureAs(oneDStructure));
         }
         return new PerturbationModel(newVoxelList);
     }

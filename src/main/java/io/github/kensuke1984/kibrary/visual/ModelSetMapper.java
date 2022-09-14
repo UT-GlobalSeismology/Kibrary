@@ -210,7 +210,7 @@ public class ModelSetMapper extends Operation {
 
                 PerturbationModel model = new PerturbationModel(knowns, initialStructure);
                 if (!referenceStructure.equals(initialStructure)) {
-                    model = model.withInitialStructureAs(referenceStructure);
+                    model = model.withReferenceStructureAs(referenceStructure);
                 }
 
                 Path outBasisPath = outPath.resolve(method.simpleName() + k);

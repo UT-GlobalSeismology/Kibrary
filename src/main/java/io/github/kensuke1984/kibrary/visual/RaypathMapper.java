@@ -39,9 +39,6 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * This class uses GMT to draw raypaths.
  * Raypaths can be classified in different colors binned by epicentral distance, azimuth at the event,
  * azimuth at the observer (backazimuth), and azimuth at the turning point.
- * <p>
- *
- * TODO: pierce calculation may not work for phases other than ScS (see {@link Raypath})
  *
  * @author Kensuke Konishi
  * @since version 0.1.2

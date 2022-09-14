@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
-import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -244,9 +243,9 @@ public class VoxelLayoutDesigner extends Operation {
             if (minLongitudes[i] > maxLongitudes[i]) continue;
 
             if (setLongitudeByKm) {
-                // voxel points are aligned on latitude lines so that their spacing is dLongitudeKm
+                // voxel points are aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm
                 // the min and max borders are set close to the min and max longitudes of sample points
-                double smallCircleRadius = Earth.EARTH_RADIUS * Math.cos(Math.toRadians(latitude));
+                double smallCircleRadius = borderRadii[borderRadii.length / 2] * Math.cos(Math.toRadians(latitude));
                 double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
                 int nLongitude = (int) Math.round((maxLongitudes[i] - minLongitudes[i]) / dLongitudeForRow);
                 double centerLongitude = (minLongitudes[i] + maxLongitudes[i]) / 2;

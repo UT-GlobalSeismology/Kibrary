@@ -176,7 +176,7 @@ public class ModelMapper extends Operation {
         // build model
         PerturbationModel model = new PerturbationModel(knowns, initialStructure);
         if (!referenceStructure.equals(initialStructure)) {
-            model = model.withInitialStructureAs(referenceStructure);
+            model = model.withReferenceStructureAs(referenceStructure);
         }
 
         // decide map region

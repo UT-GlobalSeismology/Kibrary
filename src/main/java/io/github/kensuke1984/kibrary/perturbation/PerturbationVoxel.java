@@ -19,38 +19,37 @@ public class PerturbationVoxel {
 
     private final FullPosition position;
     private final double volume;
-    private final ElasticMedium initialMedium;
+    private final ElasticMedium referenceMedium;
     private final ElasticMedium perturbedMedium;
 
     public PerturbationVoxel(FullPosition position, double volume, PolynomialStructure oneDStructure) {
         this.position = position;
         this.volume = volume;
-        this.initialMedium = oneDStructure.mediumAt(position.getR());
+        this.referenceMedium = oneDStructure.mediumAt(position.getR());
         this.perturbedMedium = new ElasticMedium();
     }
 
 
-    private PerturbationVoxel(FullPosition position, double volume, ElasticMedium initialMedium,
-            ElasticMedium perturbedMedium) {
+    private PerturbationVoxel(FullPosition position, double volume, ElasticMedium referenceMedium, ElasticMedium perturbedMedium) {
         this.position = position;
         this.volume = volume;
-        this.initialMedium = initialMedium.clone();
+        this.referenceMedium = referenceMedium.clone();
         this.perturbedMedium = perturbedMedium.clone();
     }
 
     public void setDelta(VariableType type, double perturbation) {
-        double absolute = initialMedium.get(type) + perturbation;
+        double absolute = referenceMedium.get(type) + perturbation;
         perturbedMedium.set(type, absolute);
     }
 
     public void setPercent(VariableType type, double percent) {
-        double absolute = initialMedium.get(type) * (1. + percent / 100);
+        double absolute = referenceMedium.get(type) * (1. + percent / 100);
         perturbedMedium.set(type, absolute);
     }
 
     public void setDefaultIfUndefined(VariableType type) {
         if (!perturbedMedium.isDefined(type)) {
-            double def = initialMedium.get(type);
+            double def = referenceMedium.get(type);
             perturbedMedium.set(type, def);
         }
     }
@@ -60,13 +59,13 @@ public class PerturbationVoxel {
      * @param oneDStructure
      * @return
      */
-    public PerturbationVoxel withInitialStructureAs(PolynomialStructure oneDStructure) {
+    public PerturbationVoxel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         ElasticMedium newInitialMedium = oneDStructure.mediumAt(position.getR());
         return new PerturbationVoxel(position, volume, newInitialMedium, perturbedMedium);
     }
 
     public double getDelta(VariableType type) {
-        return perturbedMedium.get(type) - initialMedium.get(type);
+        return perturbedMedium.get(type) - referenceMedium.get(type);
     }
 
     public double getAbsolute(VariableType type) {
@@ -74,7 +73,7 @@ public class PerturbationVoxel {
     }
 
     public double getPercent(VariableType type) {
-        return (perturbedMedium.get(type) / initialMedium.get(type) - 1.) * 100;
+        return (perturbedMedium.get(type) / referenceMedium.get(type) - 1.) * 100;
     }
 
     public FullPosition getPosition() {
