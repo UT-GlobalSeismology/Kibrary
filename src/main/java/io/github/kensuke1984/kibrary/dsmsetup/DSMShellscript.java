@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
- * Class for automatically generating shellscript files to execute TIPSV and TISH.
+ * Class for automatically generating shellscript files to execute DSM programs such as TIPSV, SHFP, etc.
  *
  * @author otsuru
  * @since 2021/12/23
@@ -79,34 +79,30 @@ class DSMShellscript {
      * @author otsuru
      * @since 2022/2/5
      */
-    public void write(SPCType type, SPCMode mode) throws IOException {
+    public void write(SPCType type, SPCMode mode, String listFileName, String dateStr) throws IOException {
         String fileNameRoot;
         String enterFolder;
         String exitFolder;
         String programName;
-        String mvString;
 
         switch (type) {
         case SYNTHETIC:
-            fileNameRoot = "runDSM_" + mode;
-            enterFolder = "./*[A-Z]";
+            fileNameRoot = "runDSM_" + mode + dateStr;
+            enterFolder = "./";
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "tipsv" : "tish");
-            mvString = null;
             break;
         case PF:
-            fileNameRoot = "runFP_" + mode;
-            enterFolder = "./FPqueue/*[A-Z]";
+            fileNameRoot = "runFP_" + mode + dateStr;
+            enterFolder = "./FPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvfp" : "shfp");
-            mvString = "mv $j FPinfo";
             break;
         case PB:
-            fileNameRoot = "runBP_" + mode;
-            enterFolder = "./BPqueue/[M-Q]*";
+            fileNameRoot = "runBP_" + mode + dateStr;
+            enterFolder = "./BPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
-            mvString = "mv $j BPinfo";
             break;
         default:
             throw new IllegalArgumentException("This SPCType is not supported yet.");
@@ -128,22 +124,14 @@ class DSMShellscript {
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
             pw.println("  nend=$(echo \"$(($i * $Nsimrun))\")");
             pw.println("  echo \"$nstart $nend\"");
-            pw.println("  for j in $(for k in " + enterFolder + "; do echo $k; done | sed -n $nstart,${nend}p)");
+            pw.println("  for j in $(cat " + listFileName + " | sed -n $nstart,${nend}p)");
             pw.println("  do");
-            pw.println("    cd $j");
+            pw.println("    cd " + enterFolder + "$j");
             pw.println("    " + programString + " < " + header + "_" + mode + ".inf > " + fileNameRoot + ".log &");
             pw.println("    cd " + exitFolder);
             pw.println("  done");
             pw.println("  wait");
             pw.println("done");
-
-            if (mvString != null) {
-                pw.println("  ");
-                pw.println("for j in " + enterFolder);
-                pw.println("do");
-                pw.println("  " + mvString);
-                pw.println("done");
-            }
         }
     }
 

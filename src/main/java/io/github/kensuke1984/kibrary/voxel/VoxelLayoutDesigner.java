@@ -26,8 +26,13 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Operation that decides horizontal distribution of voxels based on raypath lines.
+ * <p>
+ * Given a set of {@link DataEntry}s, raypath segments that run through a layer of specified radius range are computed.
+ * Voxels are distributed so that they cover the region these raypath segments sample.
  * Voxels are set along latitude lines, with spacing of either equal longitude angle [deg] or equal distance [km].
- * Radii of voxel boundaries must be decided manually.
+ * When using distance [km], it is converted to degrees at the (roughly) median radius of the target region.
+ * <p>
+ * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
  *
  * @author otsuru
  * @since 2022/2/11
@@ -53,8 +58,11 @@ public class VoxelLayoutDesigner extends Operation {
     private double upperPierceRadius;
     private String structureName;
 
-    private double dLatitude;
+    private double dLatitudeKm;
+    private double dLatitudeDeg;
+    private boolean setLatitudeByKm;
     private double latitudeOffset;
+
     private double dLongitudeKm;
     private double dLongitudeDeg;
     private boolean setLongitudeByKm;
@@ -92,11 +100,15 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#upperPierceRadius ");
             pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
             pw.println("#structureName ");
+            pw.println("##(double) Latitude spacing [km]. If this is unset, the following dLatitudeDeg will be used.");
+            pw.println("## The (roughly) median radius of target region will be used to convert this to degrees.");
+            pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg] (5)");
-            pw.println("#dLatitude ");
-            pw.println("##(double) Offset for latitude [deg] [0:dLatitude) (0)");
+            pw.println("#dLatitudeDeg ");
+            pw.println("##(double) Offset for latitude [deg], must be positive (0)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
+            pw.println("## The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg] (5)");
             pw.println("#dLongitudeDeg ");
@@ -104,7 +116,7 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#longitudeOffset ");
             pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
             pw.println("#crossDateLine ");
-            pw.println("##(double) Radii of layer borders, listed using spaces (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
+            pw.println("##(double) Radii of layer borders, listed using spaces [km] (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
             pw.println("#borderRadii ");
         }
         System.err.println(outPath + " is created.");
@@ -125,12 +137,20 @@ public class VoxelLayoutDesigner extends Operation {
         upperPierceRadius = property.parseDouble("upperPierceRadius", "3880");
         structureName = property.parseString("structureName", "prem");
 
-        dLatitude = property.parseDouble("dLatitude", "5");
-        if (dLatitude <= 0)
-            throw new IllegalArgumentException("dLatitude must be positive");
+        if (property.containsKey("dLatitudeKm")) {
+            dLatitudeKm = property.parseDouble("dLatitudeKm", null);
+            if (dLatitudeKm <= 0)
+                throw new IllegalArgumentException("dLatitudeKm must be positive");
+            setLatitudeByKm = true;
+        } else {
+            dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
+            if (dLatitudeDeg <= 0)
+                throw new IllegalArgumentException("dLatitudeDeg must be positive");
+            setLatitudeByKm = false;
+        }
         latitudeOffset = property.parseDouble("latitudeOffset", "0");
-        if (latitudeOffset < 0 || dLatitude <= latitudeOffset)
-            throw new IllegalArgumentException("latitudeOffset must be in [0:dLatitude)");
+        if (latitudeOffset < 0)
+            throw new IllegalArgumentException("latitudeOffset must be positive");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
@@ -189,6 +209,10 @@ public class VoxelLayoutDesigner extends Operation {
     }
 
     private List<HorizontalPiece> designHorizontalPieces(List<Raypath> insideSegments) {
+
+        // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
+        double dLatitude = setLatitudeByKm ?
+                Math.toDegrees(dLatitudeKm / borderRadii[borderRadii.length / 2]) : dLatitudeDeg;
 
         //~decide longitude ranges for each (co)latitude
         // decide number of colatitude intervals

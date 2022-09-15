@@ -6,9 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -216,6 +218,7 @@ public class SyntheticDSMSetup extends Operation {
      */
     @Override
     public void run() throws IOException {
+        String dateStr = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> rayMap = new HashMap<>();
@@ -259,7 +262,7 @@ public class SyntheticDSMSetup extends Operation {
             structure = PolynomialStructure.of(structureName);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", tag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // synthetic observer set
@@ -275,6 +278,7 @@ public class SyntheticDSMSetup extends Operation {
         }
 
         // output information files in each event folder
+        List<String> sourceList = new ArrayList<>();
         for (GlobalCMTID event : rayMap.keySet()) {
             try {
                 Set<Observer> observers = rayMap.get(event);
@@ -296,6 +300,7 @@ public class SyntheticDSMSetup extends Operation {
                     Files.createDirectories(eventOut.resolve(header));
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));
+                    sourceList.add(event.toString());
                 }
                 else {
                     System.err.println(event + "is not in the catalog");
@@ -308,9 +313,11 @@ public class SyntheticDSMSetup extends Operation {
         }
 
         // output shellscripts for execution of tipsv and tish
+        String listFileName = "sourceList.txt";
+        Files.write(outPath.resolve(listFileName), sourceList);
         DSMShellscript shell = new DSMShellscript(outPath, mpi, rayMap.size(), header);
-        shell.write(SPCType.SYNTHETIC, SPCMode.PSV);
-        shell.write(SPCType.SYNTHETIC, SPCMode.SH);
+        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, dateStr);
+        shell.write(SPCType.SYNTHETIC, SPCMode.SH, listFileName, dateStr);
         System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
     }
 
