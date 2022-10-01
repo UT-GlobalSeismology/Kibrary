@@ -99,7 +99,7 @@ public class BasicIDRebuilder extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output folder (actual)");
+            pw.println("##(String) The first part of the name of output files (actual)");
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#tag ");
@@ -155,9 +155,13 @@ public class BasicIDRebuilder extends Operation {
         obsIDs = pairer.getObsList();
         synIDs = pairer.getSynList();
 
-        selectByCriteria();
+        // select basicIDs to used based on criteria
+        if (dataEntryPath != null || requiredPhases != null) {
+            selectByCriteria();
+        }
         if (obsIDs.size() == 0) return;
 
+        // select required number of basicIDs
         if (bootstrap) {
             resample(subsamplingPercent, true);
         } else if (!Precision.equals(subsamplingPercent, 100)) {
@@ -165,6 +169,7 @@ public class BasicIDRebuilder extends Operation {
         }
         if (obsIDs.size() == 0) return;
 
+        // collect all selected basicIDs
         List<BasicID> finalList = new ArrayList<>();
         finalList.addAll(obsIDs);
         finalList.addAll(synIDs);

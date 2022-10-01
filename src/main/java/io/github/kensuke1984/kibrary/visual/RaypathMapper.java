@@ -248,6 +248,7 @@ public class RaypathMapper extends Operation {
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
         outputGMT();
+        System.err.println("After this finishes, please run " + outPath.resolve(gmtFileName));
     }
 
     private void checkReusePath() {

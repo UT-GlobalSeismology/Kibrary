@@ -118,6 +118,7 @@ public class PolynomialStructureFile {
             qKappa[i] = Double.parseDouble(etaParts[5]);
         }
 
+        System.err.println("Read " + inputPath);
         return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 

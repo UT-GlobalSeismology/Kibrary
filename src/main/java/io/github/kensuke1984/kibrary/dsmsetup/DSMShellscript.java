@@ -119,6 +119,9 @@ class DSMShellscript {
             pw.println("Nsimrun=" + nSimRun);
             pw.println("Ncore=" + nCore);
             pw.println();
+            pw.println("start=$(date +'%s')");
+            pw.println("echo \"start: $(date -d \"@${start}\" +'%Y-%m-%d %H:%M:%S (%:z)')\"");
+            pw.println();
             pw.println("for i in $(seq 1 $Nblock)");
             pw.println("do");
             pw.println("  nstart=$(echo \"$(( ($i-1) * $Nsimrun + 1))\")");
@@ -132,6 +135,16 @@ class DSMShellscript {
             pw.println("  done");
             pw.println("  wait");
             pw.println("done");
+            pw.println();
+            pw.println("end=$(date +'%s')");
+            pw.println("echo \"end  : $(date -d \"@${end}\" +'%Y-%m-%d %H:%M:%S (%:z)')\"");
+            pw.println("elapsed=$(echo \"$end - $start\" | bc)");
+            pw.println("((sec=elapsed%60, min=(elapsed%3600)/60, hrs=elapsed/3600))");
+//            pw.println("let hrs=\"$elapsed / 3600\"");
+//            pw.println("let min=\"($elapsed % 3600) / 60\"");
+//            pw.println("let sec=\"$elapsed % 60\"");
+            pw.println("timestamp=$(printf \"%d:%02d:%02d\" \"$hrs\" \"$min\" \"$sec\")");
+            pw.println("echo \"Finished in $timestamp\"");
         }
     }
 

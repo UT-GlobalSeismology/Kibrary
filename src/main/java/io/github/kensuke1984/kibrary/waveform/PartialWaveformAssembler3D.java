@@ -130,11 +130,11 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Set<PartialType> partialTypes;
     /**
-     * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
+     * FPpool このフォルダの直下に イベントフォルダ（FP）を置く
      */
     private Path fpPath;
     /**
-     * BPinfo このフォルダの直下に 観測点をソースとしたフォルダ（BP）を置く
+     * BPpool このフォルダの直下に 観測点をソースとしたフォルダ（BP）を置く
      */
     private Path bpPath;
     /**
@@ -247,9 +247,9 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#voxelPath voxel.inf");
             pw.println("##PartialTypes to compute for, listed using spaces (MU)");
             pw.println("#partialTypes ");
-            pw.println("##Path of a forward propagate spc folder (FPinfo)");
+            pw.println("##Path of a forward propagate spc folder (FPpool)");
             pw.println("#fpPath ");
-            pw.println("##Path of a back propagate spc folder (default:BPinfo, catalogue:BPcat)");
+            pw.println("##Path of a back propagate spc folder (default:BPpool, catalogue:BPcat)");
             pw.println("#bpPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
@@ -312,11 +312,11 @@ public class PartialWaveformAssembler3D extends Operation {
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
-        fpPath = property.parsePath("fpPath", "FPinfo", true, workPath);
+        fpPath = property.parsePath("fpPath", "FPpool", true, workPath);
         if (catalogue) {
             bpPath = property.parsePath("bpPath", "BPcat", true, workPath);
         } else {
-            bpPath = property.parsePath("bpPath", "BPinfo", true, workPath);
+            bpPath = property.parsePath("bpPath", "BPpool", true, workPath);
         }
 
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?

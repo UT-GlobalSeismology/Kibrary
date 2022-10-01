@@ -166,7 +166,6 @@ public class PseudoWaveformGenerator extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
         Path pseudoIDPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudoID", tag, dateStr, ".dat"));
         Path pseudoPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudo", tag, dateStr, ".dat"));
-        System.err.println("Outputting in " + pseudoIDPath + " , " + pseudoPath);
         output(pseudoWaveform, dVectorBuilder, pseudoIDPath, pseudoPath);
     }
 
@@ -192,6 +191,7 @@ public class PseudoWaveformGenerator extends Operation {
     }
 
     private RealVector createRandomNoise(DVectorBuilder dVectorBuilder) {
+        System.err.println("Adding noise of amplitude " + noisePower);
         RealVector[] noiseV = new RealVector[dVectorBuilder.getNTimeWindow()];
 
         // settings ; TODO: enable these values to be set
@@ -203,6 +203,8 @@ public class PseudoWaveformGenerator extends Operation {
         double maxFreq = 0.05;
         double minFreq = 0.01;
         int np = 6;
+
+        System.err.println("FYI, L2 norm of residual waveform: " + dVectorBuilder.fullObsVec().subtract(dVectorBuilder.fullSynVec()).getNorm());
 
         ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 import org.apache.commons.math3.linear.RealMatrix;
@@ -49,7 +48,7 @@ public class ResultEvaluation {
     }
 
     private static void writeVariance(double[] dat, Path outputPath) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE_NEW))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
                 // #CGVector normalizedVariance normalizedVariancePercent
                 pw.println(i + " " + dat[i] + " " + (dat[i] * 100));
@@ -57,7 +56,7 @@ public class ResultEvaluation {
         }
     }
     private static void writeAIC(double[] dat, Path outputPath) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE_NEW))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
                 // #CGVector AIC normalizedAIC
                 pw.println(i + " " + dat[i] + " " + (dat[i] / dat[0]));

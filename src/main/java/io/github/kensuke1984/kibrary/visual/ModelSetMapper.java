@@ -110,7 +110,7 @@ public class ModelSetMapper extends Operation {
             pw.println("##Name of a structure model to map perturbations against (PREM)");
             pw.println("#referenceStructureName ");
             pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
-            pw.println("#multigridPath ");
+            pw.println("#multigridPath multigrid.inf");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
@@ -162,12 +162,15 @@ public class ModelSetMapper extends Operation {
     public void run() throws IOException {
 
         // read initial structure
+        System.err.print("Initial structure: ");
         PolynomialStructure initialStructure = null;
         if (initialStructurePath != null) {
             initialStructure = PolynomialStructureFile.read(initialStructurePath);
         } else {
             initialStructure = PolynomialStructure.of(initialStructureName);
         }
+        // read reference structure
+        System.err.print("Reference structure: ");
         PolynomialStructure referenceStructure = null;
         if (referenceStructurePath != null) {
             referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
