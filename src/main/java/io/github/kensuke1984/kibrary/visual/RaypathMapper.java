@@ -65,9 +65,13 @@ public class RaypathMapper extends Operation {
      */
     private Path reusePath;
     /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String folderTag;
+    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * components for path
      */
@@ -132,7 +136,7 @@ public class RaypathMapper extends Operation {
             pw.println("#reusePath raypathMap");
             pw.println("##########The following is valid when reusePath is not set.");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("#folderTag ");
             pw.println("##SacComponents of data to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a data entry file, must be set if reusePath is not set.");
@@ -141,6 +145,8 @@ public class RaypathMapper extends Operation {
             pw.println("##Path of a voxel information file");
             pw.println("#voxelPath voxel.inf");
             pw.println("##########Overall settings");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("#fileTag ");
             pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
             pw.println("#cutAtPiercePoint ");
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
@@ -177,7 +183,7 @@ public class RaypathMapper extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -188,9 +194,11 @@ public class RaypathMapper extends Operation {
         } else {
             throw new IllegalArgumentException("A folder or file for input must be set.");
         }
+
         if (property.containsKey("voxelPath")) {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
         piercePhase = property.parseString("piercePhase", "ScS");
@@ -223,8 +231,8 @@ public class RaypathMapper extends Operation {
         outsideFileName = "raypathOutside.lst";
         turningPointFileName = "turningPoint.lst";
         perturbationFileName = "perturbation.lst";
-        gmtFileName = "raypathMap" + dateStr + ".sh";
-        psFileName = "raypathMap" + dateStr + ".eps";
+        gmtFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".sh");
+        psFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".eps");
     }
 
     @Override
@@ -279,7 +287,7 @@ public class RaypathMapper extends Operation {
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", tag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));

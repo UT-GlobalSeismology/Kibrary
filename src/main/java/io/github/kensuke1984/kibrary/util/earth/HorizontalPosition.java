@@ -78,7 +78,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         }
 
         return true;
-
     }
 
     @Override

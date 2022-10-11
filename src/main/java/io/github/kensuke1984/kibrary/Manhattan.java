@@ -14,6 +14,7 @@ import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
 import io.github.kensuke1984.kibrary.multigrid.MultigridPartialsForger;
+import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
@@ -89,6 +90,7 @@ enum Manhattan {
     InversionSolver(72, InversionSolver.class),
     ModelSetMapper(74, ModelSetMapper.class),
     // Tests 80
+    BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),
     PerturbationMapper(82, PerturbationMapper.class),
     ModelMapper(83, ModelMapper.class),

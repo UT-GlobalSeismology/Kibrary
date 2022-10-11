@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -30,20 +31,20 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Operation that creates a checkerboard model file.
+ * Operation to create input models for 3D block tests.
+ * <p>
+ * Shapes of the block input is to be given as a combination of boxes.
  * <p>
  * Perturbations are applied to each voxel in the input voxel file.
  * At each voxel, each given {@link VariableType} is perturbed.
  * Then, the model parameter value for each {@link PartialType} is computed and exported as a {@link KnownParameterFile}.
- * <p>
- * For the checkerboard pattern to be created properly,
- * dLatitudes must all be uniform,
- * and dLongitudes must be uniform at each latitude.
  *
  * @author otsuru
- * @since 2022/3/4
+ * @since 2022/10/11
  */
-public class CheckerboardMaker extends Operation {
+public class BlockModelMaker extends Operation {
+
+    private static final int MAX_BOX = 10;
 
     private final Property property;
     /**
@@ -70,10 +71,9 @@ public class CheckerboardMaker extends Operation {
 
     private List<VariableType> variableTypes;
     private double[] percents;
-    private boolean[] signFlips;
-    private double[] suppressFlipLatitudes;
-    private double[] suppressFlipLongitudes;
     private List<PartialType> partialTypes;
+
+    private List<Box> boxes = new ArrayList<>();
 
     /**
      * @param args  none to create a property file <br>
@@ -104,19 +104,26 @@ public class CheckerboardMaker extends Operation {
             pw.println("#variableTypes ");
             pw.println("##(double) Percentage of perturbation, listed using spaces in the order of partialTypes, must be set.");
             pw.println("#percents ");
-            pw.println("##(boolean) Whether to flip the sign, listed using spaces in the order of partialTypes, must be set.");
-            pw.println("#signFlips ");
-            pw.println("##Latitudes to suppress sign flip, listed using spaces, if needed.");
-            pw.println("#suppressFlipLatitudes ");
-            pw.println("##Longitudes to suppress sign flip, listed using spaces, if needed.");
-            pw.println("#suppressFlipLongitudes ");
             pw.println("##Partial types to set in model, listed using spaces, must be set.");
             pw.println("#partialTypes ");
+            pw.println("##########From here on, set borders of boxes to place perturbation blocks.");
+            pw.println("########## Defaults are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
+            pw.println("########## A box is recongized if at least one border value is set.");
+            pw.println("########## Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
+            for (int i = 1; i <= MAX_BOX; i++) {
+                pw.println("##" + MathAid.ordinalNumber(i) + " box");
+                pw.println("#lowerLatitude" + i + " ");
+                pw.println("#upperLatitude" + i + " ");
+                pw.println("#lowerLongitude" + i + " ");
+                pw.println("#upperLongitude" + i + " ");
+                pw.println("#lowerRadius" + i + " ");
+                pw.println("#upperRadius" + i + " ");
+            }
         }
         System.err.println(outPath + " is created.");
     }
 
-    public CheckerboardMaker(Property property) throws IOException {
+    public BlockModelMaker(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -137,17 +144,24 @@ public class CheckerboardMaker extends Operation {
         percents = property.parseDoubleArray("percents", null);
         if (percents.length != variableTypes.size())
             throw new IllegalArgumentException("Number of percents does not match number of variableTypes.");
-        signFlips = property.parseBooleanArray("signFlips", null);
-        if (signFlips.length != variableTypes.size())
-            throw new IllegalArgumentException("Number of signFlips does not match number of variableTypes.");
-
-        if (property.containsKey("suppressFlipLatitudes"))
-            suppressFlipLatitudes = property.parseDoubleArray("suppressFlipLatitudes", null);
-        if (property.containsKey("suppressFlipLongitudes"))
-            suppressFlipLongitudes = property.parseDoubleArray("suppressFlipLongitudes", null);
 
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
                 .collect(Collectors.toList());
+
+        for (int i = 1; i <= MAX_BOX; i++) {
+            if (property.containsKey("lowerLatitude" + i) || property.containsKey("upperLatitude" + i)
+                    || property.containsKey("lowerLongitude" + i) || property.containsKey("upperLongitude" + i)
+                    || property.containsKey("lowerRadius" + i) || property.containsKey("upperRadius" + i)) {
+                boxes.add(new Box(
+                        property.parseDouble("lowerLatitude" + i, "-90"),
+                        property.parseDouble("upperLatitude" + i, "90"),
+                        property.parseDouble("lowerLongitude" + i, "-180"),
+                        property.parseDouble("upperLongitude" + i, "180"),
+                        property.parseDouble("lowerRadius" + i, "0"),
+                        property.parseDouble("upperRadius" + i, String.valueOf(Double.MAX_VALUE))));
+            }
+
+        }
     }
 
     @Override
@@ -168,9 +182,8 @@ public class CheckerboardMaker extends Operation {
         List<HorizontalPiece> pieces = file.getHorizontalPieces();
 
         // set checkerboard model
-        System.err.println("Creating checkerboard perturbations.");
+        System.err.println("Creating block perturbations.");
         PerturbationModel model = new PerturbationModel();
-        HorizontalPosition referencePosition = pieces.get(0).getPosition();
         for (HorizontalPiece piece : pieces) {
             // extract information of each horizontal piece
             HorizontalPosition horizontalPosition = piece.getPosition();
@@ -179,17 +192,12 @@ public class CheckerboardMaker extends Operation {
             // loop for each layer
             for (int i = 0; i < radii.length; i++) {
                 FullPosition position = horizontalPosition.toFullPosition(radii[i]);
-                // find the sign shift with respect to referencePosition
-                int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude)
-                        + (int) Math.round((position.getLongitude() - referencePosition.getLongitude()) / dLongitude)
-                        + i + numForSuppressFlip(position);
 
                 // construct voxel
                 double volume = Earth.computeVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < variableTypes.size(); k++) {
-                    // CAUTION: (numdiff % 2) can be either 1 or -1 !!
-                    double percent = ((numDiff % 2 != 0) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
+                    double percent = (isInBox(position)) ? percents[k] : 0;
                     voxel.setPercent(variableTypes.get(k), percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
@@ -198,7 +206,7 @@ public class CheckerboardMaker extends Operation {
             }
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "block", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation list files.");
@@ -208,7 +216,7 @@ public class CheckerboardMaker extends Operation {
         }
 
         // set known parameters
-        System.err.println("Setting checkerboard model parameters.");
+        System.err.println("Setting model parameters.");
         List<KnownParameter> knowns = new ArrayList<>();
         for (PartialType partial : partialTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
@@ -223,18 +231,32 @@ public class CheckerboardMaker extends Operation {
         KnownParameterFile.write(knowns, knownPath);
     }
 
-    private int numForSuppressFlip(FullPosition position) {
-        int num = 0;
-        if (suppressFlipLatitudes != null) {
-            for (double lat : suppressFlipLatitudes) {
-                if (position.getLatitude() > lat) num++;
-            }
+    private boolean isInBox(FullPosition position) {
+        for (Box box : boxes) {
+            if (position.isInRange(box.lowerLatitude, box.upperLatitude, box.lowerLongitude, box.upperLongitude,
+                    box.lowerRadius, box.upperRadius))
+                return true;
         }
-        if (suppressFlipLongitudes != null) {
-            for (double lon : suppressFlipLongitudes) {
-                if (position.getLongitude() > lon) num++;
-            }
+        return false;
+    }
+
+    private class Box {
+        private double lowerLatitude;
+        private double upperLatitude;
+        private double lowerLongitude;
+        private double upperLongitude;
+        private double lowerRadius;
+        private double upperRadius;
+
+        private Box(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude,
+                double lowerRadius, double upperRadius) {
+            this.lowerLatitude = lowerLatitude;
+            this.upperLatitude = upperLatitude;
+            this.lowerLongitude = lowerLongitude;
+            this.upperLongitude = upperLongitude;
+            this.lowerRadius = lowerRadius;
+            this.upperRadius = upperRadius;
         }
-        return num;
+
     }
 }
