@@ -61,7 +61,7 @@ public class MatrixAssembly {
      * @param partialIDs
      * @param parameterList
      * @param weightingType
-     * @param fillEmptyPartial
+     * @param fillEmptyPartial (boolean)
      */
     public MatrixAssembly(BasicID[] basicIDs, PartialID[] partialIDs, List<UnknownParameter> parameterList,
             WeightingType weightingType, boolean fillEmptyPartial) {
