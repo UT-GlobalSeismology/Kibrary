@@ -352,6 +352,7 @@ public class DataFeatureHistogram extends Operation {
            createPlot(outPath, snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
                    dSNRatio * 5, minSNRatio, snRatioUpperBound);
        }
+
    }
 
    private static void createPlot(Path outPath, String fileNameRoot, String xLabel, double interval,
