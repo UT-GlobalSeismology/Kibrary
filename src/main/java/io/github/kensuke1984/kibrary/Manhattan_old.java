@@ -5,7 +5,6 @@ import java.util.Arrays;
 import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
@@ -26,7 +25,6 @@ public enum Manhattan_old {
     Result(14, Result.class), //
     SecondHandler(15, SecondHandler.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
-    OneDPartialDSMSetup(18, OneDPartialDSMSetup.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
     AtAMaker(22, AtAMaker.class),//
     Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//

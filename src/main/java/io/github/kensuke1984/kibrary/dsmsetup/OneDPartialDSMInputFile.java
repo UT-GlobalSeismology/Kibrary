@@ -27,7 +27,14 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  */
 public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
 
+    /**
+     * perturbation radii
+     */
     private final double[] radii;
+    /**
+     * Whether perturbation radii are close to epicentral radius.
+     * The perturbation radii close to epicentral radius are commented out.
+     */
     private boolean[] commentPerturbationR;
 
     public OneDPartialDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> stations, String outputDir,
@@ -72,7 +79,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(output + "/");
             pw.println("PSV.spc");
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARA");
                 pw.println(n + "." + event + ".PARC");
@@ -125,7 +132,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println("PSV.spc");
 
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PAR1");
                 pw.println(n + "." + event + ".PAR2");
@@ -174,7 +181,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println("SH.spc");
 
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARL");
                 pw.println(n + "." + event + ".PARN");
@@ -221,7 +228,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(output + "/");
             pw.println("SH.spc");
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PAR2");
             });

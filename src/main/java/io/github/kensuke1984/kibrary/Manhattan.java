@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
@@ -81,6 +82,7 @@ enum Manhattan {
     PartialIDMerge(62, PartialIDMerge.class),
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
+    OneDPartialDSMSetup(65, OneDPartialDSMSetup.class), //
     MultigridPartialsForger(67, MultigridPartialsForger.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     // Inversion 70
