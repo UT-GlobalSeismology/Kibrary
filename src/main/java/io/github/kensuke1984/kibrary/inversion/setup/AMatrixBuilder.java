@@ -55,9 +55,10 @@ final class AMatrixBuilder {
      * The volumes of voxels will be multiplied to the partial waveforms here.
      *
      * @param weighting (Weighting)
+     * @param fillEmptyPartial (boolean)
      * @return (Matrix) A
      */
-    ParallelizedMatrix buildWithWeight(Weighting weighting) {
+    ParallelizedMatrix buildWithWeight(Weighting weighting, boolean fillEmptyPartial) {
 
         ParallelizedMatrix a = new ParallelizedMatrix(dVector.getNpts(), parameterList.size());
         a.scalarMultiply(0);
@@ -110,19 +111,24 @@ final class AMatrixBuilder {
         });
 
         if (count.get() != dVector.getNTimeWindow() * nUnknowns) {
-            System.err.println("Printing BasicIDs that are not in the partialID set...");
-            //TODO
-//            Set<id_station> idStationSet
-//                = Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getObserver()))
-//                    .distinct().collect(Collectors.toSet());
-//            Stream.of(DVECTOR.getObsIDs()).forEach(id -> {
-//                id_station idStation = new id_station(id.getGlobalCMTID(), id.getObserver());
-//                if (!idStationSet.contains(idStation)) {
-//                    System.out.println(id);
-//                }
-//            });
-            throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " != " +
-                    dVector.getNTimeWindow() + " * (" + nUnknowns + ")");
+            if (fillEmptyPartial) {
+                System.err.println("Fill 0 to empty partials : The number of empty partial is " + dVector.getNTimeWindow()
+                        + " * " + nUnknowns + " - " + count.get() + " = " + (dVector.getNTimeWindow() * nUnknowns - count.get()));
+            } else {
+                System.err.println("Printing BasicIDs that are not in the partialID set...");
+                //TODO
+//                Set<id_station> idStationSet
+//                    = Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getObserver()))
+//                        .distinct().collect(Collectors.toSet());
+//                Stream.of(DVECTOR.getObsIDs()).forEach(id -> {
+//                    id_station idStation = new id_station(id.getGlobalCMTID(), id.getObserver());
+//                    if (!idStationSet.contains(idStation)) {
+//                        System.out.println(id);
+//                    }
+//                });
+                throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " != " +
+                        dVector.getNTimeWindow() + " * (" + nUnknowns + ")");
+            }
         }
         System.err.println(" A is read and built in " + GadgetAid.toTimeString(System.nanoTime() - t));
 

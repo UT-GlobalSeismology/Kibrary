@@ -180,7 +180,7 @@ public class MultigridDesigner extends Operation {
             PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
 
             // assemble matrices
-            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType, false);
             ata = assembler.getAta();
         }
 

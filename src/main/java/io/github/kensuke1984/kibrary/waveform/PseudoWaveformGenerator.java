@@ -78,6 +78,10 @@ public class PseudoWaveformGenerator extends Operation {
     private boolean setPseudoAsSyn;
     private boolean noise;
     private double noisePower;
+    /**
+     * Fill 0 to empty partial waveforms or not.
+     */
+    private boolean fillEmptyPartial;
 
     /**
      * @param args  none to create a property file <br>
@@ -114,6 +118,8 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("#noise ");
             pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
             pw.println("#noisePower ");
+            pw.println("##Fill 0 to empty partial waveforms (false)");
+            pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -138,6 +144,7 @@ public class PseudoWaveformGenerator extends Operation {
         if (noise) {
             noisePower = property.parseDouble("noisePower", "1000");
         }
+        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
 
     @Override
@@ -150,7 +157,7 @@ public class PseudoWaveformGenerator extends Operation {
         List<UnknownParameter> params = KnownParameter.extractParameterList(knowns);
 
         // assemble matrices (they should not be weighted)
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingType.IDENTITY);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingType.IDENTITY, fillEmptyPartial);
         ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 

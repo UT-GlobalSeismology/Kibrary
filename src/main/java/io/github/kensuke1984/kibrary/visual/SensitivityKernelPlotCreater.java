@@ -113,6 +113,15 @@ public class SensitivityKernelPlotCreater {
                             writer2_s.write(String.format("%.5e ", cumulativeSensitivity));
                         }
 
+//                        PrintWriter writer2 = new PrintWriter(new FileWriter("partial.lst", true));
+//
+//                        if (lat < 8.76 && lat > 8.74 && lon < -91.24 && lon > -91.26 && r > 3500. && r < 3510.) {
+//                            for (int i = 0; i < data.length; i++) {
+//                                double time = partial.getStartTime() + i;
+//                                writer2.println(time + " " +data[i]);
+//                            }
+//                        }
+
                         writer2.println();
                         writer2.close();
                         writer2_s.newLine();

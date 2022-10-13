@@ -46,6 +46,25 @@ public class MatrixAssembly {
      */
     public MatrixAssembly(BasicID[] basicIDs, PartialID[] partialIDs, List<UnknownParameter> parameterList,
             WeightingType weightingType) {
+        this(basicIDs, partialIDs, parameterList, weightingType, false);
+    }
+
+    /**
+     * Compute A<sup>T</sup>A and A<sup>T</sup>d.
+     * <p>
+     * Note that A<sup>T</sup>d can be calculated as follows: <br>
+     * A<sup>T</sup>d = v <br>
+     * then <br>
+     * v<sup>T</sup> = (A<sup>T</sup>d)<sup>T</sup>= d<sup>T</sup>A
+     *
+     * @param basicIDs
+     * @param partialIDs
+     * @param parameterList
+     * @param weightingType
+     * @param fillEmptyPartial
+     */
+    public MatrixAssembly(BasicID[] basicIDs, PartialID[] partialIDs, List<UnknownParameter> parameterList,
+            WeightingType weightingType, boolean fillEmptyPartial) {
 
         // set DVector
         System.err.println("Setting data for d vector");
@@ -61,7 +80,7 @@ public class MatrixAssembly {
 
         // assemble A and d
         System.err.println("Assembling A matrix");
-        a = aMatrix.buildWithWeight(weighting);
+        a = aMatrix.buildWithWeight(weighting, fillEmptyPartial);
         System.err.println("Assembling d vector");
         d = dVectorBuilder.buildWithWeight(weighting);
 

@@ -84,6 +84,10 @@ public class LetMeInvert extends Operation {
     */
     private double[] alpha;
     private int evaluateNum;
+    /**
+     * Fill 0 to empty partial waveforms or not.
+     */
+    private boolean fillEmptyPartial;
 
     /**
      * @param args  none to create a property file <br>
@@ -122,6 +126,8 @@ public class LetMeInvert extends Operation {
             pw.println("#alpha ");
             pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC (100)");
             pw.println("#evaluateNum ");
+            pw.println("##Fill 0 to empty partial waveforms (false)");
+            pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -148,6 +154,7 @@ public class LetMeInvert extends Operation {
         if (property.containsKey("alpha")) alpha = property.parseDoubleArray("alpha", "1 100 1000");
         evaluateNum = property.parseInt("evaluateNum", "100");
 
+        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
 
     @Override
@@ -159,7 +166,7 @@ public class LetMeInvert extends Operation {
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType, fillEmptyPartial);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         int dLength = assembler.getD().getDimension();

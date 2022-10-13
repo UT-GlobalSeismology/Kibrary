@@ -22,8 +22,8 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
