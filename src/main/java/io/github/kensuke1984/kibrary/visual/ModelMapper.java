@@ -42,7 +42,7 @@ public class ModelMapper extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
 
     /**
      * Path of model file
@@ -91,7 +91,7 @@ public class ModelMapper extends Operation {
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("#folderTag ");
             pw.println("##Path of model file, must be set.");
             pw.println("#modelPath model.lst");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
@@ -121,7 +121,7 @@ public class ModelMapper extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         modelPath = property.parsePath("modelPath", null, true, workPath);
         if (property.containsKey("initialStructurePath")) {
@@ -185,7 +185,7 @@ public class ModelMapper extends Operation {
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (VariableType variable : variableTypes) {

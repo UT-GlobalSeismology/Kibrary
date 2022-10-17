@@ -34,9 +34,9 @@ public class DatasetMerge extends Operation {
      */
     private String nameRoot;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * List of paths of input dataset folders
      */
@@ -61,10 +61,10 @@ public class DatasetMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output dataset folders, must be set");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##########From here on, list up paths of dataset folders to merge.");
-            pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left blank.");
+            pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_IN; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " dataset");
                 pw.println("#inPath" + i + " ");
@@ -81,7 +81,7 @@ public class DatasetMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", null);
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         for (int i = 1; i <= MAX_IN; i++) {
             String inKey = "inPath" + i;
@@ -102,7 +102,7 @@ public class DatasetMerge extends Operation {
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
 
         // each datset folder
         for (Path inPath : inPaths) {

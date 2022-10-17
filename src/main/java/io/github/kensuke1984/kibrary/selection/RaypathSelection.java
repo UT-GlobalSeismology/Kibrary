@@ -44,7 +44,7 @@ public class RaypathSelection extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * Path of the output data entry list file
      */
@@ -128,8 +128,8 @@ public class RaypathSelection extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a data entry list file, must be set");
@@ -205,7 +205,7 @@ public class RaypathSelection extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -276,7 +276,7 @@ public class RaypathSelection extends Operation {
         turningPointPhase = property.parseString("turningPointPhase", "ScS");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedEntry", tag, dateStr, ".lst"));
+        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedEntry", fileTag, dateStr, ".lst"));
     }
 
     @Override

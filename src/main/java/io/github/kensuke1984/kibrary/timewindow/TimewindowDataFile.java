@@ -278,12 +278,26 @@ public final class TimewindowDataFile {
             } while (!Files.exists(filePath) || Files.isDirectory(filePath));
         }
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".txt");
+        Path outputPath;
+        if (cmdLine.hasOption("o")) {
+            outputPath = Paths.get(cmdLine.getOptionValue("o"));
+        } else {
+            // set the output file name the same as the input, but with extension changed to txt
+            String fileName = filePath.getFileName().toString();
+            outputPath = Paths.get(fileName.substring(0, fileName.lastIndexOf('.')) + ".txt");
+        }
 
-        Set<TimewindowData> set = TimewindowDataFile.read(filePath);
+        Set<TimewindowData> windows = TimewindowDataFile.read(filePath);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            set.stream().sorted().forEach(pw::println);
+            pw.println("#station, network, lat, lon, event, component, startTime, endTime, phases, "
+                    + "epicentralDistance, azimuth");
+            windows.stream().sorted().forEach(window -> {
+                double distance = window.getGlobalCMTID().getEventData().getCmtPosition()
+                        .computeEpicentralDistanceDeg(window.getObserver().getPosition());
+                double azimuth = window.getGlobalCMTID().getEventData().getCmtPosition()
+                        .computeAzimuthDeg(window.getObserver().getPosition());
+                pw.println(window.toString() + " " + Precision.round(distance, 2) + " " + Precision.round(azimuth, 2));
+            });
         }
     }
 }

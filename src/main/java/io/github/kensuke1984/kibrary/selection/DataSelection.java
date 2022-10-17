@@ -75,7 +75,7 @@ public class DataSelection extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * Path of the output information file
      */
@@ -160,8 +160,8 @@ public class DataSelection extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##Sac components to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(double) sacSamplingHz (20)");
@@ -175,7 +175,7 @@ public class DataSelection extends Operation {
             pw.println("##Path of a timewindow file, must be defined");
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a static correction file");
-            pw.println("## If you do not want to consider static correction, then comment out the next line.");
+            pw.println("## If you do not want to consider static correction, leave this unset.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift (10.)");
             pw.println("#maxStaticShift ");
@@ -204,7 +204,7 @@ public class DataSelection extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -237,8 +237,8 @@ public class DataSelection extends Operation {
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", tag, dateStr, ".lst"));
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", tag, dateStr, ".dat"));
+        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", fileTag, dateStr, ".lst"));
+        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", fileTag, dateStr, ".dat"));
         dataFeatureList = Collections.synchronizedList(new ArrayList<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }

@@ -76,7 +76,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -159,8 +159,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##To reuse FP & BP pools that have already been created, set the folder containing them");
             pw.println("#reusePath threeDPartial");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set");
@@ -198,7 +198,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("reusePath"))
             reusePath = property.parsePath("reusePath", null, true, workPath);
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
@@ -263,7 +263,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             outPath = reusePath;
             System.err.println("Reusing " + reusePath);
         } else {
-            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, dateStr);
+            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, dateStr);
             property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
             FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
             createPointInformationFile();

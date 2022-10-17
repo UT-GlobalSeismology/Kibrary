@@ -80,7 +80,7 @@ public class TimewindowMaker extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * Path of the output timewindow file
      */
@@ -154,8 +154,8 @@ public class TimewindowMaker extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(boolean) Whether or not to use major arc phases (false)");
@@ -188,7 +188,7 @@ public class TimewindowMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
 
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         majorArc = property.parseBoolean("majorArc", "false");
@@ -207,9 +207,9 @@ public class TimewindowMaker extends Operation {
         catalogue_pP = readCatalogue(catalogueName_pP);
 
         String dateStr = GadgetAid.getTemporaryString();
-        outTimewindowPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", tag, dateStr, ".dat"));
-        invalidListPath = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", tag, dateStr, ".txt"));
-        outTravelTimePath = workPath.resolve(DatasetAid.generateOutputFileName("travelTime", tag, dateStr, ".inf"));
+        outTimewindowPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", fileTag, dateStr, ".dat"));
+        invalidListPath = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", fileTag, dateStr, ".txt"));
+        outTravelTimePath = workPath.resolve(DatasetAid.generateOutputFileName("travelTime", fileTag, dateStr, ".inf"));
         timewindowSet = Collections.synchronizedSet(new HashSet<>());
         travelTimeSet = Collections.synchronizedSet(new HashSet<>());
     }

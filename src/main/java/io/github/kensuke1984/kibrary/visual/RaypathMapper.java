@@ -135,7 +135,7 @@ public class RaypathMapper extends Operation {
             pw.println("##To reuse raypath data that have already been exported, set the folder containing them");
             pw.println("#reusePath raypathMap");
             pw.println("##########The following is valid when reusePath is not set.");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##SacComponents of data to be used, listed using spaces (Z R T)");
             pw.println("#components ");
@@ -145,7 +145,7 @@ public class RaypathMapper extends Operation {
             pw.println("##Path of a voxel information file");
             pw.println("#voxelPath voxel.inf");
             pw.println("##########Overall settings");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
             pw.println("#cutAtPiercePoint ");

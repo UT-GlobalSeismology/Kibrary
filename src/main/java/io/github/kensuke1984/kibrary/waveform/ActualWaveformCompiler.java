@@ -84,7 +84,7 @@ public class ActualWaveformCompiler extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -207,8 +207,8 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
@@ -256,7 +256,7 @@ public class ActualWaveformCompiler extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -359,7 +359,7 @@ public class ActualWaveformCompiler extends Operation {
        readPeriodRanges();
 
        String dateStr = GadgetAid.getTemporaryString();
-       outPath = DatasetAid.createOutputFolder(workPath, "compiled", tag, dateStr);
+       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, dateStr);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        EventListFile.write(eventSet, outPath.resolve("event.lst"));

@@ -46,7 +46,7 @@ public class MultigridDesigner extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -104,8 +104,8 @@ public class MultigridDesigner extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##########If this section is set, the next section is not neeeded.");
             pw.println("##Path of an AtA file");
             pw.println("#ataPath ata.lst");
@@ -142,7 +142,7 @@ public class MultigridDesigner extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         if (property.containsKey("ataPath")) {
             ataPath = property.parsePath("ataPath", null, true, workPath);
@@ -185,7 +185,7 @@ public class MultigridDesigner extends Operation {
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "multigrid", tag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "multigrid", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output unknown parameter with large diagonal component and correlation

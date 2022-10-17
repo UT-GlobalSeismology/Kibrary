@@ -264,18 +264,20 @@ public final class StaticCorrectionDataFile {
             } while (!Files.exists(filePath) || Files.isDirectory(filePath));
         }
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("staticCorrection" + GadgetAid.getTemporaryString() + ".txt");
+        Path outputPath;
+        if (cmdLine.hasOption("o")) {
+            outputPath = Paths.get(cmdLine.getOptionValue("o"));
+        } else {
+            // set the output file name the same as the input, but with extension changed to txt
+            String fileName = filePath.getFileName().toString();
+            outputPath = Paths.get(fileName.substring(0, fileName.lastIndexOf('.')) + ".txt");
+        }
 
-        Set<StaticCorrectionData> scf = StaticCorrectionDataFile.read(filePath);
+        Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(filePath);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            scf.stream().sorted().forEach(corr -> {
-                double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeAzimuth(corr.getObserver().getPosition()));
-                double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeEpicentralDistance(corr.getObserver().getPosition()));
-                pw.println(corr.toString() + " " + azimuth + " " + distance);
-            });
+            pw.println("#station, network, lat, lon, event, component, startTime, phases, "
+                    + "timeShift, amplitudeRatio");
+            corrections.stream().sorted().forEach(pw::println);
         }
     }
 

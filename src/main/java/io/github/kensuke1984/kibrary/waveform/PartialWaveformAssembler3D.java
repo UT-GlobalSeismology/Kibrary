@@ -98,7 +98,7 @@ public class PartialWaveformAssembler3D extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * output directory Path
      */
@@ -233,8 +233,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##SacComponents to be used (Z R T)");
             pw.println("#components ");
             pw.println("##(double) Sac sampling Hz (20)");
@@ -289,7 +289,7 @@ public class PartialWaveformAssembler3D extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -834,7 +834,7 @@ public class PartialWaveformAssembler3D extends Operation {
         synchronized (PartialWaveformAssembler3D.class) {
             do {
                 dateString = GadgetAid.getTemporaryString();
-                outPath = DatasetAid.createOutputFolder(workPath, "assembled", tag, dateString);
+                outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, dateString);
                 logPath = outPath.resolve("assembler" + dateString + ".log");
             } while (Files.exists(logPath));
             Files.createFile(logPath);

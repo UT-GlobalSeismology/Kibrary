@@ -46,9 +46,9 @@ public class DataKitchen extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -96,8 +96,8 @@ public class DataKitchen extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##The name of catalog to use from {cmt, pde}  (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling Hz, can not be changed now (20)");
@@ -134,7 +134,7 @@ public class DataKitchen extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":
@@ -180,7 +180,7 @@ public class DataKitchen extends Operation {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "processed", tag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "processed", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event

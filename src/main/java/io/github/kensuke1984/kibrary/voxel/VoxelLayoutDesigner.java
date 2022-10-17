@@ -47,7 +47,7 @@ public class VoxelLayoutDesigner extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
 
     /**
      * Path of the input data entry list file
@@ -88,8 +88,8 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##Path of a data entry list file, must be set");
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Phase to compute pierce points for (ScS)");
@@ -129,7 +129,7 @@ public class VoxelLayoutDesigner extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         piercePhase = property.parseString("piercePhase", "ScS");
@@ -204,7 +204,7 @@ public class VoxelLayoutDesigner extends Operation {
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", tag, GadgetAid.getTemporaryString(), ".inf"));
+        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
         VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPieces, outputPath);
     }
 

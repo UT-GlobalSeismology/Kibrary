@@ -33,7 +33,7 @@ public class SensitivityKernelMapper extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * components to make maps for
      */
@@ -80,8 +80,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##PartialTypes to be used, listed using spaces (MU)");
@@ -109,7 +109,7 @@ public class SensitivityKernelMapper extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU"))
@@ -137,7 +137,7 @@ public class SensitivityKernelMapper extends Operation {
         double[] radii = Arrays.stream(partials).mapToDouble(partial -> partial.getVoxelPosition().getR()).distinct().sorted().toArray();
 
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", folderTag, GadgetAid.getTemporaryString());
 
         for (PartialID partial : partials) {
             SACComponent component = partial.getSacComponent();

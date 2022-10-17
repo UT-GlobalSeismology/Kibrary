@@ -307,10 +307,16 @@ public final class BasicIDFile {
             ids = read(Paths.get(cmdLine.getOptionValue("i")));
         }
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("basicID" + GadgetAid.getTemporaryString() + ".txt");
+        Path outputIdsPath;
+        if (cmdLine.hasOption("o")) {
+            outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
+        } else {
+            // set the output file name the same as the input, but with extension changed to txt
+            String idFileName = Paths.get(cmdLine.getOptionValue("i")).getFileName().toString();
+            outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
+        }
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
             Arrays.stream(ids).forEach(pw::println);
         }
     }

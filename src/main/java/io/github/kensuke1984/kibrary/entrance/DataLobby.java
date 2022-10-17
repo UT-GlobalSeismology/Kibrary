@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,6 +17,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -27,6 +29,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * Output directory "dl*" is created under the work path,
  * and eventDir/mseed created under this directory will include the downloaded files.
  * (memo: All download procedures were gathered here because downloading using multiple threads in FirstHandler caused errors.)
+ * <p>
+ * Events are downloaded in chronological order, so if processing fails at a certain event,
+ * you can restart downloading from that event onward.
+ * TODO this is only true for 2005 or later
  * <p>
  * See also {@link EventDataPreparer}.
  *
@@ -41,9 +47,9 @@ public class DataLobby extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
 
     private String datacenter;
     private String networks;
@@ -91,8 +97,8 @@ public class DataLobby extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##Datacenter to send request, from {IRIS, ORFEUS} (IRIS)");
             pw.println("#datacenter ");
             pw.println("##Network names for request, listed using commas, must be defined");
@@ -137,7 +143,7 @@ public class DataLobby extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         datacenter = property.parseStringSingle("datacenter", "IRIS");
         networks = property.parseStringSingle("networks", null);
@@ -179,11 +185,11 @@ public class DataLobby extends Operation {
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         final AtomicInteger n = new AtomicInteger();
-        requestedEvents.stream().sorted().forEach(event -> {
+        requestedEvents.stream().map(GlobalCMTID::getEventData).sorted(Comparator.comparing(GlobalCMTAccess::getCMTTime)).forEach(event -> {
             try {
                 n.incrementAndGet();
                 System.err.println(event + " (# " + n + " of " + n_total + ")");

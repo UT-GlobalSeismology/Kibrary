@@ -80,8 +80,6 @@ public class InversionSolver extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
             pw.println("##Path of ata file (ata.lst)");
             pw.println("#ataPath ");
             pw.println("##Path of atd file (atd.lst)");

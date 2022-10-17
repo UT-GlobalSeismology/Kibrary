@@ -44,7 +44,7 @@ public class BasicIDMerge extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
 
     private List<Path> basicIDPaths = new ArrayList<>();
     private List<Path> basicPaths = new ArrayList<>();
@@ -69,8 +69,8 @@ public class BasicIDMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output basic ID and waveform files (actual)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##########From here on, list up pairs of the paths of a basic ID file and a basic waveform file.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
@@ -90,7 +90,7 @@ public class BasicIDMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "actual");
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         for (int i = 1; i <= MAX_PAIR; i++) {
             String basicIDKey = "basicIDPath" + i;
@@ -138,8 +138,8 @@ public class BasicIDMerge extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
         Path observerFilePath = workPath.resolve("observer" + dateStr + ".lst");
         Path eventFilePath = workPath.resolve("event" + dateStr + ".lst");
-        Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", tag, dateStr, ".dat"));
-        Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, dateStr, ".dat"));
+        Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", fileTag, dateStr, ".dat"));
+        Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, dateStr, ".dat"));
 
         System.err.println("Outputting in " + observerFilePath);
         ObserverListFile.write(observerSet, workPath.resolve(observerFilePath));
