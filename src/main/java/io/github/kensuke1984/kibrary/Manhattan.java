@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
@@ -68,6 +69,7 @@ enum Manhattan {
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     RaypathSelection(34, RaypathSelection.class),
+    StaticCorrectionForger(38, StaticCorrectionForger.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),

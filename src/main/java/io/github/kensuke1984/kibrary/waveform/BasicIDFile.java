@@ -317,6 +317,8 @@ public final class BasicIDFile {
         }
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
+            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
+                    + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");
             Arrays.stream(ids).forEach(pw::println);
         }
     }

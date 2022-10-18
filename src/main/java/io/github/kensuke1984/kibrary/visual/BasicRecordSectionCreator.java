@@ -490,7 +490,9 @@ public class BasicRecordSectionCreator extends Operation {
 
             // set names of all phases to display, and the phase to align if it is specified
             timeTool.setPhaseNames(displayPhases);
-            for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+            if (alignPhases != null) {
+                for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+            }
 
             // calculate travel times and store in arrays
             Double[][] travelTimes = new Double[displayPhases.length][iNum];

@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -37,14 +36,27 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * By reusing the output folder, these pierce point files can be reused to save the time to compute them again.
  * <p>
  * This class uses GMT to draw raypaths.
- * Raypaths can be classified in different colors binned by epicentral distance, azimuth at the event,
+ * Raypaths can be classified in different colors based on phase or binned by epicentral distance, azimuth at the event,
  * azimuth at the observer (backazimuth), and azimuth at the turning point.
+ * See also {@link ColorBinInformationFile}.
+ * When coloring by phase, the color bin information file shall be "0 / color0 / 1 / color1 / 2 ...",
+ * with the order of phases as set in piercePhases.
+ * <p>
+ * By reusing the output folder, computation of pierce points can be omitted.
+ * When you want to change the raypaths that are mapped, do not reuse the output folder.
  *
  * @author Kensuke Konishi
  * @since version 0.1.2
  * @version 2022/4/24 moved and renamed from external.gmt.RaypathDistribution
  */
 public class RaypathMapper extends Operation {
+
+    // color modes, corresponding to the numbers written in the property file
+    private static final int COLOR_BY_PHASE = 1;
+    private static final int BIN_DISTANCE = 2;
+    private static final int BIN_AZIMUTH = 3;
+    private static final int BIN_BACKAZIMUTH = 4;
+    private static final int BIN_MIDAZIMUTH = 5;
 
     /**
      * The interval of deciding map size
@@ -85,16 +97,12 @@ public class RaypathMapper extends Operation {
     private Path voxelPath;
 
     private boolean cutAtPiercePoint;
-    private String piercePhase;
+    private String[] piercePhases;
     private double lowerPierceRadius;
     private double upperPierceRadius;
     private String structureName;
 
     private int colorMode;
-    private static final int BIN_DISTANCE = 1;
-    private static final int BIN_AZIMUTH = 2;
-    private static final int BIN_BACKAZIMUTH = 3;
-    private static final int BIN_MIDAZIMUTH = 4;
     private Path colorBinPath;
     private boolean drawOutsides;
     private Path outsideColorBinPath;
@@ -150,8 +158,8 @@ public class RaypathMapper extends Operation {
             pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
             pw.println("#cutAtPiercePoint ");
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
-            pw.println("##Phase to compute pierce points for (ScS)");
-            pw.println("#piercePhase ");
+            pw.println("##Phases to compute pierce points for, listed using spaces (ScS)");
+            pw.println("#piercePhases ");
             pw.println("##(double) Lower radius to compute pierce points for [km] (3480)");
             pw.println("#lowerPierceRadius ");
             pw.println("##(double) Upper radius to compute pierce points for [km] (3880)");
@@ -159,8 +167,8 @@ public class RaypathMapper extends Operation {
             pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
             pw.println("#structureName ");
             pw.println("##########Settings for mapping");
-            pw.println("##Mode of coloring of raypaths {0: single color, 1: bin by distance, 2: bin by azimuth,");
-            pw.println("## 3: bin by back azimuth, 4: bin by turning-point-azimuth} (0)");
+            pw.println("##Mode of coloring of raypaths {0: single color, 1: color by phase, 2: bin by distance, 3: bin by azimuth,");
+            pw.println("## 4: bin by back azimuth, 5: bin by turning-point-azimuth} (0)");
             pw.println("#colorMode ");
             pw.println("##Path of color bin file, must be set if colorMode is not 0");
             pw.println("#colorBinPath ");
@@ -201,7 +209,7 @@ public class RaypathMapper extends Operation {
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
-        piercePhase = property.parseString("piercePhase", "ScS");
+        piercePhases = property.parseStringArray("piercePhases", "ScS");
         lowerPierceRadius = property.parseDouble("lowerPierceRadius", "3480");
         upperPierceRadius = property.parseDouble("upperPierceRadius", "3880");
         structureName = property.parseString("structureName", "prem");
@@ -301,6 +309,9 @@ public class RaypathMapper extends Operation {
     }
 
     private void outputRaypaths(Set<DataEntry> validEntrySet) throws IOException {
+        // here, only a single raypath from source to receiver is needed for each event-observer pair,
+        //  so use any one phase just for the sake of setting a phase name
+        String piercePhase = piercePhases[0];
         Set<Raypath> raypaths = validEntrySet.stream().map(entry -> entry.toRaypath(piercePhase)).collect(Collectors.toSet());
 
         List<String> raypathLines = new ArrayList<>();
@@ -314,7 +325,7 @@ public class RaypathMapper extends Operation {
         TauPPierceWrapper pierceTool = null;
         try {
             double[] pierceRadii = {lowerPierceRadius, upperPierceRadius};
-            pierceTool = new TauPPierceWrapper(structureName, piercePhase, pierceRadii);
+            pierceTool = new TauPPierceWrapper(structureName, piercePhases, pierceRadii);
             pierceTool.compute(validEntrySet);
         } catch (TauModelException e) {
             throw new RuntimeException(e);
@@ -325,12 +336,12 @@ public class RaypathMapper extends Operation {
         List<String> insideLines = new ArrayList<>();
         List<String> outsideLines = new ArrayList<>();
         for (Raypath raypath : allRaypaths) {
-            // add all bottom turning points
-            List<FullPosition> turningPoints = raypath.findTurningPoints();
-            turningPoints.forEach(pos -> turningPointLines.add(pos.toHorizontalPosition().toString()));
             // add all raypath segments inside layer
             List<Raypath> insideSegments = raypath.clipInsideLayer(lowerPierceRadius, upperPierceRadius);
             insideSegments.forEach(segment -> insideLines.add(lineFor(raypath, segment)));
+            // add all bottom turning points inside layer
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints().stream())
+                    .forEach(pos -> turningPointLines.add(pos.toHorizontalPosition().toString()));
             // add all raypath segments outside layer
             List<Raypath> outsideSegments = raypath.clipOutsideLayer(lowerPierceRadius, upperPierceRadius);
             outsideSegments.forEach(segment -> outsideLines.add(lineFor(raypath, segment)));
@@ -351,12 +362,14 @@ public class RaypathMapper extends Operation {
      * @param raypathSegment (Raypath) The raypath segment
      * @return (String) Output line for the raypath segment
      */
-    private static String lineFor(Raypath raypath, Raypath raypathSegment) {
+    private String lineFor(Raypath raypath, Raypath raypathSegment) {
         // create output line
         // Only output latitude and longitude, without radius.
+        // Phase is converted to its index number.
         // Math.floor is used because intervals will be set by integer, as "int_i <= val < int_{i+1}"
         String line = raypathSegment.getSource().toHorizontalPosition() + " "
                 + raypathSegment.getReceiver().toHorizontalPosition() + " "
+                + Arrays.asList(piercePhases).indexOf(raypathSegment.getPhaseName()) + " "
                 + (int) Math.floor(raypath.getEpicentralDistanceDeg()) + " "
                 + (int) Math.floor(raypath.getAzimuthDeg()) + " "
                 + (int) Math.floor(raypath.getBackAzimuthDeg());
@@ -380,7 +393,7 @@ public class RaypathMapper extends Operation {
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
-            pw.println("gmt set FONT 20p");
+            pw.println("gmt set FONT 25p");
             pw.println("gmt set FONT_LABEL 15p,Helvetica,black");
             pw.println("gmt set FONT_ANNOT_PRIMARY 25p");
             pw.println("");
@@ -471,6 +484,7 @@ public class RaypathMapper extends Operation {
             }
             pw.println("");
 
+            // turning points
             if (cutAtPiercePoint) {
                 pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
                 pw.println("");
@@ -487,9 +501,22 @@ public class RaypathMapper extends Operation {
             if (colorMode > 0 && legendJustification.equals("none") == false) {
                 pw.println("#------- Legend");
                 pw.println("gmt pslegend -Dj" + legendJustification + "+w6c -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $psname");
+                // header of legend
+                pw.println("H - - " + headerFor(colorMode));
+                // contents
                 int nSections = colorBin.getNSections();
                 for (int i = 0; i < nSections; i++) {
-                    pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c " + colorBin.getStartValueFor(i) + "@.~" + colorBin.getStartValueFor(i + 1) + "@.");
+                    switch (colorMode) {
+                    case COLOR_BY_PHASE:
+                        // list up all phases for that color (in case one color is used for several consecutive phases)
+                        String text = String.join(",", Arrays.copyOfRange(piercePhases, colorBin.getStartValueFor(i), colorBin.getStartValueFor(i + 1)));
+                        pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c " + text);
+                        break;
+                    default:
+                        // print degree range
+                        pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c "
+                                + colorBin.getStartValueFor(i) + "@.~" + colorBin.getStartValueFor(i + 1) + "@.");
+                    }
                 }
                 pw.println("END");
                 pw.println("");
@@ -509,17 +536,35 @@ public class RaypathMapper extends Operation {
 
     }
 
+    /**
+     * Get the colunm number in the raypath segment files that information for binning exists in.
+     * @param colorMode
+     * @return
+     */
     private static int columnFor(int colorMode) {
         int binColumn;
         switch (colorMode) {
-        case BIN_DISTANCE: binColumn = 5; break;
-        case BIN_AZIMUTH: binColumn = 6; break;
-        case BIN_BACKAZIMUTH: binColumn = 7; break;
-        case BIN_MIDAZIMUTH: binColumn = 8; break;
+        case COLOR_BY_PHASE: binColumn = 5; break;
+        case BIN_DISTANCE: binColumn = 6; break;
+        case BIN_AZIMUTH: binColumn = 7; break;
+        case BIN_BACKAZIMUTH: binColumn = 8; break;
+        case BIN_MIDAZIMUTH: binColumn = 9; break;
         default: throw new IllegalArgumentException("colorMode out of range");
         }
-
         return binColumn;
+    }
+
+    private static String headerFor(int colorMode) {
+        String header;
+        switch (colorMode) {
+        case COLOR_BY_PHASE: header = "Phase"; break;
+        case BIN_DISTANCE: header = "Distance"; break;
+        case BIN_AZIMUTH: header = "Azimuth"; break;
+        case BIN_BACKAZIMUTH: header = "Back azimuth"; break;
+        case BIN_MIDAZIMUTH: header = "Turn azimuth"; break;
+        default: throw new IllegalArgumentException("colorMode out of range");
+        }
+        return header;
     }
 
     private String decideMapRegion() throws IOException {

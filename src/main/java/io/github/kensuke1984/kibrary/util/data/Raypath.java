@@ -23,7 +23,7 @@ public final class Raypath {
     /**
      * Name of phase
      */
-    private final String phase;
+    private final String phaseName;
     /**
      * Number of points along the raypath (source, pierce points, turning points, receiver)
      */
@@ -38,15 +38,15 @@ public final class Raypath {
     private final List<FullPosition> positions;
 
     /**
-     * @param phase
+     * @param phaseName (String) Name of phase of this raypath
      * @param distancesDeg (double[]) Epicentral distances from the source to points along the raypath [deg]
      * @param positions (List of FullPosition) List of points along the raypath
      */
-    public Raypath(String phase, double[] distancesDeg, List<FullPosition> positions) {
+    public Raypath(String phaseName, double[] distancesDeg, List<FullPosition> positions) {
         if (distancesDeg.length != positions.size()) throw new IllegalArgumentException("number of distances and positions should match");
         this.nPoint = distancesDeg.length;
 
-        this.phase = phase;
+        this.phaseName = phaseName;
         this.distancesDeg = distancesDeg;
         this.positions = positions;
     }
@@ -54,19 +54,19 @@ public final class Raypath {
     /**
      * Create a raypath from the source to the receiver.
      *
-     * @param phase (String) Name of phase
+     * @param phaseName (String) Name of phase of this raypath
      * @param source  {@link FullPosition} of a source
      * @param receiver {@link HorizontalPosition} of a receiver
      */
-    public Raypath(String phase, FullPosition source, HorizontalPosition receiver) {
-        this.phase = phase;
+    public Raypath(String phaseName, FullPosition source, HorizontalPosition receiver) {
+        this.phaseName = phaseName;
         this.nPoint = 2;
 
-        this.distancesDeg = new double[2];
+        distancesDeg = new double[2];
         distancesDeg[0] = 0;
         distancesDeg[1] = source.computeEpicentralDistanceDeg(receiver);
 
-        this.positions = new ArrayList<>();
+        positions = new ArrayList<>();
         positions.add(source);
         positions.add(receiver.toFullPosition(Earth.EARTH_RADIUS));
     }
@@ -168,7 +168,7 @@ public final class Raypath {
             clippedDistances[i - from] = distancesDeg[i] - distancesDeg[from];
         }
         List<FullPosition> clippedPositions = positions.subList(from, to);
-        return new Raypath(phase, clippedDistances, clippedPositions);
+        return new Raypath(phaseName, clippedDistances, clippedPositions);
     }
 
     /**
@@ -268,4 +268,10 @@ public final class Raypath {
         return positions.get(nPoint - 1);
     }
 
+    /**
+     * @return (String) The name of phase of this raypath
+     */
+    public String getPhaseName() {
+        return phaseName;
+    }
 }

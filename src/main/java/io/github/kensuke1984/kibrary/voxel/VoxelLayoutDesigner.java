@@ -53,7 +53,7 @@ public class VoxelLayoutDesigner extends Operation {
      * Path of the input data entry list file
      */
     private Path dataEntryPath;
-    private String piercePhase;
+    private String[] piercePhases;
     private double lowerPierceRadius;
     private double upperPierceRadius;
     private String structureName;
@@ -92,8 +92,8 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#fileTag ");
             pw.println("##Path of a data entry list file, must be set");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##Phase to compute pierce points for (ScS)");
-            pw.println("#piercePhase ");
+            pw.println("##Phases to compute pierce points for, listed using spaces (ScS)");
+            pw.println("#piercePhases ");
             pw.println("##(double) Lower radius to compute pierce points for [km] (3480)");
             pw.println("#lowerPierceRadius ");
             pw.println("##(double) Upper radius to compute pierce points for [km] (3880)");
@@ -132,7 +132,7 @@ public class VoxelLayoutDesigner extends Operation {
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
-        piercePhase = property.parseString("piercePhase", "ScS");
+        piercePhases = property.parseStringArray("piercePhases", "ScS");
         lowerPierceRadius = property.parseDouble("lowerPierceRadius", "3480");
         upperPierceRadius = property.parseDouble("upperPierceRadius", "3880");
         structureName = property.parseString("structureName", "prem");
@@ -180,7 +180,7 @@ public class VoxelLayoutDesigner extends Operation {
         TauPPierceWrapper pierceTool = null;
         try {
             double[] pierceRadii = {lowerPierceRadius, upperPierceRadius};
-            pierceTool = new TauPPierceWrapper(structureName, piercePhase, pierceRadii);
+            pierceTool = new TauPPierceWrapper(structureName, piercePhases, pierceRadii);
             pierceTool.compute(entrySet);
         } catch (TauModelException e) {
             throw new RuntimeException(e);
