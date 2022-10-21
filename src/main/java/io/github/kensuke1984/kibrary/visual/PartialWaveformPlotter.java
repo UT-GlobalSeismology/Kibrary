@@ -382,7 +382,7 @@ public class PartialWaveformPlotter extends Operation {
 
            // each time step
            for (int j = 0; j < dataList.get(0).length; j++) {
-               double time = startTime + j * samplingHz;
+               double time = startTime + j / samplingHz;
                pwTrace.print(time);
 
                // each Partial ID
