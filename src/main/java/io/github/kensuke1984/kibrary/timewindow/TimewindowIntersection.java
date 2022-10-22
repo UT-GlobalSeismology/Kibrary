@@ -54,6 +54,12 @@ public class TimewindowIntersection  {
                 .desc("Set path of output timewindow file1").build());
         options.addOption(Option.builder("o2").longOpt("output2").hasArg().argName("outputTimewindowFile2")
                 .desc("Set path of output timewindow file2").build());
+
+        options.addOption(Option.builder("ph").longOpt("phase").hasArg().argName("phase")
+                .desc("Pick up same phase").build());
+        options.addOption(Option.builder("c").longOpt("component").hasArg().argName("component")
+                .desc("Pick up same component").build());
+
         return options;
     }
 
@@ -71,6 +77,9 @@ public class TimewindowIntersection  {
         Path outputPath2 = cmdLine.hasOption("o2") ? Paths.get(cmdLine.getOptionValue("o2"))
                 : Paths.get("timewindow2_" + GadgetAid.getTemporaryString() + ".dat");
 
+        boolean phase = cmdLine.hasOption("ph") ? true : false;
+        boolean component = cmdLine.hasOption("c") ? true : false;
+
         Set<TimewindowData> windows1 = TimewindowDataFile.read(inputPath1);
         Set<TimewindowData> windows2 = TimewindowDataFile.read(inputPath2);
 
@@ -82,6 +91,9 @@ public class TimewindowIntersection  {
             boolean exitIntersect = false;
             for (TimewindowData window2 : windows2) {
                 if (window1.getGlobalCMTID().equals(window2.getGlobalCMTID()) && window1.getObserver().equals(window2.getObserver())) {
+                    if (phase && !window1.getPhases().equals(window2.getPhases())) continue;
+                    if (component && !window1.getComponent().equals(window2.getComponent())) continue;
+
                     if(!outWindows2.contains(window2)) outWindows2.add(window2);
                     exitIntersect = true;
                 }

@@ -379,8 +379,8 @@ public class TimewindowMaker extends Operation {
                 // check if an avoidPhase is between or near usePhases
                 for (Arrival arrival : avoidArrivals) {
                     double avoidTime = arrival.getTime();
-                    if (firstUseTime <= (avoidTime + rearShift) && (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
-                        writeInvalid(sacFileName, arrival.getPhase().getName() + " arrives between or near "
+                    if (firstUseTime <= (avoidTime + rearShift) || (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
+                        writeInvalid(sacFileName, arrival.getPhase().getName() + " overlapped the timewindow between "
                                 + firstUseArrival.getPhase().getName() + " and " + lastUseArrival.getPhase().getName());
                         return;
                     }
