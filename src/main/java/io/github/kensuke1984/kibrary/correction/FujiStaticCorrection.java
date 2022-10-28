@@ -205,7 +205,6 @@ public class FujiStaticCorrection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println("Outputting in " + outputPath);
         StaticCorrectionDataFile.write(staticCorrectionSet, outputPath);
     }
 

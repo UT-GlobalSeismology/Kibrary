@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -21,6 +22,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * File containing information of data features. Ascii-format.
+ * <p>
+ * The following values are output for each timewindow.
+ * <ul>
+ * <li> maximum ratio: (maximum value in synthetic waveform)/(maximum value in observed waveform)</li>
+ * <li> minimum ratio: (minimum value in synthetic waveform)/(minimum value in observed waveform) </li>
+ * <li> absolute ratio: (maximum absolute amplitude in synthetic waveform)/(maximum absolute amplitude in observed waveform) </li>
+ * <li> normalized variance: (variance of differential waveform)/(variance of observed waveform) </li>
+ * <li> correlation coefficient of observed and synthetic waveforms </li>
+ * <li> S/N ratio </li>
+ * </ul>
  *
  * @since a long time ago
  * @version 2022/8/27 renamed from selection.DataSelectionInformationFile to selection.DataFeatureListFile
@@ -29,6 +40,10 @@ public class DataFeatureListFile {
     private DataFeatureListFile() {}
 
     public static void write(List<DataFeature> featureList, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Outputting data feature values for "
+                + MathAid.switchSingularPlural(featureList.size(), "timewindow", "timewindows")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("#station, network, lat, lon, event, component, startTime, endTime, phases, "
                     + "maxRatio, minRatio, absRatio, variance, cc, S/N, selected");
@@ -56,6 +71,8 @@ public class DataFeatureListFile {
             featureList.add(feature);
         }
 
+        System.err.println("Data feature values for "
+                + MathAid.switchSingularPlural(featureList.size(), "timewindow is", "timewindows are") + " read.");
         return featureList;
     }
 

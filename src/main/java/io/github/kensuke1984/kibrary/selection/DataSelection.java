@@ -31,6 +31,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -266,12 +267,9 @@ public class DataSelection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println("Outputting values of criteria in " + outputFeaturePath);
-        DataFeatureListFile.write(dataFeatureList, outputFeaturePath);
-
-        System.err.println("Outputting selected timewindows in " + outputSelectedPath);
+        System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
         TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
-        System.err.println(goodTimewindowSet.size() + " timewindows were selected.");
+        DataFeatureListFile.write(dataFeatureList, outputFeaturePath);
     }
 
     /**

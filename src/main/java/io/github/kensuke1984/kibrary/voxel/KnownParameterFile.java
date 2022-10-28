@@ -9,10 +9,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * File of parameters with known values.
+ * File of parameters with known values. See {@link KnownParameter}.
+ * <p>
  * m in Am=d.
  * Values should be in delta (difference from initial model).
  * <p>
@@ -46,6 +49,10 @@ public class KnownParameterFile {
      */
     public static void write(List<KnownParameter> parameterList, Path outputPath, OpenOption... options)
             throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(parameterList.size(), "known parameter", "known parameters")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             parameterList.forEach(pw::println);
         }
@@ -54,6 +61,8 @@ public class KnownParameterFile {
     public static void write(List<UnknownParameter> unknownList, double[] values, Path outputPath, OpenOption... options)
             throws IOException {
         if (unknownList.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values differ.");
+
+        // Output of the number of known parameters is not done here because it will be noisy in InverseProblem.
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             for (int i = 0; i < unknownList.size(); i++) {
@@ -82,6 +91,8 @@ public class KnownParameterFile {
             for (int j = i + 1; j < pars.size(); j++)
                 if (pars.get(i).equals(pars.get(j)))
                     System.err.println("!Caution there is duplication in " + inputPath);
+
+        DatasetAid.checkNum(pars.size(), "known parameter", "known parameters");
         return Collections.unmodifiableList(pars);
     }
 

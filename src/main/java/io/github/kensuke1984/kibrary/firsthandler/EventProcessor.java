@@ -581,7 +581,6 @@ class EventProcessor implements Runnable {
                         " -n " + headerMap.get(SACHeaderEnum.KNETWK) + " -l " + headerMap.get(SACHeaderEnum.KHOLE) +
                         " -f " + inputPath.toAbsolutePath() +
                         " -s lin -r cs -u vel";
-        //System.out.println("runevalresp: "+ command);// 4debug
 
         ExternalProcess xProcess = ExternalProcess.launch(command, outputPath);
         return xProcess.waitFor() == 0;
@@ -707,7 +706,7 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if any problem has occured
      */
     private boolean check() {
-        return Files.exists(invalidRespPath);// || Files.exists(invalidTripletPath);
+        return Files.exists(invalidRespPath);
     }
 
     /**
@@ -723,7 +722,6 @@ class EventProcessor implements Runnable {
         removeDirectory(unModifiedPath.toFile());
         removeDirectory(unRotatedPath.toFile());
         removeDirectory(invalidRespPath.toFile());
-        //removeDirectory(invalidTripletPath.toFile());
         removeDirectory(unwantedDistancePath.toFile());
         removeDirectory(duplicateComponentPath.toFile());
         removeDirectory(duplicateInstrumentPath.toFile());

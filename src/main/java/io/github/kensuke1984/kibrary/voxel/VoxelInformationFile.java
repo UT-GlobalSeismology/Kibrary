@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -64,6 +66,10 @@ public class VoxelInformationFile {
         if (layerThicknesses.length != voxelRadii.length)
             throw new IllegalArgumentException("The number of layers and radii does not match.");
 
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(voxelRadii.length * horizontalPieces.size(), "voxel", "voxels")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# thicknesses of each layer [km]");
             for (double thickness : layerThicknesses) {
@@ -105,7 +111,7 @@ public class VoxelInformationFile {
             horizontalPieces.add(piece);
         }
 
-        System.err.println("Number of voxels read in: " + (voxelRadii.length * horizontalPieces.size()));
+        DatasetAid.checkNum(voxelRadii.length * horizontalPieces.size(), "voxel", "voxels");
     }
 
     /**

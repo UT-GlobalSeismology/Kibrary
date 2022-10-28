@@ -135,8 +135,7 @@ class StationXmlFile {
             parser.parse(xmlPath.toFile(), handler);
 
         } catch (SAXException | ParserConfigurationException | IOException e) {
-            System.err.println("!! Failed to read " + xmlFile);
-            e.printStackTrace();
+            System.err.println("!! Failed to read " + xmlFile + " : " + e.toString());
             return false;
         }
         return check();

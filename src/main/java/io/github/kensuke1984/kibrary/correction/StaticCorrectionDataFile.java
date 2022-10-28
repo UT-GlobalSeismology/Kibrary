@@ -29,7 +29,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -37,7 +39,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 
 /**
- * Information File of {@link StaticCorrectionData}. Binary-format.
+ * Information file containing static corrections for each timewindow. See {@link StaticCorrectionData}. Binary-format.
+ *
  * <p>
  * The file consists of 5 sections:
  * <ol>
@@ -81,31 +84,34 @@ public final class StaticCorrectionDataFile {
     public static final int ONE_CORRECTION_BYTE = 37;
 
     /**
-     * @param outPath       of an write file.
+     * @param outputPath       of an write file.
      * @param correctionSet of static correction to write
      * @param options       for write
      * @throws IOException if an I/O error occurs.
      */
-    public static void write(Set<StaticCorrectionData> correctionSet, Path outPath, OpenOption... options)
+    public static void write(Set<StaticCorrectionData> correctionSet, Path outputPath, OpenOption... options)
             throws IOException {
+        System.err.println("Outputting "
+            + MathAid.switchSingularPlural(correctionSet.size(), "static correction", "static corrections")
+            + " in " + outputPath);
+
         Observer[] observers = correctionSet.stream().map(StaticCorrectionData::getObserver).distinct().sorted()
                 .toArray(Observer[]::new);
-        GlobalCMTID[] ids = correctionSet.stream().map(StaticCorrectionData::getGlobalCMTID).distinct().sorted()
+        GlobalCMTID[] events = correctionSet.stream().map(StaticCorrectionData::getGlobalCMTID).distinct().sorted()
                 .toArray(GlobalCMTID[]::new);
         Phase[] phases = correctionSet.stream().map(StaticCorrectionData::getPhases).flatMap(p -> Stream.of(p))
                 .distinct().toArray(Phase[]::new);
 
         Map<Observer, Integer> observerMap = IntStream.range(0, observers.length).boxed()
                 .collect(Collectors.toMap(i -> observers[i], i -> i));
-        Map<GlobalCMTID, Integer> idMap = IntStream.range(0, ids.length).boxed()
-                .collect(Collectors.toMap(i -> ids[i], i -> i));
+        Map<GlobalCMTID, Integer> eventMap = IntStream.range(0, events.length).boxed()
+                .collect(Collectors.toMap(i -> events[i], i -> i));
         Map<Phase, Integer> phaseMap = new HashMap<>();
 
-
         try (DataOutputStream dos = new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(outPath, options)))) {
+                new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
             dos.writeShort(observers.length);
-            dos.writeShort(ids.length);
+            dos.writeShort(events.length);
             dos.writeShort(phases.length);
             for (int i = 0; i < observers.length; i++) {
                 dos.writeBytes(StringUtils.rightPad(observers[i].getStation(), 8));
@@ -114,8 +120,8 @@ public final class StaticCorrectionDataFile {
                 dos.writeDouble(pos.getLatitude());
                 dos.writeDouble(pos.getLongitude());
             }
-            for (int i = 0; i < ids.length; i++) {
-                dos.writeBytes(StringUtils.rightPad(ids[i].toString(), 15));
+            for (int i = 0; i < events.length; i++) {
+                dos.writeBytes(StringUtils.rightPad(events[i].toString(), 15));
             }
             for (int i = 0; i < phases.length; i++) {
                 phaseMap.put(phases[i], i);
@@ -126,7 +132,7 @@ public final class StaticCorrectionDataFile {
 
             for (StaticCorrectionData correction : correctionSet) {
                 dos.writeShort(observerMap.get(correction.getObserver()));
-                dos.writeShort(idMap.get(correction.getGlobalCMTID()));
+                dos.writeShort(eventMap.get(correction.getGlobalCMTID()));
                 Phase[] Infophases = correction.getPhases();
                 for (int i = 0; i < 10; i++) {
                     if (i < Infophases.length) {
@@ -179,9 +185,10 @@ public final class StaticCorrectionDataFile {
             byte[][] bytes = new byte[nInfo][ONE_CORRECTION_BYTE];
             for (int i = 0; i < nInfo; i++)
                 dis.read(bytes[i]);
+
             Set<StaticCorrectionData> staticCorrectionSet = Arrays.stream(bytes).parallel()
                     .map(b -> createCorrection(b, observers, cmtIDs, phases)).collect(Collectors.toSet());
-            System.err.println(staticCorrectionSet.size() + " static corrections are read.");
+            DatasetAid.checkNum(staticCorrectionSet.size(), "static correction", "static corrections");
             return Collections.unmodifiableSet(staticCorrectionSet);
         }
     }

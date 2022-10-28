@@ -226,7 +226,6 @@ public class BlockModelMaker extends Operation {
             }
         }
 
-        System.err.println("Outputting known parameter file.");
         Path knownPath = outPath.resolve("model.lst");
         KnownParameterFile.write(knowns, knownPath);
     }

@@ -290,7 +290,6 @@ public class RaypathMapper extends Operation {
         Set<DataEntry> validEntrySet = DataEntryListFile.readAsSet(dataEntryPath)
                 .stream().filter(entry -> components.contains(entry.getComponent()))
                 .collect(Collectors.toSet());
-        DatasetAid.checkNum(validEntrySet.size(), "entry", "entries");
 
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());

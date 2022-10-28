@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -32,12 +33,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * File containing list of observers.
+ * File containing list of observers. See {@link Observer}.
  * <p>
  * Each line: station code, network code, latitude, longitude.
- * <p>
- * Only the station, network, latitude, and longitude are the parts used to convey data;
- * the rest of the information is just for the users to see.
  *
  * @author Kensuke Konishi
  * @version 0.2.0.4
@@ -53,6 +51,10 @@ public final class ObserverListFile {
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<Observer> observerSet, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(observerSet.size(), "observer", "observers")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# station network latitude longitude");
             observerSet.stream().sorted().forEach(observer -> {

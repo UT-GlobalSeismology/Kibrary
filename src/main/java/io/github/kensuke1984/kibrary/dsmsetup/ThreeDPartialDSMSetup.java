@@ -238,14 +238,9 @@ public class ThreeDPartialDSMSetup extends Operation {
         voxelRadii = vif.getRadii();
         voxelPositions = vif.getHorizontalPositions().toArray(new HorizontalPosition[0]);
 
-        // read event information
+        // read event and observer information
         Set<GlobalCMTID> eventSet = EventListFile.read(eventPath);
-        System.err.println("Number of events read in: " + eventSet.size());
-
-        // read observer information
         Set<Observer> observerSet = ObserverListFile.read(observerPath);
-        System.err.println("Number of observers read in: " + observerSet.size());
-
         if (eventSet.size() == 0 && observerSet.size() == 0) {
             return;
         }

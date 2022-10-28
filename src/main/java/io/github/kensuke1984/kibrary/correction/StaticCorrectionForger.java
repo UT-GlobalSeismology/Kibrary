@@ -143,7 +143,6 @@ public class StaticCorrectionForger extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
         Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
 
-        System.err.println("Outputting in " + outputPath);
         StaticCorrectionDataFile.write(forgedStaticCorrectionSet, outputPath);
     }
 }

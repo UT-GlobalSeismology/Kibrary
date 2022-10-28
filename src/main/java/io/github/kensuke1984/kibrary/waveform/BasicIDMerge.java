@@ -141,10 +141,7 @@ public class BasicIDMerge extends Operation {
         Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", fileTag, dateStr, ".dat"));
         Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, dateStr, ".dat"));
 
-        System.err.println("Outputting in " + observerFilePath);
         ObserverListFile.write(observerSet, workPath.resolve(observerFilePath));
-
-        System.err.println("Outputting in " + eventFilePath);
         EventListFile.write(eventSet, workPath.resolve(eventFilePath));
 
         BasicIDFile.write(basicIDs, outputIDPath, outputWavePath);

@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -35,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * File containing list of {@link DataEntry}.
+ * File containing list of data entries. See {@link DataEntry}.
  * <p>
  * Each line: globalCMTID station network latitude longitude component
  * <p>
@@ -55,6 +56,10 @@ public class DataEntryListFile {
     }
 
     public static void writeFromSet(Set<DataEntry> entrySet, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(entrySet.size(), "data entry", "data entries")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# globalCMTID station network latitude longitude component");
             entrySet.stream().sorted().forEach(entry -> pw.println(entry.toString()));
@@ -90,6 +95,7 @@ public class DataEntryListFile {
                 throw new RuntimeException("There is duplication of " + entry + " in " + inputPath + ".");
         }
 
+        DatasetAid.checkNum(entrySet.size(), "data entry", "data entries");
         return Collections.unmodifiableSet(entrySet);
     }
 
@@ -177,7 +183,10 @@ public class DataEntryListFile {
             entrySet = collectFromDataset(inPath, components);
         }
 
-        if (!DatasetAid.checkNum(entrySet.size(), "entry", "entries")) return;
+        if (entrySet.size() == 0) {
+            System.err.println("No data entries created.");
+            return;
+        }
         writeFromSet(entrySet, outputPath);
     }
 

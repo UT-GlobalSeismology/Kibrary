@@ -16,11 +16,14 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
+ * File of travel time data for an arbitrary number of phases, listed for each event-observer pair.
+ *
  * @author otsuru
  * @since 2022/7/23
  */
@@ -44,6 +47,10 @@ public class TravelTimeInformationFile {
             Path outputPath, OpenOption... options) throws IOException {
         List<Phase> useList = new ArrayList<>(usePhases);
         List<Phase> avoidList = new ArrayList<>(avoidPhases);
+
+        System.err.println("Outputting travel times for "
+                + MathAid.switchSingularPlural(informationSet.size(), "event-observer pair", "event-observer pairs")
+                + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# usePhases...");
@@ -112,6 +119,10 @@ public class TravelTimeInformationFile {
             }
             informationSet.add(new TravelTimeInformation(event, observer, usePhaseTimes, avoidPhaseTimes));
         }
+
+        System.err.println("Travel time data for "
+                + MathAid.switchSingularPlural(informationSet.size(), "event-observer pair is", "event-observer pairs are")
+                + " found.");
         return informationSet;
     }
 

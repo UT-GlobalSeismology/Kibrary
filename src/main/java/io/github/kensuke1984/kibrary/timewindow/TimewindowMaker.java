@@ -255,15 +255,10 @@ public class TimewindowMaker extends Operation {
         System.err.println();
 
         if (timewindowSet.isEmpty()) {
-            System.err.println("No timewindow is created.");
-        }
-        else {
-            System.err.println("Outputting timewindows in " + outTimewindowPath);
+            System.err.println("No timewindows are created.");
+        } else {
             TimewindowDataFile.write(timewindowSet, outTimewindowPath);
-            System.err.println(timewindowSet.size() + " timewindows were made.");
         }
-
-        System.err.println("Outputting travel time information in " + outTravelTimePath);
         TravelTimeInformationFile.write(usePhases, exPhases, travelTimeSet, outTravelTimePath);
     }
 

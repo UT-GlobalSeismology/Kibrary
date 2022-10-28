@@ -29,14 +29,17 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * File containing {@link TimewindowData}. Binary-format.
+ * File containing a list of timewindows. See {@link TimewindowData}. Binary-format.
+ *
  * <p>
  * The file consists of 5 sections:
  * <ol>
@@ -49,7 +52,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - phase </li>
  * <li>Each timewindow information, composed of {@value #ONE_WINDOW_BYTE} bytes:
  * <ul>
- * <li>Station index (2)</li>
+ * <li>Observer index (2)</li>
  * <li>GlobalCMTID index (2)</li>
  * <li>existing phases (20)</li>
  * <li>component (1)</li>
@@ -94,18 +97,24 @@ public final class TimewindowDataFile {
             throws IOException {
         if (infoSet.isEmpty())
             throw new RuntimeException("Input information is empty..");
+
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(infoSet.size(), "timewindow", "timewindows")
+                + " in " + outputPath);
+
+        Observer[] observers = infoSet.stream().map(TimewindowData::getObserver).distinct().sorted()
+                .toArray(Observer[]::new);
+        GlobalCMTID[] events = infoSet.stream().map(TimewindowData::getGlobalCMTID).distinct().sorted()
+                .toArray(GlobalCMTID[]::new);
+        Phase[] phases = infoSet.stream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
+            .distinct().toArray(Phase[]::new);
+
+        Map<Observer, Integer> observerMap = new HashMap<>();
+        Map<GlobalCMTID, Integer> eventMap = new HashMap<>();
+        Map<Phase, Integer> phaseMap = new HashMap<>();
+
         try (DataOutputStream dos = new DataOutputStream(
                 new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
-            GlobalCMTID[] events = infoSet.stream().map(TimewindowData::getGlobalCMTID).distinct().sorted()
-                    .toArray(GlobalCMTID[]::new);
-            Observer[] observers = infoSet.stream().map(TimewindowData::getObserver).distinct().sorted()
-                    .toArray(Observer[]::new);
-            Phase[] phases = infoSet.stream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
-                .distinct().toArray(Phase[]::new);
-
-            Map<GlobalCMTID, Integer> eventMap = new HashMap<>();
-            Map<Observer, Integer> observerMap = new HashMap<>();
-            Map<Phase, Integer> phaseMap = new HashMap<>();
             dos.writeShort(observers.length);
             dos.writeShort(events.length);
             dos.writeShort(phases.length);
@@ -158,7 +167,6 @@ public final class TimewindowDataFile {
      */
     public static Set<TimewindowData> read(Path inputPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(inputPath)));) {
-            long t = System.nanoTime();
             long fileSize = Files.size(inputPath);
             // Read header
             Observer[] observers = new Observer[dis.readShort()];
@@ -188,12 +196,10 @@ public final class TimewindowDataFile {
             byte[][] bytes = new byte[nwindow][ONE_WINDOW_BYTE];
             for (int i = 0; i < nwindow; i++)
                 dis.read(bytes[i]);
-//			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs, phases))
-//					.collect(Collectors.toSet());
+
             Set<TimewindowData> infoSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
-            System.err.println(
-                    infoSet.size() + " timewindow data were found in " + GadgetAid.toTimeString(System.nanoTime() - t));
+            DatasetAid.checkNum(infoSet.size(), "timewindow", "timewindows");
             return Collections.unmodifiableSet(infoSet);
         }
     }
