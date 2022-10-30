@@ -175,8 +175,7 @@ public class DataSelection extends Operation {
             pw.println("#convolved ");
             pw.println("##Path of a timewindow file, must be defined");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a static correction file");
-            pw.println("## If you do not want to consider static correction, leave this unset.");
+            pw.println("##Path of a static correction file, if static correction time-shift shall be applied");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift (10.)");
             pw.println("#maxStaticShift ");
@@ -406,8 +405,8 @@ public class DataSelection extends Operation {
 
                 double shift = 0.;
                 if (!staticCorrectionSet.isEmpty()) {
-                    StaticCorrectionData foundShift = getStaticCorrection(timewindow);
-                    shift = foundShift.getTimeshift();
+                    StaticCorrectionData correction = getStaticCorrection(timewindow);
+                    shift = correction.getTimeshift();
                 }
                 if (Math.abs(shift) > maxStaticShift)
                     return;

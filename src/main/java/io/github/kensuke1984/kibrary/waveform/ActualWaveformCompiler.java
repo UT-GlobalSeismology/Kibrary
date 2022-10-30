@@ -391,6 +391,7 @@ public class ActualWaveformCompiler extends Operation {
        spcImIDPath = outPath.resolve("spcImID" + dateStr + ".dat");
        spcImPath = outPath.resolve("spcIm" + dateStr + ".dat");
 
+       System.err.println("Outputting in " + waveIDPath + " and " + waveformPath);
        try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, observerSet, eventSet,
                periodRanges, phases)) {
            envelopeWriter = new WaveformDataWriter(envelopeIDPath, envelopePath, observerSet, eventSet,
@@ -422,7 +423,7 @@ public class ActualWaveformCompiler extends Operation {
            spcAmpWriter.close();
            spcImWriter.close();
            spcReWriter.close();
-           System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
+           System.err.println(" " + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
        }
    }
 
