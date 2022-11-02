@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;

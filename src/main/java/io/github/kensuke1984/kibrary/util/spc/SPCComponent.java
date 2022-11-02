@@ -6,7 +6,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 
 import java.util.Arrays;
 

@@ -21,8 +21,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
+import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;

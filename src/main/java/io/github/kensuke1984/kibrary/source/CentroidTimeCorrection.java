@@ -1,5 +1,7 @@
-package io.github.kensuke1984.kibrary.correction;
+package io.github.kensuke1984.kibrary.source;
 
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 

@@ -24,7 +24,7 @@ import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;

@@ -20,9 +20,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import io.github.kensuke1984.kibrary.correction.SCARDEC;
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.source.SCARDEC;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;

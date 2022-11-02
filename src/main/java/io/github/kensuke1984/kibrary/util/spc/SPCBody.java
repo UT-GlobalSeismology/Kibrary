@@ -5,7 +5,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.complex.Complex;
 
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**

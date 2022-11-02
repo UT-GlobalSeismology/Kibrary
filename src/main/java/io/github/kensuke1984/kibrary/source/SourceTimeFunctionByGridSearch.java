@@ -1,7 +1,9 @@
-package io.github.kensuke1984.kibrary.correction;
+package io.github.kensuke1984.kibrary.source;
 
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;

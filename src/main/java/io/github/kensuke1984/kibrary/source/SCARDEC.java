@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.correction;
+package io.github.kensuke1984.kibrary.source;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.FileAid;
