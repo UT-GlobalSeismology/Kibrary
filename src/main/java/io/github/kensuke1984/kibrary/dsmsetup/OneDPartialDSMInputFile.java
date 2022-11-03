@@ -72,7 +72,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(output + "/");
             pw.println("PSV.spc");
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARA");
                 pw.println(n + "." + event + ".PARC");
@@ -125,7 +125,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println("PSV.spc");
 
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PAR1");
                 pw.println(n + "." + event + ".PAR2");
@@ -174,7 +174,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println("SH.spc");
 
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARL");
                 pw.println(n + "." + event + ".PARN");
@@ -221,7 +221,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(output + "/");
             pw.println("SH.spc");
             pw.println(observers.size() + " nsta");
-            observers.stream().sorted().map(Observer::getStringID).forEach(n -> {
+            observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PAR2");
             });

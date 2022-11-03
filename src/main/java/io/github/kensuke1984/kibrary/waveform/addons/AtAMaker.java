@@ -1488,7 +1488,7 @@ public class AtAMaker implements Operation_old {
                       }
                   }
                   if (found)
-                      stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+                      stf = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
                   else
                       stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEventData().getHalfDuration());
                 break;

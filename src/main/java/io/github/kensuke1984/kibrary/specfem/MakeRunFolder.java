@@ -109,7 +109,7 @@ public class MakeRunFolder {
 		GlobalCMTAccess idData = id.getEventData();
 		LocalDateTime pdeTime = idData.getPDETime();
 		MomentTensor mt = idData.getCmt();
-		double pow = Math.pow(10, mt.getMtExp());
+		double pow = Math.pow(10, mt.getMtExponent());
 		return String.format("%s%nevent name: %s%ntime shift: %.1f%nhalf duration: "
 				+ "%.4f%nlatitude: %.4f%nlongitude: %.4f%ndepth: "
 				+ "%.4f%nMrr: %.6e%nMtt: %.6e%nMpp: %.6e%nMrt: %.6e%nMrp: %.6e%nMtp: %.6e"
@@ -129,12 +129,12 @@ public class MakeRunFolder {
 					, idData.getCmtPosition().getLatitude()
 					, idData.getCmtPosition().getLongitude()
 					, Earth.EARTH_RADIUS - idData.getCmtPosition().getR()
-					, mt.getMrr() * pow
-					, mt.getMtt() * pow
-					, mt.getMpp() * pow
-					, mt.getMrt() * pow
-					, mt.getMrp() * pow
-					, mt.getMtp() * pow
+					, mt.getMrrCoefficient() * pow
+					, mt.getMttCoefficient() * pow
+					, mt.getMppCoefficient() * pow
+					, mt.getMrtCoefficient() * pow
+					, mt.getMrpCoefficient() * pow
+					, mt.getMtpCoefficient() * pow
 			);
 	}
 

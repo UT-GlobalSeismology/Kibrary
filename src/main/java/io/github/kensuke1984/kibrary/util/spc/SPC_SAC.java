@@ -4,27 +4,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.IOUtils;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -88,10 +83,11 @@ public final class SPC_SAC extends Operation {
      */
     private String modelName;
     /**
-     * source time function. -1:Users, 0: none, 1: boxcar, 2: triangle
+     * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
      */
-    private int sourceTimeFunction;
-    private Path sourceTimeFunctionPath;
+    private int sourceTimeFunctionType;
+    private Path userSourceTimeFunctionPath;
+    private Path sourceTimeFunctionCatalogPath;
     /**
      * sampling Hz [Hz] must be 20 now.
      */
@@ -105,12 +101,9 @@ public final class SPC_SAC extends Operation {
      */
     private boolean computeAsObserved;
 
-    private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
-
-    private final List<String> stfcat =
-            readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
+    private SourceTimeFunctionHandler stfHandler;
 
     /**
      * @param args  none to create a property file <br>
@@ -142,12 +135,16 @@ public final class SPC_SAC extends Operation {
             pw.println("##Path of an SH folder (.)");
             pw.println("#shPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
-            pw.println("## If this is unset, then automatically set as the name of the folder in the eventDirs");
-            pw.println("##  but the eventDirs can have only one folder inside and they must be the same.");
+            pw.println("##  If this is unset, then automatically set as the name of the folder in the eventDirs");
+            pw.println("##    but the eventDirs can have only one folder inside and they must be the same.");
             pw.println("#modelName ");
-            pw.println("##Type of source time function from {0:none, 1:boxcar, 2:triangle} (0)");
-            pw.println("## or folder name containing *.stf if you want to use your own GLOBALCMTID.stf");
-            pw.println("#sourceTimeFunction ");
+            pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
+            pw.println("#userSourceTimeFunctionPath ");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto} (0)");
+            pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
+            pw.println("#sourceTimeFunctionType ");
+            pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
+            pw.println("#sourceTimeFunctionCatalogPath ");
             pw.println("##SamplingHz (20) !You can not change yet!");
             pw.println("#samplingHz ");
             pw.println("##(boolean) If this is true, temporal partial is computed (false)");
@@ -181,7 +178,15 @@ public final class SPC_SAC extends Operation {
             modelName = searchModelName();
         }
 
-        setSourceTimeFunction();
+        if (property.containsKey("userSourceTimeFunctionPath")) {
+            userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
+        } else {
+            sourceTimeFunctionType = property.parseInt("sourceTimeFunctionType", "0");
+        }
+        if (property.containsKey("sourceTimeFunctionCatalogPath")) {
+            sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
+        }
+
         samplingHz = 20; // TODO
         computeTimePartial = property.parseBoolean("computeTimePartial", "false");
         computeAsObserved = property.parseBoolean("computeAsObserved", "false");
@@ -207,31 +212,12 @@ public final class SPC_SAC extends Operation {
         else throw new RuntimeException("There are some events without model folder " + modelName);
     }
 
-    private void setSourceTimeFunction() throws IOException {
-        String s = property.parseString("sourceTimeFunction", "0");
-        if (s.length() == 1 && Character.isDigit(s.charAt(0)))
-            sourceTimeFunction = Integer.parseInt(s);
-        else {
-            sourceTimeFunction = -1;
-            sourceTimeFunctionPath = property.parsePath("sourceTimeFunction", null, true, workPath);
-        }
-        switch (sourceTimeFunction) {
-            case -1:
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 5:
-                return;
-            default:
-                throw new RuntimeException("Integer for source time function is invalid.");
-        }
-    }
-
     @Override
     public void run() throws IOException {
         System.err.println("Model name is " + modelName);
-        if (sourceTimeFunction == -1) readUserSourceTimeFunctions();
+
+        stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, DatasetAid.globalCMTIDSet(workPath));
 
         if (usePSV == false && useSH == false) {
             System.err.println("Both usePSV and useSH are false; nothing to do.");
@@ -300,7 +286,7 @@ public final class SPC_SAC extends Operation {
      * @return {@link SACMaker}
      */
     private SACMaker createSACMaker(SPCFile primeSPC, SPCFile secondarySPC) {
-        SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
+        SourceTimeFunction sourceTimeFunction = stfHandler.getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
                 new GlobalCMTID(primeSPC.getSourceID()));
         // create instance of an anonymous inner class extending SACMaker with the following run() function
         SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {
@@ -316,111 +302,6 @@ public final class SPC_SAC extends Operation {
         sm.setAsObserved(computeAsObserved);
         sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
         return sm;
-    }
-
-
-    private void readUserSourceTimeFunctions() throws IOException {
-        Set<GlobalCMTID> ids = DatasetAid.globalCMTIDSet(workPath);
-        userSourceTimeFunctions = new HashMap<>(ids.size());
-        for (GlobalCMTID id : ids)
-            userSourceTimeFunctions
-                    .put(id, SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath.resolve(id + ".stf")));
-    }
-
-    /**
-     * @param np
-     * @param tlen
-     * @param samplingHz
-     * @param id
-     * @return
-     * @author anselme add more options for source time function catalogs
-     */
-    private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
-        double halfDuration = id.getEventData().getHalfDuration();
-        switch (sourceTimeFunction) {
-            case -1:
-                SourceTimeFunction tmp = userSourceTimeFunctions.get(id);
-                if (tmp == null)
-                    tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-                return tmp;
-            case 0:
-                return null;
-            case 1:
-                return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-            case 2:
-                return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-            case 3:
-                if (stfcat.contains("LSTF")) {
-                    double halfDuration1 = id.getEventData().getHalfDuration();
-                    double halfDuration2 = id.getEventData().getHalfDuration();
-                    boolean found = false;
-                      for (String str : stfcat) {
-                          String[] stflist = str.split("\\s+");
-                          GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
-                          if(id.equals(eventID)) {
-                              if(Integer.valueOf(stflist[3]) >= 5.) {
-                                  halfDuration1 = Double.valueOf(stflist[1]);
-                                  halfDuration2 = Double.valueOf(stflist[2]);
-                                  found = true;
-                              }
-                          }
-                      }
-                      SourceTimeFunction stf = null;
-                      if (found) {
-                          stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
-                      }
-                      else
-                          stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEventData().getHalfDuration());
-                      return stf;
-                }
-                else {
-                    boolean found = false;
-                    double ampCorr = 1.;
-                    for (String str : stfcat) {
-                          String[] ss = str.split("\\s+");
-                          GlobalCMTID eventID = new GlobalCMTID(ss[0]);
-                          if (id.equals(eventID)) {
-                              halfDuration = Double.parseDouble(ss[1]);
-                              ampCorr = Double.parseDouble(ss[2]);
-                              found = true;
-                              break;
-                          }
-                      }
-                    if (found)
-                        return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, ampCorr);
-                    else
-                        return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEventData().getHalfDuration());
-                }
-            case 4:
-                throw new RuntimeException("Case 4 not implemented yet");
-            case 5:
-                halfDuration = 0.;
-                double amplitudeCorrection = 1.;
-                boolean found = false;
-                  for (String str : stfcat) {
-                      String[] stflist = str.split("\\s+");
-                      GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());
-                      if(id.equals(eventID)) {
-                          halfDuration = Double.valueOf(stflist[1].trim());
-                          amplitudeCorrection = Double.valueOf(stflist[2].trim());
-                          found = true;
-                      }
-                  }
-                  SourceTimeFunction stf = null;
-                  if (found)
-                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, 1. / amplitudeCorrection);
-                  else
-                      stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEventData().getHalfDuration());
-                  return stf;
-            default:
-                throw new RuntimeException("Integer for source time function is invalid.");
-        }
-    }
-
-    private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
-        System.err.println("STF catalogue: " +  STFcatalogue);
-        return IOUtils.readLines(SPC_SAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
-                    , Charset.defaultCharset());
     }
 
     private Set<SPCFileName> collectSPCs(SPCMode mode, Path inPath) throws IOException {

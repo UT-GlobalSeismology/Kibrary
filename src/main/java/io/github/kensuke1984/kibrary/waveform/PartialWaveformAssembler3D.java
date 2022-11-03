@@ -999,7 +999,7 @@ public class PartialWaveformAssembler3D extends Operation {
                           }
                       }
                       if (found) {
-                          stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+                          stf = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
                           try {
                             writeLog("Using asymmetric triangle STF : For " + id.toString() + " half duration is " + halfDuration1 + halfDuration2);
                         } catch (IOException e) {

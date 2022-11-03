@@ -261,21 +261,20 @@ public final class NDK implements GlobalCMTAccess {
         // line 4
         parts = lines[3].split("\\s+");
         ndk.momentExponent = Integer.parseInt(parts[0]);
-        double mrr = Double.parseDouble(parts[1]);
-        double mtt = Double.parseDouble(parts[3]);
-        double mpp = Double.parseDouble(parts[5]);
-        double mrt = Double.parseDouble(parts[7]);
-        double mrp = Double.parseDouble(parts[9]);
-        double mtp = Double.parseDouble(parts[11]);
+        double mrrCoeff = Double.parseDouble(parts[1]);
+        double mttCoeff = Double.parseDouble(parts[3]);
+        double mppCoeff = Double.parseDouble(parts[5]);
+        double mrtCoeff = Double.parseDouble(parts[7]);
+        double mrpCoeff = Double.parseDouble(parts[9]);
+        double mtpCoeff = Double.parseDouble(parts[11]);
 
         // line5
         parts = lines[4].split("\\s+");
         ndk.versionCode = parts[0];
         ndk.scalarMoment = Double.parseDouble(parts[10]) * Math.pow(10, ndk.momentExponent);
-        double m0 = ndk.scalarMoment / 100000 / 100;
-        // 10 ^5 dyne = N, 100 cm = 1m
+        double m0 = MomentTensor.convertToNm(ndk.scalarMoment);
         double mw = MomentTensor.toMw(m0);
-        ndk.momentTensor = new MomentTensor(mrr, mtt, mpp, mrt, mrp, mtp, ndk.momentExponent, mw);
+        ndk.momentTensor = new MomentTensor(mrrCoeff, mttCoeff, mppCoeff, mrtCoeff, mrpCoeff, mtpCoeff, ndk.momentExponent, mw);
         ndk.eigenValue0 = Double.parseDouble(parts[1]);
         ndk.eigenValue1 = Double.parseDouble(parts[4]);
         ndk.eigenValue2 = Double.parseDouble(parts[7]);
