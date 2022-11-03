@@ -67,6 +67,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @author Kensuke Konishi
  * @version 0.2.4
  * @author anselme add phase information, methods for corridor and MTZ inversion
+ * TODO PcPのみ取り出したい場合 i.e.
  */
 public class TimewindowMaker extends Operation {
 
@@ -379,7 +380,7 @@ public class TimewindowMaker extends Operation {
                 // check if an avoidPhase is between or near usePhases
                 for (Arrival arrival : avoidArrivals) {
                     double avoidTime = arrival.getTime();
-                    if (firstUseTime <= (avoidTime + rearShift) || (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
+                    if (firstUseTime <= (avoidTime + rearShift) && (avoidTime - EX_FRONT_SHIFT) <= lastUseTime) {
                         writeInvalid(sacFileName, arrival.getPhase().getName() + " overlapped the timewindow between "
                                 + firstUseArrival.getPhase().getName() + " and " + lastUseArrival.getPhase().getName());
                         return;
