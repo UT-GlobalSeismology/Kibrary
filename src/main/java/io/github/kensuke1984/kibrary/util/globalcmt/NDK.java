@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import io.github.kensuke1984.kibrary.source.MomentTensor;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -123,7 +124,7 @@ public final class NDK implements GlobalCMTAccess {
      * inversion, following a standard scaling relationship (see note (2)
      * below), and is not derived from the analysis.
      */
-    private String momentRateFunctionType;
+    private SourceTimeFunctionType momentRateFunctionType;
     /**
      * half duration of the moment rate function
      */
@@ -247,7 +248,7 @@ public final class NDK implements GlobalCMTAccess {
         ndk.m[2] = Integer.parseInt(bsmParts[8]);
         String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
         ndk.cmtType = Integer.parseInt(cmtParts[1]);
-        ndk.momentRateFunctionType = cmtParts[2].substring(0, 5);
+        ndk.momentRateFunctionType = SourceTimeFunctionType.ofCode(cmtParts[2].substring(0, 5));
         ndk.halfDurationMomentRateFunction = Double.parseDouble(cmtParts[3]);
 
         // line3
@@ -386,6 +387,11 @@ public final class NDK implements GlobalCMTAccess {
         double ddiff = timeDifference - sec;
         long nanosec = Math.round(ddiff * 1000 * 1000 * 1000);
         return referenceDateTime.plusSeconds(sec).plusNanos(nanosec);
+    }
+
+    @Override
+    public SourceTimeFunctionType getSTFType() {
+        return momentRateFunctionType;
     }
 
     @Override

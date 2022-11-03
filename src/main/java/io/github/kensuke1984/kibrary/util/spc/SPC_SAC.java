@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -85,7 +86,7 @@ public final class SPC_SAC extends Operation {
     /**
      * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
      */
-    private int sourceTimeFunctionType;
+    private SourceTimeFunctionType sourceTimeFunctionType;
     private Path userSourceTimeFunctionPath;
     private Path sourceTimeFunctionCatalogPath;
     /**
@@ -181,7 +182,7 @@ public final class SPC_SAC extends Operation {
         if (property.containsKey("userSourceTimeFunctionPath")) {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
-            sourceTimeFunctionType = property.parseInt("sourceTimeFunctionType", "0");
+            sourceTimeFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("sourceTimeFunctionType", "0"));
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
@@ -286,7 +287,7 @@ public final class SPC_SAC extends Operation {
      * @return {@link SACMaker}
      */
     private SACMaker createSACMaker(SPCFile primeSPC, SPCFile secondarySPC) {
-        SourceTimeFunction sourceTimeFunction = stfHandler.getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
+        SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
                 new GlobalCMTID(primeSPC.getSourceID()));
         // create instance of an anonymous inner class extending SACMaker with the following run() function
         SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {

@@ -9,15 +9,20 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
+/**
+ * Class to create {@link SourceTimeFunction}s based on various settings.
+ * @author otsuru
+ * @since 2022/11/3
+ */
 public class SourceTimeFunctionHandler {
 
-    private final int type;
+    private final SourceTimeFunctionType type;
     private final Path userSTFPath;
     private final Path catalogPath;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Map<GlobalCMTID, String> sourceTimeFunctionCatalog;
 
-    public SourceTimeFunctionHandler(int type, Path catalogPath, Path userSTFPath, Set<GlobalCMTID> ids) throws IOException {
+    public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath, Set<GlobalCMTID> ids) throws IOException {
         this.type = type;
         this.userSTFPath = userSTFPath;
         this.catalogPath = catalogPath;
@@ -47,7 +52,7 @@ public class SourceTimeFunctionHandler {
                     .put(id, SourceTimeFunction.readSourceTimeFunction(inPath.resolve(id + ".stf")));
     }
 
-    public SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
+    public SourceTimeFunction createSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
         double halfDuration = id.getEventData().getHalfDuration();
 
         if (userSTFPath != null) {
@@ -59,26 +64,29 @@ public class SourceTimeFunctionHandler {
             return tmp;
 
         } else {
-            switch (type) {
-            case 0:
-                // none
+            // look up STF type in GCMT catalog when type is AUTO
+            SourceTimeFunctionType individualType = type;
+            if (type == SourceTimeFunctionType.AUTO) {
+                individualType = id.getEventData().getSTFType();
+            }
+
+            // create source time function
+            switch (individualType) {
+            case NONE:
                 return null;
-            case 1:
-                // boxcar
+            case BOXCAR:
                 if (catalogPath != null && sourceTimeFunctionCatalog.containsKey(id)) {
                     String[] ss = sourceTimeFunctionCatalog.get(id).split("\\s+");
                     halfDuration = Double.parseDouble(ss[1]);
                 }
                 return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-            case 2:
-                // triangle
+            case TRIANGLE:
                 if (catalogPath != null && sourceTimeFunctionCatalog.containsKey(id)) {
                     String[] ss = sourceTimeFunctionCatalog.get(id).split("\\s+");
                     halfDuration = Double.parseDouble(ss[1]);
                 }
                 return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-            case 3:
-                // asymmetric triangle
+            case ASYMMETRIC_TRIANGLE:
                 if (catalogPath != null && sourceTimeFunctionCatalog.containsKey(id)) {
                     String[] ss = sourceTimeFunctionCatalog.get(id).split("\\s+");
                     double halfDuration1 = Double.parseDouble(ss[1]);
@@ -88,11 +96,8 @@ public class SourceTimeFunctionHandler {
                     System.err.println("! Catalog data for " + id + " not found, using triangular instead.");
                     return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
                 }
-            case 4:
-                // auto
-
             default:
-                throw new RuntimeException("Integer for source time function is invalid.");
+                throw new RuntimeException("Invalid source time function type.");
             }
         }
     }
