@@ -12,6 +12,9 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * A model composed of a set of voxels, each of which its parameters are perturbed.
  * This class holds a set of {@link PerturbationVoxel}s.
  *
+ * <p>
+ * CAUTION, this class is <b>NOT IMMUTABLE</b>.
+ *
  * @author otsuru
  * @since 2022/4/9
  */
@@ -20,6 +23,10 @@ public class PerturbationModel {
     private List<PerturbationVoxel> voxelList = new ArrayList<>();
 
     public PerturbationModel() {}
+
+    private PerturbationModel(List<PerturbationVoxel> voxelList) {
+        this.voxelList = voxelList;
+    }
 
     public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure) {
         if (unknowns.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values does not match");
@@ -78,12 +85,25 @@ public class PerturbationModel {
         }
     }
 
+    /**
+     * Create a new perturbation model with the same absolute parameter values but with a different initial structure.
+     * @param oneDStructure
+     * @return
+     */
+    public PerturbationModel withReferenceStructureAs(PolynomialStructure oneDStructure) {
+        List<PerturbationVoxel> newVoxelList = new ArrayList<>();
+        for (PerturbationVoxel voxel : this.voxelList) {
+            newVoxelList.add(voxel.withReferenceStructureAs(oneDStructure));
+        }
+        return new PerturbationModel(newVoxelList);
+    }
+
     public void add(PerturbationVoxel voxel) {
         voxelList.add(voxel);
     }
 
     public List<PerturbationVoxel> getVoxels() {
-        return voxelList;
+        return new ArrayList<>(voxelList);
     }
 
 }

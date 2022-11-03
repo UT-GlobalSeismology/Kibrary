@@ -155,7 +155,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         List<String> phaseStrings =
                 Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + synStartTime + " " + timeShift + " " + amplitude + " " + String.join(",", phaseStrings);
+                + synStartTime + " " + String.join(",", phaseStrings) + " " + timeShift + " " + amplitude;
     }
 
 }

@@ -35,7 +35,6 @@ import org.apache.commons.math3.util.FastMath;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
@@ -45,6 +44,7 @@ import io.github.kensuke1984.kibrary.inversion.addons.ResampleGrid;
 import io.github.kensuke1984.kibrary.inversion.addons.ThreeDParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.Weighting;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -969,7 +969,7 @@ public class AtAMaker implements Operation_old {
                             System.out.println("FP catalogue");
                             for (HorizontalPosition position : originalHorizontalPositions) {
                                 if (fastCompute) {
-                                    FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+                                    FullPosition fpSourceLoc = event.getEventData().getCmtPosition();
                                     HorizontalPosition bpSourceLoc = station.getPosition();
                                     double distanceFP = fpSourceLoc.computeEpicentralDistance(position);
                                     double az = fpSourceLoc.computeAzimuth(bpSourceLoc) - fpSourceLoc.computeAzimuth(position);
@@ -994,7 +994,7 @@ public class AtAMaker implements Operation_old {
                                 else if (mode.equals("BOTH")) {
                                     HorizontalPosition position = fpnames.get(ispc).read().getObserverPosition();
                                     if (fastCompute) {
-                                        FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+                                        FullPosition fpSourceLoc = event.getEventData().getCmtPosition();
                                         HorizontalPosition bpSourceLoc = station.getPosition();
                                         double distanceFP = fpSourceLoc.computeEpicentralDistance(position);
                                         double az = fpSourceLoc.computeAzimuth(bpSourceLoc) - fpSourceLoc.computeAzimuth(position);
@@ -1736,7 +1736,7 @@ public class AtAMaker implements Operation_old {
             }
 
             FullPosition bpSourceLoc = station.getPosition().toFullPosition(Earth.EARTH_RADIUS);
-            FullPosition fpSourceLoc = event.getEventData().getCmtLocation();
+            FullPosition fpSourceLoc = event.getEventData().getCmtPosition();
             double distanceBP = bpSourceLoc.computeEpicentralDistance(obsPos) * 180. / Math.PI;
             double distanceFP = fpSourceLoc.computeEpicentralDistance(obsPos) * 180. / Math.PI;
 //			double distance = bpSourceLoc.getGeographicalDistance(obsPos) * 180. / Math.PI;

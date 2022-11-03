@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inv_old;
+package io.github.kensuke1984.kibrary.inversion.solve;
 
 import java.util.stream.IntStream;
 

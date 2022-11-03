@@ -81,7 +81,7 @@ public class BasicRecordSectionCreator extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * components to be included in the dataset
      */
@@ -147,8 +147,8 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
+            pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a basic ID file, must be set");
@@ -196,7 +196,7 @@ public class BasicRecordSectionCreator extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -267,7 +267,7 @@ public class BasicRecordSectionCreator extends Operation {
                // set event to taup_time tool
                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
                if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtLocation().getDepth());
+                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtPosition().getDepth());
                }
 
                // create plot for each component
@@ -345,9 +345,9 @@ public class BasicRecordSectionCreator extends Operation {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeEpicentralDistance(obsID.getObserver().getPosition()));
-                double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeAzimuth(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds
@@ -405,10 +405,10 @@ public class BasicRecordSectionCreator extends Operation {
 
         private void profilePlotSetup() {
             String fileNameRoot;
-            if (tag == null) {
+            if (fileTag == null) {
                 fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
             } else {
-                fileNameRoot = "profile_" + tag + "_" + eventDir.toString() + "_" + component.toString();
+                fileNameRoot = "profile_" + fileTag + "_" + eventDir.toString() + "_" + component.toString();
             }
             profilePlot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
 
@@ -490,7 +490,9 @@ public class BasicRecordSectionCreator extends Operation {
 
             // set names of all phases to display, and the phase to align if it is specified
             timeTool.setPhaseNames(displayPhases);
-            for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+            if (alignPhases != null) {
+                for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+            }
 
             // calculate travel times and store in arrays
             Double[][] travelTimes = new Double[displayPhases.length][iNum];

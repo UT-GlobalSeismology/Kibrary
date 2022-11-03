@@ -1,7 +1,9 @@
-package io.github.kensuke1984.kibrary.correction;
+package io.github.kensuke1984.kibrary.source;
 
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -441,7 +443,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 						, eventFolder.getGlobalCMTID().getEventData().getCmt().getMw()
 						, correctedMw
 						, ampCorrMinMisfit
-						, Earth.EARTH_RADIUS - eventFolder.getGlobalCMTID().getEventData().getCmtLocation().getR()).getBytes()
+						, Earth.EARTH_RADIUS - eventFolder.getGlobalCMTID().getEventData().getCmtPosition().getR()).getBytes()
 					, StandardOpenOption.APPEND);
 				
 				Files.write(catalogueFile, String.format("%s %f %f %d %f %f\n"
@@ -756,7 +758,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 		public void run() {
 			try {
 				for (TimewindowData timewindow : timewindows) {
-					double distance = timewindow.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(
+					double distance = timewindow.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(
 							timewindow.getObserver().getPosition()) * 180. / Math.PI;
 					if (distance < minDistance || distance > maxDistance)
 						continue;

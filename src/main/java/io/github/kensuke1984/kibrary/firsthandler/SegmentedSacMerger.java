@@ -63,8 +63,6 @@ class SegmentedSacMerger {
      * @throws IOException
      */
     private void listUpSacFiles() throws IOException {
-        // System.out.println("Listing up sac files");
-
         try (Stream<Path> sacFileStream = Files.list(eventPath)) {
             sacFileNameList =
                     sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SET"))
@@ -73,7 +71,6 @@ class SegmentedSacMerger {
 
         // SacGroupをつくる
         createGroups(sacFileNameList);
-
     }
 
     /**

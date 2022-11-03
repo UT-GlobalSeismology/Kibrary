@@ -320,21 +320,21 @@ public final class Earth {
     }
 
     /**
-     * @param eq      {@link HorizontalPosition} of source
-     * @param station {@link HorizontalPosition} of station
+     * @param sourcePos      {@link HorizontalPosition} of source
+     * @param receiverPos {@link HorizontalPosition} of station
      * @return [rad] azimuth of the station from the eq [0:2pi)
      */
-    public static double computeAzimuth(HorizontalPosition eq, HorizontalPosition station) {
-        double e = eq.getTheta();
-        double s = station.getTheta();
+    public static double computeAzimuth(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
+        double s = sourcePos.getTheta();
+        double r = receiverPos.getTheta();
         // System.out.println("eq:"+e+" station: "+s);
-        double deltaPhi = -eq.getPhi() + station.getPhi();
-        double delta = computeEpicentralDistance(eq, station);
-        double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi)) /
+        double deltaPhi = -sourcePos.getPhi() + receiverPos.getPhi();
+        double delta = computeEpicentralDistance(sourcePos, receiverPos);
+        double cos = (FastMath.cos(r) * FastMath.sin(s) - FastMath.sin(r) * FastMath.cos(s) * FastMath.cos(deltaPhi)) /
                 FastMath.sin(delta);
         if (1 < cos) cos = 1;
         else if (cos < -1) cos = -1;
-        double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
+        double sin = FastMath.sin(r) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
         double az = FastMath.acos(cos);
         return 0 <= sin ? az : -az + 2 * Math.PI;
     }
@@ -345,15 +345,18 @@ public final class Earth {
      * @return [rad] Back azimuth of the receiver from the source [0:2pi)
      */
     public static double computeBackAzimuth(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
-        double e = sourcePos.getTheta();
-        double s = receiverPos.getTheta();
-        double deltaPhi = sourcePos.getPhi() - receiverPos.getPhi();
-        double delta = computeEpicentralDistance(sourcePos, receiverPos);
-        double cos = (FastMath.cos(e) * FastMath.sin(s) - FastMath.sin(e) * FastMath.cos(s) * FastMath.cos(deltaPhi)) /
-                FastMath.sin(delta);
-        double sin = FastMath.sin(e) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
-        double az = FastMath.acos(cos);
-        return 0 <= sin ? az : -az + 2 * Math.PI;
+        return computeAzimuth(receiverPos, sourcePos);
+//        double s = sourcePos.getTheta();
+//        double r = receiverPos.getTheta();
+//        double deltaPhi = sourcePos.getPhi() - receiverPos.getPhi();
+//        double delta = computeEpicentralDistance(sourcePos, receiverPos);
+//        double cos = (FastMath.cos(s) * FastMath.sin(r) - FastMath.sin(s) * FastMath.cos(r) * FastMath.cos(deltaPhi)) /
+//                FastMath.sin(delta);
+//        if (1 < cos) cos = 1;
+//        else if (cos < -1) cos = -1;
+//        double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
+//        double az = FastMath.acos(cos);
+//        return 0 <= sin ? az : -az + 2 * Math.PI;
     }
 
 }

@@ -107,27 +107,27 @@ public class TimewindowData extends Timewindow {
         return phases;
     }
 
-    /**
-     * @return
-     * @author anselme
-     */
-    public double getAzimuthDegree() {
-        return Math.toDegrees(eventID.getEventData().getCmtLocation().computeAzimuth(observer.getPosition()));
-    }
-
-    /**
-     * @return
-     * @author anselme
-     */
-    public double getDistanceDegree() {
-        return Math.toDegrees(eventID.getEventData().getCmtLocation().computeEpicentralDistance(observer.getPosition()));
-    }
-
     @Override
     public String toString() {
         List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
                 + startTime + " " + endTime + " " + String.join(",", phaseStrings);
+    }
+
+    /**TODO erase
+     * @return
+     * @author anselme
+     */
+    public double getAzimuthDegree() {
+        return Math.toDegrees(eventID.getEventData().getCmtPosition().computeAzimuth(observer.getPosition()));
+    }
+
+    /**TODO erase
+     * @return
+     * @author anselme
+     */
+    public double getDistanceDegree() {
+        return Math.toDegrees(eventID.getEventData().getCmtPosition().computeEpicentralDistance(observer.getPosition()));
     }
 
 }

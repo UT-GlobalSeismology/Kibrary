@@ -26,10 +26,10 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -959,7 +959,7 @@ public class Partial1DSpcMaker implements Operation_old {
                     periodRange[0], periodRange[1], t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
                     cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    periodRange[0], periodRange[1], t.getPhases(), 0, true, id.getEventData().getCmtLocation(), PartialType.TIME_SOURCE,
+                    periodRange[0], periodRange[1], t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
                     cutU);
 
             try {
@@ -1059,7 +1059,7 @@ public class Partial1DSpcMaker implements Operation_old {
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
             stationSet.forEach(station -> perturbationLocationSet.add(new FullPosition(station.getPosition().getLatitude(),
                     station.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            idSet.forEach(id -> perturbationLocationSet.add(id.getEventData().getCmtLocation()));
+            idSet.forEach(id -> perturbationLocationSet.add(id.getEventData().getCmtPosition()));
         }
     }
 

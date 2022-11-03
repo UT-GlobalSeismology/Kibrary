@@ -49,7 +49,7 @@ public class PseudoWaveformGenerator extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
 
     /**
      * Path of a {@link BasicIDFile} file (id part)
@@ -100,8 +100,8 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##Path of a basic ID file, must be defined");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
@@ -131,7 +131,7 @@ public class PseudoWaveformGenerator extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
@@ -171,9 +171,8 @@ public class PseudoWaveformGenerator extends Operation {
 
         // output
         String dateStr = GadgetAid.getTemporaryString();
-        Path pseudoIDPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudoID", tag, dateStr, ".dat"));
-        Path pseudoPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudo", tag, dateStr, ".dat"));
-        System.err.println("Outputting in " + pseudoIDPath + " , " + pseudoPath);
+        Path pseudoIDPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudoID", fileTag, dateStr, ".dat"));
+        Path pseudoPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudo", fileTag, dateStr, ".dat"));
         output(pseudoWaveform, dVectorBuilder, pseudoIDPath, pseudoPath);
     }
 
@@ -199,6 +198,7 @@ public class PseudoWaveformGenerator extends Operation {
     }
 
     private RealVector createRandomNoise(DVectorBuilder dVectorBuilder) {
+        System.err.println("Adding noise of amplitude " + noisePower);
         RealVector[] noiseV = new RealVector[dVectorBuilder.getNTimeWindow()];
 
         // settings ; TODO: enable these values to be set
@@ -210,6 +210,8 @@ public class PseudoWaveformGenerator extends Operation {
         double maxFreq = 0.05;
         double minFreq = 0.01;
         int np = 6;
+
+        System.err.println("FYI, L2 norm of residual waveform: " + dVectorBuilder.fullObsVec().subtract(dVectorBuilder.fullSynVec()).getNorm());
 
         ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {

@@ -101,7 +101,6 @@ class SegmentedSacGroup {
      * @return うまくつなげられたかどうか
      */
     boolean merge() throws IOException {
-        //System.out.println("merging");
         SacFileName[] sacFileNameList = nameSet.toArray(new SacFileName[0]);
         // sort the sacFileNameList
         // files will be sorted in order of starttime
@@ -133,12 +132,9 @@ class SegmentedSacGroup {
         // b value of file0 (msec)
         double currentB = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInMillis = Math.round(currentB * 1000);
-        //System.out.println(currentB*1000+" "+e0);
         // e value of file0 (msec)
         double e0 = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
         long eInMillis = Math.round(e0 * 1000);
-        //System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
-        //System.out.println("b, e "+bInMillis+", "+eInMillis);
         // current start time of waveform
         LocalDateTime currentStartTime = sacFileNameList[0].getStartTime().plus(bInMillis, ChronoUnit.MILLIS);
         // current end time of waveform startTime+ timelength0
@@ -151,14 +147,10 @@ class SegmentedSacGroup {
 
         // <<<<以下、file0につなげていくfile1, file2, file3, ... を読み込んでつなげていく>>>>
 
-        if (sacFileNameList.length > 1) {
-            System.err.println("++ merging : " + workPath.getFileName() + " - " + mergedSacFileName.toString());
-        }
         for (int i = 1; i < sacFileNameList.length; i++) {
             // sacfilename to be joined (file1)
             SacFileName joinSacFileName = sacFileNameList[i];
             Path joinSacPath = workPath.resolve(joinSacFileName.toString());
-            //System.err.println("joining " + joinSacFileName); // 4debug
 
             // つなげるsacfile(file1)の読み込み
             Map<SACHeaderEnum, String> headerMap1 = SACUtil.readHeader(joinSacPath);
@@ -185,7 +177,6 @@ class SegmentedSacGroup {
             if (maxGap < timeGap) return false;
 
             // read data of file1
-            //System.out.println("yes merging");
             double[] data = SACUtil.readSACData(joinSacPath);
 
             // 時間差が直前のファイルの終了時刻からDELTAの半分より後、それ以外で場合分け
@@ -214,7 +205,6 @@ class SegmentedSacGroup {
             currentEndTime = endTime;
             currentStartTime = startTime;
         }
-        //System.out.println(mergedSacFileName);
 
         if (sacdata.size() != currentNpts) {
             System.err.print("!! unexpected happened at merge, npts' are different ");
@@ -222,10 +212,8 @@ class SegmentedSacGroup {
             return false;
         }
 
-        //System.out.println(deltaInMillis+" "+bInMillis+" "+eInMillis);
         long timeDiff = (sacdata.size() - 1) * deltaInMillis + bInMillis - eInMillis;
         if (5 < timeDiff || timeDiff < -5) {
-            //if ((sacdata.size()-1)*deltaInMillis+bInMillis != eInMillis) {
             System.err.print("!! unexpected happened at merge, currentE's are different ");
             System.err.println((sacdata.size() - 1) * deltaInMillis + bInMillis + " " + eInMillis
                     + " : " + workPath.getFileName() + " - " + rootSacFileName.toString());
@@ -233,7 +221,6 @@ class SegmentedSacGroup {
         }
 
         double e = eInMillis / 1000.0;
-        //System.out.println(e+" "+eInMillis);
         headerMap.put(SACHeaderEnum.NPTS, String.valueOf(sacdata.size()));
         headerMap.put(SACHeaderEnum.E, String.valueOf(e));
         double[] sdata = sacdata.stream().mapToDouble(Double::doubleValue).toArray();

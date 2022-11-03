@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inv_old.ConjugateGradientMethod;
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
-import io.github.kensuke1984.kibrary.inv_old.NonNegativeLeastSquaresMethod;
-import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation_old;
+import io.github.kensuke1984.kibrary.inversion.solve.ConjugateGradientMethod;
+import io.github.kensuke1984.kibrary.inversion.solve.NonNegativeLeastSquaresMethod;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -62,7 +62,7 @@ public class Weighting {
 		return lowerUpperW;
 	}
 	
-	public static double[] TakeuchiKobayashi1D(PartialID[] ids, List<UnknownParameter> parameterList, Dvector dVector, double gamma) {
+	public static double[] TakeuchiKobayashi1D(PartialID[] ids, List<UnknownParameter> parameterList, Dvector_old dVector, double gamma) {
 		int n = dVector.getNTimeWindow();
 		
 		ParallelizedMatrix a = setAForSSL(ids, parameterList, dVector, gamma);
@@ -76,7 +76,7 @@ public class Weighting {
 		return qpp.compute().toArray();
 	}
 	
-	public static double[] TakeuchiKobayashi1D(PartialID[] ids, List<UnknownParameter> parameterList, Dvector dVector, double gamma, RealVector xInitial) {
+	public static double[] TakeuchiKobayashi1D(PartialID[] ids, List<UnknownParameter> parameterList, Dvector_old dVector, double gamma, RealVector xInitial) {
 		int n = dVector.getNTimeWindow();
 		
 		ParallelizedMatrix a = setA(ids, parameterList, dVector, gamma);
@@ -91,7 +91,7 @@ public class Weighting {
 		return nnls.getAnsVector().toArray();
 	}
 	
-	public static double[] CG(PartialID[] ids, List<UnknownParameter> parameterList, Dvector dVector, double gamma) {
+	public static double[] CG(PartialID[] ids, List<UnknownParameter> parameterList, Dvector_old dVector, double gamma) {
 		int n = dVector.getNTimeWindow();
 		
 		ParallelizedMatrix a = setA(ids, parameterList, dVector, gamma);
@@ -119,7 +119,7 @@ public class Weighting {
 		return cgn;
 	}
 	
-	private static ParallelizedMatrix setAForSSL(PartialID[] ids, List<UnknownParameter> parameterList, Dvector dVector, double gamma) {
+	private static ParallelizedMatrix setAForSSL(PartialID[] ids, List<UnknownParameter> parameterList, Dvector_old dVector, double gamma) {
 		int n = dVector.getNTimeWindow();
 		int m = parameterList.size();
 		
@@ -128,7 +128,7 @@ public class Weighting {
 		
 		ParallelizedMatrix a = new ParallelizedMatrix(n, n);
 		
-		ObservationEquation eq = new ObservationEquation(ids, parameterList, dVector, false, false, null, null, null, null);
+		ObservationEquation_old eq = new ObservationEquation_old(ids, parameterList, dVector, false, false, null, null, null, null);
 		ParallelizedMatrix eqA = (ParallelizedMatrix) eq.getA();
 		
 		for (int i = 0; i < eqA.getRowDimension(); i++) {
@@ -206,7 +206,7 @@ public class Weighting {
 		return a;
 	}
 	
-	private static ParallelizedMatrix setA(PartialID[] ids, List<UnknownParameter> parameterList, Dvector dVector, double gamma) {
+	private static ParallelizedMatrix setA(PartialID[] ids, List<UnknownParameter> parameterList, Dvector_old dVector, double gamma) {
 		int n = dVector.getNTimeWindow();
 		int m = parameterList.size();
 		
@@ -215,7 +215,7 @@ public class Weighting {
 		
 		ParallelizedMatrix a = new ParallelizedMatrix(n, n);
 		
-		ObservationEquation eq = new ObservationEquation(ids, parameterList, dVector, false, false, null, null, null, null);
+		ObservationEquation_old eq = new ObservationEquation_old(ids, parameterList, dVector, false, false, null, null, null, null);
 		ParallelizedMatrix eqA = (ParallelizedMatrix) eq.getA();
 		
 		double maxEqA = Double.MIN_VALUE;
@@ -300,7 +300,7 @@ public class Weighting {
 	
 	public static double weightingAzimuthTZCA(BasicID obs) {
 		double weight = 1.;
-		FullPosition loc = obs.getGlobalCMTID().getEventData().getCmtLocation();
+		FullPosition loc = obs.getGlobalCMTID().getEventData().getCmtPosition();
 		double azimuth = Math.toDegrees(loc.computeAzimuth(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
@@ -330,7 +330,7 @@ public class Weighting {
 	
 	public static double weightingDistanceTZCA(BasicID obs) {
 		double weight = 1.;
-		FullPosition loc = obs.getGlobalCMTID().getEventData().getCmtLocation();
+		FullPosition loc = obs.getGlobalCMTID().getEventData().getCmtPosition();
 		double distance = Math.toDegrees(loc.computeEpicentralDistance(obs.getObserver().getPosition()));
 		double lat = loc.getLatitude();
 		double lon = loc.getLongitude();
@@ -372,7 +372,7 @@ public class Weighting {
 	
 	public static double weightEventTZCA(BasicID obs) {
 		double weight = 1.;
-		FullPosition location = obs.getGlobalCMTID().getEventData().getCmtLocation();
+		FullPosition location = obs.getGlobalCMTID().getEventData().getCmtPosition();
 		
 		if (location.getLongitude() > -89)
 			weight = 1.5;

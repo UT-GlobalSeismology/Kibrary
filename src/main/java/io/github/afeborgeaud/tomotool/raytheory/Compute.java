@@ -320,7 +320,7 @@ public class Compute {
                 }
             }
 
-            tauptime.setSourceDepth(6371. - ttdP.getGlobalCMTID().getEventData().getCmtLocation().getR());
+            tauptime.setSourceDepth(6371. - ttdP.getGlobalCMTID().getEventData().getCmtPosition().getR());
             tauptime.calculate(ttdP.getEpicentralDistance());
             double taup_P = tauptime.getArrival(0).getTime();
             double taup_PcP = tauptime.getArrival(1).getTime();
@@ -822,7 +822,7 @@ public class Compute {
             double min_record_per_event = 50;
             rayinfo = rayinfo.parallelStream()
                     .filter(rinfo -> {
-                        double depth = 6371. - rinfo.getEventData().getEventData().getCmtLocation().getR();
+                        double depth = 6371. - rinfo.getEventData().getEventData().getCmtPosition().getR();
                         int count = eventCounts.get(rinfo.getEventData()).intValue();
                         return depth >= min_depth && count >= min_record_per_event;
                     }).collect(Collectors.toList());
@@ -930,7 +930,7 @@ public class Compute {
             double min_record_per_event = 50;
             rayinfo = rayinfo.parallelStream()
                     .filter(rinfo -> {
-                        double depth = 6371. - rinfo.getEventData().getEventData().getCmtLocation().getR();
+                        double depth = 6371. - rinfo.getEventData().getEventData().getCmtPosition().getR();
                         int count = eventCounts.get(rinfo.getEventData()).intValue();
                         return depth >= min_depth && count >= min_record_per_event;
                     }).collect(Collectors.toList());

@@ -66,7 +66,7 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
             System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
             System.out.println("Centroid Time: " + event.getCMTTime());
-            System.out.println("Centroid location(latitude longitude radius): " + event.getCmtLocation());
+            System.out.println("Centroid location(latitude longitude radius): " + event.getCmtPosition());
         }
     }
 

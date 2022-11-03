@@ -319,7 +319,7 @@ public class Traveltime {
 
     public void writeEventInformation(Path outpath) throws IOException {
         PrintWriter pw = new PrintWriter(outpath.toFile());
-        raypathInformations.stream().map(r -> r.getEventData()).distinct().forEach(id -> pw.println(id + " " + id.getEventData().getCmtLocation()));
+        raypathInformations.stream().map(r -> r.getEventData()).distinct().forEach(id -> pw.println(id + " " + id.getEventData().getCmtPosition()));
         pw.close();
     }
 

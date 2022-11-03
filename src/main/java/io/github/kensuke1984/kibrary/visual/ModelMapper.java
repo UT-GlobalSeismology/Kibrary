@@ -42,17 +42,28 @@ public class ModelMapper extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
 
     /**
      * Path of model file
      */
     private Path modelPath;
     /**
-     * structure file instead of PREM
+     * file of 1D structure used in inversion
      */
-    private Path structurePath;
-    private String structureName;
+    private Path initialStructurePath;
+    /**
+     * name of 1D structure used in inversion
+     */
+    private String initialStructureName;
+    /**
+     * file of 1D structure to map perturbations against
+     */
+    private Path referenceStructurePath;
+    /**
+     * name of 1D structure to map perturbations against
+     */
+    private String referenceStructureName;
     /**
      * Path of a {@link MultigridInformationFile}
      */
@@ -80,15 +91,19 @@ public class ModelMapper extends Operation {
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("#folderTag ");
             pw.println("##Path of model file, must be set.");
             pw.println("#modelPath model.lst");
-            pw.println("##Path of an initial structure file used. If this is unset, the following structureName will be referenced.");
-            pw.println("#structurePath ");
-            pw.println("##Name of an initial structure model used (PREM)");
-            pw.println("#structureName ");
+            pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
+            pw.println("#initialStructurePath ");
+            pw.println("##Name of an initial structure model used in inversion (PREM)");
+            pw.println("#initialStructureName ");
+            pw.println("##Path of a structure file to map perturbations against. If this is unset, the following referenceStructureName will be referenced.");
+            pw.println("#referenceStructurePath ");
+            pw.println("##Name of a structure model to map perturbations against (PREM)");
+            pw.println("#referenceStructureName ");
             pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
-            pw.println("#multigridPath ");
+            pw.println("#multigridPath multigrid.inf");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
@@ -106,13 +121,18 @@ public class ModelMapper extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         modelPath = property.parsePath("modelPath", null, true, workPath);
-        if (property.containsKey("structurePath")) {
-            structurePath = property.parsePath("structurePath", null, true, workPath);
+        if (property.containsKey("initialStructurePath")) {
+            initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
         } else {
-            structureName = property.parseString("structureName", "PREM");
+            initialStructureName = property.parseString("initialStructureName", "PREM");
+        }
+        if (property.containsKey("referenceStructurePath")) {
+            referenceStructurePath = property.parsePath("referenceStructurePath", null, true, workPath);
+        } else {
+            referenceStructureName = property.parseString("referenceStructureName", "PREM");
         }
         if (property.containsKey("multigridPath"))
             multigridPath = property.parsePath("multigridPath", null, true, workPath);
@@ -128,11 +148,20 @@ public class ModelMapper extends Operation {
     public void run() throws IOException {
 
         // read initial structure
-        PolynomialStructure structure = null;
-        if (structurePath != null) {
-            structure = PolynomialStructureFile.read(structurePath);
+        System.err.print("Initial structure: ");
+        PolynomialStructure initialStructure = null;
+        if (initialStructurePath != null) {
+            initialStructure = PolynomialStructureFile.read(initialStructurePath);
         } else {
-            structure = PolynomialStructure.of(structureName);
+            initialStructure = PolynomialStructure.of(initialStructureName);
+        }
+        // read reference structure
+        System.err.print("Reference structure: ");
+        PolynomialStructure referenceStructure = null;
+        if (referenceStructurePath != null) {
+            referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
+        } else {
+            referenceStructure = PolynomialStructure.of(referenceStructureName);
         }
 
         // read knowns
@@ -148,12 +177,15 @@ public class ModelMapper extends Operation {
         }
 
         // build model
-        PerturbationModel model = new PerturbationModel(knowns, structure);
+        PerturbationModel model = new PerturbationModel(knowns, initialStructure);
+        if (!referenceStructure.equals(initialStructure)) {
+            model = model.withReferenceStructureAs(referenceStructure);
+        }
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (VariableType variable : variableTypes) {

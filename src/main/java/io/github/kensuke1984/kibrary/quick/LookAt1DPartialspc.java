@@ -26,7 +26,7 @@ public class LookAt1DPartialspc {
 		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
-		FullPosition sourceLocation = dsmOutput.getSourceLocation();
+		FullPosition sourceLocation = dsmOutput.getSourcePosition();
 		
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 		
@@ -53,7 +53,7 @@ public class LookAt1DPartialspc {
 		String netwkName = dsmOutput.getNetworkCode();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
-		FullPosition sourceLocation = dsmOutput.getSourceLocation();
+		FullPosition sourceLocation = dsmOutput.getSourcePosition();
 		
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 	}

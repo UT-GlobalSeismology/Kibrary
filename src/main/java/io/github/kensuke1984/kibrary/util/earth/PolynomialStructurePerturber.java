@@ -31,7 +31,7 @@ public class PolynomialStructurePerturber extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
 
     /**
      * Structure file to use instead of PREM
@@ -68,7 +68,7 @@ public class PolynomialStructurePerturber extends Operation {
             pw.println("##(String) The first part of the name of output structure file (PREM)");
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
-            pw.println("#tag ");
+            pw.println("#fileTag ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
@@ -93,7 +93,7 @@ public class PolynomialStructurePerturber extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "PREM");
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
@@ -121,7 +121,7 @@ public class PolynomialStructurePerturber extends Operation {
 
        structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
 
-       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, tag, GadgetAid.getTemporaryString(), ".structure"));
+       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, GadgetAid.getTemporaryString(), ".structure"));
        PolynomialStructureFile.write(structure, outputPath);
    }
 

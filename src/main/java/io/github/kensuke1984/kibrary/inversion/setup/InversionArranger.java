@@ -39,7 +39,7 @@ public class InversionArranger extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -85,8 +85,8 @@ public class InversionArranger extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##Path of a basic ID file, must be set");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
@@ -110,7 +110,7 @@ public class InversionArranger extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
@@ -119,7 +119,6 @@ public class InversionArranger extends Operation {
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
-
     }
 
     @Override
@@ -128,21 +127,25 @@ public class InversionArranger extends Operation {
         // read input
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
-
-        // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
-        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingType);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
+        int dLength = assembler.getD().getDimension();
+        double dNorm = assembler.getD().getNorm();
+        double obsNorm = assembler.getObs().getNorm();
+
+        // prepare output folder
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
         AtAFile.write(ata, outPath.resolve("ata.lst"));
         AtdFile.write(atd, outPath.resolve("atd.lst"));
-        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
+        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
     }
 
 }

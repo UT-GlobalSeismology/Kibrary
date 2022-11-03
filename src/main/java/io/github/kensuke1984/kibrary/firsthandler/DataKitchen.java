@@ -46,9 +46,9 @@ public class DataKitchen extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -71,6 +71,10 @@ public class DataKitchen extends Operation {
      */
     private double coordinateGrid;
     /**
+     * The maximum length of output time series
+     */
+    private double maxTlen;
+    /**
      * if remove intermediate file
      */
     private boolean removeIntermediateFile;
@@ -92,8 +96,8 @@ public class DataKitchen extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##The name of catalog to use from {cmt, pde}  (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling Hz, can not be changed now (20)");
@@ -112,9 +116,13 @@ public class DataKitchen extends Operation {
             pw.println("#maxLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg] (0.01)"); // = about 1 km
             pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
-            pw.println("#coordinateGrid");
+            pw.println("#coordinateGrid ");
+            pw.println("##(double) The maximum length of output time series (3276.8)");
+            pw.println("## This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
+            pw.println("## The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
+            pw.println("#maxTlen ");
             pw.println("##(boolean) If this is true, remove intermediate files (true)");
-            pw.println("#removeIntermediateFile");
+            pw.println("#removeIntermediateFile ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -126,7 +134,7 @@ public class DataKitchen extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":
@@ -161,8 +169,8 @@ public class DataKitchen extends Operation {
         if (coordinateGrid < 0)
             throw new IllegalArgumentException("coordinateGrid must be non-negative.");
 
+        maxTlen = property.parseDouble("maxTlen", "3276.8");
         removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
-
     }
 
     @Override
@@ -172,7 +180,7 @@ public class DataKitchen extends Operation {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "processed", tag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "processed", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event
@@ -193,7 +201,7 @@ public class DataKitchen extends Operation {
 
         // set parameters
         eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
-                minLongitude, maxLongitude, coordinateGrid, removeIntermediateFile));
+                minLongitude, maxLongitude, coordinateGrid, maxTlen, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);

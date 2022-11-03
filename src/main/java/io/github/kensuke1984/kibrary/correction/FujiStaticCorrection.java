@@ -75,7 +75,7 @@ public class FujiStaticCorrection extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * Path of the output file
      */
@@ -136,8 +136,8 @@ public class FujiStaticCorrection extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##(double) sacSamplingHz (20)");
@@ -148,7 +148,7 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset (.)");
             pw.println("#synPath ");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (false)");
+            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
             pw.println("#convolved ");
             pw.println("##(double) Threshold for peak finder (0.2)");
             pw.println("#threshold ");
@@ -167,7 +167,7 @@ public class FujiStaticCorrection extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -175,14 +175,14 @@ public class FujiStaticCorrection extends Operation {
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
-        convolved = property.parseBoolean("convolved", "false");
+        convolved = property.parseBoolean("convolved", "true");
 
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");
         mediantime = property.parseBoolean("mediantime", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", tag, dateStr, ".dat"));
+        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
 
@@ -205,7 +205,6 @@ public class FujiStaticCorrection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println("Outputting in " + outputPath);
         StaticCorrectionDataFile.write(staticCorrectionSet, outputPath);
     }
 

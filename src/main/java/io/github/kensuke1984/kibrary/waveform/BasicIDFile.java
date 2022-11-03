@@ -24,6 +24,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -106,7 +107,9 @@ public final class BasicIDFile {
         Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
 
         // output
-        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(basicIDs.size(), "basicID", "basicIDs") + " (total of obs and syn)");
+        System.err.println(" in " + outputIDPath + " and " + outputWavePath);
         try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {
             for (BasicID id : basicIDs) {
                 wdw.addBasicID(id);
@@ -307,10 +310,18 @@ public final class BasicIDFile {
             ids = read(Paths.get(cmdLine.getOptionValue("i")));
         }
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("basicID" + GadgetAid.getTemporaryString() + ".txt");
+        Path outputIdsPath;
+        if (cmdLine.hasOption("o")) {
+            outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
+        } else {
+            // set the output file name the same as the input, but with extension changed to txt
+            String idFileName = Paths.get(cmdLine.getOptionValue("i")).getFileName().toString();
+            outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
+        }
 
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
+            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
+                    + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");
             Arrays.stream(ids).forEach(pw::println);
         }
     }

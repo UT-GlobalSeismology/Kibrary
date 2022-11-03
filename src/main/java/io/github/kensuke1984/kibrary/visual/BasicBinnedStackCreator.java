@@ -55,7 +55,7 @@ public class BasicBinnedStackCreator extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
     /**
      * components to be included in the dataset
      */
@@ -112,8 +112,8 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
+            pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a basic ID file, must be defined");
@@ -158,7 +158,7 @@ public class BasicBinnedStackCreator extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -222,10 +222,10 @@ public class BasicBinnedStackCreator extends Operation {
                        .toArray(BasicID[]::new);
 
                String fileNameRoot;
-               if (tag == null) {
+               if (fileTag == null) {
                    fileNameRoot = eventDir.toString() + "_" + component.toString();
                } else {
-                   fileNameRoot = tag + "_" + eventDir.toString() + "_" + component.toString();
+                   fileNameRoot = fileTag + "_" + eventDir.toString() + "_" + component.toString();
                }
 
                Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
@@ -293,9 +293,9 @@ public class BasicBinnedStackCreator extends Operation {
                 BasicID obsID = obsList.get(i);
                 BasicID synID = synList.get(i);
 
-                double distance = obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double distance = obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
-                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtLocation()
+                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
                 // skip waveform if distance or azimuth is out of bounds

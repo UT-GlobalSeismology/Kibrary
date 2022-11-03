@@ -21,8 +21,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.correction.MomentTensor;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
+import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -100,7 +100,7 @@ public class MakeRunFolders {
 //								, idData.getCmtLocation().getLongitude()
 								, 90.
 								, 0.
-								, Earth.EARTH_RADIUS - idData.getCmtLocation().getR()
+								, Earth.EARTH_RADIUS - idData.getCmtPosition().getR()
 								, mt.getMrr() * pow
 								, mt.getMtt() * pow
 								, mt.getMpp() * pow
@@ -119,8 +119,8 @@ public class MakeRunFolders {
 						}
 					});
 					Path stationFile = localDirPath.resolve("STATIONS");
-					RealVector axis = getRotationAxisToNorthPole(idData.getCmtLocation());
-					double angle = idData.getCmtLocation().getTheta();
+					RealVector axis = getRotationAxisToNorthPole(idData.getCmtPosition());
+					double angle = idData.getCmtPosition().getTheta();
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
 						for (Observer sta : stationSet) {
 							FullPosition rotatedStation 

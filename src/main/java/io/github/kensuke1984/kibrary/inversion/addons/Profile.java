@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -112,7 +112,7 @@ public class Profile {
 			PrintWriter pw4 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("eventVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 			pw4.println("# Event synVariance bornVariance varianceReduction(syn - born) lat lon depth Mw");
 			
-			InversionResult ir = new InversionResult(inversionResultPath);
+			InversionResult_old ir = new InversionResult_old(inversionResultPath);
 			List<BasicID> obsList = ir.getBasicIDList().stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 				.collect(Collectors.toList());
 			Set<GlobalCMTID> events = ir.idSet();
@@ -191,7 +191,7 @@ public class Profile {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
-							double distance = id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
+							double distance = id.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
 								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
@@ -315,9 +315,9 @@ public class Profile {
 					RealVector synVector = ir.syntheticOf(id).getYVector();
 					RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 					
-					double distance = id.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(id.getObserver().getPosition())
+					double distance = id.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(id.getObserver().getPosition())
 							* 180. / Math.PI;
-					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(id.getObserver().getPosition()));
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(id.getObserver().getPosition()));
 					int i = (int) (distance);
 					int j = (int) (azimuth / dAz);
 					
@@ -343,9 +343,9 @@ public class Profile {
 				}
 					double tmpSyn = synVariance / obsNorm;
 					double tmpBorn =  bornVariance / obsNorm;
-					double lat = event.getEventData().getCmtLocation().getLatitude();
-					double lon = event.getEventData().getCmtLocation().getLongitude();
-					double depth = 6371. - event.getEventData().getCmtLocation().getR();
+					double lat = event.getEventData().getCmtPosition().getLatitude();
+					double lon = event.getEventData().getCmtPosition().getLongitude();
+					double depth = 6371. - event.getEventData().getCmtPosition().getR();
 					pw4.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + " " + lat + " " + lon + " " + depth + " " + event.getEventData().getCmt().getMw());
 					
 				Path outPlot = stackPath.resolve(event + ".plt");
@@ -582,8 +582,8 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 				);
 		
 		ss += "gmt psxy -R-170/-52/-41/75 -JQ270/4.4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
-		double evLat = event.getEventData().getCmtLocation().getLatitude();
-		double evLon = event.getEventData().getCmtLocation().getLongitude();
+		double evLat = event.getEventData().getCmtPosition().getLatitude();
+		double evLon = event.getEventData().getCmtPosition().getLongitude();
 		for (Observer station : stations)
 			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
 		ss += "END\n";

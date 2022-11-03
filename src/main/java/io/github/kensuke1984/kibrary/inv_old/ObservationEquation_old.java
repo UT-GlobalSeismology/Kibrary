@@ -51,10 +51,10 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  *
  * @author Kensuke Konishi
  * @version 0.2.1.3
- * @see Dvector {@link UnknownParameter}
+ * @see Dvector_old {@link UnknownParameter}
  * @deprecated use MatrixAssembly
  */
-public class ObservationEquation {
+public class ObservationEquation_old {
 
     //TODO update this part of the code (not yet used)
 //    private final DataGenerator<RealVector, RealVector[]> BORN_GENERATOR;
@@ -62,7 +62,7 @@ public class ObservationEquation {
 
     private List<UnknownParameter> PARAMETER_LIST;
     private List<UnknownParameter> ORIGINAL_PARAMETER_LIST;
-    private Dvector DVECTOR;
+    private Dvector_old DVECTOR;
     private ParallelizedMatrix a;
     private RealVector atd;
     private RealMatrix ata;
@@ -76,7 +76,7 @@ public class ObservationEquation {
     private double mul;
     private RealVector m;
 
-    public ObservationEquation(RealMatrix ataMatrix, List<UnknownParameter> unknownParameterList, RealVector atdVector) {
+    public ObservationEquation_old(RealMatrix ataMatrix, List<UnknownParameter> unknownParameterList, RealVector atdVector) {
         this.ata = ataMatrix;
         this.atd = atdVector;
         this.ORIGINAL_PARAMETER_LIST = unknownParameterList;
@@ -89,7 +89,7 @@ public class ObservationEquation {
      * @param parameterList for &delta;m
      * @param dVector       for &delta;d
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector) {
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector) {
         this(partialIDs, parameterList, dVector, false, false, null, null, null, null);
     }
 
@@ -105,7 +105,7 @@ public class ObservationEquation {
      * @param verticalMappingPath
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector,
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
             , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath) {
         if (verticalMappingPath != null) {
@@ -143,7 +143,7 @@ public class ObservationEquation {
      * @param computeAtA
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector,
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
             , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath, boolean computeAtA) {
         if (verticalMappingPath != null) {
@@ -183,7 +183,7 @@ public class ObservationEquation {
      * @param verticalMappingPath
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector,
             boolean time_source, boolean time_receiver, Map<PartialType, Integer[]> nUnknowns, double lambdaMU, double lambdaQ, double correlationScaling
             , Path verticalMappingPath) {
         CombinationType combinationType = null;
@@ -247,7 +247,7 @@ public class ObservationEquation {
      * @param computeAtA
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector
             , double cm0, double cmH, double cmV, Path verticalMappingPath, boolean computeAtA) {
         CombinationType combinationType = null;
         if (verticalMappingPath != null) {
@@ -303,7 +303,7 @@ public class ObservationEquation {
      * @param verticalMappingPath
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector
             , double cm0, double cmH, double cmV, Path verticalMappingPath) {
         this(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMappingPath, true);
     }
@@ -316,7 +316,7 @@ public class ObservationEquation {
      * @param atd_prev
      * @author anselme
      */
-    public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector, ParallelizedMatrix ata_prev, RealVector atd_prev) {
+    public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector, ParallelizedMatrix ata_prev, RealVector atd_prev) {
         DVECTOR = dVector;
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
@@ -334,7 +334,7 @@ public class ObservationEquation {
      * @param dVector
      * @author anselme
      */
-    public ObservationEquation(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector dVector) {
+    public ObservationEquation_old(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector_old dVector) {
         DVECTOR = dVector;
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
@@ -351,7 +351,7 @@ public class ObservationEquation {
      * @param a
      * @author anselme
      */
-    public ObservationEquation(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector dVector, ParallelizedMatrix a) {
+    public ObservationEquation_old(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector_old dVector, ParallelizedMatrix a) {
         DVECTOR = dVector;
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
@@ -366,24 +366,24 @@ public class ObservationEquation {
      * @return
      * @author anselme
      */
-    public ObservationEquation add(ObservationEquation equation) {
+    public ObservationEquation_old add(ObservationEquation_old equation) {
         RealMatrix atatmp = ata.add(equation.getAtA());
         RealVector atdtmp = atd.add(equation.getAtD());
         DVECTOR.setVariance(DVECTOR.getVariance() + equation.getDVector().getVariance());
 
 //		dVector.setObsNormSquare(dVector.getObsNormSquare() + equation.getDVector().getObsNormSquare());
 
-        return new ObservationEquation(atatmp, atdtmp, PARAMETER_LIST, DVECTOR, a);
+        return new ObservationEquation_old(atatmp, atdtmp, PARAMETER_LIST, DVECTOR, a);
     }
 
-    public ObservationEquation scalarMultiply(double d) {
+    public ObservationEquation_old scalarMultiply(double d) {
         mul = d;
         RealMatrix atatmp = ata.scalarMultiply(d);
         RealVector atdtmp = atd.mapMultiply(d);
         DVECTOR.setVariance(DVECTOR.getVariance() * d);
 //		dVector.mapMultiply(Math.sqrt(d)); // TODO check if valid
 //		dVector.setObsNormSquare(dVector.getObsNormSquare() * d);
-        ObservationEquation eq = new ObservationEquation(atatmp, atdtmp, PARAMETER_LIST, DVECTOR, a);
+        ObservationEquation_old eq = new ObservationEquation_old(atatmp, atdtmp, PARAMETER_LIST, DVECTOR, a);
         return eq;
     }
 
@@ -1025,7 +1025,7 @@ public class ObservationEquation {
         return cmAtd;
     }
 
-    public Dvector getDVector() {
+    public Dvector_old getDVector() {
         return DVECTOR;
     }
 
@@ -1064,8 +1064,8 @@ public class ObservationEquation {
         atd = ata.operate(checkeboardPerturbationVector);
     }
 
-    public ObservationEquation setTypeToZero(PartialType type) {
-        ObservationEquation eq = new ObservationEquation(ata, atd, PARAMETER_LIST, DVECTOR, a);
+    public ObservationEquation_old setTypeToZero(PartialType type) {
+        ObservationEquation_old eq = new ObservationEquation_old(ata, atd, PARAMETER_LIST, DVECTOR, a);
         for (int i = 0; i < PARAMETER_LIST.size(); i++) {
             if (PARAMETER_LIST.get(i).getPartialType().equals(type))
                 atd.setEntry(i, 0.);

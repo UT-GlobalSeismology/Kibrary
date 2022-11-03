@@ -24,12 +24,13 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * File containing list of events.
+ * File containing list of events. See {@link GlobalCMTID}.
  * <p>
  * Each line: globalCMTID, latitude, longitude, radius.
  * <p>
@@ -50,10 +51,14 @@ public class EventListFile {
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(eventSet.size(), "event", "events")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# GCMTID latitude longitude radius");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtLocation());
+                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition());
             });
         }
     }

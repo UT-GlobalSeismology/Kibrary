@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
@@ -15,9 +16,10 @@ import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
 import io.github.kensuke1984.kibrary.multigrid.MultigridPartialsForger;
+import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
+import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
-import io.github.kensuke1984.kibrary.tests.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
@@ -33,6 +35,7 @@ import io.github.kensuke1984.kibrary.visual.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.SensitivityKernelMapper;
+import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
@@ -68,6 +71,7 @@ enum Manhattan {
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     RaypathSelection(34, RaypathSelection.class),
+    StaticCorrectionForger(38, StaticCorrectionForger.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),
@@ -75,6 +79,7 @@ enum Manhattan {
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
+    VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
     MultigridDesigner(53, MultigridDesigner.class),
     // Partial 60
     ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
@@ -91,6 +96,7 @@ enum Manhattan {
     InversionSolver(72, InversionSolver.class),
     ModelSetMapper(74, ModelSetMapper.class),
     // Tests 80
+    BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),
     PerturbationMapper(82, PerturbationMapper.class),
     ModelMapper(83, ModelMapper.class),

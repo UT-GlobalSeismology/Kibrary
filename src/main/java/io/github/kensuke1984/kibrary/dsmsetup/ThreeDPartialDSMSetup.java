@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -13,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
@@ -74,7 +76,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -129,13 +131,14 @@ public class ThreeDPartialDSMSetup extends Operation {
      * locations of perturbation points
      *
      */
-    private HorizontalPosition[] perturbationPositions;
+    private HorizontalPosition[] voxelPositions;
     /**
      * Radii of perturbation points default values are double[]{3505, 3555,
      * 3605, 3655, 3705, 3755, 3805, 3855} Sorted. No duplication.
      */
-    private double[] perturbationRadii;
+    private double[] voxelRadii;
 
+    private String dateStr;
 
     /**
      * @param args  none to create a property file <br>
@@ -156,8 +159,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##To reuse FP & BP pools that have already been created, set the folder containing them");
             pw.println("#reusePath threeDPartial");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set");
@@ -195,7 +198,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("reusePath"))
             reusePath = property.parsePath("reusePath", null, true, workPath);
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
@@ -228,19 +231,16 @@ public class ThreeDPartialDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
+        dateStr = GadgetAid.getTemporaryString();
+
         // read voxel information
         VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
-        perturbationRadii = vif.getRadii();
-        perturbationPositions = vif.getHorizontalPositions();
+        voxelRadii = vif.getRadii();
+        voxelPositions = vif.getHorizontalPositions().toArray(new HorizontalPosition[0]);
 
-        // read event information
+        // read event and observer information
         Set<GlobalCMTID> eventSet = EventListFile.read(eventPath);
-        System.err.println("Number of events read in: " + eventSet.size());
-
-        // read observer information
         Set<Observer> observerSet = ObserverListFile.read(observerPath);
-        System.err.println("Number of observers read in: " + observerSet.size());
-
         if (eventSet.size() == 0 && observerSet.size() == 0) {
             return;
         }
@@ -258,26 +258,24 @@ public class ThreeDPartialDSMSetup extends Operation {
             outPath = reusePath;
             System.err.println("Reusing " + reusePath);
         } else {
-            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", tag, GadgetAid.getTemporaryString());
+            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, dateStr);
             property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
             FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
             createPointInformationFile();
         }
 
-        Path fpQueuePath = outPath.resolve("FPqueue");
-        Path bpQueuePath = outPath.resolve("BPqueue");
-        Path fpPoolPath = outPath.resolve("FPinfo");
-        Path bpPoolPath = outPath.resolve("BPinfo");
+        setupFPs(eventSet, structure);
+        setupBPs(observerSet, structure);
+    }
+
+    private void setupFPs(Set<GlobalCMTID> eventSet, PolynomialStructure structure) throws IOException {
+        Path fpPoolPath = outPath.resolve("FPpool");
         Path fpCatPath = outPath.resolve("FPcat");
-        Path bpCatPath = outPath.resolve("BPcat");
         Files.createDirectories(fpPoolPath);
-        Files.createDirectories(bpPoolPath);
-
-
-        //---------FP----------//
 
         System.err.println("Making information files for the events (fp) ...");
         int n = 0;
+        List<String> fpList = new ArrayList<>();
         for (GlobalCMTID event : eventSet) {
             GlobalCMTAccess eventData = event.getEventData();
 
@@ -302,11 +300,10 @@ public class ThreeDPartialDSMSetup extends Operation {
                     }
 
                     eventData.setCMT(mts[i]);
-                    Path mtQueuePath = fpQueuePath.resolve(event.toString() + "_mt" + i);
-                    FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, perturbationRadii, perturbationPositions);
-                    Files.createDirectories(mtQueuePath.resolve(header));
-                    fp.writeSHFP(mtQueuePath.resolve(header + "_SH.inf"));
-                    fp.writePSVFP(mtQueuePath.resolve(header + "_PSV.inf"));
+                    FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, voxelRadii, voxelPositions);
+                    Files.createDirectories(mtPoolPath.resolve(header));
+                    fp.writeSHFP(mtPoolPath.resolve(header + "_SH.inf"));
+                    fp.writePSVFP(mtPoolPath.resolve(header + "_PSV.inf"));
                 }
 
             } else {
@@ -317,12 +314,11 @@ public class ThreeDPartialDSMSetup extends Operation {
                     continue;
                 }
 
-                // Prepare files in FPqueue
-                Path eventQueuePath = fpQueuePath.resolve(event.toString());
-                FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, perturbationRadii, perturbationPositions);
-                Files.createDirectories(eventQueuePath.resolve(header));
-                fp.writeSHFP(eventQueuePath.resolve(header + "_SH.inf"));
-                fp.writePSVFP(eventQueuePath.resolve(header + "_PSV.inf"));
+                // Prepare files in FP pool
+                FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, voxelRadii, voxelPositions);
+                Files.createDirectories(eventPoolPath.resolve(header));
+                fp.writeSHFP(eventPoolPath.resolve(header + "_SH.inf"));
+                fp.writePSVFP(eventPoolPath.resolve(header + "_PSV.inf"));
 
                 if (catalogue) {
                      Path catInfPath = fpCatPath.resolve(event.toString());
@@ -332,57 +328,62 @@ public class ThreeDPartialDSMSetup extends Operation {
                 }
             }
             n++;
+            fpList.add(event.toString());
         }
-        System.err.println(n + " sources created in " + fpQueuePath);
+        System.err.println(n + " sources created in " + fpPoolPath);
 
-        // output shellscripts for execution of psvfp and shfp
+        // output list and shellscripts for execution of psvfp and shfp
+        String fpListFileName = "fpList" + dateStr + ".txt";
+        Files.write(outPath.resolve(fpListFileName), fpList);
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
-        shellFP.write(SPCType.PF, SPCMode.PSV);
-        shellFP.write(SPCType.PF, SPCMode.SH);
+        shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, dateStr);
+        shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, dateStr);
         System.err.println("After this finishes, please run " + outPath + "/runFP_PSV.sh and " + outPath + "/runFP_SH.sh");
+    }
 
-
-        //---------BP----------//
+    private void setupBPs(Set<Observer> observerSet, PolynomialStructure structure) throws IOException {
+        Path bpPoolPath = outPath.resolve("BPpool");
+        Path bpCatPath = outPath.resolve("BPcat");
+        Files.createDirectories(bpPoolPath);
 
         System.err.println("Making information files for the observers (bp) ...");
-        n = 0;
+        int n = 0;
+        List<String> bpList = new ArrayList<>();
         for (Observer observer : observerSet) {
-            // If computation for this observer already exists in the BP pool, skip
-            Path observerPoolPath = bpPoolPath.resolve(observer.getPosition().toCode());
+            String observerCode = observer.getPosition().toCode();
+
+            // If computation for this observer already exists in the BP pool,
+            //  or in case observers with same position but different name exist, skip
+            Path observerPoolPath = bpPoolPath.resolve(observerCode);
             if (Files.exists(observerPoolPath)) {
                 System.err.println(" " + observer.toString() + " : " + observerPoolPath + " already exists, skipping.");
                 continue;
             }
 
-            // In case observers with same position but different name exist, skip
-            Path observerQueuePath = bpQueuePath.resolve(observer.getPosition().toCode());
-            if (Files.exists(observerQueuePath)) {
-                System.err.println(" " + observer.toString() + " : " + observerQueuePath + " already exists, skipping.");
-                continue;
-            }
-
             // Prepare files in BPqueue
-            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, perturbationRadii, perturbationPositions);
-            Files.createDirectories(observerQueuePath.resolve(header));
-            bp.writeSHBP(observerQueuePath.resolve(header + "_SH.inf"));
-            bp.writePSVBP(observerQueuePath.resolve(header + "_PSV.inf"));
+            BPInputFile bp = new BPInputFile(observer.getPosition(), header, structure, tlen, np, voxelRadii, voxelPositions);
+            Files.createDirectories(observerPoolPath.resolve(header));
+            bp.writeSHBP(observerPoolPath.resolve(header + "_SH.inf"));
+            bp.writePSVBP(observerPoolPath.resolve(header + "_PSV.inf"));
             n++;
+            bpList.add(observerCode);
         }
-        System.err.println(n + " sources created in " + bpQueuePath);
+        System.err.println(n + " sources created in " + bpPoolPath);
 
         if (catalogue) {
-            BPInputFile bp = new BPInputFile(header, structure, tlen, np, perturbationRadii, perturbationPositions);
+            BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);
             Files.createDirectories(bpCatPath.resolve(header));
             bp.writeSHBPCat(bpCatPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
             bp.writePSVBPCat(bpCatPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
         }
 
-        // output shellscripts for execution of psvbp and shbp
+        // output list and shellscripts for execution of psvbp and shbp
+        String bpListFileName = "bpList" + dateStr + ".txt";
+        Files.write(outPath.resolve(bpListFileName), bpList);
         DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
-        shellBP.write(SPCType.PB, SPCMode.PSV);
-        shellBP.write(SPCType.PB, SPCMode.SH);
+        shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, dateStr);
+        shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, dateStr);
         System.err.println("After this finishes, please run " + outPath + "/runBP_PSV.sh and " + outPath + "/runBP_SH.sh");
-
     }
 
     /**
@@ -391,9 +392,9 @@ public class ThreeDPartialDSMSetup extends Operation {
     private void createPointInformationFile() throws IOException {
         Path horizontalPointPath = outPath.resolve("voxelPointCode.txt");
         try (PrintWriter hpw = new PrintWriter(Files.newBufferedWriter(horizontalPointPath))) {
-            int figure = String.valueOf(perturbationPositions.length).length();
-            for (int i = 0; i < perturbationPositions.length; i++) {
-                hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + perturbationPositions[i]);
+            int figure = String.valueOf(voxelPositions.length).length();
+            for (int i = 0; i < voxelPositions.length; i++) {
+                hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + voxelPositions[i]);
             }
         }
     }

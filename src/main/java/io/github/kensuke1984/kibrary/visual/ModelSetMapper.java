@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
 import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
@@ -45,17 +45,28 @@ public class ModelSetMapper extends Operation {
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
 
     /**
      * The root folder containing results of inversion
      */
     private Path resultPath;
     /**
-     * structure file instead of PREM
+     * file of 1D structure used in inversion
      */
-    private Path structurePath;
-    private String structureName;
+    private Path initialStructurePath;
+    /**
+     * name of 1D structure used in inversion
+     */
+    private String initialStructureName;
+    /**
+     * file of 1D structure to map perturbations against
+     */
+    private Path referenceStructurePath;
+    /**
+     * name of 1D structure to map perturbations against
+     */
+    private String referenceStructureName;
     /**
      * Path of a {@link MultigridInformationFile}
      */
@@ -87,20 +98,24 @@ public class ModelSetMapper extends Operation {
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("#folderTag ");
             pw.println("##Path of a root folder containing results of inversion (.)");
             pw.println("#resultPath ");
-            pw.println("##Path of an initial structure file used. If this is unset, the following structureName will be referenced.");
-            pw.println("#structurePath ");
-            pw.println("##Name of an initial structure model used (PREM)");
-            pw.println("#structureName ");
+            pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
+            pw.println("#initialStructurePath ");
+            pw.println("##Name of an initial structure model used in inversion (PREM)");
+            pw.println("#initialStructureName ");
+            pw.println("##Path of a structure file to map perturbations against. If this is unset, the following referenceStructureName will be referenced.");
+            pw.println("#referenceStructurePath ");
+            pw.println("##Name of a structure model to map perturbations against (PREM)");
+            pw.println("#referenceStructureName ");
             pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
-            pw.println("#multigridPath ");
+            pw.println("#multigridPath multigrid.inf");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
             pw.println("#inverseMethods ");
-            pw.println("##(int) Maximum number of basis vectors to map (20)");
+            pw.println("##(int) Maximum number of basis vectors to map (10)");
             pw.println("#maxNum ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
@@ -117,13 +132,18 @@ public class ModelSetMapper extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
-        if (property.containsKey("structurePath")) {
-            structurePath = property.parsePath("structurePath", null, true, workPath);
+        if (property.containsKey("initialStructurePath")) {
+            initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
         } else {
-            structureName = property.parseString("structureName", "PREM");
+            initialStructureName = property.parseString("initialStructureName", "PREM");
+        }
+        if (property.containsKey("referenceStructurePath")) {
+            referenceStructurePath = property.parsePath("referenceStructurePath", null, true, workPath);
+        } else {
+            referenceStructureName = property.parseString("referenceStructureName", "PREM");
         }
         if (property.containsKey("multigridPath"))
             multigridPath = property.parsePath("multigridPath", null, true, workPath);
@@ -132,7 +152,7 @@ public class ModelSetMapper extends Operation {
                 .collect(Collectors.toSet());
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        maxNum = property.parseInt("maxNum", "20");
+        maxNum = property.parseInt("maxNum", "10");
 
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         scale = property.parseDouble("scale", "3");
@@ -142,11 +162,20 @@ public class ModelSetMapper extends Operation {
     public void run() throws IOException {
 
         // read initial structure
-        PolynomialStructure structure = null;
-        if (structurePath != null) {
-            structure = PolynomialStructureFile.read(structurePath);
+        System.err.print("Initial structure: ");
+        PolynomialStructure initialStructure = null;
+        if (initialStructurePath != null) {
+            initialStructure = PolynomialStructureFile.read(initialStructurePath);
         } else {
-            structure = PolynomialStructure.of(structureName);
+            initialStructure = PolynomialStructure.of(initialStructureName);
+        }
+        // read reference structure
+        System.err.print("Reference structure: ");
+        PolynomialStructure referenceStructure = null;
+        if (referenceStructurePath != null) {
+            referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
+        } else {
+            referenceStructure = PolynomialStructure.of(referenceStructureName);
         }
 
         // read parameters
@@ -165,7 +194,7 @@ public class ModelSetMapper extends Operation {
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // write list files
@@ -178,11 +207,14 @@ public class ModelSetMapper extends Operation {
 
             for (int k = 1; k <= maxNum; k++){
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
-                List<KnownParameter> answers = KnownParameterFile.read(answerPath);
+                List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
 
-                if (multigridPath != null) answers = multigrid.reverseFusion(answers);
+                if (multigridPath != null) knowns = multigrid.reverseFusion(knowns);
 
-                PerturbationModel model = new PerturbationModel(answers, structure);
+                PerturbationModel model = new PerturbationModel(knowns, initialStructure);
+                if (!referenceStructure.equals(initialStructure)) {
+                    model = model.withReferenceStructureAs(referenceStructure);
+                }
 
                 Path outBasisPath = outPath.resolve(method.simpleName() + k);
                 Files.createDirectories(outBasisPath);

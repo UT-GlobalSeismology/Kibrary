@@ -22,8 +22,6 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * Information file for SSHSH
@@ -215,8 +213,8 @@ public class OneDPartialDSMSetup extends Operation {
         // output shellscripts for execution of tipsv and tish
         //TODO PAR2の場合とPAR5の場合で場合分け
         DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
-        shell.write(SPCType.PAR0, SPCMode.PSV);
-        shell.write(SPCType.PAR0, SPCMode.SH);
+//        shell.write(SPCType.PAR0, SPCMode.PSV);
+//        shell.write(SPCType.PAR0, SPCMode.SH);
         System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
     }
 }

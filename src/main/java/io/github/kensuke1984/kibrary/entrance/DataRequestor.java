@@ -33,9 +33,9 @@ public class DataRequestor extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -88,8 +88,8 @@ public class DataRequestor extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##Network names for request, listed using spaces, must be defined");
             pw.println("## Wildcards (*, ?) and virtual networks are allowed.");
             pw.println("## Note that it will make a request for all stations in the networks.");
@@ -132,7 +132,7 @@ public class DataRequestor extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         networks = property.parseStringArray("networks", null);
 
@@ -232,7 +232,7 @@ public class DataRequestor extends Operation {
         }
         System.out.println("Label contains \"" + dateStr + "\"");
 
-        outPath = DatasetAid.createOutputFolder(workPath, "request", tag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, dateStr);
 
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
 

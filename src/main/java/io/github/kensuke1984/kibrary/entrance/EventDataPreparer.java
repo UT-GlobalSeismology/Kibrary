@@ -418,7 +418,7 @@ class EventDataPreparer {
                 headerMap.put(SACHeaderEnum.CMPAZ, stationInfo.getAzimuth());
 
                 // set event info
-                FullPosition sourcePosition = eventData.getCmtLocation();
+                FullPosition sourcePosition = eventData.getCmtPosition();
                 headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
                 headerMap.put(SACHeaderEnum.EVLA, String.valueOf(sourcePosition.getLatitude()));
                 headerMap.put(SACHeaderEnum.EVLO, String.valueOf(sourcePosition.getLongitude()));
@@ -491,7 +491,7 @@ class EventDataPreparer {
                 // other observer info should be filled
 
                 // set event info
-                FullPosition sourcePosition = eventData.getCmtLocation();
+                FullPosition sourcePosition = eventData.getCmtPosition();
                 headerMap.put(SACHeaderEnum.KEVNM, eventData.toString());
                 headerMap.put(SACHeaderEnum.EVLA, String.valueOf(sourcePosition.getLatitude()));
                 headerMap.put(SACHeaderEnum.EVLO, String.valueOf(sourcePosition.getLongitude()));

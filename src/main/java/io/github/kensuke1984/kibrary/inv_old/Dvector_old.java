@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * @version 0.2.2.2
  * @deprecated use DVectorBuilder
  */
-public class Dvector {
+public class Dvector_old {
 
     /**
      * Predicate for choosing dataset. Observed IDs are used for the choice.
@@ -140,7 +140,7 @@ public class Dvector {
     private double obsNormSquare;
     protected static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
-    public Dvector() {
+    public Dvector_old() {
     }
 
     /**
@@ -149,7 +149,7 @@ public class Dvector {
      *
      * @param basicIDs must contain waveform data
      */
-    public Dvector(BasicID[] basicIDs) {
+    public Dvector_old(BasicID[] basicIDs) {
         this(basicIDs, id -> true, WeightingType.RECIPROCAL);
     }
 
@@ -161,7 +161,7 @@ public class Dvector {
      * @param selectionInfo
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType,
             boolean atLeastThreeRecordsPerStation, List<DataFeature> selectionInfo) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         ids = basicIDs;
@@ -225,7 +225,7 @@ public class Dvector {
                 }
                 if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
                     throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
-                double distance = Math.toDegrees(obs.getGlobalCMTID().getEventData().getCmtLocation()
+                double distance = Math.toDegrees(obs.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeEpicentralDistance(obs.getObserver().getPosition()));
                 double a = 3.;
                 double w = (a-1) / (91-67) * (91-distance) + 1.;
@@ -239,7 +239,7 @@ public class Dvector {
                     System.err.println(obs);
                     return 0.;
                 }
-                double d = Math.toDegrees(obs.getGlobalCMTID().getEventData().getCmtLocation()
+                double d = Math.toDegrees(obs.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeEpicentralDistance(obs.getObserver().getPosition()));
                 double w = 1. * Math.cos((d - 70) / (78 - d) * Math.PI / 2.) + 1.;
                 if (d > 78 || d < 70) w = 1.;
@@ -350,7 +350,7 @@ public class Dvector {
      * @param weigthingType
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {
         this(basicIDs, chooser, weigthingType, false, null);
     }
 
@@ -365,7 +365,7 @@ public class Dvector {
      * @param atLeastThreeRecordsPerStation
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             ToDoubleBiFunction<BasicID, BasicID> weightingFunction, boolean atLeastThreeRecordsPerStation) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         ids = basicIDs;
@@ -389,7 +389,7 @@ public class Dvector {
      *                          synthetic are used.
      * @param weightingFunction {@link ToDoubleBiFunction} (observed, synthetic). If null, the reciprocal of the max value in observed is a weighting value.
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             ToDoubleBiFunction<BasicID, BasicID> weightingFunction) {
         this(basicIDs, chooser, weightingFunction, false);
     }
@@ -402,7 +402,7 @@ public class Dvector {
      * @param atLeastThreeRecordsPerStation
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             WeightingType weightingType, double[] weighting, boolean atLeastThreeRecordsPerStation) {
         this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
         double minW = Double.MAX_VALUE;
@@ -449,7 +449,7 @@ public class Dvector {
      * @param weighting
      * @author anselme
      */
-    public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+    public Dvector_old(BasicID[] basicIDs, Predicate<BasicID> chooser,
             WeightingType weightingType, double[] weighting) {
         this(basicIDs, chooser, weightingType, weighting, false);
     }
@@ -491,11 +491,11 @@ public class Dvector {
         for (GlobalCMTID event : events) {
             BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
                     .collect(Collectors.toList()).toArray(new BasicID[0]);
-            Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+            Dvector_old dvector = new Dvector_old(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
             Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
         }
 
-        Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+        Dvector_old dvector = new Dvector_old(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 
 //		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
 //		dvector.outWeighting(Paths.get("."));
@@ -560,7 +560,7 @@ public class Dvector {
      */
     private double weightingEpicentralDistanceDpp(BasicID obs) {
         double weight = 1.;
-        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double distance = obs.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 
         double maxWeight = 2.;
 
@@ -596,7 +596,7 @@ public class Dvector {
      */
     public double weightingAzimuthDpp(BasicID obs) {
         double weight = 1.;
-        double azimuth = obs.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double azimuth = obs.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
 
         double maxWeight = 2.;
 
@@ -634,7 +634,7 @@ public class Dvector {
      */
     private double weightingEpicentralDistanceTZ(BasicID obs) {
         double weight = 1.;
-        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double distance = obs.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
 
 //		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
 //		histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
@@ -654,7 +654,7 @@ public class Dvector {
      */
     public double weightingAzimuthTZ(BasicID obs) {
         double weight = 1.;
-        double azimuth = obs.getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double azimuth = obs.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(obs.getObserver().getPosition()) * 180. / Math.PI;
 
 //		histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
 //			, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
@@ -678,7 +678,7 @@ public class Dvector {
      */
     private static double weightingEpicentralDistance(BasicID obs) {
         double weight = 1.;
-        double distance = obs.getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
+        double distance = obs.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(obs.getObserver().getPosition()) * 180. / Math.PI;
         Phases phases = new Phases(obs.getPhases());
 
 //		double[][] histogram = new double[][] { {45, 0.741}, {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
@@ -727,8 +727,8 @@ public class Dvector {
     }
 
     @Override
-    public Dvector clone() {
-        Dvector dvector = new Dvector();
+    public Dvector_old clone() {
+        Dvector_old dvector = new Dvector_old();
         dvector.dVec = dVec.clone();
         dvector.ids = ids.clone();
         dvector.CHOOSER = CHOOSER;

@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import io.github.kensuke1984.kibrary.correction.MomentTensor;
+import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -377,7 +377,7 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public FullPosition getCmtLocation() {
+    public FullPosition getCmtPosition() {
         return centroidLocation;
     }
 
@@ -395,7 +395,7 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public FullPosition getPDELocation() {
+    public FullPosition getPDEPosition() {
         return hypocenterLocation;
     }
 

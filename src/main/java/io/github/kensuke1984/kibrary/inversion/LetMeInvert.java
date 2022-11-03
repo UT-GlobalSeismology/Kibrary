@@ -16,12 +16,12 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inv_old.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inv_old.InverseProblem;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseProblem;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -45,9 +45,9 @@ public class LetMeInvert extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
      * Path of the output folder
      */
@@ -83,6 +83,9 @@ public class LetMeInvert extends Operation {
     * α for AIC 独立データ数:n/α
     */
     private double[] alpha;
+    /**
+     * Maximum number of basis vectors to evaluate variance and AIC
+     */
     private int evaluateNum;
     /**
      * Fill 0 to empty partial waveforms or not.
@@ -106,8 +109,8 @@ public class LetMeInvert extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##Path of a basic ID file, must be set");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
@@ -139,7 +142,7 @@ public class LetMeInvert extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
@@ -151,7 +154,7 @@ public class LetMeInvert extends Operation {
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        if (property.containsKey("alpha")) alpha = property.parseDoubleArray("alpha", "1 100 1000");
+        alpha = property.parseDoubleArray("alpha", "1 100 1000");
         evaluateNum = property.parseInt("evaluateNum", "100");
 
         fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
@@ -163,10 +166,10 @@ public class LetMeInvert extends Operation {
         // read input
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingType, fillEmptyPartial);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         int dLength = assembler.getD().getDimension();
@@ -175,28 +178,28 @@ public class LetMeInvert extends Operation {
         System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", tag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output matrices
         AtAFile.write(ata, outPath.resolve("ata.lst"));
         AtdFile.write(atd, outPath.resolve("atd.lst"));
-        UnknownParameterFile.write(parameterList, outPath.resolve("unknowns.lst"));
+        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
 
         // solve inversion and evaluate
-        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dNorm, obsNorm, dLength);
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dLength, dNorm, obsNorm);
         for (InverseMethodEnum method : inverseMethods) {
             Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
             InverseProblem inverseProblem = method.formProblem(ata, atd);
             inverseProblem.compute();
-            inverseProblem.outputAnswers(parameterList, outMethodPath);
+            inverseProblem.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
             evaluation.evaluate(inverseProblem.getANS(), evaluateNum, alpha, outMethodPath);
         }
-
     }
 
 }

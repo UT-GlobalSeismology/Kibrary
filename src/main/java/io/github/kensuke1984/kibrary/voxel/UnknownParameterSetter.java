@@ -87,19 +87,23 @@ public class UnknownParameterSetter {
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
         double[] radii = file.getRadii();
-        double dLatitude = file.getSpacingLatitude();
-        double dLongitude = file.getSpacingLongitude();
-        HorizontalPosition[] positions = file.getHorizontalPositions();
+        List<HorizontalPiece> horizontalPieces = file.getHorizontalPieces();
 
+        // create unknown parameters
         List<UnknownParameter> parameterList = new ArrayList<>();
         int numFinished = 0;
-        int numTotal = positions.length * radii.length;
-        for (HorizontalPosition position : positions) {
+        int numTotal = horizontalPieces.size() * radii.length;
+        for (HorizontalPiece piece : horizontalPieces) {
+            // extract information of horizontal piece
+            HorizontalPosition horizontalPosition = piece.getPosition();
+            double dLatitude = piece.getDLatitude();
+            double dLongitude = piece.getDLongitude();
+            // loop for each layer
             for (int i = 0; i < radii.length; i++) {
-                FullPosition pointPosition = position.toFullPosition(radii[i]);
-                double volume = Earth.computeVolume(pointPosition, layerThicknesses[i], dLatitude, dLongitude);
+                FullPosition voxelPosition = horizontalPosition.toFullPosition(radii[i]);
+                double volume = Earth.computeVolume(voxelPosition, layerThicknesses[i], dLatitude, dLongitude);
                 for (PartialType type : types) {
-                    Physical3DParameter parameter = new Physical3DParameter(type, pointPosition, volume);
+                    Physical3DParameter parameter = new Physical3DParameter(type, voxelPosition, volume);
                     parameterList.add(parameter);
                 }
                 numFinished++;

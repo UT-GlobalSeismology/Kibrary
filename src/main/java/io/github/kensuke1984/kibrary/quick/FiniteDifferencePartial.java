@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -38,7 +38,7 @@ public class FiniteDifferencePartial {
 			
 			BasicID[] ids = BasicIDFile.read(idPath, dataPath);
 			Predicate<BasicID> chooser = id -> true;
-			Dvector dVector = new Dvector(ids, chooser, WeightingType.IDENTITY);
+			Dvector_old dVector = new Dvector_old(ids, chooser, WeightingType.IDENTITY);
 			
 			BasicID[] obsIds = dVector.getObsIDs();
 			BasicID[] synIds = dVector.getSynIDs();
@@ -89,11 +89,11 @@ public class FiniteDifferencePartial {
 				pw2.close();
 				pw3.close();
 				
-				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().computeAzimuth(obsIds[i].getObserver().getPosition()))
+				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(obsIds[i].getObserver().getPosition()))
 						/ daz);
 				int icomp = obsIds[i].getSacComponent().valueOf();
 				double max = new ArrayRealVector(obs).subtract(new ArrayRealVector(syn)).getLInfNorm() * 0.167;
-				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obsIds[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(obsIds[i].getObserver().getPosition()));
 				azimuthPlotString[iaz][icomp-1] += String.format("'%s' u 1:($2/%.4e+%.3f) w l lc rgb 'black' lt 1 lw .5 noti,\\\n", outname, max, distance);
 			}
 			

@@ -24,8 +24,8 @@ class GlobalCMTSearchTest {
     private static HorizontalPosition usCenter = new HorizontalPosition(40, -100);
 
     private static Set<GlobalCMTID> eventList() {
-        return GlobalCMTSearch.search(d -> d.getCmtLocation().computeEpicentralDistance(usCenter) < 80 &&
-                d.getCMTTime().isAfter(LocalDate.of(2004, 1, 1).atTime(0, 0)) && d.getCmtLocation().getR() < 6361);
+        return GlobalCMTSearch.search(d -> d.getCmtPosition().computeEpicentralDistance(usCenter) < 80 &&
+                d.getCMTTime().isAfter(LocalDate.of(2004, 1, 1).atTime(0, 0)) && d.getCmtPosition().getR() < 6361);
     }
 
     private static LocalDateTime toTime(String line) {
@@ -56,9 +56,9 @@ class GlobalCMTSearchTest {
             }
             System.out.println(
                     (time.toLocalTime().toSecondOfDay() + " " + d.getCMTTime().toLocalTime().toSecondOfDay()) + " " +
-                            closeEnough(d.getCmtLocation(), eventLoc) + " " + Math.abs(
+                            closeEnough(d.getCmtPosition(), eventLoc) + " " + Math.abs(
                             time.toLocalTime().toSecondOfDay() - d.getCMTTime().toLocalTime().toSecondOfDay()));
-            return closeEnough(d.getCmtLocation(), eventLoc) &&
+            return closeEnough(d.getCmtPosition(), eventLoc) &&
                     Math.abs(time.toLocalTime().toSecondOfDay() - d.getCMTTime().toLocalTime().toSecondOfDay()) < 100;
         };
 //        Set<GlobalCMTID> search = GlobalCMTSearch.search(predicate);

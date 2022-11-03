@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.quick;
 
-import io.github.kensuke1984.kibrary.inv_old.InversionResult;
+import io.github.kensuke1984.kibrary.inv_old.InversionResult_old;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 import java.io.File;
@@ -16,7 +16,7 @@ public class RenamePartialText {
 		Path inversionPath = Paths.get(".");
 		
 		try {
-			InversionResult ir = new InversionResult(inversionPath);
+			InversionResult_old ir = new InversionResult_old(inversionPath);
 			List<BasicID> ids = ir.getBasicIDList();
 			Path partialDir = inversionPath.resolve("partial");
 			for (int i = 0; i < ids.size(); i++) {

@@ -43,7 +43,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
         radii = perturbationR.clone();
 
         commentPerturbationR = new boolean[perturbationR.length];
-        double eventR = event.getCmtLocation().getR();
+        double eventR = event.getCmtPosition().getR();
         for (int i = 0; i < perturbationR.length; i++) {
             commentPerturbationR[i] = false;
             if (Math.abs(eventR - perturbationR[i]) < 10.)
@@ -67,7 +67,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // structure
             Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
-            FullPosition eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtPosition();
 
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
@@ -120,7 +120,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
 
             // structure
             Arrays.stream(structure.toPSVlines()).forEach(pw::println);
-            FullPosition eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtPosition();
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
@@ -169,7 +169,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
 
             // structure
             Arrays.stream(structure.toSHlines()).forEach(pw::println);
-            FullPosition eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtPosition();
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
@@ -217,7 +217,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
 
             // structure
             Arrays.stream(structure.toSHlines()).forEach(pw::println);
-            FullPosition eventLocation = event.getCmtLocation();
+            FullPosition eventLocation = event.getCmtPosition();
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");

@@ -17,7 +17,7 @@ public class KeyHoleMarkupLanguage {
 
 
     public static String[] outPlaceMark(GlobalCMTID id) {
-        FullPosition loc = id.getEventData().getCmtLocation();
+        FullPosition loc = id.getEventData().getCmtPosition();
         String[] lines = new String[17];
         double lat = loc.getLatitude();
         double lon = loc.getLongitude();

@@ -1,248 +1,277 @@
 package io.github.kensuke1984.kibrary.util.data;
 
 
-import io.github.kensuke1984.anisotime.ComputationalMesh;
-import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.anisotime.RaypathCatalog;
-import io.github.kensuke1984.anisotime.VelocityStructure;
-import io.github.kensuke1984.kibrary.external.TauPPierceReader;
-import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
-import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * Raypath between a source at {@link #sourcePosition} and a receiver at
- * {@link #receiverPosition} <br>
- * This class is <b>IMMUTABLE</b>
+ * Raypath between a source and a receiver.
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
+ * @version 2022/9/8 Modified almost whole file.
  */
-public class Raypath {
+public final class Raypath {
 
     /**
-     * source-to-receiver(station) Azimuth [rad] 震源から観測点をみた方位角
+     * Name of phase
      */
-    protected final double azimuth;
-    protected final double backAzimuth;
+    private final String phaseName;
     /**
-     * epicentral distance [rad]
+     * Number of points along the raypath (source, pierce points, turning points, receiver)
      */
-    protected final double epicentralDistance;
+    private final int nPoint;
     /**
-     * {@link FullPosition} of a seismic source
+     * Epicentral distances from the source to points along the raypath [deg]
      */
-    private final FullPosition sourcePosition;
+    private final double[] distancesDeg;
     /**
-     * {@link HorizontalPosition} of a seismic station
+     * List of points along the raypath
      */
-    private final HorizontalPosition receiverPosition;
+    private final List<FullPosition> positions;
 
     /**
-     * whether attempt to compute turning and piercing points has been made
+     * @param phaseName (String) Name of phase of this raypath
+     * @param distancesDeg (double[]) Epicentral distances from the source to points along the raypath [deg]
+     * @param positions (List of FullPosition) List of points along the raypath
      */
-    private boolean computedPiercePoints;
-    /**
-     * whether attempt to compute turning point has been made
-     */
-    private boolean computedTurningPoint;
-    /**
-     * the bottoming point of raypath
-     */
-    private FullPosition turnPosition;
-    /**
-     * the point the ray pierces in through a certain depth
-     */
-    private FullPosition enterPosition;
-    /**
-     * the point the ray pierces out through a certain depth
-     */
-    private FullPosition leavePosition;
+    public Raypath(String phaseName, double[] distancesDeg, List<FullPosition> positions) {
+        if (distancesDeg.length != positions.size()) throw new IllegalArgumentException("number of distances and positions should match");
+        this.nPoint = distancesDeg.length;
 
+        this.phaseName = phaseName;
+        this.distancesDeg = distancesDeg;
+        this.positions = positions;
+    }
 
     /**
-     * Create a raypath for the source and station.
+     * Create a raypath from the source to the receiver.
      *
+     * @param phaseName (String) Name of phase of this raypath
      * @param source  {@link FullPosition} of a source
      * @param receiver {@link HorizontalPosition} of a receiver
      */
-    public Raypath(FullPosition source, HorizontalPosition receiver) {
-        sourcePosition = source;
-        receiverPosition = receiver;
-        azimuth = source.computeAzimuth(receiver);
-        epicentralDistance = Earth.computeEpicentralDistance(source, receiver);
-        backAzimuth = source.computeBackAzimuth(receiver);
+    public Raypath(String phaseName, FullPosition source, HorizontalPosition receiver) {
+        this.phaseName = phaseName;
+        this.nPoint = 2;
+
+        distancesDeg = new double[2];
+        distancesDeg[0] = 0;
+        distancesDeg[1] = source.computeEpicentralDistanceDeg(receiver);
+
+        positions = new ArrayList<>();
+        positions.add(source);
+        positions.add(receiver.toFullPosition(Earth.EARTH_RADIUS));
     }
 
     /**
-     * Calculate turning point on the raypath.
-     * @param model
-     * @param phase
-     * @return (boolean) true if calculation succeeded
+     * Clips all raypath segments that are within a specified layer.
+     * @param lowerRadius (double) lower bound of layer [km]
+     * @param upperRadius (double) upper bound of layer [km]
+     * @return (List of Raypath)
      */
-    public boolean computeTurningPoint(String model, Phase phase) {
-        Info info = TauPPierceReader.getTurningInfo(sourcePosition, receiverPosition, model, phase);
-        computedTurningPoint = true;
+    public List<Raypath> clipInsideLayer(double lowerRadius, double upperRadius) {
+        List<Raypath> clippedRaypaths = new ArrayList<>();
 
-        if (info != null) {
-            turnPosition = info.getTurningPoint();
-            return true;
-        } else {
-            return false;
+        int startIndex = -1;
+        // if start point is inside layer, set it to startIndex
+        if (lowerRadius < positions.get(0).getR() && positions.get(0).getR() < upperRadius) {
+            startIndex = 0;
         }
-    }
-
-    /**
-     * Calculate turning point and pierce points on the raypath.
-     * @param model
-     * @param phase
-     * @param pierceDepth
-     * @return (boolean) true if calculation succeeded
-     */
-    public boolean computePiercePoints(String model, Phase phase, double pierceDepth) {
-        Info info = TauPPierceReader.getPierceInfo(sourcePosition, receiverPosition, model, pierceDepth, phase);
-        computedPiercePoints = true;
-        computedTurningPoint = true;
-
-        if (info != null) {
-            enterPosition = info.getEnterPoint();
-            turnPosition = info.getTurningPoint();
-            leavePosition = info.getLeavePoint();
-            return true;
-        } else {
-            return false;
+        for (int i = 0; i < nPoint; i++) {
+            if (startIndex < 0 && (Precision.equals(positions.get(i).getR(), lowerRadius, FullPosition.RADIUS_EPSILON)
+                    || Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON))) {
+                // when raypath comes to a border, remember that index
+                startIndex = i;
+            } else if (startIndex >= 0 && (Precision.equals(positions.get(i).getR(), lowerRadius, FullPosition.RADIUS_EPSILON)
+                    || Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON))) {
+                // do nothing if raypath is still at the borders
+            } else if (startIndex >= 0 && (positions.get(i).getR() < lowerRadius || upperRadius < positions.get(i).getR())) {
+                // once the raypath goes away from layer, clip from startIndex to the previous index
+                if (i - 1 > startIndex) clippedRaypaths.add(clip(startIndex, i));
+                startIndex = -1;
+            }
         }
+        // if end point is still within layer, add the final clip
+        if (startIndex >= 0 && (nPoint - 1 > startIndex)) {
+            clippedRaypaths.add(clip(startIndex, nPoint));
+        }
+
+        return clippedRaypaths;
     }
 
     /**
-     * @return MAY BE NULL if turning point does not exist
-     *
-     * @author otsuru
-     * @since 2022/4/22
+     * Clips all raypath segments that are outside a specified layer.
+     * @param lowerRadius (double) lower bound of layer [km]
+     * @param upperRadius (double) upper bound of layer [km]
+     * @return (List of Raypath)
      */
-    public FullPosition getTurningPoint() {
-        if (computedTurningPoint) return turnPosition;
-        else throw new IllegalStateException("Turning point is not yet computed");
-    }
-    public FullPosition getEnterPoint() {
-        if (computedPiercePoints) return enterPosition;
-        else throw new IllegalStateException("Pierce points are not yet computed");
-    }
-    public FullPosition getLeavePoint() {
-        if (computedPiercePoints) return leavePosition;
-        else throw new IllegalStateException("Pierce points are not yet computed");
+    public List<Raypath> clipOutsideLayer(double lowerRadius, double upperRadius) {
+        List<Raypath> clippedRaypaths = new ArrayList<>();
+
+        int startBelowIndex = -1;
+        int startAboveIndex = -1;
+        // if start point is outside layer, set it to startIndex
+        if (positions.get(0).getR() < lowerRadius) {
+            startBelowIndex = 0;
+        } else if (upperRadius < positions.get(0).getR()) {
+            startAboveIndex = 0;
+        }
+        for (int i = 0; i < nPoint; i++) {
+            if (startBelowIndex < 0 && Precision.equals(positions.get(i).getR(), lowerRadius, FullPosition.RADIUS_EPSILON)) {
+                // when raypath comes down to lower border, remember that index
+                startBelowIndex = i;
+            } else if (startBelowIndex >= 0 && Precision.equals(positions.get(i).getR(), lowerRadius, FullPosition.RADIUS_EPSILON)) {
+                // do nothing if raypath is still at the lower border
+            } else if (startBelowIndex >= 0 && positions.get(i).getR() > lowerRadius) {
+                // once the raypath goes above the lower border, clip from startBelowIndex to the previous index
+                if (i - 1 > startBelowIndex) clippedRaypaths.add(clip(startBelowIndex, i));
+                startBelowIndex = -1;
+            }
+            if (startAboveIndex < 0 && Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON)) {
+                // when raypath comes up to upper border, remember that index
+                startAboveIndex = i;
+            } else if (startAboveIndex >= 0 && Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON)) {
+                // do nothing if raypath is still at the upper border
+            } else if (startAboveIndex >= 0 && positions.get(i).getR() < upperRadius) {
+                // once the raypath goes below the upper border, clip from startAboveIndex to the previous index
+                if (i - 1 > startAboveIndex) clippedRaypaths.add(clip(startAboveIndex, i));
+                startAboveIndex = -1;
+            }
+        }
+        // if end point is still outside layer, add the final clip
+        if (startBelowIndex >= 0 && (nPoint - 1 > startBelowIndex)) {
+            clippedRaypaths.add(clip(startBelowIndex, nPoint));
+        } else if (startAboveIndex >= 0 && (nPoint - 1 > startAboveIndex)) {
+            clippedRaypaths.add(clip(startAboveIndex, nPoint));
+        }
+
+        return clippedRaypaths;
     }
 
     /**
-     * Calculate the azimuth of the raypath at the turning point.
-     * The turning point must be already computed.
-     * @return (double) azimuth at turning point
+     * @param from (int) index to start clipping from (includes this index)
+     * @param to (int) index to clip up to (does not include this index)
+     * @return (Raypath) Clipped raypath
      */
-    public double computeMidAzimuth() {
-        if (computedTurningPoint) return turnPosition.computeAzimuth(receiverPosition);
-        else throw new IllegalStateException("Turning point is not yet computed");
+    private Raypath clip(int from, int to) {
+        if (to - from <= 1) throw new IllegalArgumentException("Raypath must include at least 1 segment");
+        double[] clippedDistances = new double[to - from];
+        for (int i = from; i < to; i++) {
+            clippedDistances[i - from] = distancesDeg[i] - distancesDeg[from];
+        }
+        List<FullPosition> clippedPositions = positions.subList(from, to);
+        return new Raypath(phaseName, clippedDistances, clippedPositions);
     }
 
     /**
-     * 震源から観測点に向けての震央距離thetaでの座標
-     * @param theta [rad]
-     * @return {@link HorizontalPosition} on the raypath where the epicentral distance from the source is theta.
+     * Finds the bottom turning point of the given index.
+     * @param index (int) Which bottom turning point to look for (0:first, 1:second, ...)
+     * @return (FullPosition) Position of bottom turning point, or null if it does not exist
      */
-    public HorizontalPosition positionOnRaypathAt(double theta) {
-        return RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0).rotateaboutZ(Math.PI - azimuth)
-                .rotateaboutY(sourcePosition.getTheta()).rotateaboutZ(sourcePosition.getPhi()).toLocation();
+    public FullPosition findTurningPoint(int index) {
+        List<FullPosition> turningPoints = findTurningPoints();
+        if (index < 0 || index >= turningPoints.size()) return null;
+        return turningPoints.get(index);
     }
 
     /**
-     * ある点を震源、観測点に与えた時に、 震源を北極に持って行って観測点をさらに標準時線に持っていった時のある点の座標
-     *
-     * @param position {@link HorizontalPosition} of target
-     * @return relative position when the source is shifted to the north pole
-     * and station is on the Standard meridian
+     * Finds all bottom turning points.
+     * @return (List of FullPosition) Positions of bottom turning points
      */
-    public HorizontalPosition moveToNorthPole(HorizontalPosition position) {
-        return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(-sourcePosition.getPhi())
-                .rotateaboutY(-sourcePosition.getTheta()).rotateaboutZ(-Math.PI + azimuth).toLocation();
+    public List<FullPosition> findTurningPoints() {
+        List<FullPosition> turningPoints = new ArrayList<>();
+        for (int i = 1; i < nPoint - 1; i++) {
+            if (positions.get(i).getR() <= positions.get(i - 1).getR() && positions.get(i).getR() <= positions.get(i + 1).getR()) {
+                turningPoints.add(positions.get(i));
+            }
+        }
+        return turningPoints;
     }
 
     /**
-     * 震源を北極に持って行って観測点をさらに標準時線に持っていった時に、ある点を仮定する。 その後震源、観測点を本来の位置に戻した時の、ある点の座標
-     *
-     * @param position {@link HorizontalPosition} of target
-     * @return relative position when the source is shifted from the north pole
-     * and station is from the Standard meridian
+     * Finds the ceil bouncing point of the given index.
+     * @param index (int) Which ceil bouncing point to look for (0:first, 1:second, ...)
+     * @return (FullPosition) Position of ceil bouncing point, or null if it does not exist
      */
-    public HorizontalPosition moveFromNorthPole(HorizontalPosition position) {
-        return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(Math.PI - azimuth)
-                .rotateaboutY(sourcePosition.getTheta()).rotateaboutZ(sourcePosition.getPhi()).toLocation();
+    public FullPosition findCeilBouncingPoint(int index) {
+        List<FullPosition> ceilBouncingPoints = findCeilBouncingPoints();
+        if (index < 0 || index >= ceilBouncingPoints.size()) return null;
+        return ceilBouncingPoints.get(index);
     }
 
     /**
-     * Compensation is the raypath extension of the input phase to the surface
-     * at the source side.
-     *
-     * @param phase     target phase to be extended
-     * @param structure in which a raypath travels
-     * @return [rad] the delta of the extednded ray path
+     * Finds all ceil bouncing points.
+     * @return (List of FullPosition) Positions of ceil bouncing points
      */
-    public double computeCompensatedEpicentralDistance(Phase phase, VelocityStructure structure) {
-        io.github.kensuke1984.anisotime.Raypath[] rays = toANISOtime(phase, structure);
-        if (rays.length == 0) throw new RuntimeException("No raypath");
-        if (1 < rays.length) throw new RuntimeException("multiples");
-        return rays[0].computeDelta(phase, structure.earthRadius());
+    public List<FullPosition> findCeilBouncingPoints() {
+        List<FullPosition> ceilBouncingPoints = new ArrayList<>();
+        for (int i = 1; i < nPoint - 1; i++) {
+            if (positions.get(i).getR() >= positions.get(i - 1).getR() && positions.get(i).getR() >= positions.get(i + 1).getR()) {
+                ceilBouncingPoints.add(positions.get(i));
+            }
+        }
+        return ceilBouncingPoints;
     }
 
     /**
-     * @param phase     target phase
-     * @param structure to compute raypath
-     * @return Raypath which phase travels this raypath
+     * Computes the bottom turning point azimuth of the given index.
+     * @param index (int) Which bottom turning point to compute for (0:first, 1:second, ...)
+     * @return (double) Azimuth at bottom turning point [deg]
      */
-    public io.github.kensuke1984.anisotime.Raypath[] toANISOtime(Phase phase, VelocityStructure structure) {
-        return RaypathCatalog.computeCatalog(structure, ComputationalMesh.simple(structure), 10)
-                .searchPath(phase, sourcePosition.getR(), epicentralDistance, false);
+    public double computeTurningAzimuthDeg(int index) {
+        FullPosition turningPoint = findTurningPoint(index);
+        if (turningPoint == null)
+            throw new ArrayIndexOutOfBoundsException("Bottom turning point " + index + " does not exist.");
+        return turningPoint.computeAzimuthDeg(getReceiver());
     }
 
     /**
-     * @return {@link FullPosition} of the seismic source on the raypath
+     * @return epicentral distance of this full raypath [deg]
+     */
+    public double getEpicentralDistanceDeg() {
+        return distancesDeg[nPoint - 1];
+    }
+
+    /**
+     * @return azimuth at source [deg]
+     */
+    public double getAzimuthDeg() {
+        return getSource().computeAzimuthDeg(getReceiver());
+    }
+
+    /**
+     * @return back azimuth at receiver [deg]
+     */
+    public double getBackAzimuthDeg() {
+        return getSource().computeBackAzimuthDeg(getReceiver());
+    }
+
+    /**
+     * @return (FullPosition) The first point on this raypath
      */
     public FullPosition getSource() {
-        return sourcePosition;
+        return positions.get(0);
     }
 
     /**
-     * @return {@link HorizontalPosition} of the seismic station on the raypath
+     * @return (FullPosition) The last point on this raypath
      */
-    public HorizontalPosition getReceiver() {
-        return receiverPosition;
+    public FullPosition getReceiver() {
+        return positions.get(nPoint - 1);
     }
 
     /**
-     * @return epicentral distance of this raypath [rad]
+     * @return (String) The name of phase of this raypath
      */
-    public double getEpicentralDistance() {
-        return epicentralDistance;
-    }
-
-    /**
-     * @return azimuth [rad]
-     */
-    public double getAzimuth() {
-        return azimuth;
-    }
-
-    /**
-     * @return back azimuth [rad]
-     */
-    public double getBackAzimuth() {
-        return backAzimuth;
-    }
-
-    public boolean hasCalculatedTurningPoint() {
-        return computedTurningPoint;
-    }
-
-    public boolean hasCalculatedPiercePoints() {
-        return computedPiercePoints;
+    public String getPhaseName() {
+        return phaseName;
     }
 }

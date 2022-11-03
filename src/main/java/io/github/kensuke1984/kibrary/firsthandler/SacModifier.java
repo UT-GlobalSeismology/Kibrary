@@ -229,14 +229,17 @@ class SacModifier {
      *
      * @throws IOException if any
      */
-    void trim() throws IOException {
+    void trim(int maxNpts) throws IOException {
 
-        // nptsを元のSacfileのEでのポイントを超えない２の累乗ポイントにする
+        // set new npts so that it is a power of 2,
+        //  does not surpass the number of points at "E" (the end) of SAC file,
+        //  and does not surpass the limit (maxNpts)
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modifiedPath);
         int npts = (int) (Double.parseDouble(headerMap.get(SACHeaderEnum.E)) /
                 Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)));
+        if (npts > maxNpts) npts = maxNpts;
         int newNpts = Integer.highestOneBit(npts);
-        //System.out.println("rebuilding "+ sacFile);
+        // cut SAC file to start at 0 (event time) and end at new npts
         String cwd = sacPath.getParent().toString();
         try (SAC sacP1 = SAC.createProcess()) {
             sacP1.inputCMD("cd " + cwd);

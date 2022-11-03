@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -82,7 +82,7 @@ public class Vespagram {
 		recordsinBin = new int[(int) (180 / deltaDistance)];
 		usedBinIndexes = new HashSet<>();
 		for (int i = 0; i < obsIDs.length; i++) {
-			double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obsIDs[i].getObserver().getPosition()));
+			double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(obsIDs[i].getObserver().getPosition()));
 			int ibin = (int) (distance / deltaDistance);
 			id2bin[i] = ibin;
 			usedBinIndexes.add(ibin);
@@ -120,7 +120,7 @@ public class Vespagram {
 				double[] data = obsIDs[i].getData();
 				double max = new ArrayRealVector(data).getLInfNorm();
 				
-				double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(obsIDs[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(obsIDs[i].getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(obsIDs[i].getObserver().getPosition()));
 				double timeshift = smax * deltaDistance - slowness * (distance - distance0);
 				int shift = (int) (timeshift * samplingHz);
 				
@@ -164,7 +164,7 @@ public class Vespagram {
 				double[] data = synIDs[i].getData();
 				double max = new ArrayRealVector(data).getLInfNorm();
 				
-				double distance = Math.toDegrees(synIDs[i].getGlobalCMTID().getEventData().getCmtLocation().computeEpicentralDistance(synIDs[i].getObserver().getPosition()));
+				double distance = Math.toDegrees(synIDs[i].getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(synIDs[i].getObserver().getPosition()));
 				double timeshift = smax * deltaDistance - slowness * (distance - distance0);
 				int shift = (int) (timeshift * samplingHz);
 				
@@ -238,7 +238,7 @@ public class Vespagram {
 		for (int i = 0; i < synList.size(); i++) {
 			boolean foundPair = false;
 			for (int j = 0; j < obsList.size(); j++) {
-				if (Dvector.isPair(synList.get(i), obsList.get(j))) {
+				if (Dvector_old.isPair(synList.get(i), obsList.get(j))) {
 					useObsList.add(obsList.get(j));
 					useSynList.add(synList.get(i));
 					foundPair = true;

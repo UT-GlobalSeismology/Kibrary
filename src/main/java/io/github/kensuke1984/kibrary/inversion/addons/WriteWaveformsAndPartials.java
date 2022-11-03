@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.addons;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
-import io.github.kensuke1984.kibrary.inv_old.ObservationEquation;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
+import io.github.kensuke1984.kibrary.inv_old.ObservationEquation_old;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -41,8 +41,8 @@ public class WriteWaveformsAndPartials {
 		
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);
 		
-		Dvector dVector = new Dvector(waveforms, id -> true, WeightingType.RECIPROCAL);
-		ObservationEquation eq = new ObservationEquation(partials, parameterList, dVector, false, false, null, null, UnknownParameterWeightType.NO_WEIGHT, null);
+		Dvector_old dVector = new Dvector_old(waveforms, id -> true, WeightingType.RECIPROCAL);
+		ObservationEquation_old eq = new ObservationEquation_old(partials, parameterList, dVector, false, false, null, null, UnknownParameterWeightType.NO_WEIGHT, null);
 		
 		String tempString = GadgetAid.getTemporaryString();
 		
@@ -69,7 +69,7 @@ public class WriteWaveformsAndPartials {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public static void outEachTrace(Path outPath, Dvector d) throws IOException {
+	public static void outEachTrace(Path outPath, Dvector_old d) throws IOException {
 		if (Files.exists(outPath))
 			throw new FileAlreadyExistsException(outPath.toString());
 		Files.createDirectories(outPath);
@@ -81,7 +81,7 @@ public class WriteWaveformsAndPartials {
 			pwEvent.println("#id latitude longitude radius variance");
 			d.getEventVariance().entrySet().forEach(entry -> {
 				pwEvent.println(
-						entry.getKey() + " " + entry.getKey().getEventData().getCmtLocation() + " " + entry.getValue());
+						entry.getKey() + " " + entry.getKey().getEventData().getCmtPosition() + " " + entry.getValue());
 			});
 			pwStation.println("#name network latitude longitude variance");
 			d.getStationVariance().entrySet().forEach(entry -> {
@@ -138,7 +138,7 @@ public class WriteWaveformsAndPartials {
 			String name = obsIDs[i].getObserver() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
 					+ "." + i + ".txt";
 
-			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtLocation();
+			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEventData().getCmtPosition();
 			HorizontalPosition stationPos = obsIDs[i].getObserver().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.computeEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.computeAzimuth(stationPos)), 2);

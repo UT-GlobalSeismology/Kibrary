@@ -35,9 +35,9 @@ public interface SPCFileAccess {
     double[] getBodyR();
 
     /**
-     * @return Location of a seismic source.
+     * @return (FullPosition) Position of a seismic source.
      */
-    FullPosition getSourceLocation();
+    FullPosition getSourcePosition();
 
     /**
      * @return ID of a source

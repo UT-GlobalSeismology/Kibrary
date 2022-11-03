@@ -41,7 +41,7 @@ public class MultigridPartialsForger extends Operation {
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String tag;
+    private String fileTag;
 
     /**
      * path of partial ID file
@@ -73,8 +73,8 @@ public class MultigridPartialsForger extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##Path of a partial ID file, must be set");
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
@@ -92,7 +92,7 @@ public class MultigridPartialsForger extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
@@ -153,8 +153,8 @@ public class MultigridPartialsForger extends Operation {
 
         // output
         String dateStr = GadgetAid.getTemporaryString();
-        Path idPath = workPath.resolve(DatasetAid.generateOutputFileName("partialID", tag, dateStr, ".dat"));
-        Path wavePath = workPath.resolve(DatasetAid.generateOutputFileName("partial", tag, dateStr, ".dat"));
+        Path idPath = workPath.resolve(DatasetAid.generateOutputFileName("partialID", fileTag, dateStr, ".dat"));
+        Path wavePath = workPath.resolve(DatasetAid.generateOutputFileName("partial", fileTag, dateStr, ".dat"));
         PartialIDFile.write(newPartialIDs, idPath, wavePath);
     }
 

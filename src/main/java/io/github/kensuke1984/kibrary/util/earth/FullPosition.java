@@ -53,6 +53,34 @@ public final class FullPosition extends HorizontalPosition {
         return Latitude.valueFor(theta);
     }
 
+    /**
+     * Checks whether this position is inside a given coordinate range.
+     * @param minLatitude (double) [-90:maxLatitude)
+     * @param maxLatitude (double) (minLatitude:90]
+     * @param minLongitude (double) [-180:maxLongitude)
+     * @param maxLongitude (double) (minLongitude:360]
+     * @param minRadius (double) [0:maxRadius)
+     * @param maxRadius (double) (minRadius:)
+     * @return (boolean) true if position is inside the given range
+     *
+     * @author otsuru
+     * @since 2022/10/11
+     */
+    public boolean isInRange(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude,
+            double minRadius, double maxRadius) {
+        if (minRadius < 0 || minRadius > maxRadius) {
+            throw new IllegalArgumentException("The input radius range: " + minRadius + ", " + maxRadius + " is invalid.");
+        }
+
+        // radius
+        if (R < minRadius || maxRadius < R) return false;
+
+        // latitude and longitude
+        if (isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude) == false) return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
@@ -23,7 +23,7 @@ public class AtaCut_temp {
      */
     protected Path partialPath;
     private Path unknownsPath;
-    private Dvector DVECTOR;
+    private Dvector_old DVECTOR;
 
     public static void main(String[] args) throws IOException {
         Path unknownsPath = Paths.get(args[0]);

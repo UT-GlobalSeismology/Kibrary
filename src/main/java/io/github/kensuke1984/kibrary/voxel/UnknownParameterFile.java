@@ -8,7 +8,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -16,7 +18,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
- * File of parameters of which their values are not yet known.
+ * File of parameters of which their values are not yet known. See {@link UnknownParameter}.
+ * <p>
  * m in Am=d
  * <p>
  * Each line:
@@ -44,6 +47,10 @@ public class UnknownParameterFile {
      */
     public static void write(List<UnknownParameter> parameterList, Path outputPath, OpenOption... options)
             throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(parameterList.size(), "unknown parameter", "unknown parameters")
+                + " in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             parameterList.forEach(pw::println);
         }
@@ -66,6 +73,9 @@ public class UnknownParameterFile {
             for (int j = i + 1; j < pars.size(); j++)
                 if (pars.get(i).equals(pars.get(j)))
                     System.err.println("!Caution there is duplication in " + inputPath);
+
+        DatasetAid.checkNum(pars.size(), "unknown parameter", "unknown parameters");
+
 //		return Collections.unmodifiableList(pars); //TODO why not this?
         return pars;
     }

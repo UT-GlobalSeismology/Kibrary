@@ -27,9 +27,9 @@ import org.apache.commons.math3.complex.Complex;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -654,7 +654,7 @@ public class PartialWaveformAssembler3D_old extends Operation {
                     1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
                     cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtLocation(), PartialType.TIME_SOURCE,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
                     cutU);
 
             try {
@@ -804,7 +804,7 @@ public class PartialWaveformAssembler3D_old extends Operation {
 //				perturbationRs[i] = perturbationLocations[i].getR();
 
             String observerSourceCode = bp.getSourceID();
-            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourceLocation()))
+            if (!observer.getPosition().toFullPosition(0).equals(bp.getSourcePosition()))
                 throw new RuntimeException("There may be a station with the same name but other networks.");
 
             if (bp.tlen() != tlen || bp.np() != np)
@@ -1053,7 +1053,7 @@ public class PartialWaveformAssembler3D_old extends Operation {
                 throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
             observerSet.forEach(observer -> voxelPositionSet.add(new FullPosition(observer.getPosition().getLatitude(),
                     observer.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
-            eventSet.forEach(id -> voxelPositionSet.add(id.getEventData().getCmtLocation()));
+            eventSet.forEach(id -> voxelPositionSet.add(id.getEventData().getCmtPosition()));
         }
         writeLog(voxelPositionSet.size() + " voxel points are found in " + voxelPath);
     }

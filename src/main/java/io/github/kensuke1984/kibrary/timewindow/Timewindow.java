@@ -15,6 +15,10 @@ import org.apache.commons.math3.util.Precision;
 public class Timewindow implements Comparable<Timewindow> {
 
     /**
+     * the number of decimal places to round off the time values
+     */
+    static final int PRECISION = 3;
+    /**
      * Margin to decide whether two timewindows have the same startTime and/or endTime
      */
     public static final double TIME_EPSILON = 0.1;
@@ -41,8 +45,29 @@ public class Timewindow implements Comparable<Timewindow> {
     public Timewindow(double startTime, double endTime) {
         if (endTime < startTime)
             throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
-        this.startTime = Precision.round(startTime, 3);
-        this.endTime = Precision.round(endTime, 3);
+        this.startTime = Precision.round(startTime, PRECISION);
+        this.endTime = Precision.round(endTime, PRECISION);
+    }
+
+    /**
+     * @param timeWindow to check
+     * @return if timeWindow and this overlap
+     */
+    boolean overlap(Timewindow timeWindow) {
+        return timeWindow.startTime <= endTime && startTime <= timeWindow.endTime;
+    }
+
+    /**
+     * Creates a new Timewindow from this and the input timewindow. If the two
+     * windows do not overlap, then the interval between them is also included.
+     *
+     * @param timeWindow ({@link Timewindow}) Timewindow to merge
+     * @return ({@link Timewindow}) Merged timewindow
+     */
+    Timewindow merge(Timewindow timeWindow) {
+        double newStart = startTime < timeWindow.startTime ? startTime : timeWindow.startTime;
+        double newEnd = timeWindow.endTime < endTime ? endTime : timeWindow.endTime;
+        return new Timewindow(newStart, newEnd);
     }
 
     @Override
@@ -73,32 +98,6 @@ public class Timewindow implements Comparable<Timewindow> {
                 Double.doubleToLongBits(startTime) == Double.doubleToLongBits(other.startTime);
     }
 
-    @Override
-    public String toString() {
-        return startTime + " " + endTime;
-    }
-
-    /**
-     * @param timeWindow to check
-     * @return if timeWindow and this overlap
-     */
-    boolean overlap(Timewindow timeWindow) {
-        return timeWindow.startTime <= endTime && startTime <= timeWindow.endTime;
-    }
-
-    /**
-     * Creates a new Timewindow from this and the input timewindow. If the two
-     * windows do not overlap, then the interval between them is also included.
-     *
-     * @param timeWindow timewindow to merge
-     * @return timewindow new {@link Timewindow} for merged window
-     */
-    Timewindow merge(Timewindow timeWindow) {
-        double newStart = startTime < timeWindow.startTime ? startTime : timeWindow.startTime;
-        double newEnd = timeWindow.endTime < endTime ? endTime : timeWindow.endTime;
-        return new Timewindow(newStart, newEnd);
-    }
-
     public double getStartTime() {
         return startTime;
     }
@@ -109,6 +108,11 @@ public class Timewindow implements Comparable<Timewindow> {
 
     public double getLength() {
         return endTime - startTime;
+    }
+
+    @Override
+    public String toString() {
+        return startTime + " " + endTime;
     }
 
 }

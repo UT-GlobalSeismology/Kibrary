@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.inv_old.Dvector;
+import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -30,7 +30,7 @@ public class SelectSpcAmp {
 		Path outPath = Paths.get("spcAmp" + ".dat");
 		try {
 			List<BasicID> ids = Arrays.stream(BasicIDFile.read(spcAmpIDPath, spcAmpPath)).collect(Collectors.toList());
-			Dvector dVector = new Dvector(ids.toArray(new BasicID[ids.size()]));
+			Dvector_old dVector = new Dvector_old(ids.toArray(new BasicID[ids.size()]));
 			Set<GlobalCMTID> events = ids.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 			Set<Observer> stations = ids.stream().map(id -> id.getObserver()).collect(Collectors.toSet());
 			double[][] periodRanges = new double[][] {{8, 200}};

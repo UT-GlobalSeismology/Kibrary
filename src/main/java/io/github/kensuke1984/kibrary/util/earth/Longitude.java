@@ -38,7 +38,7 @@ final class Longitude implements Comparable<Longitude> {
      */
     Longitude(double longitude) {
         if (!withinValidRange(longitude)) throw new IllegalArgumentException(
-                "The input longitude: " + longitude + " is invalid (must be [-180, 360)).");
+                "The input longitude: " + longitude + " is invalid (must be in [-180, 360)).");
 
         if (180 <= longitude) {
             this.longitude = Precision.round(longitude - 360, PRECISION);

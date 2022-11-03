@@ -60,7 +60,7 @@ public final class VSConversion {
         HorizontalPosition observerPosition = spectrum.getObserverPosition();
         String observerID = spectrum.getStationCode();
         String observerNetwork = spectrum.getNetworkCode();
-        FullPosition sourceLocation = spectrum.getSourceLocation();
+        FullPosition sourceLocation = spectrum.getSourcePosition();
         String sourceID = spectrum.getSourceID();
         double[] bodyR = spectrum.getBodyR();
         for (int i = 0; i < spectrum.nbody(); i++) {
@@ -113,7 +113,7 @@ public final class VSConversion {
             }
 
             @Override
-            public FullPosition getSourceLocation() {
+            public FullPosition getSourcePosition() {
                 return sourceLocation;
             }
 

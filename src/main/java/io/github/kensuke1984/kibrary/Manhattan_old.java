@@ -3,10 +3,9 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.axiSEM.Result;
-import io.github.kensuke1984.kibrary.correction.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
-import io.github.kensuke1984.kibrary.selection.SecondHandler;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
@@ -23,7 +22,6 @@ public enum Manhattan_old {
     PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
     Result(14, Result.class), //
-    SecondHandler(15, SecondHandler.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
     AtAMaker(22, AtAMaker.class),//

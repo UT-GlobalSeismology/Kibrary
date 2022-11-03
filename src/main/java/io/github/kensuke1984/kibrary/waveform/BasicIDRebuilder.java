@@ -48,9 +48,9 @@ public class BasicIDRebuilder extends Operation {
      */
     private String nameRoot;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
 
     /**
      * path of basic ID file
@@ -99,10 +99,10 @@ public class BasicIDRebuilder extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output folder (actual)");
+            pw.println("##(String) The first part of the name of output files (actual)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
             pw.println("##Path of a basic ID file, must be set");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
@@ -128,7 +128,7 @@ public class BasicIDRebuilder extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "actual");
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
@@ -155,9 +155,13 @@ public class BasicIDRebuilder extends Operation {
         obsIDs = pairer.getObsList();
         synIDs = pairer.getSynList();
 
-        selectByCriteria();
+        // select basicIDs to used based on criteria
+        if (dataEntryPath != null || requiredPhases != null) {
+            selectByCriteria();
+        }
         if (obsIDs.size() == 0) return;
 
+        // select required number of basicIDs
         if (bootstrap) {
             resample(subsamplingPercent, true);
         } else if (!Precision.equals(subsamplingPercent, 100)) {
@@ -165,12 +169,13 @@ public class BasicIDRebuilder extends Operation {
         }
         if (obsIDs.size() == 0) return;
 
+        // collect all selected basicIDs
         List<BasicID> finalList = new ArrayList<>();
         finalList.addAll(obsIDs);
         finalList.addAll(synIDs);
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

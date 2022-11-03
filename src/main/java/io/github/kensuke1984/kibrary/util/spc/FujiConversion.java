@@ -46,7 +46,7 @@ public final class FujiConversion {
         HorizontalPosition observerPosition = spectrum.getObserverPosition();
         String observerID = spectrum.getStationCode();
         String observerNetwork = spectrum.getNetworkCode();
-        FullPosition sourceLocation = spectrum.getSourceLocation();
+        FullPosition sourceLocation = spectrum.getSourcePosition();
         String sourceID = spectrum.getSourceID();
         double[] bodyR = spectrum.getBodyR();
         double domega = 1. / spectrum.tlen() * 2. * Math.PI;
@@ -124,7 +124,7 @@ public final class FujiConversion {
             }
 
             @Override
-            public FullPosition getSourceLocation() {
+            public FullPosition getSourcePosition() {
                 return sourceLocation;
             }
 
