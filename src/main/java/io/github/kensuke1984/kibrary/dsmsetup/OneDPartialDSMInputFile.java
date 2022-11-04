@@ -27,7 +27,14 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  */
 public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
 
+    /**
+     * perturbation radii
+     */
     private final double[] radii;
+    /**
+     * Whether perturbation radii are close to epicentral radius.
+     * The perturbation radii close to epicentral radius are commented out.
+     */
     private boolean[] commentPerturbationR;
 
     public OneDPartialDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> stations, String outputDir,

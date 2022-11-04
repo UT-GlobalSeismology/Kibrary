@@ -77,6 +77,10 @@ public class DataFeatureHistogram extends Operation {
      */
     private double ratioUpperBound;
     /**
+     * Upper bound of S/N ratio to plot
+     */
+    private double snRatioUpperBound;
+    /**
      * Interval of correlation coefficient
      */
     private double dCorrelation;
@@ -88,6 +92,10 @@ public class DataFeatureHistogram extends Operation {
      * Interval of amplitude ratio
      */
     private double dRatio;
+    /**
+     * Interval of S/N ratio
+     */
+    private double dSNRatio;
     /**
      * Minimum correlation coefficient that is selected
      */
@@ -108,6 +116,10 @@ public class DataFeatureHistogram extends Operation {
      * Threshold of amplitude ratio that is selected
      */
     private double ratio;
+    /**
+     * Threshold of S/N ratio that is selected
+     */
+    private double minSNRatio;
 
     /**
      * @param args  none to create a property file <br>
@@ -142,12 +154,17 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#varianceUpperBound ");
             pw.println("##(double) Upper bound of amplitude ratio to plot (0:) (5)");
             pw.println("#ratioUpperBound ");
+            pw.println("##S/N ratio histogram can be created only when data feature list file is set");
+            pw.println("##(double) Upper bound of S/N ratio to plot (0:) (5)");
+            pw.println("#snRatioUpperBound ");
             pw.println("##(double) Interval of correlation coefficient, must be positive (0.1)");
             pw.println("#dCorrelation ");
             pw.println("##(double) Interval of normalized variance, must be positive (0.2)");
             pw.println("#dVariance ");
             pw.println("##(double) Interval of amplitude ratio, must be positive (0.2)");
             pw.println("#dRatio ");
+            pw.println("##(double) Interval of S/N ratio, must be positive (0.2)");
+            pw.println("#dSNRatio ");
             pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
             pw.println("#minCorrelation ");
             pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
@@ -158,6 +175,8 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#maxVariance ");
             pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
             pw.println("#ratio ");
+            pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
+            pw.println("#minSNRatio ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -188,12 +207,18 @@ public class DataFeatureHistogram extends Operation {
         if (ratioUpperBound <= 0)
             throw new IllegalArgumentException("Amplitude ratio bound " + ratioUpperBound + " is invalid.");
 
+        snRatioUpperBound = property.parseDouble("snRatioUpperBound", "5");
+        if (snRatioUpperBound <= 0)
+            throw new IllegalArgumentException("S/N ratio bound " + snRatioUpperBound + " is invalid.");
+
         dCorrelation = property.parseDouble("dCorrelation", "0.1");
         if (dCorrelation <= 0) throw new IllegalArgumentException("dCorrelation must be positive.");
         dVariance = property.parseDouble("dVariance", "0.2");
         if (dVariance <= 0) throw new IllegalArgumentException("dVariance must be positive.");
         dRatio = property.parseDouble("dRatio", "0.2");
         if (dRatio <= 0) throw new IllegalArgumentException("dRatio must be positive.");
+        dSNRatio = property.parseDouble("dSNRatio", "0.2");
+        if (dSNRatio <= 0) throw new IllegalArgumentException("dSNRatio must be positive.");
 
         minCorrelation = property.parseDouble("minCorrelation", "0");
         maxCorrelation = property.parseDouble("maxCorrelation", "1");
@@ -206,6 +231,9 @@ public class DataFeatureHistogram extends Operation {
         ratio = property.parseDouble("ratio", "2");
         if (ratio < 1)
             throw new IllegalArgumentException("Selected amplitude ratio threshold " + ratio + " is invalid, must be >= 1.");
+        minSNRatio = property.parseDouble("minSNRatio", "0");
+        if (minSNRatio < 0)
+            throw new IllegalArgumentException("Selected S/N ratio threshold " + minSNRatio + " is invalid, must be >= 0.");
     }
 
    @Override
@@ -262,15 +290,19 @@ public class DataFeatureHistogram extends Operation {
        int nCorr = (int) Math.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
        int nVar = (int) Math.ceil(varianceUpperBound / dVariance);
        int nRatio = (int) Math.ceil(ratioUpperBound / dRatio);
+       int nSNRatio = (int) Math.ceil(snRatioUpperBound / dSNRatio);
        int[] corrs = new int[nCorr];
        int[] vars = new int[nVar];
        int[] ratios = new int[nRatio];
+       int[] snRatios = new int[nSNRatio];
        String corrFileNameRoot = "correlationHistogram";
        String varFileNameRoot = "varianceHistogram";
        String ratioFileNameRoot = "ratioHistogram";
+       String snRatioFileNameRoot = "snRatioHistogram";
        Path corrPath = outPath.resolve(corrFileNameRoot + ".txt");
        Path varPath = outPath.resolve(varFileNameRoot + ".txt");
        Path ratioPath = outPath.resolve(ratioFileNameRoot + ".txt");
+       Path snRatioPath = outPath.resolve(snRatioFileNameRoot + ".txt");
 
        for (DataFeature feature : featureList) {
            // if the value is inside the plot range, count it at the corresponding interval
@@ -286,6 +318,10 @@ public class DataFeatureHistogram extends Operation {
            if (feature.getAbsRatio() < ratioUpperBound) {
                int iRatio = (int) (feature.getAbsRatio() / dRatio);
                ratios[iRatio]++;
+           }
+           if (feature.getSNRatio() < snRatioUpperBound) {
+               int iSNRatio = (int) (feature.getSNRatio() / dSNRatio);
+               snRatios[iSNRatio]++;
            }
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(corrPath))) {
@@ -307,6 +343,15 @@ public class DataFeatureHistogram extends Operation {
                dVariance * 5, minVariance, maxVariance);
        createPlot(outPath, ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
                dRatio * 5, 1 / ratio, ratio);
+
+       if (dataFeaturePath != null) {
+           try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
+               for (int i = 0; i < nSNRatio; i++)
+                   pw.println((i * dSNRatio) + " " + snRatios[i]);
+           }
+           createPlot(outPath, snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
+                   dSNRatio * 5, minSNRatio, snRatioUpperBound);
+       }
    }
 
    private static void createPlot(Path outPath, String fileNameRoot, String xLabel, double interval,

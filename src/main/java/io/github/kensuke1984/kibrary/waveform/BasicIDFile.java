@@ -377,8 +377,8 @@ public final class BasicIDFile {
         try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
             for (int j = 0; j < obsData.length; j++) {
-                double obsTime = obsStartTime + j * obsSamplingHz;
-                double synTime = synStartTime + j * synSamplingHz;
+                double obsTime = obsStartTime + j / obsSamplingHz;
+                double synTime = synStartTime + j / synSamplingHz;
                 pwTrace.println(obsTime + " " + obsData[j] + " " + synTime + " " + synData[j]);
             }
         }

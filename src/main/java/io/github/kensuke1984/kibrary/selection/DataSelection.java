@@ -134,6 +134,9 @@ public class DataSelection extends Operation {
      * Threshold of amplitude ratio (upper limit; lower limit is its inverse)
      */
     private double ratio;
+    /**
+     * Threshold of S/N ratio that is selected
+     */
     private double minSNratio;
     private boolean requirePhase;
     private boolean excludeSurfaceWave;

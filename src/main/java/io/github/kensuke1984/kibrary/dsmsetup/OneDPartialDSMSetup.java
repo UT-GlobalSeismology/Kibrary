@@ -3,27 +3,24 @@ package io.github.kensuke1984.kibrary.dsmsetup;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.Operation_old;
-import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -33,14 +30,38 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @since version 0.1.3
  * @version 2021/12/24 renamed from SshDSMInformationFileMaker
  */
-public class OneDPartialDSMSetup implements Operation_old {
+public class OneDPartialDSMSetup extends Operation {
 
-    private Properties property;
+    private final Property property;
     /**
      * work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String tag;
+    /**
+     * Information file name is header_[psv,sh].inf (default:PREM)
+     */
+    private String header;
+    /**
+     * components to create an information file for
+     */
+    private Set<SACComponent> components;
+    /**
+     * The root folder containing event folders which have observed SAC files
+     */
+    private Path obsPath;
+    /**
+     * perturbation radii
+     */
     private double[] perturbationR;
+    /**
+     * structure file instead of PREM
+     */
+    private Path structurePath;
+    private String structureName;
     /**
      * number of steps in frequency domain, must be a power of 2 (2<sup>n</sup>)
      */
@@ -50,166 +71,150 @@ public class OneDPartialDSMSetup implements Operation_old {
      */
     private double tlen;
     /**
-     * components to create an information file for
+     * Whether to use MPI-version of DSM in shellscript file
      */
-    private Set<SACComponent> components;
+    private boolean mpi;
     /**
-     * Information file name is header_[psv,sh].inf (default:PREM)
+     * Path of a time window file to selecte the set of events and observers
      */
-    private String header;
-    /**
-     * structure file instead of PREM
-     */
-    private Path structurePath;
-    private Path timewindowInformationPath;
-
-    public OneDPartialDSMSetup(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
-    }
+    private Path timewindowPath;
 
     /**
-     * @param args [parameter file name]
-     * @throws Exception if any
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
      */
-    public static void main(String[] args) throws Exception {
-        OneDPartialDSMSetup opds = new OneDPartialDSMSetup(Property_old.parse(args));
-        long start = System.nanoTime();
-        System.err.println(OneDPartialDSMSetup.class.getName() + " is going.");
-        opds.run();
-        System.err.println(OneDPartialDSMSetup.class.getName() + " finished in "
-                + GadgetAid.toTimeString(System.nanoTime() - start));
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths
-                .get(OneDPartialDSMSetup.class.getName() + GadgetAid.getTemporaryString() + ".properties");
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan OneDPartialDSMSetup");
-            pw.println("##These properties for SshDSMInformationFileMaker");
+            pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("#tag ");
+            pw.println("##(String) Header for names of information files, header_[psv, sh].inf, (PREM)");
+            pw.println("#header");
             pw.println("##SacComponents to be used (Z R T)");
             pw.println("#components");
-            pw.println("##header for names of information files, header_[psv, sh].inf, (PREM)");
-            pw.println("#header");
-            pw.println("##Path of a structure file you want to use. ()");
-            pw.println("#structureFile");
-            pw.println("##tlen must be a power of 2 over 10 (3276.8)");
-            pw.println("#tlen");
-            pw.println("##np must be a power of 2 (512)");
-            pw.println("#np");
-            pw.println("##Depths for computations, must be defined");
+            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("#obsPath ");
+            pw.println("##Depths for computations, listed using spaces, must be set");
             pw.println("#perturbationR 3500 3600");
-            pw.println("#timewindowInformationPath");
+            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("#structurePath ");
+            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("#structureName ");
+            pw.println("##Time length to be computed, must be a power of 2 over 10 (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
+            pw.println("#np ");
+            pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
+            pw.println("#mpi ");
+            pw.println("##Path of a time window file to selecte the set of events and observers");
+            pw.println("#timewindowPath");
         }
         System.err.println(outPath + " is created.");
     }
 
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath"))
-            property.setProperty("workPath", "");
-        if (!property.containsKey("components"))
-            property.setProperty("components", "Z R T");
-        if (!property.containsKey("tlen"))
-            property.setProperty("tlen", "3276.8");
-        if (!property.containsKey("np"))
-            property.setProperty("np", "512");
-        if (!property.containsKey("header"))
-            property.setProperty("header", "PREM");
-        if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
-            throw new RuntimeException("perturbationR must be defined.");
+    public OneDPartialDSMSetup(Property property) throws IOException {
+        this.property = (Property) property.clone();
+        //set();
     }
 
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        header = property.parseStringSingle("header", "PREM");
 
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath: " + workPath + " does not exist");
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
-                .collect(Collectors.toSet());
-        np = Integer.parseInt(property.getProperty("np"));
-        tlen = Double.parseDouble(property.getProperty("tlen"));
-        header = property.getProperty("header");
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
+        obsPath = property.parsePath("obsPath", ".", true, workPath);
 
-        if (property.containsKey("structureFile")) structurePath = Paths.get(property.getProperty("structureFile"));
-        perturbationR = Arrays.stream(property.getProperty("perturbationR").split("\\s+"))
-                .mapToDouble(Double::parseDouble).toArray();
+        perturbationR = property.parseDoubleArray("perturbationR", null);
+        if (property.containsKey("structurePath")) {
+            structurePath = property.parsePath("structurePath", null, true, workPath);
+        } else {
+            structureName = property.parseString("structureName", "PREM");
+        }
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
+        mpi = property.parseBoolean("mpi", "true");
 
         if (property.containsKey("timewindowInformationPath"))
-            timewindowInformationPath = Paths.get(property.getProperty("timewindowInformationPath"));
+            timewindowPath = Paths.get(property.getProperty("timewindowPath"));
         else
-            timewindowInformationPath = null;
+            timewindowPath = null;
     }
 
     @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
+    public void run() throws IOException {
 
-    @Override
-    public void run() throws Exception {
-        Set<TimewindowData> tmpwindows = null;
-        if (timewindowInformationPath != null)
-            tmpwindows = TimewindowDataFile.read(timewindowInformationPath);
-        final Set<TimewindowData> timewindows = tmpwindows;
+        //set structure
+        PolynomialStructure structure = null;
+        if (structurePath != null) {
+            structure = PolynomialStructureFile.read(structurePath);
+        } else {
+            structure = PolynomialStructure.of(structureName);
+        }
 
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
-        PolynomialStructure ps = DefaultStructure.PREM;
-        if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
-            ps = DefaultStructure.PREM;
+        //set output
+        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", tag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        //read timewindows
+        final Set<TimewindowData> timewindows;
+        if (timewindowPath != null)
+            timewindows = TimewindowDataFile.read(timewindowPath);
+        else timewindows = null;
+
+        //get set of observers and events
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
+        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
+            return;
         }
-        else if (structurePath.toString().trim().toUpperCase().equals("AK135")) {
-            ps = DefaultStructure.AK135;
-        }
-//        else if (structurePath.toString().trim().toUpperCase().equals("TBL50")) {
-//            ps = DefaultStructure.TBL50;
-//        }
-        else
-            ps = PolynomialStructureFile.read(structurePath);
-        String temporaryString = GadgetAid.getTemporaryString();
-        Path output = workPath.resolve("oneDPartial" + temporaryString);
-        Files.createDirectories(output);
-        Set<SACComponent> useComponents = components;
         for (EventFolder eventDir : eventDirs) {
-            Set<Observer> stations = eventDir.sacFileSet().stream()
-                    .filter(name -> name.isOBS() && useComponents.contains(name.getComponent())).map(name -> {
-                        try {
-                            return name.readHeader();
-                        } catch (Exception e2) {
-                            e2.printStackTrace();
-                            return null;
-                        }
-                    }).filter(Objects::nonNull).map(Observer::of).collect(Collectors.toSet());
+            Set<Observer> observers = eventDir.sacFileSet().stream()
+                    .filter(name -> name.isOBS() && components.contains(name.getComponent()))
+                    .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                    .map(Observer::of).collect(Collectors.toSet());
 
             //select stations in timewindows
-            if (timewindowInformationPath != null) {
-                stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getObserver().equals(sta)
+            if (timewindowPath != null)
+                observers.removeIf(obs -> timewindows.stream().filter(tw -> tw.getObserver().equals(obs)
                         && tw.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
-                        && useComponents.contains(tw.getComponent())).count() == 0);
-            }
+                        && components.contains(tw.getComponent())).count() == 0);
 
-            if (stations.isEmpty())
+            //check observers
+            if (observers.isEmpty())
                 continue;
-            int numberOfStation = (int) stations.stream().map(Observer::getStation).count();
-            if (numberOfStation != stations.size())
+            int numberOfStation = (int) observers.stream().map(Observer::getStation).count();
+            if (numberOfStation != observers.size())
                 System.err.println("!Caution there are stations with the same name and different positions in "
                         + eventDir.getGlobalCMTID());
-            OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(ps, eventDir.getGlobalCMTID().getEventData(), stations, header, perturbationR,
-                    tlen, np);
-            Path outEvent = output.resolve(eventDir.toString());
+
+            Path outEvent = outPath.resolve(eventDir.toString());
             Path modelPath = outEvent.resolve(header);
             Files.createDirectories(outEvent);
             Files.createDirectories(modelPath);
+            OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, eventDir.getGlobalCMTID().getEventData(), observers, header, perturbationR,
+                    tlen, np);
             info.writeTIPSV(outEvent.resolve("par5_" + header + "_PSV.inf"));
             info.writeTISH(outEvent.resolve("par5_" + header + "_SH.inf"));
             info.writeISOPSV(outEvent.resolve("par2_" + header + "_PSV.inf"));
             info.writeISOSH(outEvent.resolve("par2_" + header + "_SH.inf"));
         }
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
+        // output shellscripts for execution of tipsv and tish
+        //TODO PAR2の場合とPAR5の場合で場合分け
+        DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
+//        shell.write(SPCType.PAR0, SPCMode.PSV);
+//        shell.write(SPCType.PAR0, SPCMode.SH);
+        System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
     }
 }

@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
+import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
@@ -25,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.BasicWaveformPlotter;
+import io.github.kensuke1984.kibrary.visual.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.ModelSetMapper;
@@ -85,7 +87,9 @@ enum Manhattan {
     PartialIDMerge(62, PartialIDMerge.class),
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
+    OneDPartialDSMSetup(65, OneDPartialDSMSetup.class), //
     MultigridPartialsForger(67, MultigridPartialsForger.class),
+    CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
