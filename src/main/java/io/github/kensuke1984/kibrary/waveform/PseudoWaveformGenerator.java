@@ -118,7 +118,7 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("#noise ");
             pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
             pw.println("#noisePower ");
-            pw.println("##Fill 0 to empty partial waveforms (false)");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
             pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");

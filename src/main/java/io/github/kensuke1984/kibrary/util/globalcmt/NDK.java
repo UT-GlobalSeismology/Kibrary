@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import io.github.kensuke1984.kibrary.source.MomentTensor;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -123,7 +124,7 @@ public final class NDK implements GlobalCMTAccess {
      * inversion, following a standard scaling relationship (see note (2)
      * below), and is not derived from the analysis.
      */
-    private String momentRateFunctionType;
+    private SourceTimeFunctionType momentRateFunctionType;
     /**
      * half duration of the moment rate function
      */
@@ -247,7 +248,7 @@ public final class NDK implements GlobalCMTAccess {
         ndk.m[2] = Integer.parseInt(bsmParts[8]);
         String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
         ndk.cmtType = Integer.parseInt(cmtParts[1]);
-        ndk.momentRateFunctionType = cmtParts[2].substring(0, 5);
+        ndk.momentRateFunctionType = SourceTimeFunctionType.ofCode(cmtParts[2].substring(0, 5));
         ndk.halfDurationMomentRateFunction = Double.parseDouble(cmtParts[3]);
 
         // line3
@@ -261,21 +262,20 @@ public final class NDK implements GlobalCMTAccess {
         // line 4
         parts = lines[3].split("\\s+");
         ndk.momentExponent = Integer.parseInt(parts[0]);
-        double mrr = Double.parseDouble(parts[1]);
-        double mtt = Double.parseDouble(parts[3]);
-        double mpp = Double.parseDouble(parts[5]);
-        double mrt = Double.parseDouble(parts[7]);
-        double mrp = Double.parseDouble(parts[9]);
-        double mtp = Double.parseDouble(parts[11]);
+        double mrrCoeff = Double.parseDouble(parts[1]);
+        double mttCoeff = Double.parseDouble(parts[3]);
+        double mppCoeff = Double.parseDouble(parts[5]);
+        double mrtCoeff = Double.parseDouble(parts[7]);
+        double mrpCoeff = Double.parseDouble(parts[9]);
+        double mtpCoeff = Double.parseDouble(parts[11]);
 
         // line5
         parts = lines[4].split("\\s+");
         ndk.versionCode = parts[0];
         ndk.scalarMoment = Double.parseDouble(parts[10]) * Math.pow(10, ndk.momentExponent);
-        double m0 = ndk.scalarMoment / 100000 / 100;
-        // 10 ^5 dyne = N, 100 cm = 1m
+        double m0 = MomentTensor.convertToNm(ndk.scalarMoment);
         double mw = MomentTensor.toMw(m0);
-        ndk.momentTensor = new MomentTensor(mrr, mtt, mpp, mrt, mrp, mtp, ndk.momentExponent, mw);
+        ndk.momentTensor = new MomentTensor(mrrCoeff, mttCoeff, mppCoeff, mrtCoeff, mrpCoeff, mtpCoeff, ndk.momentExponent, mw);
         ndk.eigenValue0 = Double.parseDouble(parts[1]);
         ndk.eigenValue1 = Double.parseDouble(parts[4]);
         ndk.eigenValue2 = Double.parseDouble(parts[7]);
@@ -387,6 +387,11 @@ public final class NDK implements GlobalCMTAccess {
         double ddiff = timeDifference - sec;
         long nanosec = Math.round(ddiff * 1000 * 1000 * 1000);
         return referenceDateTime.plusSeconds(sec).plusNanos(nanosec);
+    }
+
+    @Override
+    public SourceTimeFunctionType getSTFType() {
+        return momentRateFunctionType;
     }
 
     @Override

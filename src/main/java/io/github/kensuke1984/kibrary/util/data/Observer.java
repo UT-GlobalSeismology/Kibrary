@@ -229,15 +229,6 @@ public final class Observer implements Comparable<Observer> {
     }
 
     /**
-     * @return
-     *
-     * @deprecated use toString().
-     */
-    public String getStringID() { // TODO erase
-        return station + "_" + network;
-    }
-
-    /**
      * @return (String) station network latitude longitude
      */
     public String toPaddedInfoString() {

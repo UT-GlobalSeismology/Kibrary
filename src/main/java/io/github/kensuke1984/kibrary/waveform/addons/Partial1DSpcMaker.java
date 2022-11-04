@@ -476,7 +476,7 @@ public class Partial1DSpcMaker implements Operation_old {
                       }
                       SourceTimeFunction stf = null;
                       if (found) {
-                          stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+                          stf = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
         //	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
                       }
                       else

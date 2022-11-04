@@ -129,7 +129,7 @@ public class LetMeInvert extends Operation {
             pw.println("#alpha ");
             pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC (100)");
             pw.println("#evaluateNum ");
-            pw.println("##Fill 0 to empty partial waveforms (false)");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
             pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");

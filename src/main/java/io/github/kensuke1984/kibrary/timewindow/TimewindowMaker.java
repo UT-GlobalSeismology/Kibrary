@@ -59,13 +59,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * See {@link TimewindowDataFile}.
  *
  * @author Kensuke Konishi
-<<<<<<< HEAD
- * @version 0.2.4
- * @author anselme add phase information, methods for corridor and MTZ inversion
- * TODO PcPのみ取り出したい場合 i.e.
-=======
  * @since version 0.2.4
->>>>>>> network
+ * TODO PcPのみ取り出したい場合 i.e.
  */
 public class TimewindowMaker extends Operation {
 

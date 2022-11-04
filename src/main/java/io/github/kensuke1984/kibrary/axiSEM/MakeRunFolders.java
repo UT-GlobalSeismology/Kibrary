@@ -89,7 +89,7 @@ public class MakeRunFolders {
 					GlobalCMTID id = eventFolder.getGlobalCMTID();
 					GlobalCMTAccess idData = id.getEventData();
 					MomentTensor mt = idData.getCmt();
-					double pow = Math.pow(10, mt.getMtExp());
+					double pow = Math.pow(10, mt.getMtExponent());
 					String s = String.format("PDE...%nevent name: %s%ntime shift: %.4f%nhalf duration: "
 							+ "%.4f%nlatitude: %.4f%nlongitude: %.4f%ndepth: "
 							+ "%.4f%nMrr: %.6e%nMtt: %.6e%nMpp: %.6e%nMrt: %.6e%nMrp: %.6e%nMtp: %.6e"
@@ -101,12 +101,12 @@ public class MakeRunFolders {
 								, 90.
 								, 0.
 								, Earth.EARTH_RADIUS - idData.getCmtPosition().getR()
-								, mt.getMrr() * pow
-								, mt.getMtt() * pow
-								, mt.getMpp() * pow
-								, mt.getMrt() * pow
-								, mt.getMrp() * pow
-								, mt.getMtp() * pow
+								, mt.getMrrCoefficient() * pow
+								, mt.getMttCoefficient() * pow
+								, mt.getMppCoefficient() * pow
+								, mt.getMrtCoefficient() * pow
+								, mt.getMrpCoefficient() * pow
+								, mt.getMtpCoefficient() * pow
 						);
 					Files.write(eventFile, s.getBytes());
 					

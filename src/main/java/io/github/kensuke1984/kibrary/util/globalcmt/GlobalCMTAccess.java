@@ -1,9 +1,10 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import io.github.kensuke1984.kibrary.source.MomentTensor;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-
 import java.time.LocalDateTime;
+
+import io.github.kensuke1984.kibrary.source.MomentTensor;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
  * Data for global CMT data used frequently.
@@ -23,6 +24,8 @@ public interface GlobalCMTAccess {
 
     LocalDateTime getCMTTime();
 
+    SourceTimeFunctionType getSTFType();
+
     double getHalfDuration();
 
     FullPosition getPDEPosition();
@@ -30,13 +33,13 @@ public interface GlobalCMTAccess {
     LocalDateTime getPDETime();
 
     GlobalCMTID getGlobalCMTID();
-    
+
     void setCMT(MomentTensor mt);
-    
+
     double getTimeDifference();
 
-	String getHypocenterReferenceCatalog();
-	
-	String getGeographicalLocationName();
-    
+    String getHypocenterReferenceCatalog();
+
+    String getGeographicalLocationName();
+
 }
