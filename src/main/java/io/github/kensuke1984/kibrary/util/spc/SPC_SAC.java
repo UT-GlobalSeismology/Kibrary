@@ -87,8 +87,15 @@ public final class SPC_SAC extends Operation {
      * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
      */
     private SourceTimeFunctionType sourceTimeFunctionType;
+    /**
+     * Folder containing user-defined source time functions
+     */
     private Path userSourceTimeFunctionPath;
+    /**
+     * Catalog containing source time function durations
+     */
     private Path sourceTimeFunctionCatalogPath;
+
     /**
      * sampling Hz [Hz] must be 20 now.
      */

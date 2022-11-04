@@ -141,6 +141,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, set this unset.");
             pw.println("#folderTag ");
             pw.println("##Path of a data feature list file. If this is not set, the following basicID&waveform files will be used.");
+            pw.println("##  The S/N ratio histogram can be created only when dataFeaturePath is set.");
             pw.println("#dataFeaturePath dataFeature.lst");
             pw.println("##Path of a basic ID file, must be set if dataFeaturePath is not set");
             pw.println("#basicIDPath ");
@@ -154,7 +155,6 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#varianceUpperBound ");
             pw.println("##(double) Upper bound of amplitude ratio to plot (0:) (5)");
             pw.println("#ratioUpperBound ");
-            pw.println("##S/N ratio histogram can be created only when data feature list file is set");
             pw.println("##(double) Upper bound of S/N ratio to plot (0:) (5)");
             pw.println("#snRatioUpperBound ");
             pw.println("##(double) Interval of correlation coefficient, must be positive (0.1)");
@@ -196,6 +196,7 @@ public class DataFeatureHistogram extends Operation {
             basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
             basicPath = property.parsePath("basicPath", null, true, workPath);
         }
+
         correlationLowerBound = property.parseDouble("correlationLowerBound", "-1");
         correlationUpperBound = property.parseDouble("correlationUpperBound", "1");
         if (correlationLowerBound < -1 || correlationLowerBound >= correlationUpperBound || 1 < correlationUpperBound)
@@ -206,7 +207,6 @@ public class DataFeatureHistogram extends Operation {
         ratioUpperBound = property.parseDouble("ratioUpperBound", "5");
         if (ratioUpperBound <= 0)
             throw new IllegalArgumentException("Amplitude ratio bound " + ratioUpperBound + " is invalid.");
-
         snRatioUpperBound = property.parseDouble("snRatioUpperBound", "5");
         if (snRatioUpperBound <= 0)
             throw new IllegalArgumentException("S/N ratio bound " + snRatioUpperBound + " is invalid.");
