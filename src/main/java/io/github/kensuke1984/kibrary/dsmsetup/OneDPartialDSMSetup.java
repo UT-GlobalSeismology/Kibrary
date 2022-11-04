@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,6 +24,8 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * Information file for SSHSH
@@ -156,6 +160,8 @@ public class OneDPartialDSMSetup extends Operation {
     @Override
     public void run() throws IOException {
 
+        String dataStr = GadgetAid.getTemporaryString();
+
         //set structure
         PolynomialStructure structure = null;
         if (structurePath != null) {
@@ -165,8 +171,11 @@ public class OneDPartialDSMSetup extends Operation {
         }
 
         //set output
-        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", tag, dataStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        Path isoOutPath = outPath.resolve("ISO");
+        Path tiOutPath = outPath.resolve("TI");
 
         //read timewindows
         final Set<TimewindowData> timewindows;
@@ -179,6 +188,8 @@ public class OneDPartialDSMSetup extends Operation {
         if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
+
+        List<String> sourceList = new ArrayList<>();
         for (EventFolder eventDir : eventDirs) {
             Set<Observer> observers = eventDir.sacFileSet().stream()
                     .filter(name -> name.isOBS() && components.contains(name.getComponent()))
@@ -199,22 +210,33 @@ public class OneDPartialDSMSetup extends Operation {
                 System.err.println("!Caution there are stations with the same name and different positions in "
                         + eventDir.getGlobalCMTID());
 
-            Path outEvent = outPath.resolve(eventDir.toString());
-            Path modelPath = outEvent.resolve(header);
-            Files.createDirectories(outEvent);
-            Files.createDirectories(modelPath);
+            Path isoOutEvent = isoOutPath.resolve(eventDir.toString());
+            Path isoModelPath = isoOutEvent.resolve(header);
+            Path tiOutEvent = tiOutPath.resolve(eventDir.toString());
+            Path tiModelPath = tiOutEvent.resolve(header);
+            Files.createDirectories(isoOutEvent);
+            Files.createDirectories(isoModelPath);
+            Files.createDirectories(tiOutEvent);
+            Files.createDirectories(tiModelPath);
+
+            sourceList.add(eventDir.getGlobalCMTID().toString());
+
             OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, eventDir.getGlobalCMTID().getEventData(), observers, header, perturbationR,
                     tlen, np);
-            info.writeTIPSV(outEvent.resolve("par5_" + header + "_PSV.inf"));
-            info.writeTISH(outEvent.resolve("par5_" + header + "_SH.inf"));
-            info.writeISOPSV(outEvent.resolve("par2_" + header + "_PSV.inf"));
-            info.writeISOSH(outEvent.resolve("par2_" + header + "_SH.inf"));
+            info.writeTIPSV(tiOutEvent.resolve(header + "_PSV.inf"));
+            info.writeTISH(tiOutEvent.resolve(header + "_SH.inf"));
+            info.writeISOPSV(isoOutEvent.resolve(header + "_PSV.inf"));
+            info.writeISOSH(isoOutEvent.resolve(header + "_SH.inf"));
         }
         // output shellscripts for execution of tipsv and tish
         //TODO PAR2の場合とPAR5の場合で場合分け
+        String listFileName = "sourceList.txt";
+        Files.write(outPath.resolve(listFileName), sourceList);
         DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
-//        shell.write(SPCType.PAR0, SPCMode.PSV);
-//        shell.write(SPCType.PAR0, SPCMode.SH);
+        shell.write(SPCType.PAR2, SPCMode.PSV, listFileName, dataStr);
+        shell.write(SPCType.PAR2, SPCMode.SH, listFileName, dataStr);
+        shell.write(SPCType.PAR5, SPCMode.PSV, listFileName, dataStr);
+        shell.write(SPCType.PAR5, SPCMode.SH, listFileName, dataStr);
         System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
     }
 }

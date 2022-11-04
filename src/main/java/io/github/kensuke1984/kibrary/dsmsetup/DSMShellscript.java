@@ -104,6 +104,18 @@ class DSMShellscript {
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
             break;
+        case PAR2:
+            fileNameRoot = "runISOSSH_" + mode + dateStr;
+            enterFolder = "./ISO";
+            exitFolder = "../../";
+            programName = (mode == SPCMode.PSV ? "sshpsvi" : "sshshi");
+            break;
+        case PAR5:
+            fileNameRoot = "runTISSH_" + mode + dateStr;
+            enterFolder = "./TI";
+            exitFolder = "../../";
+            programName = (mode == SPCMode.PSV ? "sshpsv" : "sshsh");
+            break;
         default:
             throw new IllegalArgumentException("This SPCType is not supported yet.");
         }
