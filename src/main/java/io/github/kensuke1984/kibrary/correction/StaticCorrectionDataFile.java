@@ -243,6 +243,8 @@ public final class StaticCorrectionDataFile {
         options.addOption(Option.builder("c").longOpt("correction").hasArg().argName("staticCorrectionFile")
                 .desc("Set input static correction file").build());
         // output
+        options.addOption(Option.builder("n").longOpt("number")
+                .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Set path of output file").build());
         return options;
@@ -254,7 +256,7 @@ public final class StaticCorrectionDataFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
+        // set input file path
         Path filePath;
         if (cmdLine.hasOption("c")) {
             filePath = Paths.get(cmdLine.getOptionValue("c"));
@@ -271,16 +273,21 @@ public final class StaticCorrectionDataFile {
             } while (!Files.exists(filePath) || Files.isDirectory(filePath));
         }
 
+        // read static correction file
+        Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(filePath);
+        if (cmdLine.hasOption("n")) return;
+
+        // set output
         Path outputPath;
         if (cmdLine.hasOption("o")) {
             outputPath = Paths.get(cmdLine.getOptionValue("o"));
         } else {
-            // set the output file name the same as the input, but with extension changed to txt
+            // set the output file name the same as the input, but with extension changed to "txt"
             String fileName = filePath.getFileName().toString();
             outputPath = Paths.get(fileName.substring(0, fileName.lastIndexOf('.')) + ".txt");
         }
 
-        Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(filePath);
+        // output
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#station, network, lat, lon, event, component, startTime, phases, "
                     + "timeShift, amplitudeRatio");

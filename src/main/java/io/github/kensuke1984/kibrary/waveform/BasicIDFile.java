@@ -291,6 +291,8 @@ public final class BasicIDFile {
         options.addOption(Option.builder("w").longOpt("waveform").hasArg().argName("basicFile")
                 .desc("Export waveforms in event directories under current path").build());
         // output
+        options.addOption(Option.builder("n").longOpt("number")
+                .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Set path of output file").build());
         return options;
@@ -302,14 +304,18 @@ public final class BasicIDFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        // read input
         BasicID[] ids;
         if (cmdLine.hasOption("w")) {
             ids = read(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
+            if (cmdLine.hasOption("n")) return;
             outputWaveforms(ids);
         } else {
             ids = read(Paths.get(cmdLine.getOptionValue("i")));
+            if (cmdLine.hasOption("n")) return;
         }
 
+        // set output
         Path outputIdsPath;
         if (cmdLine.hasOption("o")) {
             outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
@@ -319,6 +325,7 @@ public final class BasicIDFile {
             outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
         }
 
+        // output
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
             pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
                     + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");

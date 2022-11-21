@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
 import io.github.kensuke1984.kibrary.multigrid.MultigridPartialsForger;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
+import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -100,6 +101,7 @@ enum Manhattan {
     CheckerboardMaker(81, CheckerboardMaker.class),
     PerturbationMapper(82, PerturbationMapper.class),
     ModelMapper(83, ModelMapper.class),
+    ModelSmoothener(84, ModelSmoothener.class),
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
     // Temporal 100

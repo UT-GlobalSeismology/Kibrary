@@ -70,7 +70,6 @@ public class BlockModelMaker extends Operation {
     private String structureName;
 
     private List<VariableType> variableTypes;
-    private double[] percents;
     private List<PartialType> partialTypes;
 
     private List<Box> boxes = new ArrayList<>();
@@ -100,18 +99,18 @@ public class BlockModelMaker extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
             pw.println("#structureName ");
-            pw.println("##Variable types to perturb, listed using spaces, must be set.");
+            pw.println("##Variable types to perturb, listed using spaces (Vs)");
             pw.println("#variableTypes ");
-            pw.println("##(double) Percentage of perturbation, listed using spaces in the order of partialTypes, must be set.");
-            pw.println("#percents ");
-            pw.println("##Partial types to set in model, listed using spaces, must be set.");
+            pw.println("##Partial types to set in model, listed using spaces (MU)");
             pw.println("#partialTypes ");
-            pw.println("##########From here on, set borders of boxes to place perturbation blocks.");
-            pw.println("########## Defaults are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
-            pw.println("########## A box is recongized if at least one border value is set.");
+            pw.println("##########From here on, set percentages of perturbations and the borders of boxes to place them.");
+            pw.println("########## Percentages of perturbations must be listed using spaces in the order of variableTypes.");
+            pw.println("########## Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
+            pw.println("########## A box is recongized if the percentage values are properly set.");
             pw.println("########## Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
             for (int i = 1; i <= MAX_BOX; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " box");
+                pw.println("#percents" + i + " ");
                 pw.println("#lowerLatitude" + i + " ");
                 pw.println("#upperLatitude" + i + " ");
                 pw.println("#lowerLongitude" + i + " ");
@@ -139,20 +138,18 @@ public class BlockModelMaker extends Operation {
             structureName = property.parseString("structureName", "PREM");
         }
 
-        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
-        percents = property.parseDoubleArray("percents", null);
-        if (percents.length != variableTypes.size())
-            throw new IllegalArgumentException("Number of percents does not match number of variableTypes.");
-
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
                 .collect(Collectors.toList());
 
         for (int i = 1; i <= MAX_BOX; i++) {
-            if (property.containsKey("lowerLatitude" + i) || property.containsKey("upperLatitude" + i)
-                    || property.containsKey("lowerLongitude" + i) || property.containsKey("upperLongitude" + i)
-                    || property.containsKey("lowerRadius" + i) || property.containsKey("upperRadius" + i)) {
+            if (property.containsKey("percents" + i)) {
+                double[] percents = property.parseDoubleArray("percents" + i, null);
+                if (percents.length != variableTypes.size())
+                    throw new IllegalArgumentException("Number of percents" + i + " does not match number of variableTypes.");
                 boxes.add(new Box(
+                        percents,
                         property.parseDouble("lowerLatitude" + i, "-90"),
                         property.parseDouble("upperLatitude" + i, "90"),
                         property.parseDouble("lowerLongitude" + i, "-180"),
@@ -197,7 +194,7 @@ public class BlockModelMaker extends Operation {
                 double volume = Earth.computeVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < variableTypes.size(); k++) {
-                    double percent = (isInBox(position)) ? percents[k] : 0;
+                    double percent = findPercentage(position, k);
                     voxel.setPercent(variableTypes.get(k), percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
@@ -230,16 +227,18 @@ public class BlockModelMaker extends Operation {
         KnownParameterFile.write(knowns, knownPath);
     }
 
-    private boolean isInBox(FullPosition position) {
-        for (Box box : boxes) {
+    private double findPercentage(FullPosition position, int variableNum) {
+        for (int i = boxes.size() - 1; i >= 0; i--) {
+            Box box = boxes.get(i);
             if (position.isInRange(box.lowerLatitude, box.upperLatitude, box.lowerLongitude, box.upperLongitude,
                     box.lowerRadius, box.upperRadius))
-                return true;
+                return box.percents[variableNum];
         }
-        return false;
+        return 0;
     }
 
     private class Box {
+        private double[] percents;
         private double lowerLatitude;
         private double upperLatitude;
         private double lowerLongitude;
@@ -247,8 +246,9 @@ public class BlockModelMaker extends Operation {
         private double lowerRadius;
         private double upperRadius;
 
-        private Box(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude,
+        private Box(double percents[], double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude,
                 double lowerRadius, double upperRadius) {
+            this.percents = percents;
             this.lowerLatitude = lowerLatitude;
             this.upperLatitude = upperLatitude;
             this.lowerLongitude = lowerLongitude;
