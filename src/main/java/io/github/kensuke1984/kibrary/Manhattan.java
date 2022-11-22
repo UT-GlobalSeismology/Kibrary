@@ -43,6 +43,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
+import io.github.kensuke1984.kibrary.waveform.TradeoffTest;
 
 /**
  * An enum where all {@link Operation}s in Kibrary should be assigned to.
@@ -96,14 +97,15 @@ enum Manhattan {
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
     ModelSetMapper(74, ModelSetMapper.class),
+    ModelMapper(75, ModelMapper.class),
+    PerturbationMapper(76, PerturbationMapper.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),
-    PerturbationMapper(82, PerturbationMapper.class),
-    ModelMapper(83, ModelMapper.class),
     ModelSmoothener(84, ModelSmoothener.class),
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
+    TradeoffTest(88, TradeoffTest.class),
     // Temporal 100
     ;
 
