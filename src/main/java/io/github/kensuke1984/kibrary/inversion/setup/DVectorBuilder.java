@@ -6,6 +6,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
@@ -65,7 +66,7 @@ public final class DVectorBuilder {
         obsVecs = new RealVector[nTimeWindow];
         synVecs = new RealVector[nTimeWindow];
         startPoints = new int[nTimeWindow];
-        System.err.println(" " + nTimeWindow + " timewindows are used");
+        System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "timewindow is", "timewindows are") + " used");
 
         npts = read();
     }

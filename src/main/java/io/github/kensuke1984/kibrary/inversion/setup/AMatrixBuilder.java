@@ -37,13 +37,13 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  * @author otsuru
  * @since 2022/7/6 created based on inversion.ObservationEquation
  */
-final class AMatrixBuilder {
+public final class AMatrixBuilder {
 
     private final PartialID[] partialIDs;
     private final DVectorBuilder dVector;
     private final List<UnknownParameter> parameterList;
 
-    AMatrixBuilder(PartialID[] partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
+    public AMatrixBuilder(PartialID[] partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
         this.partialIDs = partialIDs;
         this.dVector = dVector;
         this.parameterList = parameterList;
@@ -58,7 +58,7 @@ final class AMatrixBuilder {
      * @param fillEmptyPartial (boolean)
      * @return (Matrix) A
      */
-    ParallelizedMatrix buildWithWeight(Weighting weighting, boolean fillEmptyPartial) {
+    public ParallelizedMatrix buildWithWeight(Weighting weighting, boolean fillEmptyPartial) {
 
         ParallelizedMatrix a = new ParallelizedMatrix(dVector.getNpts(), parameterList.size());
         a.scalarMultiply(0);
