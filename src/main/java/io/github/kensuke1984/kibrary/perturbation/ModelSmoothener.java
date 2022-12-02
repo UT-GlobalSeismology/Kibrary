@@ -6,9 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -93,13 +93,17 @@ public class ModelSmoothener extends Operation {
     @Override
     public void run() throws IOException {
 
+        // read input
+        // This will be obtained as unmodifiable LinkedHashMap
         Map<FullPosition, Double> perturbationMap = PerturbationListFile.read(perturbationPath);
-        Set<HorizontalPosition> horizontalPositions = perturbationMap.keySet().stream()
-                .map(pos -> pos.toHorizontalPosition()).distinct().collect(Collectors.toSet());
+
+        List<HorizontalPosition> horizontalPositions = perturbationMap.keySet().stream()
+                .map(pos -> pos.toHorizontalPosition()).distinct().collect(Collectors.toList());
         double averagedRadius = perturbationMap.keySet().stream().mapToDouble(pos -> pos.getR()).distinct()
                 .filter(r -> lowerRadius < r && r < upperRadius).average().getAsDouble();
 
-        Map<FullPosition, Double> smoothedMap = new HashMap<>();
+        // This is created as LinkedHashMap to preserve the order of voxels
+        Map<FullPosition, Double> smoothedMap = new LinkedHashMap<>();
         for (HorizontalPosition horizontalPosition : horizontalPositions) {
             double average = perturbationMap.entrySet().stream()
                     .filter(entry -> entry.getKey().toHorizontalPosition().equals(horizontalPosition))

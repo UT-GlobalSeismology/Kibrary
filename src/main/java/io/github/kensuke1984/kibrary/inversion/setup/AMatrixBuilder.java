@@ -99,6 +99,7 @@ public final class AMatrixBuilder {
             }
 
             // set weighting
+            // This includes the volumes of voxels.
             RealVector weightingVector = weighting.get(k);
             weightingVector = weightingVector.mapMultiply(parameterList.get(column).getWeighting());
 

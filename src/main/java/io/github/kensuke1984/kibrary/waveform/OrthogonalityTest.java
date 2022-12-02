@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * @author otsuru
  * @since 2022/11/22
  */
-public class TradeoffTest extends Operation {
+public class OrthogonalityTest extends Operation {
 
     private final Property property;
     /**
@@ -138,7 +138,7 @@ public class TradeoffTest extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public TradeoffTest(Property property) throws IOException {
+    public OrthogonalityTest(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 

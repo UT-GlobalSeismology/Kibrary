@@ -9,6 +9,7 @@ import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -61,8 +62,9 @@ enum Brooklyn {
     AzimuthHistogram(49, AzimuthHistogram.class),
     // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
-    // Partial 50
-    // Inversion 60
+    // Partial 60
+    // Inversion 70
+    PerturbationComparison(71, PerturbationComparison.class),
     // Temporal 100
     ;
 

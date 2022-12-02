@@ -40,10 +40,10 @@ import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
+import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
-import io.github.kensuke1984.kibrary.waveform.TradeoffTest;
 
 /**
  * An enum where all {@link Operation}s in Kibrary should be assigned to.
@@ -105,7 +105,7 @@ enum Manhattan {
     ModelSmoothener(84, ModelSmoothener.class),
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
-    TradeoffTest(88, TradeoffTest.class),
+    OrthogonalityTest(88, OrthogonalityTest.class),
     // Temporal 100
     ;
 

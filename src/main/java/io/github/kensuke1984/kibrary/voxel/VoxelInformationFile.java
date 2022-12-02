@@ -47,7 +47,7 @@ public class VoxelInformationFile {
     /**
      * Horizontal distribution of voxels
      */
-    private List<HorizontalPiece> horizontalPieces = new ArrayList<>();
+    private List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
 
     /**
@@ -61,13 +61,13 @@ public class VoxelInformationFile {
      * @param options     for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(double[] layerThicknesses, double[] voxelRadii, List<HorizontalPiece> horizontalPieces,
+    public static void write(double[] layerThicknesses, double[] voxelRadii, List<HorizontalPixel> horizontalPixels,
             Path outputPath, OpenOption... options) throws IOException {
         if (layerThicknesses.length != voxelRadii.length)
             throw new IllegalArgumentException("The number of layers and radii does not match.");
 
         System.err.println("Outputting "
-                + MathAid.switchSingularPlural(voxelRadii.length * horizontalPieces.size(), "voxel", "voxels")
+                + MathAid.switchSingularPlural(voxelRadii.length * horizontalPixels.size(), "voxel", "voxels")
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
@@ -84,8 +84,8 @@ public class VoxelInformationFile {
             pw.println("");
 
             pw.println("# horizontal rectangle on sphere [deg] (latitude longitude dLatitude dLongitude)");
-            for (HorizontalPiece piece : horizontalPieces) {
-                pw.println(piece.getPosition() + " " + piece.getDLatitude() + " " + piece.getDLongitude());
+            for (HorizontalPixel pixel : horizontalPixels) {
+                pw.println(pixel.getPosition() + " " + pixel.getDLatitude() + " " + pixel.getDLongitude());
             }
         }
     }
@@ -107,11 +107,11 @@ public class VoxelInformationFile {
         while ((line = reader.next()) != null) {
             String[] parts = line.split("\\s+");
             HorizontalPosition position = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-            HorizontalPiece piece = new HorizontalPiece(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
-            horizontalPieces.add(piece);
+            HorizontalPixel pixel = new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
+            horizontalPixels.add(pixel);
         }
 
-        DatasetAid.checkNum(voxelRadii.length * horizontalPieces.size(), "voxel", "voxels");
+        DatasetAid.checkNum(voxelRadii.length * horizontalPixels.size(), "voxel", "voxels");
     }
 
     /**
@@ -135,15 +135,15 @@ public class VoxelInformationFile {
      * @return
      */
     public List<HorizontalPosition> getHorizontalPositions() {
-        return horizontalPieces.stream().map(HorizontalPiece::getPosition).collect(Collectors.toList());
+        return horizontalPixels.stream().map(HorizontalPixel::getPosition).collect(Collectors.toList());
     }
 
     /**
-     * Get horizontal position information. They may not be sorted. There may be duplication.
+     * Get horizontal pixels. They may not be sorted. There may be duplication.
      * @return
      */
-    public List<HorizontalPiece> getHorizontalPieces() {
-        return horizontalPieces;
+    public List<HorizontalPixel> getHorizontalPixels() {
+        return horizontalPixels;
     }
 
     /**

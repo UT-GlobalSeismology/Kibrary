@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,14 +46,21 @@ public class PerturbationListFile {
 
     public static void write(Map<FullPosition, Double> perturbationMap, Path outputPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            perturbationMap.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                    .forEach(entry -> pw.println(entry.getKey() + " " + entry.getValue()));
-//            perturbationMap.forEach((key, value) -> pw.println(key + " " + value));
+//            perturbationMap.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
+//                    .forEach(entry -> pw.println(entry.getKey() + " " + entry.getValue()));
+            perturbationMap.forEach((key, value) -> pw.println(key + " " + value));
         }
     }
 
+    /**
+     * @param inputPath
+     * @param options
+     * @return (Unmodifiable LinkedHashMap of FullPosition to Double) Map of perturbations
+     * @throws IOException
+     */
     public static Map<FullPosition, Double> read(Path inputPath, OpenOption... options) throws IOException {
-        Map<FullPosition, Double> perturbationMap = new HashMap<>();
+        // This is created as LinkedHashMap to preserve the order of voxels
+        Map<FullPosition, Double> perturbationMap = new LinkedHashMap<>();
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while(reader.hasNext()) {
