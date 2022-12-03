@@ -90,9 +90,7 @@ public class PerturbationComparison {
         RealVector ratioVector = numeratorVector.ebeDivide(denominatorVector);
         RealVector differenceVector = numeratorVector.subtract(denominatorVector);
         double cosineSimilarity = numeratorVector.dotProduct(denominatorVector) / numeratorVector.getNorm() / denominatorVector.getNorm();
-        System.err.println(cosineSimilarity + " " + numeratorVector.cosine(denominatorVector));
         double l2Distance = differenceVector.getNorm();
-        System.err.println(l2Distance + " " + numeratorVector.getDistance(denominatorVector));
         double l2Average = numeratorVector.add(denominatorVector).mapDivide(2).getNorm();
         double l2Denominator = denominatorVector.getNorm();
 

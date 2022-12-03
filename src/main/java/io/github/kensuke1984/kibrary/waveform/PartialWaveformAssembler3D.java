@@ -36,6 +36,8 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -66,7 +68,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * (point name).(observerPositionCode or eventID).(PB or PF)...(sh or psv).spc
  * <p>
  * A timewindow data file, a voxel information file, and a set of partialTypes to work for must be specified.
- * organize this program file and decide which set of data is worked for.
+ * TODO organize this program file and decide which set of data is worked for.
  *
  * <p>
  * halfDurationはevent informationファイルから読み取る
@@ -117,9 +119,13 @@ public class PartialWaveformAssembler3D extends Operation {
     private double finalSamplingHz;
 
     /**
-     * タイムウインドウ情報のファイル
+     * Path of a timewindow information file
      */
     private Path timewindowPath;
+    /**
+     * Path of a data entry file
+     */
+    private Path dataEntryPath;
     /**
      * Information file about voxels for perturbations
      */
@@ -207,7 +213,7 @@ public class PartialWaveformAssembler3D extends Operation {
      * sacdataを何ポイントおきに取り出すか
      */
     private int step;
-    private Set<TimewindowData> timewindowInformation;
+    private Set<TimewindowData> timewindowSet;
     private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
     private String dateString;
@@ -251,6 +257,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a time window file, must be set");
             pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Voxel file path, must be set");
             pw.println("#voxelPath voxel.inf");
             pw.println("##PartialTypes to compute for, listed using spaces (MU)");
@@ -321,6 +329,9 @@ public class PartialWaveformAssembler3D extends Operation {
         }
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        }
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
@@ -494,14 +505,28 @@ public class PartialWaveformAssembler3D extends Operation {
     private void collectTimewindowInformation() throws IOException {
         // タイムウインドウの情報を読み取る。
         System.err.println("Reading timewindow information");
-        timewindowInformation = TimewindowDataFile.read(timewindowPath);
+        if (dataEntryPath != null) {
+            // read entry set to be used for selection
+            Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+
+            // read timewindows and select based on component and entries
+            timewindowSet = TimewindowDataFile.read(timewindowPath)
+                    .stream().filter(window -> components.contains(window.getComponent()) &&
+                            entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
+                    .collect(Collectors.toSet());
+        } else {
+            // read timewindows and select based on component
+            timewindowSet = TimewindowDataFile.read(timewindowPath)
+                    .stream().filter(window -> components.contains(window.getComponent()))
+                    .collect(Collectors.toSet());
+        }
         eventSet = new HashSet<>();
         observerSet = new HashSet<>();
-        timewindowInformation.forEach(t -> {
+        timewindowSet.forEach(t -> {
             eventSet.add(t.getGlobalCMTID());
             observerSet.add(t.getObserver());
         });
-        phases = timewindowInformation.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
+        phases = timewindowSet.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
                 .distinct().toArray(Phase[]::new);
 
         boolean fpExistence = eventSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
@@ -516,7 +541,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 .forEach(observer -> System.err.println(observer));
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
         }
-        writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + eventSet.size()
+        writeLog(timewindowSet.size() + " timewindows are found in " + timewindowPath + ". " + eventSet.size()
                 + " events and " + observerSet.size() + " stations.");
     }
 
@@ -672,7 +697,7 @@ public class PartialWaveformAssembler3D extends Operation {
             }
 
             // Pickup timewindows
-            Set<TimewindowData> timewindowList = timewindowInformation.stream()
+            Set<TimewindowData> timewindowList = timewindowSet.stream()
                     .filter(info -> info.getObserver().equals(observer))
                     .filter(info -> info.getGlobalCMTID().equals(event)).collect(Collectors.toSet());
             if (timewindowList.isEmpty())
@@ -934,7 +959,7 @@ public class PartialWaveformAssembler3D extends Operation {
 //          System.out.println(sacnameSet.size());
 //          sacnameSet.forEach(name -> System.out.println(name));
 
-            Set<TimewindowData> timewindowCurrentEvent = timewindowInformation
+            Set<TimewindowData> timewindowCurrentEvent = timewindowSet
                     .stream()
                     .filter(tw -> tw.getGlobalCMTID().equals(id))
                     .collect(Collectors.toSet());
@@ -1051,7 +1076,7 @@ public class PartialWaveformAssembler3D extends Operation {
      * sort timewindows comparing stations
      */
     private List<TimewindowData> sortTimewindows() {
-        List<TimewindowData> timewindows = timewindowInformation.stream().collect(Collectors.toList());
+        List<TimewindowData> timewindows = timewindowSet.stream().collect(Collectors.toList());
 
         Comparator<TimewindowData> comparator = new Comparator<TimewindowData>() {
             @Override
@@ -1089,7 +1114,7 @@ public class PartialWaveformAssembler3D extends Operation {
      * @throws IOException
      */
     private Set<Observer> readObserver(GlobalCMTID event) throws IOException {
-        Set<Observer> observerSet = timewindowInformation.stream()
+        Set<Observer> observerSet = timewindowSet.stream()
          .filter(info -> components.contains(info.getComponent()))
          .filter(info -> info.getGlobalCMTID().equals(event)).map(TimewindowData::getObserver)
          .collect(Collectors.toSet());
