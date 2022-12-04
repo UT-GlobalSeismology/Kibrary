@@ -128,9 +128,9 @@ public class ActualWaveformCompiler extends Operation {
      */
     private boolean correctTime;
     /**
-     * Whether to correct amplitude ratio
+     * How to correct amplitude ratio. 0: none, 1: each trace, 2: event average
      */
-    private boolean correctAmplitude;
+    private int amplitudeCorrectionType;
     /**
      * Path of a data entry file
      */
@@ -228,12 +228,12 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file");
-            pw.println("## If the following correctTime or correctAmplitude is true, this path must be defined.");
+            pw.println("## If the following correctTime is true or amplitudeCorrectionType > 0, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(boolean) Whether time should be corrected (false)");
             pw.println("#correctTime ");
-            pw.println("##(boolean) Whether amplitude should be corrected (false)");
-            pw.println("#correctAmplitude ");
+            pw.println("##(int) Type of amplitude correction to apply, from {0: none, 1: each trace, 2: event average} (0)");
+            pw.println("#amplitudeCorrectionType ");
             pw.println("##Path of a mantle correction file");
             pw.println("## If the following correctMantle is true, this path must be defined.");
             pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
@@ -277,8 +277,8 @@ public class ActualWaveformCompiler extends Operation {
         }
 
         correctTime = property.parseBoolean("correctTime", "false");
-        correctAmplitude = property.parseBoolean("correctAmplitude", "false");
-        if (correctTime || correctAmplitude) {
+        amplitudeCorrectionType = property.parseInt("amplitudeCorrectionType", "0");
+        if (correctTime || amplitudeCorrectionType > 0) {
             staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
         }
 
@@ -319,7 +319,7 @@ public class ActualWaveformCompiler extends Operation {
        }
 
        // read static correction data
-       if (correctTime || correctAmplitude) {
+       if (correctTime || amplitudeCorrectionType > 0) {
            Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
            // choose only static corrections that have a pair timewindow
            staticCorrectionSet = tmpset.stream()
@@ -327,16 +327,18 @@ public class ActualWaveformCompiler extends Operation {
                            .map(t -> c.isForTimewindow(t)).distinct().collect(Collectors.toSet()).contains(true))
                    .collect(Collectors.toSet());
 
-           // average amplitude correction
-           amplitudeCorrEventMap = new HashMap<>();
-           for (GlobalCMTID event : staticCorrectionSet.stream().map(s -> s.getGlobalCMTID()).collect(Collectors.toSet())) {
-               double avgCorr = 0;
-               Set<StaticCorrectionData> eventCorrs = staticCorrectionSet.stream()
-                       .filter(s -> s.getGlobalCMTID().equals(event)).collect(Collectors.toSet());
-               for (StaticCorrectionData corr : eventCorrs)
-                   avgCorr += corr.getAmplitudeRatio();
-               avgCorr /= eventCorrs.size();
-               amplitudeCorrEventMap.put(event, avgCorr);
+           if (amplitudeCorrectionType == 2) {
+               // average amplitude correction
+               amplitudeCorrEventMap = new HashMap<>();
+               for (GlobalCMTID event : staticCorrectionSet.stream().map(s -> s.getGlobalCMTID()).collect(Collectors.toSet())) {
+                   double avgCorr = 0;
+                   Set<StaticCorrectionData> eventCorrs = staticCorrectionSet.stream()
+                           .filter(s -> s.getGlobalCMTID().equals(event)).collect(Collectors.toSet());
+                   for (StaticCorrectionData corr : eventCorrs)
+                       avgCorr += corr.getAmplitudeRatio();
+                   avgCorr /= eventCorrs.size();
+                   amplitudeCorrEventMap.put(event, avgCorr);
+               }
            }
        }
 
@@ -684,12 +686,14 @@ public class ActualWaveformCompiler extends Operation {
             double startTime = timewindow.getStartTime();
             double shift = 0;
             double ratio = 1;
-            if (correctTime || correctAmplitude) {
+            if (correctTime || amplitudeCorrectionType > 0) {
                 try {
                     StaticCorrectionData sc = getStaticCorrection(timewindow);
-                    shift = correctTime ? sc.getTimeshift() : 0;
-//                  ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
-                    ratio = correctAmplitude ? sc.getAmplitudeRatio() : amplitudeCorrEventMap.get(timewindow.getGlobalCMTID());
+                    if (correctTime) shift = sc.getTimeshift();
+                    switch (amplitudeCorrectionType) {
+                    case 1: ratio = sc.getAmplitudeRatio(); break;
+                    case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
+                    }
                 } catch (NoSuchElementException e) {
                     System.err.println("There is no static correction information for");
                     System.err.println("   " + timewindow);
@@ -774,7 +778,7 @@ public class ActualWaveformCompiler extends Operation {
                     refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
                 }
 
-                if (correctAmplitude) {
+                if (amplitudeCorrectionType > 0) {
                     obsSpcAmp = correctSpcAmp(obsSpcAmpTrace, refObsSpcAmpTrace);
                     synSpcAmp = correctSpcAmp(synSpcAmpTrace, refSynSpcAmpTrace);
                 }

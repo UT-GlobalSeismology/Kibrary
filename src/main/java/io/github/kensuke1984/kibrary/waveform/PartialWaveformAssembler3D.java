@@ -427,7 +427,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         int num = 0;
         for (GlobalCMTID event : eventSet) {
-            System.err.println("Working for " + event.toString() + " " + ++num + "/" + eventSet.size());
+            System.err.println("Working for " + event.toPaddedString() + " " + ++num + "/" + eventSet.size());
 
          // Set of observers for the components and events in the timewindow.
             Set<Observer> observerSet = readObserver(event);

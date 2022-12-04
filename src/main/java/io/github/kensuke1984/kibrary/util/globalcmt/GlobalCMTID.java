@@ -144,6 +144,9 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
         return id;
     }
 
+    /**
+     * @return (String) GCMTID padded with spaces at the right.
+     */
     public String toPaddedString() {
         return StringUtils.rightPad(id, LENGTH);
     }

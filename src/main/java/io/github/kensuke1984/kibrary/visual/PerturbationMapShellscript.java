@@ -131,14 +131,14 @@ public class PerturbationMapShellscript {
                 int radius = (int) radii[i];
 
                 if (i == radii.length - 1) {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
+                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
                 } else if (i % PANEL_PER_ROW == (PANEL_PER_ROW - 1)) {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
                 } else {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
                 }
 
                 pw.println("gmt pscoast -R -J $O -K -O -Wthinner,black -A500 >> $outputps");
@@ -146,7 +146,7 @@ public class PerturbationMapShellscript {
             }
 
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx7/-1+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + "\\(\\%\\)\" -K -O -Y-3 -X-36 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -Dx7/-1+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -Y-3 -X-36 >> $outputps");
             pw.println("");
 
             pw.println("#------- Finalize");
