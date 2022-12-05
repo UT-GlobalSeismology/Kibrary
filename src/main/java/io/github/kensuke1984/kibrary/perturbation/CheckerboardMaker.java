@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.voxel.HorizontalPiece;
+import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
@@ -165,17 +165,17 @@ public class CheckerboardMaker extends Operation {
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
         double[] radii = file.getRadii();
-        List<HorizontalPiece> pieces = file.getHorizontalPieces();
+        List<HorizontalPixel> pixels = file.getHorizontalPixels();
 
         // set checkerboard model
         System.err.println("Creating checkerboard perturbations.");
         PerturbationModel model = new PerturbationModel();
-        HorizontalPosition referencePosition = pieces.get(0).getPosition();
-        for (HorizontalPiece piece : pieces) {
-            // extract information of each horizontal piece
-            HorizontalPosition horizontalPosition = piece.getPosition();
-            double dLatitude = piece.getDLatitude();
-            double dLongitude = piece.getDLongitude();
+        HorizontalPosition referencePosition = pixels.get(0).getPosition();
+        for (HorizontalPixel pixel : pixels) {
+            // extract information of each horizontal pixel
+            HorizontalPosition horizontalPosition = pixel.getPosition();
+            double dLatitude = pixel.getDLatitude();
+            double dLongitude = pixel.getDLongitude();
             // loop for each layer
             for (int i = 0; i < radii.length; i++) {
                 FullPosition position = horizontalPosition.toFullPosition(radii[i]);

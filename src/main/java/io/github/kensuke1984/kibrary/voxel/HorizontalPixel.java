@@ -6,12 +6,12 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * @author otsuru
  * @since 2022/9/12
  */
-public class HorizontalPiece {
+public class HorizontalPixel {
     private HorizontalPosition position;
     private double dLatitude;
     private double dLongitude;
 
-    public HorizontalPiece(HorizontalPosition position, double dLatitude, double dLongitude) {
+    public HorizontalPixel(HorizontalPosition position, double dLatitude, double dLongitude) {
         super();
         this.position = position;
         this.dLatitude = dLatitude;

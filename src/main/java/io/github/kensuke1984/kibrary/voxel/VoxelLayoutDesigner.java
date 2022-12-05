@@ -193,7 +193,7 @@ public class VoxelLayoutDesigner extends Operation {
                 .collect(Collectors.toList());
 
         // decide horizontal distribution of voxels
-        List<HorizontalPiece> horizontalPieces = designHorizontalPieces(insideSegments);
+        List<HorizontalPixel> horizontalPixels = designHorizontalPixels(insideSegments);
 
         // set voxel layer information
         double[] layerThicknesses = new double[borderRadii.length - 1];
@@ -205,10 +205,10 @@ public class VoxelLayoutDesigner extends Operation {
 
         // output
         Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
-        VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPieces, outputPath);
+        VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPixels, outputPath);
     }
 
-    private List<HorizontalPiece> designHorizontalPieces(List<Raypath> insideSegments) {
+    private List<HorizontalPixel> designHorizontalPixels(List<Raypath> insideSegments) {
 
         // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
         double dLatitude = setLatitudeByKm ?
@@ -257,7 +257,7 @@ public class VoxelLayoutDesigner extends Operation {
         }
 
         //~decide horizontal positions of voxels
-        List<HorizontalPiece> horizontalPieces = new ArrayList<>();
+        List<HorizontalPixel> horizontalPixels = new ArrayList<>();
         for (int i = 0; i < nLatitude; i++) {
             // compute center latitude of the voxel row
             double latitude = switchLatitudeColatitude((i + 0.5) * dLatitude) + latitudeOffset;
@@ -279,14 +279,14 @@ public class VoxelLayoutDesigner extends Operation {
                     // when even number, align evenly on both sides of center longitude
                     startLongitude = centerLongitude - (nLongitude / 2 - 0.5) * dLongitudeForRow;
                 } else {
-                    // when odd number, set one piece at center longitude
+                    // when odd number, set one pixel at center longitude
                     // This is same equation as above but is rewritten for clarity.
                     startLongitude = centerLongitude - (nLongitude - 1) / 2 * dLongitudeForRow;
                 }
                 for (int j = 0; j < nLongitude; j++) {
                     double longitude = startLongitude + j * dLongitudeForRow;
-                    // add horizontal piece to list
-                    horizontalPieces.add(new HorizontalPiece(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
+                    // add horizontal pixel to list
+                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
                 }
 
             } else {
@@ -296,15 +296,15 @@ public class VoxelLayoutDesigner extends Operation {
                 double maxLongitude = Math.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
                  int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
                 for (int j = 0; j < nLongitude; j++) {
-                    // center longitude of each horizontal piece
+                    // center longitude of each horizontal pixel
                     double longitude = minLongitude + (j + 0.5) * dLongitudeDeg;
-                    // add horizontal piece to list
-                    horizontalPieces.add(new HorizontalPiece(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeDeg));
+                    // add horizontal pixel to list
+                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeDeg));
                 }
             }
         }
 
-        return horizontalPieces;
+        return horizontalPixels;
     }
 
     /**

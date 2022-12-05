@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.selection.DataFeature;
  * Weighting to be applied to A matrix and d vector in Am=d.
  * To be applied as the W matrix in WAm=Wd.
  * It is assumed to be a diagonal matrix, so the diagonal components are stored as a vector.
+ * A weighting value is set for each timewindow.
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * Caution: {@link RealVector} is not immutable, so don't hand it over without deep-copying!

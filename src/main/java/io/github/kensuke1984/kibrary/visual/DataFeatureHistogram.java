@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -54,11 +55,19 @@ public class DataFeatureHistogram extends Operation {
     /**
      * path of basic ID file
      */
-    private Path basicIDPath;
+    private Path mainBasicIDPath;
     /**
      * path of waveform data
      */
-    private Path basicPath;
+    private Path mainBasicPath;
+    /**
+     * path of basic ID file
+     */
+    private Path extraBasicIDPath;
+    /**
+     * path of waveform data
+     */
+    private Path extraBasicPath;
 
     /**
      * Lower bound of correlation coefficient to plot
@@ -144,9 +153,13 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##  The S/N ratio histogram can be created only when dataFeaturePath is set.");
             pw.println("#dataFeaturePath dataFeature.lst");
             pw.println("##Path of a basic ID file, must be set if dataFeaturePath is not set");
-            pw.println("#basicIDPath ");
+            pw.println("#mainBasicIDPath ");
             pw.println("##Path of a basic waveform file, must be set if dataFeaturePath is not set");
-            pw.println("#basicPath ");
+            pw.println("#mainBasicPath ");
+            pw.println("##Path of an additional basic ID file, if any (e.g. data not used in inversion)");
+            pw.println("#extraBasicIDPath ");
+            pw.println("##Path of an additional basic waveform file, if any (e.g. data not used in inversion)");
+            pw.println("#extraBasicPath ");
             pw.println("##(double) Lower bound of correlation coefficient to plot [-1:correlationUpperBound) (-1)");
             pw.println("#correlationLowerBound ");
             pw.println("##(double) Upper bound of correlation coefficient to plot (correlationLowerBound:1] (1)");
@@ -193,8 +206,12 @@ public class DataFeatureHistogram extends Operation {
         if (property.containsKey("dataFeaturePath")) {
             dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
         } else {
-            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
-            basicPath = property.parsePath("basicPath", null, true, workPath);
+            mainBasicIDPath = property.parsePath("mainBasicIDPath", null, true, workPath);
+            mainBasicPath = property.parsePath("mainBasicPath", null, true, workPath);
+            if (property.containsKey("extraBasicIDPath") && property.containsKey("extraBasicPath")) {
+                extraBasicIDPath = property.parsePath("extraBasicIDPath", null, true, workPath);
+                extraBasicPath = property.parsePath("extraBasicPath", null, true, workPath);
+            }
         }
 
         correlationLowerBound = property.parseDouble("correlationLowerBound", "-1");
@@ -238,23 +255,39 @@ public class DataFeatureHistogram extends Operation {
 
    @Override
    public void run() throws IOException {
+       // read data features
        List<DataFeature> featureList;
+       List<DataFeature> extraFeatureList = null;
        if (dataFeaturePath != null) {
-           featureList = DataFeatureListFile.read(dataFeaturePath);
+           // the DataFeatureListFile includes information of whether the timewindow is selected, so use that to filter the features
+           List<DataFeature> tempFeatureList = DataFeatureListFile.read(dataFeaturePath);
+           featureList = tempFeatureList.stream().filter(feature -> feature.isSelected()).collect(Collectors.toList());
+           extraFeatureList = tempFeatureList.stream().filter(feature -> !feature.isSelected()).collect(Collectors.toList());
        } else {
-           BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-           featureList = extractFeatures(basicIDs);
+           BasicID[] mainBasicIDs = BasicIDFile.read(mainBasicIDPath, mainBasicPath);
+           featureList = extractFeatures(mainBasicIDs);
+           // read extra data features if the extra basic files exist
+           if (extraBasicIDPath != null) {
+               BasicID[] extraBasicIDs = BasicIDFile.read(extraBasicIDPath, extraBasicPath);
+               extraFeatureList = extractFeatures(extraBasicIDs);
+           }
        }
 
        outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       if (basicIDPath != null) {
+       // if input is in BasicID, export their features (for reference)
+       if (mainBasicIDPath != null) {
            Path outFeaturePath = outPath.resolve("dataFeature.lst");
            DataFeatureListFile.write(featureList, outFeaturePath);
+           // if extra BasicID files are set, export for them as well
+           if (extraFeatureList != null) {
+               Path outExtraFeaturePath = outPath.resolve("extraDataFeature.lst");
+               DataFeatureListFile.write(extraFeatureList, outExtraFeaturePath);
+           }
        }
 
-       createHistograms(featureList);
+       createHistograms(featureList, extraFeatureList);
    }
 
    private List<DataFeature> extractFeatures(BasicID[] basicIDs) {
@@ -273,10 +306,10 @@ public class DataFeatureHistogram extends Operation {
            RealVector obsU = new ArrayRealVector(obsID.getData(), false);
            RealVector synU = new ArrayRealVector(synID.getData(), false);
 
-           double startTime = obsID.getStartTime();
-           double endTime = startTime + obsID.getNpts() / obsID.getSamplingHz();
+           double startTime = synID.getStartTime();
+           double endTime = startTime + synID.getNpts() / synID.getSamplingHz();
            TimewindowData timewindow = new TimewindowData(startTime, endTime,
-                   obsID.getObserver(), obsID.getGlobalCMTID(), obsID.getSacComponent(), obsID.getPhases());
+                   synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
 
            // TODO snRatio and selected cannot be decided
            DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, true);
@@ -286,7 +319,12 @@ public class DataFeatureHistogram extends Operation {
        return featureList;
    }
 
-   private void createHistograms(List<DataFeature> featureList) throws IOException {
+   /**
+ * @param featureList (List of DataFeature) The main data feature list.
+ * @param extraFeatureList (List of DataFeature) Extra list. This shall be null if there is no extra list.
+ * @throws IOException
+ */
+private void createHistograms(List<DataFeature> featureList, List<DataFeature> extraFeatureList) throws IOException {
        int nCorr = (int) Math.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
        int nVar = (int) Math.ceil(varianceUpperBound / dVariance);
        int nRatio = (int) Math.ceil(ratioUpperBound / dRatio);
@@ -295,6 +333,9 @@ public class DataFeatureHistogram extends Operation {
        int[] vars = new int[nVar];
        int[] ratios = new int[nRatio];
        int[] snRatios = new int[nSNRatio];
+       int[] extraCorrs = new int[nCorr];
+       int[] extraVars = new int[nVar];
+       int[] extraRatios = new int[nRatio];
        String corrFileNameRoot = "correlationHistogram";
        String varFileNameRoot = "varianceHistogram";
        String ratioFileNameRoot = "ratioHistogram";
@@ -304,6 +345,7 @@ public class DataFeatureHistogram extends Operation {
        Path ratioPath = outPath.resolve(ratioFileNameRoot + ".txt");
        Path snRatioPath = outPath.resolve(snRatioFileNameRoot + ".txt");
 
+       // count up main features
        for (DataFeature feature : featureList) {
            // if the value is inside the plot range, count it at the corresponding interval
            // in the following lines, the decimal part is cut off when typecasting
@@ -324,25 +366,49 @@ public class DataFeatureHistogram extends Operation {
                snRatios[iSNRatio]++;
            }
        }
+
+       // count up extra features
+       boolean extraExists = (extraFeatureList != null);
+       if (extraExists) {
+           for (DataFeature feature : extraFeatureList) {
+               // if the value is inside the plot range, count it at the corresponding interval
+               // in the following lines, the decimal part is cut off when typecasting
+               if (correlationLowerBound <= feature.getCorrelation() && feature.getCorrelation() < correlationUpperBound) {
+                   int iCorr = (int) ((feature.getCorrelation() - correlationLowerBound) / dCorrelation);
+                   extraCorrs[iCorr]++;
+               }
+               if (feature.getVariance() < varianceUpperBound) {
+                   int iVar = (int) (feature.getVariance() / dVariance);
+                   extraVars[iVar]++;
+               }
+               if (feature.getAbsRatio() < ratioUpperBound) {
+                   int iRatio = (int) (feature.getAbsRatio() / dRatio);
+                   extraRatios[iRatio]++;
+               }
+           }
+       }
+
+       // output txt files
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(corrPath))) {
            for (int i = 0; i < nCorr; i++)
-               pw.println((correlationLowerBound + i * dCorrelation) + " " + corrs[i]);
+               pw.println((correlationLowerBound + i * dCorrelation) + " " + corrs[i] + " " + extraCorrs[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(varPath))) {
            for (int i = 0; i < nVar; i++)
-               pw.println((i * dVariance) + " " + vars[i]);
+               pw.println((i * dVariance) + " " + vars[i] + " " + extraVars[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(ratioPath))) {
            for (int i = 0; i < nRatio; i++)
-               pw.println((i * dRatio) + " " + ratios[i]);
+               pw.println((i * dRatio) + " " + ratios[i] + " " + extraRatios[i]);
        }
 
+       // plot histograms
        createPlot(outPath, corrFileNameRoot, "Correlation", dCorrelation, correlationLowerBound, correlationUpperBound,
-               dCorrelation * 5, minCorrelation, maxCorrelation);
+               dCorrelation * 5, minCorrelation, maxCorrelation, extraExists);
        createPlot(outPath, varFileNameRoot, "Normalized variance", dVariance, 0, varianceUpperBound,
-               dVariance * 5, minVariance, maxVariance);
+               dVariance * 5, minVariance, maxVariance, extraExists);
        createPlot(outPath, ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
-               dRatio * 5, 1 / ratio, ratio);
+               dRatio * 5, 1 / ratio, ratio, extraExists);
 
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
@@ -350,12 +416,12 @@ public class DataFeatureHistogram extends Operation {
                    pw.println((i * dSNRatio) + " " + snRatios[i]);
            }
            createPlot(outPath, snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
-                   dSNRatio * 5, minSNRatio, snRatioUpperBound);
+                   dSNRatio * 5, minSNRatio, snRatioUpperBound, false);
        }
    }
 
    private static void createPlot(Path outPath, String fileNameRoot, String xLabel, double interval,
-           double minimum, double maximum, double xtics, double minRect, double maxRect) throws IOException {
+           double minimum, double maximum, double xtics, double minRect, double maxRect, boolean extraExists) throws IOException {
        Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
@@ -369,7 +435,13 @@ public class DataFeatureHistogram extends Operation {
            pw.println("set sample 11");
            pw.println("set output '" + fileNameRoot + ".png'");
            pw.println("set object 1 rect from first " + minRect + ",graph 0 to first " + maxRect + ",graph 1 back lw 0 fillcolor rgb 'light-gray'");
-           pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'red' notitle");
+           if (extraExists) {
+               // "($2+$3)" is to stack up the amounts
+               pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):($2+$3) w boxes lw 2.5 lc 'pink' title  \"unused\" ,\\");
+               pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'red' title \"used\"");
+           } else {
+               pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'red' notitle");
+           }
        }
 
        GnuplotFile histogramPlot = new GnuplotFile(scriptPath);

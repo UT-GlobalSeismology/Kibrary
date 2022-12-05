@@ -85,7 +85,7 @@ public class PerturbationMapper extends Operation {
     @Override
     public void run() throws IOException {
 
-        Set<FullPosition> positions = PerturbationListFile.readPositions(perturbationPath);
+        Set<FullPosition> positions = PerturbationListFile.read(perturbationPath).keySet();
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region

@@ -50,7 +50,7 @@ public class PerturbationModel {
             }
         }
 
-        // if RHO is not included in unknwons, set RHO to value in initial structure
+        // if RHO is not included in unknowns, set RHO to value in initial structure
         for (PerturbationVoxel voxel : voxelList) {
             voxel.setDefaultIfUndefined(VariableType.RHO);
         }
@@ -79,7 +79,7 @@ public class PerturbationModel {
             }
         }
 
-        // if RHO is not included in unknwons, set RHO to value in initial structure
+        // if RHO is not included in unknowns, set RHO to value in initial structure
         for (PerturbationVoxel voxel : voxelList) {
             voxel.setDefaultIfUndefined(VariableType.RHO);
         }

@@ -76,11 +76,11 @@ public class MatrixAssembly {
 
         // set AMatrix
         System.err.println("Setting data for A matrix");
-        AMatrixBuilder aMatrix = new AMatrixBuilder(partialIDs, parameterList, dVectorBuilder);
+        AMatrixBuilder aMatrixBuilder = new AMatrixBuilder(partialIDs, parameterList, dVectorBuilder);
 
         // assemble A and d
         System.err.println("Assembling A matrix");
-        a = aMatrix.buildWithWeight(weighting, fillEmptyPartial);
+        a = aMatrixBuilder.buildWithWeight(weighting, fillEmptyPartial);
         System.err.println("Assembling d vector");
         d = dVectorBuilder.buildWithWeight(weighting);
 

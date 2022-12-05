@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
 import io.github.kensuke1984.kibrary.multigrid.MultigridPartialsForger;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
+import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -39,6 +40,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
+import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
@@ -95,13 +97,15 @@ enum Manhattan {
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
     ModelSetMapper(74, ModelSetMapper.class),
+    ModelMapper(75, ModelMapper.class),
+    PerturbationMapper(76, PerturbationMapper.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),
-    PerturbationMapper(82, PerturbationMapper.class),
-    ModelMapper(83, ModelMapper.class),
+    ModelSmoothener(84, ModelSmoothener.class),
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
+    OrthogonalityTest(88, OrthogonalityTest.class),
     // Temporal 100
     ;
 

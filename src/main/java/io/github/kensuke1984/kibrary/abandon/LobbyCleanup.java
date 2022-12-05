@@ -77,6 +77,15 @@ public class LobbyCleanup {
 
             Path respDirPath = eventDir.toPath().resolve("resp");
             FileUtils.deleteDirectory(respDirPath.toFile());
+
+            //TODO the following will become unneeded
+            Path sacDirPath2 = eventDir.toPath().resolve("old_sac");
+            FileUtils.deleteDirectory(sacDirPath2.toFile());
+            Path respDirPath2 = eventDir.toPath().resolve("old_resp");
+            FileUtils.deleteDirectory(respDirPath2.toFile());
+            Path stationDirPath2 = eventDir.toPath().resolve("old_station");
+            FileUtils.deleteDirectory(stationDirPath2.toFile());
+
         }
 
     }

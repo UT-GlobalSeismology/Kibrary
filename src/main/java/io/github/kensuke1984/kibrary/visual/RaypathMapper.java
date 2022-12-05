@@ -402,13 +402,13 @@ public class RaypathMapper extends Operation {
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("C='-Ggray -Wthinnest,gray20'");
             pw.println("");
-            pw.println("psname=\"" + psFileName + "\"");
+            pw.println("outputps=\"" + psFileName + "\"");
             pw.println("");
-            pw.println("gmt pscoast -K $R $J $B $C -P  > $psname");
+            pw.println("gmt pscoast -K $R $J $B $C -P  > $outputps");
             pw.println("");
             pw.println("#------- Events & Observers");
-            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -J -R -O -P -Sa0.3 -G255/156/0 -Wthinnest -K  >> $psname");
-            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -J -R -O -P -Si0.3 -G71/187/243 -Wthinnest -K >> $psname");
+            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -J -R -O -P -Sa0.3 -G255/156/0 -Wthinnest -K  >> $outputps");
+            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -J -R -O -P -Si0.3 -G71/187/243 -Wthinnest -K >> $outputps");
             pw.println("");
 
             pw.println("#------- Raypath");
@@ -421,7 +421,7 @@ public class RaypathMapper extends Operation {
                     int nSections = outsideColorBin.getNSections();
                     if (nSections == 1) {
                         pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                        pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(0) + " >> $psname");
+                        pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(0) + " >> $outputps");
                     } else {
                         pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                         for (int i = 0; i < nSections + 2; i++) {
@@ -431,7 +431,7 @@ public class RaypathMapper extends Operation {
                             } else if (i < nSections + 1) {
                                 pw.println("  elif [ $valueForBin -lt " + outsideColorBin.getStartValueFor(i) + " ]; then");
                                 pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                                pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(i - 1) + " >> $psname");
+                                pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + outsideColorBin.getColorFor(i - 1) + " >> $outputps");
                             } else {
                                 pw.println("  else");
                                 pw.println("    echo \"value $valueForBin out of range\"");
@@ -441,7 +441,7 @@ public class RaypathMapper extends Operation {
                     }
                 } else {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                    pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,lavender >> $psname");
+                    pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,lavender >> $outputps");
                 }
                 pw.println("done < " + outsideFileName);
                 pw.println("");
@@ -454,7 +454,7 @@ public class RaypathMapper extends Operation {
                 int nSections = colorBin.getNSections();
                 if (nSections == 1) {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                    pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(0) + " >> $psname");
+                    pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(0) + " >> $outputps");
                 } else {
                     pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                     for (int i = 0; i < nSections + 2; i++) {
@@ -464,7 +464,7 @@ public class RaypathMapper extends Operation {
                         } else if (i < nSections + 1) {
                             pw.println("  elif [ $valueForBin -lt " + colorBin.getStartValueFor(i) + " ]; then");
                             pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                            pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(i - 1) + " >> $psname");
+                            pw.println("    gmt psxy -: -J -R -O -P -K -Wthinnest," + colorBin.getColorFor(i - 1) + " >> $outputps");
                         } else {
                             pw.println("  else");
                             pw.println("    echo \"value $valueForBin out of range\"");
@@ -474,7 +474,7 @@ public class RaypathMapper extends Operation {
                 }
             } else {
                 pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $psname");
+                pw.println("  gmt psxy -: -J -R -O -P -K -Wthinnest,red >> $outputps");
             }
             if (cutAtPiercePoint) {
                 pw.println("done < " + insideFileName);
@@ -485,21 +485,21 @@ public class RaypathMapper extends Operation {
 
             // turning points
             if (cutAtPiercePoint) {
-                pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $psname");
+                pw.println("awk '{print $1, $2}' " + turningPointFileName + " | gmt psxy -: -J -R -O -Sx0.3 -Wthinnest,black -K >> $outputps");
                 pw.println("");
             }
 
             // perturbation points
             if (voxelPath != null) {
                 pw.println("#------- Perturbation");
-                pw.println("gmt psxy " + perturbationFileName + " -: -J -R -O -P -Sc0.2 -G0/255/0 -Wthinnest -K >> $psname");
+                pw.println("gmt psxy " + perturbationFileName + " -: -J -R -O -P -Sc0.2 -G0/255/0 -Wthinnest -K >> $outputps");
                 pw.println("");
             }
 
             // legend
             if (colorMode > 0 && legendJustification.equals("none") == false) {
                 pw.println("#------- Legend");
-                pw.println("gmt pslegend -Dj" + legendJustification + "+w6c -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $psname");
+                pw.println("gmt pslegend -Dj" + legendJustification + "+w6c -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $outputps");
                 // header of legend
                 pw.println("H - - " + headerFor(colorMode));
                 // contents
@@ -522,14 +522,15 @@ public class RaypathMapper extends Operation {
             }
 
             pw.println("#------- Finalize");
-            pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $psname");
+            pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $outputps");
             pw.println("END");
             pw.println("");
-            pw.println("gmt psconvert $psname -A -Tf -Qg4 -E100");
-            pw.println("gmt psconvert $psname -A -Tg -Qg4 -E100");
+            pw.println("gmt psconvert $outputps -A -Tf -Qg4 -E100");
+            pw.println("gmt psconvert $outputps -A -Tg -Qg4 -E100");
             pw.println("");
-            pw.println("#-------- clear");
-            pw.println("rm -rf color.cpt tmp.grd comp.grd $OUTFILE gmt.conf gmt.history");
+            pw.println("#-------- Clear");
+            pw.println("rm -rf cp.cpt gmt.conf gmt.history");
+            pw.println("echo \"Done!\"");
         }
         gmtPath.toFile().setExecutable(true);
 
