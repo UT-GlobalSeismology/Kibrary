@@ -21,9 +21,9 @@ public class DataFeature {
 
     private double correlation;
 
-    private double maxRatio;
+    private double posSideRatio;
 
-    private double minRatio;
+    private double negSideRatio;
 
     private double absRatio;
 
@@ -33,13 +33,13 @@ public class DataFeature {
 
 
     public DataFeature(TimewindowData timewindow, double variance, double correlation,
-            double maxRatio, double minRatio, double absRatio, double snRatio, boolean selected) {
+            double posSideRatio, double negSideRatio, double absRatio, double snRatio, boolean selected) {
         this.timewindow = timewindow;
         this.variance = variance;
         this.correlation = correlation;
-        this.maxRatio = maxRatio;
-        this.minRatio = minRatio;
-        this.absRatio = absRatio;
+        this.posSideRatio = posSideRatio;
+        this.negSideRatio = negSideRatio;
+        this.absRatio = Math.abs(absRatio);
         this.snRatio = snRatio;
         this.selected = selected;
     }
@@ -61,35 +61,51 @@ public class DataFeature {
         double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
         var /= obs2;
 
-        double maxRatio = Precision.round(synMax / obsMax, 2);
-        double minRatio = Precision.round(synMin / obsMin, 2);
-        double absRatio = Precision.round((-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin), 2);
+        double posSideRatio = Precision.round(synMax / obsMax, 2);
+        double negSideRatio = Precision.round(synMin / obsMin, 2);
+        // "Math.abs()" is to exclude -Infinity.
+        double absRatio = Math.abs(Precision.round((-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin), 2));
         double variance = Precision.round(var, 2);
         double correlation = Precision.round(cor, 2);
 
-        return new DataFeature(timewindow, variance, correlation, maxRatio, minRatio, absRatio, snRatio, selected);
+        return new DataFeature(timewindow, variance, correlation, posSideRatio, negSideRatio, absRatio, snRatio, selected);
     }
 
     public TimewindowData getTimewindow() {
         return timewindow;
     }
 
+    /**
+     * @return(double) variance of residual waveform. MAY BE INFINITY or NaN!!
+     */
     public double getVariance() {
         return variance;
     }
 
+    /**
+     * @return(double) correlation of observed and synthetic waveforms. MAY BE INFINITY or NaN!!
+     */
     public double getCorrelation() {
         return correlation;
     }
 
-    public double getMaxRatio() {
-        return maxRatio;
+    /**
+     * @return (double) syn/obs ratio of maximum value in waveforms. MAY BE NEGATIVE, INFINITY, or NaN!!
+     */
+    public double getPosSideRatio() {
+        return posSideRatio;
     }
 
-    public double getMinRatio() {
-        return minRatio;
+    /**
+     * @return (double) syn/obs ratio of minimum value in waveforms. MAY BE NEGATIVE, INFINITY, or NaN!!
+     */
+    public double getNegSideRatio() {
+        return negSideRatio;
     }
 
+    /**
+     * @return (double) syn/obs ratio of maximum absolute value in waveforms. MAY BE INFINITY or NaN!!
+     */
     public double getAbsRatio() {
         return absRatio;
     }
@@ -108,7 +124,7 @@ public class DataFeature {
 
     @Override
     public String toString() {
-        return timewindow.toString() + " " + maxRatio + " " + minRatio + " " + absRatio + " " +
+        return timewindow.toString() + " " + posSideRatio + " " + negSideRatio + " " + absRatio + " " +
                 variance + " " + correlation + " " + snRatio + " " + selected;
     }
 }

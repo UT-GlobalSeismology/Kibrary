@@ -25,6 +25,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -67,7 +68,10 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * Resulting entries can be specified by a (event, observer, component, sacType, timeframe)-pair.
  * The sample rate of the resulting data is {@link #finalSamplingHz}.
- * Static correction is applied as described in {@link StaticCorrection}.
+ * Static correction is applied as described in {@link FujiStaticCorrection}.
+ * <p>
+ * In output {@link BasicID}s, the start time of the synthetic and observed IDs will differ when time shift is applied.
+ * The start time of the synthetic is the one that shall be used hereafter.
  * <p>
  * This class does not apply a digital filter, but extracts information about the passband written in SAC files.
  *

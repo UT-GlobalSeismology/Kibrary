@@ -75,8 +75,8 @@ public class BasicIDMerge extends Operation {
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " pair");
-                pw.println("#basicIDPath" + i + " actualID" + i + ".dat");
-                pw.println("#basicPath" + i + " actual" + i + ".dat");
+                pw.println("#basicIDPath" + i + " actualID.dat");
+                pw.println("#basicPath" + i + " actual.dat");
             }
         }
         System.err.println(outPath + " is created.");

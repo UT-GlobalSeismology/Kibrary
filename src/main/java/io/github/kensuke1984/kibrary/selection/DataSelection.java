@@ -133,7 +133,7 @@ public class DataSelection extends Operation {
     /**
      * Threshold of amplitude ratio (upper limit; lower limit is its inverse)
      */
-    private double ratio;
+    private double maxRatio;
     /**
      * Threshold of S/N ratio that is selected
      */
@@ -190,7 +190,7 @@ public class DataSelection extends Operation {
             pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
             pw.println("#maxVariance ");
             pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
-            pw.println("#ratio ");
+            pw.println("#maxRatio ");
             pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNratio ");
             pw.println("##(boolean) Whether to require phases to be included in timewindow (true)");
@@ -232,9 +232,9 @@ public class DataSelection extends Operation {
         maxVariance = property.parseDouble("maxVariance", "2");
         if (minVariance < 0 || minVariance > maxVariance)
             throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
-        ratio = property.parseDouble("ratio", "2");
-        if (ratio < 1)
-            throw new IllegalArgumentException("Amplitude ratio threshold " + ratio + " is invalid, must be >= 1.");
+        maxRatio = property.parseDouble("maxRatio", "2");
+        if (maxRatio < 1)
+            throw new IllegalArgumentException("Amplitude ratio threshold " + maxRatio + " is invalid, must be >= 1.");
         minSNratio = property.parseDouble("minSNratio", "0");
         if (minSNratio < 0)
             throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
@@ -313,17 +313,17 @@ public class DataSelection extends Operation {
     }
 
     private boolean check(DataFeature feature) throws IOException {
-        double minRatio = feature.getMinRatio();
-        double maxRatio = feature.getMaxRatio();
+        double posSideRatio = feature.getNegSideRatio();
+        double negSideRatio = feature.getPosSideRatio();
         double absRatio = feature.getAbsRatio();
         double cor = feature.getCorrelation();
         double var = feature.getVariance();
         double sn = feature.getSNRatio();
 
-        boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
-                || ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
-                || var < minVariance || maxVariance < var || sn < minSNratio);
-
+        boolean isok = (1 / maxRatio <= posSideRatio && posSideRatio <= maxRatio)
+                && (1 / maxRatio <= negSideRatio && negSideRatio <= maxRatio)
+                && (1 / maxRatio <= absRatio && absRatio <= maxRatio) && (minCorrelation <= cor &&  cor <= maxCorrelation)
+                && (minVariance <= var && var <= maxVariance) && (minSNratio <= sn);
         return isok;
     }
 

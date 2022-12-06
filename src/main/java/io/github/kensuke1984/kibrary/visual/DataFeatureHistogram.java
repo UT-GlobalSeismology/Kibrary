@@ -124,7 +124,7 @@ public class DataFeatureHistogram extends Operation {
     /**
      * Threshold of amplitude ratio that is selected
      */
-    private double ratio;
+    private double maxRatio;
     /**
      * Threshold of S/N ratio that is selected
      */
@@ -187,7 +187,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
             pw.println("#maxVariance ");
             pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
-            pw.println("#ratio ");
+            pw.println("#maxRatio ");
             pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNRatio ");
         }
@@ -245,9 +245,9 @@ public class DataFeatureHistogram extends Operation {
         maxVariance = property.parseDouble("maxVariance", "2");
         if (minVariance < 0 || minVariance > maxVariance)
             throw new IllegalArgumentException("Selected normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
-        ratio = property.parseDouble("ratio", "2");
-        if (ratio < 1)
-            throw new IllegalArgumentException("Selected amplitude ratio threshold " + ratio + " is invalid, must be >= 1.");
+        maxRatio = property.parseDouble("maxRatio", "2");
+        if (maxRatio < 1)
+            throw new IllegalArgumentException("Selected amplitude ratio threshold " + maxRatio + " is invalid, must be >= 1.");
         minSNRatio = property.parseDouble("minSNRatio", "0");
         if (minSNRatio < 0)
             throw new IllegalArgumentException("Selected S/N ratio threshold " + minSNRatio + " is invalid, must be >= 0.");
@@ -306,6 +306,7 @@ public class DataFeatureHistogram extends Operation {
            RealVector obsU = new ArrayRealVector(obsID.getData(), false);
            RealVector synU = new ArrayRealVector(synID.getData(), false);
 
+           // Start time of synthetic waveform must be used, since it is the correct one when time shift is applied.
            double startTime = synID.getStartTime();
            double endTime = startTime + synID.getNpts() / synID.getSamplingHz();
            TimewindowData timewindow = new TimewindowData(startTime, endTime,
@@ -353,15 +354,18 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
                int iCorr = (int) ((feature.getCorrelation() - correlationLowerBound) / dCorrelation);
                corrs[iCorr]++;
            }
-           if (feature.getVariance() < varianceUpperBound) {
+           // "0 <= feature.getVariance()" is to exclude -Infinity or any other inappropriate data.
+           if (0 <= feature.getVariance() && feature.getVariance() < varianceUpperBound) {
                int iVar = (int) (feature.getVariance() / dVariance);
                vars[iVar]++;
            }
-           if (feature.getAbsRatio() < ratioUpperBound) {
+           // "0 <= feature.getAbsRatio()" is to exclude -Infinity or any other inappropriate data.
+           if (0 <= feature.getAbsRatio() && feature.getAbsRatio() < ratioUpperBound) {
                int iRatio = (int) (feature.getAbsRatio() / dRatio);
                ratios[iRatio]++;
            }
-           if (feature.getSNRatio() < snRatioUpperBound) {
+           // "0 <= feature.getSNRatio()" is to exclude -Infinity or any other inappropriate data.
+           if (0 <= feature.getSNRatio() && feature.getSNRatio() < snRatioUpperBound) {
                int iSNRatio = (int) (feature.getSNRatio() / dSNRatio);
                snRatios[iSNRatio]++;
            }
@@ -408,7 +412,7 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
        createPlot(outPath, varFileNameRoot, "Normalized variance", dVariance, 0, varianceUpperBound,
                dVariance * 5, minVariance, maxVariance, extraExists);
        createPlot(outPath, ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
-               dRatio * 5, 1 / ratio, ratio, extraExists);
+               dRatio * 5, 1 / maxRatio, maxRatio, extraExists);
 
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
