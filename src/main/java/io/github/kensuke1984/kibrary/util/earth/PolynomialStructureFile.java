@@ -122,6 +122,66 @@ public class PolynomialStructureFile {
         return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
+    public static PolynomialStructure readDsm(Path inputPath) throws IOException{
+    	InformationFileReader reader = new InformationFileReader(inputPath, false);
+        String[] structureLines = reader.getNonCommentLines();
+
+        String[] headerParts = structureLines[6].split("\\s+");
+        int nZone = Integer.parseInt(headerParts[0]);
+        int nCoreZone = 2; //nCoreZone should be parameter. //TODO
+        if (nZone < 1)
+            throw new IllegalStateException("nzone is invalid.");
+        
+        double[] rmin = new double[nZone];
+        double[] rmax = new double[nZone];
+        PolynomialFunction[] rho = new PolynomialFunction[nZone];
+        PolynomialFunction[] vpv = new PolynomialFunction[nZone];
+        PolynomialFunction[] vph = new PolynomialFunction[nZone];
+        PolynomialFunction[] vsv = new PolynomialFunction[nZone];
+        PolynomialFunction[] vsh = new PolynomialFunction[nZone];
+        PolynomialFunction[] eta = new PolynomialFunction[nZone];
+        double[] qMu = new double[nZone];
+        double[] qKappa = new double[nZone];
+
+        for (int i = 0; i < nZone; i++) {
+            String[] rangeRhoParts = structureLines[i * 6 + 7].split("\\s+");
+            String[] vpvParts = structureLines[i * 6 + 8].split("\\s+");
+            String[] vphParts = structureLines[i * 6 + 9].split("\\s+");
+            String[] vsvParts = structureLines[i * 6 + 10].split("\\s+");
+            String[] vshParts = structureLines[i * 6 + 11].split("\\s+");
+            String[] etaParts = structureLines[i * 6 + 12].split("\\s+");
+
+            rmin[i] = Double.parseDouble(rangeRhoParts[0]);
+            rmax[i] = Double.parseDouble(rangeRhoParts[1]);
+
+            double[] rhoCoeffs = new double[4];
+            double[] vpvCoeffs = new double[4];
+            double[] vphCoeffs = new double[4];
+            double[] vsvCoeffs = new double[4];
+            double[] vshCoeffs = new double[4];
+            double[] etaCoeffs = new double[4];
+            for (int j = 0; j < 4; j++) {
+                rhoCoeffs[j] = Double.parseDouble(rangeRhoParts[j + 2]);
+                vpvCoeffs[j] = Double.parseDouble(vpvParts[j]);
+                vphCoeffs[j] = Double.parseDouble(vphParts[j]);
+                vsvCoeffs[j] = Double.parseDouble(vsvParts[j]);
+                vshCoeffs[j] = Double.parseDouble(vshParts[j]);
+                etaCoeffs[j] = Double.parseDouble(etaParts[j]);
+            }
+            rho[i] = new PolynomialFunction(rhoCoeffs);
+            vpv[i] = new PolynomialFunction(vpvCoeffs);
+            vph[i] = new PolynomialFunction(vphCoeffs);
+            vsv[i] = new PolynomialFunction(vsvCoeffs);
+            vsh[i] = new PolynomialFunction(vshCoeffs);
+            eta[i] = new PolynomialFunction(etaCoeffs);
+
+            qMu[i] = Double.parseDouble(etaParts[4]);
+            qKappa[i] = Double.parseDouble(etaParts[5]);
+        }
+
+        System.err.println("Read " + inputPath);
+        return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+    }
     /**
      * Create a polynomial structure file under the working folder.
      * The structure can be specified by its name or by using a DSM PSV input file.
@@ -170,14 +230,21 @@ public class PolynomialStructureFile {
 
         PolynomialStructure structure;
         String structureName;
+        String fileName;
+        Path dsmPsvPath;
 
         if (cmdLine.hasOption("n")) {
             structureName = cmdLine.getOptionValue("n");
             structure = PolynomialStructure.of(structureName);
-        } else {
-            System.err.println("not supported yet"); // TODO
-            return;
-        }
+        } else if(cmdLine.hasOption("d")) {
+    		dsmPsvPath = Paths.get(cmdLine.getOptionValue("d"));
+    		fileName = dsmPsvPath.getFileName().toString();
+    		structureName = fileName.substring(0, fileName.lastIndexOf('.'));
+    		structure = PolynomialStructureFile.readDsm(dsmPsvPath);
+    	} else {
+    		System.err.println("No StructureName and dsmPsvFile.");
+    		return;
+    	}
 
         Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
                 : Paths.get(structureName + ".structure");
