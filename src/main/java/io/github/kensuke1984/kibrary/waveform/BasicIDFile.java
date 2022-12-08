@@ -259,15 +259,11 @@ public final class BasicIDFile {
         return bid;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Exports data files in ascii format.
-     *
      * @param args [option]
-     * <ul>
-     * <li> [-i IDFile] : exports ID file in standard output</li>
-     * <li> [-w IDFile WaveformFile] : exports waveforms in event directories under current path</li>
-     * </ul>
-     * You must specify one or the other.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

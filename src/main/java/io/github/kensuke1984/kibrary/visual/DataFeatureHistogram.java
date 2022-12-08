@@ -8,10 +8,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -21,6 +23,8 @@ import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
@@ -68,6 +72,10 @@ public class DataFeatureHistogram extends Operation {
      * path of waveform data
      */
     private Path extraBasicPath;
+    /**
+     * Path of a data entry file
+     */
+    private Path dataEntryPath;
 
     /**
      * Lower bound of correlation coefficient to plot
@@ -160,6 +168,8 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#extraBasicIDPath ");
             pw.println("##Path of an additional basic waveform file, if any (e.g. data not used in inversion)");
             pw.println("#extraBasicPath ");
+            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##(double) Lower bound of correlation coefficient to plot [-1:correlationUpperBound) (-1)");
             pw.println("#correlationLowerBound ");
             pw.println("##(double) Upper bound of correlation coefficient to plot (correlationLowerBound:1] (1)");
@@ -213,6 +223,9 @@ public class DataFeatureHistogram extends Operation {
                 extraBasicPath = property.parsePath("extraBasicPath", null, true, workPath);
             }
         }
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        }
 
         correlationLowerBound = property.parseDouble("correlationLowerBound", "-1");
         correlationUpperBound = property.parseDouble("correlationUpperBound", "1");
@@ -255,6 +268,7 @@ public class DataFeatureHistogram extends Operation {
 
    @Override
    public void run() throws IOException {
+
        // read data features
        List<DataFeature> featureList;
        List<DataFeature> extraFeatureList = null;
@@ -271,6 +285,15 @@ public class DataFeatureHistogram extends Operation {
                BasicID[] extraBasicIDs = BasicIDFile.read(extraBasicIDPath, extraBasicPath);
                extraFeatureList = extractFeatures(extraBasicIDs);
            }
+       }
+
+       // read entry set and apply selection
+       if (dataEntryPath != null) {
+           Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+           featureList = featureList.stream().filter(feature -> entrySet.contains(feature.getTimewindow().toEntry()))
+                   .collect(Collectors.toList());
+           extraFeatureList = extraFeatureList.stream().filter(feature -> entrySet.contains(feature.getTimewindow().toEntry()))
+                   .collect(Collectors.toList());
        }
 
        outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, GadgetAid.getTemporaryString());
@@ -321,11 +344,11 @@ public class DataFeatureHistogram extends Operation {
    }
 
    /**
- * @param featureList (List of DataFeature) The main data feature list.
- * @param extraFeatureList (List of DataFeature) Extra list. This shall be null if there is no extra list.
- * @throws IOException
- */
-private void createHistograms(List<DataFeature> featureList, List<DataFeature> extraFeatureList) throws IOException {
+     * @param featureList (List of DataFeature) The main data feature list.
+     * @param extraFeatureList (List of DataFeature) Extra list. This shall be null if there is no extra list.
+     * @throws IOException
+     */
+    private void createHistograms(List<DataFeature> featureList, List<DataFeature> extraFeatureList) throws IOException {
        int nCorr = (int) Math.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
        int nVar = (int) Math.ceil(varianceUpperBound / dVariance);
        int nRatio = (int) Math.ceil(ratioUpperBound / dRatio);
@@ -337,6 +360,7 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
        int[] extraCorrs = new int[nCorr];
        int[] extraVars = new int[nVar];
        int[] extraRatios = new int[nRatio];
+       int[] extraSnRatios = new int[nSNRatio];
        String corrFileNameRoot = "correlationHistogram";
        String varFileNameRoot = "varianceHistogram";
        String ratioFileNameRoot = "ratioHistogram";
@@ -349,22 +373,20 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
        // count up main features
        for (DataFeature feature : featureList) {
            // if the value is inside the plot range, count it at the corresponding interval
-           // in the following lines, the decimal part is cut off when typecasting
+           // In the following lines, the decimal part is cut off when typecasting.
+           // The "0 <= feature.**()" is to exclude -Infinity or any other inappropriate data.
            if (correlationLowerBound <= feature.getCorrelation() && feature.getCorrelation() < correlationUpperBound) {
                int iCorr = (int) ((feature.getCorrelation() - correlationLowerBound) / dCorrelation);
                corrs[iCorr]++;
            }
-           // "0 <= feature.getVariance()" is to exclude -Infinity or any other inappropriate data.
            if (0 <= feature.getVariance() && feature.getVariance() < varianceUpperBound) {
                int iVar = (int) (feature.getVariance() / dVariance);
                vars[iVar]++;
            }
-           // "0 <= feature.getAbsRatio()" is to exclude -Infinity or any other inappropriate data.
            if (0 <= feature.getAbsRatio() && feature.getAbsRatio() < ratioUpperBound) {
                int iRatio = (int) (feature.getAbsRatio() / dRatio);
                ratios[iRatio]++;
            }
-           // "0 <= feature.getSNRatio()" is to exclude -Infinity or any other inappropriate data.
            if (0 <= feature.getSNRatio() && feature.getSNRatio() < snRatioUpperBound) {
                int iSNRatio = (int) (feature.getSNRatio() / dSNRatio);
                snRatios[iSNRatio]++;
@@ -376,18 +398,23 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
        if (extraExists) {
            for (DataFeature feature : extraFeatureList) {
                // if the value is inside the plot range, count it at the corresponding interval
-               // in the following lines, the decimal part is cut off when typecasting
+               // In the following lines, the decimal part is cut off when typecasting.
+               // The "0 <= feature.**()" is to exclude -Infinity or any other inappropriate data.
                if (correlationLowerBound <= feature.getCorrelation() && feature.getCorrelation() < correlationUpperBound) {
                    int iCorr = (int) ((feature.getCorrelation() - correlationLowerBound) / dCorrelation);
                    extraCorrs[iCorr]++;
                }
-               if (feature.getVariance() < varianceUpperBound) {
+               if (0 <= feature.getVariance() && feature.getVariance() < varianceUpperBound) {
                    int iVar = (int) (feature.getVariance() / dVariance);
                    extraVars[iVar]++;
                }
-               if (feature.getAbsRatio() < ratioUpperBound) {
+               if (0 <= feature.getAbsRatio() && feature.getAbsRatio() < ratioUpperBound) {
                    int iRatio = (int) (feature.getAbsRatio() / dRatio);
                    extraRatios[iRatio]++;
+               }
+               if (0 <= feature.getSNRatio() && feature.getSNRatio() < snRatioUpperBound) {
+                   int iSNRatio = (int) (feature.getSNRatio() / dSNRatio);
+                   extraSnRatios[iSNRatio]++;
                }
            }
        }
@@ -395,15 +422,16 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
        // output txt files
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(corrPath))) {
            for (int i = 0; i < nCorr; i++)
-               pw.println((correlationLowerBound + i * dCorrelation) + " " + corrs[i] + " " + extraCorrs[i]);
+               pw.println(Precision.round(correlationLowerBound + i * dCorrelation, DataFeature.PRECISION)
+                       + " " + corrs[i] + " " + extraCorrs[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(varPath))) {
            for (int i = 0; i < nVar; i++)
-               pw.println((i * dVariance) + " " + vars[i] + " " + extraVars[i]);
+               pw.println(Precision.round(i * dVariance, DataFeature.PRECISION) + " " + vars[i] + " " + extraVars[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(ratioPath))) {
            for (int i = 0; i < nRatio; i++)
-               pw.println((i * dRatio) + " " + ratios[i] + " " + extraRatios[i]);
+               pw.println(Precision.round(i * dRatio, DataFeature.PRECISION) + " " + ratios[i] + " " + extraRatios[i]);
        }
 
        // plot histograms
@@ -417,10 +445,11 @@ private void createHistograms(List<DataFeature> featureList, List<DataFeature> e
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
                for (int i = 0; i < nSNRatio; i++)
-                   pw.println((i * dSNRatio) + " " + snRatios[i]);
+                   pw.println(Precision.round(i * dSNRatio, DataFeature.PRECISION)
+                           + " " + snRatios[i] + " " + extraSnRatios[i]);
            }
            createPlot(outPath, snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
-                   dSNRatio * 5, minSNRatio, snRatioUpperBound, false);
+                   dSNRatio * 5, minSNRatio, snRatioUpperBound, extraExists);
        }
    }
 

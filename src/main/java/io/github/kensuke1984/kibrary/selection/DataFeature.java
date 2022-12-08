@@ -15,6 +15,8 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
  */
 public class DataFeature {
 
+    public static int PRECISION = 3;
+
     private TimewindowData timewindow;
 
     private double variance;
@@ -34,12 +36,15 @@ public class DataFeature {
 
     public DataFeature(TimewindowData timewindow, double variance, double correlation,
             double posSideRatio, double negSideRatio, double absRatio, double snRatio, boolean selected) {
+        if (variance < 0) throw new IllegalArgumentException("variance must be positive: " + timewindow);
+        if (absRatio < 0) throw new IllegalArgumentException("absRatio must be positive: " + timewindow);
+        if (snRatio < 0) throw new IllegalArgumentException("snRatio must be positive: " + timewindow);
         this.timewindow = timewindow;
         this.variance = variance;
         this.correlation = correlation;
         this.posSideRatio = posSideRatio;
         this.negSideRatio = negSideRatio;
-        this.absRatio = Math.abs(absRatio);
+        this.absRatio = absRatio;
         this.snRatio = snRatio;
         this.selected = selected;
     }
@@ -50,23 +55,21 @@ public class DataFeature {
         else if (synU.getDimension() < obsU.getDimension())
             obsU = obsU.getSubVector(0, synU.getDimension() - 1);
 
-        double synMax = synU.getMaxValue();
-        double synMin = synU.getMinValue();
-        double obsMax = obsU.getMaxValue();
-        double obsMin = obsU.getMinValue();
-        double obs2 = obsU.dotProduct(obsU);
-        double syn2 = synU.dotProduct(synU);
-        double cor = obsU.dotProduct(synU);
-        cor /= Math.sqrt(obs2 * syn2);
-        double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
-        var /= obs2;
-
-        double posSideRatio = Precision.round(synMax / obsMax, 2);
-        double negSideRatio = Precision.round(synMin / obsMin, 2);
+        // variance
+        RealVector resid = obsU.subtract(synU);
+        double var = resid.dotProduct(resid) / obsU.dotProduct(obsU);
         // "Math.abs()" is to exclude -Infinity.
-        double absRatio = Math.abs(Precision.round((-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin), 2));
-        double variance = Precision.round(var, 2);
-        double correlation = Precision.round(cor, 2);
+        double variance = Math.abs(Precision.round(var, PRECISION));
+
+        // ratio
+        double posSideRatio = Precision.round(synU.getMaxValue() / obsU.getMaxValue(), PRECISION);
+        double negSideRatio = Precision.round(synU.getMinValue() / obsU.getMinValue(), PRECISION);
+        // "Math.abs()" is to exclude -Infinity.
+        double absRatio = Math.abs(Precision.round(synU.getLInfNorm() / obsU.getLInfNorm(), PRECISION));
+
+        // correlation
+        double cor = obsU.dotProduct(synU) / (synU.getNorm() * obsU.getNorm());
+        double correlation = Precision.round(cor, PRECISION);
 
         return new DataFeature(timewindow, variance, correlation, posSideRatio, negSideRatio, absRatio, snRatio, selected);
     }

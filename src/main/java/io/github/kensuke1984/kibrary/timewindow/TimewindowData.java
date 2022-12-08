@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -107,11 +108,28 @@ public class TimewindowData extends Timewindow {
         return phases;
     }
 
+    public DataEntry toEntry() {
+        return new DataEntry(eventID, observer, component);
+    }
+
     @Override
     public String toString() {
-        List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + startTime + " " + endTime + " " + String.join(",", phaseStrings);
+                + startTime + " " + endTime + " " + phasesAsString(phases);
+    }
+
+    /**
+     * Change array of phases into a String for outputting in files. TODO There may be somewhere else to put this method.
+     * @param phases (array of Phase)
+     * @return (String) Phase names connected with ",", or "null" when there are no phases.
+     */
+    public static String phasesAsString(Phase[] phases) {
+        if (phases == null || phases.length == 0) {
+            return "null";
+        } else {
+            List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+            return String.join(",", phaseStrings);
+        }
     }
 
     /**TODO erase

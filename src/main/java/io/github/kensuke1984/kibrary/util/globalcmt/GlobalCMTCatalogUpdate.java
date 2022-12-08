@@ -37,10 +37,7 @@ public final class GlobalCMTCatalogUpdate {
     private GlobalCMTCatalogUpdate() {}
 
     /**
-     * @param args [month and year of update]<br>
-     *             Should take the form mmmYY,
-     *             where mmm is the first three letters of the name of the month,
-     *             and YY is the lower two digits of the year.
+     * @param args [option]
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {

@@ -87,7 +87,7 @@ public final class DVectorBuilder {
 
             if (Math.abs(obsIDs[i].getStartTime() - synIDs[i].getStartTime()) >= START_TIME_DELAY_LIMIT)
                 throw new RuntimeException("Start time mismatch: " + obsIDs[i] + " " + synIDs[i]);
-            if (obsVecs[i].getLInfNorm() == 0 || Double.isNaN(obsVecs[i].getLInfNorm()))
+            if (Double.isNaN(obsVecs[i].getLInfNorm()) || obsVecs[i].getLInfNorm() == 0)
                 throw new RuntimeException("Obs is 0 or NaN: " + obsIDs[i] + " " + obsVecs[i].getLInfNorm());
         }
         return npts;

@@ -1,12 +1,18 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -47,15 +53,38 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     /**
      * Displays information of input event IDs.
      * Results are written in the standard output.
-     * @param args [GlobalCMTID ...]
+     * @param args [option]
+     * @throws IOException if any
      */
-    public static void main(String[] args) {
-        if (args.length == 0) {
-            System.out.println("Usage: [GlobalCMTID ...] (list using spaces)");
-            return;
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
         }
+    }
 
-        for (String idString : args) {
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("id").required()
+                .desc("Global CMT IDs, listed using commas").build());
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+        String[] idStrings = cmdLine.getOptionValue("i").split(",");
+        for (String idString : idStrings) {
             if (!isGlobalCMTID(idString)) {
                 System.err.println(idString + " does not exist.");
                 continue;
@@ -66,7 +95,7 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
             System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
             System.out.println("Centroid Time: " + event.getCMTTime());
-            System.out.println("Centroid location(latitude longitude radius): " + event.getCmtPosition());
+            System.out.println("Centroid location (latitude longitude radius): " + event.getCmtPosition());
         }
     }
 

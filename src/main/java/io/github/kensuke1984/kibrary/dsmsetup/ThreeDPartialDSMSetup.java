@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -275,6 +276,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         System.err.println("Making information files for the events (fp) ...");
         int n = 0;
+        int nSkip = 0;
         List<String> fpList = new ArrayList<>();
         for (GlobalCMTID event : eventSet) {
             GlobalCMTAccess eventData = event.getEventData();
@@ -295,7 +297,8 @@ public class ThreeDPartialDSMSetup extends Operation {
                     // If computation for this event & mt already exists in the FP pool, skip
                     Path mtPoolPath = fpPoolPath.resolve(event.toString() + "_mt" + i);
                     if (Files.exists(mtPoolPath)) {
-                        System.err.println(" " + event.toString() + " : " + mtPoolPath + " already exists, skipping.");
+                        nSkip ++;
+//                        System.err.println(" " + event.toString() + " : " + mtPoolPath + " already exists, skipping.");
                         continue;
                     }
 
@@ -310,7 +313,8 @@ public class ThreeDPartialDSMSetup extends Operation {
                 // If computation for this event already exists in the FP pool, skip
                 Path eventPoolPath = fpPoolPath.resolve(event.toString());
                 if (Files.exists(eventPoolPath)) {
-                    System.err.println(" " + event.toString() + " : " + eventPoolPath + " already exists, skipping.");
+                    nSkip ++;
+//                    System.err.println(" " + event.toString() + " : " + eventPoolPath + " already exists, skipping.");
                     continue;
                 }
 
@@ -330,7 +334,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             n++;
             fpList.add(event.toString());
         }
-        System.err.println(n + " sources created in " + fpPoolPath);
+        System.err.println(MathAid.switchSingularPlural(nSkip, "source was", "sources were") + " skipped; directory already exists.");
+        System.err.println(MathAid.switchSingularPlural(n, "source", "sources") + " created in " + fpPoolPath);
 
         // output list and shellscripts for execution of psvfp and shfp
         String fpListFileName = "fpList" + dateStr + ".txt";
@@ -348,6 +353,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         System.err.println("Making information files for the observers (bp) ...");
         int n = 0;
+        int nSkip = 0;
         List<String> bpList = new ArrayList<>();
         for (Observer observer : observerSet) {
             String observerCode = observer.getPosition().toCode();
@@ -356,7 +362,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             //  or in case observers with same position but different name exist, skip
             Path observerPoolPath = bpPoolPath.resolve(observerCode);
             if (Files.exists(observerPoolPath)) {
-                System.err.println(" " + observer.toString() + " : " + observerPoolPath + " already exists, skipping.");
+                nSkip ++;
+//                System.err.println(" " + observer.toString() + " : " + observerPoolPath + " already exists, skipping.");
                 continue;
             }
 
@@ -368,7 +375,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             n++;
             bpList.add(observerCode);
         }
-        System.err.println(n + " sources created in " + bpPoolPath);
+        System.err.println(MathAid.switchSingularPlural(nSkip, "source was", "sources were") + " skipped; directory already exists.");
+        System.err.println(MathAid.switchSingularPlural(n, "source", "sources") + " created in " + bpPoolPath);
 
         if (catalogue) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);

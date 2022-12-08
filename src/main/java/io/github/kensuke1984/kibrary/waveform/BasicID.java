@@ -277,19 +277,9 @@ public class BasicID {
 
     @Override
     public String toString() {
-        String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " "
-                + component + " " + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod
-                + " " + maxPeriod + " ";
-        if (phases == null)
-            basicString += "null" + " ";
-        else if (phases.length == 1)
-            basicString += phases[phases.length - 1] + " ";
-        else if (phases.length > 1) {
-            for (int i = 0; i < phases.length - 1; i++)
-                basicString += phases[i] + ",";
-            basicString += phases[phases.length - 1] + " ";
-        }
-        basicString += startByte + " " + convolved;
+        String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
+                + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
+                + TimewindowData.phasesAsString(phases) + " " + startByte + " " + convolved;
         return basicString;
     }
 
