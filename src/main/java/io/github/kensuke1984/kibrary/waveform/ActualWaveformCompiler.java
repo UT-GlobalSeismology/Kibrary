@@ -312,7 +312,7 @@ public class ActualWaveformCompiler extends Operation {
 
            // read timewindows and select based on component and entries
            sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
-                   .stream().filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toEntry()))
+                   .stream().filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
                    .collect(Collectors.toSet());
        } else {
            // read timewindows and select based on component

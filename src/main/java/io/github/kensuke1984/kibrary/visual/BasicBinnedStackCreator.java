@@ -192,10 +192,10 @@ public class BasicBinnedStackCreator extends Operation {
 
    @Override
    public void run() throws IOException {
-       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+       List<BasicID> ids = BasicIDFile.readAsList(basicIDPath, basicPath);
 
        // get all events included in basicIDs
-       Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+       Set<GlobalCMTID> allEvents =ids.stream().filter(id -> components.contains(id.getSacComponent()))
                .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
        // eventDirs of events to be used
        Set<EventFolder> eventDirs;
@@ -216,10 +216,10 @@ public class BasicBinnedStackCreator extends Operation {
            Files.createDirectories(eventDir.toPath());
 
            for (SACComponent component : components) {
-               BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+               List<BasicID> useIds = ids.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                        && id.getSacComponent().equals(component))
                        .sorted(Comparator.comparing(BasicID::getObserver))
-                       .toArray(BasicID[]::new);
+                       .collect(Collectors.toList());
 
                String fileNameRoot;
                if (fileTag == null) {
@@ -246,7 +246,7 @@ public class BasicBinnedStackCreator extends Operation {
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
 
         private EventFolder eventDir;
-        private BasicID[] ids;
+        private List<BasicID> ids;
         private String fileNameRoot;
 
         private GnuplotFile binStackPlot;
@@ -258,14 +258,14 @@ public class BasicBinnedStackCreator extends Operation {
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(EventFolder eventDir, BasicID[] ids, String fileNameRoot) {
+        private Plotter(EventFolder eventDir, List<BasicID> ids, String fileNameRoot) {
             this.eventDir = eventDir;
             this.ids = ids;
             this.fileNameRoot = fileNameRoot;
         }
 
         public void plot() throws IOException {
-            if (ids.length == 0) {
+            if (ids.size() == 0) {
                 return;
             }
 
@@ -350,8 +350,8 @@ public class BasicBinnedStackCreator extends Operation {
         }
 
         private void binStackPlotContent(RealVector obsStack, RealVector synStack, double y) throws IOException {
-            SACComponent component = ids[0].getSacComponent();
-            double samplingHz = ids[0].getSamplingHz();
+            SACComponent component = ids.get(0).getSacComponent();
+            double samplingHz = ids.get(0).getSamplingHz();
 
             String fileName = y + "." + eventDir.toString() + "." + component + ".txt";
             outputBinStackTxt(obsStack, synStack, fileName, samplingHz);

@@ -6,7 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,17 +22,45 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
- * Operation that creates hisograms of normalized variance, amplitude ratio, and cross correlation
+ * Operation that creates hisograms of normalized variance, amplitude ratio, and cross correlation (and in some cases S/N ratio)
  * between observed and synthetic waveforms.
+ * <p>
+ * Either a {@link DataFeatureListFile} or a {@link BasicIDFile} pair must be given as input.
+ *
+ * <p>
+ * When a {@link DataFeatureListFile} is given as input,
+ * all {@link DataFeature}s listed in this file that satisfy the following criteria will be counted:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * <li> the (event, observer, component)-pair exists in the {@link DataEntryListFile} if it is given </li>
+ * </ul>
+ * If {@link DataFeature#isSelected()} is true, it will be counted in the 'main' list;
+ * otherwise, it will be counted in the 'extra' list.
+ * Histograms for S/N ratios will be created along with the 3 others in this case.
+ *
+ * <p>
+ * When a {@link BasicIDFile} pair is given as input,
+ * all {@link BasicID}s that satisfy the following criteria will be counted:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * <li> the (event, observer, component)-pair exists in the {@link DataEntryListFile} if it is given </li>
+ * </ul>
+ * {@link BasicID}s in the 'main' {@link BasicIDFile} will be counted in the 'main' list.
+ * If an 'extra' {@link BasicIDFile} is provided, {@link BasicID}s in there will be counted in the 'extra' list.
+ * If a {@link TimewindowDataFile} containing information of 'improvement windows' is provided,
+ * normalized variance, amplitude ratio, and cross correlation values will be computed within those windows.
+ * Otherwise, they will be computed for the whole length included in the {@link BasicIDFile}.
  *
  * @author otsuru
  * @since 2022/8/27
@@ -51,6 +80,10 @@ public class DataFeatureHistogram extends Operation {
      * Path of the output folder
      */
     private Path outPath;
+    /**
+     * set of {@link SACComponent}
+     */
+    private Set<SACComponent> components;
 
     /**
      * Path of a data feature list file
@@ -76,7 +109,15 @@ public class DataFeatureHistogram extends Operation {
      * Path of a data entry file
      */
     private Path dataEntryPath;
+    /**
+     * Path of a timewindow data file of improvement windows
+     */
+    private Path improvementWindowPath;
 
+    /**
+     * Color of histograms to create
+     */
+    private String color;
     /**
      * Lower bound of correlation coefficient to plot
      */
@@ -157,9 +198,14 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, set this unset.");
             pw.println("#folderTag ");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("#components ");
+            pw.println("##########Either a data feature file or a basicID&waveform file pair must be set.");
+            pw.println("##########Settings using data feature file");
             pw.println("##Path of a data feature list file. If this is not set, the following basicID&waveform files will be used.");
             pw.println("##  The S/N ratio histogram can be created only when dataFeaturePath is set.");
             pw.println("#dataFeaturePath dataFeature.lst");
+            pw.println("##########Settings using basic ID and waveform files");
             pw.println("##Path of a basic ID file, must be set if dataFeaturePath is not set");
             pw.println("#mainBasicIDPath ");
             pw.println("##Path of a basic waveform file, must be set if dataFeaturePath is not set");
@@ -168,8 +214,14 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#extraBasicIDPath ");
             pw.println("##Path of an additional basic waveform file, if any (e.g. data not used in inversion)");
             pw.println("#extraBasicPath ");
+            pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows");
+            pw.println("##  This is only used when basic ID and waveform files are used, not a data feature file.");
+            pw.println("#improvementWindowPath timewindow.dat");
+            pw.println("##########Common settings");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
+            pw.println("##Color of histograms to create, from {red, green, blue} (red)");
+            pw.println("#color ");
             pw.println("##(double) Lower bound of correlation coefficient to plot [-1:correlationUpperBound) (-1)");
             pw.println("#correlationLowerBound ");
             pw.println("##(double) Upper bound of correlation coefficient to plot (correlationLowerBound:1] (1)");
@@ -188,6 +240,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#dRatio ");
             pw.println("##(double) Interval of S/N ratio, must be positive (0.2)");
             pw.println("#dSNRatio ");
+            pw.println("##########The following are parameters that decide the range of the background shaded box.");
             pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
             pw.println("#minCorrelation ");
             pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
@@ -212,6 +265,8 @@ public class DataFeatureHistogram extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         if (property.containsKey("dataFeaturePath")) {
             dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
@@ -226,7 +281,11 @@ public class DataFeatureHistogram extends Operation {
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
+        if (property.containsKey("improvementWindowPath")) {
+            improvementWindowPath = property.parsePath("improvementWindowPath", null, true, workPath);
+        }
 
+        color = property.parseString("color", "red");
         correlationLowerBound = property.parseDouble("correlationLowerBound", "-1");
         correlationUpperBound = property.parseDouble("correlationUpperBound", "1");
         if (correlationLowerBound < -1 || correlationLowerBound >= correlationUpperBound || 1 < correlationUpperBound)
@@ -269,31 +328,41 @@ public class DataFeatureHistogram extends Operation {
    @Override
    public void run() throws IOException {
 
+       // read entry set for selection
+       Set<DataEntry> entrySet = (dataEntryPath != null) ? DataEntryListFile.readAsSet(dataEntryPath) : null;
+
        // read data features
-       List<DataFeature> featureList;
-       List<DataFeature> extraFeatureList = null;
+       Set<DataFeature> featureSet;
+       Set<DataFeature> extraFeatureSet = null;
        if (dataFeaturePath != null) {
            // the DataFeatureListFile includes information of whether the timewindow is selected, so use that to filter the features
-           List<DataFeature> tempFeatureList = DataFeatureListFile.read(dataFeaturePath);
-           featureList = tempFeatureList.stream().filter(feature -> feature.isSelected()).collect(Collectors.toList());
-           extraFeatureList = tempFeatureList.stream().filter(feature -> !feature.isSelected()).collect(Collectors.toList());
+           Set<DataFeature> tempFeatureSet = DataFeatureListFile.read(dataFeaturePath).stream()
+                   .filter(feature -> components.contains(feature.getTimewindow().getComponent()))
+                   .filter((dataEntryPath == null) ? (feature -> true) : (feature -> entrySet.contains(feature.getTimewindow().toDataEntry())))
+                   .collect(Collectors.toSet());
+           featureSet = tempFeatureSet.stream().filter(feature -> feature.isSelected()).collect(Collectors.toSet());
+           extraFeatureSet = tempFeatureSet.stream().filter(feature -> !feature.isSelected()).collect(Collectors.toSet());
        } else {
-           BasicID[] mainBasicIDs = BasicIDFile.read(mainBasicIDPath, mainBasicPath);
-           featureList = extractFeatures(mainBasicIDs);
+           // read the improvement windows if the file is given
+           Set<TimewindowData> improvementWindowSet = null;
+           if (improvementWindowPath != null) {
+               improvementWindowSet = TimewindowDataFile.read(improvementWindowPath);
+           }
+
+           // read the main data features from the main basic files
+           List<BasicID> mainBasicIDs = BasicIDFile.readAsList(mainBasicIDPath, mainBasicPath).stream()
+                   .filter(id -> components.contains(id.getSacComponent()))
+                   .filter((dataEntryPath == null) ? (feature -> true) : (id -> entrySet.contains(id.toDataEntry())))
+                   .collect(Collectors.toList());
+           featureSet = extractFeatures(mainBasicIDs, true, improvementWindowSet);
            // read extra data features if the extra basic files exist
            if (extraBasicIDPath != null) {
-               BasicID[] extraBasicIDs = BasicIDFile.read(extraBasicIDPath, extraBasicPath);
-               extraFeatureList = extractFeatures(extraBasicIDs);
+               List<BasicID> extraBasicIDs = BasicIDFile.readAsList(extraBasicIDPath, extraBasicPath).stream()
+                       .filter(id -> components.contains(id.getSacComponent()))
+                       .filter((dataEntryPath == null) ? (feature -> true) : (id -> entrySet.contains(id.toDataEntry())))
+                       .collect(Collectors.toList());
+               extraFeatureSet = extractFeatures(extraBasicIDs, false, improvementWindowSet);
            }
-       }
-
-       // read entry set and apply selection
-       if (dataEntryPath != null) {
-           Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-           featureList = featureList.stream().filter(feature -> entrySet.contains(feature.getTimewindow().toEntry()))
-                   .collect(Collectors.toList());
-           extraFeatureList = extraFeatureList.stream().filter(feature -> entrySet.contains(feature.getTimewindow().toEntry()))
-                   .collect(Collectors.toList());
        }
 
        outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, GadgetAid.getTemporaryString());
@@ -302,45 +371,77 @@ public class DataFeatureHistogram extends Operation {
        // if input is in BasicID, export their features (for reference)
        if (mainBasicIDPath != null) {
            Path outFeaturePath = outPath.resolve("dataFeature.lst");
-           DataFeatureListFile.write(featureList, outFeaturePath);
+           DataFeatureListFile.write(featureSet, outFeaturePath);
            // if extra BasicID files are set, export for them as well
-           if (extraFeatureList != null) {
+           if (extraFeatureSet != null) {
                Path outExtraFeaturePath = outPath.resolve("extraDataFeature.lst");
-               DataFeatureListFile.write(extraFeatureList, outExtraFeaturePath);
+               DataFeatureListFile.write(extraFeatureSet, outExtraFeaturePath);
            }
        }
 
-       createHistograms(featureList, extraFeatureList);
+       createHistograms(featureSet, extraFeatureSet);
    }
 
-   private List<DataFeature> extractFeatures(BasicID[] basicIDs) {
-       List<DataFeature> featureList = new ArrayList<>();
+   private Set<DataFeature> extractFeatures(List<BasicID> basicIDs, boolean selected, Set<TimewindowData> improvementWindowSet) {
+       Set<DataFeature> featureSet = new HashSet<>();
 
        // sort observed and synthetic
        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
-       BasicID[] obsIDs = pairer.getObsList().toArray(new BasicID[0]);
-       BasicID[] synIDs = pairer.getSynList().toArray(new BasicID[0]);
+       List<BasicID> obsIDs = pairer.getObsList();
+       List<BasicID> synIDs = pairer.getSynList();
 
        // create dataFeatures from basicIDs
-       for (int i = 0; i < obsIDs.length; i++) {
-           BasicID obsID = obsIDs[i];
-           BasicID synID = synIDs[i];
+       for (int i = 0; i < obsIDs.size(); i++) {
+           BasicID obsID = obsIDs.get(i);
+           BasicID synID = synIDs.get(i);
 
-           RealVector obsU = new ArrayRealVector(obsID.getData(), false);
-           RealVector synU = new ArrayRealVector(synID.getData(), false);
-
-           // Start time of synthetic waveform must be used, since it is the correct one when time shift is applied.
-           double startTime = synID.getStartTime();
-           double endTime = startTime + synID.getNpts() / synID.getSamplingHz();
-           TimewindowData timewindow = new TimewindowData(startTime, endTime,
-                   synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
-
-           // TODO snRatio and selected cannot be decided
-           DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, true);
-           featureList.add(feature);
+           RealVector obsU;
+           RealVector synU;
+           TimewindowData timewindow;
+           if (improvementWindowSet == null) {
+               // if improvement window does not exist, use the whole window
+               obsU = new ArrayRealVector(obsID.getData(), false);
+               synU = new ArrayRealVector(synID.getData(), false);
+               // Start time of synthetic waveform must be used, since it is the correct one when time shift is applied.
+               double startTime = synID.getStartTime();
+               double endTime = synID.computeEndTime();
+               timewindow = new TimewindowData(startTime, endTime,
+                       synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
+               // snRatio cannot be decided, so set 0
+               DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, selected);
+               featureSet.add(feature);
+           } else {
+               // if improvement window exists, cut to that window
+               Set<TimewindowData> improvementWindows = findImprovementWindows(synID, improvementWindowSet);
+               for (TimewindowData improvementWindow : improvementWindows) {
+                   // Time frame of synthetic waveform must be used, since it is the correct one when time shift is applied.
+                   double[] x = synID.toTrace().cutWindow(improvementWindow).getX();
+                   double startTime = x[0];
+                   double endTime = x[x.length - 1];
+                   // observed waveform must be shifted before cutting
+                   obsU = obsID.toTrace().withXAs(synID.toTrace().getX()).cutWindow(startTime, endTime).getYVector();
+                   synU = synID.toTrace().cutWindow(startTime, endTime).getYVector();
+                   timewindow = new TimewindowData(startTime, endTime,
+                           synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
+                   // snRatio cannot be decided, so set 0
+                   DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, selected);
+                   featureSet.add(feature);
+               }
+           }
        }
+       return featureSet;
+   }
 
-       return featureList;
+   private static Set<TimewindowData> findImprovementWindows(BasicID basicID, Set<TimewindowData> improvementWindowSet) {
+       Set<TimewindowData> matchingWindows = improvementWindowSet.stream()
+               .filter(window -> window.getGlobalCMTID().equals(basicID.getGlobalCMTID())
+                       && window.getObserver().equals(basicID.getObserver())
+                       && window.getComponent().equals(basicID.getSacComponent())
+                       // there must be some overlap between the windows
+                       && window.getStartTime() < basicID.computeEndTime()
+                       && basicID.getStartTime() < window.getEndTime())
+               .collect(Collectors.toSet());
+       return matchingWindows;
    }
 
    /**
@@ -348,7 +449,7 @@ public class DataFeatureHistogram extends Operation {
      * @param extraFeatureList (List of DataFeature) Extra list. This shall be null if there is no extra list.
      * @throws IOException
      */
-    private void createHistograms(List<DataFeature> featureList, List<DataFeature> extraFeatureList) throws IOException {
+    private void createHistograms(Set<DataFeature> featureList, Set<DataFeature> extraFeatureList) throws IOException {
        int nCorr = (int) Math.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
        int nVar = (int) Math.ceil(varianceUpperBound / dVariance);
        int nRatio = (int) Math.ceil(ratioUpperBound / dRatio);
@@ -435,12 +536,12 @@ public class DataFeatureHistogram extends Operation {
        }
 
        // plot histograms
-       createPlot(outPath, corrFileNameRoot, "Correlation", dCorrelation, correlationLowerBound, correlationUpperBound,
-               dCorrelation * 5, minCorrelation, maxCorrelation, extraExists);
-       createPlot(outPath, varFileNameRoot, "Normalized variance", dVariance, 0, varianceUpperBound,
-               dVariance * 5, minVariance, maxVariance, extraExists);
-       createPlot(outPath, ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
-               dRatio * 5, 1 / maxRatio, maxRatio, extraExists);
+       createPlot(corrFileNameRoot, "Correlation", dCorrelation, correlationLowerBound, correlationUpperBound,
+               dCorrelation * 5, minCorrelation, maxCorrelation, true, extraExists);
+       createPlot(varFileNameRoot, "Normalized variance", dVariance, 0, varianceUpperBound,
+               dVariance * 5, minVariance, maxVariance, false, extraExists);
+       createPlot(ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
+               dRatio * 5, 1 / maxRatio, maxRatio, false, extraExists);
 
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
@@ -448,32 +549,51 @@ public class DataFeatureHistogram extends Operation {
                    pw.println(Precision.round(i * dSNRatio, DataFeature.PRECISION)
                            + " " + snRatios[i] + " " + extraSnRatios[i]);
            }
-           createPlot(outPath, snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
-                   dSNRatio * 5, minSNRatio, snRatioUpperBound, extraExists);
+           createPlot(snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
+                   dSNRatio * 5, minSNRatio, snRatioUpperBound, false, extraExists);
        }
    }
 
-   private static void createPlot(Path outPath, String fileNameRoot, String xLabel, double interval,
-           double minimum, double maximum, double xtics, double minRect, double maxRect, boolean extraExists) throws IOException {
+   private void createPlot(String fileNameRoot, String xLabel, double interval, double minimum, double maximum,
+           double xtics, double minRect, double maxRect, boolean keyLeft, boolean extraExists) throws IOException {
        Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
+       String mainColor;
+       String extraColor;
+       switch (color) {
+       case "red":
+           mainColor = "red"; extraColor = "pink"; break;
+       case "green":
+           mainColor = "web-green"; extraColor = "seagreen"; break;
+       case "blue":
+           mainColor = "web-blue"; extraColor = "light-cyan"; break;
+       default:
+           throw new IllegalArgumentException("Color unrecognizable");
+       }
+
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
-           pw.println("set term pngcairo enhanced font 'Helvetica,14'");
+           pw.println("set term pngcairo enhanced font 'Helvetica,20'");
            pw.println("set xlabel '" + xLabel + "'");
            pw.println("set ylabel '#timewindows'");
            pw.println("set xrange [" + minimum + ":" + maximum + "]");
+           pw.println("#set yrange [0:1000]");
            pw.println("set xtics " + xtics + " nomirror");
            pw.println("set ytics nomirror");
+           if (keyLeft) pw.println("set key left top");
+           else pw.println("#set key left top");
            pw.println("set style fill solid border lc rgb 'black'");
            pw.println("set sample 11");
            pw.println("set output '" + fileNameRoot + ".png'");
-           pw.println("set object 1 rect from first " + minRect + ",graph 0 to first " + maxRect + ",graph 1 back lw 0 fillcolor rgb 'light-gray'");
+           pw.println("set object 1 rect from first " + minRect + ",graph 0 to first " + maxRect + ",graph 1 behind lw 0 fillcolor rgb 'light-gray'");
            if (extraExists) {
                // "($2+$3)" is to stack up the amounts
-               pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):($2+$3) w boxes lw 2.5 lc 'pink' title  \"unused\" ,\\");
-               pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'red' title \"used\"");
+               pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):($2+$3) w boxes lw 2.5 lc '"
+                       + extraColor + "' title  \"unused\" ,\\");
+               pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc '"
+                       + mainColor + "' title \"used\"");
            } else {
-               pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'red' notitle");
+               pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc '"
+                       + mainColor + "' notitle");
            }
        }
 

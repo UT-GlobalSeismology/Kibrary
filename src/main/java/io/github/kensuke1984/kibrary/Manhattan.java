@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -73,6 +74,7 @@ enum Manhattan {
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     RaypathSelection(34, RaypathSelection.class),
+    TimewindowMerge(37, TimewindowMerge.class),
     StaticCorrectionForger(38, StaticCorrectionForger.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),

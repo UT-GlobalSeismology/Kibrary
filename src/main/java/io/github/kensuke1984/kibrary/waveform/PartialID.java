@@ -104,8 +104,8 @@ public class PartialID extends BasicID {
     public String toString() {
         String partialString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
                 + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
-                + TimewindowData.phasesAsString(phases) + " " + startByte + " " + convolved + " "
-                + voxelPosition + " " + partialType;
+                + TimewindowData.phasesAsString(phases) + " " + convolved + " "
+                + voxelPosition + " " + partialType + " " + startByte;
         return partialString;
     }
 

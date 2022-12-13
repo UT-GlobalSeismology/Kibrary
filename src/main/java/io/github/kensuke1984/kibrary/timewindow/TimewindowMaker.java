@@ -200,10 +200,10 @@ public class TimewindowMaker extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
+
         usePhases = phaseSet(property.parseString("usePhases", "S"));
         avoidPhases = property.containsKey("avoidPhases") ? phaseSet(property.parseString("avoidPhases", null)) : phaseSet(null);
         frontShift = property.parseDouble("frontShift", "20");

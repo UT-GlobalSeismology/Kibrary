@@ -168,11 +168,11 @@ public class BasicWaveformPlotter extends Operation {
 
    @Override
    public void run() throws IOException {
-       BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-       basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent())).toArray(BasicID[]::new);
+       List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath).stream()
+               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
        // get all events included in basicIDs
-       Set<GlobalCMTID> allEvents = Arrays.stream(basicIDs).map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       Set<GlobalCMTID> allEvents = basicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
        // eventDirs of events to be used
        Set<EventFolder> eventDirs;
        if (tendEvents.isEmpty()) {
@@ -198,18 +198,18 @@ public class BasicWaveformPlotter extends Operation {
 
            if (splitComponents) {
                for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(basicIDs).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                   List<BasicID> useIds = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                            && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
-                           .toArray(BasicID[]::new);
+                           .collect(Collectors.toList());
 
                    String fileNameRoot = "plot_" + eventDir.toString() + "_" + component.toString();
                    createPlot(eventDir, useIds, fileNameRoot);
                }
            } else {
-               BasicID[] useIds = Arrays.stream(basicIDs).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
+               List<BasicID> useIds = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
-                       .toArray(BasicID[]::new);
+                       .collect(Collectors.toList());
 
                String fileNameRoot = "plot_" + eventDir.toString();
                createPlot(eventDir, useIds, fileNameRoot);
@@ -224,8 +224,8 @@ public class BasicWaveformPlotter extends Operation {
      * @param fileNameRoot (String) The root of file names of output plot and graph files
      * @throws IOException
      */
-    private void createPlot(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
-        if (ids.length == 0) {
+    private void createPlot(EventFolder eventDir, List<BasicID> ids, String fileNameRoot) throws IOException {
+        if (ids.size() == 0) {
             return;
         }
 

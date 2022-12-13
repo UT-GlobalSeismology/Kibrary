@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -143,7 +142,7 @@ public class DataSelection extends Operation {
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private List<DataFeature> dataFeatureList;
+    private Set<DataFeature> dataFeatureSet;
     private Set<TimewindowData> goodTimewindowSet;
 
     /**
@@ -244,7 +243,7 @@ public class DataSelection extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
         outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", fileTag, dateStr, ".lst"));
         outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", fileTag, dateStr, ".dat"));
-        dataFeatureList = Collections.synchronizedList(new ArrayList<>());
+        dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
@@ -273,7 +272,7 @@ public class DataSelection extends Operation {
 
         System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
         TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
-        DataFeatureListFile.write(dataFeatureList, outputFeaturePath);
+        DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 
     /**
@@ -450,7 +449,7 @@ public class DataSelection extends Operation {
                     feature.setSelected(true);
                     goodTimewindowSet.add(timewindow);
                 }
-                dataFeatureList.add(feature);
+                dataFeatureSet.add(feature);
 
             } catch (Exception e) {
                 System.err.println("!! " + timewindow + " is ignored because an error occurs.");

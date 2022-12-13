@@ -153,6 +153,21 @@ public final class BasicIDFile {
     }
 
     /**
+     * @param idPath
+     * @param dataPath
+     * @return
+     * @throws IOException
+     * @since 2022/12/11
+     * @author otsuru
+     */
+    public static List<BasicID> readAsList(Path idPath, Path dataPath) throws IOException {
+        return Arrays.asList(read(idPath, dataPath));
+    }
+    public static List<BasicID> readAsList(Path idPath) throws IOException {
+        return Arrays.asList(read(idPath));
+    }
+
+    /**
      * Reads only the ID file (and not the waveform file).
      * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @return Array of {@link BasicID} without waveform data
@@ -301,13 +316,13 @@ public final class BasicIDFile {
      */
     public static void run(CommandLine cmdLine) throws IOException {
         // read input
-        BasicID[] ids;
+        List<BasicID> ids;
         if (cmdLine.hasOption("w")) {
-            ids = read(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
+            ids = readAsList(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
             if (cmdLine.hasOption("n")) return;
             outputWaveforms(ids);
         } else {
-            ids = read(Paths.get(cmdLine.getOptionValue("i")));
+            ids = readAsList(Paths.get(cmdLine.getOptionValue("i")));
             if (cmdLine.hasOption("n")) return;
         }
 
@@ -323,9 +338,9 @@ public final class BasicIDFile {
 
         // output
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
-            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
-                    + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");
-            Arrays.stream(ids).forEach(pw::println);
+            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, samplingHz, "
+                    + "minPeriod, maxPeriod, phases, convolved, startByte");
+            ids.forEach(pw::println);
         }
     }
 
@@ -335,7 +350,7 @@ public final class BasicIDFile {
      * @param ids
      * @throws IOException
      */
-    private static void outputWaveforms(BasicID[] ids) throws IOException {
+    private static void outputWaveforms(List<BasicID> ids) throws IOException {
 
         BasicIDPairUp pairer = new BasicIDPairUp(ids);
         List<BasicID> obsList = pairer.getObsList();

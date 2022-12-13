@@ -6,6 +6,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -195,27 +196,6 @@ public class BasicID {
         return type;
     }
 
-    /**
-     * @return Sampling Hz [hz]
-     */
-    public double getSamplingHz() {
-        return samplingHz;
-    }
-
-    /**
-     * @return [s]
-     */
-    public double getStartTime() {
-        return startTime;
-    }
-
-    /**
-     * @return Number of data points
-     */
-    public int getNpts() {
-        return npts;
-    }
-
     public Observer getObserver() {
         return observer;
     }
@@ -228,6 +208,38 @@ public class BasicID {
         return component;
     }
 
+    public Phase[] getPhases() {
+        return phases;
+    }
+
+    /**
+     * @return [s]
+     */
+    public double getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * @return [s]
+     */
+    public double computeEndTime() {
+        return startTime + npts / samplingHz;
+    }
+
+    /**
+     * @return Number of data points
+     */
+    public int getNpts() {
+        return npts;
+    }
+
+    /**
+     * @return Sampling Hz [hz]
+     */
+    public double getSamplingHz() {
+        return samplingHz;
+    }
+
     public double getMinPeriod() {
         return minPeriod;
     }
@@ -236,23 +248,19 @@ public class BasicID {
         return maxPeriod;
     }
 
-    public Phase[] getPhases() {
-        return phases;
-    }
-
-    /**
-     * If this is 100, then the data for this ID starts from 100th byte in the file.
-     * @return [byte]
-     */
-    public long getStartByte() {
-        return startByte;
-    }
-
     /**
      * @return If this ID is convolved
      */
     public boolean isConvolved() {
         return convolved;
+    }
+
+    /**
+     * If this is 100, then the data for this ID starts from 100th byte in the waveform file.
+     * @return [byte]
+     */
+    public long getStartByte() {
+        return startByte;
     }
 
     public boolean containsData() {
@@ -275,11 +283,20 @@ public class BasicID {
         return new Trace(x, data);
     }
 
+    /**
+     * @return
+     * @since 2022/12/13
+     * @author otsuru
+     */
+    public DataEntry toDataEntry() {
+        return new DataEntry(event, observer, component);
+    }
+
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
                 + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
-                + TimewindowData.phasesAsString(phases) + " " + startByte + " " + convolved;
+                + TimewindowData.phasesAsString(phases) + " " + convolved + " " + startByte;
         return basicString;
     }
 

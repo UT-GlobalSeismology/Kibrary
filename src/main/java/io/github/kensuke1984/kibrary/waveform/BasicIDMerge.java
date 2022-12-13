@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -122,8 +121,8 @@ public class BasicIDMerge extends Operation {
         // read BasicIDs from all input files
         List<BasicID> basicIDs = new ArrayList<>();
         for (int i = 0; i < pairNum; i++) {
-            BasicID[] srcIDs = BasicIDFile.read(basicIDPaths.get(i), basicPaths.get(i));
-            Arrays.stream(srcIDs).forEach(id -> basicIDs.add(id));
+            List<BasicID> srcIDs = BasicIDFile.readAsList(basicIDPaths.get(i), basicPaths.get(i));
+            basicIDs.addAll(srcIDs);
         }
 
         // extract set of observers, events

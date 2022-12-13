@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class TimewindowData extends Timewindow {
 
     /**
-     * station
+     * observer
      */
     private final Observer observer;
     /**
@@ -108,7 +108,7 @@ public class TimewindowData extends Timewindow {
         return phases;
     }
 
-    public DataEntry toEntry() {
+    public DataEntry toDataEntry() {
         return new DataEntry(eventID, observer, component);
     }
 
