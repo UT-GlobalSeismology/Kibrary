@@ -1,9 +1,6 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
@@ -23,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * When a set of GlobalCMTIDs is sorted, they will be in dictionary order, not order of event time.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
+ * @since version 0.1.1.2
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
 public final class GlobalCMTID implements Comparable<GlobalCMTID> {
@@ -44,11 +41,93 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
      */
     private static final int LENGTH = 13;
 
-    private final String id;
+    private final String idString;
     /**
      * if {@link #getEventData()} is once invoked, this holds it.
      */
     private volatile NDK ndk;
+
+    /**
+     * Create an instance for an input
+     * If no ID exists for the input, throw {@link RuntimeException}
+     *
+     * @param idString (String) global cmt id
+     */
+    public GlobalCMTID(String idString) {
+        if (isGlobalCMTID(idString)) this.idString = idString;
+        else throw new IllegalArgumentException(idString + " does not exist.");
+    }
+
+    /**
+     * @param sacHeaderData ({@link SACHeaderAccess}) A SAC header. Must contain a valid ID in KEVNM
+     * @return GlobalCMTID of the input sacHeaderData
+     */
+    public static GlobalCMTID of(SACHeaderAccess sacHeaderData) {
+        return new GlobalCMTID(sacHeaderData.getSACString(SACHeaderEnum.KEVNM));
+    }
+
+    /**
+     * Checks whether a String matches the GlobalCMT ID pattern.
+     * @param string (String) String to check
+     * @return (boolean) Whether the String matches the GlobalCMT ID pattern
+     */
+    public static boolean isGlobalCMTID(String string) {
+        return RECENT_GLOBALCMTID_PATTERN.matcher(string).matches() ||
+                PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
+    }
+
+    @Override
+    public int hashCode() {
+        int prime = 31;
+        int result = 1;
+        result = prime * result + ((idString == null) ? 0 : idString.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (!(obj instanceof GlobalCMTID)) return false;
+        GlobalCMTID other = (GlobalCMTID) obj;
+        if (idString == null) {
+            if (other.idString != null) return false;
+        } else if (!idString.equals(other.idString)) return false;
+        return true;
+    }
+
+    /**
+     * Compares global CMT IDs by their ID using {@link String#compareTo(String)}
+     */
+    @Override
+    public int compareTo(GlobalCMTID o) {
+        return idString.compareTo(o.idString);
+    }
+
+    @Override
+    public String toString() {
+        return idString;
+    }
+
+    /**
+     * @return (String) GCMTID padded with spaces at the right.
+     */
+    public String toPaddedString() {
+        return StringUtils.rightPad(idString, LENGTH);
+    }
+
+    /**
+     * If there is a certain existing ID, then returns the {@link GlobalCMTAccess} for this ID.
+     * If not, null will be returned.
+     *
+     * @return ({@link GlobalCMTAccess}) GlobalCMT data for this ID
+     */
+    public GlobalCMTAccess getEventData() {
+        if (ndk == null) synchronized (this) {
+            if (ndk == null) ndk = GlobalCMTCatalog.getNDK(this);
+        }
+        return ndk;
+    }
 
     /**
      * Displays information of input event IDs.
@@ -97,100 +176,6 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             System.out.println("Centroid Time: " + event.getCMTTime());
             System.out.println("Centroid location (latitude longitude radius): " + event.getCmtPosition());
         }
-    }
-
-    /**
-     * Create an instance for an input
-     * If no ID exists for the input, throw {@link RuntimeException}
-     *
-     * @param idStr global cmt id
-     */
-    public GlobalCMTID(String idStr) {
-        if (isGlobalCMTID(idStr)) id = idStr;
-        else throw new IllegalArgumentException(idStr + " does not exist.");
-    }
-
-    /**
-     * @param sacHeaderData must contain a valid ID in KEVNM
-     * @return GlobalCMTID of the input sacHeaderData
-     */
-    public static GlobalCMTID of(SACHeaderAccess sacHeaderData) {
-        return new GlobalCMTID(sacHeaderData.getSACString(SACHeaderEnum.KEVNM));
-    }
-
-    /**
-     *
-     * @param string global cmt id
-     * @return if the string is contained in global cmt catalog
-     */
-    public static boolean isGlobalCMTID(String string) {
-        return RECENT_GLOBALCMTID_PATTERN.matcher(string).matches() ||
-                PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
-    }
-
-    /** TODO Why is this here?
-     * When you want to create Events not contained in Global CMT Catalog, you
-     * can make it by yourself and use this.
-     *
-     * @param catalogFile arbitrary file containing cmt catalog
-     * @return {@link GlobalCMTAccess} written in catalogFile
-     */
-    public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
-        return new HashSet<>(GlobalCMTCatalog.readCatalog(catalogFile, false));
-    }
-
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (!(obj instanceof GlobalCMTID)) return false;
-        GlobalCMTID other = (GlobalCMTID) obj;
-        if (id == null) {
-            if (other.id != null) return false;
-        } else if (!id.equals(other.id)) return false;
-        return true;
-    }
-
-    /**
-     * Compares global CMT IDs by their ID using
-     * {@link String#compareTo(String)}
-     */
-    @Override
-    public int compareTo(GlobalCMTID o) {
-        return id.compareTo(o.id);
-    }
-
-    @Override
-    public String toString() {
-        return id;
-    }
-
-    /**
-     * @return (String) GCMTID padded with spaces at the right.
-     */
-    public String toPaddedString() {
-        return StringUtils.rightPad(id, LENGTH);
-    }
-
-    /**
-     * If there is a certain existing ID, then returns the {@link GlobalCMTAccess} for this ID.
-     * If not, null will be returned.
-     *
-     * @return GlobalCMTData for this
-     */
-    public GlobalCMTAccess getEventData() {
-        if (ndk == null) synchronized (this) {
-            if (ndk == null) ndk = GlobalCMTCatalog.getNDK(this);
-        }
-        return ndk;
     }
 
 }

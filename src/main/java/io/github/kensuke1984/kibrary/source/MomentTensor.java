@@ -70,7 +70,7 @@ public class MomentTensor {
      * Note that the scalar moment must be given in N*m (not dyne*cm).
      *
      * @param m0 (double) scalar moment M<sub>0</sub> [N*m]
-     * @return (double) moment magnitude M<sub>w</sub>
+     * @return (double) moment magnitude M<sub>w</sub> [no unit]
      */
     public static double toMw(double m0) {
         double mw = (FastMath.log10(m0) - 9.1) / 1.5;
@@ -79,40 +79,64 @@ public class MomentTensor {
 
     /**
      * Convert moment magnitude to scalar moment.
-     * @param mw (double) moment magnitude M<sub>w</sub>
+     * @param mw (double) moment magnitude M<sub>w</sub> [no unit]
      * @return (double) scalar moment M<sub>0</sub> [N*m]
      */
     public static final double toM0(double mw) {
         return FastMath.pow(10, 1.5 * mw + 9.1);
     }
 
+    /**
+     * Coefficient for Mrr value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) Mrr coefficient
+     */
     public double getMrrCoefficient() {
         return mrrCoefficient;
     }
 
+    /**
+     * Coefficient for Mtt value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) Mtt coefficient
+     */
     public double getMttCoefficient() {
         return mttCoefficient;
     }
 
+    /**
+     * Coefficient for Mpp value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) Mpp coefficient
+     */
     public double getMppCoefficient() {
         return mppCoefficient;
     }
 
+    /**
+     * Coefficient for Mrt value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) Mrt coefficient
+     */
     public double getMrtCoefficient() {
         return mrtCoefficient;
     }
 
+    /**
+     * Coefficient for Mrp value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) Mrp coefficient
+     */
     public double getMrpCoefficient() {
         return mrpCoefficient;
     }
 
+    /**
+     * Coefficient for Mtp value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) Mtp coefficient
+     */
     public double getMtpCoefficient() {
         return mtpCoefficient;
     }
 
     /**
      * Get the value used for exponential in global CMT expression.
-     * By multiplying this value to the coefficients, the parameters will be expressed in dyne*cm.
+     * By multiplying 10^(this value) to the coefficients, the parameters will be expressed in dyne*cm.
      * @return (int) the value used for exponential in global CMT expression
      */
     public int getMtExponent() {
@@ -120,7 +144,7 @@ public class MomentTensor {
     }
 
     /**
-     * @return (double) Moment magnitude
+     * @return (double) Moment magnitude [no unit]
      */
     public double getMw() {
         return mw;

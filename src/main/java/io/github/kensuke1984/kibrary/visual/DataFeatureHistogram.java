@@ -157,27 +157,31 @@ public class DataFeatureHistogram extends Operation {
     /**
      * Minimum correlation coefficient that is selected
      */
-    private double minCorrelation;
+    private double minSelectedCorrelation;
     /**
      * Maximum correlation coefficient that is selected
      */
-    private double maxCorrelation;
+    private double maxSelectedCorrelation;
     /**
      * Minimum normalized variance that is selected
      */
-    private double minVariance;
+    private double minSelectedVariance;
     /**
      * Maximum normalized variance that is selected
      */
-    private double maxVariance;
+    private double maxSelectedVariance;
     /**
-     * Threshold of amplitude ratio that is selected
+     * Minimum amplitude ratio that is selected
      */
-    private double maxRatio;
+    private double minSelectedRatio;
+    /**
+     * Maximum amplitude ratio that is selected
+     */
+    private double maxSelectedRatio;
     /**
      * Threshold of S/N ratio that is selected
      */
-    private double minSNRatio;
+    private double minSelectedSNRatio;
 
     /**
      * @param args  none to create a property file <br>
@@ -222,6 +226,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Color of histograms to create, from {red, green, blue} (red)");
             pw.println("#color ");
+            pw.println("##########The following are parameters that decide the plot range and interval.");
             pw.println("##(double) Lower bound of correlation coefficient to plot [-1:correlationUpperBound) (-1)");
             pw.println("#correlationLowerBound ");
             pw.println("##(double) Upper bound of correlation coefficient to plot (correlationLowerBound:1] (1)");
@@ -241,18 +246,20 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##(double) Interval of S/N ratio, must be positive (0.2)");
             pw.println("#dSNRatio ");
             pw.println("##########The following are parameters that decide the range of the background shaded box.");
-            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
-            pw.println("#minCorrelation ");
-            pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
-            pw.println("#maxCorrelation ");
-            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance] (0)");
-            pw.println("#minVariance ");
-            pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
-            pw.println("#maxVariance ");
-            pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
-            pw.println("#maxRatio ");
-            pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
-            pw.println("#minSNRatio ");
+            pw.println("##(double) Lower end of selected range for correlation [-1:maxSelectedCorrelation] (0)");
+            pw.println("#minSelectedCorrelation ");
+            pw.println("##(double) Upper end of selected range for correlation [minSelectedCorrelation:1] (1)");
+            pw.println("#maxSelectedCorrelation ");
+            pw.println("##(double) Lower end of selected range for normalized variance [0:maxSelectedVariance] (0)");
+            pw.println("#minSelectedVariance ");
+            pw.println("##(double) Upper end of selected range for normalized variance [minSelectedVariance:) (2)");
+            pw.println("#maxSelectedVariance ");
+            pw.println("##(double) Lower end of selected range for amplitude ratio [0:maxSelectedRatio] (0.5)");
+            pw.println("#minSelectedRatio ");
+            pw.println("##(double) Upper end of selected range for amplitude ratio [minSelectedRatio:) (2)");
+            pw.println("#maxSelectedRatio ");
+            pw.println("##(double) Lower end of selected range for S/N ratio [0:) (0)");
+            pw.println("#minSelectedSNRatio ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -286,6 +293,7 @@ public class DataFeatureHistogram extends Operation {
         }
 
         color = property.parseString("color", "red");
+
         correlationLowerBound = property.parseDouble("correlationLowerBound", "-1");
         correlationUpperBound = property.parseDouble("correlationUpperBound", "1");
         if (correlationLowerBound < -1 || correlationLowerBound >= correlationUpperBound || 1 < correlationUpperBound)
@@ -309,20 +317,21 @@ public class DataFeatureHistogram extends Operation {
         dSNRatio = property.parseDouble("dSNRatio", "0.2");
         if (dSNRatio <= 0) throw new IllegalArgumentException("dSNRatio must be positive.");
 
-        minCorrelation = property.parseDouble("minCorrelation", "0");
-        maxCorrelation = property.parseDouble("maxCorrelation", "1");
-        if (minCorrelation < -1 || minCorrelation > maxCorrelation || 1 < maxCorrelation)
-            throw new IllegalArgumentException("Selected correlation range " + minCorrelation + " , " + maxCorrelation + " is invalid.");
-        minVariance = property.parseDouble("minVariance", "0");
-        maxVariance = property.parseDouble("maxVariance", "2");
-        if (minVariance < 0 || minVariance > maxVariance)
-            throw new IllegalArgumentException("Selected normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
-        maxRatio = property.parseDouble("maxRatio", "2");
-        if (maxRatio < 1)
-            throw new IllegalArgumentException("Selected amplitude ratio threshold " + maxRatio + " is invalid, must be >= 1.");
-        minSNRatio = property.parseDouble("minSNRatio", "0");
-        if (minSNRatio < 0)
-            throw new IllegalArgumentException("Selected S/N ratio threshold " + minSNRatio + " is invalid, must be >= 0.");
+        minSelectedCorrelation = property.parseDouble("minSelectedCorrelation", "0");
+        maxSelectedCorrelation = property.parseDouble("maxSelectedCorrelation", "1");
+        if (minSelectedCorrelation < -1 || minSelectedCorrelation > maxSelectedCorrelation || 1 < maxSelectedCorrelation)
+            throw new IllegalArgumentException("Selected correlation range " + minSelectedCorrelation + " , " + maxSelectedCorrelation + " is invalid.");
+        minSelectedVariance = property.parseDouble("minSelectedVariance", "0");
+        maxSelectedVariance = property.parseDouble("maxSelectedVariance", "2");
+        if (minSelectedVariance < 0 || minSelectedVariance > maxSelectedVariance)
+            throw new IllegalArgumentException("Selected normalized variance range " + minSelectedVariance + " , " + maxSelectedVariance + " is invalid.");
+        minSelectedRatio = property.parseDouble("minSelectedRatio", "0.5");
+        maxSelectedRatio = property.parseDouble("maxSelectedRatio", "2");
+        if (minSelectedRatio < 0 || minSelectedRatio > maxSelectedRatio)
+            throw new IllegalArgumentException("Selected amplitude ratio range " + minSelectedRatio + " , " + maxSelectedRatio + " is invalid.");
+        minSelectedSNRatio = property.parseDouble("minSelectedSNRatio", "0");
+        if (minSelectedSNRatio < 0)
+            throw new IllegalArgumentException("Selected S/N ratio threshold " + minSelectedSNRatio + " is invalid, must be >= 0.");
     }
 
    @Override
@@ -537,11 +546,11 @@ public class DataFeatureHistogram extends Operation {
 
        // plot histograms
        createPlot(corrFileNameRoot, "Correlation", dCorrelation, correlationLowerBound, correlationUpperBound,
-               dCorrelation * 5, minCorrelation, maxCorrelation, true, extraExists);
+               dCorrelation * 5, minSelectedCorrelation, maxSelectedCorrelation, true, extraExists);
        createPlot(varFileNameRoot, "Normalized variance", dVariance, 0, varianceUpperBound,
-               dVariance * 5, minVariance, maxVariance, false, extraExists);
+               dVariance * 5, minSelectedVariance, maxSelectedVariance, false, extraExists);
        createPlot(ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
-               dRatio * 5, 1 / maxRatio, maxRatio, false, extraExists);
+               dRatio * 5, minSelectedRatio, maxSelectedRatio, false, extraExists);
 
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
@@ -550,7 +559,7 @@ public class DataFeatureHistogram extends Operation {
                            + " " + snRatios[i] + " " + extraSnRatios[i]);
            }
            createPlot(snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
-                   dSNRatio * 5, minSNRatio, snRatioUpperBound, false, extraExists);
+                   dSNRatio * 5, minSelectedSNRatio, snRatioUpperBound, false, extraExists);
        }
    }
 

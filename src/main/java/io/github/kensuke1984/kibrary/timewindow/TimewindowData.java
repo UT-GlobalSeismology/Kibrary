@@ -11,15 +11,16 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Timewindow for a raypath (a pair of a source and a receiver).
+ * Timewindow data for an (event, observer, component) data pair.
+ * <p>
+ * Contains information of {@link GlobalCMTID}, {@link Observer}, {@link SACComponent}, and {@link Phase}s,
+ * in addition to the start and end times specified in {@link Timewindow}.
+ *
  * <p>
  * This class is <b>IMMUTABLE</b>.
- * </p>
- * <p>
- * The information contains a component, a station and a global CMT ID.
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @since version 0.1.3
  */
 public class TimewindowData extends Timewindow {
 
@@ -40,26 +41,13 @@ public class TimewindowData extends Timewindow {
      */
     private final Phase[] phases;
 
-    public TimewindowData(double startTime, double endTime, Observer observer, GlobalCMTID id,
+    public TimewindowData(double startTime, double endTime, Observer observer, GlobalCMTID eventID,
             SACComponent component, Phase[] phases) {
         super(startTime, endTime);
-        this.eventID = id;
+        this.eventID = eventID;
         this.component = component;
         this.observer = observer;
         this.phases = phases;
-    }
-
-    @Override
-    public int compareTo(Timewindow o) {
-        if (!(o instanceof TimewindowData)) return super.compareTo(o);
-        TimewindowData ot = (TimewindowData) o;
-        int sta = getObserver().compareTo(ot.getObserver());
-        if (sta != 0) return sta;
-        int id = getGlobalCMTID().compareTo(ot.getGlobalCMTID());
-        if (id != 0) return id;
-        int comp = getComponent().compareTo(ot.getComponent());
-        if (comp != 0) return comp;
-        return super.compareTo(o);
     }
 
     @Override
@@ -88,6 +76,19 @@ public class TimewindowData extends Timewindow {
         return true;
     }
 
+    @Override
+    public int compareTo(Timewindow o) {
+        if (!(o instanceof TimewindowData)) return super.compareTo(o);
+        TimewindowData ot = (TimewindowData) o;
+        int sta = getObserver().compareTo(ot.getObserver());
+        if (sta != 0) return sta;
+        int id = getGlobalCMTID().compareTo(ot.getGlobalCMTID());
+        if (id != 0) return id;
+        int comp = getComponent().compareTo(ot.getComponent());
+        if (comp != 0) return comp;
+        return super.compareTo(o);
+    }
+
     public Observer getObserver() {
         return observer;
     }
@@ -101,7 +102,7 @@ public class TimewindowData extends Timewindow {
     }
 
     /**
-     * @return
+     * @return (Phase array) Phases included in this timewindow
      * @author anselme
      */
     public Phase[] getPhases() {
@@ -120,7 +121,7 @@ public class TimewindowData extends Timewindow {
 
     /**
      * Change array of phases into a String for outputting in files. TODO There may be somewhere else to put this method.
-     * @param phases (array of Phase)
+     * @param phases (Phase array)
      * @return (String) Phase names connected with ",", or "null" when there are no phases.
      */
     public static String phasesAsString(Phase[] phases) {

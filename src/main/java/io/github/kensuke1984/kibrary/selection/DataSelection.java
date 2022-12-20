@@ -130,7 +130,11 @@ public class DataSelection extends Operation {
      */
     private double maxVariance;
     /**
-     * Threshold of amplitude ratio (upper limit; lower limit is its inverse)
+     * Minimum amplitude ratio
+     */
+    private double minRatio;
+    /**
+     * Maximum of amplitude ratio
      */
     private double maxRatio;
     /**
@@ -188,7 +192,9 @@ public class DataSelection extends Operation {
             pw.println("#minVariance ");
             pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
             pw.println("#maxVariance ");
-            pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
+            pw.println("##(double) Lower threshold of amplitude ratio [0:maxRatio] (0.5)");
+            pw.println("#minRatio ");
+            pw.println("##(double) Upper threshold of amplitude ratio [minRatio:) (2)");
             pw.println("#maxRatio ");
             pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNratio ");
@@ -231,9 +237,10 @@ public class DataSelection extends Operation {
         maxVariance = property.parseDouble("maxVariance", "2");
         if (minVariance < 0 || minVariance > maxVariance)
             throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
+        minRatio = property.parseDouble("minRatio", "0.5");
         maxRatio = property.parseDouble("maxRatio", "2");
-        if (maxRatio < 1)
-            throw new IllegalArgumentException("Amplitude ratio threshold " + maxRatio + " is invalid, must be >= 1.");
+        if (minRatio < 0 || minRatio > maxRatio)
+            throw new IllegalArgumentException("Amplitude ratio range " + minRatio + " , " + maxRatio + " is invalid.");
         minSNratio = property.parseDouble("minSNratio", "0");
         if (minSNratio < 0)
             throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
@@ -319,9 +326,9 @@ public class DataSelection extends Operation {
         double var = feature.getVariance();
         double sn = feature.getSNRatio();
 
-        boolean isok = (1 / maxRatio <= posSideRatio && posSideRatio <= maxRatio)
-                && (1 / maxRatio <= negSideRatio && negSideRatio <= maxRatio)
-                && (1 / maxRatio <= absRatio && absRatio <= maxRatio) && (minCorrelation <= cor &&  cor <= maxCorrelation)
+        boolean isok = (minRatio <= posSideRatio && posSideRatio <= maxRatio)
+                && (minRatio <= negSideRatio && negSideRatio <= maxRatio)
+                && (minRatio <= absRatio && absRatio <= maxRatio) && (minCorrelation <= cor &&  cor <= maxCorrelation)
                 && (minVariance <= var && var <= maxVariance) && (minSNratio <= sn);
         return isok;
     }

@@ -1,35 +1,27 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
-import edu.sc.seis.TauP.TauP_Pierce;
-import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 
 public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
 
-        TauP_Pierce timeTool = new TauP_Pierce("prem");
-        timeTool.setAddDepths("2861,2871");
-        String[] phaseNames = "S,ScS".split(",");
-        timeTool.setPhaseNames(phaseNames);
-        timeTool.setSourceDepth(new GlobalCMTID("201506231218A").getEventData().getCmtPosition().getDepth()); //TODO use this for later calculation
+        Set<DataFeature> featureSet = DataFeatureListFile.read(Paths.get(args[0]));
 
-        timeTool.calculate(80);
-        List<Arrival> arrivals = timeTool.getArrivals();
+        Path acceptedPath = Paths.get("acceptedEntry.lst");
+        Set<DataEntry> acceptedSet = featureSet.stream().filter(feature -> 0.2 < feature.getAbsRatio() && feature.getAbsRatio() < 5)
+                .map(feature -> feature.getTimewindow().toDataEntry()).collect(Collectors.toSet());
 
-        for (Arrival arrival : arrivals) {
-            System.err.println(arrival);
-
-            TimeDist[] pierces = arrival.getPierce();
-            for (TimeDist pierce : pierces) {
-                System.err.println(pierce);
-            }
-        }
-
+        DataEntryListFile.writeFromSet(acceptedSet, acceptedPath);
     }
 }

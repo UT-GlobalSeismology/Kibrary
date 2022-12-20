@@ -96,6 +96,7 @@ public class RaypathMapper extends Operation {
     private Path dataEntryPath;
     private Path voxelPath;
 
+    private boolean forSlides;
     private boolean cutAtPiercePoint;
     private String[] piercePhases;
     private double lowerPierceRadius;
@@ -155,6 +156,8 @@ public class RaypathMapper extends Operation {
             pw.println("##########Overall settings");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides (true)");
+            pw.println("#forSlides ");
             pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
             pw.println("#cutAtPiercePoint ");
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
@@ -208,6 +211,7 @@ public class RaypathMapper extends Operation {
         }
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
+        forSlides = property.parseBoolean("forSlides", "true");
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
         piercePhases = property.parseStringArray("piercePhases", "ScS");
         lowerPierceRadius = property.parseDouble("lowerPierceRadius", "3480");
@@ -382,6 +386,8 @@ public class RaypathMapper extends Operation {
 
     private void outputGMT() throws IOException {
         Path gmtPath = outPath.resolve(gmtFileName);
+        String fontSize = forSlides ? "25p" : "15p";
+        String legendWidth = forSlides ? "6c" : "4.5cm";
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
@@ -392,9 +398,9 @@ public class RaypathMapper extends Operation {
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
-            pw.println("gmt set FONT 25p");
-            pw.println("gmt set FONT_LABEL 15p,Helvetica,black");
-            pw.println("gmt set FONT_ANNOT_PRIMARY 25p");
+            pw.println("gmt set FONT " + fontSize);
+//            pw.println("gmt set FONT_LABEL 15p,Helvetica,black");
+//            pw.println("gmt set FONT_ANNOT_PRIMARY " + fontSize);
             pw.println("");
             pw.println("# parameters for gmt pscoast");
             pw.println("R='-R" + decideMapRegion() + "'");
@@ -499,7 +505,7 @@ public class RaypathMapper extends Operation {
             // legend
             if (colorMode > 0 && legendJustification.equals("none") == false) {
                 pw.println("#------- Legend");
-                pw.println("gmt pslegend -Dj" + legendJustification + "+w6c -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $outputps");
+                pw.println("gmt pslegend -Dj" + legendJustification + "+w" + legendWidth + " -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $outputps");
                 // header of legend
                 pw.println("H - - " + headerFor(colorMode));
                 // contents
@@ -601,10 +607,11 @@ public class RaypathMapper extends Operation {
             lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
             // space for legend
             if (colorMode > 0) {
+                double fix = forSlides ? 60 : 40;
                 if (legendJustification.equals("TL") || legendJustification.equals("BL")) {
-                    lonMin -= 40;
+                    lonMin -= fix;
                 } else if (legendJustification.equals("TR") || legendJustification.equals("BR")) {
-                    lonMax += 40;
+                    lonMax += fix;
                 }
             }
 
