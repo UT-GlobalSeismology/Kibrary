@@ -91,8 +91,15 @@ public class PerturbationMapper extends Operation {
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
-        String fileName = perturbationPath.toString();
+        String fileName = perturbationPath.getFileName().toString();
         String fileNameRoot = fileName.substring(0, fileName.lastIndexOf("."));
+
+        // copy perturbation file to current directory
+        Path outPerturbationPath = workPath.resolve(fileName);
+        if (!Files.exists(outPerturbationPath)) {
+            Files.copy(perturbationPath, outPerturbationPath);
+        }
+
         // output shellscripts
         PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, mapRegion, scale, fileNameRoot);
         script.write(workPath);
