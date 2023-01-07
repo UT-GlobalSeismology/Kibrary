@@ -1,6 +1,8 @@
 package io.github.kensuke1984.kibrary.waveform;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -123,6 +125,43 @@ public class BasicID {
                 maxPeriod, phases, startByte, convolved, data);
     }
 
+    /**
+     * Extract all timewindows from a set of input timewindows
+     * that have the same (event, observer, component) and overlap with the timewindow of this basicID.
+     * @param timewindowSet (Set of {@link TimewindowData}) Input timewindow set to search from
+     * @return (Set of {@link TimewindowData}) All timewindows that overlap with this
+     */
+    public Set<TimewindowData> findAllOverlappingWindows(Set<TimewindowData> timewindowSet) {
+        Set<TimewindowData> overlappingWindows = timewindowSet.stream()
+                .filter(window -> window.getGlobalCMTID().equals(event)
+                        && window.getObserver().equals(observer)
+                        && window.getComponent().equals(component)
+                        // there must be some overlap between the windows
+                        && window.getStartTime() < computeEndTime()
+                        && startTime < window.getEndTime())
+                .collect(Collectors.toSet());
+        return overlappingWindows;
+    }
+
+    /**
+     * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
+     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
+     * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
+     *
+     * @param id0 {@link BasicID}
+     * @param id1 {@link BasicID}
+     * @return if the IDs are same
+     */
+    public static boolean isPair(BasicID id0, BasicID id1) {
+        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+                && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
+                && id0.getSamplingHz() == id1.getSamplingHz()
+                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
+                && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
+        return res;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -172,26 +211,6 @@ public class BasicID {
         return true;
     }
 
-    /**
-     * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
-     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
-     * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
-     *
-     * @param id0 {@link BasicID}
-     * @param id1 {@link BasicID}
-     * @return if the IDs are same
-     */
-    public static boolean isPair(BasicID id0, BasicID id1) {
-        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-                && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                && id0.getSamplingHz() == id1.getSamplingHz()
-                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
-                && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
-                && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
-        return res;
-    }
-
-
     public WaveformType getWaveformType() {
         return type;
     }
@@ -223,7 +242,7 @@ public class BasicID {
      * @return [s]
      */
     public double computeEndTime() {
-        return startTime + npts / samplingHz;
+        return startTime + (npts - 1) / samplingHz;
     }
 
     /**

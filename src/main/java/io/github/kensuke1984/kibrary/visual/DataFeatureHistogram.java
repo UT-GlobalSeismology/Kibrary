@@ -47,7 +47,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * </ul>
  * If {@link DataFeature#isSelected()} is true, it will be counted in the 'main' list;
  * otherwise, it will be counted in the 'extra' list.
- * Histograms for S/N ratios will be created along with the 3 others in this case.
+ * 'Improvement windows' cannot be used in this case.
+ * Histograms for S/N ratios will be created along with the 3 others.
  *
  * <p>
  * When a {@link BasicIDFile} pair is given as input,
@@ -404,33 +405,35 @@ public class DataFeatureHistogram extends Operation {
            BasicID obsID = obsIDs.get(i);
            BasicID synID = synIDs.get(i);
 
-           RealVector obsU;
-           RealVector synU;
-           TimewindowData timewindow;
            if (improvementWindowSet == null) {
                // if improvement window does not exist, use the whole window
-               obsU = new ArrayRealVector(obsID.getData(), false);
-               synU = new ArrayRealVector(synID.getData(), false);
+               RealVector obsU = new ArrayRealVector(obsID.getData(), false);
+               RealVector synU = new ArrayRealVector(synID.getData(), false);
                // Start time of synthetic waveform must be used, since it is the correct one when time shift is applied.
                double startTime = synID.getStartTime();
                double endTime = synID.computeEndTime();
-               timewindow = new TimewindowData(startTime, endTime,
+               TimewindowData timewindow = new TimewindowData(startTime, endTime,
                        synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
                // snRatio cannot be decided, so set 0
                DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, selected);
                featureSet.add(feature);
            } else {
                // if improvement window exists, cut to that window
-               Set<TimewindowData> improvementWindows = findImprovementWindows(synID, improvementWindowSet);
+               // Time frame of synthetic waveform must be compared, since it is the correct one when time shift is applied.
+               // All windows are worked for in case the improvement window is split into several parts.
+               Set<TimewindowData> improvementWindows = synID.findAllOverlappingWindows(improvementWindowSet);
+               if (improvementWindows.size() == 0) {
+                   System.err.println(" No matching improvement window: " + synID.toDataEntry());
+               }
                for (TimewindowData improvementWindow : improvementWindows) {
                    // Time frame of synthetic waveform must be used, since it is the correct one when time shift is applied.
-                   double[] x = synID.toTrace().cutWindow(improvementWindow).getX();
-                   double startTime = x[0];
-                   double endTime = x[x.length - 1];
+                   double[] cutX = synID.toTrace().cutWindow(improvementWindow).getX();
+                   double startTime = cutX[0];
+                   double endTime = cutX[cutX.length - 1];
                    // observed waveform must be shifted before cutting
-                   obsU = obsID.toTrace().withXAs(synID.toTrace().getX()).cutWindow(startTime, endTime).getYVector();
-                   synU = synID.toTrace().cutWindow(startTime, endTime).getYVector();
-                   timewindow = new TimewindowData(startTime, endTime,
+                   RealVector obsU = obsID.toTrace().withXAs(synID.toTrace().getX()).cutWindow(startTime, endTime).getYVector();
+                   RealVector synU = synID.toTrace().cutWindow(startTime, endTime).getYVector();
+                   TimewindowData timewindow = new TimewindowData(startTime, endTime,
                            synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
                    // snRatio cannot be decided, so set 0
                    DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, selected);
@@ -439,18 +442,6 @@ public class DataFeatureHistogram extends Operation {
            }
        }
        return featureSet;
-   }
-
-   private static Set<TimewindowData> findImprovementWindows(BasicID basicID, Set<TimewindowData> improvementWindowSet) {
-       Set<TimewindowData> matchingWindows = improvementWindowSet.stream()
-               .filter(window -> window.getGlobalCMTID().equals(basicID.getGlobalCMTID())
-                       && window.getObserver().equals(basicID.getObserver())
-                       && window.getComponent().equals(basicID.getSacComponent())
-                       // there must be some overlap between the windows
-                       && window.getStartTime() < basicID.computeEndTime()
-                       && basicID.getStartTime() < window.getEndTime())
-               .collect(Collectors.toSet());
-       return matchingWindows;
    }
 
    /**
