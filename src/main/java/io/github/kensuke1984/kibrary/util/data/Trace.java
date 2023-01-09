@@ -339,7 +339,7 @@ public final class Trace {
             xList.add(xArray[i]);
             yList.add(yArray[i]);
         });
-        if (xList.isEmpty()) throw new RuntimeException("No data in [" + start + ", " + end + "]");
+        if (xList.isEmpty()) throw new IllegalStateException("No data in [" + start + ", " + end + "]");
         return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
                 yList.stream().mapToDouble(Double::doubleValue).toArray());
     }

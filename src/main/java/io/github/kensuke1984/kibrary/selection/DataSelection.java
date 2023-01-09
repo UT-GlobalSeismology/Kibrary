@@ -51,6 +51,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Resulting data selection entries will be created for each timewindow,
  * thus specified by a (event, observer, component, timeframe)-pair.
  * <p>
+ * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each timewindow.
+ * <p>
  * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
  * See {@link TimewindowDataFile}.
  * <p>
@@ -301,21 +303,6 @@ public class DataSelection extends Operation {
         if (corrs.size() == 0)
             throw new RuntimeException("Found no static correction for window " + window);
         return corrs.get(0);
-    }
-
-    /**
-     * @param timewindow timewindow to shift
-     * @return if there is time shift information for the input timewindow, then
-     * creates new timewindow and returns it, otherwise, just returns
-     * the input one.
-     */
-    private TimewindowData shift(TimewindowData timewindow) {
-        if (staticCorrectionSet.isEmpty())
-            return timewindow;
-        StaticCorrectionData foundShift = getStaticCorrection(timewindow);
-        double value = foundShift.getTimeshift();
-        return new TimewindowData(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
-                foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
     private boolean check(DataFeature feature) throws IOException {
