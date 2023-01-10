@@ -106,28 +106,29 @@ public class NetworkLookup extends Operation {
        Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
 
        // search for network names
-       Set<String> networkDataLines = new HashSet<>();
-       for (GlobalCMTID event : eventSet) {
-           Set<DataEntry> correspondingEntrySet = entrySet.stream().filter(entry -> entry.getEvent().equals(event))
+       Set<Network> networkDataSet = new HashSet<>();
+       for (GlobalCMTID eventID : eventSet) {
+           Set<DataEntry> correspondingEntrySet = entrySet.stream().filter(entry -> entry.getEvent().equals(eventID))
                    .collect(Collectors.toSet());
-           Set<String> networks = correspondingEntrySet.stream().map(entry -> entry.getObserver().getNetwork())
+           Set<String> networkCodes = correspondingEntrySet.stream().map(entry -> entry.getObserver().getNetwork())
                    .collect(Collectors.toSet());
 
-           for (String network : networks) {
-               String networkDescription = lookupDescription(network, event);
+           for (String networkCode : networkCodes) {
+               String networkDescription = lookupDescription(networkCode, eventID);
                if (networkDescription != null) {
-                   networkDataLines.add(network + "|" + networkDescription);
+                   networkDataSet.add(new Network(networkCode, networkDescription));
                } else {
-                   System.err.println("No stationXML files found for " + network + " " + event);
+                   System.err.println("No stationXML files found for " + networkCode + " " + eventID);
                }
            }
        }
 
        // output
        Path outputPath = workPath.resolve("network" + GadgetAid.getTemporaryString() + ".txt");
+       System.err.println("Outputting in " + outputPath);
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
            pw.println("# network|description");
-           networkDataLines.stream().sorted().forEach(pw::println);
+           networkDataSet.stream().sorted().forEach(pw::println);
        }
    }
 
@@ -173,4 +174,57 @@ public class NetworkLookup extends Operation {
        return description;
    }
 
+    private class Network implements Comparable<Network> {
+        private String code;
+        private String description;
+
+        public Network(String code, String description) {
+            this.code = code;
+            this.description = description;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((code == null) ? 0 : code.hashCode());
+            result = prime * result + ((description == null) ? 0 : description.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Network other = (Network) obj;
+
+            if (code == null) {
+                if (other.code != null)
+                    return false;
+            } else if (!code.equals(other.code))
+                return false;
+
+            if (description == null) {
+                if (other.description != null)
+                    return false;
+            } else if (!description.equals(other.description))
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int compareTo(Network o) {
+            return code.compareTo(o.code);
+        }
+
+        @Override
+        public String toString() {
+            return code + "|" + description;
+        }
+    }
 }
