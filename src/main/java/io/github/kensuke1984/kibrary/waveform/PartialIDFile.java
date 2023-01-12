@@ -9,18 +9,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -28,7 +30,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 
 /**
  * Utilities for a pair of an ID file and a waveform file. <br>
@@ -291,128 +292,42 @@ public final class PartialIDFile {
                 usablephases, startByte, isConvolved, perturbationLocation, partialType);
     }
 
-
-///////////////TODO : change or delete following
-
-    /**
-     * Creates lists of stations, events, partials.(if they don't exist) Options:
-     * -a: show all IDs
-     * --debug: create debug files
-     *
-     * @param args [options] [parameter file name]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        if (args.length == 1) {
-            PartialID[] ids = read(Paths.get(args[0]));
-            String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
-            outputStations(header, ids);
-            outputGlobalCMTID(header, ids);
-            outputPerturbationPoints(header, ids);
-        } else if (args.length == 2 && args[0].equals("-a")) {
-            PartialID[] ids = read(Paths.get(args[1]));
-            Arrays.stream(ids).forEach(System.out::println);
-        } else if (args.length == 2 && args[0].equals("--debug")) {
-            PartialID[] ids = read(Paths.get(args[1]));
-            Set<PartialType> types = new HashSet<>();
-            for (PartialID id : ids)
-                types.add(id.getPartialType());
-            for (PartialType type : types) {
-                List<ObserverEvent> tmpList = Arrays.stream(ids).parallel().filter(id -> id.getPartialType().equals(type))
-                        .map(id -> new ObserverEvent(id.getObserver(), id.getGlobalCMTID(), id.getStartTime()))
-                        .distinct().collect(Collectors.toList());
-                Collections.sort(tmpList);
-                Path outPath = Paths.get(type + ".inf");
-                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
-                    tmpList.forEach(tmp -> pw.println(tmp));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+    public static void main(String[] args) throws IOException{
+    	Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+    
+    public static Options defineOptions() throws IOException{
+    	Options options = Summon.defaultOptions();
+        //input
+        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("partailIDFile").required()
+                .desc("Export content of partial ID file").build());
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+        return options;
+    }
+    
+    public static void run(CommandLine cmdLine) throws IOException{
+    	BasicID[] ids;
+    	ids = read(Paths.get(cmdLine.getOptionValue("i")));
+        Path outputIdsPath;
+        if (cmdLine.hasOption("o")) {
+            outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
         } else {
-            System.out.println("usage:[-a | --debug] [id file name]\n if \"-a\", show all IDs\n if \"--debug\", makes station-event list for all partial types");
+            // set the output file name the same as the input, but with extension changed to txt
+            String idFileName = Paths.get(cmdLine.getOptionValue("i")).getFileName().toString();
+            outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
+        }
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
+            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
+                    + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");
+            Arrays.stream(Arrays.copyOfRange(ids,0,10)).forEach(pw::println);
         }
     }
-
-    private static void outputPerturbationPoints(String header, PartialID[] pids) throws IOException {
-        Path outPath = Paths.get(header + ".par");
-        if (Files.exists(outPath)) return;
-        List<String> lines =
-                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.partialType, id.voxelPosition, 1))
-                        .distinct().map(Physical3DParameter::toString).sorted().collect(Collectors.toList());
-        Files.write(outPath, lines);
-        System.err.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");
-    }
-
-    private static void outputStations(String header, PartialID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".station");
-        if (Files.exists(outPath)) return;
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.observer).distinct()
-                .map(s -> s.getStation() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
-        Files.write(outPath, lines);
-        System.err.println(outPath + " is created as a list of stations.");
-    }
-
-    private static void outputGlobalCMTID(String header, PartialID[] ids) throws IOException {
-        Path outPath = Paths.get(header + ".globalCMTID");
-        if (Files.exists(outPath)) return;
-        List<String> lines = Arrays.stream(ids).parallel().map(id -> id.event.toString()).distinct().sorted()
-                .collect(Collectors.toList());
-        Files.write(outPath, lines);
-        System.err.println(outPath + " is created as a list of global CMT IDs.");
-    }
-
-    /**
-     * @author anselme
-     * Static class for debug informations
-     */
-    public static class ObserverEvent implements Comparable<ObserverEvent> {
-        public Observer observer;
-        public GlobalCMTID event;
-        public double startTime;
-        public ObserverEvent(Observer observer, GlobalCMTID event, double startTime) {
-            this.observer = observer;
-            this.event = event;
-            this.startTime = startTime;
-        }
-        @Override
-        public int compareTo(ObserverEvent o) {
-            int compareObserver = observer.compareTo(o.observer);
-            if (compareObserver != 0)
-                return compareObserver;
-            else if (event.compareTo(o.event) != 0)
-                return event.compareTo(o.event);
-            else
-                return Double.compare(this.startTime, o.startTime);
-        }
-        @Override
-        public String toString() {
-            return observer.toString() + " " + event.toString() + " " + String.format("%.2f", startTime);
-        }
-        @Override
-        public int hashCode() {
-            return observer.hashCode() * event.hashCode() * 31 * (int) startTime;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ObserverEvent other = (ObserverEvent) obj;
-            double otherStartTime = other.startTime;
-            if (!observer.equals(other.observer))
-                return false;
-            if (!event.equals(other.event))
-                return false;
-            if (Math.abs(startTime - otherStartTime) > 0.1)
-                return false;
-            return true;
-        }
-    }
-
-///////////////change up to here
-
 }

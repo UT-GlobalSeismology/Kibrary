@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.visual.DistanceHistogram;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
 
 /**
@@ -62,6 +63,7 @@ enum Brooklyn {
     // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
     // Partial 50
+    PartialIDFile(55, PartialIDFile.class),
     // Inversion 60
     // Temporal 100
     ;
