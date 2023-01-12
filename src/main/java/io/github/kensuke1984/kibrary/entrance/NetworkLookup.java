@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -23,6 +24,12 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
+ * Class to create a list of networks that are used in certain sets of data.
+ * To be used for creating a table to put in Supplementary Materials of a paper.
+ * <p>
+ * A {@link DataEntryListFile} shall be given as the set of data for input.
+ * Paths of {@link DataLobby} folders must be set to look up the network descriptions in stationXML files.
+ *
  * @author otsuru
  * @since 2023/1/10
  */
@@ -70,7 +77,7 @@ public class NetworkLookup extends Operation {
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##Path of a data entry list file, must be set");
-            pw.println("#dataEntryPath selectedEntry.lst");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##########From here on, list up paths of data lobby folders containing stationXML files.");
             pw.println("##########  Up to " + MAX_NUM + " folders can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
@@ -124,7 +131,8 @@ public class NetworkLookup extends Operation {
        }
 
        // output
-       Path outputPath = workPath.resolve("network" + GadgetAid.getTemporaryString() + ".txt");
+       String dateStr = GadgetAid.getTemporaryString();
+       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("network", fileTag, dateStr, ".txt"));
        System.err.println("Outputting in " + outputPath);
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
            pw.println("# network|description");
@@ -174,6 +182,13 @@ public class NetworkLookup extends Operation {
        return description;
    }
 
+    /**
+     * A class to store information of network code and description.
+     * This class is needed because Map<>() does not work;
+     * there may be networks with same code but different description,
+     * or those with different codes but same description.
+     * {@link #compareTo(Network)} is set to sort by code.
+     */
     private class Network implements Comparable<Network> {
         private String code;
         private String description;
