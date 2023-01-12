@@ -232,7 +232,7 @@ public final class TimewindowDataFile {
     }
 
     /**
-     * The binary-format timewindow information file is output in the standard output.
+     * The binary-format timewindow information file is output in ascii format.
      *
      * @param args [information file name]
      * @throws IOException if an I/O error occurs

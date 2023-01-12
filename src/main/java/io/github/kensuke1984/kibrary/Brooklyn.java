@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.visual.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.visual.DistanceHistogram;
@@ -53,6 +54,7 @@ enum Brooklyn {
     DataAligner(13, DataAligner.class),
     LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
+    SACFileAccess(21, SACFileAccess.class),
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
