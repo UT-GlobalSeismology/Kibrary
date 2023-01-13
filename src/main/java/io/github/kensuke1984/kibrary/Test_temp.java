@@ -1,21 +1,25 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import edu.sc.seis.TauP.TauModelException;
-import io.github.kensuke1984.kibrary.selection.DataFeature;
-import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
+        HorizontalPosition posE = new HorizontalPosition(-14, -69);
+        HorizontalPosition posS = new HorizontalPosition(-16, 28);
 
+        System.err.println(posE.computeEpicentralDistanceDeg(posS));
+
+        double baz = posS.computeAzimuthDeg(posE);
+        System.err.println(baz);
+        System.err.println(posS.pointAlongAzimuth(baz, 24));
+        System.err.println(posS.pointAlongAzimuth(baz, 60));
+
+        System.err.println(posS.pointAlongAzimuth(0, 10));
+/*
         Set<DataFeature> featureSet = DataFeatureListFile.read(Paths.get(args[0]));
 
         Path acceptedPath = Paths.get("acceptedEntry.lst");
@@ -23,5 +27,6 @@ public class Test_temp {
                 .map(feature -> feature.getTimewindow().toDataEntry()).collect(Collectors.toSet());
 
         DataEntryListFile.writeFromSet(acceptedSet, acceptedPath);
+ */
     }
 }
