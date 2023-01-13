@@ -19,6 +19,9 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Merges {@link TimewindowDataFile}s.
+ *
+ * TODO merge windows of same entry
+ *
  * @author otsuru
  * @since 2022/12/13
  */
@@ -36,6 +39,9 @@ public class TimewindowMerge extends Operation {
      */
     private String fileTag;
 
+    /**
+     * Paths of input timewindow files.
+     */
     private List<Path> timewindowPaths = new ArrayList<>();
 
 
@@ -59,7 +65,7 @@ public class TimewindowMerge extends Operation {
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##########From here on, list up paths of timewindow files.");
-            pw.println("########## Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
+            pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " file");
                 pw.println("#timewindowPath" + i + " timewindow.dat");
