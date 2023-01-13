@@ -29,8 +29,9 @@ class StationXmlFile {
     private static final String STATION_URL_IRIS = "http://service.iris.edu/fdsnws/station/1/query?";
     private static final String STATION_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/station/1/query?";
     private String url;
-    private String xmlFile;
-    private Path xmlPath;
+
+    private final String xmlFileName;
+    private final Path xmlPath;
 
     private String network = "";
     private String station = "";
@@ -43,6 +44,7 @@ class StationXmlFile {
     private String depth = "";
     private String azimuth = "";
     private String dip = "";
+    private String networkDescription = "";
 
     /**
      * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
@@ -61,9 +63,18 @@ class StationXmlFile {
         this.channel = channel;
 
         // file name is "station.II.PFO.00.BHE.xml" or "station.IU.INU..BHE.xml"
-        xmlFile = "station." + network + "." + station + "." + location + "." + channel + ".xml";
-        xmlPath = parentPath.resolve(xmlFile);
+        xmlFileName = "station." + network + "." + station + "." + location + "." + channel + ".xml";
+        xmlPath = parentPath.resolve(xmlFileName);
+    }
 
+    StationXmlFile(Path xmlPath) {
+        this.xmlPath = xmlPath;
+        this.xmlFileName = xmlPath.getFileName().toString();
+        String[] parts = xmlFileName.split("\\.");
+        network = parts[1];
+        station = parts[2];
+        location = parts[3];
+        channel = parts[4];
     }
 
     /**
@@ -135,7 +146,7 @@ class StationXmlFile {
             parser.parse(xmlPath.toFile(), handler);
 
         } catch (SAXException | ParserConfigurationException | IOException e) {
-            System.err.println("!! Failed to read " + xmlFile + " : " + e.toString());
+            System.err.println("!! Failed to read " + xmlFileName + " : " + e.toString());
             return false;
         }
         return check();
@@ -148,13 +159,13 @@ class StationXmlFile {
      */
     boolean check() {
         if (latitude.isEmpty()) {
-            System.err.println("!! Latitude empty: " + xmlFile);
+            System.err.println("!! Latitude empty: " + xmlFileName);
             return false;
         } else if (longitude.isEmpty()) {
-            System.err.println("!! Longitude empty: " + xmlFile);
+            System.err.println("!! Longitude empty: " + xmlFileName);
             return false;
         } else if (dip.isEmpty()) {
-            System.err.println("!! Dip empty: " + xmlFile);
+            System.err.println("!! Dip empty: " + xmlFileName);
             return false;
         } else if (azimuth.isEmpty()) {
             // for channels of Z component, it is OK if azimuth is empty; it is set 0 here to prevent NumberFormatException
@@ -162,7 +173,7 @@ class StationXmlFile {
             if (Precision.equals(Double.parseDouble(dip), -90, 0.01)) {
                 azimuth = "0";
             } else {
-                System.err.println("!! Azimuth empty: " + xmlFile);
+                System.err.println("!! Azimuth empty: " + xmlFileName);
                 return false;
             }
         }
@@ -180,7 +191,7 @@ class StationXmlFile {
 
 
     String getXmlFile() {
-        return xmlFile;
+        return xmlFileName;
     }
 
     Path getXmlPath() {
@@ -243,11 +254,22 @@ class StationXmlFile {
         return dip;
     }
 
+    String getNetworkDescription() {
+        return networkDescription;
+    }
+
     private class StationXmlHandler extends DefaultHandler {
         String text;
+        boolean atNetworkBeginning = false;
         boolean inChannel = false;
 
         public void startElement(String uri, String localName, String qName, Attributes attributes) {
+            if (qName.equals("Network")) {
+                atNetworkBeginning = true;
+            }
+            if (qName.equals("Station")) {
+                atNetworkBeginning = false;
+            }
             if (qName.equals("Channel")) {
                 inChannel = true;
             }
@@ -256,21 +278,25 @@ class StationXmlFile {
             text = new String(ch, start, length);
         }
         public void endElement(String uri, String localName, String qName) {
-            if (!inChannel) {
-                return;
+            if (atNetworkBeginning) {
+                if (qName.equals("Description")) {
+                    networkDescription = text;
+                }
             }
-            if (qName.equals("Latitude")) {
-                latitude = text;
-            } else if (qName.equals("Longitude")) {
-                longitude = text;
-            } else if (qName.equals("Elevation")) {
-                elevation = text;
-            } else if (qName.equals("Depth")) {
-                depth = text;
-            } else if (qName.equals("Azimuth")) {
-                azimuth = text;
-            } else if (qName.equals("Dip")) {
-                dip = text;
+            if (inChannel) {
+                if (qName.equals("Latitude")) {
+                    latitude = text;
+                } else if (qName.equals("Longitude")) {
+                    longitude = text;
+                } else if (qName.equals("Elevation")) {
+                    elevation = text;
+                } else if (qName.equals("Depth")) {
+                    depth = text;
+                } else if (qName.equals("Azimuth")) {
+                    azimuth = text;
+                } else if (qName.equals("Dip")) {
+                    dip = text;
+                }
             }
         }
     }
