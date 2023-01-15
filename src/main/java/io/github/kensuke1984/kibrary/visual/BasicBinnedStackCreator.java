@@ -338,14 +338,14 @@ public class BasicBinnedStackCreator extends Operation {
             binStackPlot.setMarginH(15, 10);
             binStackPlot.setMarginV(15, 15);
             binStackPlot.setFont("Arial", 20, 15, 15, 15, 10);
-            binStackPlot.unsetKey();
+            binStackPlot.unsetCommonKey();
 
-            binStackPlot.setTitle(eventDir.toString());
-            binStackPlot.setXlabel("Time in window (s)");
+            binStackPlot.setCommonTitle(eventDir.toString());
+            binStackPlot.setCommonXlabel("Time in window (s)");
             if (!byAzimuth) {
-                binStackPlot.setYlabel("Distance (deg)");
+                binStackPlot.setCommonYlabel("Distance (deg)");
             } else {
-                binStackPlot.setYlabel("Azimuth (deg)");
+                binStackPlot.setCommonYlabel("Azimuth (deg)");
             }
         }
 

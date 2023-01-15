@@ -247,7 +247,7 @@ public class BasicWaveformPlotter extends Operation {
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
-        gnuplot.setKey(true, "top right");
+        gnuplot.setCommonKey(true, "top right");
 
         //gnuplot.setXlabel("time");
         //gnuplot.setYlabel("value");
