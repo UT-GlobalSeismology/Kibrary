@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -92,7 +93,7 @@ public class PerturbationMapper extends Operation {
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
         String fileName = perturbationPath.getFileName().toString();
-        String fileNameRoot = fileName.substring(0, fileName.lastIndexOf("."));
+        String fileNameRoot = FileAid.extractNameRoot(perturbationPath);
 
         // copy perturbation file to current directory
         Path outPerturbationPath = workPath.resolve(fileName);

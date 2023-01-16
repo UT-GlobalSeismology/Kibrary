@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
@@ -79,27 +80,23 @@ class DSMShellscript {
      * @author otsuru
      * @since 2022/2/5
      */
-    public void write(SPCType type, SPCMode mode, String listFileName, String dateStr) throws IOException {
-        String fileNameRoot;
+    public void write(SPCType type, SPCMode mode, String listFileName, Path outputPath) throws IOException {
         String enterFolder;
         String exitFolder;
         String programName;
 
         switch (type) {
         case SYNTHETIC:
-            fileNameRoot = "runDSM_" + mode + dateStr;
             enterFolder = "./";
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "tipsv" : "tish");
             break;
         case PF:
-            fileNameRoot = "runFP_" + mode + dateStr;
             enterFolder = "./FPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvfp" : "shfp");
             break;
         case PB:
-            fileNameRoot = "runBP_" + mode + dateStr;
             enterFolder = "./BPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
@@ -111,9 +108,9 @@ class DSMShellscript {
         String programString;
         if (mpi) programString = "mpirun -n $Ncore $(which mpi-" + programName + ")";
         else programString = programName;
+        String fileNameRoot = FileAid.extractNameRoot(outputPath);
 
-        Path shellPath = workPath.resolve(fileNameRoot + ".sh");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shellPath))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("Nblock=" + nBlock);
             pw.println("Nsimrun=" + nSimRun);

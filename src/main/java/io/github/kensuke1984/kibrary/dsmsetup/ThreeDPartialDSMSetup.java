@@ -57,6 +57,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <p>
  * By reusing the output folder, computation for events and observers that have already been computed for can be skipped.
  * When doing so, all computation settings (besides events and observers) should be kept the same.
+ * TODO check that the voxel sets are same
  *
  * @author Kensuke Konishi
  * @since version 0.2.2.1
@@ -78,6 +79,10 @@ public class ThreeDPartialDSMSetup extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String fileTag;
     /**
      * Path of the output folder
      */
@@ -162,6 +167,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#reusePath threeDPartial");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set");
@@ -200,6 +207,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         if (property.containsKey("reusePath"))
             reusePath = property.parsePath("reusePath", null, true, workPath);
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
@@ -297,7 +305,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                     // If computation for this event & mt already exists in the FP pool, skip
                     Path mtPoolPath = fpPoolPath.resolve(event.toString() + "_mt" + i);
                     if (Files.exists(mtPoolPath)) {
-                        nSkip ++;
+                        nSkip++;
 //                        System.err.println(" " + event.toString() + " : " + mtPoolPath + " already exists, skipping.");
                         continue;
                     }
@@ -313,7 +321,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                 // If computation for this event already exists in the FP pool, skip
                 Path eventPoolPath = fpPoolPath.resolve(event.toString());
                 if (Files.exists(eventPoolPath)) {
-                    nSkip ++;
+                    nSkip++;
 //                    System.err.println(" " + event.toString() + " : " + eventPoolPath + " already exists, skipping.");
                     continue;
                 }
@@ -334,16 +342,21 @@ public class ThreeDPartialDSMSetup extends Operation {
             n++;
             fpList.add(event.toString());
         }
-        System.err.println(MathAid.switchSingularPlural(nSkip, "source was", "sources were") + " skipped; directory already exists.");
-        System.err.println(MathAid.switchSingularPlural(n, "source", "sources") + " created in " + fpPoolPath);
+
+        if (nSkip > 0)
+            System.err.println(" " + MathAid.switchSingularPlural(nSkip, "source was", "sources were")
+                    + " skipped; directory already exists.");
+        System.err.println(" " + MathAid.switchSingularPlural(n, "source", "sources") + " created in " + fpPoolPath);
 
         // output list and shellscripts for execution of psvfp and shfp
-        String fpListFileName = "fpList" + dateStr + ".txt";
+        String fpListFileName = DatasetAid.generateOutputFileName("fpList", fileTag, dateStr, ".txt");
         Files.write(outPath.resolve(fpListFileName), fpList);
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
+        Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_SH", fileTag, dateStr, ".sh"));
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
-        shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, dateStr);
-        shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, dateStr);
-        System.err.println("After this finishes, please run " + outPath + "/runFP_PSV.sh and " + outPath + "/runFP_SH.sh");
+        shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, outPSVPath);
+        shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, outSHPath);
+        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
     }
 
     private void setupBPs(Set<Observer> observerSet, PolynomialStructure structure) throws IOException {
@@ -362,7 +375,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             //  or in case observers with same position but different name exist, skip
             Path observerPoolPath = bpPoolPath.resolve(observerCode);
             if (Files.exists(observerPoolPath)) {
-                nSkip ++;
+                nSkip++;
 //                System.err.println(" " + observer.toString() + " : " + observerPoolPath + " already exists, skipping.");
                 continue;
             }
@@ -375,8 +388,11 @@ public class ThreeDPartialDSMSetup extends Operation {
             n++;
             bpList.add(observerCode);
         }
-        System.err.println(MathAid.switchSingularPlural(nSkip, "source was", "sources were") + " skipped; directory already exists.");
-        System.err.println(MathAid.switchSingularPlural(n, "source", "sources") + " created in " + bpPoolPath);
+
+        if (nSkip > 0)
+            System.err.println(" " + MathAid.switchSingularPlural(nSkip, "source was", "sources were")
+                    + " skipped; directory already exists.");
+        System.err.println(" " + MathAid.switchSingularPlural(n, "source", "sources") + " created in " + bpPoolPath);
 
         if (catalogue) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);
@@ -386,12 +402,14 @@ public class ThreeDPartialDSMSetup extends Operation {
         }
 
         // output list and shellscripts for execution of psvbp and shbp
-        String bpListFileName = "bpList" + dateStr + ".txt";
+        String bpListFileName = DatasetAid.generateOutputFileName("bpList", fileTag, dateStr, ".txt");
         Files.write(outPath.resolve(bpListFileName), bpList);
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
+        Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_SH", fileTag, dateStr, ".sh"));
         DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
-        shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, dateStr);
-        shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, dateStr);
-        System.err.println("After this finishes, please run " + outPath + "/runBP_PSV.sh and " + outPath + "/runBP_SH.sh");
+        shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, outPSVPath);
+        shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, outSHPath);
+        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
     }
 
     /**

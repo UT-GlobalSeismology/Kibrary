@@ -30,6 +30,7 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -296,8 +297,7 @@ public final class TimewindowDataFile {
             outputPath = Paths.get(cmdLine.getOptionValue("o"));
         } else {
             // set the output file name the same as the input, but with extension changed to "txt"
-            String fileName = filePath.getFileName().toString();
-            outputPath = Paths.get(fileName.substring(0, fileName.lastIndexOf('.')) + ".txt");
+            outputPath = Paths.get(FileAid.extractNameRoot(filePath) + ".txt");
         }
 
         // output
