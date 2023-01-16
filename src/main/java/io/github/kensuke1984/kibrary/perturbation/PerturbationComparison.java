@@ -19,6 +19,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -98,8 +99,7 @@ public class PerturbationComparison {
         Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, GadgetAid.getTemporaryString());
 
         // output ratio and difference maps as perturbation list files
-        String fileName = numeratorPath.getFileName().toString();
-        String fileNameRoot = fileName.substring(0, fileName.lastIndexOf("."));
+        String fileNameRoot = FileAid.extractNameRoot(numeratorPath);
         Path ratioMapPath = outPath.resolve(fileNameRoot + "Ratio.lst");
         Path differenceMapPath = outPath.resolve(fileNameRoot + "Difference.lst");
         PerturbationListFile.write(constructMapFromVector(positions, ratioVector), ratioMapPath);

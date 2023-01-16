@@ -34,6 +34,20 @@ public final class FileAid {
     private FileAid() {}
 
     /**
+     * Given a Path, this method extracts the root of the name of the file.
+     * The path of parent folders and the extension of the file is removed.
+     * @param filePath (Path) The file to extract name root
+     * @return (String) File name root
+     *
+     * @author otsuru
+     * @since 2023/1/16
+     */
+    public static String extractNameRoot(Path filePath) {
+        String fileName = filePath.getFileName().toString();
+        return fileName.substring(0, fileName.lastIndexOf('.'));
+    }
+
+    /**
      * Moves a given file to a specified directory.
      * @param srcPath       {@link Path} of the file to be moved
      * @param destDirectory {@link Path} of the destination directory

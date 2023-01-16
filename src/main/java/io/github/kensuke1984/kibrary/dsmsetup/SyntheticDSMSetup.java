@@ -316,9 +316,11 @@ public class SyntheticDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceList);
         DSMShellscript shell = new DSMShellscript(outPath, mpi, rayMap.size(), header);
-        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, dateStr);
-        shell.write(SPCType.SYNTHETIC, SPCMode.SH, listFileName, dateStr);
-        System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
+        Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
+        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
+        shell.write(SPCType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
+        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
     }
 
 }
