@@ -6,9 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -283,9 +282,9 @@ public class ThreeDPartialDSMSetup extends Operation {
         Files.createDirectories(fpPoolPath);
 
         System.err.println("Making information files for the events (fp) ...");
-        int n = 0;
-        int nSkip = 0;
-        List<String> fpList = new ArrayList<>();
+        int nCreated = 0;
+        int nSkipped = 0;
+        Set<String> fpSourceSet = new TreeSet<>();
         for (GlobalCMTID event : eventSet) {
             GlobalCMTAccess eventData = event.getEventData();
 
@@ -305,7 +304,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                     // If computation for this event & mt already exists in the FP pool, skip
                     Path mtPoolPath = fpPoolPath.resolve(event.toString() + "_mt" + i);
                     if (Files.exists(mtPoolPath)) {
-                        nSkip++;
+                        nSkipped++;
 //                        System.err.println(" " + event.toString() + " : " + mtPoolPath + " already exists, skipping.");
                         continue;
                     }
@@ -321,7 +320,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                 // If computation for this event already exists in the FP pool, skip
                 Path eventPoolPath = fpPoolPath.resolve(event.toString());
                 if (Files.exists(eventPoolPath)) {
-                    nSkip++;
+                    nSkipped++;
 //                    System.err.println(" " + event.toString() + " : " + eventPoolPath + " already exists, skipping.");
                     continue;
                 }
@@ -339,21 +338,21 @@ public class ThreeDPartialDSMSetup extends Operation {
                      fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
                 }
             }
-            n++;
-            fpList.add(event.toString());
+            nCreated++;
+            fpSourceSet.add(event.toString());
         }
 
-        if (nSkip > 0)
-            System.err.println(" " + MathAid.switchSingularPlural(nSkip, "source was", "sources were")
+        if (nSkipped > 0)
+            System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
-        System.err.println(" " + MathAid.switchSingularPlural(n, "source", "sources") + " created in " + fpPoolPath);
+        System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
 
         // output list and shellscripts for execution of psvfp and shfp
         String fpListFileName = DatasetAid.generateOutputFileName("fpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(fpListFileName), fpList);
+        Files.write(outPath.resolve(fpListFileName), fpSourceSet);
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_SH", fileTag, dateStr, ".sh"));
-        DSMShellscript shellFP = new DSMShellscript(outPath, mpi, eventSet.size(), header);
+        DSMShellscript shellFP = new DSMShellscript(outPath, mpi, nCreated, header);
         shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, outPSVPath);
         shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, outSHPath);
         System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
@@ -365,9 +364,9 @@ public class ThreeDPartialDSMSetup extends Operation {
         Files.createDirectories(bpPoolPath);
 
         System.err.println("Making information files for the observers (bp) ...");
-        int n = 0;
-        int nSkip = 0;
-        List<String> bpList = new ArrayList<>();
+        int nCreated = 0;
+        int nSkipped = 0;
+        Set<String> bpSourceSet = new TreeSet<>();
         for (Observer observer : observerSet) {
             String observerCode = observer.getPosition().toCode();
 
@@ -375,7 +374,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             //  or in case observers with same position but different name exist, skip
             Path observerPoolPath = bpPoolPath.resolve(observerCode);
             if (Files.exists(observerPoolPath)) {
-                nSkip++;
+                nSkipped++;
 //                System.err.println(" " + observer.toString() + " : " + observerPoolPath + " already exists, skipping.");
                 continue;
             }
@@ -385,14 +384,14 @@ public class ThreeDPartialDSMSetup extends Operation {
             Files.createDirectories(observerPoolPath.resolve(header));
             bp.writeSHBP(observerPoolPath.resolve(header + "_SH.inf"));
             bp.writePSVBP(observerPoolPath.resolve(header + "_PSV.inf"));
-            n++;
-            bpList.add(observerCode);
+            nCreated++;
+            bpSourceSet.add(observerCode);
         }
 
-        if (nSkip > 0)
-            System.err.println(" " + MathAid.switchSingularPlural(nSkip, "source was", "sources were")
+        if (nSkipped > 0)
+            System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
-        System.err.println(" " + MathAid.switchSingularPlural(n, "source", "sources") + " created in " + bpPoolPath);
+        System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + bpPoolPath);
 
         if (catalogue) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);
@@ -403,10 +402,10 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         // output list and shellscripts for execution of psvbp and shbp
         String bpListFileName = DatasetAid.generateOutputFileName("bpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(bpListFileName), bpList);
+        Files.write(outPath.resolve(bpListFileName), bpSourceSet);
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_SH", fileTag, dateStr, ".sh"));
-        DSMShellscript shellBP = new DSMShellscript(outPath, mpi, observerSet.size(), header);
+        DSMShellscript shellBP = new DSMShellscript(outPath, mpi, nCreated, header);
         shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, outPSVPath);
         shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, outSHPath);
         System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);

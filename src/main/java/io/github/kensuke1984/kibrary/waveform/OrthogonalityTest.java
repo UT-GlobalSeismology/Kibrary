@@ -32,9 +32,10 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 /**
- * Operation for performing trade-off test of structure in the target region and structure outside it.
+ * Operation for performing the orthogonality test
+ * to check the trade-off between structure in the target region and structure outside it.
  * <p>
- * Trade-off is checked by computing the correlation coefficient between two partial waveforms.
+ * Orthogonality is checked by computing the correlation coefficient between two partial waveforms.
  * This is the same as saying "the cosine of the angle between the two vectors of partial derivatives".
  *
  * @author otsuru

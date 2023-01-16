@@ -35,9 +35,12 @@ public final class MathAid {
 
     /**
      * Division of two integers, but round up when not divisible.
-     * @param dividend
-     * @param divisor
-     * @return
+     * @param dividend (int) a in a/b
+     * @param divisor (int) b in a/b
+     * @return (int) a/b, rounded up
+     *
+     * @author otsuru
+     * @since 2023/1/15
      */
     public static int divideUp(int dividend, int divisor) {
         return (dividend + divisor - 1) / divisor;
@@ -62,8 +65,11 @@ public final class MathAid {
     /**
      * When simply changing double to String, a ".0" is always left in integer values.
      * This method exports integer values without ".0".
-     * @param value
-     * @return
+     * @param value (double) Value to turn into String
+     * @return (String) Simple String form of the value
+     *
+     * @author otsuru
+     * @since 2023/1/15
      */
     public static String simplestString(double value) {
         if (Math.floor(value) == value) {
