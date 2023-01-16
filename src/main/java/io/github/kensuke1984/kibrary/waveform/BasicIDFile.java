@@ -23,6 +23,7 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -332,8 +333,7 @@ public final class BasicIDFile {
             outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
         } else {
             // set the output file name the same as the input, but with extension changed to txt
-            String idFileName = Paths.get(cmdLine.getOptionValue("i")).getFileName().toString();
-            outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
+            outputIdsPath = Paths.get(FileAid.extractNameRoot(Paths.get(cmdLine.getOptionValue("i"))) + ".txt");
         }
 
         // output
