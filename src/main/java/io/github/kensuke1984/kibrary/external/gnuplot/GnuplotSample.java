@@ -18,7 +18,7 @@ final class GnuplotSample {
         GnuplotLineAppearance appearance2 = new GnuplotLineAppearance(2, GnuplotColorName.red, 3);
 
         gnuplot.setOutput("pdf", "sample.pdf", 21, 29.7, true);
-        gnuplot.setCommonKey(true, "top right");
+        gnuplot.setCommonKey(true, false, "top right");
 
         gnuplot.setCommonXlabel("time");
         gnuplot.setCommonYlabel("value");

@@ -10,6 +10,7 @@ class GnuplotField {
     private String xlabel;
     private String ylabel;
     private String title;
+    private String key;
 
     private List<GnuplotLine> lines = new ArrayList<>();
     private List<GnuplotLabel> labels = new ArrayList<>();
@@ -102,7 +103,7 @@ class GnuplotField {
         return yrange;
     }
 
-    // ----------title and axes----------
+    // ----------title, key, and axes----------
 
     public void setXlabel(String xlabel) {
         this.xlabel = xlabel;
@@ -128,4 +129,11 @@ class GnuplotField {
         return title;
     }
 
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getKey() {
+        return key;
+    }
 }

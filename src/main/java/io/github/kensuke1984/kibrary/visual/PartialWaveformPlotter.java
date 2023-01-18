@@ -311,7 +311,7 @@ public class PartialWaveformPlotter extends Operation {
        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
        gnuplot.setMarginH(15, 5);
        gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
-       gnuplot.setCommonKey(true, "top right");
+       gnuplot.setCommonKey(true, false, "top right");
 
        int i;
        for (i = 0; i < ids.length; i++) {

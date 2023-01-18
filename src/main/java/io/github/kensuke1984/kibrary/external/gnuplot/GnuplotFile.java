@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -191,6 +193,9 @@ public class GnuplotFile {
                     // title and axes
                     if (field.getTitle() != null) {
                         pw.println(" set title \"" + field.getTitle() + "\"");
+                    }
+                    if (field.getKey() != null) {
+                        pw.println(" set key " + field.getKey());
                     }
                     if (field.getXlabel() != null) {
                         pw.println(" set xlabel \"" + field.getXlabel() + "\"");
@@ -407,6 +412,29 @@ public class GnuplotFile {
     }
 
     /**
+     * Sets the legend of the graph. To turn it off, use {@link #unsetKey()}.
+     * @param box (boolean) Whether to surround the key with box
+     * @param invert (boolean) Whether to display the items of the key in reverse order
+     * @param position (String) Position and additional options (if unneeded, set this "")
+     */
+    public void setKey(boolean box, boolean invert, String position) {
+        String keyString = (box ? "box" : "nobox");
+        keyString += (invert ? " invert" : "");
+        keyString += ((!StringUtils.isEmpty(position)) ? (" " + position) : "");
+
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setKey(keyString);
+    }
+
+    /**
+     * Unsets the legend of the graph. To turn it on, use {@link #setKey()}.
+     */
+    public void unsetKey() {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setKey("off");
+    }
+
+    /**
      * Switches to the next field.
      */
     public void nextField() {
@@ -501,14 +529,14 @@ public class GnuplotFile {
     /**
      * Sets the legend of the graph. To turn it off, use {@link #unsetCommonKey()}.
      * @param box (boolean) Whether to surround the key with box
+     * @param invert (boolean) Whether to display the items of the key in reverse order
      * @param position (String) Position and additional options (if unneeded, set this "")
      */
-    public void setCommonKey(boolean box, String position) {
-        if (!box){
-            this.keySettings = "nobox "+ position;
-        } else {
-            this.keySettings = "box " + position;
-        }
+    public void setCommonKey(boolean box, boolean invert, String position) {
+        String keyString = (box ? "box" : "nobox");
+        keyString += (invert ? " invert" : "");
+        keyString += ((!StringUtils.isEmpty(position)) ? (" " + position) : "");
+        this.keySettings = keyString;
     }
 
     /**

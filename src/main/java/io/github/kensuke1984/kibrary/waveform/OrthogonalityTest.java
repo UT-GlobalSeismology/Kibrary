@@ -179,8 +179,15 @@ public class OrthogonalityTest extends Operation {
        List<UnknownParameter> mainUnknowns = UnknownParameterFile.read(mainUnknownsPath);
        List<UnknownParameter> testUnknowns = UnknownParameterFile.read(testUnknownsPath);
 
-       BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-       basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent())).toArray(BasicID[]::new);
+       List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
+       basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+       long nSpecificObserver = basicIDs.stream().map(BasicID::getObserver)
+               .filter(observer -> observer.toString().equals(specificObserverName)).distinct().count();
+       if (nSpecificObserver == 0) {
+           System.err.println("CAUTION: observer with name " + specificObserverName + " does not exist!");
+       } else if (nSpecificObserver > 1) {
+           System.err.println("CAUTION: more than 1 observer with the name " + specificObserverName + "!");
+       }
 
        PartialID[] mainPartialIDs = PartialIDFile.read(mainPartialIDPath, mainPartialPath);
        PartialID[] testPartialIDs = PartialIDFile.read(testPartialIDPath, testPartialPath);
@@ -193,27 +200,27 @@ public class OrthogonalityTest extends Operation {
 
        // one event to one observer
        System.err.println("## One event to one observer ##");
-       BasicID[] oneToOneBasicIDs = Arrays.stream(basicIDs)
+       List<BasicID> oneToOneBasicIDs = basicIDs.stream()
                .filter(id -> id.getGlobalCMTID().equals(specificEvent) && id.getObserver().toString().equals(specificObserverName))
-               .toArray(BasicID[]::new);
+               .collect(Collectors.toList());
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, oneToOneBasicIDs);
        outputPath = outPath.resolve("oneToOne.txt");
        outputCorrelations(correlations, outputPath);
 
        // one event to all observers
        System.err.println("## One event to all observers ##");
-       BasicID[] oneToAllBasicIDs = Arrays.stream(basicIDs)
+       List<BasicID> oneToAllBasicIDs = basicIDs.stream()
                .filter(id -> id.getGlobalCMTID().equals(specificEvent))
-               .toArray(BasicID[]::new);
+               .collect(Collectors.toList());
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, oneToAllBasicIDs);
        outputPath = outPath.resolve("oneToAll.txt");
        outputCorrelations(correlations, outputPath);
 
        // one event to one observer
        System.err.println("## All events to one observer ##");
-       BasicID[] allToOneBasicIDs = Arrays.stream(basicIDs)
+       List<BasicID> allToOneBasicIDs = basicIDs.stream()
                .filter(id -> id.getObserver().toString().equals(specificObserverName))
-               .toArray(BasicID[]::new);
+               .collect(Collectors.toList());
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, allToOneBasicIDs);
        outputPath = outPath.resolve("allToOne.txt");
        outputCorrelations(correlations, outputPath);
@@ -224,11 +231,11 @@ public class OrthogonalityTest extends Operation {
        outputPath = outPath.resolve("allToAll.txt");
        outputCorrelations(correlations, outputPath);
 
-       createPlot(testUnknowns);
+       createPlot(mainUnknowns, testUnknowns);
    }
 
    private double[][] computeCorrelations(PartialID[] mainPartialIDs, PartialID[] testPartialIDs,
-           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, BasicID[] basicIDs) {
+           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, List<BasicID> basicIDs) {
 
        // set DVector
        System.err.println("Setting data for d vector");
@@ -275,52 +282,53 @@ public class OrthogonalityTest extends Operation {
        }
    }
 
-   private void createPlot(List<UnknownParameter> testUnknowns) throws IOException {
+   private void createPlot(List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns) throws IOException {
        GnuplotFile gnuplot = new GnuplotFile(outPath.resolve("orthogonality.plt"));
        gnuplot.setOutput("png", "orthogonality.png", 1280, 960, false);
        gnuplot.setFont("Arial", 20, 18, 18, 12, 18);
        gnuplot.setNMultiplotColumn(2);
-       gnuplot.setCommonKey(true, "top right");
+       gnuplot.unsetCommonKey();
        gnuplot.setCommonXlabel("voxel #");
        gnuplot.setCommonYlabel("cosine");
+       gnuplot.setCommonXrange(0, mainUnknowns.size() - 1);
        gnuplot.setCommonYrange(-1, 1);
 
-       GnuplotLineAppearance appearances[] = new GnuplotLineAppearance[10];
-       appearances[0] = new GnuplotLineAppearance(1, GnuplotColorName.brown, 1);
-       appearances[1] = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-       appearances[2] = new GnuplotLineAppearance(1, GnuplotColorName.orange, 1);
-       appearances[3] = new GnuplotLineAppearance(1, GnuplotColorName.dark_yellow, 1);
-       appearances[4] = new GnuplotLineAppearance(1, GnuplotColorName.green, 1);
-       appearances[5] = new GnuplotLineAppearance(1, GnuplotColorName.cyan, 1);
-       appearances[6] = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
-       appearances[7] = new GnuplotLineAppearance(1, GnuplotColorName.dark_violet, 1);
-       appearances[8] = new GnuplotLineAppearance(1, GnuplotColorName.magenta, 1);
-       appearances[9] = new GnuplotLineAppearance(1, GnuplotColorName.dark_gray, 1);
+       int nAppearances = 8;
+       GnuplotLineAppearance appearances[] = new GnuplotLineAppearance[nAppearances];
+       appearances[0] = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+       appearances[1] = new GnuplotLineAppearance(1, GnuplotColorName.gold, 1);
+       appearances[2] = new GnuplotLineAppearance(1, GnuplotColorName.forest_green, 1);
+       appearances[3] = new GnuplotLineAppearance(1, GnuplotColorName.cyan, 1);
+       appearances[4] = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
+       appearances[5] = new GnuplotLineAppearance(1, GnuplotColorName.dark_violet, 1);
+       appearances[6] = new GnuplotLineAppearance(1, GnuplotColorName.magenta, 1);
+       appearances[7] = new GnuplotLineAppearance(1, GnuplotColorName.dark_gray, 1);
 
        for (int i = 0; i < testUnknowns.size(); i++) {
            gnuplot.setTitle("1 event (" + specificEvent + ") and 1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
-           gnuplot.addLine("oneToOne.txt", 1, i + 2, appearances[i % 10],
+           gnuplot.addLine("oneToOne.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
        }
        gnuplot.nextField();
 
        for (int i = 0; i < testUnknowns.size(); i++) {
            gnuplot.setTitle("1 event (" + specificEvent + ")");
-           gnuplot.addLine("oneToAll.txt", 1, i + 2, appearances[i % 10],
+           gnuplot.addLine("oneToAll.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
        }
        gnuplot.nextField();
 
        for (int i = 0; i < testUnknowns.size(); i++) {
            gnuplot.setTitle("1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
-           gnuplot.addLine("allToOne.txt", 1, i + 2, appearances[i % 10],
+           gnuplot.addLine("allToOne.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
        }
        gnuplot.nextField();
 
        for (int i = 0; i < testUnknowns.size(); i++) {
            gnuplot.setTitle("All waveforms");
-           gnuplot.addLine("allToAll.txt", 1, i + 2, appearances[i % 10],
+           gnuplot.setKey(false, true, "top right");
+           gnuplot.addLine("allToAll.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
        }
 
