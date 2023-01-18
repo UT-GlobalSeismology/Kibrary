@@ -9,7 +9,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Plot file for gnuplot.
@@ -50,17 +53,21 @@ public class GnuplotFile {
     private int fontSizeDefault = 12;
 
     /**
-     * x軸のラベル
+     * x axis label of all figures
      */
     private String xlabel = "";
     /**
-     * y軸のラベル
+     * y axis label of all figures
      */
     private String ylabel = "";
     /**
-     * 図のタイトル
+     * title of all figures
      */
     private String title = "";
+    /**
+     * Number of columns of fields when using multiplot
+     */
+    private int nMultiplotColumn = 1;
 
     /**
      * Settings for the key. If "", no key.
@@ -174,7 +181,8 @@ public class GnuplotFile {
 
             // each page
             for (int k = 0; k < pages.size(); k++) {
-                pw.println("set multiplot layout " + pages.get(k).numField() + ",1");
+                pw.println("set multiplot layout " + MathAid.divideUp(pages.get(k).numField(), nMultiplotColumn)
+                        + "," + nMultiplotColumn);
 
                 // each field
                 for (int j = 0; j < pages.get(k).numField(); j++) {
@@ -182,12 +190,26 @@ public class GnuplotFile {
 
                     if (field.numLine() == 0) continue;
 
-                    // plot range
-                    if (field.hasXrange()) {
-                        pw.println("set xrange " + field.getXrange());
+                    // title and axes
+                    if (field.getTitle() != null) {
+                        pw.println(" set title \"" + field.getTitle() + "\"");
                     }
-                    if (field.hasYrange()) {
-                        pw.println("set yrange [" + field.getYrange());
+                    if (field.getKey() != null) {
+                        pw.println(" set key " + field.getKey());
+                    }
+                    if (field.getXlabel() != null) {
+                        pw.println(" set xlabel \"" + field.getXlabel() + "\"");
+                    }
+                    if (field.getYlabel() != null) {
+                        pw.println(" set ylabel \"" + field.getYlabel() + "\"");
+                    }
+
+                    // plot range
+                    if (field.getXrange() != null) {
+                        pw.println(" set xrange " + field.getXrange());
+                    }
+                    if (field.getYrange() != null) {
+                        pw.println(" set yrange " + field.getYrange());
                     }
 
                     // each label
@@ -374,7 +396,47 @@ public class GnuplotFile {
         page.field(page.numField() - 1).setYrangeLimit(yminLimit, ymaxLimit);
     }
 
+    public void setXlabel(String xlabel) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setXlabel(xlabel);
+    }
 
+    public void setYlabel(String ylabel) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setYlabel(ylabel);
+    }
+
+    public void setTitle(String title) {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setTitle(title);
+    }
+
+    /**
+     * Sets the legend of the graph. To turn it off, use {@link #unsetKey()}.
+     * @param box (boolean) Whether to surround the key with box
+     * @param invert (boolean) Whether to display the items of the key in reverse order
+     * @param position (String) Position and additional options (if unneeded, set this "")
+     */
+    public void setKey(boolean box, boolean invert, String position) {
+        String keyString = (box ? "box" : "nobox");
+        keyString += (invert ? " invert" : "");
+        keyString += ((!StringUtils.isEmpty(position)) ? (" " + position) : "");
+
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setKey(keyString);
+    }
+
+    /**
+     * Unsets the legend of the graph. To turn it on, use {@link #setKey()}.
+     */
+    public void unsetKey() {
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).setKey("off");
+    }
+
+    /**
+     * Switches to the next field.
+     */
     public void nextField() {
         drawStarted = true;
         // add field to current page
@@ -465,36 +527,28 @@ public class GnuplotFile {
     }
 
     /**
-     * Sets the legend of the graph. To turn it off, use {@link #unsetKey()}.
+     * Sets the legend of the graph. To turn it off, use {@link #unsetCommonKey()}.
      * @param box (boolean) Whether to surround the key with box
+     * @param invert (boolean) Whether to display the items of the key in reverse order
      * @param position (String) Position and additional options (if unneeded, set this "")
      */
-    public void setKey(boolean box, String position) {
-        if (!box){
-            this.keySettings = "nobox "+ position;
-        } else {
-            this.keySettings = "box " + position;
-        }
+    public void setCommonKey(boolean box, boolean invert, String position) {
+        String keyString = (box ? "box" : "nobox");
+        keyString += (invert ? " invert" : "");
+        keyString += ((!StringUtils.isEmpty(position)) ? (" " + position) : "");
+        this.keySettings = keyString;
     }
 
     /**
-     * Unsets the legend of the graph. To turn it on, use {@link #setKey()}.
+     * Unsets the legend of the graph. To turn it on, use {@link #setCommonKey()}.
      */
-    public void unsetKey() {
+    public void unsetCommonKey() {
         this.keySettings = "";
-    }
-
-    public String getKeySettings() {
-        return keySettings;
     }
 
     public void setRatio(double ratio) {
         this.ratio = ratio;
         ratioFlag = true;
-    }
-
-    public double getRatio() {
-        return ratio;
     }
 
     public void setCommonXrange(double xmin, double xmax) {
@@ -539,63 +593,30 @@ public class GnuplotFile {
         yrangeLimitFlag = true;
     }
 
-    public double getXmin() {
-        return xmin;
-    }
-
-    public double getXmax() {
-        return xmax;
-    }
-
-    public double getYmin() {
-        return ymin;
-    }
-
-    public double getYmax() {
-        return ymax;
-    }
-
-    public void setXtics(double xtics) {
+    public void setCommonXtics(double xtics) {
         this.xtics = xtics;
         xticsFlag = true;
     }
 
-    public void setYtics(double ytics) {
+    public void setCommonYtics(double ytics) {
         this.ytics = ytics;
         yticsFlag = true;
     }
 
-    public double getXtics() {
-        return xtics;
-    }
-
-    public double getYtics() {
-        return ytics;
-    }
-
-    public void setXlabel(String xlabel) {
+    public void setCommonXlabel(String xlabel) {
         this.xlabel = xlabel;
     }
 
-    public void setYlabel(String ylabel) {
+    public void setCommonYlabel(String ylabel) {
         this.ylabel = ylabel;
     }
 
-    public String getXlabel() {
-        return xlabel;
-    }
-
-    public String getYlabel() {
-        return ylabel;
-    }
-
-    public void setTitle(String title) {
+    public void setCommonTitle(String title) {
         this.title = title;
     }
 
-    public String getTitle() {
-        return title;
+    public void setNMultiplotColumn(int nMultiplotColumn) {
+        this.nMultiplotColumn = nMultiplotColumn;
     }
-
 
 }

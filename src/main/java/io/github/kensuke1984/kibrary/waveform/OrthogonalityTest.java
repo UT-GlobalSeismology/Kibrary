@@ -15,20 +15,27 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.AMatrixBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.Weighting;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 /**
- * Operation for performing trade-off test of structure in the target region and structure outside it.
+ * Operation for performing the orthogonality test
+ * to check the trade-off between structure in the target region and structure outside it.
  * <p>
- * Trade-off is checked by computing the correlation coefficient between two partial waveforms.
+ * Orthogonality is checked by computing the correlation coefficient between two partial waveforms.
  * This is the same as saying "the cosine of the angle between the two vectors of partial derivatives".
  *
  * @author otsuru
@@ -45,6 +52,10 @@ public class OrthogonalityTest extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * output directory Path
+     */
+    private Path outPath;
     /**
      * components to be included in the dataset
      */
@@ -165,55 +176,66 @@ public class OrthogonalityTest extends Operation {
 
    @Override
    public void run() throws IOException {
-       PartialID[] mainPartialIDs = PartialIDFile.read(mainPartialIDPath, mainPartialPath);
-       PartialID[] testPartialIDs = PartialIDFile.read(testPartialIDPath, testPartialPath);
-
        List<UnknownParameter> mainUnknowns = UnknownParameterFile.read(mainUnknownsPath);
        List<UnknownParameter> testUnknowns = UnknownParameterFile.read(testUnknownsPath);
 
-       BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-       basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent())).toArray(BasicID[]::new);
+       List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
+       basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+       long nSpecificObserver = basicIDs.stream().map(BasicID::getObserver)
+               .filter(observer -> observer.toString().equals(specificObserverName)).distinct().count();
+       if (nSpecificObserver == 0) {
+           System.err.println("CAUTION: observer with name " + specificObserverName + " does not exist!");
+       } else if (nSpecificObserver > 1) {
+           System.err.println("CAUTION: more than 1 observer with the name " + specificObserverName + "!");
+       }
+
+       PartialID[] mainPartialIDs = PartialIDFile.read(mainPartialIDPath, mainPartialPath);
+       PartialID[] testPartialIDs = PartialIDFile.read(testPartialIDPath, testPartialPath);
 
        double[][] correlations;
        Path outputPath;
 
+       outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, GadgetAid.getTemporaryString());
+       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
        // one event to one observer
        System.err.println("## One event to one observer ##");
-       BasicID[] oneToOneBasicIDs = Arrays.stream(basicIDs)
+       List<BasicID> oneToOneBasicIDs = basicIDs.stream()
                .filter(id -> id.getGlobalCMTID().equals(specificEvent) && id.getObserver().toString().equals(specificObserverName))
-               .toArray(BasicID[]::new);
+               .collect(Collectors.toList());
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, oneToOneBasicIDs);
-       outputPath = workPath.resolve("oneToOne.txt");
+       outputPath = outPath.resolve("oneToOne.txt");
        outputCorrelations(correlations, outputPath);
 
        // one event to all observers
        System.err.println("## One event to all observers ##");
-       BasicID[] oneToAllBasicIDs = Arrays.stream(basicIDs)
+       List<BasicID> oneToAllBasicIDs = basicIDs.stream()
                .filter(id -> id.getGlobalCMTID().equals(specificEvent))
-               .toArray(BasicID[]::new);
+               .collect(Collectors.toList());
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, oneToAllBasicIDs);
-       outputPath = workPath.resolve("oneToAll.txt");
+       outputPath = outPath.resolve("oneToAll.txt");
        outputCorrelations(correlations, outputPath);
 
        // one event to one observer
        System.err.println("## All events to one observer ##");
-       BasicID[] allToOneBasicIDs = Arrays.stream(basicIDs)
+       List<BasicID> allToOneBasicIDs = basicIDs.stream()
                .filter(id -> id.getObserver().toString().equals(specificObserverName))
-               .toArray(BasicID[]::new);
+               .collect(Collectors.toList());
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, allToOneBasicIDs);
-       outputPath = workPath.resolve("allToOne.txt");
+       outputPath = outPath.resolve("allToOne.txt");
        outputCorrelations(correlations, outputPath);
 
        // all events to all observers
        System.err.println("## All events to all observers ##");
        correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, basicIDs);
-       outputPath = workPath.resolve("allToAll.txt");
+       outputPath = outPath.resolve("allToAll.txt");
        outputCorrelations(correlations, outputPath);
 
+       createPlot(mainUnknowns, testUnknowns);
    }
 
    private double[][] computeCorrelations(PartialID[] mainPartialIDs, PartialID[] testPartialIDs,
-           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, BasicID[] basicIDs) {
+           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, List<BasicID> basicIDs) {
 
        // set DVector
        System.err.println("Setting data for d vector");
@@ -237,10 +259,8 @@ public class OrthogonalityTest extends Operation {
        // compute correlations
        double[][] correlations = new double[testUnknowns.size()][mainUnknowns.size()];
        for (int i = 0; i < testUnknowns.size(); i++) {
-           UnknownParameter testUnknown = testUnknowns.get(i);
            RealVector testPartialVector = testA.getColumnVector(i);
            for (int j = 0; j < mainUnknowns.size(); j++) {
-               UnknownParameter mainUnknown = mainUnknowns.get(j);
                RealVector mainPartialVector = mainA.getColumnVector(j);
 
                double correlation = mainPartialVector.dotProduct(testPartialVector) / mainPartialVector.getNorm() / testPartialVector.getNorm();
@@ -260,5 +280,59 @@ public class OrthogonalityTest extends Operation {
                pw.println();
            }
        }
+   }
+
+   private void createPlot(List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns) throws IOException {
+       GnuplotFile gnuplot = new GnuplotFile(outPath.resolve("orthogonality.plt"));
+       gnuplot.setOutput("png", "orthogonality.png", 1280, 960, false);
+       gnuplot.setFont("Arial", 20, 18, 18, 16, 18);
+       gnuplot.setNMultiplotColumn(2);
+       gnuplot.unsetCommonKey();
+       gnuplot.setCommonXlabel("voxel #");
+       gnuplot.setCommonYlabel("cosine");
+       gnuplot.setCommonXrange(0, mainUnknowns.size() - 1);
+       gnuplot.setCommonYrange(-1, 1);
+
+       int nAppearances = 8;
+       GnuplotLineAppearance appearances[] = new GnuplotLineAppearance[nAppearances];
+       appearances[0] = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+       appearances[1] = new GnuplotLineAppearance(1, GnuplotColorName.gold, 1);
+       appearances[2] = new GnuplotLineAppearance(1, GnuplotColorName.forest_green, 1);
+       appearances[3] = new GnuplotLineAppearance(1, GnuplotColorName.cyan, 1);
+       appearances[4] = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
+       appearances[5] = new GnuplotLineAppearance(1, GnuplotColorName.dark_violet, 1);
+       appearances[6] = new GnuplotLineAppearance(1, GnuplotColorName.magenta, 1);
+       appearances[7] = new GnuplotLineAppearance(1, GnuplotColorName.dark_gray, 1);
+
+       for (int i = 0; i < testUnknowns.size(); i++) {
+           gnuplot.setTitle("1 event (" + specificEvent + ") and 1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
+           gnuplot.addLine("oneToOne.txt", 1, i + 2, appearances[i % nAppearances],
+                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+       }
+       gnuplot.nextField();
+
+       for (int i = 0; i < testUnknowns.size(); i++) {
+           gnuplot.setTitle("1 event (" + specificEvent + ")");
+           gnuplot.addLine("oneToAll.txt", 1, i + 2, appearances[i % nAppearances],
+                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+       }
+       gnuplot.nextField();
+
+       for (int i = 0; i < testUnknowns.size(); i++) {
+           gnuplot.setTitle("1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
+           gnuplot.addLine("allToOne.txt", 1, i + 2, appearances[i % nAppearances],
+                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+       }
+       gnuplot.nextField();
+
+       for (int i = 0; i < testUnknowns.size(); i++) {
+           gnuplot.setTitle("All waveforms");
+           gnuplot.setKey(false, true, "top right");
+           gnuplot.addLine("allToAll.txt", 1, i + 2, appearances[i % nAppearances],
+                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+       }
+
+       gnuplot.write();
+       if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
    }
 }

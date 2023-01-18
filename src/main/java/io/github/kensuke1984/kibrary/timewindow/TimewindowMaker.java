@@ -25,6 +25,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -35,23 +37,31 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * Operation that creates a data file of timewindows.
  * <p>
- * Timewindows are created for all SAC files in event folders under workDir that satisfy the following criteria:
+ * Either a {@link DataEntryListFile} or a dataset folder containing observed SAC files should be given as input.
+ * Note that the results may be slightly different depending on which input type is given.
+ * <p>
+ * When a dataset folder is given as input,
+ * timewindows are created for all SAC files in event folders under obsDir that satisfy the following criteria:
  * <ul>
  * <li> is observed waveform </li>
  * <li> the component is included in the components specified in the property file </li>
+ * <li> a timewindow satisfying the specifications can possibly be created in the time range of the SAC file </li>
  * </ul>
  * For each (event, observer, component) data pair of the selected SAC files,
  * several timewindows may be created for different phases.
  * Thus, output data can be specified as a (event, observer, component, timeframe)-pair.
+ * Start and end times of the windows are set to integer multiples of DELTA in SAC files.
+ * Only windows that end before the SAC end time are used.
+ * <p>
+ * When a {@link DataEntryListFile} is provided as input,
+ *
  * <p>
  * This class creates a window for each specified phase,
  * starting from (arrival time - frontShift) and ending at (arrival time + rearShift).
  * It also creates a window for each phase to be avoided,
- * starting from (arrival time - exFrontShift) and ending at (arrival time + rearShift),
+ * starting from (arrival time - avoidFrontShift) and ending at (arrival time + avoidRearShift),
  * and abandons overlapped parts between these.
  * Arrival times are computed by TauP.
- * <p>
- * Start and end times of the windows are set to integer multiples of DELTA in SAC files.
  * <p>
  * Timewindow information is written in binary format in "timewindow*.dat".
  * SAC files that could not produce timewindows are written in "invalidTimewindow*.txt".
@@ -89,6 +99,15 @@ public class TimewindowMaker extends Operation {
      * set of {@link SACComponent}
      */
     private Set<SACComponent> components;
+
+    /**
+     * Path of a data entry file
+     */
+    private Path dataEntryPath;
+    /**
+     * Path of a root folder containing observed dataset
+     */
+    private Path obsPath;
 
     /**
      * phases to be included in timewindows
@@ -164,6 +183,13 @@ public class TimewindowMaker extends Operation {
             pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
+            pw.println("##########Input: either a data entry list file or a dataset folder will be read.");
+            pw.println("##########  Note that the results may slightly change depending on the input type.");
+            pw.println("##Path of a data entry list file. If not set, the following obsPath will be used.");
+            pw.println("#dataEntryPath dataEntry.lst");
+            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("#obsPath ");
+            pw.println("##########Settings of timewindows to be created.");
             pw.println("##TauPPhases to be included in timewindow, listed using spaces (S)");
             pw.println("#usePhases ");
             pw.println("##TauPPhases not to be included in timewindow, listed using spaces, if any");
@@ -204,6 +230,12 @@ public class TimewindowMaker extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        } else {
+            obsPath = property.parsePath("obsPath", ".", true, workPath);
+        }
+
         usePhases = phaseSet(property.parseString("usePhases", "S"));
         avoidPhases = property.containsKey("avoidPhases") ? phaseSet(property.parseString("avoidPhases", null)) : phaseSet(null);
         frontShift = property.parseDouble("frontShift", "20");
@@ -232,7 +264,31 @@ public class TimewindowMaker extends Operation {
     @Override
     public void run() throws IOException {
         System.err.println("Invalid files, if any, will be listed in " + outInvalidPath);
-        ThreadAid.runEventProcess(workPath, eventDir -> {
+
+        if (dataEntryPath != null) {
+            Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+            Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
+
+            for (GlobalCMTID event : eventSet) {
+                try {
+                    String[] phaseNames = Stream.concat(usePhases.stream(), avoidPhases.stream()).map(Phase::toString).toArray(String[]::new);
+                    TauP_Time timeTool = new TauP_Time(structureName);
+                    timeTool.setPhaseNames(phaseNames);
+                    timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
+
+                    Set<DataEntry> correspondingEntrySet = entrySet.stream()
+                            .filter(entry -> entry.getEvent().equals(event) && components.contains(entry.getComponent()))
+                            .collect(Collectors.toSet());
+                    for (DataEntry entry: correspondingEntrySet) {
+                        makeTimeWindows(entry, timeTool);
+                    }
+                } catch (TauModelException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        } else {
+        ThreadAid.runEventProcess(obsPath, eventDir -> {
             try {
                 // set up taup_time tool
                 // This is done per event (not reusing a single tool) because each thread needs its own instance.
@@ -259,6 +315,7 @@ public class TimewindowMaker extends Operation {
         } , 10, TimeUnit.HOURS);
         // this println() is for starting new line after writing "."s
         System.err.println();
+        }
 
         if (timewindowSet.isEmpty()) {
             System.err.println("No timewindows are created.");
@@ -266,6 +323,83 @@ public class TimewindowMaker extends Operation {
             TimewindowDataFile.write(timewindowSet, outTimewindowPath);
         }
         TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
+    }
+
+    private void makeTimeWindows(DataEntry entry, TauP_Time timeTool) throws IOException, TauModelException {
+        GlobalCMTID event = entry.getEvent();
+        Observer observer = entry.getObserver();
+        SACComponent component = entry.getComponent();
+
+        // Compute phase arrivals
+        double epicentralDistanceDeg = event.getEventData().getCmtPosition().computeEpicentralDistanceDeg(observer.getPosition());
+        timeTool.calculate(epicentralDistanceDeg);
+        List<Arrival> arrivals = timeTool.getArrivals();
+        List<Arrival> useArrivals = new ArrayList<>();
+        List<Arrival> avoidArrivals = new ArrayList<>();
+        if (useDuplicatePhases) {
+            // use all arrivals for usePhases
+            arrivals.stream().filter(arrival -> usePhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(useArrivals::add);
+        } else {
+            // use only the first arrival of each usePhase
+            for (Phase phase : usePhases) {
+                arrivals.stream().filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(phase)).findFirst().ifPresent(useArrivals::add);
+            }
+        }
+        // for avoidPhases, use all arrivals
+        arrivals.stream().filter(arrival -> avoidPhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(avoidArrivals::add);
+
+        // refine useArrivals
+        if (!majorArc) {
+            useArrivals.removeIf(arrival -> arrival.getDistDeg() >= 180.);
+        }
+        if (useArrivals.isEmpty()) {
+            writeInvalid(entry, "No usePhases arrive");
+            return;
+        }
+
+        // extract arrival times
+        double[] usePhaseTimes = useArrivals.stream().mapToDouble(Arrival::getTime).toArray();
+        double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
+
+        // create windows
+        Timewindow[] windows;
+        if (allowSplitWindows) {
+            // create windows allowing them to be split
+            windows = createWindowsAllowingSplits(usePhaseTimes, avoidPhaseTimes);
+        } else {
+            // find first and last usePhase arrival times
+            double firstUseTime = Arrays.stream(usePhaseTimes).min().getAsDouble();
+            double lastUseTime = Arrays.stream(usePhaseTimes).max().getAsDouble();
+            // skip if an avoidPhase is between or near usePhases
+            for (Arrival avoidArrival : avoidArrivals) {
+                double avoidTime = avoidArrival.getTime();
+                if (firstUseTime <= (avoidTime + avoidRearShift) && (avoidTime - avoidFrontShift) <= lastUseTime) {
+                    writeInvalid(entry, avoidArrival.getPhase().getName() + " arrives between or near usePhases");
+                    return;
+                }
+            }
+            // create single window
+            windows = createSingleWindow(firstUseTime, lastUseTime, avoidPhaseTimes);
+        }
+        if (windows == null) {
+            writeInvalid(entry, "Nothing remains after eliminating windows of avoidPhases");
+            return;
+        }
+
+        // window fix and check
+        List<TimewindowData> windowList = Arrays.stream(windows)
+                .map(window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component,
+                        findContainedPhases(window, useArrivals)))
+                .filter(tw -> tw.getLength() > minLength).collect(Collectors.toList());
+        if (windowList.size() == 0) {
+            writeInvalid(entry, "Timewindow too short.");
+            return;
+        }
+
+        // add final result
+        timewindowSet.addAll(windowList);
+        travelTimeSet.add(new TravelTimeInformation(event, observer, useArrivals, avoidArrivals));
+
     }
 
     /**
@@ -506,6 +640,17 @@ public class TimewindowMaker extends Operation {
         try (PrintWriter pw = new PrintWriter(
                 Files.newBufferedWriter(outInvalidPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
             pw.println(sacFileName + " : " + reason);
+        }
+    }
+    /**
+     * Write invalid sacFile in invalidList
+     * @param sacFileName which is invalid
+     * @param reason why the sacFile is invalid
+     */
+    private synchronized void writeInvalid(DataEntry entry, String reason) throws IOException {
+        try (PrintWriter pw = new PrintWriter(
+                Files.newBufferedWriter(outInvalidPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+            pw.println(entry + " : " + reason);
         }
     }
 

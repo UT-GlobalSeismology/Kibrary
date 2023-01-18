@@ -416,19 +416,19 @@ public class BasicRecordSectionCreator extends Operation {
             profilePlot.setMarginH(15, 25);
             profilePlot.setMarginV(15, 15);
             profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
-            profilePlot.unsetKey();
+            profilePlot.unsetCommonKey();
 
-            profilePlot.setTitle(eventDir.toString());
+            profilePlot.setCommonTitle(eventDir.toString());
             if (alignPhases != null) {
-                profilePlot.setXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
+                profilePlot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
             } else {
-                profilePlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+                profilePlot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                profilePlot.setYlabel("Distance (deg)");
+                profilePlot.setCommonYlabel("Distance (deg)");
                 profilePlot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
-                profilePlot.setYlabel("Azimuth (deg)");
+                profilePlot.setCommonYlabel("Azimuth (deg)");
                 profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }
