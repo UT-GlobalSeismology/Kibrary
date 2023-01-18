@@ -284,6 +284,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         System.err.println("Making information files for the events (fp) ...");
         int nCreated = 0;
         int nSkipped = 0;
+        // TreeSet is used here to sort the FP sources in the fpList file
         Set<String> fpSourceSet = new TreeSet<>();
         for (GlobalCMTID event : eventSet) {
             GlobalCMTAccess eventData = event.getEventData();
@@ -366,6 +367,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         System.err.println("Making information files for the observers (bp) ...");
         int nCreated = 0;
         int nSkipped = 0;
+        // TreeSet is used here to sort the BP sources in the bpList file
         Set<String> bpSourceSet = new TreeSet<>();
         for (Observer observer : observerSet) {
             String observerCode = observer.getPosition().toCode();

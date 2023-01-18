@@ -285,7 +285,7 @@ public class OrthogonalityTest extends Operation {
    private void createPlot(List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns) throws IOException {
        GnuplotFile gnuplot = new GnuplotFile(outPath.resolve("orthogonality.plt"));
        gnuplot.setOutput("png", "orthogonality.png", 1280, 960, false);
-       gnuplot.setFont("Arial", 20, 18, 18, 12, 18);
+       gnuplot.setFont("Arial", 20, 18, 18, 16, 18);
        gnuplot.setNMultiplotColumn(2);
        gnuplot.unsetCommonKey();
        gnuplot.setCommonXlabel("voxel #");
