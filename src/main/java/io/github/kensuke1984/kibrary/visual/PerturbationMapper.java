@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -85,14 +86,21 @@ public class PerturbationMapper extends Operation {
     @Override
     public void run() throws IOException {
 
-        Set<FullPosition> positions = PerturbationListFile.readPositions(perturbationPath);
+        Set<FullPosition> positions = PerturbationListFile.read(perturbationPath).keySet();
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
 
-        String fileName = perturbationPath.toString();
-        String fileNameRoot = fileName.substring(0, fileName.lastIndexOf("."));
+        String fileName = perturbationPath.getFileName().toString();
+        String fileNameRoot = FileAid.extractNameRoot(perturbationPath);
+
+        // copy perturbation file to current directory
+        Path outPerturbationPath = workPath.resolve(fileName);
+        if (!Files.exists(outPerturbationPath)) {
+            Files.copy(perturbationPath, outPerturbationPath);
+        }
+
         // output shellscripts
         PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, mapRegion, scale, fileNameRoot);
         script.write(workPath);

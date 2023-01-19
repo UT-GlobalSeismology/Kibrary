@@ -9,6 +9,9 @@ import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
+import io.github.kensuke1984.kibrary.quick.LookAtBPspc;
+import io.github.kensuke1984.kibrary.quick.LookAtFPspc;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -16,6 +19,8 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.visual.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.visual.DistanceHistogram;
@@ -47,10 +52,12 @@ enum Brooklyn {
     ObserverListFile(6, ObserverListFile.class),
     ColorBinInformationFile(9, ColorBinInformationFile.class),
     // Data download 10
+    GlobalCMTID(10, GlobalCMTID.class),
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),
     LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
+    SACFileAccess(21, SACFileAccess.class),
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
@@ -62,10 +69,13 @@ enum Brooklyn {
     AzimuthHistogram(49, AzimuthHistogram.class),
     // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
-    // Partial 50
-    PartialIDFile(55, PartialIDFile.class),
-    // Inversion 60
+    // Partial 60
+	PartialIDFile(65, PartialIDFile.class),
+    // Inversion 70
+    PerturbationComparison(71, PerturbationComparison.class),
     // Temporal 100
+	LookAtFPspc(101,LookAtFPspc.class),
+	LookAtBPspc(102,LookAtBPspc.class),
     ;
 
     private Class<?> c;

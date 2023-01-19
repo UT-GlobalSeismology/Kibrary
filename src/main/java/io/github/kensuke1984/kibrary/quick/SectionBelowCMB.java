@@ -73,11 +73,11 @@ public class SectionBelowCMB {
         profilePlot.setMarginH(15, 25);
         profilePlot.setMarginV(15, 15);
         profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
-        profilePlot.unsetKey();
+        profilePlot.unsetCommonKey();
 
-        profilePlot.setTitle(eventDir.toString());
-        profilePlot.setXlabel("Time (s)");
-        profilePlot.setYlabel("Depth (km)");
+        profilePlot.setCommonTitle(eventDir.toString());
+        profilePlot.setCommonXlabel("Time (s)");
+        profilePlot.setCommonYlabel("Depth (km)");
 
         for (SACFileName name : sacfilenames) {
 

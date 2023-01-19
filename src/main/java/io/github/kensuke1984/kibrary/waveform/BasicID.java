@@ -1,11 +1,14 @@
 package io.github.kensuke1984.kibrary.waveform;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -122,6 +125,43 @@ public class BasicID {
                 maxPeriod, phases, startByte, convolved, data);
     }
 
+    /**
+     * Extract all timewindows from a set of input timewindows
+     * that have the same (event, observer, component) and overlap with the timewindow of this basicID.
+     * @param timewindowSet (Set of {@link TimewindowData}) Input timewindow set to search from
+     * @return (Set of {@link TimewindowData}) All timewindows that overlap with this
+     */
+    public Set<TimewindowData> findAllOverlappingWindows(Set<TimewindowData> timewindowSet) {
+        Set<TimewindowData> overlappingWindows = timewindowSet.stream()
+                .filter(window -> window.getGlobalCMTID().equals(event)
+                        && window.getObserver().equals(observer)
+                        && window.getComponent().equals(component)
+                        // there must be some overlap between the windows
+                        && window.getStartTime() < computeEndTime()
+                        && startTime < window.getEndTime())
+                .collect(Collectors.toSet());
+        return overlappingWindows;
+    }
+
+    /**
+     * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
+     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
+     * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
+     *
+     * @param id0 {@link BasicID}
+     * @param id1 {@link BasicID}
+     * @return if the IDs are same
+     */
+    public static boolean isPair(BasicID id0, BasicID id1) {
+        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+                && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
+                && id0.getSamplingHz() == id1.getSamplingHz()
+                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
+                && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
+        return res;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -171,49 +211,8 @@ public class BasicID {
         return true;
     }
 
-    /**
-     * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
-     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
-     * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
-     *
-     * @param id0 {@link BasicID}
-     * @param id1 {@link BasicID}
-     * @return if the IDs are same
-     */
-    public static boolean isPair(BasicID id0, BasicID id1) {
-        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-                && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                && id0.getSamplingHz() == id1.getSamplingHz()
-                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
-                && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
-                && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
-        return res;
-    }
-
-
     public WaveformType getWaveformType() {
         return type;
-    }
-
-    /**
-     * @return Sampling Hz [hz]
-     */
-    public double getSamplingHz() {
-        return samplingHz;
-    }
-
-    /**
-     * @return [s]
-     */
-    public double getStartTime() {
-        return startTime;
-    }
-
-    /**
-     * @return Number of data points
-     */
-    public int getNpts() {
-        return npts;
     }
 
     public Observer getObserver() {
@@ -228,6 +227,38 @@ public class BasicID {
         return component;
     }
 
+    public Phase[] getPhases() {
+        return phases;
+    }
+
+    /**
+     * @return [s]
+     */
+    public double getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * @return [s]
+     */
+    public double computeEndTime() {
+        return startTime + (npts - 1) / samplingHz;
+    }
+
+    /**
+     * @return Number of data points
+     */
+    public int getNpts() {
+        return npts;
+    }
+
+    /**
+     * @return Sampling Hz [hz]
+     */
+    public double getSamplingHz() {
+        return samplingHz;
+    }
+
     public double getMinPeriod() {
         return minPeriod;
     }
@@ -236,23 +267,19 @@ public class BasicID {
         return maxPeriod;
     }
 
-    public Phase[] getPhases() {
-        return phases;
-    }
-
-    /**
-     * If this is 100, then the data for this ID starts from 100th byte in the file.
-     * @return [byte]
-     */
-    public long getStartByte() {
-        return startByte;
-    }
-
     /**
      * @return If this ID is convolved
      */
     public boolean isConvolved() {
         return convolved;
+    }
+
+    /**
+     * If this is 100, then the data for this ID starts from 100th byte in the waveform file.
+     * @return [byte]
+     */
+    public long getStartByte() {
+        return startByte;
     }
 
     public boolean containsData() {
@@ -275,21 +302,20 @@ public class BasicID {
         return new Trace(x, data);
     }
 
+    /**
+     * @return
+     * @since 2022/12/13
+     * @author otsuru
+     */
+    public DataEntry toDataEntry() {
+        return new DataEntry(event, observer, component);
+    }
+
     @Override
     public String toString() {
-        String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " "
-                + component + " " + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod
-                + " " + maxPeriod + " ";
-        if (phases == null)
-            basicString += "null" + " ";
-        else if (phases.length == 1)
-            basicString += phases[phases.length - 1] + " ";
-        else if (phases.length > 1) {
-            for (int i = 0; i < phases.length - 1; i++)
-                basicString += phases[i] + ",";
-            basicString += phases[phases.length - 1] + " ";
-        }
-        basicString += startByte + " " + convolved;
+        String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
+                + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
+                + TimewindowData.phasesAsString(phases) + " " + convolved + " " + startByte;
         return basicString;
     }
 

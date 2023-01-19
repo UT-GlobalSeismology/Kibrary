@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,6 +50,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Both observed and synthetic data must be in event folders under obsDir and synDir (they can be the same folder).
  * Resulting data selection entries will be created for each timewindow,
  * thus specified by a (event, observer, component, timeframe)-pair.
+ * <p>
+ * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each timewindow.
  * <p>
  * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
  * See {@link TimewindowDataFile}.
@@ -131,9 +132,13 @@ public class DataSelection extends Operation {
      */
     private double maxVariance;
     /**
-     * Threshold of amplitude ratio (upper limit; lower limit is its inverse)
+     * Minimum amplitude ratio
      */
-    private double ratio;
+    private double minRatio;
+    /**
+     * Maximum of amplitude ratio
+     */
+    private double maxRatio;
     /**
      * Threshold of S/N ratio that is selected
      */
@@ -143,7 +148,7 @@ public class DataSelection extends Operation {
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private List<DataFeature> dataFeatureList;
+    private Set<DataFeature> dataFeatureSet;
     private Set<TimewindowData> goodTimewindowSet;
 
     /**
@@ -189,8 +194,10 @@ public class DataSelection extends Operation {
             pw.println("#minVariance ");
             pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
             pw.println("#maxVariance ");
-            pw.println("##(double) Threshold of amplitude ratio (upper limit; lower limit is its inverse) [1:) (2)");
-            pw.println("#ratio ");
+            pw.println("##(double) Lower threshold of amplitude ratio [0:maxRatio] (0.5)");
+            pw.println("#minRatio ");
+            pw.println("##(double) Upper threshold of amplitude ratio [minRatio:) (2)");
+            pw.println("#maxRatio ");
             pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
             pw.println("#minSNratio ");
             pw.println("##(boolean) Whether to require phases to be included in timewindow (true)");
@@ -232,9 +239,10 @@ public class DataSelection extends Operation {
         maxVariance = property.parseDouble("maxVariance", "2");
         if (minVariance < 0 || minVariance > maxVariance)
             throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
-        ratio = property.parseDouble("ratio", "2");
-        if (ratio < 1)
-            throw new IllegalArgumentException("Amplitude ratio threshold " + ratio + " is invalid, must be >= 1.");
+        minRatio = property.parseDouble("minRatio", "0.5");
+        maxRatio = property.parseDouble("maxRatio", "2");
+        if (minRatio < 0 || minRatio > maxRatio)
+            throw new IllegalArgumentException("Amplitude ratio range " + minRatio + " , " + maxRatio + " is invalid.");
         minSNratio = property.parseDouble("minSNratio", "0");
         if (minSNratio < 0)
             throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
@@ -244,7 +252,7 @@ public class DataSelection extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
         outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", fileTag, dateStr, ".lst"));
         outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", fileTag, dateStr, ".dat"));
-        dataFeatureList = Collections.synchronizedList(new ArrayList<>());
+        dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
@@ -273,7 +281,7 @@ public class DataSelection extends Operation {
 
         System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
         TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
-        DataFeatureListFile.write(dataFeatureList, outputFeaturePath);
+        DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 
     /**
@@ -297,33 +305,18 @@ public class DataSelection extends Operation {
         return corrs.get(0);
     }
 
-    /**
-     * @param timewindow timewindow to shift
-     * @return if there is time shift information for the input timewindow, then
-     * creates new timewindow and returns it, otherwise, just returns
-     * the input one.
-     */
-    private TimewindowData shift(TimewindowData timewindow) {
-        if (staticCorrectionSet.isEmpty())
-            return timewindow;
-        StaticCorrectionData foundShift = getStaticCorrection(timewindow);
-        double value = foundShift.getTimeshift();
-        return new TimewindowData(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
-                foundShift.getObserver(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
-    }
-
     private boolean check(DataFeature feature) throws IOException {
-        double minRatio = feature.getMinRatio();
-        double maxRatio = feature.getMaxRatio();
+        double posSideRatio = feature.getNegSideRatio();
+        double negSideRatio = feature.getPosSideRatio();
         double absRatio = feature.getAbsRatio();
         double cor = feature.getCorrelation();
         double var = feature.getVariance();
         double sn = feature.getSNRatio();
 
-        boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
-                || ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
-                || var < minVariance || maxVariance < var || sn < minSNratio);
-
+        boolean isok = (minRatio <= posSideRatio && posSideRatio <= maxRatio)
+                && (minRatio <= negSideRatio && negSideRatio <= maxRatio)
+                && (minRatio <= absRatio && absRatio <= maxRatio) && (minCorrelation <= cor &&  cor <= maxCorrelation)
+                && (minVariance <= var && var <= maxVariance) && (minSNratio <= sn);
         return isok;
     }
 
@@ -450,7 +443,7 @@ public class DataSelection extends Operation {
                     feature.setSelected(true);
                     goodTimewindowSet.add(timewindow);
                 }
-                dataFeatureList.add(feature);
+                dataFeatureSet.add(feature);
 
             } catch (Exception e) {
                 System.err.println("!! " + timewindow + " is ignored because an error occurs.");

@@ -94,8 +94,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
-            pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##Map region, in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90] (-180/180/-90/90)");
+            pw.println("#mapRegion ");
             pw.println("##(double) Range of scale (3)");
             pw.println("#scale ");
         }
@@ -125,7 +125,7 @@ public class SensitivityKernelMapper extends Operation {
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
 
-        if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        mapRegion = property.parseString("mapRegion", "-180/180/-90/90");
         scale = property.parseDouble("scale", "3");
 
     }
@@ -154,7 +154,7 @@ public class SensitivityKernelMapper extends Operation {
             double[] data = partial.getData();
             double t0 = partial.getStartTime();
 
-            String phaselist = null;
+            String phaselist = "";
 
             for (Phase phase : partial.getPhases()) {
                 phaselist = phaselist + phase;

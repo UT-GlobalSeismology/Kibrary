@@ -31,7 +31,6 @@ public class UnknownParameterSetter {
     /**
      * Create unknown parameter file.
      * @param args [option]
-     *      [voxelPath  partialTypes...]
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
@@ -87,17 +86,17 @@ public class UnknownParameterSetter {
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
         double[] radii = file.getRadii();
-        List<HorizontalPiece> horizontalPieces = file.getHorizontalPieces();
+        List<HorizontalPixel> horizontalPixels = file.getHorizontalPixels();
 
         // create unknown parameters
         List<UnknownParameter> parameterList = new ArrayList<>();
         int numFinished = 0;
-        int numTotal = horizontalPieces.size() * radii.length;
-        for (HorizontalPiece piece : horizontalPieces) {
-            // extract information of horizontal piece
-            HorizontalPosition horizontalPosition = piece.getPosition();
-            double dLatitude = piece.getDLatitude();
-            double dLongitude = piece.getDLongitude();
+        int numTotal = horizontalPixels.size() * radii.length;
+        for (HorizontalPixel pixel : horizontalPixels) {
+            // extract information of horizontal pixel
+            HorizontalPosition horizontalPosition = pixel.getPosition();
+            double dLatitude = pixel.getDLatitude();
+            double dLongitude = pixel.getDLongitude();
             // loop for each layer
             for (int i = 0; i < radii.length; i++) {
                 FullPosition voxelPosition = horizontalPosition.toFullPosition(radii[i]);

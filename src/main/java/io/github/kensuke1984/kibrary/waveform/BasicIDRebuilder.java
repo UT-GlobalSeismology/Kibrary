@@ -149,7 +149,7 @@ public class BasicIDRebuilder extends Operation {
     @Override
     public void run() throws IOException {
 
-        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+        List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
         // sort observed and synthetic
         BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
         obsIDs = pairer.getObsList();

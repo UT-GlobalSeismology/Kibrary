@@ -125,33 +125,39 @@ public class PerturbationMapShellscript {
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
 
+            pw.println("#------- Panels");
             // CAUTION: i is in reverse order because we will draw from the top
             for (int i = radii.length - 1; i >= 0; i--) {
                 int radius = (int) radii[i];
 
                 if (i == radii.length - 1) {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
+                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
                 } else if (i % PANEL_PER_ROW == (PANEL_PER_ROW - 1)) {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
                 } else {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3505) + "-" + (radius - 3455)//TODO parameterize
-                            + "km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
                 }
 
-                if (i == 0) {
-                    pw.println("gmt psscale -Ccp.cpt -D7/-1/12/0.8h -B1.0:@~d@~" + paramName + "/" + paramName + "\\(\\%\\): -K -O -Y-3 -X-32 >> $outputps");
-                    pw.println("gmt pscoast -R -J $O -X32 -Y3 -O -Wthinner,black -A500 >> $outputps");
-                } else {
-                    pw.println("gmt pscoast -R -J $O -K -O  -Wthinner,black -A500 >> $outputps");
-                }
-
+                pw.println("gmt pscoast -R -J $O -K -O -Wthinner,black -A500 >> $outputps");
                 pw.println("");
             }
 
+            pw.println("#------- Scale");
+            pw.println("gmt psscale -Ccp.cpt -Dx7/-1+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -Y-3 -X-36 >> $outputps");
+            pw.println("");
+
+            pw.println("#------- Finalize");
+            pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $outputps");
+            pw.println("END");
+            pw.println("");
             pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
             pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
+            pw.println("");
+            pw.println("#-------- Clear");
+            pw.println("rm -rf cp.cpt gmt.conf gmt.history");
             pw.println("echo \"Done!\"");
         }
     }

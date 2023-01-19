@@ -1,35 +1,32 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
-import java.util.List;
 
-import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
-import edu.sc.seis.TauP.TauP_Pierce;
-import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
+        HorizontalPosition posE = new HorizontalPosition(-14, -69);
+        HorizontalPosition posS = new HorizontalPosition(-16, 28);
 
-        TauP_Pierce timeTool = new TauP_Pierce("prem");
-        timeTool.setAddDepths("2861,2871");
-        String[] phaseNames = "S,ScS".split(",");
-        timeTool.setPhaseNames(phaseNames);
-        timeTool.setSourceDepth(new GlobalCMTID("201506231218A").getEventData().getCmtPosition().getDepth()); //TODO use this for later calculation
+        System.err.println(posE.computeEpicentralDistanceDeg(posS));
 
-        timeTool.calculate(80);
-        List<Arrival> arrivals = timeTool.getArrivals();
+        double baz = posS.computeAzimuthDeg(posE);
+        System.err.println(baz);
+        System.err.println(posS.pointAlongAzimuth(baz, 24));
+        System.err.println(posS.pointAlongAzimuth(baz, 60));
 
-        for (Arrival arrival : arrivals) {
-            System.err.println(arrival);
+        System.err.println(posS.pointAlongAzimuth(0, 10));
+/*
+        Set<DataFeature> featureSet = DataFeatureListFile.read(Paths.get(args[0]));
 
-            TimeDist[] pierces = arrival.getPierce();
-            for (TimeDist pierce : pierces) {
-                System.err.println(pierce);
-            }
-        }
+        Path acceptedPath = Paths.get("acceptedEntry.lst");
+        Set<DataEntry> acceptedSet = featureSet.stream().filter(feature -> 0.2 < feature.getAbsRatio() && feature.getAbsRatio() < 5)
+                .map(feature -> feature.getTimewindow().toDataEntry()).collect(Collectors.toSet());
 
+        DataEntryListFile.writeFromSet(acceptedSet, acceptedPath);
+ */
     }
 }

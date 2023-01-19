@@ -37,11 +37,6 @@ public class DataAligner {
 
     /**
      * @param args [option]
-     * <ul>
-     * <li> -s : operate for seed files</li>
-     * <li> -m datacenter : operate for mseed files, and download from the specified datacenter</li>
-     * </ul>
-     * You must specify one or the other.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {

@@ -89,7 +89,7 @@ public class DataEntry implements Comparable<DataEntry> {
 
     @Override
     public String toString() {
-        return event + " " + observer.toPaddedInfoString() + " " + component;
+        return event.toPaddedString() + " " + observer.toPaddedInfoString() + " " + component;
     }
 
 }

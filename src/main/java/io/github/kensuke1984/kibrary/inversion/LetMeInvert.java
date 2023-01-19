@@ -33,6 +33,11 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Operation for operating inversion.
+ * This solves A<sup>T</sup>Am = A<sup>T</sup>d.
+ * <p>
+ * Weighting will be applied, thus the inversion equation will take the form<br>
+ * (WA')<sup>T</sup>(WA')m = (WA')<sup>T</sup>Wd'<br>
+ * where A = WA' is the weighted partial waveform matrix and d = Wd' is the weighted residual vector.
  *
  * @author otsuru
  * @since 2022/4/28 recreated former inversion.LetMeInvert

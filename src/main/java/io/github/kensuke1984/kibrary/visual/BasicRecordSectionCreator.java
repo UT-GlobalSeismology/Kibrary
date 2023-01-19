@@ -236,10 +236,10 @@ public class BasicRecordSectionCreator extends Operation {
    @Override
    public void run() throws IOException {
        try {
-           BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+           List<BasicID> ids = BasicIDFile.readAsList(basicIDPath, basicPath);
 
            // get all events included in basicIDs
-           Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+           Set<GlobalCMTID> allEvents = ids.stream().filter(id -> components.contains(id.getSacComponent()))
                    .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
            // eventDirs of events to be used
            Set<EventFolder> eventDirs;
@@ -272,10 +272,10 @@ public class BasicRecordSectionCreator extends Operation {
 
                // create plot for each component
                for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                   List<BasicID> useIds = ids.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                            && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
-                           .toArray(BasicID[]::new);
+                           .collect(Collectors.toList());
 
                    Plotter plotter = new Plotter(eventDir, useIds, component);
                    plotter.plot();
@@ -300,7 +300,7 @@ public class BasicRecordSectionCreator extends Operation {
         private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
 
         private final EventFolder eventDir;
-        private final BasicID[] ids;
+        private final List<BasicID> ids;
         private final SACComponent component;
 
         private GnuplotFile profilePlot;
@@ -312,7 +312,7 @@ public class BasicRecordSectionCreator extends Operation {
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(EventFolder eventDir, BasicID[] ids, SACComponent component) {
+        private Plotter(EventFolder eventDir, List<BasicID> ids, SACComponent component) {
             this.eventDir = eventDir;
             this.ids = ids;
             this.component = component;
@@ -320,7 +320,7 @@ public class BasicRecordSectionCreator extends Operation {
 
         public void plot() throws IOException, TauModelException {
             // prepare IDs
-            if (ids.length == 0) {
+            if (ids.size() == 0) {
                 return;
             }
             BasicIDPairUp pairer = new BasicIDPairUp(ids);
@@ -416,19 +416,19 @@ public class BasicRecordSectionCreator extends Operation {
             profilePlot.setMarginH(15, 25);
             profilePlot.setMarginV(15, 15);
             profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
-            profilePlot.unsetKey();
+            profilePlot.unsetCommonKey();
 
-            profilePlot.setTitle(eventDir.toString());
+            profilePlot.setCommonTitle(eventDir.toString());
             if (alignPhases != null) {
-                profilePlot.setXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
+                profilePlot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
             } else {
-                profilePlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+                profilePlot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                profilePlot.setYlabel("Distance (deg)");
+                profilePlot.setCommonYlabel("Distance (deg)");
                 profilePlot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
-                profilePlot.setYlabel("Azimuth (deg)");
+                profilePlot.setCommonYlabel("Azimuth (deg)");
                 profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }

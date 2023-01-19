@@ -114,8 +114,8 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         for (int i = 0; i < n; i++) {
             double t = -range + i / samplingHz;
             for (int iTrace = 0; iTrace < obsStackTraces.length; iTrace++) {
-                obsStack[i] += obsStackTraces[iTrace].toValue(0, t);
-                synStack[i] += synStackTraces[iTrace].toValue(0, t) / ampRatio[iTrace];
+                obsStack[i] += obsStackTraces[iTrace].interpolateValue(0, t);
+                synStack[i] += synStackTraces[iTrace].interpolateValue(0, t) / ampRatio[iTrace];
             }
             // System.out.println(t + " " + obsStack[i] + " " + synStack[i]);
         }
