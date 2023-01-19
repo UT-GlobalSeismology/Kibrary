@@ -318,16 +318,15 @@ public final class PartialIDFile {
         Path outputIdsPath;
         if (cmdLine.hasOption("o")) {
             outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
+            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
+                pw.println("#station, network, eventID, component, samplingHz, startTime, npts, period[0], period[1], "
+                		+ "usablephases, startByte, isConvolved, perturbationLocation, partialType");
+            		/*pw.println("#station, network, event, component, samplingHz, lat, lon, type, startTime, npts, "
+                    + " minPeriod, maxPeriod, phases, startByte, convolved"); */
+                Arrays.stream(Arrays.copyOfRange(ids,0,10)).forEach(pw::println);
+            }
         } else {
-            // set the output file name the same as the input, but with extension changed to txt
-            String idFileName = Paths.get(cmdLine.getOptionValue("i")).getFileName().toString();
-            outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
-        }
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
-            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
-                    + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");
-            Arrays.stream(Arrays.copyOfRange(ids,0,10)).forEach(pw::println);
+            for(int i=0; i<10; i++) System.out.println(Arrays.copyOfRange(ids,0,10)[i]);
         }
     }
 }
