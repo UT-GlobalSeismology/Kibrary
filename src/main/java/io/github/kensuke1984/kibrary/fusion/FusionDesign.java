@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.multigrid;
+package io.github.kensuke1984.kibrary.fusion;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,17 +11,17 @@ import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
- * A class that holds information of voxels that are changed before and after fusing voxels for multigrid inversion.
+ * A class that holds information of voxels that are changed before and after fusing voxels.
  * TODO this is currently only for 3D parameters
  *
  * @author otsuru
  * @since 2022/8/2
  */
-public class MultigridDesign {
+public class FusionDesign {
     private List<List<UnknownParameter>> originalParameters = new ArrayList<>();
     private List<UnknownParameter> fusedParameters = new ArrayList<>();
 
-    public MultigridDesign() {
+    public FusionDesign() {
     }
 
     public void addFusion(UnknownParameter... params) {

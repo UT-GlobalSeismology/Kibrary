@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.multigrid;
+package io.github.kensuke1984.kibrary.fusion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,13 +25,13 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Operation that creates new {@link PartialID}s for fused voxels in {@link MultigridDesign}
+ * Operation that creates new {@link PartialID}s for fused voxels in {@link FusionDesign}
  * by averaging partial waveforms of existing {@link PartialID}s.
  *
  * @author otsuru
  * @since 2022/8/10
  */
-public class MultigridPartialsForger extends Operation {
+public class PartialsFuser extends Operation {
 
     private final Property property;
     /**
@@ -52,9 +52,9 @@ public class MultigridPartialsForger extends Operation {
      */
     private Path partialPath;
     /**
-     * Path of a {@link MultigridInformationFile}
+     * Path of a {@link FusionInformationFile}
      */
-    private Path multigridPath;
+    private Path fusionPath;
 
     /**
      * @param args  none to create a property file <br>
@@ -79,13 +79,13 @@ public class MultigridPartialsForger extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
-            pw.println("##Path of a multigrid information file, must be set");
-            pw.println("#multigridPath multigrid.inf");
+            pw.println("##Path of a fusion information file, must be set");
+            pw.println("#fusionPath fusion.inf");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public MultigridPartialsForger(Property property) throws IOException {
+    public PartialsFuser(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -96,7 +96,7 @@ public class MultigridPartialsForger extends Operation {
 
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
-        multigridPath = property.parsePath("multigridPath", null, true, workPath);
+        fusionPath = property.parsePath("fusionPath", null, true, workPath);
 
     }
 
@@ -106,12 +106,12 @@ public class MultigridPartialsForger extends Operation {
 
         // read input
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        MultigridDesign multigrid = MultigridInformationFile.read(multigridPath);
+        FusionDesign fusionDesign = FusionInformationFile.read(fusionPath);
 
         // work for each fused parameter
-        for (int i = 0; i < multigrid.getFusedParameters().size(); i++) {
-            UnknownParameter fusedParam = multigrid.getFusedParameters().get(i);
-            List<UnknownParameter> originalParams = multigrid.getOriginalParameters().get(i);
+        for (int i = 0; i < fusionDesign.getFusedParameters().size(); i++) {
+            UnknownParameter fusedParam = fusionDesign.getFusedParameters().get(i);
+            List<UnknownParameter> originalParams = fusionDesign.getOriginalParameters().get(i);
 
             // collect partialIDs that are for these originalParams
             List<PartialID> originalPartialIDs = new ArrayList<>();

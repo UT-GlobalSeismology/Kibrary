@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.multigrid;
+package io.github.kensuke1984.kibrary.fusion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,14 +29,14 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Computes correlation between partial waveforms of each unknown parameter, and creates a multigrid design.
+ * Computes correlation between partial waveforms of each unknown parameter, and designs an adaptive grid.
  *
  * TODO when A~B and B~C (A~C may or may not be true)
  *
  * @author otsuru
  * @since 2022/8/1
  */
-public class MultigridDesigner extends Operation {
+public class AdaptiveGridDesigner extends Operation {
 
     private final Property property;
     /**
@@ -135,7 +135,7 @@ public class MultigridDesigner extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public MultigridDesigner(Property property) throws IOException {
+    public AdaptiveGridDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -185,12 +185,12 @@ public class MultigridDesigner extends Operation {
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "multigrid", folderTag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output unknown parameter with large diagonal component and correlation
-        Path logPath = outPath.resolve("multigridDesigner.log");
-        MultigridDesign multigrid = new MultigridDesign();
+        Path logPath = outPath.resolve("adaptiveGridDesigner.log");
+        FusionDesign fusionDesign = new FusionDesign();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(logPath))) {
             GadgetAid.dualPrintln(pw, "# i j AtA(i,i) AtA(i,j) coeff");
 
@@ -209,20 +209,20 @@ public class MultigridDesigner extends Operation {
                         GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(j));
-                        multigrid.addFusion(parameterList.get(i), parameterList.get(j));
+                        fusionDesign.addFusion(parameterList.get(i), parameterList.get(j));
                     }
                 }
             }
         }
 
-        // output multigrid design file
-        Path outputMultigridPath = outPath.resolve("multigrid.inf");
-        MultigridInformationFile.write(multigrid, outputMultigridPath);
+        // output fusion design file
+        Path outputFusionPath = outPath.resolve("fusion.inf");
+        FusionInformationFile.write(fusionDesign, outputFusionPath);
 
         // output unknown parameter file
         List<UnknownParameter> fusedParameterList = parameterList.stream()
-                .filter(param -> !multigrid.fuses(param)).collect(Collectors.toList());
-        fusedParameterList.addAll(multigrid.getFusedParameters());
+                .filter(param -> !fusionDesign.fuses(param)).collect(Collectors.toList());
+        fusedParameterList.addAll(fusionDesign.getFusedParameters());
         Path outputUnknownsPath = outPath.resolve("unknowns.lst");
         UnknownParameterFile.write(fusedParameterList, outputUnknownsPath);
     }

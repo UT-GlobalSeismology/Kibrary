@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.multigrid;
+package io.github.kensuke1984.kibrary.fusion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,16 +17,16 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * @author otsuru
  * @since 2022/8/3
  */
-public class MultigridInformationFile {
-    private MultigridInformationFile() {}
+public class FusionInformationFile {
+    private FusionInformationFile() {}
 
     /**
-     * @param design (MultigridDesign)
+     * @param design ({@link FusionDesign})
      * @param outPath       for write
      * @param options       for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(MultigridDesign design, Path outPath, OpenOption... options)
+    public static void write(FusionDesign design, Path outPath, OpenOption... options)
             throws IOException {
         List<List<UnknownParameter>> originalParameters = design.getOriginalParameters();
         List<UnknownParameter> fusedParameters = design.getFusedParameters();
@@ -43,12 +43,12 @@ public class MultigridInformationFile {
     }
 
     /**
-     * @param path of a multigrid information file.
-     * @return (MultigridDesign) design of multigrid
+     * @param path (Path) A {@link FusionInformationFile}
+     * @return ({@link FusionDesign}) Design of voxel fusion
      * @throws IOException if an I/O error occurs.
      */
-    public static MultigridDesign read(Path path) throws IOException {
-        MultigridDesign multigrid = new MultigridDesign();
+    public static FusionDesign read(Path path) throws IOException {
+        FusionDesign fusionDesign = new FusionDesign();
 
         InformationFileReader reader = new InformationFileReader(path, true);
         List<UnknownParameter> originalParams = new ArrayList<>();
@@ -59,13 +59,13 @@ public class MultigridInformationFile {
                 originalParams.add(UnknownParameterFile.constructParameterFromParts(unknownParts));
             } else if (parts[0].equals("+")) {
                 UnknownParameter fusedParam = UnknownParameterFile.constructParameterFromParts(unknownParts);
-                multigrid.add(originalParams, fusedParam);
+                fusionDesign.add(originalParams, fusedParam);
                 originalParams = new ArrayList<>();
             } else {
                 throw new IllegalArgumentException("Line should start with \"-\" or \"+\"");
             }
         }
 
-        return multigrid;
+        return fusionDesign;
     }
 }
