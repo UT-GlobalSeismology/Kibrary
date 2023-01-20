@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -55,6 +54,11 @@ public class PartialsFuser extends Operation {
      * Path of a {@link FusionInformationFile}
      */
     private Path fusionPath;
+
+    /**
+     * The design of the fusion of unknown parameters
+     */
+    private FusionDesign fusionDesign;
 
     /**
      * @param args  none to create a property file <br>
@@ -106,7 +110,7 @@ public class PartialsFuser extends Operation {
 
         // read input
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        FusionDesign fusionDesign = FusionInformationFile.read(fusionPath);
+        fusionDesign = FusionInformationFile.read(fusionPath);
 
         // work for each fused parameter
         for (int i = 0; i < fusionDesign.getFusedParameters().size(); i++) {
@@ -148,14 +152,27 @@ public class PartialsFuser extends Operation {
             }
         }
 
-        // add forged IDs into the array of all original IDs
-        List<PartialID> newPartialIDs = Stream.concat(Arrays.stream(partialIDs), forgedPartialIDs.stream()).collect(Collectors.toList());
+        // collect fused IDs and the original IDs that are not fused
+        List<PartialID> newPartialIDs = Arrays.stream(partialIDs).filter(id -> isFused(id)).collect(Collectors.toList());
+        newPartialIDs.addAll(forgedPartialIDs);
 
         // output
         String dateStr = GadgetAid.getTemporaryString();
         Path idPath = workPath.resolve(DatasetAid.generateOutputFileName("partialID", fileTag, dateStr, ".dat"));
         Path wavePath = workPath.resolve(DatasetAid.generateOutputFileName("partial", fileTag, dateStr, ".dat"));
         PartialIDFile.write(newPartialIDs, idPath, wavePath);
+    }
+
+    private boolean isFused(PartialID id) {
+        List<List<UnknownParameter>> originalParamsList = fusionDesign.getOriginalParameters();
+        for (List<UnknownParameter> originalParams : originalParamsList) {
+            for (UnknownParameter originalParam : originalParams) {
+                if (id.getPartialType().equals(originalParam.getPartialType()) && id.getVoxelPosition().equals(originalParam.getPosition())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

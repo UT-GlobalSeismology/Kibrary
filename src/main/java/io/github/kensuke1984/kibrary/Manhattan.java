@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.entrance.NetworkLookup;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.fusion.AdaptiveGridDesigner;
+import io.github.kensuke1984.kibrary.fusion.CoarseGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.PartialsFuser;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
@@ -86,6 +87,7 @@ enum Manhattan {
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
+    CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     // Partial 60
     ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
