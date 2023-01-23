@@ -170,6 +170,7 @@ public class VoxelLayoutDesigner extends Operation {
 
         borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", "3480 3530 3580 3630 3680 3730 3780 3830 3880"))
                 .sorted().toArray();
+        if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii");
     }
 
     @Override

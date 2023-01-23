@@ -106,7 +106,7 @@ public class PartialsFuser extends Operation {
 
     @Override
     public void run() throws IOException {
-        List<PartialID> forgedPartialIDs = new ArrayList<>();
+        List<PartialID> fusedPartialIDs = new ArrayList<>();
 
         // read input
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
@@ -128,7 +128,7 @@ public class PartialsFuser extends Operation {
                 }
             }
 
-            // pair up partialIDs and forge into a new one
+            // pair up partialIDs and fuse into a new one
             // this process is repeated while removing used IDs out of the list
             while (originalPartialIDs.size() > 0) {
                 // get the first ID in list
@@ -143,18 +143,20 @@ public class PartialsFuser extends Operation {
                         pairPartialIDs.add(idK);
                     }
                 }
-                // forge partialID for this fusedParam
-                forgedPartialIDs.add(forge(pairPartialIDs, fusedParam));
+                // fuse partialID for this fusedParam
+                fusedPartialIDs.add(fuse(pairPartialIDs, fusedParam));
                 // remove used IDs from the collected IDs
                 for (PartialID id : pairPartialIDs) {
                     originalPartialIDs.remove(id);
                 }
             }
+            System.err.print(".");
         }
+        System.err.println();
 
         // collect fused IDs and the original IDs that are not fused
-        List<PartialID> newPartialIDs = Arrays.stream(partialIDs).filter(id -> isFused(id)).collect(Collectors.toList());
-        newPartialIDs.addAll(forgedPartialIDs);
+        List<PartialID> newPartialIDs = Arrays.stream(partialIDs).filter(id -> !isFused(id)).collect(Collectors.toList());
+        newPartialIDs.addAll(fusedPartialIDs);
 
         // output
         String dateStr = GadgetAid.getTemporaryString();
@@ -183,7 +185,7 @@ public class PartialsFuser extends Operation {
      * @param fusedParam
      * @return
      */
-    private PartialID forge(List<PartialID> ids, UnknownParameter fusedParam) {
+    private PartialID fuse(List<PartialID> ids, UnknownParameter fusedParam) {
         // add waveforms
         RealVector sumVector = null;
         for (PartialID id : ids) {
@@ -195,10 +197,10 @@ public class PartialsFuser extends Operation {
 
         // create forged ID
         PartialID id0 = ids.get(0);
-        PartialID forgedID = new PartialID(id0.getObserver(), id0.getGlobalCMTID(), id0.getSacComponent(),
+        PartialID fusedID = new PartialID(id0.getObserver(), id0.getGlobalCMTID(), id0.getSacComponent(),
                 id0.getSamplingHz(), id0.getStartTime(), id0.getNpts(), id0.getMinPeriod(), id0.getMaxPeriod(),
                 id0.getPhases(), id0.getStartByte(), id0.isConvolved(),
                 fusedParam.getPosition(), fusedParam.getPartialType(), averageWaveform);
-        return forgedID;
+        return fusedID;
     }
 }

@@ -140,11 +140,8 @@ public class CoarseGridDesigner extends Operation {
         FusionInformationFile.write(fusionDesign, outputFusionPath);
 
         // output unknown parameter file
-        List<UnknownParameter> fusedParameterList = parameterList.stream()
-                .filter(param -> !fusionDesign.fuses(param)).collect(Collectors.toList());
-        fusedParameterList.addAll(fusionDesign.getFusedParameters());
         Path outputUnknownsPath = outPath.resolve("unknowns.lst");
-        UnknownParameterFile.write(fusedParameterList, outputUnknownsPath);
+        UnknownParameterFile.write(fusionDesign.getFusedParameters(), outputUnknownsPath);
     }
 
 }
