@@ -144,7 +144,7 @@ public class PartialsFuser extends Operation {
                     }
                 }
                 // fuse partialID for this fusedParam
-                fusedPartialIDs.add(fuse(pairPartialIDs, fusedParam));
+                fusedPartialIDs.add(fuse(pairPartialIDs, originalParams, fusedParam));
                 // remove used IDs from the collected IDs
                 for (PartialID id : pairPartialIDs) {
                     originalPartialIDs.remove(id);
@@ -179,21 +179,29 @@ public class PartialsFuser extends Operation {
 
     /**
      * Creates a new {@link PartialID} based on input {@link PartialID}s.
-     * TODO Is taking a simple average OK?
+     * The average waveform, taken considering the volume of voxels, is computed.
      *
      * @param ids
      * @param fusedParam
      * @return
      */
-    private PartialID fuse(List<PartialID> ids, UnknownParameter fusedParam) {
+    private PartialID fuse(List<PartialID> ids, List<UnknownParameter> originalParams, UnknownParameter fusedParam) {
         // add waveforms
         RealVector sumVector = null;
+        double volumeTotal = 0;
         for (PartialID id : ids) {
+            // find volume of corresponding voxel
+            UnknownParameter originalParam = originalParams.stream()
+                    .filter(param -> id.getPartialType().equals(param.getPartialType()) && id.getVoxelPosition().equals(param.getPosition()))
+                    .findFirst().get();
+            double volume = originalParam.getWeighting();
+            volumeTotal += volume;
+            // add the waveform, multiplied by volume
             RealVector vector = new ArrayRealVector(id.getData());
-            sumVector = (sumVector == null) ? vector : sumVector.add(vector);
+            sumVector = (sumVector == null) ? vector.mapMultiply(volume) : sumVector.add(vector.mapMultiply(volume));
         }
         // compute average waveform
-        double[] averageWaveform = sumVector.mapDivide(ids.size()).toArray();
+        double[] averageWaveform = sumVector.mapDivide(volumeTotal).toArray();
 
         // create forged ID
         PartialID id0 = ids.get(0);

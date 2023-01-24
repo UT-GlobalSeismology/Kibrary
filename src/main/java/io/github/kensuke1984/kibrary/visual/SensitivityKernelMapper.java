@@ -60,6 +60,7 @@ public class SensitivityKernelMapper extends Operation {
      */
     protected Path partialPath;
     private String mapRegion;
+    private double amplification;
     private double scale;
 
 
@@ -96,6 +97,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#partialPath partial.dat");
             pw.println("##Map region, in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90] (-180/180/-90/90)");
             pw.println("#mapRegion ");
+            pw.println("##(double) The factor to amplify the sensitivity values (1e29)");
+            pw.println("#amplification ");
             pw.println("##(double) Range of scale (3)");
             pw.println("#scale ");
         }
@@ -126,8 +129,8 @@ public class SensitivityKernelMapper extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
 
         mapRegion = property.parseString("mapRegion", "-180/180/-90/90");
+        amplification = property.parseDouble("amplification", "1e29");
         scale = property.parseDouble("scale", "3");
-
     }
 
     @Override
@@ -171,7 +174,7 @@ public class SensitivityKernelMapper extends Operation {
                 Files.createFile(filePath);
 
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath, StandardOpenOption.APPEND))) {
-                pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * 1e31);
+                pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * amplification);
             }
 
             PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
