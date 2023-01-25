@@ -95,6 +95,10 @@ public class BasicRecordSectionCreator extends Operation {
      * Path of a basic file
      */
     private Path basicPath;
+    /**
+     * Path of folder containing event folders with waveform txt files
+     */
+    private Path referencePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -155,6 +159,9 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a waveform folder, when also plotting reference waveforms");
+            pw.println("##  It must contain event folders with waveform txt files. Only observed waveforms will be plotted.");
+            pw.println("#referencePath ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
@@ -166,12 +173,12 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
             pw.println("#byAzimuth ");
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
-            pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
             pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
-            pw.println("## When multiple phases are set, the fastest arrival of them will be used for alignment.");
+            pw.println("##  When multiple phases are set, the fastest arrival of them will be used for alignment.");
             pw.println("#alignPhases ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness ");
@@ -202,6 +209,8 @@ public class BasicRecordSectionCreator extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
+        if (property.containsKey("referencePath"))
+            referencePath = property.parsePath("referencePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -297,6 +306,7 @@ public class BasicRecordSectionCreator extends Operation {
     private class Plotter {
         private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private final GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
         private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
 
         private final EventFolder eventDir;
@@ -437,8 +447,8 @@ public class BasicRecordSectionCreator extends Operation {
                 throws IOException, TauModelException {
 
             // output waveform data to text file if it has not already been done so
-            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
-            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+            String fileName = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(fileName))) {
                 BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
             }
 
@@ -466,8 +476,16 @@ public class BasicRecordSectionCreator extends Operation {
             }
 
             // add plot
-            profilePlot.addLine(filename, obsUsingString, obsAppearance, "observed");
-            profilePlot.addLine(filename, synUsingString, synAppearance, "synthetic");
+            if (referencePath != null) {
+                // when reference (the actual observed) exists, plot the actual (shifted) observed in black and the new (obtained) in blue
+                Path referenceFilePath = Paths.get("..").resolve(referencePath).resolve(eventDir.toString()).resolve(fileName);
+                profilePlot.addLine(referenceFilePath.toString(), obsUsingString, obsAppearance, "observed"); //TODO: this is not valid when ampStyle is not synEach
+                profilePlot.addLine(fileName, synUsingString, synAppearance, "initial");
+                profilePlot.addLine(fileName, obsUsingString, resultAppearance, "result");
+            } else {
+                profilePlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
+                profilePlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+            }
         }
 
         private double selectAmp(AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
