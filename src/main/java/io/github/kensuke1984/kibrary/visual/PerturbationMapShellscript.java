@@ -29,18 +29,32 @@ public class PerturbationMapShellscript {
      */
     private static final int MAP_RIM = 5;
 
-    private VariableType variable;
-    private double[] radii;
-    private String mapRegion;
-    private double scale;
-    private String modelFileName;
+    private final VariableType variable;
+    private final double[] radii;
+    private final String mapRegion;
+    private final double scale;
+    private final String modelFileNameRoot;
+    private String maskFileNameRoot;
+    private double maskThreshold;
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, String mapRegion, double scale, String modelFileName) {
+    public PerturbationMapShellscript(VariableType variable, double[] radii, String mapRegion, double scale,
+            String modelFileNameRoot) {
         this.variable = variable;
         this.radii = radii;
         this.mapRegion = mapRegion;
         this.scale = scale;
-        this.modelFileName = modelFileName;
+        this.modelFileNameRoot = modelFileNameRoot;
+    }
+
+    public PerturbationMapShellscript(VariableType variable, double[] radii, String mapRegion, double scale,
+            String modelFileNameRoot, String maskFileNameRoot, double maskThreshold) {
+        this.variable = variable;
+        this.radii = radii;
+        this.mapRegion = mapRegion;
+        this.scale = scale;
+        this.modelFileNameRoot = modelFileNameRoot;
+        this.maskFileNameRoot = maskFileNameRoot;
+        this.maskThreshold = maskThreshold;
     }
 
     /**
@@ -50,12 +64,13 @@ public class PerturbationMapShellscript {
      */
     public void write(Path outPath) throws IOException {
         writeCpMaster(outPath.resolve("cp_master.cpt"));
-        writeGridMaker(outPath.resolve(modelFileName + "Grid.sh"));
-        writeMakeMap(outPath.resolve(modelFileName + "Map.sh"));
+        if (maskFileNameRoot != null) writeCpMask(outPath.resolve("cp_mask.cpt"));
+        writeGridMaker(outPath.resolve(modelFileNameRoot + "Grid.sh"));
+        writeMakeMap(outPath.resolve(modelFileNameRoot + "Map.sh"));
     }
 
-    private void writeCpMaster(Path outPath) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+    private void writeCpMaster(Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("-3.5 129 14  30 -3.088235294117647 129 14  30");
             pw.println("-3.088235294117647 158 15  9 -2.6764705882352944 158 15  9");
             pw.println("-2.6764705882352944 218 20  7 -2.264705882352941 218 20  7");
@@ -79,8 +94,17 @@ public class PerturbationMapShellscript {
         }
     }
 
-    private void writeGridMaker(Path outPath) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+    private void writeCpMask(Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("0 black " + maskThreshold + " black");
+            pw.println("B black");
+            pw.println("F white");
+            pw.println("N 127.5");
+        }
+    }
+
+    private void writeGridMaker(Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
 
@@ -92,16 +116,22 @@ public class PerturbationMapShellscript {
 
             pw.println("do");
             pw.println("    dep=${depth%.0}");
-            pw.println("    grep \"$depth\" " + modelFileName + ".lst | \\");
+            pw.println("    grep \"$depth\" " + modelFileNameRoot + ".lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
             pw.println("    gmt xyz2grd -G$dep.grd -R" + mapRegion + " -I5 -di0");//TODO parameterize interval (-I)
-            pw.println("    gmt grdsample $dep.grd -G$dep\\comp.grd -I0.5");//TODO parameterize interval (-I)
+            pw.println("    gmt grdsample $dep.grd -G$dep\\smooth.grd -I0.5");//TODO parameterize interval (-I)
+            if (maskFileNameRoot != null) {
+                pw.println("    grep \"$depth\" " + maskFileNameRoot + ".lst | \\");
+                pw.println("    awk '{print $2,$1,$4}' | \\");
+                pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I5 -di0");//TODO parameterize interval (-I)
+                pw.println("    gmt grdsample $dep\\mask.grd -G$dep\\maskSmooth.grd -I0.5");//TODO parameterize interval (-I)
+            }
             pw.println("done");
         }
     }
-    private void writeMakeMap(Path outPath) throws IOException {
+    private void writeMakeMap(Path outputPath) throws IOException {
         String paramName = variable.toString();
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
             pw.println("# GMT options");
@@ -113,14 +143,12 @@ public class PerturbationMapShellscript {
             pw.println("gmt set FONT 50");
             pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
             pw.println("");
-            pw.println("# parameters for gmt pscoast");
+            pw.println("# map parameters");
             pw.println("R='-R" + mapRegion + "'");
             pw.println("J='-JQ15'");
-            pw.println("G='-G255/255/255';");
             pw.println("B='-B30f10';");
-            pw.println("O='-W1';");
             pw.println("");
-            pw.println("outputps=" + modelFileName + "Map.eps");
+            pw.println("outputps=" + modelFileNameRoot + "Map.eps");
             pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
@@ -131,17 +159,21 @@ public class PerturbationMapShellscript {
                 int radius = (int) radii[i];
 
                 if (i == radii.length - 1) {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
-                            + " km\" $B $J $R -Ccp.cpt -K -Y80 > $outputps");
+                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B -Ccp.cpt $J $R -K -Y80 > $outputps");
                 } else if (i % PANEL_PER_ROW == (PANEL_PER_ROW - 1)) {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
-                            + " km\" $B $J $R -Ccp.cpt -K -O -X-63 -Y-20 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B -Ccp.cpt $J $R -K -O -X-63 -Y-20 >> $outputps");
                 } else {
-                    pw.println("gmt grdimage " + radius + "\\comp.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
-                            + " km\" $B $J $R -Ccp.cpt -K -O -X21 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                            + " km\" $B -Ccp.cpt $J $R -K -O -X21 >> $outputps");
                 }
 
-                pw.println("gmt pscoast -R -J $O -K -O -Wthinner,black -A500 >> $outputps");
+                if (maskFileNameRoot != null) {
+                    pw.println("gmt grdimage " + radius + "\\maskSmooth.grd -Ccp_mask.cpt -G0/0/0 -t80 $J $R -K -O >> $outputps");
+                }
+
+                pw.println("gmt pscoast -Wthinner,black -A500 -J -R -K -O >> $outputps");
                 pw.println("");
             }
 
@@ -150,7 +182,7 @@ public class PerturbationMapShellscript {
             pw.println("");
 
             pw.println("#------- Finalize");
-            pw.println("gmt pstext $J $R -O -N -F+jLM+f30p,Helvetica,black << END >> $outputps");
+            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");
             pw.println("END");
             pw.println("");
             pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
