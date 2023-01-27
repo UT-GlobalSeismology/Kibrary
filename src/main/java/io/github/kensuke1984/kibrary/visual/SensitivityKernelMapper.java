@@ -54,11 +54,13 @@ public class SensitivityKernelMapper extends Operation {
     /**
      * path of partial ID file
      */
-    protected Path partialIDPath;
+    private Path partialIDPath;
     /**
      * path of partial data
      */
-    protected Path partialPath;
+    private Path partialPath;
+    private double[] boundaries;
+    private int nPanelsPerRow;
     private String mapRegion;
     private double scale;
 
@@ -94,6 +96,10 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
+            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
+            pw.println("#boundaries ");
+            pw.println("##(int) Number of panels to display in each row (4)");
+            pw.println("#nPanelsPerRow ");
             pw.println("##Map region, in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90] (-180/180/-90/90)");
             pw.println("#mapRegion ");
             pw.println("##(double) Range of scale (3)");
@@ -125,6 +131,8 @@ public class SensitivityKernelMapper extends Operation {
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
 
+        boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
+        nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         mapRegion = property.parseString("mapRegion", "-180/180/-90/90");
         scale = property.parseDouble("scale", "3");
 
@@ -174,7 +182,8 @@ public class SensitivityKernelMapper extends Operation {
                 pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * 1e31);
             }
 
-            PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
+            PerturbationMapShellscript script
+                    = new PerturbationMapShellscript(VariableType.Vs, radii, boundaries, mapRegion, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct
             script.write(observerPath);
 
         }

@@ -46,6 +46,8 @@ public class PerturbationMapper extends Operation {
     private Path maskPath;
 
     private VariableType variable;
+    private double[] boundaries;
+    private int nPanelsPerRow;
     private String mapRegion;
     private double scale;
     private double maskThreshold;
@@ -75,6 +77,10 @@ public class PerturbationMapper extends Operation {
             pw.println("#maskPath vsPercentRatio.lst");
             pw.println("##Variable type of perturbation file (Vs)");
             pw.println("#variable ");
+            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
+            pw.println("#boundaries ");
+            pw.println("##(int) Number of panels to display in each row (4)");
+            pw.println("#nPanelsPerRow ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##(double) Range of percent scale (3)");
@@ -100,6 +106,8 @@ public class PerturbationMapper extends Operation {
         }
 
         variable = VariableType.valueOf(property.parseString("variable", "Vs"));
+        boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
+        nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         scale = property.parseDouble("scale", "3");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
@@ -137,10 +145,9 @@ public class PerturbationMapper extends Operation {
 
         // output shellscripts
         PerturbationMapShellscript script;
+        script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, scale, fileNameRoot, nPanelsPerRow);
         if (maskPath != null) {
-            script = new PerturbationMapShellscript(variable, radii, mapRegion, scale, fileNameRoot, maskFileNameRoot, maskThreshold);
-        } else {
-            script = new PerturbationMapShellscript(variable, radii, mapRegion, scale, fileNameRoot);
+            script.setMask(maskFileNameRoot, maskThreshold);
         }
         script.write(outPath);
         System.err.println("After this finishes, please enter " + outPath

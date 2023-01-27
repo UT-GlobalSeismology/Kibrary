@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -17,9 +18,13 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 public class PerturbationMapShellscript {
 
     /**
-     * Number of panels to map in each row
+     * Width of each panel
      */
-    private static final int PANEL_PER_ROW = 4;
+    private static final int PANEL_WIDTH = 21;
+    /**
+     * Height of each panel
+     */
+    private static final int PANEL_HEIGHT = 20;
     /**
      * The interval of deciding map size
      */
@@ -31,28 +36,36 @@ public class PerturbationMapShellscript {
 
     private final VariableType variable;
     private final double[] radii;
+    /**
+     * The displayed value of each layer boundary. This may be radius, depth, or height from a certain discontinuity.
+     */
+    private final double[] boundaries;
     private final String mapRegion;
     private final double scale;
     private final String modelFileNameRoot;
+    /**
+     * Number of panels to map in each row
+     */
+    private final int nPanelsPerRow;
+
     private String maskFileNameRoot;
     private double maskThreshold;
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, String mapRegion, double scale,
-            String modelFileNameRoot) {
+    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double scale,
+            String modelFileNameRoot, int nPanelsPerRow) {
         this.variable = variable;
         this.radii = radii;
+        this.boundaries = boundaries;
         this.mapRegion = mapRegion;
         this.scale = scale;
         this.modelFileNameRoot = modelFileNameRoot;
+        this.nPanelsPerRow = nPanelsPerRow;
+        if (boundaries.length <= radii.length) {
+            throw new IllegalArgumentException(boundaries.length + " boundaries is not enough for " + radii.length + " layers.");
+        }
     }
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, String mapRegion, double scale,
-            String modelFileNameRoot, String maskFileNameRoot, double maskThreshold) {
-        this.variable = variable;
-        this.radii = radii;
-        this.mapRegion = mapRegion;
-        this.scale = scale;
-        this.modelFileNameRoot = modelFileNameRoot;
+    public void setMask(String maskFileNameRoot, double maskThreshold) {
         this.maskFileNameRoot = maskFileNameRoot;
         this.maskThreshold = maskThreshold;
     }
@@ -136,7 +149,7 @@ public class PerturbationMapShellscript {
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 3300x3300");
+            pw.println("gmt set PS_MEDIA 3000x6000");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
@@ -154,19 +167,22 @@ public class PerturbationMapShellscript {
             pw.println("");
 
             pw.println("#------- Panels");
-            // CAUTION: i is in reverse order because we will draw from the top
-            for (int i = radii.length - 1; i >= 0; i--) {
-                int radius = (int) radii[i];
+            for (int i = 0; i < radii.length; i++) {
+                // CAUTION: radii are referenced in reverse order because we will draw from the top
+                int iRev = radii.length - 1 - i;
+                int radius = (int) radii[iRev];
+                String b1 = MathAid.simplestString(boundaries[iRev + 1]);
+                String b0 = MathAid.simplestString(boundaries[iRev]);
 
-                if (i == radii.length - 1) {
-                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
+                if (i == 0) {
+                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + b1 + "-" + b0
                             + " km\" $B -Ccp.cpt $J $R -K -Y80 > $outputps");
-                } else if (i % PANEL_PER_ROW == (PANEL_PER_ROW - 1)) {
-                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
-                            + " km\" $B -Ccp.cpt $J $R -K -O -X-63 -Y-20 >> $outputps");
+                } else if (i % nPanelsPerRow == 0) {
+                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + b1 + "-" + b0
+                            + " km\" $B -Ccp.cpt $J $R -K -O -X-" + (PANEL_WIDTH * (nPanelsPerRow - 1)) + " -Y-" + PANEL_HEIGHT + " >> $outputps");
                 } else {
-                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + (radius - 3455) + "-" + (radius - 3505)//TODO parameterize
-                            + " km\" $B -Ccp.cpt $J $R -K -O -X21 >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + b1 + "-" + b0
+                            + " km\" $B -Ccp.cpt $J $R -K -O -X" + PANEL_WIDTH + " >> $outputps");
                 }
 
                 if (maskFileNameRoot != null) {
@@ -178,7 +194,10 @@ public class PerturbationMapShellscript {
             }
 
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx7/-1+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -Y-3 -X-36 >> $outputps");
+            // compute the column number of the last panel (counting as 0, 1, 2, 3, ...)
+            int nLastColumn = (radii.length - 1) % nPanelsPerRow;
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -X-"
+                    + (PANEL_WIDTH * nLastColumn / 2) + " >> $outputps");
             pw.println("");
 
             pw.println("#------- Finalize");
