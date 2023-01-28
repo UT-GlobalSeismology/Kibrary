@@ -43,6 +43,10 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         this.longitude = new Longitude(longitude);
     }
 
+    public static double latitudeFor(double theta) {
+        return Latitude.valueFor(theta);
+    }
+
     /**
      * Checks whether this position is inside a given coordinate range.
      * @param minLatitude (double) [-90:maxLatitude)
@@ -111,53 +115,53 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @param horizontalPosition ({@link HorizontalPosition}) Position to compute azimuth with
      * @return (double) Azimuth [rad] from this to the given position [0:2pi)
      */
-    public double computeAzimuth(HorizontalPosition position) {
-        return Earth.computeAzimuth(this, position);
+    public double computeAzimuthRad(HorizontalPosition position) {
+        return Earth.computeAzimuthRad(this, position);
     }
     /**
      * @param horizontalPosition ({@link HorizontalPosition}) Position to compute azimuth with
      * @return (double) Azimuth [deg] from this to the given position [0:360)
      */
     public double computeAzimuthDeg(HorizontalPosition position) {
-        return Math.toDegrees(Earth.computeAzimuth(this, position));
+        return Math.toDegrees(Earth.computeAzimuthRad(this, position));
     }
 
     /**
      * @param horizontalPosition ({@link HorizontalPosition}) Position to compute back azimuth with
      * @return (double) Back azimuth [rad] from the given position to this position [0:2pi)
      */
-    public double computeBackAzimuth(HorizontalPosition position) {
-        return Earth.computeBackAzimuth(this, position);
+    public double computeBackAzimuthRad(HorizontalPosition position) {
+        return Earth.computeBackAzimuthRad(this, position);
     }
     /**
      * @param horizontalPosition ({@link HorizontalPosition}) Position to compute back azimuth with
      * @return (double) Back azimuth [deg] from the given position to this position [0:360)
      */
     public double computeBackAzimuthDeg(HorizontalPosition position) {
-        return Math.toDegrees(Earth.computeBackAzimuth(this, position));
+        return Math.toDegrees(Earth.computeBackAzimuthRad(this, position));
     }
 
     /**
      * @param horizontalPosition ({@link HorizontalPosition}) Position to compute epicentral distance to
      * @return (double) Epicentral distance [rad] between this and the given position [0:pi]
      */
-    public double computeEpicentralDistance(HorizontalPosition horizontalPosition) {
-        return Earth.computeEpicentralDistance(horizontalPosition, this);
+    public double computeEpicentralDistanceRad(HorizontalPosition horizontalPosition) {
+        return Earth.computeEpicentralDistanceRad(horizontalPosition, this);
     }
     /**
      * @param horizontalPosition ({@link HorizontalPosition}) Position to compute epicentral distance to
      * @return (double) Epicentral distance [deg] between this and horizontalPosition [0:180]
      */
     public double computeEpicentralDistanceDeg(HorizontalPosition horizontalPosition) {
-        return Math.toDegrees(Earth.computeEpicentralDistance(horizontalPosition, this));
+        return Math.toDegrees(Earth.computeEpicentralDistanceRad(horizontalPosition, this));
     }
 
-    public double computeGeographicalAzimuth(HorizontalPosition position) {
-        return Earth.getGeographicalAzimuth(this, position);
+    public double computeGeographicalAzimuthRad(HorizontalPosition position) {
+        return Earth.computeGeographicalAzimuthRad(this, position);
     }
 
-    public double computeGeographicalDistance(HorizontalPosition horizontalPosition) {
-        return Earth.getGeographicalDistance(horizontalPosition, this);
+    public double computeGeographicalDistanceRad(HorizontalPosition horizontalPosition) {
+        return Earth.computeGeographicalDistanceRad(horizontalPosition, this);
     }
 
     /**
@@ -170,7 +174,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * this
      */
     public HorizontalPosition computeMidpoint(HorizontalPosition position) {
-        double delta = computeEpicentralDistance(position); // locとthis との震央距離
+        double delta = computeEpicentralDistanceRad(position); // locとthis との震央距離
         // System.out.println("delta: " + delta);
         // theta = ⊿/2の zx平面上の点
         XYZ midXYZ = new RThetaPhi(1, delta * 0.5, 0).toCartesian();
@@ -287,7 +291,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @return geocentric latitude [rad] [-&pi;/2, &pi;/2]
      */
     public double getGeocentricLatitude() {
-        return latitude.getGeocentricLatitude();
+        return latitude.getGeocentricLatitudeRad();
     }
 
     /**
