@@ -8,8 +8,8 @@ public class testGreatCircle {
 	public static void main(String[] args) {
 		HorizontalPosition pos0 = new HorizontalPosition(-30, -90);
 		HorizontalPosition pos1 = new HorizontalPosition(40, -120);
-		double azimuth = Math.toDegrees(pos0.computeGeographicalAzimuth(pos1));
-		double distance = Math.toDegrees(pos0.computeGeographicalDistance(pos1));
+		double azimuth = Math.toDegrees(pos0.computeGeographicalAzimuthRad(pos1));
+		double distance = Math.toDegrees(pos0.computeGeographicalDistanceRad(pos1));
 		double lat = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), distance, azimuth);
 		double lon = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), distance, azimuth);
 		HorizontalPosition pos2 = new HorizontalPosition(lat, lon);

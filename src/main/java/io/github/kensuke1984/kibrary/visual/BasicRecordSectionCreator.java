@@ -346,9 +346,9 @@ public class BasicRecordSectionCreator extends Operation {
                 BasicID synID = synList.get(i);
 
                 double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeEpicentralDistance(obsID.getObserver().getPosition()));
+                        .computeEpicentralDistanceRad(obsID.getObserver().getPosition()));
                 double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeAzimuth(obsID.getObserver().getPosition()));
+                        .computeAzimuthRad(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance

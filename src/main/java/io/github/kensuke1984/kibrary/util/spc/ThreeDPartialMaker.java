@@ -861,9 +861,9 @@ public class ThreeDPartialMaker {
         HorizontalPosition event = fp.getSourcePosition();
         HorizontalPosition station = bp.getSourcePosition();
         HorizontalPosition point = bp.getObserverPosition();
-        angleForTensor = Earth.computeAzimuth(point, station) - Earth.computeAzimuth(point, event);
+        angleForTensor = Earth.computeAzimuthRad(point, station) - Earth.computeAzimuthRad(point, event);
 
-        angleForVector = 2 * Math.PI - Earth.computeAzimuth(station, event);
+        angleForVector = 2 * Math.PI - Earth.computeAzimuthRad(station, event);
 
 //		System.out.println(event + " " + station + " " + point);
 //		System.out.println(angleForTensor*180/Math.PI + " " + angleForVector*180/Math.PI);

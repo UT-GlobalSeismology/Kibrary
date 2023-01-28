@@ -38,7 +38,7 @@ public class LookAtBPspc {
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
 		FullPosition sourceLocation = dsmOutput.getSourcePosition();
 		
-		double distance = sourceLocation.computeEpicentralDistance(observerPosition) * 180. / Math.PI;
+		double distance = sourceLocation.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
 		
 		System.out.println("Epicentral distance = " + distance);
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);

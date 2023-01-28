@@ -823,8 +823,8 @@ public class PartialWaveformAssembler3D extends Operation {
             HorizontalPosition voxelPos = fp.getObserverPosition();
             String voxelName = fp.getObserverID();
             FullPosition observerPos = observer.getPosition().toFullPosition(Earth.EARTH_RADIUS);
-            double distanceBP = observerPos.computeEpicentralDistance(voxelPos) * 180. / Math.PI;
-            double phiBP = Math.PI - observerPos.computeAzimuth(voxelPos);
+            double distanceBP = observerPos.computeEpicentralDistanceRad(voxelPos) * 180. / Math.PI;
+            double phiBP = Math.PI - observerPos.computeAzimuthRad(voxelPos);
             if (Double.isNaN(phiBP))
                 throw new RuntimeException("PhiBP is NaN " + fpName + " " + observer);
 
