@@ -5,6 +5,9 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.stream.IntStream;
+
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -28,11 +31,15 @@ public class PerturbationMapShellscript {
     /**
      * The interval of deciding map size
      */
-    private static final int INTERVAL = 5;
+    private static final int MAP_SIZE_INTERVAL = 5;
     /**
      * How much space to provide at the rim of the map
      */
     private static final int MAP_RIM = 5;
+    /**
+     * Number of nodes to divide an original node when smoothing
+     */
+    private static final int SMOOTHING_FACTOR = 10;
 
     private final VariableType variable;
     private final double[] radii;
@@ -41,6 +48,13 @@ public class PerturbationMapShellscript {
      */
     private final double[] boundaries;
     private final String mapRegion;
+    /**
+     * Interval of
+     */
+    private final double positionInterval;
+    /**
+     * Maximum of color scale
+     */
     private final double scale;
     private final String modelFileNameRoot;
     /**
@@ -48,26 +62,56 @@ public class PerturbationMapShellscript {
      */
     private final int nPanelsPerRow;
 
+    /**
+     * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
+     */
+    private int[] displayLayers;
+    /**
+     * Whether to display map as mosaic without smoothing
+     */
+    private boolean mosaic = false;
+
     private String maskFileNameRoot;
     private double maskThreshold;
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double scale,
+    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double positionInterval, double scale,
             String modelFileNameRoot, int nPanelsPerRow) {
         this.variable = variable;
         this.radii = radii;
         this.boundaries = boundaries;
         this.mapRegion = mapRegion;
+        this.positionInterval = positionInterval;
         this.scale = scale;
         this.modelFileNameRoot = modelFileNameRoot;
         this.nPanelsPerRow = nPanelsPerRow;
         if (boundaries.length <= radii.length) {
             throw new IllegalArgumentException(boundaries.length + " boundaries is not enough for " + radii.length + " layers.");
         }
+
+        // set this temporarily to display all layers (may be oveerwritten later)
+        this.displayLayers = IntStream.range(0, radii.length).toArray();
     }
 
     public void setMask(String maskFileNameRoot, double maskThreshold) {
         this.maskFileNameRoot = maskFileNameRoot;
         this.maskThreshold = maskThreshold;
+    }
+
+    public void setMosaic(boolean mosaic) {
+        this.mosaic = mosaic;
+    }
+
+    /**
+     * Specify which of the layers to display.
+     * @param displayLayers (int[]) Indices of layers to plot, listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
+     */
+    public void setDisplayLayers(int[] displayLayers) {
+        this.displayLayers = displayLayers;
+        for (int layerIndex : displayLayers) {
+            if (layerIndex >= radii.length) {
+                throw new IllegalArgumentException("Layer index " + layerIndex + " too large.");
+            }
+        }
     }
 
     /**
@@ -121,6 +165,7 @@ public class PerturbationMapShellscript {
             pw.println("#!/bin/sh");
             pw.println("");
 
+            // This will be done for all radii, even when the layers to display are specified.
             pw.print("for depth in");
             for (double radius : radii) {
                 pw.print(" " + (int) radius + ".0");
@@ -129,19 +174,34 @@ public class PerturbationMapShellscript {
 
             pw.println("do");
             pw.println("    dep=${depth%.0}");
+
+            // grid model
             pw.println("    grep \"$depth\" " + modelFileNameRoot + ".lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
-            pw.println("    gmt xyz2grd -G$dep.grd -R" + mapRegion + " -I5 -di0");//TODO parameterize interval (-I)
-            pw.println("    gmt grdsample $dep.grd -G$dep\\smooth.grd -I0.5");//TODO parameterize interval (-I)
+            if (mosaic) {
+                pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
+            } else {
+                pw.println("    gmt xyz2grd -Gtmp.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
+                pw.println("    gmt grdsample tmp.grd -G$dep\\model.grd -I" + (positionInterval / SMOOTHING_FACTOR));
+            }
+
+            // grid mask
             if (maskFileNameRoot != null) {
                 pw.println("    grep \"$depth\" " + maskFileNameRoot + ".lst | \\");
                 pw.println("    awk '{print $2,$1,$4}' | \\");
-                pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I5 -di0");//TODO parameterize interval (-I)
-                pw.println("    gmt grdsample $dep\\mask.grd -G$dep\\maskSmooth.grd -I0.5");//TODO parameterize interval (-I)
+                if (mosaic) {
+                    pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
+                } else {
+                    pw.println("    gmt xyz2grd -Gtmp.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
+                    pw.println("    gmt grdsample tmp.grd -G$dep\\mask.grd -I" + (positionInterval / SMOOTHING_FACTOR));
+                }
             }
+
             pw.println("done");
+            pw.println("rm -f tmp.grd");
         }
     }
+
     private void writeMakeMap(Path outputPath) throws IOException {
         String paramName = variable.toString();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
@@ -149,7 +209,7 @@ public class PerturbationMapShellscript {
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 3000x6000");
+            pw.println("gmt set PS_MEDIA 6000x6000");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
@@ -167,26 +227,27 @@ public class PerturbationMapShellscript {
             pw.println("");
 
             pw.println("#------- Panels");
-            for (int i = 0; i < radii.length; i++) {
-                // CAUTION: radii are referenced in reverse order because we will draw from the top
-                int iRev = radii.length - 1 - i;
-                int radius = (int) radii[iRev];
-                String b1 = MathAid.simplestString(boundaries[iRev + 1]);
-                String b0 = MathAid.simplestString(boundaries[iRev]);
+            for (int iPanel = 0; iPanel < displayLayers.length; iPanel++) {
+                // CAUTION: layers are referenced in reverse order because we will draw from the top
+                int iPanelRev = displayLayers.length - 1 - iPanel;
+                int layerIndex = displayLayers[iPanelRev];
+                int radius = (int) radii[layerIndex];
+                String upperBound = MathAid.simplestString(boundaries[layerIndex + 1]);
+                String lowerBound = MathAid.simplestString(boundaries[layerIndex]);
 
-                if (i == 0) {
-                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + b1 + "-" + b0
-                            + " km\" $B -Ccp.cpt $J $R -K -Y80 > $outputps");
-                } else if (i % nPanelsPerRow == 0) {
-                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + b1 + "-" + b0
+                if (iPanel == 0) {
+                    pw.println("gmt grdimage " + radius + "\\model.grd -BwESn+t\"" + upperBound + "-" + lowerBound
+                            + " km\" $B -Ccp.cpt $J $R -K -Y180 > $outputps");
+                } else if (iPanel % nPanelsPerRow == 0) {
+                    pw.println("gmt grdimage " + radius + "\\model.grd -BwESn+t\"" + upperBound + "-" + lowerBound
                             + " km\" $B -Ccp.cpt $J $R -K -O -X-" + (PANEL_WIDTH * (nPanelsPerRow - 1)) + " -Y-" + PANEL_HEIGHT + " >> $outputps");
                 } else {
-                    pw.println("gmt grdimage " + radius + "\\smooth.grd -BwESn+t\"" + b1 + "-" + b0
+                    pw.println("gmt grdimage " + radius + "\\model.grd -BwESn+t\"" + upperBound + "-" + lowerBound
                             + " km\" $B -Ccp.cpt $J $R -K -O -X" + PANEL_WIDTH + " >> $outputps");
                 }
 
                 if (maskFileNameRoot != null) {
-                    pw.println("gmt grdimage " + radius + "\\maskSmooth.grd -Ccp_mask.cpt -G0/0/0 -t80 $J $R -K -O >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\mask.grd -Ccp_mask.cpt -G0/0/0 -t80 $J $R -K -O >> $outputps");
                 }
 
                 pw.println("gmt pscoast -Wthinner,black -A500 -J -R -K -O >> $outputps");
@@ -195,7 +256,7 @@ public class PerturbationMapShellscript {
 
             pw.println("#------- Scale");
             // compute the column number of the last panel (counting as 0, 1, 2, 3, ...)
-            int nLastColumn = (radii.length - 1) % nPanelsPerRow;
+            int nLastColumn = (displayLayers.length - 1) % nPanelsPerRow;
             pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -X-"
                     + (PANEL_WIDTH * nLastColumn / 2) + " >> $outputps");
             pw.println("");
@@ -213,14 +274,24 @@ public class PerturbationMapShellscript {
         }
     }
 
+    /**
+     * Find the longitude interval of a given set of positions.
+     * The longitudes must be equally spaced.
+     * @param positions (Set of FullPosition)
+     * @return (double) interval
+     */
+    static double findPositionInterval(Set<FullPosition> positions) {
+        FullPosition pos0 = positions.iterator().next();
+        return positions.stream().mapToDouble(pos -> Math.abs(pos.getLongitude() - pos0.getLongitude())).distinct()
+                .filter(diff -> !Precision.equals(diff, 0, FullPosition.LONGITUDE_EPSILON)).min().getAsDouble();
+    }
 
     /**
      * Decides a rectangular region of a map that is sufficient to plot all parameter points.
      * @param positions (Set of FullPosition) Positions that need to be included in map region
      * @return (String) "lonMin/lonMax/latMin/latMax"
-     * @throws IOException
      */
-    static String decideMapRegion(Set<FullPosition> positions) throws IOException {
+    static String decideMapRegion(Set<FullPosition> positions) {
         double latMin = Double.MAX_VALUE;
         double latMax = -Double.MAX_VALUE;
         double lonMin = Double.MAX_VALUE;
@@ -233,10 +304,10 @@ public class PerturbationMapShellscript {
             if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
         }
         // expand the region a bit more
-        latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
-        latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
-        lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
-        lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
+        latMin = Math.floor(latMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
+        latMax = Math.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
+        lonMin = Math.floor(lonMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
+        lonMax = Math.ceil(lonMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
         // return as String
         return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
     }

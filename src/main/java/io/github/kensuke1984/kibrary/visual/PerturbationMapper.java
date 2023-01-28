@@ -47,9 +47,17 @@ public class PerturbationMapper extends Operation {
 
     private VariableType variable;
     private double[] boundaries;
+    /**
+     * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
+     */
+    private int[] displayLayers;
     private int nPanelsPerRow;
     private String mapRegion;
     private double scale;
+    /**
+     * Whether to display map as mosaic without smoothing
+     */
+    private boolean mosaic;
     private double maskThreshold;
 
     /**
@@ -79,12 +87,17 @@ public class PerturbationMapper extends Operation {
             pw.println("#variable ");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
+            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
+            pw.println("##  Layers are numbered 0, 1, 2, ... from the inside.");
+            pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row (4)");
             pw.println("#nPanelsPerRow ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##(double) Range of percent scale (3)");
             pw.println("#scale ");
+            pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
+            pw.println("#mosaic ");
             pw.println("##(double) Threshold for mask (0.3)");
             pw.println("#maskThreshold ");
         }
@@ -107,9 +120,11 @@ public class PerturbationMapper extends Operation {
 
         variable = VariableType.valueOf(property.parseString("variable", "Vs"));
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
+        if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         scale = property.parseDouble("scale", "3");
+        mosaic = property.parseBoolean("mosaic", "false");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
     }
 
@@ -121,6 +136,7 @@ public class PerturbationMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, GadgetAid.getTemporaryString());
@@ -145,10 +161,10 @@ public class PerturbationMapper extends Operation {
 
         // output shellscripts
         PerturbationMapShellscript script;
-        script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, scale, fileNameRoot, nPanelsPerRow);
-        if (maskPath != null) {
-            script.setMask(maskFileNameRoot, maskThreshold);
-        }
+        script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, positionInterval, scale, fileNameRoot, nPanelsPerRow);
+        script.setMosaic(mosaic);
+        if (displayLayers != null) script.setDisplayLayers(displayLayers);
+        if (maskPath != null) script.setMask(maskFileNameRoot, maskThreshold);
         script.write(outPath);
         System.err.println("After this finishes, please enter " + outPath
                 + "/ and run " + fileNameRoot + "Grid.sh and " + fileNameRoot + "Map.sh");
