@@ -180,7 +180,7 @@ public class MultigridPartialsForger extends Operation {
         PartialID id0 = ids.get(0);
         PartialID forgedID = new PartialID(id0.getObserver(), id0.getGlobalCMTID(), id0.getSacComponent(),
                 id0.getSamplingHz(), id0.getStartTime(), id0.getNpts(), id0.getMinPeriod(), id0.getMaxPeriod(),
-                id0.getPhases(), id0.getStartByte(), id0.isConvolved(),
+                id0.getPhases(), id0.isConvolved(),
                 fusedParam.getPosition(), fusedParam.getPartialType(), averageWaveform);
         return forgedID;
     }

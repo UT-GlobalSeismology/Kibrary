@@ -814,38 +814,38 @@ public class ActualWaveformCompiler extends Operation {
 
             obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
             BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, synData);
+                    component, minPeriod, maxPeriod, includePhases, convolved, synData);
             BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, obsData);
+                    component, minPeriod, maxPeriod, includePhases, convolved, obsData);
 
             obsEnvelope = Arrays.stream(obsEnvelope).map(d -> d / correctionRatio).toArray();
             BasicID synEnvelopeID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, synEnvelope);
+                    component, minPeriod, maxPeriod, includePhases, convolved, synEnvelope);
             BasicID obsEnvelopeID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, obsEnvelope);
+                    component, minPeriod, maxPeriod, includePhases, convolved, obsEnvelope);
 
             obsHy = Arrays.stream(obsHy).map(d -> d / correctionRatio).toArray();
             BasicID synHyID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, synHy);
+                    component, minPeriod, maxPeriod, includePhases, convolved, synHy);
             BasicID obsHyID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, obsHy);
+                    component, minPeriod, maxPeriod, includePhases, convolved, obsHy);
 
             int fnpts = synSpcAmp.length;
 
             BasicID synSpcAmpID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, synSpcAmp);
+                    component, minPeriod, maxPeriod, includePhases, convolved, synSpcAmp);
             BasicID obsSpcAmpID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, obsSpcAmp);
+                    component, minPeriod, maxPeriod, includePhases, convolved, obsSpcAmp);
 
             BasicID synSpcReID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, synSpcRe);
+                    component, minPeriod, maxPeriod, includePhases, convolved, synSpcRe);
             BasicID obsSpcReID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, obsSpcRe);
+                    component, minPeriod, maxPeriod, includePhases, convolved, obsSpcRe);
 
             BasicID synSpcImID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, synSpcIm);
+                    component, minPeriod, maxPeriod, includePhases, convolved, synSpcIm);
             BasicID obsSpcImID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, observer, eventID,
-                    component, minPeriod, maxPeriod, includePhases, 0, convolved, obsSpcIm);
+                    component, minPeriod, maxPeriod, includePhases, convolved, obsSpcIm);
 
             try {
                 dataWriter.addBasicID(obsID);

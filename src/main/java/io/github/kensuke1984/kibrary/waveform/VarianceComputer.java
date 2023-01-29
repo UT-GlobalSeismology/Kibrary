@@ -134,19 +134,17 @@ public class VarianceComputer {
                 double[] cutSynY = synID.toTrace().cutWindow(startTime, endTime).getY();
 
                 // add new synID
-                // Start byte cannot be set because we are not writing out basicIDs into files here
                 cutOutBasicIDs.add(new BasicID(synID.getWaveformType(), synID.getSamplingHz(), startTime, npts,
                         synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(),
                         synID.getMinPeriod(), synID.getMaxPeriod(), improvementWindow.getPhases(),
-                        0, synID.isConvolved(), cutSynY));
+                        synID.isConvolved(), cutSynY));
                 // add new obsID
                 // Time shift is the same as before cutting.
-                // Start byte cannot be set because we are not writing out basicIDs into files here.
                 double shift = obsID.getStartTime() - synID.getStartTime();
                 cutOutBasicIDs.add(new BasicID(obsID.getWaveformType(), obsID.getSamplingHz(), startTime + shift, npts,
                         obsID.getObserver(), obsID.getGlobalCMTID(), obsID.getSacComponent(),
                         obsID.getMinPeriod(), obsID.getMaxPeriod(), improvementWindow.getPhases(),
-                        0, obsID.isConvolved(), cutObsY));
+                        obsID.isConvolved(), cutObsY));
             }
 
         }

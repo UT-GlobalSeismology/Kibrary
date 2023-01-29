@@ -208,7 +208,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     private void addWaveform(double[] data) throws IOException {
         for (double aData : data) dataStream.writeDouble(aData);
-        dataLength += 8 * data.length;
+        dataLength += Double.BYTES * data.length;
     }
 
     /**
@@ -249,7 +249,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         long startByte = dataLength;
         addWaveform(basicID.getData());
         idStream.writeShort(ista);
-        idStream.writeShort(globalCMTIDMap.get(basicID.event));
+        idStream.writeShort(globalCMTIDMap.get(basicID.eventID));
         idStream.writeByte(basicID.component.valueOf());
         idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod));
         Phase[] phases = basicID.phases;
@@ -291,7 +291,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         long startByte = dataLength;
         addWaveform(partialID.getData());
         idStream.writeShort(observerMap.get(partialID.observer));
-        idStream.writeShort(globalCMTIDMap.get(partialID.event));
+        idStream.writeShort(globalCMTIDMap.get(partialID.eventID));
         idStream.writeByte(partialID.component.valueOf());
         idStream.writeByte(getIndexOfRange(partialID.minPeriod, partialID.maxPeriod));
         Phase[] phases = partialID.phases;

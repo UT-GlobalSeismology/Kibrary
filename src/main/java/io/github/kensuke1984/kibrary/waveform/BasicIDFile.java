@@ -131,13 +131,14 @@ public final class BasicIDFile {
 
         // Read waveforms
         long t = System.nanoTime();
+        long nptsTotal = Arrays.stream(ids).mapToLong(BasicID::getNpts).sum();
         long dataSize = Files.size(dataPath);
-        BasicID lastID = ids[ids.length - 1];
-        if (dataSize != lastID.startByte + lastID.npts * 8)
+        if (dataSize != nptsTotal * Double.BYTES)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
+
         try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(dataPath))) {
             byte[][] bytes = new byte[ids.length][];
-            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * 8]);
+            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * Double.BYTES]);
             for (int i = 0; i < ids.length; i++)
                 bis.read(bytes[i]);
             IntStream.range(0, ids.length).parallel().forEach(i -> {
@@ -265,13 +266,14 @@ public final class BasicIDFile {
         }
         Phase[] usablephases = new Phase[tmpset.size()];
         usablephases = tmpset.toArray(usablephases);
-        double startTime = bb.getFloat(); // starting time
-        int npts = bb.getInt(); // データポイント数
+        double startTime = bb.getFloat();
+        int npts = bb.getInt();
         double samplingHz = bb.getFloat();
         boolean isConvolved = 0 < bb.get();
+        // startByte is read, but not used
         long startByte = bb.getLong();
         BasicID bid = new BasicID(type, samplingHz, startTime, npts, station, event, component, period[0], period[1],
-                usablephases, startByte, isConvolved);
+                usablephases, isConvolved);
         return bid;
     }
 
@@ -339,7 +341,7 @@ public final class BasicIDFile {
         // output
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
             pw.println("#station, network, lat, lon, event, component, type, startTime, npts, samplingHz, "
-                    + "minPeriod, maxPeriod, phases, convolved, startByte");
+                    + "minPeriod, maxPeriod, phases, convolved");
             ids.forEach(pw::println);
         }
     }
