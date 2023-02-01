@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  */
 public class BasicIDMerge extends Operation {
 
-    private static final int MAX_PAIR = 10;
+    private static final int MAX_IN = 10;
 
     private final Property property;
     /**
@@ -37,15 +37,15 @@ public class BasicIDMerge extends Operation {
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic ID and waveform files
+     * The first part of the name of output basic folder
      */
     private String nameRoot;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String fileTag;
+    private String folderTag;
 
-    private List<Path> basicIDPaths = new ArrayList<>();
+    private List<Path> basicIDPaths = new ArrayList<>(); //TODO erase
     private List<Path> basicPaths = new ArrayList<>();
 
 
@@ -66,15 +66,15 @@ public class BasicIDMerge extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output basic ID and waveform files (actual)");
+            pw.println("##(String) The first part of the name of output basic waveform folder (actual)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
-            pw.println("#fileTag ");
-            pw.println("##########From here on, list up pairs of the paths of a basic ID file and a basic waveform file.");
-            pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
-            for (int i = 1; i <= MAX_PAIR; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " pair");
-                pw.println("#basicIDPath" + i + " actualID.dat");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##########From here on, list up paths of basic waveform folders to merge.");
+            pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
+            for (int i = 1; i <= MAX_IN; i++) {
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                pw.println("!basicIDPath" + i + " actualID.dat");
                 pw.println("#basicPath" + i + " actual.dat");
             }
         }
@@ -89,40 +89,45 @@ public class BasicIDMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "actual");
-        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        for (int i = 1; i <= MAX_PAIR; i++) {
+        for (int i = 1; i <= MAX_IN; i++) {
             String basicIDKey = "basicIDPath" + i;
             String basicKey = "basicPath" + i;
-            if (!property.containsKey(basicIDKey) && !property.containsKey(basicKey)) {
-                continue;
-            } else if (!property.containsKey(basicIDKey) || !property.containsKey(basicKey)) {
-                throw new IllegalArgumentException("Basic ID file and basic waveform file must be set in pairs.");
+            if (property.containsKey(basicKey)) {
+                if (property.containsKey(basicIDKey)) { //TODO erase
+                    basicIDPaths.add(property.parsePath(basicIDKey, null, true, workPath));
+                    basicPaths.add(property.parsePath(basicKey, null, true, workPath));
+                } else {
+                    basicIDPaths.add(null);
+                    basicPaths.add(property.parsePath(basicKey, null, true, workPath));
+                }
             }
-            basicIDPaths.add(property.parsePath(basicIDKey, null, true, workPath));
-            basicPaths.add(property.parsePath(basicKey, null, true, workPath));
         }
     }
 
     @Override
     public void run() throws IOException {
-        int pairNum = basicIDPaths.size();
-        if (basicPaths.size() != pairNum) {
-            throw new IllegalStateException("The number of basic ID files and basic waveform files is different.");
-        }
-        if (pairNum == 0) {
-            System.err.println("No input files found.");
+        int inputNum = basicPaths.size();
+        if (inputNum == 0) {
+            System.err.println("No input folders found.");
             return;
-        } else if (pairNum == 1) {
-            System.err.println("Only 1 pair of input files found. Merging will not be done.");
+        } else if (inputNum == 1) {
+            System.err.println("Only 1 input folder found. Merging will not be done.");
             return;
         }
 
         // read BasicIDs from all input files
         List<BasicID> basicIDs = new ArrayList<>();
-        for (int i = 0; i < pairNum; i++) {
-            List<BasicID> srcIDs = BasicIDFile.readAsList(basicIDPaths.get(i), basicPaths.get(i));
-            basicIDs.addAll(srcIDs);
+        for (int i = 0; i < inputNum; i++) {
+            if (basicIDPaths.get(i) == null) {
+                List<BasicID> srcIDs = BasicIDFile.read(basicPaths.get(i), true);
+                basicIDs.addAll(srcIDs);
+
+            } else { //TODO erase
+                List<BasicID> srcIDs = BasicIDFile.readAsList(basicIDPaths.get(i), basicPaths.get(i));
+                basicIDs.addAll(srcIDs);
+            }
         }
 
         // extract set of observers, events
@@ -133,17 +138,16 @@ public class BasicIDMerge extends Operation {
             eventSet.add(id.getGlobalCMTID());
         });
 
-        // output merged files
         String dateStr = GadgetAid.getTemporaryString();
-        Path observerFilePath = workPath.resolve("observer" + dateStr + ".lst");
-        Path eventFilePath = workPath.resolve("event" + dateStr + ".lst");
-        Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", fileTag, dateStr, ".dat"));
-        Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, dateStr, ".dat"));
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, dateStr);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        ObserverListFile.write(observerSet, workPath.resolve(observerFilePath));
-        EventListFile.write(eventSet, workPath.resolve(eventFilePath));
-
-        BasicIDFile.write(basicIDs, outputIDPath, outputWavePath);
+        // output merged files
+        BasicIDFile.write(basicIDs, outPath);
+        Path observerFilePath = outPath.resolve("observer" + dateStr + ".lst");
+        Path eventFilePath = outPath.resolve("event" + dateStr + ".lst");
+        ObserverListFile.write(observerSet, observerFilePath);
+        EventListFile.write(eventSet, eventFilePath);
     }
 
 }

@@ -44,13 +44,9 @@ import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
  * - latitude, longitude, radius<br>
  * Each PartialID information<br>
  * - see in {@link #read(Path)}<br>
- * <p>
- * TODO short to char
- * READing has problem. TODO
  *
  * @author Kensuke Konishi
- * @version 0.3.2
- * @author anselme Added phase information
+ * @since version 0.3.2
  */
 public final class PartialIDFile {
     private PartialIDFile() {}
@@ -59,6 +55,22 @@ public final class PartialIDFile {
      * [byte] File size for an ID
      */
     public static final int oneIDByte = 50;
+
+    public static final String ID_FILE_NAME = "partialID.dat";
+    public static final String DATA_FILE_NAME = "partialData.dat";
+
+    /**
+     * Write partialIDs into ID file and data file.
+     * @param partialIDs (List of PartialID)
+     * @param outPath (Path) The directory where partial ID and data files shall be created. The directory must exist.
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/1/29
+     */
+    public static void write(List<PartialID> partialIDs, Path outPath) throws IOException {
+        write(partialIDs, outPath.resolve(ID_FILE_NAME), outPath.resolve(DATA_FILE_NAME));
+    }
 
     /**
      * Write partialIDs into ID file and waveform file.
@@ -115,6 +127,21 @@ public final class PartialIDFile {
                 }
             });
         }
+    }
+
+    /**
+     * Reads partialIDs from file.
+     * @param inPath (Path) The directory containing partial ID and data files
+     * @param withData (boolean) Whether to read waveform data
+     * @return (List of PartialID)
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/1/29
+     */
+    public static List<PartialID> read(Path inPath, boolean withData) throws IOException {
+        if (withData) return Arrays.asList(read(inPath.resolve(ID_FILE_NAME), inPath.resolve(DATA_FILE_NAME)));
+        else return Arrays.asList(read(inPath.resolve(ID_FILE_NAME)));
     }
 
     /**

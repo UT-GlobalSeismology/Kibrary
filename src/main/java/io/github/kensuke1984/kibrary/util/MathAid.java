@@ -164,11 +164,13 @@ public final class MathAid {
      * @since 2022/4/24
      */
     public static String ordinalNumber(int n) {
-        if (n < 0) throw new IllegalArgumentException("invalid input n");
+        if (n < 0) throw new IllegalArgumentException("Input n must be positive");
 
-        if (n % 10 == 1 && n != 11) return n + "st";
-        else if (n % 10 == 2 && n != 12) return n + "nd";
-        else if (n % 10 == 3 && n != 13) return n + "rd";
+        // always "th" when the digit in the tens place is 1
+        if (n % 100 / 10 == 1) return  n + "th";
+        else if (n % 10 == 1) return n + "st";
+        else if (n % 10 == 2) return n + "nd";
+        else if (n % 10 == 3) return n + "rd";
         else return n + "th";
     }
 

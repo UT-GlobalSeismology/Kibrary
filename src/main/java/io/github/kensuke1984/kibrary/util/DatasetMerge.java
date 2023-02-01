@@ -93,11 +93,11 @@ public class DatasetMerge extends Operation {
 
     @Override
     public void run() throws IOException {
-        int pairNum = inPaths.size();
-        if (pairNum == 0) {
+        int inputNum = inPaths.size();
+        if (inputNum == 0) {
             System.err.println("No input dataset folders found.");
             return;
-        } else if (pairNum == 1) {
+        } else if (inputNum == 1) {
             System.err.println("Only 1 dataset folder found. Merging will not be done.");
             return;
         }

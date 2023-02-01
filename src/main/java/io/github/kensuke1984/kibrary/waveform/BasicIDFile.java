@@ -70,6 +70,60 @@ public final class BasicIDFile {
      */
     public static final int ONE_ID_BYTE = 48;
 
+    public static final String ID_FILE_NAME = "basicID.dat";
+    public static final String DATA_FILE_NAME = "basicData.dat";
+
+    /**
+     * Write basicIDs into ID file and data file.
+     * @param basicIDs (List of BasicID)
+     * @param outPath (Path) The directory where basic ID and data files shall be created. The directory must exist.
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/1/29
+     */
+    public static void write(List<BasicID> basicIDs, Path outPath) throws IOException {
+        Files.createDirectories(outPath);
+        Path outputIDPath = outPath.resolve(ID_FILE_NAME);
+        Path outputDataPath = outPath.resolve(DATA_FILE_NAME);
+
+        // extract set of observers, events, periods, and phases
+        Set<Observer> observerSet = new HashSet<>();
+        Set<GlobalCMTID> eventSet = new HashSet<>();
+        Set<double[]> periodSet = new HashSet<>();
+        Set<Phase> phaseSet = new HashSet<>();
+
+        basicIDs.forEach(id -> {
+            observerSet.add(id.getObserver());
+            eventSet.add(id.getGlobalCMTID());
+            boolean add = true;
+            for (double[] periods : periodSet) {
+                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
+                    add = false;
+            }
+            if (add)
+                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
+            for (Phase phase : id.getPhases())
+                phaseSet.add(phase);
+        });
+
+        double[][] periodRanges = new double[periodSet.size()][];
+        int j = 0;
+        for (double[] periods : periodSet)
+            periodRanges[j++] = periods;
+        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
+
+        // output
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(basicIDs.size(), "basicID", "basicIDs") + " (total of obs and syn)"
+                + " in " + outPath);
+        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputDataPath, observerSet, eventSet, periodRanges, phases)) {
+            for (BasicID id : basicIDs) {
+                wdw.addBasicID(id);
+            }
+        }
+    }
+
     /**
      * Write basicIDs into ID file and waveform file.
      * @param basicIDs
@@ -78,6 +132,7 @@ public final class BasicIDFile {
      * @throws IOException
      *
      * @author otsuru
+     * @deprecated
      */
     public static void write(List<BasicID> basicIDs, Path outputIDPath, Path outputWavePath) throws IOException {
 
@@ -116,6 +171,21 @@ public final class BasicIDFile {
                 wdw.addBasicID(id);
             }
         }
+    }
+
+    /**
+     * Reads basicIDs from file.
+     * @param inPath (Path) The directory containing basic ID and data files
+     * @param withData (boolean) Whether to read waveform data
+     * @return (List of BasicID)
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/1/29
+     */
+    public static List<BasicID> read(Path inPath, boolean withData) throws IOException {
+        if (withData) return Arrays.asList(read(inPath.resolve(ID_FILE_NAME), inPath.resolve(DATA_FILE_NAME)));
+        else return Arrays.asList(read(inPath.resolve(ID_FILE_NAME)));
     }
 
     /**

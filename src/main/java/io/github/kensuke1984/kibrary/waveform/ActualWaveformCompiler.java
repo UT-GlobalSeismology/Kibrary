@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +48,6 @@ import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
@@ -172,22 +171,18 @@ public class ActualWaveformCompiler extends Operation {
     private Set<StaticCorrectionData> mantleCorrectionSet;
     private Set<Observer> observerSet;
     private Set<GlobalCMTID> eventSet;
-    private Phase[] phases;
-    private double[][] periodRanges;
     private int finalFreqSamplingHz;
     /**
      * event-averaged amplitude corrections, used if amplitudeCorrection is False
      */
     private Map<GlobalCMTID, Double> amplitudeCorrEventMap;
-    /**
-     * writers
-     */
-    private WaveformDataWriter dataWriter;
-    private WaveformDataWriter envelopeWriter;
-    private WaveformDataWriter spcAmpWriter;
-    private WaveformDataWriter spcReWriter;
-    private WaveformDataWriter spcImWriter;
-    private WaveformDataWriter hyWriter;
+
+    private List<BasicID> actualIDs = Collections.synchronizedList(new ArrayList<>());
+    private List<BasicID> envelopeIDs = Collections.synchronizedList(new ArrayList<>());
+    private List<BasicID> hyIDs = Collections.synchronizedList(new ArrayList<>());
+    private List<BasicID> spcAmpIDs = Collections.synchronizedList(new ArrayList<>());
+    private List<BasicID> spcReIDs = Collections.synchronizedList(new ArrayList<>());
+    private List<BasicID> spcImIDs = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * number of OUTPUT pairs. (excluding ignored traces)
@@ -352,16 +347,12 @@ public class ActualWaveformCompiler extends Operation {
 
        if (timewindowRefPath != null)
            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
-               .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
+                   .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
        eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
                .collect(Collectors.toSet());
        observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver)
                .collect(Collectors.toSet());
-       phases = sourceTimewindowSet.stream().map(TimewindowData::getPhases).flatMap(p -> Arrays.stream(p))
-               .distinct().toArray(Phase[]::new);
-
-       readPeriodRanges();
 
        String dateStr = GadgetAid.getTemporaryString();
        outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, dateStr);
@@ -370,89 +361,32 @@ public class ActualWaveformCompiler extends Operation {
        EventListFile.write(eventSet, outPath.resolve("event.lst"));
        ObserverListFile.write(observerSet, outPath.resolve("observer.lst"));
 
-       Path waveIDPath = null;
-       Path waveformPath = null;
-       Path envelopeIDPath = null;
-       Path envelopePath = null;
-       Path hyIDPath = null;
-       Path hyPath = null;
-       Path spcAmpIDPath = null;
-       Path spcAmpPath = null;
-       Path spcReIDPath = null;
-       Path spcRePath = null;
-       Path spcImIDPath = null;
-       Path spcImPath = null;
+       Path actualPath = outPath.resolve("actual");
+       Path envelopePath = outPath.resolve("envelope");
+       Path hyPath = outPath.resolve("hy");
+       Path spcAmpPath = outPath.resolve("spcAmp");
+       Path spcRePath = outPath.resolve("spcRe");
+       Path spcImPath = outPath.resolve("spcIm");
 
-       waveIDPath = outPath.resolve("actualID.dat");
-       waveformPath = outPath.resolve("actual.dat");
-       envelopeIDPath = outPath.resolve("envelopeID" + dateStr + ".dat");
-       envelopePath = outPath.resolve("envelope" + dateStr + ".dat");
-       hyIDPath = outPath.resolve("hyID" + dateStr + ".dat");
-       hyPath = outPath.resolve("hy" + dateStr + ".dat");
-       spcAmpIDPath = outPath.resolve("spcAmpID" + dateStr + ".dat");
-       spcAmpPath = outPath.resolve("spcAmp" + dateStr + ".dat");
-       spcReIDPath = outPath.resolve("spcReID" + dateStr + ".dat");
-       spcRePath = outPath.resolve("spcRe" + dateStr + ".dat");
-       spcImIDPath = outPath.resolve("spcImID" + dateStr + ".dat");
-       spcImPath = outPath.resolve("spcIm" + dateStr + ".dat");
-
-       System.err.println("Outputting in " + waveIDPath + " and " + waveformPath);
-       try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, observerSet, eventSet,
-               periodRanges, phases)) {
-           envelopeWriter = new WaveformDataWriter(envelopeIDPath, envelopePath, observerSet, eventSet,
-                   periodRanges, phases);
-           hyWriter = new WaveformDataWriter(hyIDPath, hyPath, observerSet, eventSet,
-                   periodRanges, phases);
-           spcAmpWriter = new WaveformDataWriter(spcAmpIDPath, spcAmpPath,
-                   observerSet, eventSet, periodRanges, phases);
-           spcReWriter = new WaveformDataWriter(spcReIDPath, spcRePath,
-                   observerSet, eventSet, periodRanges, phases);
-           spcImWriter = new WaveformDataWriter(spcImIDPath, spcImPath,
-                   observerSet, eventSet, periodRanges, phases);
-           dataWriter = bdw;
-
-           ExecutorService es = ThreadAid.createFixedThreadPool();
-
-           for (GlobalCMTID event : eventSet)
-               es.execute(new Worker(event));
-           es.shutdown();
-
-           while (!es.isTerminated()){
-               ThreadAid.sleep(1000);
-           }
-           // this println() is for starting new line after writing "."s
-           System.err.println();
-
-           envelopeWriter.close();
-           hyWriter.close();
-           spcAmpWriter.close();
-           spcImWriter.close();
-           spcReWriter.close();
-           System.err.println(" " + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
+       ExecutorService es = ThreadAid.createFixedThreadPool();
+       // for each event, execute run() of class Worker, which is defined at the bottom of this java file
+       eventSet.stream().map(Worker::new).forEach(es::execute);
+       es.shutdown();
+       while (!es.isTerminated()){
+           ThreadAid.sleep(1000);
        }
+       // this println() is for starting new line after writing "."s
+       System.err.println();
+
+       BasicIDFile.write(actualIDs, actualPath);
+       BasicIDFile.write(envelopeIDs, envelopePath);
+       BasicIDFile.write(hyIDs, hyPath);
+       BasicIDFile.write(spcAmpIDs, spcAmpPath);
+       BasicIDFile.write(spcReIDs, spcRePath);
+       BasicIDFile.write(spcImIDs, spcImPath);
+
+       System.err.println(" " + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
    }
-
-   private void readPeriodRanges() {
-        try {
-            List<double[]> ranges = new ArrayList<>();
-            Set<SACFileName> sacfilenames = DatasetAid.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet()); // TODO is this limit(20) OK?
-            for (SACFileName name : sacfilenames) {
-                if (!name.isOBS()) continue;
-                SACHeaderAccess header = name.readHeader();
-                double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
-                        header.getValue(SACHeaderEnum.USER1) };
-                boolean exists = false;
-                if (ranges.size() == 0) ranges.add(range);
-                for (int i = 0; !exists && i < ranges.size(); i++)
-                    if (Arrays.equals(range, ranges.get(i))) exists = true;
-                if (!exists) ranges.add(range);
-            }
-            periodRanges = ranges.toArray(new double[0][]);
-        } catch (Exception e) {
-            throw new RuntimeException("Error in reading period ranges from SAC files.");
-        }
-    }
-
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
@@ -848,18 +782,18 @@ public class ActualWaveformCompiler extends Operation {
                     component, minPeriod, maxPeriod, includePhases, convolved, obsSpcIm);
 
             try {
-                dataWriter.addBasicID(obsID);
-                dataWriter.addBasicID(synID);
-                envelopeWriter.addBasicID(obsEnvelopeID);
-                envelopeWriter.addBasicID(synEnvelopeID);
-                hyWriter.addBasicID(obsHyID);
-                hyWriter.addBasicID(synHyID);
-                spcAmpWriter.addBasicID(obsSpcAmpID);
-                spcAmpWriter.addBasicID(synSpcAmpID);
-                spcReWriter.addBasicID(obsSpcReID);
-                spcReWriter.addBasicID(synSpcReID);
-                spcImWriter.addBasicID(obsSpcImID);
-                spcImWriter.addBasicID(synSpcImID);
+                actualIDs.add(obsID);
+                actualIDs.add(synID);
+                envelopeIDs.add(obsEnvelopeID);
+                envelopeIDs.add(synEnvelopeID);
+                hyIDs.add(obsHyID);
+                hyIDs.add(synHyID);
+                spcAmpIDs.add(obsSpcAmpID);
+                spcAmpIDs.add(synSpcAmpID);
+                spcReIDs.add(obsSpcReID);
+                spcReIDs.add(synSpcReID);
+                spcImIDs.add(obsSpcImID);
+                spcImIDs.add(synSpcImID);
                 numberOfPairs.incrementAndGet();
             } catch (Exception e) {
                 e.printStackTrace();
