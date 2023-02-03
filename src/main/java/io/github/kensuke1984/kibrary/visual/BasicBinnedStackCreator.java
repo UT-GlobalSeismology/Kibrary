@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
@@ -82,18 +84,28 @@ public class BasicBinnedStackCreator extends Operation {
     private boolean byAzimuth;
     private boolean flipAzimuth;
     /**
-     * Name of phase to align the record section
+     * Names of phases to plot travel time curves
      */
-    private String alignPhase;
+    private String[] displayPhases;
     /**
-     * apparent velocity to use when reducing time [s/deg]
+     * Name of phase to align the record section //TODO byAzimuthでは無効?
+     */
+    private String[] alignPhases;
+    /**
+     * apparent velocity to use when reducing time [s/deg] //TODO byAzimuthでは無効?
      */
     private double reductionSlowness;
+    /**
+     * Name of structure to compute travel times
+     */
+    private String structureName;
 
     private double lowerDistance;
     private double upperDistance;
     private double lowerAzimuth;
     private double upperAzimuth;
+
+    private TauP_Time timeTool;
 
     /**
      * @param args  none to create a property file <br>
@@ -135,10 +147,15 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
             pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
-            pw.println("##Phase name to use for alignment. When unset, the following reductionSlowness will be used.");
-            pw.println("#alignPhase ");
+            pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
+            pw.println("#displayPhases ");
+            pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
+            pw.println("## When multiple phases are set, the fastest arrival of them will be used for alignment.");
+            pw.println("#alignPhases ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness ");
+            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("#structureName ");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
@@ -177,7 +194,13 @@ public class BasicBinnedStackCreator extends Operation {
 
         byAzimuth = property.parseBoolean("byAzimuth", "false");
         flipAzimuth = property.parseBoolean("flipAzimuth", "false");
+
+        if (property.containsKey("displayPhases") && byAzimuth == false)
+            displayPhases = property.parseStringArray("displayPhases", null);
+        if (property.containsKey("alignPhases"))
+            alignPhases = property.parseStringArray("alignPhases", null);
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
+        structureName = property.parseString("structureName", "prem").toLowerCase();
 
         lowerDistance = property.parseDouble("lowerDistance", "0");
         upperDistance = property.parseDouble("upperDistance", "180");
@@ -192,46 +215,62 @@ public class BasicBinnedStackCreator extends Operation {
 
    @Override
    public void run() throws IOException {
-       BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+       try {
+           BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
 
-       // get all events included in basicIDs
-       Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
-               .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-       // eventDirs of events to be used
-       Set<EventFolder> eventDirs;
-       if (tendEvents.isEmpty()) {
-           eventDirs = allEvents.stream()
-                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
-       } else {
-           // choose only events that are included in tendEvents
-           eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
-                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
-       }
-       if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-           return;
-       }
+           // get all events included in basicIDs
+           Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+                   .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+           // eventDirs of events to be used
+           Set<EventFolder> eventDirs;
+           if (tendEvents.isEmpty()) {
+               eventDirs = allEvents.stream()
+                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+           } else {
+               // choose only events that are included in tendEvents
+               eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
+                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+           }
+           if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
+               return;
+           }
 
-       for (EventFolder eventDir : eventDirs) {
-           // create event directory if it does not exist
-           Files.createDirectories(eventDir.toPath());
+        // set up taup_time tool
+           if (alignPhases != null || displayPhases != null) {
+               timeTool = new TauP_Time(structureName);
+           }
 
-           for (SACComponent component : components) {
-               BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
-                       && id.getSacComponent().equals(component))
-                       .sorted(Comparator.comparing(BasicID::getObserver))
-                       .toArray(BasicID[]::new);
+           for (EventFolder eventDir : eventDirs) {
+               // create event directory if it does not exist
+               Files.createDirectories(eventDir.toPath());
 
-               String fileNameRoot;
-               if (fileTag == null) {
-                   fileNameRoot = eventDir.toString() + "_" + component.toString();
-               } else {
-                   fileNameRoot = fileTag + "_" + eventDir.toString() + "_" + component.toString();
+               // set event to taup_time tool
+               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
+               if (alignPhases != null || displayPhases != null) {
+                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtPosition().getDepth());
                }
 
-               Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
-               plotter.plot();
+               for (SACComponent component : components) {
+                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                           && id.getSacComponent().equals(component))
+                           .sorted(Comparator.comparing(BasicID::getObserver))
+                           .toArray(BasicID[]::new);
+
+                   String fileNameRoot;
+                   if (fileTag == null) {
+                       fileNameRoot = eventDir.toString() + "_" + component.toString();
+                   } else {
+                       fileNameRoot = fileTag + "_" + eventDir.toString() + "_" + component.toString();
+                   }
+
+                   Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
+                   plotter.plot();
+               }
            }
+       } catch (TauModelException e) {
+           e.printStackTrace();
        }
+
    }
 
     private static enum AmpStyle {
@@ -264,7 +303,7 @@ public class BasicBinnedStackCreator extends Operation {
             this.fileNameRoot = fileNameRoot;
         }
 
-        public void plot() throws IOException {
+        public void plot() throws IOException, TauModelException {
             if (ids.length == 0) {
                 return;
             }
@@ -313,15 +352,38 @@ public class BasicBinnedStackCreator extends Operation {
                 } else {
                     k = (int) Math.floor(azimuth / binWidth);
                 }
-                obsStacks[k] = (obsStacks[k] == null ? obsDataVector : add(obsStacks[k], obsDataVector));
-                synStacks[k] = (synStacks[k] == null ? synDataVector : add(synStacks[k], synDataVector));
+
+                if (obsStacks[k] == null && synStacks[k] == null) {
+                    obsStacks[k] = obsDataVector;
+                    synStacks[k] = synDataVector;
+                } else if (obsStacks[k] != null && synStacks[k] != null) {
+                    obsStacks[k] = add(obsStacks[k], obsDataVector);
+                    synStacks[k] = add(synStacks[k], synDataVector);
+                } else {
+                    throw new RuntimeException("The number of stacked observed waveforms and synthetics is different");
+                }
             }
 
             binStackPlotSetup();
 
             for (int j = 0; j < obsStacks.length; j++) {
                 if (obsStacks[j] != null && synStacks[j] != null) {
-                    binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth);
+                    double reduceTime = 0;
+                    if (!byAzimuth) {
+                        double binDistance = (j + 0.5) * binWidth;
+                        if (alignPhases != null) {
+                            timeTool.setPhaseNames(alignPhases);
+                            timeTool.calculate(binDistance);
+                            if (timeTool.getNumArrivals() < 1) {
+                                System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for bin label " + j + " , skipping.");
+                                return;
+                            }
+                            reduceTime = timeTool.getArrival(0).getTime();
+                        } else {
+                            reduceTime = reductionSlowness * binDistance;
+                        }
+                    }
+                    binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth, reduceTime);
                 }
             }
 
@@ -349,7 +411,7 @@ public class BasicBinnedStackCreator extends Operation {
             }
         }
 
-        private void binStackPlotContent(RealVector obsStack, RealVector synStack, double y) throws IOException {
+        private void binStackPlotContent(RealVector obsStack, RealVector synStack, double y, double reduceTime) throws IOException {
             SACComponent component = ids[0].getSacComponent();
             double samplingHz = ids[0].getSamplingHz();
 
@@ -365,10 +427,11 @@ public class BasicBinnedStackCreator extends Operation {
                 y -= 360;
             }
 
-            String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
-            String synUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
+            String obsUsingString = String.format("($1-%.3f):($2/%.3e+%.2f)", reduceTime, obsAmp, y);
+            String synUsingString = String.format("($1-%.3f):($3/%.3e+%.2f)", reduceTime, synAmp, y);
             binStackPlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
             binStackPlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+
         }
 
         /**
@@ -389,7 +452,7 @@ public class BasicBinnedStackCreator extends Operation {
             try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
                 for (int j = 0; j < obsStack.getDimension(); j++) {
-                    double time = j * samplingHz;
+                    double time = j / samplingHz;
                     pwTrace.println(time + " " + obsStack.getEntry(j) + " " + synStack.getEntry(j));
                 }
             }

@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -24,6 +25,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * An operation to select or resample BasicIDs.
@@ -51,6 +53,10 @@ public class BasicIDRebuilder extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * components to be included in the dataset
+     */
+    private Set<SACComponent> components;
 
     /**
      * path of basic ID file
@@ -103,6 +109,8 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("#components ");
             pw.println("##Path of a basic ID file, must be set");
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
@@ -129,6 +137,8 @@ public class BasicIDRebuilder extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "actual");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
@@ -150,6 +160,10 @@ public class BasicIDRebuilder extends Operation {
     public void run() throws IOException {
 
         BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+        basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
+                .sorted(Comparator.comparing(BasicID::getObserver))
+                .toArray(BasicID[]::new);
+
         // sort observed and synthetic
         BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
         obsIDs = pairer.getObsList();

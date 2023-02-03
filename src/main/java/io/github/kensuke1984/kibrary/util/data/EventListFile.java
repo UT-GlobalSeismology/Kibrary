@@ -64,6 +64,31 @@ public class EventListFile {
     }
 
     /**
+     * Writes an event list file given a set of GlobalCMTIDs.
+     * Each line: Date, latitude, longitude, depth, Mw, Half duration
+     * @param eventSet Set of events
+     * @param outputPath  of write file
+     * @param options  for write
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeList(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(eventSet.size(), "event", "events")
+                + " in " + outputPath);
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
+            pw.println("# yyyy/mm/dd latitude longitude depth Mw HalfDuration");
+            eventSet.stream().sorted().forEach(event -> {
+                pw.println(event.getEventData().getCMTTime().getYear() + "/" +
+                        event.getEventData().getCMTTime().getMonthValue() + "/" + event.getEventData().getCMTTime().getDayOfMonth()
+                        + " " + event.getEventData().getCmtPosition().getLatitude()
+                        + " " + event.getEventData().getCmtPosition().getLongitude() + " " + event.getEventData().getCmtPosition().getDepth()
+                        + " " + event.getEventData().getCmt().getMw() + " " + event.getEventData().getHalfDuration());
+            });
+        }
+    }
+
+    /**
      * Reads an event lsit file. Only the GlobalCMTID is read in; other information are ignored.
      * @param inputPath of event information file
      * @return (<b>unmodifiable</b>) Set of events
@@ -121,6 +146,9 @@ public class EventListFile {
                 .desc("Use basic ID file as input").build());
         options.addOptionGroup(inputOption);
 
+        // option
+        options.addOption("f2", "format2", false, "Select Out put format as Date, Latitude, Longitude, Depth, Mw, Half dur");
+
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Set path of output file").build());
@@ -159,7 +187,9 @@ public class EventListFile {
         }
 
         if (!DatasetAid.checkNum(eventSet.size(), "event", "events")) return;
-        write(eventSet, outputPath);
+
+        if (cmdLine.hasOption("f2")) writeList(eventSet, outputPath);
+        else write(eventSet, outputPath);
     }
 
 }

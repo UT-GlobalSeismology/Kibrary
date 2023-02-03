@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.BasicBinnedStackCreator;
 import io.github.kensuke1984.kibrary.visual.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.CatalogueErrorCalculator;
@@ -79,6 +80,7 @@ enum Manhattan {
     BasicIDMerge(41, BasicIDMerge.class),
     BasicWaveformPlotter(42, BasicWaveformPlotter.class),
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
+    BasicBinnedStackCreator(44, BasicBinnedStackCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),

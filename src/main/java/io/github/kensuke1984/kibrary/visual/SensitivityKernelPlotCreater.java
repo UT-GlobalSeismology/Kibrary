@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  *<p>
  * Timewindow and use phases are refered to {@link PartialID}.
  * <p>
- * The format of output files is [ parturbation point (lat, long, depth), values of data at each time ].
+ * The format of output files is [ parturbation point (lon, lat, depth), values of data at each time ].
  * <p>
  * each event directories will be created under "KernelTemporalVisual" directories.
  * each observer directories will be created under the event directories.
@@ -55,6 +55,8 @@ public class SensitivityKernelPlotCreater {
         Path dir0 = Paths.get("KernelTemporalVisual");
         Files.createDirectories(dir0);
         for (PartialID partial : partials) {
+
+//            if (partial.getObserver().toString().equals("LLLB_CN")) {
 
                 for (SACComponent component : components) {
                     if (component != partial.getSacComponent())
@@ -99,12 +101,12 @@ public class SensitivityKernelPlotCreater {
                         PrintWriter writer2 = new PrintWriter(new FileWriter(filePath.toString(), true));
                         double lat = partial.getVoxelPosition().getLatitude();
                         double lon = partial.getVoxelPosition().getLongitude();
-                        if (lon < 0)
-                            lon += 360.;
+//                        if (lon < 0)
+//                            lon += 360.;
                         double r = partial.getVoxelPosition().getR();
-                        writer2.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
+                        writer2.write(String.format("%.3f %.3f %.1f ", lon, lat, r));
                         BufferedWriter writer2_s = Files.newBufferedWriter(filePath_sensitivity, StandardOpenOption.APPEND);
-                        writer2_s.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
+                        writer2_s.write(String.format("%.3f %.3f %.1f ", lon, lat, r));
 
                         for (int i = 0; i < data.length; i++) {
                             writer2.write(String.format("%.5e ", data[i]));
@@ -129,6 +131,7 @@ public class SensitivityKernelPlotCreater {
 
                     }
                 }
+//            }
             }
         }
 }
