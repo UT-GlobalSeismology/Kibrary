@@ -238,7 +238,7 @@ public class BasicWaveformPlotter extends Operation {
         GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
         GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-        GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
+        GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
         GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
         GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
         GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
