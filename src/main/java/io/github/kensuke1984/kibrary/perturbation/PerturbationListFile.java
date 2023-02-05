@@ -48,6 +48,7 @@ public class PerturbationListFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
 //            perturbationMap.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
 //                    .forEach(entry -> pw.println(entry.getKey() + " " + entry.getValue()));
+            // Do not sort here, because the input may be already sorted. (LinkedHashMap can be sorted.)
             perturbationMap.forEach((key, value) -> pw.println(key + " " + value));
         }
     }

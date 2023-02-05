@@ -170,7 +170,7 @@ public class GlobalCMTSearch {
      * @return all global CMT IDs satisfying the input predicate
      */
     public static Set<GlobalCMTID> search(Predicate<GlobalCMTAccess> predicate) {
-        return GlobalCMTCatalog.allNDK().stream().filter(predicate).map(NDK::getGlobalCMTID)
+        return GlobalCMTCatalog.allNDKs().stream().filter(predicate).map(NDK::getGlobalCMTID)
                 .collect(Collectors.toSet());
     }
 
@@ -279,7 +279,7 @@ public class GlobalCMTSearch {
      * @return Set of {@link GlobalCMTID} which fulfill queries
      */
     public Set<GlobalCMTID> search() {
-        return GlobalCMTCatalog.allNDK().parallelStream().filter(ndk -> ndk.fulfill(this)).map(NDK::getGlobalCMTID)
+        return GlobalCMTCatalog.allNDKs().parallelStream().filter(ndk -> ndk.fulfill(this)).map(NDK::getGlobalCMTID)
                 .collect(Collectors.toSet());
     }
 

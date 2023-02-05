@@ -56,9 +56,10 @@ public class EventListFile {
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            pw.println("# GCMTID latitude longitude radius");
+            pw.println("# GCMTID latitude longitude radius depth Mw");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition());
+                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition()
+                         + " " + event.getEventData().getCmtPosition().getDepth() + " " + event.getEventData().getCmt().getMw());
             });
         }
     }
@@ -140,6 +141,8 @@ public class EventListFile {
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
                 .desc("Use dataset folder containing event folders as input").build());
+        inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
+                .desc("Use data entry file as input").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
                 .desc("Use timewindow file as input").build());
         inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("basicIDFile")
@@ -169,6 +172,9 @@ public class EventListFile {
         Set<GlobalCMTID> eventSet;
         if (cmdLine.hasOption("d")) {
             eventSet = DatasetAid.globalCMTIDSet(Paths.get(cmdLine.getOptionValue("d")));
+        } else if (cmdLine.hasOption("e")) {
+            Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
+            eventSet = entries.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
             Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             eventSet = timewindows.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());

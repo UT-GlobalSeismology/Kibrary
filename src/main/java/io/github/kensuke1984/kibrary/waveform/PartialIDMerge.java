@@ -69,8 +69,8 @@ public class PartialIDMerge extends Operation {
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " pair");
-                pw.println("#partialIDPath" + i + " partialID" + i + ".dat");
-                pw.println("#partialPath" + i + " partial" + i + ".dat");
+                pw.println("#partialIDPath" + i + " partialID.dat");
+                pw.println("#partialPath" + i + " partial.dat");
             }
         }
         System.err.println(outPath + " is created.");

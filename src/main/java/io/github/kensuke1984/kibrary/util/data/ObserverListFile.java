@@ -141,6 +141,8 @@ public final class ObserverListFile {
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
                 .desc("Use dataset folder containing event folders as input").build());
+        inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
+                .desc("Use data entry file as input").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
                 .desc("Use timewindow file as input").build());
         inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("basicIDFile")
@@ -171,6 +173,9 @@ public final class ObserverListFile {
         Set<Observer> observerSet;
         if (cmdLine.hasOption("d")) {
             observerSet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
+        } else if (cmdLine.hasOption("e")) {
+            Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
+            observerSet = entries.stream().map(DataEntry::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
             Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             observerSet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))

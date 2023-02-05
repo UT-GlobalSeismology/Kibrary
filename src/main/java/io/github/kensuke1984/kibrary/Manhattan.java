@@ -9,6 +9,7 @@ import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
 import io.github.kensuke1984.kibrary.entrance.DataRequestor;
+import io.github.kensuke1984.kibrary.entrance.NetworkLookup;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
@@ -22,6 +23,7 @@ import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -65,6 +67,7 @@ enum Manhattan {
     DataRequestor(13, DataRequestor.class),
     DataLobby(14, DataLobby.class),
     DataKitchen(15, DataKitchen.class),
+    NetworkLookup(18, NetworkLookup.class),
     // Synthetic  20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
@@ -74,6 +77,7 @@ enum Manhattan {
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     RaypathSelection(34, RaypathSelection.class),
+    TimewindowMerge(37, TimewindowMerge.class),
     StaticCorrectionForger(38, StaticCorrectionForger.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),

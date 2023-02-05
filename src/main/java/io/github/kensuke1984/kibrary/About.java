@@ -35,7 +35,7 @@ public final class About extends javax.swing.JFrame {
     private static final String KIBRARY_JAR_URL = "https://bit.ly/31FkTrh";
 
     /**
-     * @param args the command line arguments
+     * @param args [no option needed]
      */
     public static void main(String[] args) {
         run(null);

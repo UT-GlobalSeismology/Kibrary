@@ -151,10 +151,10 @@ public class PseudoWaveformGenerator extends Operation {
     public void run() throws IOException {
 
         // read input
-        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
         List<UnknownParameter> params = KnownParameter.extractParameterList(knowns);
+        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
 
         // assemble matrices (they should not be weighted)
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingType.IDENTITY, fillEmptyPartial);

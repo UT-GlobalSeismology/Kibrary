@@ -1,9 +1,5 @@
 package io.github.kensuke1984.kibrary.correction;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -33,12 +29,23 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author Kensuke Konishi
  * @version 0.1.1.2
  * @author anselme add phase information
+ *
+ * TODO shouldn't this hold TimewindowData as a field, instead of obs/ev/comp/phases/start ? (2022/12/14 otsuru)
  */
 public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 
     private final Observer observer;
     private final GlobalCMTID eventID;
     private final SACComponent component;
+    /**
+     * start time of timewindow for synthetic waveform
+     */
+    private final double synStartTime;
+    /**
+     * seismic phases included in the timewindow (e.g. S, ScS)
+     */
+    private final Phase[] phases;
+
     /**
      * time shift [s]<br>
      * Synthetic [t1, t2], Observed [t1 - TIME, t2 - TIME]
@@ -48,16 +55,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
      * amplitude correction: obs / syn<br>
      * Observed should be divided by this value.
      */
-    private final double amplitude;
-    /**
-     * start time of synthetic waveform
-     */
-    private final double synStartTime;
-
-    /**
-     * phases in windows
-     */
-    private final Phase[] phases;
+    private final double amplitudeRatio;
 
     /**
      * When a time window for a synthetic is [start, end], then
@@ -84,7 +82,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         this.component = component;
         this.synStartTime = Precision.round(synStartTime, 2);
         this.timeShift = Precision.round(timeShift, 2);
-        this.amplitude = Precision.round(amplitudeRatio, 2);
+        this.amplitudeRatio = Precision.round(amplitudeRatio, 2);
         this.phases = phases;
     }
 
@@ -110,7 +108,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         if (start != 0) return start;
         int shift = Double.compare(timeShift, o.timeShift);
         if (shift != 0) return shift;
-        return Double.compare(amplitude, o.amplitude);
+        return Double.compare(amplitudeRatio, o.amplitudeRatio);
     }
 
     public Observer getObserver() {
@@ -126,21 +124,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     }
 
     /**
-     * @return value of time shift (syn-obs)
-     */
-    public double getTimeshift() {
-        return timeShift;
-    }
-
-    /**
-     * @return value of ratio (obs / syn)
-     */
-    public double getAmplitudeRatio() {
-        return amplitude;
-    }
-
-    /**
-     * @return value of synthetic start time for the identification when you use multiple time windows.
+     * @return value of synthetic start time for identification when you use multiple time windows.
      */
     public double getSynStartTime() {
         return synStartTime;
@@ -150,12 +134,24 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         return phases;
     }
 
+    /**
+     * @return value of time shift [s] (syn-obs)
+     */
+    public double getTimeshift() {
+        return timeShift;
+    }
+
+    /**
+     * @return value of amplitude ratio (obs / syn)
+     */
+    public double getAmplitudeRatio() {
+        return amplitudeRatio;
+    }
+
     @Override
     public String toString() {
-        List<String> phaseStrings =
-                Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + synStartTime + " " + String.join(",", phaseStrings) + " " + timeShift + " " + amplitude;
+                + synStartTime + " " + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
     }
 
 }

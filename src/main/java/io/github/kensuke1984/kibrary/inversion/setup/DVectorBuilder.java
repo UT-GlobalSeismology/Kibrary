@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.setup;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -52,8 +53,11 @@ public final class DVectorBuilder {
      */
     private final int[] startPoints;
 
-
     public DVectorBuilder(BasicID[] basicIDs) {
+        this(Arrays.asList(basicIDs));
+    }
+
+    public DVectorBuilder(List<BasicID> basicIDs) {
         // check if IDs are valid
         if (!check(basicIDs)) throw new RuntimeException("Input IDs do not have waveform data.");
 
@@ -87,7 +91,7 @@ public final class DVectorBuilder {
 
             if (Math.abs(obsIDs[i].getStartTime() - synIDs[i].getStartTime()) >= START_TIME_DELAY_LIMIT)
                 throw new RuntimeException("Start time mismatch: " + obsIDs[i] + " " + synIDs[i]);
-            if (obsVecs[i].getLInfNorm() == 0 || Double.isNaN(obsVecs[i].getLInfNorm()))
+            if (Double.isNaN(obsVecs[i].getLInfNorm()) || obsVecs[i].getLInfNorm() == 0)
                 throw new RuntimeException("Obs is 0 or NaN: " + obsIDs[i] + " " + obsVecs[i].getLInfNorm());
         }
         return npts;
@@ -98,8 +102,8 @@ public final class DVectorBuilder {
      * @param ids for check
      * @return if all the ids have waveform data.
      */
-    private static boolean check(BasicID[] ids) {
-        return Arrays.stream(ids).parallel().allMatch(BasicID::containsData);
+    private static boolean check(List<BasicID> ids) {
+        return ids.stream().parallel().allMatch(BasicID::containsData);
     }
 
     /**

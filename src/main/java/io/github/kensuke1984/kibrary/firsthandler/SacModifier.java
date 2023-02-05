@@ -139,7 +139,7 @@ class SacModifier {
         RealVector obsVec = new ArrayRealVector(sacdata);
 
         // check
-        if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm())) {
+        if (Double.isNaN(obsVec.getLInfNorm()) || obsVec.getLInfNorm() == 0) {
             return true;
         } else {
             return false;

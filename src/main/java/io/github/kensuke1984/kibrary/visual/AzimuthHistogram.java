@@ -109,7 +109,7 @@ public class AzimuthHistogram {
                 .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
 
         double interval = cmdLine.hasOption("i") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 5;
-        double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 10;
+        double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : 30;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
         boolean expand = cmdLine.hasOption("e");
@@ -189,7 +189,7 @@ public class AzimuthHistogram {
         Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
-            pw.println("set term pngcairo enhanced font 'Helvetica,14'");
+            pw.println("set term pngcairo enhanced font 'Helvetica,20'");
             pw.println("set xlabel '" + xlabel + " (deg)'");
             pw.println("set ylabel 'Number of records'");
             pw.println("set xrange [" + minimum + ":" + maximum + "]");

@@ -159,10 +159,10 @@ public class BasicIDRebuilder extends Operation {
     @Override
     public void run() throws IOException {
 
-        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-        basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
+        List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
+        basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))
                 .sorted(Comparator.comparing(BasicID::getObserver))
-                .toArray(BasicID[]::new);
+                .collect(Collectors.toList());
 
         // sort observed and synthetic
         BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);

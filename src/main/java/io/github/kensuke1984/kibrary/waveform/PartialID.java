@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.waveform;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -101,13 +102,10 @@ public class PartialID extends BasicID {
 
     @Override
     public String toString() {
-        String partialString = observer.getStation() + " " + observer.getNetwork() + " " + event + " " + component + " " + samplingHz + " "
-                + startTime + " " + npts + " " + minPeriod + " " + maxPeriod + " ";
-        for (int i = 0; i < phases.length - 1; i++)
-            partialString += phases[i] + ",";
-        partialString += phases[phases.length - 1];
-        partialString += " " + startByte + " " + convolved + " "
-                + voxelPosition + " " + partialType;
+        String partialString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
+                + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
+                + TimewindowData.phasesAsString(phases) + " " + convolved + " "
+                + voxelPosition + " " + partialType + " " + startByte;
         return partialString;
     }
 

@@ -6,6 +6,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -89,6 +90,17 @@ public final class GlobalCMTCatalog {
     }
 
     /**
+     * When you want to create Events not contained in Global CMT Catalog, you
+     * can make it by yourself and use this.
+     *
+     * @param catalogFile arbitrary file containing cmt catalog
+     * @return {@link GlobalCMTAccess} written in catalogFile
+     */
+    public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
+        return new HashSet<>(GlobalCMTCatalog.readCatalog(catalogFile, false));
+    }
+
+    /**
      * Reads catalog file and returns NDKs inside.
      *
      * @param catalogPath path of a catalog
@@ -131,7 +143,7 @@ public final class GlobalCMTCatalog {
     /**
      * @return <b>(Unmodifiable)</b>Set of all NDKs
      */
-    static Set<NDK> allNDK() {
+    static Set<NDK> allNDKs() {
         return NDKs;
     }
 

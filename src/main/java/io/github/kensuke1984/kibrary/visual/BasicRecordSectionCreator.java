@@ -95,6 +95,10 @@ public class BasicRecordSectionCreator extends Operation {
      * Path of a basic file
      */
     private Path basicPath;
+    /**
+     * Path of folder containing event folders with waveform txt files
+     */
+    private Path referencePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -155,6 +159,9 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be set");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a waveform folder, when also plotting reference waveforms");
+            pw.println("##  It must contain event folders with waveform txt files. Only observed waveforms will be plotted.");
+            pw.println("#referencePath ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
@@ -166,12 +173,12 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
             pw.println("#byAzimuth ");
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
-            pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
             pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
-            pw.println("## When multiple phases are set, the fastest arrival of them will be used for alignment.");
+            pw.println("##  When multiple phases are set, the fastest arrival of them will be used for alignment.");
             pw.println("#alignPhases ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness ");
@@ -202,6 +209,8 @@ public class BasicRecordSectionCreator extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
+        if (property.containsKey("referencePath"))
+            referencePath = property.parsePath("referencePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -236,10 +245,10 @@ public class BasicRecordSectionCreator extends Operation {
    @Override
    public void run() throws IOException {
        try {
-           BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+           List<BasicID> ids = BasicIDFile.readAsList(basicIDPath, basicPath);
 
            // get all events included in basicIDs
-           Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
+           Set<GlobalCMTID> allEvents = ids.stream().filter(id -> components.contains(id.getSacComponent()))
                    .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
            // eventDirs of events to be used
            Set<EventFolder> eventDirs;
@@ -272,10 +281,10 @@ public class BasicRecordSectionCreator extends Operation {
 
                // create plot for each component
                for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                   List<BasicID> useIds = ids.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                            && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
-                           .toArray(BasicID[]::new);
+                           .collect(Collectors.toList());
 
                    Plotter plotter = new Plotter(eventDir, useIds, component);
                    plotter.plot();
@@ -297,10 +306,11 @@ public class BasicRecordSectionCreator extends Operation {
     private class Plotter {
         private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private final GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
         private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
 
         private final EventFolder eventDir;
-        private final BasicID[] ids;
+        private final List<BasicID> ids;
         private final SACComponent component;
 
         private GnuplotFile profilePlot;
@@ -312,7 +322,7 @@ public class BasicRecordSectionCreator extends Operation {
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(EventFolder eventDir, BasicID[] ids, SACComponent component) {
+        private Plotter(EventFolder eventDir, List<BasicID> ids, SACComponent component) {
             this.eventDir = eventDir;
             this.ids = ids;
             this.component = component;
@@ -320,7 +330,7 @@ public class BasicRecordSectionCreator extends Operation {
 
         public void plot() throws IOException, TauModelException {
             // prepare IDs
-            if (ids.length == 0) {
+            if (ids.size() == 0) {
                 return;
             }
             BasicIDPairUp pairer = new BasicIDPairUp(ids);
@@ -346,9 +356,9 @@ public class BasicRecordSectionCreator extends Operation {
                 BasicID synID = synList.get(i);
 
                 double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeEpicentralDistance(obsID.getObserver().getPosition()));
+                        .computeEpicentralDistanceRad(obsID.getObserver().getPosition()));
                 double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeAzimuth(obsID.getObserver().getPosition()));
+                        .computeAzimuthRad(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
@@ -416,19 +426,19 @@ public class BasicRecordSectionCreator extends Operation {
             profilePlot.setMarginH(15, 25);
             profilePlot.setMarginV(15, 15);
             profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
-            profilePlot.unsetKey();
+            profilePlot.unsetCommonKey();
 
-            profilePlot.setTitle(eventDir.toString());
+            profilePlot.setCommonTitle(eventDir.toString());
             if (alignPhases != null) {
-                profilePlot.setXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
+                profilePlot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
             } else {
-                profilePlot.setXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+                profilePlot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                profilePlot.setYlabel("Distance (deg)");
+                profilePlot.setCommonYlabel("Distance (deg)");
                 profilePlot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
-                profilePlot.setYlabel("Azimuth (deg)");
+                profilePlot.setCommonYlabel("Azimuth (deg)");
                 profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }
@@ -437,8 +447,8 @@ public class BasicRecordSectionCreator extends Operation {
                 throws IOException, TauModelException {
 
             // output waveform data to text file if it has not already been done so
-            String filename = BasicIDFile.getWaveformTxtFileName(obsID);
-            if (!Files.exists(eventDir.toPath().resolve(filename))) {
+            String fileName = BasicIDFile.getWaveformTxtFileName(obsID);
+            if (!Files.exists(eventDir.toPath().resolve(fileName))) {
                 BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
             }
 
@@ -466,8 +476,16 @@ public class BasicRecordSectionCreator extends Operation {
             }
 
             // add plot
-            profilePlot.addLine(filename, obsUsingString, obsAppearance, "observed");
-            profilePlot.addLine(filename, synUsingString, synAppearance, "synthetic");
+            if (referencePath != null) {
+                // when reference (the actual observed) exists, plot the actual (shifted) observed in black and the new (obtained) in blue
+                Path referenceFilePath = Paths.get("..").resolve(referencePath).resolve(eventDir.toString()).resolve(fileName);
+                profilePlot.addLine(referenceFilePath.toString(), obsUsingString, obsAppearance, "observed"); //TODO: this is not valid when ampStyle is not synEach
+                profilePlot.addLine(fileName, synUsingString, synAppearance, "initial");
+                profilePlot.addLine(fileName, obsUsingString, resultAppearance, "result");
+            } else {
+                profilePlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
+                profilePlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+            }
         }
 
         private double selectAmp(AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {

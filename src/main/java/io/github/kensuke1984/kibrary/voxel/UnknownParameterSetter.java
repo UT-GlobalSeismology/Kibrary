@@ -31,7 +31,6 @@ public class UnknownParameterSetter {
     /**
      * Create unknown parameter file.
      * @param args [option]
-     *      [voxelPath  partialTypes...]
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {

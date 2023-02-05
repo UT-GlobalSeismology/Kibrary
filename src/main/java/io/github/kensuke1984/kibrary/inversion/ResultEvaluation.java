@@ -28,23 +28,23 @@ public class ResultEvaluation {
         this.obsNorm = obsNorm;
     }
 
-    public void evaluate(RealMatrix ans, int maxNum, double[] alpha, Path outPath) throws IOException {
+    public void evaluate(RealMatrix ans, int maxNum, double[] alphas, Path outPath) throws IOException {
         System.err.println("Computing variance and AIC ...");
 
         // compute normalized variance up to basis vector maxNum
-        double[] variance = new double[maxNum + 1];
-        variance[0] = dNorm * dNorm / (obsNorm * obsNorm);
+        double[] variances = new double[maxNum + 1];
+        variances[0] = dNorm * dNorm / (obsNorm * obsNorm);
         for (int i = 0; i < maxNum; i++) {
-            variance[i + 1] = varianceOf(ans.getColumnVector(i));
+            variances[i + 1] = varianceOf(ans.getColumnVector(i));
         }
-        writeVariance(variance, outPath.resolve("variance.txt"));
+        writeVariance(variances, outPath.resolve("variance.txt"));
 
-        for (int k = 0; k < alpha.length; k++) {
-            double[] aic = computeAIC(variance, alpha[k]);
-            writeAIC(aic, outPath.resolve("aic_" + alpha[k] + ".txt"));
+        for (int k = 0; k < alphas.length; k++) {
+            double[] aics = computeAIC(variances, alphas[k]);
+            writeAIC(aics, outPath.resolve("aic_" + alphas[k] + ".txt"));
         }
 
-        createScript(outPath, alpha);
+        createScript(outPath, alphas);
     }
 
     private static void writeVariance(double[] dat, Path outputPath) throws IOException {

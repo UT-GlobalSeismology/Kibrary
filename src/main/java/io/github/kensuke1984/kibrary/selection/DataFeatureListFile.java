@@ -6,8 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -39,21 +40,20 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class DataFeatureListFile {
     private DataFeatureListFile() {}
 
-    public static void write(List<DataFeature> featureList, Path outputPath, OpenOption... options) throws IOException {
+    public static void write(Set<DataFeature> featureSet, Path outputPath, OpenOption... options) throws IOException {
         System.err.println("Outputting data feature values for "
-                + MathAid.switchSingularPlural(featureList.size(), "timewindow", "timewindows")
+                + MathAid.switchSingularPlural(featureSet.size(), "timewindow", "timewindows")
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("#station, network, lat, lon, event, component, startTime, endTime, phases, "
-                    + "maxRatio, minRatio, absRatio, variance, cc, S/N, selected");
-            for (DataFeature feature : featureList)
-                pw.println(feature);
+                    + "posSideRatio, negSideRatio, absRatio, variance, correlation, S/N, selected");
+            featureSet.stream().sorted(Comparator.comparing(DataFeature::getTimewindow)).forEach(pw::println);
         }
     }
 
-    public static List<DataFeature> read(Path inputPath) throws IOException {
-        List<DataFeature> featureList = new ArrayList<>();
+    public static Set<DataFeature> read(Path inputPath) throws IOException {
+        Set<DataFeature> featureSet = new HashSet<>();
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while (reader.hasNext()) {
@@ -68,12 +68,12 @@ public class DataFeatureListFile {
                     Double.parseDouble(parts[13]), Double.parseDouble(parts[9]), Double.parseDouble(parts[10]),
                     Double.parseDouble(parts[11]), Double.parseDouble(parts[14]), Boolean.parseBoolean(parts[15]));
 
-            featureList.add(feature);
+            featureSet.add(feature);
         }
 
         System.err.println("Data feature values for "
-                + MathAid.switchSingularPlural(featureList.size(), "timewindow is", "timewindows are") + " read.");
-        return featureList;
+                + MathAid.switchSingularPlural(featureSet.size(), "timewindow is", "timewindows are") + " read.");
+        return featureSet;
     }
 
     public static void main(String[] args) throws IOException {

@@ -15,15 +15,17 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
  */
 public class DataFeature {
 
+    public static int PRECISION = 3;
+
     private TimewindowData timewindow;
 
     private double variance;
 
     private double correlation;
 
-    private double maxRatio;
+    private double posSideRatio;
 
-    private double minRatio;
+    private double negSideRatio;
 
     private double absRatio;
 
@@ -33,12 +35,15 @@ public class DataFeature {
 
 
     public DataFeature(TimewindowData timewindow, double variance, double correlation,
-            double maxRatio, double minRatio, double absRatio, double snRatio, boolean selected) {
+            double posSideRatio, double negSideRatio, double absRatio, double snRatio, boolean selected) {
+        if (variance < 0) throw new IllegalArgumentException("variance must be positive: " + timewindow);
+        if (absRatio < 0) throw new IllegalArgumentException("absRatio must be positive: " + timewindow);
+        if (snRatio < 0) throw new IllegalArgumentException("snRatio must be positive: " + timewindow);
         this.timewindow = timewindow;
         this.variance = variance;
         this.correlation = correlation;
-        this.maxRatio = maxRatio;
-        this.minRatio = minRatio;
+        this.posSideRatio = posSideRatio;
+        this.negSideRatio = negSideRatio;
         this.absRatio = absRatio;
         this.snRatio = snRatio;
         this.selected = selected;
@@ -50,46 +55,60 @@ public class DataFeature {
         else if (synU.getDimension() < obsU.getDimension())
             obsU = obsU.getSubVector(0, synU.getDimension() - 1);
 
-        double synMax = synU.getMaxValue();
-        double synMin = synU.getMinValue();
-        double obsMax = obsU.getMaxValue();
-        double obsMin = obsU.getMinValue();
-        double obs2 = obsU.dotProduct(obsU);
-        double syn2 = synU.dotProduct(synU);
-        double cor = obsU.dotProduct(synU);
-        cor /= Math.sqrt(obs2 * syn2);
-        double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
-        var /= obs2;
+        // variance
+        RealVector resid = obsU.subtract(synU);
+        double var = resid.dotProduct(resid) / obsU.dotProduct(obsU);
+        // "Math.abs()" is to exclude -Infinity.
+        double variance = Math.abs(Precision.round(var, PRECISION));
 
-        double maxRatio = Precision.round(synMax / obsMax, 2);
-        double minRatio = Precision.round(synMin / obsMin, 2);
-        double absRatio = Precision.round((-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin), 2);
-        double variance = Precision.round(var, 2);
-        double correlation = Precision.round(cor, 2);
+        // ratio
+        double posSideRatio = Precision.round(synU.getMaxValue() / obsU.getMaxValue(), PRECISION);
+        double negSideRatio = Precision.round(synU.getMinValue() / obsU.getMinValue(), PRECISION);
+        // "Math.abs()" is to exclude -Infinity.
+        double absRatio = Math.abs(Precision.round(synU.getLInfNorm() / obsU.getLInfNorm(), PRECISION));
 
-        return new DataFeature(timewindow, variance, correlation, maxRatio, minRatio, absRatio, snRatio, selected);
+        // correlation
+        double cor = obsU.dotProduct(synU) / (synU.getNorm() * obsU.getNorm());
+        double correlation = Precision.round(cor, PRECISION);
+
+        return new DataFeature(timewindow, variance, correlation, posSideRatio, negSideRatio, absRatio, snRatio, selected);
     }
 
     public TimewindowData getTimewindow() {
         return timewindow;
     }
 
+    /**
+     * @return(double) variance of residual waveform. MAY BE INFINITY or NaN!!
+     */
     public double getVariance() {
         return variance;
     }
 
+    /**
+     * @return(double) correlation of observed and synthetic waveforms. MAY BE INFINITY or NaN!!
+     */
     public double getCorrelation() {
         return correlation;
     }
 
-    public double getMaxRatio() {
-        return maxRatio;
+    /**
+     * @return (double) syn/obs ratio of maximum value in waveforms. MAY BE NEGATIVE, INFINITY, or NaN!!
+     */
+    public double getPosSideRatio() {
+        return posSideRatio;
     }
 
-    public double getMinRatio() {
-        return minRatio;
+    /**
+     * @return (double) syn/obs ratio of minimum value in waveforms. MAY BE NEGATIVE, INFINITY, or NaN!!
+     */
+    public double getNegSideRatio() {
+        return negSideRatio;
     }
 
+    /**
+     * @return (double) syn/obs ratio of maximum absolute value in waveforms. MAY BE INFINITY or NaN!!
+     */
     public double getAbsRatio() {
         return absRatio;
     }
@@ -108,7 +127,7 @@ public class DataFeature {
 
     @Override
     public String toString() {
-        return timewindow.toString() + " " + maxRatio + " " + minRatio + " " + absRatio + " " +
+        return timewindow.toString() + " " + posSideRatio + " " + negSideRatio + " " + absRatio + " " +
                 variance + " " + correlation + " " + snRatio + " " + selected;
     }
 }

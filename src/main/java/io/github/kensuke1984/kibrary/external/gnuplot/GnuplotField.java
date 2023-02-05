@@ -7,6 +7,10 @@ class GnuplotField {
 
     private String xrange;
     private String yrange;
+    private String xlabel;
+    private String ylabel;
+    private String title;
+    private String key;
 
     private List<GnuplotLine> lines = new ArrayList<>();
     private List<GnuplotLabel> labels = new ArrayList<>();
@@ -91,20 +95,45 @@ class GnuplotField {
         yrange = "[" + yminLimit + "<*:*<" + ymaxLimit + "]";
     }
 
-    public boolean hasXrange() {
-        return xrange != null;
-    }
-
     public String getXrange() {
         return xrange;
-    }
-
-    public boolean hasYrange() {
-        return yrange != null;
     }
 
     public String getYrange() {
         return yrange;
     }
 
+    // ----------title, key, and axes----------
+
+    public void setXlabel(String xlabel) {
+        this.xlabel = xlabel;
+    }
+
+    public String getXlabel() {
+        return xlabel;
+    }
+
+    public void setYlabel(String ylabel) {
+        this.ylabel = ylabel;
+    }
+
+    public String getYlabel() {
+        return ylabel;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getKey() {
+        return key;
+    }
 }

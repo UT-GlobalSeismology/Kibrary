@@ -168,11 +168,11 @@ public class BasicWaveformPlotter extends Operation {
 
    @Override
    public void run() throws IOException {
-       BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-       basicIDs = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent())).toArray(BasicID[]::new);
+       List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath).stream()
+               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
        // get all events included in basicIDs
-       Set<GlobalCMTID> allEvents = Arrays.stream(basicIDs).map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       Set<GlobalCMTID> allEvents = basicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
        // eventDirs of events to be used
        Set<EventFolder> eventDirs;
        if (tendEvents.isEmpty()) {
@@ -198,18 +198,18 @@ public class BasicWaveformPlotter extends Operation {
 
            if (splitComponents) {
                for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(basicIDs).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                   List<BasicID> useIds = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
                            && id.getSacComponent().equals(component))
                            .sorted(Comparator.comparing(BasicID::getObserver))
-                           .toArray(BasicID[]::new);
+                           .collect(Collectors.toList());
 
                    String fileNameRoot = "plot_" + eventDir.toString() + "_" + component.toString();
                    createPlot(eventDir, useIds, fileNameRoot);
                }
            } else {
-               BasicID[] useIds = Arrays.stream(basicIDs).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
+               List<BasicID> useIds = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
-                       .toArray(BasicID[]::new);
+                       .collect(Collectors.toList());
 
                String fileNameRoot = "plot_" + eventDir.toString();
                createPlot(eventDir, useIds, fileNameRoot);
@@ -224,8 +224,8 @@ public class BasicWaveformPlotter extends Operation {
      * @param fileNameRoot (String) The root of file names of output plot and graph files
      * @throws IOException
      */
-    private void createPlot(EventFolder eventDir, BasicID[] ids, String fileNameRoot) throws IOException {
-        if (ids.length == 0) {
+    private void createPlot(EventFolder eventDir, List<BasicID> ids, String fileNameRoot) throws IOException {
+        if (ids.size() == 0) {
             return;
         }
 
@@ -238,7 +238,7 @@ public class BasicWaveformPlotter extends Operation {
         GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
         GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-        GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
+        GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
         GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
         GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
         GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
@@ -247,7 +247,7 @@ public class BasicWaveformPlotter extends Operation {
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
-        gnuplot.setKey(true, "top right");
+        gnuplot.setCommonKey(true, false, "top right");
 
         //gnuplot.setXlabel("time");
         //gnuplot.setYlabel("value");

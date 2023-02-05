@@ -18,10 +18,10 @@ final class GnuplotSample {
         GnuplotLineAppearance appearance2 = new GnuplotLineAppearance(2, GnuplotColorName.red, 3);
 
         gnuplot.setOutput("pdf", "sample.pdf", 21, 29.7, true);
-        gnuplot.setKey(true, "top right");
+        gnuplot.setCommonKey(true, false, "top right");
 
-        gnuplot.setXlabel("time");
-        gnuplot.setYlabel("value");
+        gnuplot.setCommonXlabel("time");
+        gnuplot.setCommonYlabel("value");
         //gnuplot.setTitle("Test");
 
         gnuplot.addLabel("AAA AA", "graph", 0, 0.95);

@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
@@ -22,6 +24,10 @@ class DSMShellscript {
      */
     private String header;
     private boolean mpi;
+    /**
+     * Number of sources
+     */
+    private int nSources;
     /**
      * Number of blocks of {nSimRun} sources to operate for
      */
@@ -49,6 +55,7 @@ class DSMShellscript {
         this.workPath = workPath;
         this.mpi = mpi;
         this.header = header;
+        this.nSources = nSources;
 
         int nThreads = Runtime.getRuntime().availableProcessors() - 1;
         if (mpi) {
@@ -63,11 +70,13 @@ class DSMShellscript {
             nCore = 1;
         }
 
+        // number of sources to compute simultaneously
         // Number of cores that will run simultaneously = nSimRun * nCore. Remainders will not be used.
         nSimRun = nThreads / nCore;
 
+        // number of sets of computation
         // Number of sources that will be processed = nBlock * nSimRun.
-        nBlock = nSources / nSimRun + ((nSources % nSimRun == 0) ? 0 : 1);
+        nBlock = MathAid.divideUp(nSources, nSimRun);
     }
 
     /**
@@ -79,39 +88,33 @@ class DSMShellscript {
      * @author otsuru
      * @since 2022/2/5
      */
-    public void write(SPCType type, SPCMode mode, String listFileName, String dateStr) throws IOException {
-        String fileNameRoot;
+    public void write(SPCType type, SPCMode mode, String listFileName, Path outputPath) throws IOException {
         String enterFolder;
         String exitFolder;
         String programName;
 
         switch (type) {
         case SYNTHETIC:
-            fileNameRoot = "runDSM_" + mode + dateStr;
             enterFolder = "./";
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "tipsv" : "tish");
             break;
         case PF:
-            fileNameRoot = "runFP_" + mode + dateStr;
             enterFolder = "./FPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvfp" : "shfp");
             break;
         case PB:
-            fileNameRoot = "runBP_" + mode + dateStr;
             enterFolder = "./BPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
             break;
         case PAR2:
-            fileNameRoot = "runISOSSH_" + mode + dateStr;
-            enterFolder = "./ISO";
+             enterFolder = "./ISO";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "sshpsvi" : "sshshi");
             break;
         case PAR5:
-            fileNameRoot = "runTISSH_" + mode + dateStr;
             enterFolder = "./TI";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "sshpsv" : "sshsh");
@@ -123,14 +126,15 @@ class DSMShellscript {
         String programString;
         if (mpi) programString = "mpirun -n $Ncore $(which mpi-" + programName + ")";
         else programString = programName;
+        String fileNameRoot = FileAid.extractNameRoot(outputPath);
 
-        Path shellPath = workPath.resolve(fileNameRoot + ".sh");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shellPath))) {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("Nblock=" + nBlock);
             pw.println("Nsimrun=" + nSimRun);
             pw.println("Ncore=" + nCore);
             pw.println();
+            pw.println("echo \"" + nSources + " sources\"");
             pw.println("start=$(date +'%s')");
             pw.println("echo \"start: $(date -d \"@${start}\" +'%Y-%m-%d %H:%M:%S (%:z)')\"");
             pw.println();

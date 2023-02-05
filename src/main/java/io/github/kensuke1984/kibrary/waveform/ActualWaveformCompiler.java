@@ -25,6 +25,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -67,7 +68,10 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * Resulting entries can be specified by a (event, observer, component, sacType, timeframe)-pair.
  * The sample rate of the resulting data is {@link #finalSamplingHz}.
- * Static correction is applied as described in {@link StaticCorrection}.
+ * Static correction is applied as described in {@link FujiStaticCorrection}.
+ * <p>
+ * In output {@link BasicID}s, the start time of the synthetic and observed IDs will differ when time shift is applied.
+ * The start time of the synthetic is the one that shall be used hereafter.
  * <p>
  * This class does not apply a digital filter, but extracts information about the passband written in SAC files.
  *
@@ -308,8 +312,7 @@ public class ActualWaveformCompiler extends Operation {
 
            // read timewindows and select based on component and entries
            sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
-                   .stream().filter(window -> components.contains(window.getComponent()) &&
-                           entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
+                   .stream().filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
                    .collect(Collectors.toSet());
        } else {
            // read timewindows and select based on component
@@ -662,23 +665,25 @@ public class ActualWaveformCompiler extends Operation {
             // check delta
             double delta = 1 / sacSamplingHz;
             if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println(
-                        "!! Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA) + " , " +
-                                synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
+                System.err.println("!! Deltas are invalid. Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                        + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
+                System.err.println("   " + timewindow);
                 return;
             }
 
             // check and read bandpass
             if (obsSac.getValue(SACHeaderEnum.USER0) != synSac.getValue(SACHeaderEnum.USER0)
                     || obsSac.getValue(SACHeaderEnum.USER1) != synSac.getValue(SACHeaderEnum.USER1)) {
-                System.err.println("band pass filter difference");
+                System.err.println("!! Band pass filter difference");
+                System.err.println("   " + timewindow);
                 return;
             }
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
             if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) { // TODO should 10 be maxStaticShift ?
-                System.err.println("!! End time of timewindow " + timewindow + " is too late.");
+                System.err.println("!! End time of timewindow too late");
+                System.err.println("   " + timewindow);
                 return;
             }
 
@@ -695,7 +700,7 @@ public class ActualWaveformCompiler extends Operation {
                     case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
                     }
                 } catch (NoSuchElementException e) {
-                    System.err.println("There is no static correction information for");
+                    System.err.println("!! There is no static correction information for");
                     System.err.println("   " + timewindow);
                     return;
                 }
@@ -705,7 +710,7 @@ public class ActualWaveformCompiler extends Operation {
                     StaticCorrectionData sc = getMantleCorrection(timewindow);
                     shift += sc.getTimeshift();
                 } catch (NoSuchElementException e) {
-                    System.err.println("There is no mantle correction information for");
+                    System.err.println("!! There is no mantle correction information for");
                     System.err.println("   " + timewindow);
                     return;
                 }
@@ -719,7 +724,8 @@ public class ActualWaveformCompiler extends Operation {
                         && tw.getObserver().equals(timewindow.getObserver())
                         && tw.getComponent().equals(timewindow.getComponent())).collect(Collectors.toList());
                 if (tmpwindows.size() != 1) {
-                    System.err.println("Reference timewindow does not exist " + timewindow);
+                    System.err.println("!! Reference timewindow does not exist:");
+                    System.err.println("   " + timewindow);
                     return;
                 }
                 else {
@@ -735,6 +741,14 @@ public class ActualWaveformCompiler extends Operation {
             else
                 obsData = cutDataSac(obsSac, startTime - shift, npts);
             double[] synData = cutDataSac(synSac, startTime, npts);
+
+            // check
+            RealVector obsVec = new ArrayRealVector(obsData);
+            if (Double.isNaN(obsVec.getLInfNorm()) || obsVec.getLInfNorm() == 0) {
+                System.err.println("!! Obs is 0 or NaN:");
+                System.err.println("   " + timewindow);
+                return;
+            }
 
             double[] obsEnvelope = cutEnvelopeSac(obsSac, startTime - shift, npts);
             double[] synEnvelope = cutEnvelopeSac(synSac, startTime, npts);

@@ -438,6 +438,7 @@ class EventProcessor implements Runnable {
                 sm.removeTrend();
 
                 // check whether the waveform has non-zero data
+                // This is after removeTrend() because we also want to remove constant-value data.
                 if (sm.isCompleteZero()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! waveform is 0 or NaN : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);

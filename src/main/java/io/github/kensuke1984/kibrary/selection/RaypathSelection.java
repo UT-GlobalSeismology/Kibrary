@@ -327,11 +327,11 @@ public class RaypathSelection extends Operation {
             }
 
             // distance, azimuth, back-azimuth
-            double distance = eventPosition.computeEpicentralDistance(observerPosition) * 180. / Math.PI;
+            double distance = eventPosition.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
             boolean distanceCheck = (lowerDistance <= distance && distance <= upperDistance);
-            double azimuth = eventPosition.computeAzimuth(observerPosition) * 180. / Math.PI;
+            double azimuth = eventPosition.computeAzimuthRad(observerPosition) * 180. / Math.PI;
             boolean azimuthCheck = MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth);
-            double backAzimuth = eventPosition.computeBackAzimuth(observerPosition) * 180. / Math.PI;
+            double backAzimuth = eventPosition.computeBackAzimuthRad(observerPosition) * 180. / Math.PI;
             boolean backAzimuthCheck = MathAid.checkAngleRange(backAzimuth, lowerBackAzimuth, upperBackAzimuth);
             if ((distanceCheck && azimuthCheck && backAzimuthCheck) == false) {
                 if (eliminationMode) {

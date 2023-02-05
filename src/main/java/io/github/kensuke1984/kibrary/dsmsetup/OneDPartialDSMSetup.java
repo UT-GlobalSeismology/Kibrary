@@ -233,10 +233,15 @@ public class OneDPartialDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceList);
         DSMShellscript shell = new DSMShellscript(outPath, mpi, eventDirs.size(), header);
-        shell.write(SPCType.PAR2, SPCMode.PSV, listFileName, dataStr);
-        shell.write(SPCType.PAR2, SPCMode.SH, listFileName, dataStr);
-        shell.write(SPCType.PAR5, SPCMode.PSV, listFileName, dataStr);
-        shell.write(SPCType.PAR5, SPCMode.SH, listFileName, dataStr);
+        String dateStr = GadgetAid.getTemporaryString();
+        Path outISOPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runSSHi_PSV", null, dateStr, ".sh"));
+        Path outISOSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runSSHi_SH", null, dateStr, ".sh"));
+        Path outTIPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runSSH_PSV", null, dateStr, ".sh"));
+        Path outTISHPath = outPath.resolve(DatasetAid.generateOutputFileName("runSSH_SH", null, dateStr, ".sh"));
+        shell.write(SPCType.PAR2, SPCMode.PSV, listFileName, outISOPSVPath);
+        shell.write(SPCType.PAR2, SPCMode.SH, listFileName, outISOSHPath);
+        shell.write(SPCType.PAR5, SPCMode.PSV, listFileName, outTIPSVPath);
+        shell.write(SPCType.PAR5, SPCMode.SH, listFileName, outTISHPath);
         System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
     }
 }

@@ -395,10 +395,10 @@ public class SCARDEC {
         for (int i = 0; i < stfForFFT.length; i++) {
             double t = i * deltaT;
             if (t < end) {
-                stfForFFT[i] = momentRateFunction.toValue(2, t);
+                stfForFFT[i] = momentRateFunction.interpolateValue(2, t);
                 stfSize += stfForFFT[i];
             } else if (start < t - tlen) {
-                stfForFFT[i] = momentRateFunction.toValue(2, t - tlen);
+                stfForFFT[i] = momentRateFunction.interpolateValue(2, t - tlen);
                 stfSize += stfForFFT[i];
             }
         }

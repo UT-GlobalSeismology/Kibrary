@@ -27,7 +27,7 @@ final class Latitude implements Comparable<Latitude> {
     /**
      * [-&pi;/2, &pi;/2] geocentric latitude [rad]
      */
-    private final double geocentricLatitude;
+    private final double geocentricLatitudeRad;
     /**
      * [0, &pi;] &theta; in spherical coordinates [rad]
      */
@@ -44,7 +44,7 @@ final class Latitude implements Comparable<Latitude> {
                         Thread.currentThread().getStackTrace()[1].getMethodName());
 
         double geocentric = 0.5 * Math.PI - theta;
-        return FastMath.toDegrees(Earth.toGeographical(geocentric));
+        return FastMath.toDegrees(Earth.toGeographicLatitude(geocentric));
     }
 
 
@@ -57,8 +57,8 @@ final class Latitude implements Comparable<Latitude> {
                 "The input latitude: " + geographicLatitude + " is invalid (must be in [-90, 90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
-        geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
-        theta = 0.5 * Math.PI - geocentricLatitude;
+        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(geographicLatitude));
+        theta = 0.5 * Math.PI - geocentricLatitudeRad;
     }
 
     /**
@@ -111,12 +111,12 @@ final class Latitude implements Comparable<Latitude> {
     /**
      * @return geocentric latitude [rad]
      */
-    double getGeocentricLatitude() {
-        return geocentricLatitude;
+    double getGeocentricLatitudeRad() {
+        return geocentricLatitudeRad;
     }
 
     /**
-     * @return theta [radian]
+     * @return theta [rad]
      */
     double getTheta() {
         return theta;

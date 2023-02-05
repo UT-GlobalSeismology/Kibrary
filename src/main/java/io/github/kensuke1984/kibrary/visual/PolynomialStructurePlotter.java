@@ -13,6 +13,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 
@@ -85,8 +86,7 @@ public class PolynomialStructurePlotter extends Operation {
        String fileNameRoot = null;
        if (structurePath != null) {
            structure = PolynomialStructureFile.read(structurePath);
-           String fileStr = structurePath.getFileName().toString();
-           fileNameRoot = fileStr.substring(0, fileStr.lastIndexOf('.'));
+           fileNameRoot = FileAid.extractNameRoot(structurePath);
        } else {
            structure = PolynomialStructure.of(structureName);
            fileNameRoot = structureName;

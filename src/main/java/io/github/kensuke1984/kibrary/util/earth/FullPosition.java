@@ -28,29 +28,24 @@ public final class FullPosition extends HorizontalPosition {
     /**
      * the number of decimal places to round off the radius value
      */
-    private static final int R_PRECISION = 6;
+    private static final int RADIUS_PRECISION = 6;
     /**
      * margin to decide whether two radii are the same value
      */
-    public static double RADIUS_EPSILON = Math.pow(10, -R_PRECISION)/2;
+    public static final double RADIUS_EPSILON = Math.pow(10, -RADIUS_PRECISION)/2;
     /**
      * [0, &infin;) radius [km]
      */
-    private final double R;
+    private final double radius;
 
     /**
-     * @param latitude  [deg] geographical latitude
+     * @param latitude  [deg] geographic latitude
      * @param longitude [deg] longitude
-     * @param r         [km] radius
+     * @param radius [km] radius
      */
-    public FullPosition(double latitude, double longitude, double r) {
+    public FullPosition(double latitude, double longitude, double radius) {
         super(latitude, longitude);
-        R = Precision.round(r, R_PRECISION);
-//        R = r;
-    }
-
-    public static double latitudeFor(double theta) {
-        return Latitude.valueFor(theta);
+        this.radius = Precision.round(radius, RADIUS_PRECISION);
     }
 
     /**
@@ -73,7 +68,7 @@ public final class FullPosition extends HorizontalPosition {
         }
 
         // radius
-        if (R < minRadius || maxRadius < R) return false;
+        if (radius < minRadius || maxRadius < radius) return false;
 
         // latitude and longitude
         if (isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude) == false) return false;
@@ -89,7 +84,7 @@ public final class FullPosition extends HorizontalPosition {
 //      temp = Double.doubleToLongBits(R);
 //      result = prime * result + (int) (temp ^ (temp >>> 32));
 //      int temp = (int) (R / eps / 10);
-        int temp = (int) R;
+        int temp = (int) radius;
         result = prime * result + temp;
         return result;
     }
@@ -106,7 +101,7 @@ public final class FullPosition extends HorizontalPosition {
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         FullPosition other = (FullPosition) obj;
-        return Precision.equals(R, other.R, Math.pow(10, -R_PRECISION)/2);
+        return Precision.equals(radius, other.radius, Math.pow(10, -RADIUS_PRECISION)/2);
     }
 
     /**
@@ -116,28 +111,28 @@ public final class FullPosition extends HorizontalPosition {
     public int compareTo(HorizontalPosition o) {
         int horizontalCompare = super.compareTo(o);
         if (horizontalCompare != 0 || !(o instanceof FullPosition)) return horizontalCompare;
-        return Double.compare(R, ((FullPosition) o).R);
+        return Double.compare(radius, ((FullPosition) o).radius);
     }
 
     /**
      * @return [km] radius (not depth)
      */
     public double getR() {
-        return R;
+        return radius;
     }
 
     /**
      * @return [km] depth (not radius)
      */
     public double getDepth() {
-        return Precision.round(6371 - R, R_PRECISION); //TODO: consider ellipticity of Earth
+        return Precision.round(6371 - radius, RADIUS_PRECISION); //TODO: consider ellipticity of Earth
     }
 
     /**
      * @return {@link RThetaPhi} of this
      */
-    public RThetaPhi getRThetaPhi() {
-        return new RThetaPhi(R, getTheta(), getPhi());
+    public RThetaPhi toRThetaPhi() {
+        return new RThetaPhi(radius, getTheta(), getPhi());
     }
 
     /**
@@ -146,7 +141,7 @@ public final class FullPosition extends HorizontalPosition {
      * @return {@link XYZ} of this
      */
     public XYZ toXYZ() {
-        return RThetaPhi.toCartesian(R, getTheta(), getPhi());
+        return RThetaPhi.toCartesian(radius, getTheta(), getPhi());
     }
 
     /**
@@ -156,7 +151,7 @@ public final class FullPosition extends HorizontalPosition {
      */
     public XYZ toXYZGeographical() {
         double theta = Math.toRadians(90. - getLatitude());
-        return RThetaPhi.toCartesian(R, theta, getPhi());
+        return RThetaPhi.toCartesian(radius, theta, getPhi());
     }
 
     /**
@@ -204,7 +199,7 @@ public final class FullPosition extends HorizontalPosition {
     public FullPosition[] findNearestPosition(FullPosition[] locations, double maxSearchRange) {
         FullPosition[] newLocations = Arrays.stream(locations).parallel().filter(loc -> {
     //		System.out.println(loc + " " + this.toString() + " " + this.getDistance(loc));
-            return Math.abs(this.R - loc.getR()) < maxSearchRange;
+            return Math.abs(this.radius - loc.getR()) < maxSearchRange;
         }).collect(Collectors.toList()).toArray(new FullPosition[0]);
     //	System.out.println(newLocations.length);
         Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::computeStraightDistance));
@@ -227,7 +222,7 @@ public final class FullPosition extends HorizontalPosition {
 
     @Override
     public String toString() {
-        return super.toString() + " " + MathAid.padToString(R, 4, R_PRECISION, " ");
+        return super.toString() + " " + MathAid.padToString(radius, 4, RADIUS_PRECISION, " ");
     }
 
 }

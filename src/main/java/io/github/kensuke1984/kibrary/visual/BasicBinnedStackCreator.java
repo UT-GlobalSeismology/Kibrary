@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import edu.sc.seis.TauP.TauModelException;
-import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
@@ -71,6 +69,10 @@ public class BasicBinnedStackCreator extends Operation {
      * {@link Path} of a basic file
      */
     private Path basicPath;
+    /**
+     * Path of folder containing event folders with waveform txt files
+     */
+    private Path referencePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -83,29 +85,11 @@ public class BasicBinnedStackCreator extends Operation {
 
     private boolean byAzimuth;
     private boolean flipAzimuth;
-    /**
-     * Names of phases to plot travel time curves
-     */
-    private String[] displayPhases;
-    /**
-     * Name of phase to align the record section //TODO byAzimuthでは無効?
-     */
-    private String[] alignPhases;
-    /**
-     * apparent velocity to use when reducing time [s/deg] //TODO byAzimuthでは無効?
-     */
-    private double reductionSlowness;
-    /**
-     * Name of structure to compute travel times
-     */
-    private String structureName;
 
     private double lowerDistance;
     private double upperDistance;
     private double lowerAzimuth;
     private double upperAzimuth;
-
-    private TauP_Time timeTool;
 
     /**
      * @param args  none to create a property file <br>
@@ -132,6 +116,9 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a waveform folder, when also plotting reference waveforms");
+            pw.println("##  It must contain event folders with waveform txt files for stacks. Only observed waveforms will be plotted.");
+            pw.println("#referencePath ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##(double) The width of each bin [deg] (1.0)");
@@ -147,15 +134,6 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
             pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
-            pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
-            pw.println("#displayPhases ");
-            pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
-            pw.println("## When multiple phases are set, the fastest arrival of them will be used for alignment.");
-            pw.println("#alignPhases ");
-            pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
-            pw.println("#reductionSlowness ");
-            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
-            pw.println("#structureName ");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
@@ -181,6 +159,8 @@ public class BasicBinnedStackCreator extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
+        if (property.containsKey("referencePath"))
+            referencePath = property.parsePath("referencePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -195,13 +175,6 @@ public class BasicBinnedStackCreator extends Operation {
         byAzimuth = property.parseBoolean("byAzimuth", "false");
         flipAzimuth = property.parseBoolean("flipAzimuth", "false");
 
-        if (property.containsKey("displayPhases") && byAzimuth == false)
-            displayPhases = property.parseStringArray("displayPhases", null);
-        if (property.containsKey("alignPhases"))
-            alignPhases = property.parseStringArray("alignPhases", null);
-        reductionSlowness = property.parseDouble("reductionSlowness", "0");
-        structureName = property.parseString("structureName", "prem").toLowerCase();
-
         lowerDistance = property.parseDouble("lowerDistance", "0");
         upperDistance = property.parseDouble("upperDistance", "180");
         if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
@@ -215,62 +188,46 @@ public class BasicBinnedStackCreator extends Operation {
 
    @Override
    public void run() throws IOException {
-       try {
-           BasicID[] ids = BasicIDFile.read(basicIDPath, basicPath);
+       List<BasicID> ids = BasicIDFile.readAsList(basicIDPath, basicPath);
 
-           // get all events included in basicIDs
-           Set<GlobalCMTID> allEvents = Arrays.stream(ids).filter(id -> components.contains(id.getSacComponent()))
-                   .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-           // eventDirs of events to be used
-           Set<EventFolder> eventDirs;
-           if (tendEvents.isEmpty()) {
-               eventDirs = allEvents.stream()
-                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
-           } else {
-               // choose only events that are included in tendEvents
-               eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
-                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
-           }
-           if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-               return;
-           }
+       // get all events included in basicIDs
+       Set<GlobalCMTID> allEvents =ids.stream().filter(id -> components.contains(id.getSacComponent()))
+               .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       // eventDirs of events to be used
+       Set<EventFolder> eventDirs;
+       if (tendEvents.isEmpty()) {
+           eventDirs = allEvents.stream()
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       } else {
+           // choose only events that are included in tendEvents
+           eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
+                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+       }
+       if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
+           return;
+       }
 
-        // set up taup_time tool
-           if (alignPhases != null || displayPhases != null) {
-               timeTool = new TauP_Time(structureName);
-           }
+       for (EventFolder eventDir : eventDirs) {
+           // create event directory if it does not exist
+           Files.createDirectories(eventDir.toPath());
 
-           for (EventFolder eventDir : eventDirs) {
-               // create event directory if it does not exist
-               Files.createDirectories(eventDir.toPath());
+           for (SACComponent component : components) {
+               List<BasicID> useIds = ids.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+                       && id.getSacComponent().equals(component))
+                       .sorted(Comparator.comparing(BasicID::getObserver))
+                       .collect(Collectors.toList());
 
-               // set event to taup_time tool
-               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
-               if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtPosition().getDepth());
+               String fileNameRoot;
+               if (fileTag == null) {
+                   fileNameRoot = eventDir.toString() + "_" + component.toString();
+               } else {
+                   fileNameRoot = fileTag + "_" + eventDir.toString() + "_" + component.toString();
                }
-
-               for (SACComponent component : components) {
-                   BasicID[] useIds = Arrays.stream(ids).filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
-                           && id.getSacComponent().equals(component))
-                           .sorted(Comparator.comparing(BasicID::getObserver))
-                           .toArray(BasicID[]::new);
-
-                   String fileNameRoot;
-                   if (fileTag == null) {
-                       fileNameRoot = eventDir.toString() + "_" + component.toString();
-                   } else {
-                       fileNameRoot = fileTag + "_" + eventDir.toString() + "_" + component.toString();
-                   }
 
                    Plotter plotter = new Plotter(eventDir, useIds, fileNameRoot);
                    plotter.plot();
                }
            }
-       } catch (TauModelException e) {
-           e.printStackTrace();
-       }
-
    }
 
     private static enum AmpStyle {
@@ -283,9 +240,10 @@ public class BasicBinnedStackCreator extends Operation {
     private class Plotter {
         private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private final GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
 
         private EventFolder eventDir;
-        private BasicID[] ids;
+        private List<BasicID> ids;
         private String fileNameRoot;
 
         private GnuplotFile binStackPlot;
@@ -297,14 +255,14 @@ public class BasicBinnedStackCreator extends Operation {
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(EventFolder eventDir, BasicID[] ids, String fileNameRoot) {
+        private Plotter(EventFolder eventDir, List<BasicID> ids, String fileNameRoot) {
             this.eventDir = eventDir;
             this.ids = ids;
             this.fileNameRoot = fileNameRoot;
         }
 
-        public void plot() throws IOException, TauModelException {
-            if (ids.length == 0) {
+        public void plot() throws IOException {
+            if (ids.size() == 0) {
                 return;
             }
 
@@ -333,9 +291,9 @@ public class BasicBinnedStackCreator extends Operation {
                 BasicID synID = synList.get(i);
 
                 double distance = obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                        .computeEpicentralDistanceRad(obsID.getObserver().getPosition()) * 180. / Math.PI;
                 double azimuth = obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                        .computeAzimuthRad(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
@@ -367,24 +325,7 @@ public class BasicBinnedStackCreator extends Operation {
             binStackPlotSetup();
 
             for (int j = 0; j < obsStacks.length; j++) {
-                if (obsStacks[j] != null && synStacks[j] != null) {
-                    double reduceTime = 0;
-                    if (!byAzimuth) {
-                        double binDistance = (j + 0.5) * binWidth;
-                        if (alignPhases != null) {
-                            timeTool.setPhaseNames(alignPhases);
-                            timeTool.calculate(binDistance);
-                            if (timeTool.getNumArrivals() < 1) {
-                                System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for bin label " + j + " , skipping.");
-                                return;
-                            }
-                            reduceTime = timeTool.getArrival(0).getTime();
-                        } else {
-                            reduceTime = reductionSlowness * binDistance;
-                        }
-                    }
-                    binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth, reduceTime);
-                }
+                 binStackPlotContent(obsStacks[j], synStacks[j], (j + 0.5) * binWidth);
             }
 
             binStackPlot.write();
@@ -400,20 +341,20 @@ public class BasicBinnedStackCreator extends Operation {
             binStackPlot.setMarginH(15, 10);
             binStackPlot.setMarginV(15, 15);
             binStackPlot.setFont("Arial", 20, 15, 15, 15, 10);
-            binStackPlot.unsetKey();
+            binStackPlot.unsetCommonKey();
 
-            binStackPlot.setTitle(eventDir.toString());
-            binStackPlot.setXlabel("Time in window (s)");
+            binStackPlot.setCommonTitle(eventDir.toString());
+            binStackPlot.setCommonXlabel("Time in window (s)");
             if (!byAzimuth) {
-                binStackPlot.setYlabel("Distance (deg)");
+                binStackPlot.setCommonYlabel("Distance (deg)");
             } else {
-                binStackPlot.setYlabel("Azimuth (deg)");
+                binStackPlot.setCommonYlabel("Azimuth (deg)");
             }
         }
 
-        private void binStackPlotContent(RealVector obsStack, RealVector synStack, double y, double reduceTime) throws IOException {
-            SACComponent component = ids[0].getSacComponent();
-            double samplingHz = ids[0].getSamplingHz();
+        private void binStackPlotContent(RealVector obsStack, RealVector synStack, double y) throws IOException {
+            SACComponent component = ids.get(0).getSacComponent();
+            double samplingHz = ids.get(0).getSamplingHz();
 
             String fileName = y + "." + eventDir.toString() + "." + component + ".txt";
             outputBinStackTxt(obsStack, synStack, fileName, samplingHz);
@@ -427,11 +368,19 @@ public class BasicBinnedStackCreator extends Operation {
                 y -= 360;
             }
 
-            String obsUsingString = String.format("($1-%.3f):($2/%.3e+%.2f)", reduceTime, obsAmp, y);
-            String synUsingString = String.format("($1-%.3f):($3/%.3e+%.2f)", reduceTime, synAmp, y);
-            binStackPlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
-            binStackPlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+            String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
+            String synUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
 
+            if (referencePath != null) {
+                // when reference (the actual observed) exists, plot the actual (shifted) observed in black and the new (obtained) in blue
+                Path referenceFilePath = Paths.get("..").resolve(referencePath).resolve(eventDir.toString()).resolve(fileName);
+                binStackPlot.addLine(referenceFilePath.toString(), obsUsingString, obsAppearance, "observed");
+                binStackPlot.addLine(fileName, synUsingString, synAppearance, "initial");
+                binStackPlot.addLine(fileName, obsUsingString, resultAppearance, "result");
+            } else {
+                binStackPlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
+                binStackPlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+            }
         }
 
         /**

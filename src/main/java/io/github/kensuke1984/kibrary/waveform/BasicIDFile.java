@@ -23,6 +23,7 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -153,6 +154,21 @@ public final class BasicIDFile {
     }
 
     /**
+     * @param idPath
+     * @param dataPath
+     * @return
+     * @throws IOException
+     * @since 2022/12/11
+     * @author otsuru
+     */
+    public static List<BasicID> readAsList(Path idPath, Path dataPath) throws IOException {
+        return Arrays.asList(read(idPath, dataPath));
+    }
+    public static List<BasicID> readAsList(Path idPath) throws IOException {
+        return Arrays.asList(read(idPath));
+    }
+
+    /**
      * Reads only the ID file (and not the waveform file).
      * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @return Array of {@link BasicID} without waveform data
@@ -259,15 +275,11 @@ public final class BasicIDFile {
         return bid;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Exports data files in ascii format.
-     *
      * @param args [option]
-     * <ul>
-     * <li> [-i IDFile] : exports ID file in standard output</li>
-     * <li> [-w IDFile WaveformFile] : exports waveforms in event directories under current path</li>
-     * </ul>
-     * You must specify one or the other.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -305,13 +317,13 @@ public final class BasicIDFile {
      */
     public static void run(CommandLine cmdLine) throws IOException {
         // read input
-        BasicID[] ids;
+        List<BasicID> ids;
         if (cmdLine.hasOption("w")) {
-            ids = read(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
+            ids = readAsList(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
             if (cmdLine.hasOption("n")) return;
             outputWaveforms(ids);
         } else {
-            ids = read(Paths.get(cmdLine.getOptionValue("i")));
+            ids = readAsList(Paths.get(cmdLine.getOptionValue("i")));
             if (cmdLine.hasOption("n")) return;
         }
 
@@ -321,15 +333,14 @@ public final class BasicIDFile {
             outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
         } else {
             // set the output file name the same as the input, but with extension changed to txt
-            String idFileName = Paths.get(cmdLine.getOptionValue("i")).getFileName().toString();
-            outputIdsPath = Paths.get(idFileName.substring(0, idFileName.lastIndexOf('.')) + ".txt");
+            outputIdsPath = Paths.get(FileAid.extractNameRoot(Paths.get(cmdLine.getOptionValue("i"))) + ".txt");
         }
 
         // output
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
-            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, "
-                    + "samplingHz, minPeriod, maxPeriod, phases, startByte, convolved");
-            Arrays.stream(ids).forEach(pw::println);
+            pw.println("#station, network, lat, lon, event, component, type, startTime, npts, samplingHz, "
+                    + "minPeriod, maxPeriod, phases, convolved, startByte");
+            ids.forEach(pw::println);
         }
     }
 
@@ -339,7 +350,7 @@ public final class BasicIDFile {
      * @param ids
      * @throws IOException
      */
-    private static void outputWaveforms(BasicID[] ids) throws IOException {
+    private static void outputWaveforms(List<BasicID> ids) throws IOException {
 
         BasicIDPairUp pairer = new BasicIDPairUp(ids);
         List<BasicID> obsList = pairer.getObsList();

@@ -26,9 +26,12 @@ public class BasicIDPairUp {
     private final List<BasicID> synList;
 
     public BasicIDPairUp(BasicID[] basicIDs) {
+        this(Arrays.asList(basicIDs));
+    }
 
+    public BasicIDPairUp(List<BasicID> basicIDs) {
         // extract observed IDs
-        List<BasicID> tempObsList = Arrays.stream(basicIDs).filter(id -> id.getWaveformType() == WaveformType.OBS)
+        List<BasicID> tempObsList = basicIDs.stream().filter(id -> id.getWaveformType() == WaveformType.OBS)
                 .collect(Collectors.toList());
         // check for duplication
         for (int i = 0; i < tempObsList.size(); i++)
@@ -37,7 +40,7 @@ public class BasicIDPairUp {
                     throw new RuntimeException("Duplicate observed IDs detected");
 
         // extract synthetic IDs
-        List<BasicID> tempSynList = Arrays.stream(basicIDs).filter(id -> id.getWaveformType() == WaveformType.SYN)
+        List<BasicID> tempSynList = basicIDs.stream().filter(id -> id.getWaveformType() == WaveformType.SYN)
                 .collect(Collectors.toList());
         // check for duplication
         for (int i = 0; i < tempSynList.size() - 1; i++)

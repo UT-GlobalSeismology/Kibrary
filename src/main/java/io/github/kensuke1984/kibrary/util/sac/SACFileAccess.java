@@ -1,22 +1,29 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.stream.IntStream;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
-import org.apache.commons.math3.util.Precision;
-
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.stream.IntStream;
-
 /**
- * Data in a SAC file.
+ * Data in a SAC file. Binary format.
  *
  * @author Kensuke Konishi
  * @version 0.0.1.2
@@ -249,4 +256,63 @@ public interface SACFileAccess extends SACHeaderAccess {
      */
     SACFileAccess setSACData(double[] waveData);
 
+
+    /**
+     * SAC files in binary format will be read and output in ascii format.
+     *
+     * @param args [information file name]
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+        // input
+        options.addOption(Option.builder("s").longOpt("sac").hasArg().argName("sacFile")
+                .desc("Path of input SAC file").build());
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Path of output file").build());
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+        // set input file path
+        SACFileName sacName = new SACFileName(cmdLine.getOptionValue("s"));
+        SACFileAccess sacData = sacName.read();
+        Trace sacTrace = sacData.createTrace();
+
+        // set output
+        Path outputPath;
+        if (cmdLine.hasOption("o")) {
+            outputPath = Paths.get(cmdLine.getOptionValue("o"));
+        } else {
+            // set the output file name the same as the input, but with extension changed to "txt"
+            String fileName = sacName.toPath().getFileName().toString();
+            outputPath = Paths.get(fileName + ".txt");
+        }
+
+        // output
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (int i = 0; i < sacTrace.getLength(); i++) {
+                pw.println(sacTrace.getXAt(i) + " " + sacTrace.getYAt(i));
+            }
+        }
+    }
 }
