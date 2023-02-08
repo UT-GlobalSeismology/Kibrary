@@ -91,19 +91,11 @@ public class DataFeatureHistogram extends Operation {
      */
     private Path dataFeaturePath;
     /**
-     * path of basic ID file
-     */
-    private Path mainBasicIDPath;
-    /**
-     * path of waveform data
+     * path of basic waveform folder
      */
     private Path mainBasicPath;
     /**
-     * path of basic ID file
-     */
-    private Path extraBasicIDPath;
-    /**
-     * path of waveform data
+     * path of basic waveform folder
      */
     private Path extraBasicPath;
     /**
@@ -210,14 +202,10 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##Path of a data feature list file. If this is not set, the following basicID&waveform files will be used.");
             pw.println("##  The S/N ratio histogram can be created only when dataFeaturePath is set.");
             pw.println("#dataFeaturePath dataFeature.lst");
-            pw.println("##########Settings using basic ID and waveform files");
-            pw.println("##Path of a basic ID file, must be set if dataFeaturePath is not set");
-            pw.println("#mainBasicIDPath ");
-            pw.println("##Path of a basic waveform file, must be set if dataFeaturePath is not set");
+            pw.println("##########Settings using basic folders");
+            pw.println("##Path of a basic waveform folder, must be set if dataFeaturePath is not set");
             pw.println("#mainBasicPath ");
-            pw.println("##Path of an additional basic ID file, if any (e.g. data not used in inversion)");
-            pw.println("#extraBasicIDPath ");
-            pw.println("##Path of an additional basic waveform file, if any (e.g. data not used in inversion)");
+            pw.println("##Path of an additional basic waveform folder, if any (e.g. data not used in inversion)");
             pw.println("#extraBasicPath ");
             pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows");
             pw.println("##  This is only used when basic ID and waveform files are used, not a data feature file.");
@@ -279,10 +267,8 @@ public class DataFeatureHistogram extends Operation {
         if (property.containsKey("dataFeaturePath")) {
             dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
         } else {
-            mainBasicIDPath = property.parsePath("mainBasicIDPath", null, true, workPath);
             mainBasicPath = property.parsePath("mainBasicPath", null, true, workPath);
-            if (property.containsKey("extraBasicIDPath") && property.containsKey("extraBasicPath")) {
-                extraBasicIDPath = property.parsePath("extraBasicIDPath", null, true, workPath);
+            if (property.containsKey("extraBasicPath")) {
                 extraBasicPath = property.parsePath("extraBasicPath", null, true, workPath);
             }
         }
@@ -359,15 +345,15 @@ public class DataFeatureHistogram extends Operation {
                improvementWindowSet = TimewindowDataFile.read(improvementWindowPath);
            }
 
-           // read the main data features from the main basic files
-           List<BasicID> mainBasicIDs = BasicIDFile.readAsList(mainBasicIDPath, mainBasicPath).stream()
+           // read the main data features from the main basic folder
+           List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()))
                    .filter((dataEntryPath == null) ? (feature -> true) : (id -> entrySet.contains(id.toDataEntry())))
                    .collect(Collectors.toList());
            featureSet = extractFeatures(mainBasicIDs, true, improvementWindowSet);
-           // read extra data features if the extra basic files exist
-           if (extraBasicIDPath != null) {
-               List<BasicID> extraBasicIDs = BasicIDFile.readAsList(extraBasicIDPath, extraBasicPath).stream()
+           // read extra data features if the extra basic folder exists
+           if (extraBasicPath != null) {
+               List<BasicID> extraBasicIDs = BasicIDFile.read(extraBasicPath, true).stream()
                        .filter(id -> components.contains(id.getSacComponent()))
                        .filter((dataEntryPath == null) ? (feature -> true) : (id -> entrySet.contains(id.toDataEntry())))
                        .collect(Collectors.toList());
@@ -379,7 +365,7 @@ public class DataFeatureHistogram extends Operation {
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // if input is in BasicID, export their features (for reference)
-       if (mainBasicIDPath != null) {
+       if (mainBasicPath != null) {
            Path outFeaturePath = outPath.resolve("dataFeature.lst");
            DataFeatureListFile.write(featureSet, outFeaturePath);
            // if extra BasicID files are set, export for them as well

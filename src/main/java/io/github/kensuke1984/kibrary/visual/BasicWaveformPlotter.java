@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -65,11 +66,7 @@ public class BasicWaveformPlotter extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * Path of a basic waveform file
+     * Path of a basic waveform folder
      */
     private Path basicPath;
     /**
@@ -119,10 +116,8 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#workPath ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a basic waveform folder (.)");
+            pw.println("#basicPath ");
             pw.println("##Path of a waveform folder, when also plotting reference waveforms");
             pw.println("## It must contain event folders with waveform txt files. Only observed waveforms will be plotted.");
             pw.println("#referencePath ");
@@ -150,8 +145,7 @@ public class BasicWaveformPlotter extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
-        basicPath = property.parsePath("basicPath", null, true, workPath);
+        basicPath = property.parsePath("basicPath", ".", true, workPath);
         if (property.containsKey("referencePath"))
             referencePath = property.parsePath("referencePath", null, true, workPath);
         if (property.containsKey("travelTimePath"))
@@ -168,7 +162,9 @@ public class BasicWaveformPlotter extends Operation {
 
    @Override
    public void run() throws IOException {
-       List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath).stream()
+       String dateStr = GadgetAid.getTemporaryString();
+
+       List<BasicID> basicIDs = BasicIDFile.read(basicPath, true).stream()
                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
        // get all events included in basicIDs
@@ -177,11 +173,11 @@ public class BasicWaveformPlotter extends Operation {
        Set<EventFolder> eventDirs;
        if (tendEvents.isEmpty()) {
            eventDirs = allEvents.stream()
-                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+                   .map(event -> new EventFolder(basicPath.resolve(event.toString()))).collect(Collectors.toSet());
        } else {
            // choose only events that are included in tendEvents
            eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
-                   .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+                   .map(event -> new EventFolder(basicPath.resolve(event.toString()))).collect(Collectors.toSet());
        }
        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
            return;
@@ -203,7 +199,7 @@ public class BasicWaveformPlotter extends Operation {
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   String fileNameRoot = "plot_" + eventDir.toString() + "_" + component.toString();
+                   String fileNameRoot = "plot" + dateStr + "_" + component.toString();
                    createPlot(eventDir, useIds, fileNameRoot);
                }
            } else {
@@ -211,7 +207,7 @@ public class BasicWaveformPlotter extends Operation {
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                        .collect(Collectors.toList());
 
-               String fileNameRoot = "plot_" + eventDir.toString();
+               String fileNameRoot = "plot" + dateStr;
                createPlot(eventDir, useIds, fileNameRoot);
            }
        }
@@ -248,10 +244,6 @@ public class BasicWaveformPlotter extends Operation {
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setCommonKey(true, false, "top right");
-
-        //gnuplot.setXlabel("time");
-        //gnuplot.setYlabel("value");
-        //gnuplot.setTitle("Test");
 
         int i;
         for (i = 0; i < obsList.size(); i++) {

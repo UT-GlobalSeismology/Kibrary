@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -88,11 +89,7 @@ public class BasicRecordSectionCreator extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * Path of a basic file
+     * Path of a basic waveform folder
      */
     private Path basicPath;
     /**
@@ -133,6 +130,7 @@ public class BasicRecordSectionCreator extends Operation {
     private double upperAzimuth;
 
     private TauP_Time timeTool;
+    String dateStr;
 
     /**
      * @param args  none to create a property file <br>
@@ -155,10 +153,8 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a basic waveform folder (.)");
+            pw.println("#basicPath ");
             pw.println("##Path of a waveform folder, when also plotting reference waveforms");
             pw.println("##  It must contain event folders with waveform txt files. Only observed waveforms will be plotted.");
             pw.println("#referencePath ");
@@ -207,8 +203,7 @@ public class BasicRecordSectionCreator extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
-        basicPath = property.parsePath("basicPath", null, true, workPath);
+        basicPath = property.parsePath("basicPath", ".", true, workPath);
         if (property.containsKey("referencePath"))
             referencePath = property.parsePath("referencePath", null, true, workPath);
 
@@ -244,8 +239,10 @@ public class BasicRecordSectionCreator extends Operation {
 
    @Override
    public void run() throws IOException {
+       dateStr = GadgetAid.getTemporaryString();
+
        try {
-           List<BasicID> ids = BasicIDFile.readAsList(basicIDPath, basicPath);
+           List<BasicID> ids = BasicIDFile.read(basicPath, true);
 
            // get all events included in basicIDs
            Set<GlobalCMTID> allEvents = ids.stream().filter(id -> components.contains(id.getSacComponent()))
@@ -254,11 +251,11 @@ public class BasicRecordSectionCreator extends Operation {
            Set<EventFolder> eventDirs;
            if (tendEvents.isEmpty()) {
                eventDirs = allEvents.stream()
-                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+                       .map(event -> new EventFolder(basicPath.resolve(event.toString()))).collect(Collectors.toSet());
            } else {
                // choose only events that are included in tendEvents
                eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
-                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
+                       .map(event -> new EventFolder(basicPath.resolve(event.toString()))).collect(Collectors.toSet());
            }
            if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
                return;
@@ -414,14 +411,10 @@ public class BasicRecordSectionCreator extends Operation {
         }
 
         private void profilePlotSetup() {
-            String fileNameRoot;
-            if (fileTag == null) {
-                fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
-            } else {
-                fileNameRoot = "profile_" + fileTag + "_" + eventDir.toString() + "_" + component.toString();
-            }
-            profilePlot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
+            // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
+            String fileNameRoot = DatasetAid.generateOutputFileName("profile", fileTag, dateStr, "_" + component.toString());
 
+            profilePlot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
             profilePlot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
             profilePlot.setMarginH(15, 25);
             profilePlot.setMarginV(15, 15);

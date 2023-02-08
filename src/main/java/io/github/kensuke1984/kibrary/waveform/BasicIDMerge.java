@@ -45,7 +45,6 @@ public class BasicIDMerge extends Operation {
      */
     private String folderTag;
 
-    private List<Path> basicIDPaths = new ArrayList<>(); //TODO erase
     private List<Path> basicPaths = new ArrayList<>();
 
 
@@ -74,8 +73,7 @@ public class BasicIDMerge extends Operation {
             pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_IN; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " folder");
-                pw.println("!basicIDPath" + i + " actualID.dat");
-                pw.println("#basicPath" + i + " actual.dat");
+                pw.println("#basicPath" + i + " actual");
             }
         }
         System.err.println(outPath + " is created.");
@@ -92,16 +90,9 @@ public class BasicIDMerge extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         for (int i = 1; i <= MAX_IN; i++) {
-            String basicIDKey = "basicIDPath" + i;
             String basicKey = "basicPath" + i;
             if (property.containsKey(basicKey)) {
-                if (property.containsKey(basicIDKey)) { //TODO erase
-                    basicIDPaths.add(property.parsePath(basicIDKey, null, true, workPath));
-                    basicPaths.add(property.parsePath(basicKey, null, true, workPath));
-                } else {
-                    basicIDPaths.add(null);
-                    basicPaths.add(property.parsePath(basicKey, null, true, workPath));
-                }
+                basicPaths.add(property.parsePath(basicKey, null, true, workPath));
             }
         }
     }
@@ -120,14 +111,8 @@ public class BasicIDMerge extends Operation {
         // read BasicIDs from all input files
         List<BasicID> basicIDs = new ArrayList<>();
         for (int i = 0; i < inputNum; i++) {
-            if (basicIDPaths.get(i) == null) {
-                List<BasicID> srcIDs = BasicIDFile.read(basicPaths.get(i), true);
-                basicIDs.addAll(srcIDs);
-
-            } else { //TODO erase
-                List<BasicID> srcIDs = BasicIDFile.readAsList(basicIDPaths.get(i), basicPaths.get(i));
-                basicIDs.addAll(srcIDs);
-            }
+            List<BasicID> srcIDs = BasicIDFile.read(basicPaths.get(i), true);
+            basicIDs.addAll(srcIDs);
         }
 
         // extract set of observers, events
