@@ -19,7 +19,6 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -54,17 +53,6 @@ public class BasicWaveformPlotter extends Operation {
      * The time margin in the plot before the start time of the synthetic waveform.
      */
     private static final double FRONT_MARGIN = 10;
-
-    private final GnuplotLineAppearance unshiftedAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
-    private final GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-    private final GnuplotLineAppearance redAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-    private final GnuplotLineAppearance greenAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
-    private final GnuplotLineAppearance blueAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
-    private final GnuplotLineAppearance residualAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
-
-    private final GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
-    private final GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
-    private final GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
 
     private final Property property;
     /**
@@ -341,23 +329,24 @@ public class BasicWaveformPlotter extends Operation {
 
             // plot waveforms
             // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
-            gnuplot.addLine("0", zeroAppearance, "");
-            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(txtFileName);
+            String eventName = eventPath.getFileName().toString();
+            gnuplot.addLine("0", BasicPlotAid.ZERO_APPEARANCE, "");
+            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
             if (unshiftedObsStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), 1, 2, switchObservedAppearance(unshiftedObsStyle), unshiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), 1, 2, BasicPlotAid.switchObservedAppearance(unshiftedObsStyle), unshiftedObsName);
             if (shiftedObsStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), 3, 2, switchObservedAppearance(shiftedObsStyle), shiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), 3, 2, BasicPlotAid.switchObservedAppearance(shiftedObsStyle), shiftedObsName);
             if (mainSynStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), 3, 4, switchSyntheticAppearance(mainSynStyle), mainSynName);
+                gnuplot.addLine(mainFilePath.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
             if (residualStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), "3:($2-$4)", switchResidualAppearance(residualStyle), residualName);
+                gnuplot.addLine(mainFilePath.toString(), "3:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle), residualName);
             if (refSynStyle1 != 0) {
-                Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(txtFileName);
-                gnuplot.addLine(refFilePath1.toString(), 3, 4, switchSyntheticAppearance(refSynStyle1), refSynName1);
+                Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath1.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
             }
             if (refSynStyle2 != 0) {
-                Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(txtFileName);
-                gnuplot.addLine(refFilePath2.toString(), 3, 4, switchSyntheticAppearance(refSynStyle2), refSynName2);
+                Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath2.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
             }
 
             // add vertical lines and labels of travel times
@@ -367,12 +356,12 @@ public class BasicWaveformPlotter extends Operation {
                         .forEach(info -> {
                             Map<Phase, Double> usePhaseMap = info.getUsePhases();
                             for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                                gnuplot.addVerticalLine(entry.getValue(), usePhaseAppearance);
+                                gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
                             }
                             Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
                             for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                                gnuplot.addVerticalLine(entry.getValue(), avoidPhaseAppearance);
+                                gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                             }
                         });
@@ -395,28 +384,6 @@ public class BasicWaveformPlotter extends Operation {
 
         gnuplot.write();
         if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
-    }
-
-    private GnuplotLineAppearance switchObservedAppearance(int num) {
-        switch(num) {
-        case 1: return unshiftedAppearance;
-        case 2: return shiftedAppearance;
-        default: throw new IllegalArgumentException("Undefined style number for observed: " + num);
-        }
-    }
-    private GnuplotLineAppearance switchSyntheticAppearance(int num) {
-        switch(num) {
-        case 1: return redAppearance;
-        case 2: return greenAppearance;
-        case 3: return blueAppearance;
-        default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
-        }
-    }
-    private GnuplotLineAppearance switchResidualAppearance(int num) {
-        switch(num) {
-        case 1: return residualAppearance;
-        default: throw new IllegalArgumentException("Undefined style number for residual: " + num);
-        }
     }
 
 }

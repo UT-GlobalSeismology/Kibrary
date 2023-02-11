@@ -123,14 +123,13 @@ public class BasicIDMerge extends Operation {
             eventSet.add(id.getGlobalCMTID());
         });
 
-        String dateStr = GadgetAid.getTemporaryString();
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output merged files
         BasicIDFile.write(basicIDs, outPath);
-        Path observerFilePath = outPath.resolve("observer" + dateStr + ".lst");
-        Path eventFilePath = outPath.resolve("event" + dateStr + ".lst");
+        Path observerFilePath = outPath.resolve("observer.lst");
+        Path eventFilePath = outPath.resolve("event.lst");
         ObserverListFile.write(observerSet, observerFilePath);
         EventListFile.write(eventSet, eventFilePath);
     }

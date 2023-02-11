@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -72,14 +71,6 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private static final int TIME_RIM = 10;
 
-    private final GnuplotLineAppearance unshiftedAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
-    private final GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-    private final GnuplotLineAppearance redAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-    private final GnuplotLineAppearance greenAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
-    private final GnuplotLineAppearance blueAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
-    private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
-
-
     private final Property property;
     /**
      * Path of the work folder
@@ -111,8 +102,8 @@ public class BasicRecordSectionCreator extends Operation {
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
-    private AmpStyle obsAmpStyle;
-    private AmpStyle synAmpStyle;
+    private BasicPlotAid.AmpStyle obsAmpStyle;
+    private BasicPlotAid.AmpStyle synAmpStyle;
     private double ampScale;
 
     private boolean byAzimuth;
@@ -259,8 +250,8 @@ public class BasicRecordSectionCreator extends Operation {
                     .collect(Collectors.toSet());
         }
 
-        obsAmpStyle = AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
-        synAmpStyle = AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
+        obsAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
+        synAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
         ampScale = property.parseDouble("ampScale", "1.0");
 
         byAzimuth = property.parseBoolean("byAzimuth", "false");
@@ -365,29 +356,6 @@ public class BasicRecordSectionCreator extends Operation {
            e.printStackTrace();
        }
    }
-
-   private GnuplotLineAppearance switchObservedAppearance(int num) {
-       switch(num) {
-       case 1: return unshiftedAppearance;
-       case 2: return shiftedAppearance;
-       default: throw new IllegalArgumentException("Undefined style number for observed: " + num);
-       }
-   }
-   private GnuplotLineAppearance switchSyntheticAppearance(int num) {
-       switch(num) {
-       case 1: return redAppearance;
-       case 2: return greenAppearance;
-       case 3: return blueAppearance;
-       default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
-       }
-   }
-
-   private static enum AmpStyle {
-        obsEach,
-        synEach,
-        obsMean,
-        synMean
-    }
 
     private class Plotter {
         private final Path eventPath;
@@ -530,8 +498,8 @@ public class BasicRecordSectionCreator extends Operation {
             RealVector synDataVector = new ArrayRealVector(synID.getData());
             double obsMax = obsDataVector.getLInfNorm();
             double synMax = synDataVector.getLInfNorm();
-            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double obsAmp = BasicPlotAid.selectAmp(obsAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = BasicPlotAid.selectAmp(synAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
 
             // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
             String obsUsingString;
@@ -550,35 +518,21 @@ public class BasicRecordSectionCreator extends Operation {
 
             // plot waveforms
             // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
-            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(txtFileName);
+            String eventName = eventPath.getFileName().toString();
+            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
             if (unshiftedObsStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), obsUsingString, switchObservedAppearance(unshiftedObsStyle), unshiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), obsUsingString, BasicPlotAid.switchObservedAppearance(unshiftedObsStyle), unshiftedObsName);
             if (shiftedObsStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), obsUsingString, switchObservedAppearance(shiftedObsStyle), shiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), obsUsingString, BasicPlotAid.switchObservedAppearance(shiftedObsStyle), shiftedObsName);
             if (mainSynStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), synUsingString, switchSyntheticAppearance(mainSynStyle), mainSynName);
+                gnuplot.addLine(mainFilePath.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
             if (refSynStyle1 != 0) {
-                Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(txtFileName);
-                gnuplot.addLine(refFilePath1.toString(), synUsingString, switchSyntheticAppearance(refSynStyle1), refSynName1);
+                Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath1.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
             }
             if (refSynStyle2 != 0) {
-                Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(txtFileName);
-                gnuplot.addLine(refFilePath2.toString(), synUsingString, switchSyntheticAppearance(refSynStyle2), refSynName2);
-            }
-        }
-
-        private double selectAmp(AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
-            switch (style) {
-            case obsEach:
-                return obsEachMax / ampScale;
-            case synEach:
-                return synEachMax / ampScale;
-            case obsMean:
-                return obsMeanMax / ampScale;
-            case synMean:
-                return synMeanMax / ampScale;
-            default:
-                throw new IllegalArgumentException("Input AmpStyle is unknown.");
+                Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath2.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
             }
         }
 
@@ -648,7 +602,7 @@ public class BasicRecordSectionCreator extends Operation {
                         }
                     }
                 }
-                gnuplot.addLine(curveFileName, 2, 1, phaseAppearance, phase);
+                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, phase);
             }
         }
     }

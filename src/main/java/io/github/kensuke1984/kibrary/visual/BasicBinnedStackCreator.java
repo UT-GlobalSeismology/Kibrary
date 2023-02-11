@@ -18,9 +18,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -46,12 +44,6 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * @since 2022/7/27 divided from visual.RecordSectionCreater
  */
 public class BasicBinnedStackCreator extends Operation {
-
-    private final GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-    private final GnuplotLineAppearance redAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-    private final GnuplotLineAppearance greenAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
-    private final GnuplotLineAppearance blueAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
-    private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
 
     private final Property property;
     /**
@@ -85,8 +77,8 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
     private double binWidth;
-    private AmpStyle obsAmpStyle;
-    private AmpStyle synAmpStyle;
+    private BasicPlotAid.AmpStyle obsAmpStyle;
+    private BasicPlotAid.AmpStyle synAmpStyle;
     private double ampScale;
 
     private boolean byAzimuth;
@@ -208,8 +200,8 @@ public class BasicBinnedStackCreator extends Operation {
         }
 
         binWidth = property.parseDouble("binWidth", "1.0");
-        obsAmpStyle = AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
-        synAmpStyle = AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
+        obsAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
+        synAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
         ampScale = property.parseDouble("ampScale", "1.0");
 
         byAzimuth = property.parseBoolean("byAzimuth", "false");
@@ -288,22 +280,6 @@ public class BasicBinnedStackCreator extends Operation {
            }
        }
    }
-
-    private static enum AmpStyle {
-        obsEach,
-        synEach,
-        obsMean,
-        synMean
-    }
-
-    private GnuplotLineAppearance switchSyntheticAppearance(int num) {
-        switch(num) {
-        case 1: return redAppearance;
-        case 2: return greenAppearance;
-        case 3: return blueAppearance;
-        default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
-        }
-    }
 
     private class Plotter {
         private Path eventPath;
@@ -450,26 +426,26 @@ public class BasicBinnedStackCreator extends Operation {
 
             double obsMax = obsStack.getLInfNorm();
             double synMax = mainSynStack.getLInfNorm();
-            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double obsAmp = BasicPlotAid.selectAmp(obsAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = BasicPlotAid.selectAmp(synAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
 
             if (byAzimuth == true && flipAzimuth == true && 180 <= y) {
                 y -= 360;
             }
 
             String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
-            gnuplot.addLine(fileName, obsUsingString, shiftedAppearance, "observed");
+            gnuplot.addLine(fileName, obsUsingString, BasicPlotAid.SHIFTED_APPEARANCE, "observed");
             if (mainSynStyle != 0) {
                 String mainSynUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, mainSynUsingString, switchSyntheticAppearance(mainSynStyle), mainSynName);
+                gnuplot.addLine(fileName, mainSynUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
             }
             if (refSynStyle1 != 0) {
                 String refSynUsingString1 = String.format("1:($4/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString1, switchSyntheticAppearance(refSynStyle1), refSynName1);
+                gnuplot.addLine(fileName, refSynUsingString1, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
             }
             if (refSynStyle2 != 0) {
                 String refSynUsingString2 = String.format("1:($5/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString2, switchSyntheticAppearance(refSynStyle2), refSynName2);
+                gnuplot.addLine(fileName, refSynUsingString2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
             }
         }
 
@@ -500,21 +476,6 @@ public class BasicBinnedStackCreator extends Operation {
                             + " " + (refSynStack2 != null ? refSynStack2.getEntry(j) : 0);
                     pwTrace.println(line);
                 }
-            }
-        }
-
-        private double selectAmp(AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
-            switch (style) {
-            case obsEach:
-                return obsEachMax / ampScale;
-            case synEach:
-                return synEachMax / ampScale;
-            case obsMean:
-                return obsMeanMax / ampScale;
-            case synMean:
-                return synMeanMax / ampScale;
-            default:
-                throw new IllegalArgumentException("Input AmpStyle is unknown.");
             }
         }
 
