@@ -180,7 +180,8 @@ public class BasicID {
 
     /**
      * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
-     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
+     * They are regarded as same if eventID, observer, component, npts, samplingHz, max & min period are same
+     * and startTime difference is within the maximum time shift.
      * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
      *
      * @param id0 {@link BasicID}
@@ -188,10 +189,10 @@ public class BasicID {
      * @return if the IDs are same
      */
     public static boolean isPair(BasicID id0, BasicID id1) {
-        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+        boolean res = id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) && id0.getObserver().equals(id1.getObserver())
                 && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                && id0.getSamplingHz() == id1.getSamplingHz()
                 && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && id0.getSamplingHz() == id1.getSamplingHz()
                 && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
                 && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
         return res;

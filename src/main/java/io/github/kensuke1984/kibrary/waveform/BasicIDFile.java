@@ -402,7 +402,7 @@ public final class BasicIDFile {
         if (cmdLine.hasOption("w")) {
             ids = read(basicPath, true);
             if (cmdLine.hasOption("n")) return;
-            outputWaveforms(ids, basicPath);
+            outputWaveformTxts(ids, basicPath);
         } else {
             ids = read(basicPath, false);
             if (cmdLine.hasOption("n")) return;
@@ -430,7 +430,7 @@ public final class BasicIDFile {
      * @param ids
      * @throws IOException
      */
-    private static void outputWaveforms(List<BasicID> ids, Path basicPath) throws IOException {
+    public static void outputWaveformTxts(List<BasicID> ids, Path basicPath) throws IOException {
 
         BasicIDPairUp pairer = new BasicIDPairUp(ids);
         List<BasicID> obsList = pairer.getObsList();
@@ -483,7 +483,7 @@ public final class BasicIDFile {
     }
 
     /**
-     * The name of text file which is to contain waveform data.
+     * The name of text file which is to contain waveform data. TODO there may be multiple timewindows for a dataEntry
      * @param oneID
      * @return
      */

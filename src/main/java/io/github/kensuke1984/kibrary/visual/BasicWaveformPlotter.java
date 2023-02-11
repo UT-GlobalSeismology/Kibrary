@@ -33,12 +33,13 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 /**
  * Plots waveform data from a set of {@link BasicIDFile}.
  * For each event, a pdf file with waveforms for all observers will be created.
- * Each plot includes the original observed waveform, the shifted observed waveform, and the synthetic waveform.
- * The residual waveform can also be plotted.
+ * In each plot, the original observed waveform, the shifted observed waveform,
+ * the synthetic waveform, and the residual waveform can be plotted.
  * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
+ * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
  * <p>
- * Waveform data for each observer will be written in txt files under event directories, if they do not exist already.
- * Output pdf files will be created under each of the event directories.
+ * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
+ * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
  * @author otsuru
  * @since 2021/12/10
@@ -54,11 +55,26 @@ public class BasicWaveformPlotter extends Operation {
      */
     private static final double FRONT_MARGIN = 10;
 
+    private final GnuplotLineAppearance unshiftedAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
+    private final GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
+    private final GnuplotLineAppearance redAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+    private final GnuplotLineAppearance greenAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
+    private final GnuplotLineAppearance blueAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
+    private final GnuplotLineAppearance residualAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
+
+    private final GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
+    private final GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
+    private final GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
+
     private final Property property;
     /**
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String fileTag;
     /**
      * components to be included in the dataset
      */
@@ -129,6 +145,8 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
+            pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a basic waveform folder (.)");
@@ -180,6 +198,7 @@ public class BasicWaveformPlotter extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -220,32 +239,34 @@ public class BasicWaveformPlotter extends Operation {
    public void run() throws IOException {
        String dateStr = GadgetAid.getTemporaryString();
 
-       // read main basic waveform folders
+       // read main basic waveform folders and write waveforms to be used into txt files
        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
-
-       // collect all events included in mainBasicIDs
-       Set<GlobalCMTID> events;
-       if (tendEvents.isEmpty()) {
-           events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-       } else {
-           events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID())
-                   .filter(event -> tendEvents.contains(event)).distinct().collect(Collectors.toSet());
+       if (!tendEvents.isEmpty()) {
+           mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
        }
+       BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
+
+       // collect events included in mainBasicIDs
+       Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
        if (!DatasetAid.checkNum(events.size(), "event", "events")) {
            return;
        }
 
-       // read reference basic waveform folders
+       // read reference basic waveform folders and write waveforms to be used into txt files
        List<BasicID> refBasicIDs1 = null;
        if (refBasicPath1 != null && refSynStyle1 != 0) {
            refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                   .collect(Collectors.toList());
+           BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
        }
        List<BasicID> refBasicIDs2 = null;
        if (refBasicPath2 != null && refSynStyle2 != 0) {
            refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                   .collect(Collectors.toList());
+           BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
        }
 
        // read travel time information
@@ -254,62 +275,32 @@ public class BasicWaveformPlotter extends Operation {
        }
 
        for (GlobalCMTID event : events) {
-           // write out waveforms in txt files under each basic waveform folder
-           if (refBasicPath1 != null && refSynStyle1 != 0) {
-               List<BasicID> correspondingRefBasicIDs1 = refBasicIDs1.stream()
-                       .filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-               Files.createDirectories(refBasicPath1.resolve(event.toString()));
-               outputWaveforms(correspondingRefBasicIDs1, refBasicPath1.resolve(event.toString()));
-           }
-           if (refBasicPath2 != null && refSynStyle2 != 0) {
-               List<BasicID> correspondingRefBasicIDs2 = refBasicIDs2.stream()
-                       .filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-               Files.createDirectories(refBasicPath2.resolve(event.toString()));
-               outputWaveforms(correspondingRefBasicIDs2, refBasicPath2.resolve(event.toString()));
-           }
-           List<BasicID> correspondingMainBasicIDs = mainBasicIDs.stream()
-                   .filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-           Files.createDirectories(mainBasicPath.resolve(event.toString()));
-           outputWaveforms(correspondingMainBasicIDs, mainBasicPath.resolve(event.toString()));
 
            // create plots under workPath
            Path eventPath = workPath.resolve(event.toString());
            Files.createDirectories(eventPath);
            if (splitComponents) {
                for (SACComponent component : components) {
-                   List<BasicID> useIds = correspondingMainBasicIDs.stream().filter(id -> id.getSacComponent().equals(component))
+                   List<BasicID> useIds = mainBasicIDs.stream()
+                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   String fileNameRoot = "plot" + dateStr + "_" + component.toString();
+                   // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
+                   String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "_" + component.toString());
                    createPlot(eventPath, useIds, fileNameRoot);
                }
            } else {
-               List<BasicID> useIds = correspondingMainBasicIDs.stream()
+               List<BasicID> useIds = mainBasicIDs.stream()
+                       .filter(id -> id.getGlobalCMTID().equals(event))
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                        .collect(Collectors.toList());
 
-               String fileNameRoot = "plot" + dateStr;
+               // Here, generateOutputFileName() is used in an irregular way, without adding the file extension.
+               String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "");
                createPlot(eventPath, useIds, fileNameRoot);
            }
 
-       }
-   }
-
-   private void outputWaveforms(List<BasicID> ids, Path outPath) throws IOException {
-       BasicIDPairUp pairer = new BasicIDPairUp(ids);
-       List<BasicID> obsList = pairer.getObsList();
-       List<BasicID> synList = pairer.getSynList();
-
-       for (int i = 0; i < obsList.size(); i++) {
-           BasicID obsID = obsList.get(i);
-           BasicID synID = synList.get(i);
-
-           // output waveform data to text file if it has not already been done so
-           String fileName = BasicIDFile.getWaveformTxtFileName(obsID);
-           if (!Files.exists(outPath.resolve(fileName))) {
-               BasicIDFile.outputWaveformTxt(outPath, obsID, synID);
-           }
        }
    }
 
@@ -330,15 +321,6 @@ public class BasicWaveformPlotter extends Operation {
 
         GnuplotFile gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
 
-        GnuplotLineAppearance originalAppearance = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
-        GnuplotLineAppearance shiftedAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-        GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-        GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
-        GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
-        GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
-        GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
-        GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
-
         gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
@@ -358,22 +340,24 @@ public class BasicWaveformPlotter extends Operation {
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
 
             // plot waveforms
+            // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
             gnuplot.addLine("0", zeroAppearance, "");
+            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(txtFileName);
             if (unshiftedObsStyle != 0)
-                gnuplot.addLine(txtFileName, 1, 2, originalAppearance, unshiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), 1, 2, switchObservedAppearance(unshiftedObsStyle), unshiftedObsName);
             if (shiftedObsStyle != 0)
-                gnuplot.addLine(txtFileName, 3, 2, originalAppearance, shiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), 3, 2, switchObservedAppearance(shiftedObsStyle), shiftedObsName);
             if (mainSynStyle != 0)
-                gnuplot.addLine(txtFileName, 3, 4, originalAppearance, mainSynName);
+                gnuplot.addLine(mainFilePath.toString(), 3, 4, switchSyntheticAppearance(mainSynStyle), mainSynName);
             if (residualStyle != 0)
-                gnuplot.addLine(txtFileName, "3:($2-$4)", originalAppearance, residualName);
+                gnuplot.addLine(mainFilePath.toString(), "3:($2-$4)", switchResidualAppearance(residualStyle), residualName);
             if (refSynStyle1 != 0) {
                 Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(txtFileName);
-                gnuplot.addLine(refFilePath1.toString(), 3, 4, originalAppearance, refSynName1);
+                gnuplot.addLine(refFilePath1.toString(), 3, 4, switchSyntheticAppearance(refSynStyle1), refSynName1);
             }
             if (refSynStyle2 != 0) {
                 Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(txtFileName);
-                gnuplot.addLine(refFilePath2.toString(), 3, 4, originalAppearance, refSynName2);
+                gnuplot.addLine(refFilePath2.toString(), 3, 4, switchSyntheticAppearance(refSynStyle2), refSynName2);
             }
 
             // add vertical lines and labels of travel times
@@ -411,6 +395,28 @@ public class BasicWaveformPlotter extends Operation {
 
         gnuplot.write();
         if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+    }
+
+    private GnuplotLineAppearance switchObservedAppearance(int num) {
+        switch(num) {
+        case 1: return unshiftedAppearance;
+        case 2: return shiftedAppearance;
+        default: throw new IllegalArgumentException("Undefined style number for observed: " + num);
+        }
+    }
+    private GnuplotLineAppearance switchSyntheticAppearance(int num) {
+        switch(num) {
+        case 1: return redAppearance;
+        case 2: return greenAppearance;
+        case 3: return blueAppearance;
+        default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
+        }
+    }
+    private GnuplotLineAppearance switchResidualAppearance(int num) {
+        switch(num) {
+        case 1: return residualAppearance;
+        default: throw new IllegalArgumentException("Undefined style number for residual: " + num);
+        }
     }
 
 }

@@ -354,8 +354,7 @@ public class ActualWaveformCompiler extends Operation {
        observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver)
                .collect(Collectors.toSet());
 
-       String dateStr = GadgetAid.getTemporaryString();
-       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, dateStr);
+       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        EventListFile.write(eventSet, outPath.resolve("event.lst"));
