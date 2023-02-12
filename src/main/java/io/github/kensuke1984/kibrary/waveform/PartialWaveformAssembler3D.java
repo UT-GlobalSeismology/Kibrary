@@ -873,7 +873,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         // 書き込み準備
         Path idPath = outPath.resolve("partialID.dat");
-        Path datasetPath = outPath.resolve("partial.dat");
+        Path datasetPath = outPath.resolve("partialData.dat");
 
         partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
                 phases, voxelPositionSet);

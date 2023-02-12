@@ -125,55 +125,6 @@ public final class BasicIDFile {
     }
 
     /**
-     * Write basicIDs into ID file and waveform file.
-     * @param basicIDs
-     * @param outputIDPath
-     * @param outputWavePath
-     * @throws IOException
-     *
-     * @author otsuru
-     * @deprecated
-     */
-    public static void write(List<BasicID> basicIDs, Path outputIDPath, Path outputWavePath) throws IOException {
-
-        // extract set of observers, events, periods, and phases
-        Set<Observer> observerSet = new HashSet<>();
-        Set<GlobalCMTID> eventSet = new HashSet<>();
-        Set<double[]> periodSet = new HashSet<>();
-        Set<Phase> phaseSet = new HashSet<>();
-
-        basicIDs.forEach(id -> {
-            observerSet.add(id.getObserver());
-            eventSet.add(id.getGlobalCMTID());
-            boolean add = true;
-            for (double[] periods : periodSet) {
-                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
-                    add = false;
-            }
-            if (add)
-                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
-            for (Phase phase : id.getPhases())
-                phaseSet.add(phase);
-        });
-
-        double[][] periodRanges = new double[periodSet.size()][];
-        int j = 0;
-        for (double[] periods : periodSet)
-            periodRanges[j++] = periods;
-        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
-
-        // output
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(basicIDs.size(), "basicID", "basicIDs") + " (total of obs and syn)");
-        System.err.println(" in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {
-            for (BasicID id : basicIDs) {
-                wdw.addBasicID(id);
-            }
-        }
-    }
-
-    /**
      * Reads basicIDs from file.
      * @param inPath (Path) The directory containing basic ID and data files
      * @param withData (boolean) Whether to read waveform data
@@ -222,28 +173,6 @@ public final class BasicIDFile {
         }
         System.err.println(" Basic waveforms read in " + GadgetAid.toTimeString(System.nanoTime() - t));
         return ids;
-    }
-
-    /**
-     * @param idPath
-     * @param dataPath
-     * @return
-     * @throws IOException
-     * @since 2022/12/11
-     * @author otsuru
-     * @deprecated use read(Path, boolean)
-     */
-    public static List<BasicID> readAsList(Path idPath, Path dataPath) throws IOException {
-        return Arrays.asList(read(idPath, dataPath));
-    }
-    /**
-     * @param idPath
-     * @return
-     * @throws IOException
-     * @deprecated use read(Path, boolean)
-     */
-    public static List<BasicID> readAsList(Path idPath) throws IOException {
-        return Arrays.asList(read(idPath));
     }
 
     /**

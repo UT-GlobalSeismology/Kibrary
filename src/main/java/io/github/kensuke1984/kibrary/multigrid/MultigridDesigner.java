@@ -57,19 +57,11 @@ public class MultigridDesigner extends Operation {
      */
     private Path ataPath;
     /**
-     * path of basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * path of waveform data
+     * path of basic waveform folder
      */
     private Path basicPath;
     /**
-     * path of partial ID file
-     */
-    private Path partialIDPath;
-    /**
-     * path of partial data
+     * path of partial waveform folder
      */
     private Path partialPath;
     /**
@@ -110,14 +102,10 @@ public class MultigridDesigner extends Operation {
             pw.println("##Path of an AtA file");
             pw.println("#ataPath ata.lst");
             pw.println("##########If the previous section is set, this section is not neeeded.");
-            pw.println("##Path of a basic ID file");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file");
-            pw.println("#basicPath actual.dat");
-            pw.println("##Path of a partial ID file");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file");
-            pw.println("#partialPath partial.dat");
+            pw.println("##Path of a basic waveform folder");
+            pw.println("#basicPath actual");
+            pw.println("##Path of a partial waveform folder");
+            pw.println("#partialPath partial");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weightingType ");
             pw.println("##########Other settings.");
@@ -147,9 +135,7 @@ public class MultigridDesigner extends Operation {
         if (property.containsKey("ataPath")) {
             ataPath = property.parsePath("ataPath", null, true, workPath);
         } else {
-            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
             basicPath = property.parsePath("basicPath", null, true, workPath);
-            partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
             partialPath = property.parsePath("partialPath", null, true, workPath);
         }
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
@@ -176,8 +162,8 @@ public class MultigridDesigner extends Operation {
                 throw new IllegalArgumentException("AtA size does not match number of parameters.");
         } else {
             // read input
-            BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-            PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+            List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
+            List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
             // assemble matrices
             MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType, false);

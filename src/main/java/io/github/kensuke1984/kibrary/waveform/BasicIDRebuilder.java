@@ -53,11 +53,7 @@ public class BasicIDRebuilder extends Operation {
     private String folderTag;
 
     /**
-     * path of basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * path of waveform data
+     * path of basic waveform folder
      */
     private Path basicPath;
     /**
@@ -103,10 +99,8 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("#basicPath actual");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
@@ -130,7 +124,6 @@ public class BasicIDRebuilder extends Operation {
         nameRoot = property.parseStringSingle("nameRoot", "actual");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
@@ -149,7 +142,7 @@ public class BasicIDRebuilder extends Operation {
     @Override
     public void run() throws IOException {
 
-        List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
+        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         // sort observed and synthetic
         BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
         obsIDs = pairer.getObsList();
@@ -179,9 +172,7 @@ public class BasicIDRebuilder extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
-        Path outputIDPath = outPath.resolve(nameRoot + "ID.dat");
-        Path outputWavePath = outPath.resolve(nameRoot + ".dat");
-        BasicIDFile.write(finalList, outputIDPath, outputWavePath);
+        BasicIDFile.write(finalList, outPath);
 
     }
 

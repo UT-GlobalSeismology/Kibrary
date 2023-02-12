@@ -69,7 +69,49 @@ public final class PartialIDFile {
      * @since 2023/1/29
      */
     public static void write(List<PartialID> partialIDs, Path outPath) throws IOException {
-        write(partialIDs, outPath.resolve(ID_FILE_NAME), outPath.resolve(DATA_FILE_NAME));
+        Files.createDirectories(outPath);
+        Path outputIDPath = outPath.resolve(ID_FILE_NAME);
+        Path outputDataPath = outPath.resolve(DATA_FILE_NAME);
+
+        // extract set of observers, events, voxels, periods, and phases
+        Set<Observer> observerSet = new HashSet<>();
+        Set<GlobalCMTID> eventSet = new HashSet<>();
+        Set<FullPosition> voxelPositionSet = new HashSet<>();
+        Set<double[]> periodSet = new HashSet<>();
+        Set<Phase> phaseSet = new HashSet<>();
+
+        partialIDs.forEach(id -> {
+            observerSet.add(id.getObserver());
+            eventSet.add(id.getGlobalCMTID());
+            voxelPositionSet.add(id.getVoxelPosition());
+            boolean add = true;
+            for (double[] periods : periodSet) {
+                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
+                    add = false;
+            }
+            if (add)
+                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
+            for (Phase phase : id.getPhases())
+                phaseSet.add(phase);
+        });
+
+        double[][] periodRanges = new double[periodSet.size()][];
+        int j = 0;
+        for (double[] periods : periodSet)
+            periodRanges[j++] = periods;
+        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
+
+        // output
+        System.err.println("Outputting in " + outPath);
+        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputDataPath,
+                observerSet, eventSet, periodRanges, phases, voxelPositionSet)) {
+            for (PartialID id : partialIDs) {
+                if (id.getWaveformType().equals(WaveformType.PARTIAL) == false) {
+                    throw new IllegalStateException(id.toString() + "is not a partial, it is a " + id.getWaveformType().toString());
+                }
+                wdw.addPartialID(id);
+            }
+        }
     }
 
     /**
@@ -81,6 +123,7 @@ public final class PartialIDFile {
      *
      * @author otsuru
      * @since 2022/8/11
+     * @deprecated
      */
     public static void write(List<PartialID> partialIDs, Path outputIDPath, Path outputWavePath) throws IOException {
 

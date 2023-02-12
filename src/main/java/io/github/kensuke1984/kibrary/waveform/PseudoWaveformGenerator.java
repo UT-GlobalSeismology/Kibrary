@@ -47,24 +47,20 @@ public class PseudoWaveformGenerator extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String fileTag;
+    private String folderTag;
+    /**
+     * Path of the output folder
+     */
+    private Path outPath;
 
     /**
-     * Path of a {@link BasicIDFile} file (id part)
-     */
-    private Path basicIDPath;
-    /**
-     * Path of a {@link BasicIDFile} file (data part)
+     * basic waveform folder
      */
     private Path basicPath;
     /**
-     * Path of the partialID
-     */
-    private Path partialIDPath;
-    /**
-     * Path of the partial data
+     * partial waveform folder
      */
     private Path partialPath;
     /**
@@ -100,17 +96,13 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
-            pw.println("#fileTag ");
-            pw.println("##Path of a basic ID file, must be defined");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be defined");
-            pw.println("#basicPath actual.dat");
-            pw.println("##Path of a partial ID file, must be defined");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file, must be defined");
-            pw.println("#partialPath partial.dat");
-            pw.println("##Path of a model file, must be defined");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("#basicPath actual");
+            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("#partialPath partial");
+            pw.println("##Path of a model file, must be set");
             pw.println("#modelPath model.lst");
             pw.println("##(boolean) Whether to set the psuedo waveform as synthetic. If false, observed. (false)");
             pw.println("#setPseudoAsSyn ");
@@ -131,11 +123,9 @@ public class PseudoWaveformGenerator extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
-        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         modelPath = property.parsePath("modelPath", null, true, workPath);
 
@@ -153,8 +143,8 @@ public class PseudoWaveformGenerator extends Operation {
         // read input
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
         List<UnknownParameter> params = KnownParameter.extractParameterList(knowns);
-        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
+        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
         // assemble matrices (they should not be weighted)
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingType.IDENTITY, fillEmptyPartial);
@@ -169,14 +159,15 @@ public class PseudoWaveformGenerator extends Operation {
         // add noise
         if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
 
+        // prepare output folder
+        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
         // output
-        String dateStr = GadgetAid.getTemporaryString();
-        Path pseudoIDPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudoID", fileTag, dateStr, ".dat"));
-        Path pseudoPath = workPath.resolve(DatasetAid.generateOutputFileName("pseudo", fileTag, dateStr, ".dat"));
-        output(pseudoWaveform, dVectorBuilder, pseudoIDPath, pseudoPath);
+        output(pseudoWaveform, dVectorBuilder);
     }
 
-    private void output(RealVector pseudoVec, DVectorBuilder dVectorBuilder, Path outIDPath, Path outDataPath) throws IOException {
+    private void output(RealVector pseudoVec, DVectorBuilder dVectorBuilder) throws IOException {
         RealVector[] pseudoObsParts = dVectorBuilder.decompose(pseudoVec);
 
         List<BasicID> basicIDs = new ArrayList<>();
@@ -194,7 +185,7 @@ public class PseudoWaveformGenerator extends Operation {
             }
         }
 
-        BasicIDFile.write(basicIDs, outIDPath, outDataPath);
+        BasicIDFile.write(basicIDs, outPath);
     }
 
     private RealVector createRandomNoise(DVectorBuilder dVectorBuilder) {

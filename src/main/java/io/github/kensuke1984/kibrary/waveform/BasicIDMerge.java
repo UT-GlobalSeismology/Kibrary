@@ -22,14 +22,14 @@ import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
- * Operation for merging pairs of basic ID files and basic waveform files.
+ * Operation for merging datasets in multiple basic waveform folders.
  *
  * @author otsuru
  * @since 2022/1/2 Created based on the original BasicIDMerge which was in kibrary.waveform.addons.
  */
 public class BasicIDMerge extends Operation {
 
-    private static final int MAX_IN = 10;
+    private static final int MAX_INPUT = 10;
 
     private final Property property;
     /**
@@ -70,8 +70,8 @@ public class BasicIDMerge extends Operation {
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##########From here on, list up paths of basic waveform folders to merge.");
-            pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
-            for (int i = 1; i <= MAX_IN; i++) {
+            pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
+            for (int i = 1; i <= MAX_INPUT; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " folder");
                 pw.println("#basicPath" + i + " actual");
             }
@@ -89,7 +89,7 @@ public class BasicIDMerge extends Operation {
         nameRoot = property.parseStringSingle("nameRoot", "actual");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        for (int i = 1; i <= MAX_IN; i++) {
+        for (int i = 1; i <= MAX_INPUT; i++) {
             String basicKey = "basicPath" + i;
             if (property.containsKey(basicKey)) {
                 basicPaths.add(property.parsePath(basicKey, null, true, workPath));

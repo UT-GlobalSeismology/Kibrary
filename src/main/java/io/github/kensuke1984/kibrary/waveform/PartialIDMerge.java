@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -17,14 +16,14 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * Operation for merging pairs of partial ID files and partial waveform files.
+ * Operation for merging datasets in multiple partial waveform folders.
  *
  * @author otsuru
  * @since 2022/2/12 Modified the original PartialIDMerge which was in kibrary.waveform.addons.
  */
 public class PartialIDMerge extends Operation {
 
-    private static final int MAX_PAIR = 10;
+    private static final int MAX_INPUT = 10;
 
     private final Property property;
     /**
@@ -32,15 +31,14 @@ public class PartialIDMerge extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
-     */
-    private String fileTag;
-    /**
-     * The first part of the name of output partial ID and waveform files
+     * The first part of the name of output partial folder
      */
     private String nameRoot;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String folderTag;
 
-    private List<Path> partialIDPaths = new ArrayList<>();
     private List<Path> partialPaths = new ArrayList<>();
 
 
@@ -61,16 +59,15 @@ public class PartialIDMerge extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output partial ID and waveform files (partial)");
+            pw.println("##(String) The first part of the name of output partial waveform folder (partial)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
-            pw.println("#fileTag ");
-            pw.println("##########From here on, list up pairs of the paths of a partial ID file and a partial waveform file.");
-            pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
-            for (int i = 1; i <= MAX_PAIR; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " pair");
-                pw.println("#partialIDPath" + i + " partialID.dat");
-                pw.println("#partialPath" + i + " partial.dat");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##########From here on, list up paths of partial waveform folders to merge.");
+            pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
+            for (int i = 1; i <= MAX_INPUT; i++) {
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                pw.println("#partialPath" + i + " assembled");
             }
         }
         System.err.println(outPath + " is created.");
@@ -84,48 +81,40 @@ public class PartialIDMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "partial");
-        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        for (int i = 1; i <= MAX_PAIR; i++) {
-            String partialIDKey = "partialIDPath" + i;
+        for (int i = 1; i <= MAX_INPUT; i++) {
             String partialKey = "partialPath" + i;
-            if (!property.containsKey(partialIDKey) && !property.containsKey(partialKey)) {
-                continue;
-            } else if (!property.containsKey(partialIDKey) || !property.containsKey(partialKey)) {
-                throw new IllegalArgumentException("Partial ID file and partial waveform file must be set in pairs.");
+            if (property.containsKey(partialKey)) {
+                partialPaths.add(property.parsePath(partialKey, null, true, workPath));
             }
-            partialIDPaths.add(property.parsePath(partialIDKey, null, true, workPath));
-            partialPaths.add(property.parsePath(partialKey, null, true, workPath));
         }
     }
 
 
     @Override
     public void run() throws IOException {
-        int pairNum = partialIDPaths.size();
-        if (partialPaths.size() != pairNum) {
-            throw new IllegalStateException("The number of partial ID files and partial waveform files is different.");
-        }
-        if (pairNum == 0) {
-            System.err.println("No input files found.");
+        int inputNum = partialPaths.size();
+        if (inputNum == 0) {
+            System.err.println("No input folders found.");
             return;
-        } else if (pairNum == 1) {
-            System.err.println("Only 1 pair of input files found. Merging will not be done.");
+        } else if (inputNum == 1) {
+            System.err.println("Only 1 input folder found. Merging will not be done.");
             return;
         }
 
         // read PartialIDs from all input files
         List<PartialID> partialIDs = new ArrayList<>();
-        for (int i = 0; i < pairNum; i++) {
-            PartialID[] srcIDs = PartialIDFile.read(partialIDPaths.get(i), partialPaths.get(i));
-            Stream.of(srcIDs).forEach(id -> partialIDs.add(id));
+        for (int i = 0; i < inputNum; i++) {
+            List<PartialID> srcIDs = PartialIDFile.read(partialPaths.get(i), true);
+            partialIDs.addAll(srcIDs);
         }
 
-        String dateStr = GadgetAid.getTemporaryString();
-        Path outputIDPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot + "ID", fileTag, dateStr, ".dat"));
-        Path outputWavePath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, dateStr, ".dat"));
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        PartialIDFile.write(partialIDs, outputIDPath, outputWavePath);
+        // output merged files
+        PartialIDFile.write(partialIDs, outPath);
 
     }
 }
