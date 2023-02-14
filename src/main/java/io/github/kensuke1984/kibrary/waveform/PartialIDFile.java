@@ -321,8 +321,6 @@ public final class PartialIDFile {
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
                 pw.println("#station, network, eventID, component, samplingHz, startTime, npts, period[0], period[1], "
                 		+ "usablephases, startByte, isConvolved, perturbationLocation, partialType");
-            		/*pw.println("#station, network, event, component, samplingHz, lat, lon, type, startTime, npts, "
-                    + " minPeriod, maxPeriod, phases, startByte, convolved"); */
                 Arrays.stream(Arrays.copyOfRange(ids,0,10)).forEach(pw::println);
             }
         } else {
