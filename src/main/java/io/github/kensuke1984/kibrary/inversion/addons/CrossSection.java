@@ -100,9 +100,9 @@ public class CrossSection {
         HorizontalPosition endPos = extremities[1];
         FullPosition centerLocation = startPos.computeMidpoint(endPos)
                 .toFullPosition(Earth.EARTH_RADIUS);
-        double azimuth = centerLocation.computeAzimuth(endPos);
+        double azimuth = centerLocation.computeAzimuthRad(endPos);
 //		double theta = 20. * Math.PI/180.;
-        double theta = centerLocation.computeEpicentralDistance(endPos) + Math.toRadians(0.);
+        double theta = centerLocation.computeEpicentralDistanceRad(endPos) + Math.toRadians(0.);
         double deltaTheta = Math.toRadians(0.5);
 
         System.out.println("Theta = " + Math.toDegrees(theta));

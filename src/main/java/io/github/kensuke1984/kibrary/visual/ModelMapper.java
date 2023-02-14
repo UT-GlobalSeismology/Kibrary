@@ -70,8 +70,18 @@ public class ModelMapper extends Operation {
     private Path multigridPath;
     private Set<VariableType> variableTypes;
 
+    private double[] boundaries;
+    /**
+     * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
+     */
+    private int[] displayLayers;
+    private int nPanelsPerRow;
     private String mapRegion;
     private double scale;
+    /**
+     * Whether to display map as mosaic without smoothing
+     */
+    private boolean mosaic;
 
     /**
      * @param args  none to create a property file <br>
@@ -106,10 +116,19 @@ public class ModelMapper extends Operation {
             pw.println("#multigridPath multigrid.inf");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
+            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
+            pw.println("#boundaries ");
+            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
+            pw.println("##  Layers are numbered 0, 1, 2, ... from the inside.");
+            pw.println("#displayLayers ");
+            pw.println("##(int) Number of panels to display in each row (4)");
+            pw.println("#nPanelsPerRow ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##(double) Range of percent scale (3)");
             pw.println("#scale ");
+            pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
+            pw.println("#mosaic ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -140,8 +159,12 @@ public class ModelMapper extends Operation {
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
 
+        boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
+        if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
+        nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         scale = property.parseDouble("scale", "3");
+        mosaic = property.parseBoolean("mosaic", "false");
     }
 
     @Override
@@ -184,6 +207,7 @@ public class ModelMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -194,10 +218,13 @@ public class ModelMapper extends Operation {
             Path outputPercentPath = outPath.resolve(variableName + "Percent.lst");
             PerturbationListFile.writePercentForType(variable, model, outputPercentPath);
             // output shellscripts
-            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, mapRegion, scale, variableName + "Percent");
+            PerturbationMapShellscript script
+                    = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, positionInterval, scale, variableName + "Percent", nPanelsPerRow);
+            script.setMosaic(mosaic);
+            if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);
-            System.err.println("After this finishes, please run " + outPath + "/" + variableName + "PercentGrid.sh and "
-                    + outPath + "/" + variableName + "PercentMap.sh");
+            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentGrid.sh and "
+                    + variableName + "PercentMap.sh");
         }
     }
 

@@ -24,7 +24,7 @@ class GlobalCMTSearchTest {
     private static HorizontalPosition usCenter = new HorizontalPosition(40, -100);
 
     private static Set<GlobalCMTID> eventList() {
-        return GlobalCMTSearch.search(d -> d.getCmtPosition().computeEpicentralDistance(usCenter) < 80 &&
+        return GlobalCMTSearch.search(d -> d.getCmtPosition().computeEpicentralDistanceRad(usCenter) < 80 &&
                 d.getCMTTime().isAfter(LocalDate.of(2004, 1, 1).atTime(0, 0)) && d.getCmtPosition().getR() < 6361);
     }
 

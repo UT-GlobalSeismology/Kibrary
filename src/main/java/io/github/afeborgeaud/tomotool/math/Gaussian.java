@@ -23,12 +23,12 @@ public class Gaussian {
     }
 
     public double getY(HorizontalPosition x) {
-        double d = x.computeEpicentralDistance(center) * 3480.;
+        double d = x.computeEpicentralDistanceRad(center) * 3480.;
         return amplitude * Math.exp(-d * d / (2 * sigmaKm * sigmaKm));
     }
 
     public double getDerivativeY(HorizontalPosition x) {
-        double d = x.computeEpicentralDistance(center) * 3480.;
+        double d = x.computeEpicentralDistanceRad(center) * 3480.;
         return -d / (sigmaKm * sigmaKm) * amplitude * Math.exp(-d * d / (2 * sigmaKm * sigmaKm));
     }
 

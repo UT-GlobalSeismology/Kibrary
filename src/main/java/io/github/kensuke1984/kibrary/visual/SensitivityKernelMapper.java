@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -54,13 +55,23 @@ public class SensitivityKernelMapper extends Operation {
     /**
      * path of partial ID file
      */
-    protected Path partialIDPath;
+    private Path partialIDPath;
     /**
      * path of partial data
      */
-    protected Path partialPath;
+    private Path partialPath;
+    private double[] boundaries;
+    /**
+     * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
+     */
+    private int[] displayLayers;
+    private int nPanelsPerRow;
     private String mapRegion;
     private double scale;
+    /**
+     * Whether to display map as mosaic without smoothing
+     */
+    private boolean mosaic;
 
 
     /**
@@ -84,20 +95,29 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#folderTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##PartialTypes to be used, listed using spaces (MU)");
-            pw.println("#partialTypes ");
-            pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
-            pw.println("#tendEvents ");
-            pw.println("##Observers to work for, in the form STA_NET, listed using spaces. To use all observers, leave this unset.");
-            pw.println("#tendObservers ");
             pw.println("##Path of a partial ID file, must be set");
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
-            pw.println("##Map region, in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90] (-180/180/-90/90)");
-            pw.println("#mapRegion ");
+            pw.println("##PartialTypes to be used, listed using spaces (MU)");
+            pw.println("#partialTypes ");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set");
+            pw.println("#tendEvents ");
+            pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set");
+            pw.println("#tendObservers ");
+            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
+            pw.println("#boundaries ");
+            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
+            pw.println("##  Layers are numbered 0, 1, 2, ... from the inside.");
+            pw.println("#displayLayers ");
+            pw.println("##(int) Number of panels to display in each row (4)");
+            pw.println("#nPanelsPerRow ");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("#mapRegion -180/180/-90/90");
             pw.println("##(double) Range of scale (3)");
             pw.println("#scale ");
+            pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
+            pw.println("#mosaic ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -112,30 +132,33 @@ public class SensitivityKernelMapper extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU"))
-                .map(PartialType::valueOf).collect(Collectors.toSet());
-        if (property.containsKey("tendEvents")) {
-            tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
-                    .collect(Collectors.toSet());
-        }
-        if (property.containsKey("tendObservers")) {
-            tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
-        }
 
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
+        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU"))
+                .map(PartialType::valueOf).collect(Collectors.toSet());
+        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
+                .collect(Collectors.toSet());
+        tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
 
-        mapRegion = property.parseString("mapRegion", "-180/180/-90/90");
+        boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
+        if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
+        nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
+        if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         scale = property.parseDouble("scale", "3");
-
+        mosaic = property.parseBoolean("mosaic", "false");
     }
 
     @Override
     public void run() throws IOException {
 
         PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
-        double[] radii = Arrays.stream(partials).mapToDouble(partial -> partial.getVoxelPosition().getR()).distinct().sorted().toArray();
+        Set<FullPosition> positions = Arrays.stream(partials).map(partial -> partial.getVoxelPosition()).collect(Collectors.toSet());
+        double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
+        // decide map region
+        if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", folderTag, GadgetAid.getTemporaryString());
 
@@ -174,9 +197,11 @@ public class SensitivityKernelMapper extends Operation {
                 pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * 1e31);
             }
 
-            PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii, mapRegion, scale, fileNameRoot); //TODO parameter type not correct
+            PerturbationMapShellscript script
+                    = new PerturbationMapShellscript(VariableType.Vs, radii, boundaries, mapRegion, positionInterval, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct
+            script.setMosaic(mosaic);
+            if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(observerPath);
-
         }
     }
 }

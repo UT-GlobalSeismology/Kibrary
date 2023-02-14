@@ -69,7 +69,7 @@ public class LookAtBPspc {
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
 		FullPosition sourceLocation = dsmOutput.getSourcePosition();
 		
-		double distance = sourceLocation.computeEpicentralDistance(observerPosition) * 180. / Math.PI;
+		double distance = sourceLocation.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
 		
 //		SPCTensorComponent c1 = SPCTensorComponent.valueOf27Conmponent(1, 1, 2);
 //		SPCTensorComponent c2 = SPCTensorComponent.valueOf27Conmponent(1, 2, 2);
