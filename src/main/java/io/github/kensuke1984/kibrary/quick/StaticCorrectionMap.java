@@ -111,13 +111,13 @@ public class StaticCorrectionMap {
 				azSepLow = cluster.getAzimuthBound(4);
 				
 			for (StaticCorrectionData corr : fujiCorrections_low) {
-				double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(corr.getObserver().getPosition()));
+				double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuthRad(corr.getObserver().getPosition()));
 				if (azimuth < 180) azimuth += 360;
 				if (azimuth >= azSepLow[0] && azimuth <= azSepLow[1])
 					fujiCorrections.add(corr);
 			}
 			for (StaticCorrectionData corr : fujiCorrections_high) {
-				double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(corr.getObserver().getPosition()));
+				double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuthRad(corr.getObserver().getPosition()));
 				if (azimuth < 180) azimuth += 360;
 				if (azimuth < azSepLow[0] || azimuth > azSepLow[1])
 					fujiCorrections.add(corr);
@@ -195,8 +195,8 @@ public class StaticCorrectionMap {
 			
 			double evtlat = corr.getGlobalCMTID().getEventData().getCmtPosition().getLatitude();
 			double evtlon = corr.getGlobalCMTID().getEventData().getCmtPosition().getLongitude();
-			double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(corr.getObserver().getPosition()));
-			double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuth(corr.getObserver().getPosition()));
+			double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistanceRad(corr.getObserver().getPosition()));
+			double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuthRad(corr.getObserver().getPosition()));
 			
 			if (distance > 75) continue;
 			if (distance < 65) continue;
@@ -244,8 +244,8 @@ public class StaticCorrectionMap {
 			
 			double evtlat = cluster.getCenterPosition().getLatitude();
 			double evtlon = cluster.getCenterPosition().getLongitude();
-			double distance = Math.toDegrees(cluster.getCenterPosition().computeEpicentralDistance(corr.getObserver().getPosition()));
-			double azimuth = Math.toDegrees(cluster.getCenterPosition().computeAzimuth(corr.getObserver().getPosition()));
+			double distance = Math.toDegrees(cluster.getCenterPosition().computeEpicentralDistanceRad(corr.getObserver().getPosition()));
+			double azimuth = Math.toDegrees(cluster.getCenterPosition().computeAzimuthRad(corr.getObserver().getPosition()));
 			
 			if (distance > 75) continue;
 			if (distance < 65) continue;
@@ -283,11 +283,11 @@ public class StaticCorrectionMap {
 		double[][] averages = new double[azimuthSeparations.size() + 1][2];
 		int[] counts = new int[azimuthSeparations.size() + 1];
 		for (StaticCorrectionData corr : ratios) {
-			double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(corr.getObserver().getPosition()));
+			double distance = Math.toDegrees(corr.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistanceRad(corr.getObserver().getPosition()));
 			if (distance < 65) continue;
 			if (distance > 70) continue;
 //			if (distance > 69) continue;
-			double azimuth = Math.toDegrees(center.computeAzimuth(corr.getObserver().getPosition()));
+			double azimuth = Math.toDegrees(center.computeAzimuthRad(corr.getObserver().getPosition()));
 			if (azimuth < 180) azimuth += 360;
 			int i = azimuthSeparations.size();
 			for (int j = 0; j < azimuthSeparations.size(); j++)

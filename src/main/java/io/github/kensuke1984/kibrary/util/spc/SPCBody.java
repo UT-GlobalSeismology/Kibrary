@@ -201,6 +201,12 @@ public class SPCBody {
     public SPCComponent getSpcComponent(int n) {
         return spcComponents[n];
     }
+    
+    /**
+     * TODO デバッグ用なので、すぐ消す
+     * 
+     * @author ryoichi
+     */
 
     /**
      * TODO 別を出すようにする anotherBodyを足し合わせる

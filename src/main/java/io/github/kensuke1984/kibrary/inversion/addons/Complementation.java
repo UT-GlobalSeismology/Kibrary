@@ -135,7 +135,7 @@ public class Complementation {
 	}
 	
 	private static double weightHorizontalEnhanced(FullPosition loc1, FullPosition loc2) {
-		double arcDistance = loc1.computeEpicentralDistance(loc2) * (loc1.getR() + loc2.getR()) / 2.;
+		double arcDistance = loc1.computeEpicentralDistanceRad(loc2) * (loc1.getR() + loc2.getR()) / 2.;
 		double dR = Math.abs(loc1.getR() - loc2.getR());
 		arcDistance /= 4.;
 		

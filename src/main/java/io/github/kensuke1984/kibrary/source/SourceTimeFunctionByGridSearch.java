@@ -758,7 +758,7 @@ public class SourceTimeFunctionByGridSearch implements Operation_old {
 		public void run() {
 			try {
 				for (TimewindowData timewindow : timewindows) {
-					double distance = timewindow.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistance(
+					double distance = timewindow.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistanceRad(
 							timewindow.getObserver().getPosition()) * 180. / Math.PI;
 					if (distance < minDistance || distance > maxDistance)
 						continue;

@@ -69,6 +69,10 @@ public class BasicBinnedStackCreator extends Operation {
      * {@link Path} of a basic file
      */
     private Path basicPath;
+    /**
+     * Path of folder containing event folders with waveform txt files
+     */
+    private Path referencePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -120,6 +124,9 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#basicIDPath actualID.dat");
             pw.println("##Path of a basic waveform file, must be defined");
             pw.println("#basicPath actual.dat");
+            pw.println("##Path of a waveform folder, when also plotting reference waveforms");
+            pw.println("##  It must contain event folders with waveform txt files for stacks. Only observed waveforms will be plotted.");
+            pw.println("#referencePath ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##(double) The width of each bin [deg] (1.0)");
@@ -164,6 +171,8 @@ public class BasicBinnedStackCreator extends Operation {
 
         basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
+        if (property.containsKey("referencePath"))
+            referencePath = property.parsePath("referencePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -244,6 +253,7 @@ public class BasicBinnedStackCreator extends Operation {
     private class Plotter {
         private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
         private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        private final GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
 
         private EventFolder eventDir;
         private List<BasicID> ids;
@@ -294,9 +304,9 @@ public class BasicBinnedStackCreator extends Operation {
                 BasicID synID = synList.get(i);
 
                 double distance = obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeEpicentralDistance(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                        .computeEpicentralDistanceRad(obsID.getObserver().getPosition()) * 180. / Math.PI;
                 double azimuth = obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeAzimuth(obsID.getObserver().getPosition()) * 180. / Math.PI;
+                        .computeAzimuthRad(obsID.getObserver().getPosition()) * 180. / Math.PI;
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
@@ -367,8 +377,17 @@ public class BasicBinnedStackCreator extends Operation {
 
             String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
             String synUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
-            binStackPlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
-            binStackPlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+
+            if (referencePath != null) {
+                // when reference (the actual observed) exists, plot the actual (shifted) observed in black and the new (obtained) in blue
+                Path referenceFilePath = Paths.get("..").resolve(referencePath).resolve(eventDir.toString()).resolve(fileName);
+                binStackPlot.addLine(referenceFilePath.toString(), obsUsingString, obsAppearance, "observed");
+                binStackPlot.addLine(fileName, synUsingString, synAppearance, "initial");
+                binStackPlot.addLine(fileName, obsUsingString, resultAppearance, "result");
+            } else {
+                binStackPlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
+                binStackPlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+            }
         }
 
         /**

@@ -39,11 +39,11 @@ public class RaypathInformation {
     }
 
     public double getDistanceDegree() {
-        return Math.toDegrees(event.getEventData().getCmtPosition().computeEpicentralDistance(observer.getPosition()));
+        return Math.toDegrees(event.getEventData().getCmtPosition().computeEpicentralDistanceRad(observer.getPosition()));
     }
 
     public double getAzimuthDegree() {
-        return Math.toDegrees(event.getEventData().getCmtPosition().computeAzimuth(observer.getPosition()));
+        return Math.toDegrees(event.getEventData().getCmtPosition().computeAzimuthRad(observer.getPosition()));
     }
 
     public FullPosition getCmtLocation() {
