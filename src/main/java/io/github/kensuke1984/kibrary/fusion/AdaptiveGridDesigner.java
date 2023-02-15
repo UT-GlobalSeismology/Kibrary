@@ -29,7 +29,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Computes correlation between partial waveforms of each unknown parameter, and designs an adaptive grid.
+ * Computes correlation between partial waveforms of each unknown parameter,
+ * and designs an adaptive grid by fusing voxels with large correlation between their partial waveforms.
  *
  * TODO when A~B and B~C (A~C may or may not be true)
  *
@@ -200,7 +201,7 @@ public class AdaptiveGridDesigner extends Operation {
 
                 for (int j = 0; j < parameterList.size(); j++) {
                     if (i == j) continue;
-                    if (partialTypes != null && partialTypes.contains(parameterList.get(j).getPartialType()) == false)
+                    if (!parameterList.get(i).getPartialType().equals(parameterList.get(j).getPartialType()))
                         continue;
 
                     double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));

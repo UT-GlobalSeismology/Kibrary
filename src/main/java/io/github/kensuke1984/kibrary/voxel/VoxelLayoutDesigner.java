@@ -108,7 +108,7 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("##(double) Offset for latitude [deg], must be positive (0)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
-            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg] (5)");
             pw.println("#dLongitudeDeg ");
