@@ -106,7 +106,13 @@ public class BasicRecordSectionCreator extends Operation {
     private BasicPlotAid.AmpStyle synAmpStyle;
     private double ampScale;
 
+    /**
+     * Whether to plot the figure with azimuth as the Y-axis
+     */
     private boolean byAzimuth;
+    /**
+     * Whether to set the azimuth range to [-180:180) instead of [0:360)
+     */
     private boolean flipAzimuth;
     /**
      * Names of phases to plot travel time curves
@@ -377,7 +383,7 @@ public class BasicRecordSectionCreator extends Operation {
             this.component = component;
         }
 
-        public void plot() throws IOException, TauModelException {
+        private void plot() throws IOException, TauModelException {
             if (ids.size() == 0) {
                 return;
             }
@@ -416,7 +422,7 @@ public class BasicRecordSectionCreator extends Operation {
                     continue;
                 }
 
-                // Compute reduce time by distance or phase travel time.
+                // compute reduce time by distance or phase travel time
                 double reduceTime = 0;
                 if (alignPhases != null) {
                     timeTool.setPhaseNames(alignPhases);
@@ -453,7 +459,7 @@ public class BasicRecordSectionCreator extends Operation {
             gnuplot.setCommonYrange(startDistance, endDistance);
             gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 
-            // add  travel time curves
+            // add travel time curves
             if (displayPhases != null) {
                 plotTravelTimeCurve(startDistance, endDistance);
             }

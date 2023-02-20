@@ -412,7 +412,7 @@ public class ActualWaveformCompiler extends Operation {
     private double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         double[] waveData = trace.getY();
         return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
     }
@@ -426,7 +426,7 @@ public class ActualWaveformCompiler extends Operation {
     private double[] cutEnvelopeSac(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         HilbertTransform hilbert = new HilbertTransform(trace.getY());
         double[] waveData = hilbert.getEnvelope();
         return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
@@ -441,7 +441,7 @@ public class ActualWaveformCompiler extends Operation {
     private double[] cutHySac(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         HilbertTransform hilbert = new HilbertTransform(trace.getY());
         double[] waveData = hilbert.getHy();
         return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
@@ -456,7 +456,7 @@ public class ActualWaveformCompiler extends Operation {
     private Trace cutSpcAmpSac(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
         FourierTransform fourier = new FourierTransform(cutY, finalFreqSamplingHz);
         double df = fourier.getFreqIncrement(sacSamplingHz);
@@ -478,7 +478,7 @@ public class ActualWaveformCompiler extends Operation {
     private Trace cutSpcAmpSacAddNoise(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
         Trace tmp = createNoiseTrace(new ArrayRealVector(cutY).getLInfNorm());
         Trace noiseTrace = new Trace(trace.getX(), Arrays.copyOf(tmp.getY(), trace.getLength()));
@@ -504,7 +504,7 @@ public class ActualWaveformCompiler extends Operation {
         double[] spcAmpCorr = new double[spcAmp.getLength()];
         for (int i = 0; i < spcAmp.getLength(); i++) {
             double x = spcAmp.getXAt(i);
-            int j0 = refSpcAmp.getNearestXIndex(x);
+            int j0 = refSpcAmp.findNearestXIndex(x);
             int j1;
             if (j0 == 0) {
                 j1 = 1;
@@ -530,7 +530,7 @@ public class ActualWaveformCompiler extends Operation {
     private Complex[] cutSpcFySac(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
         FourierTransform fourier = new FourierTransform(cutY, finalFreqSamplingHz);
         double df = fourier.getFreqIncrement(sacSamplingHz);
@@ -552,7 +552,7 @@ public class ActualWaveformCompiler extends Operation {
     private double[] cutDataSacAddNoise(SACFileAccess sac, double startTime, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
+        int startPoint = trace.findNearestXIndex(startTime);
         double[] waveData = trace.getY();
         RealVector vector = new ArrayRealVector(IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray());
         Trace tmp = createNoiseTrace(vector.getLInfNorm());

@@ -30,8 +30,8 @@ public class PeakStack implements Stack {
             if (10e-10 < gap) throw new RuntimeException("Input Trace has invalid x interval.");
         }
         RealVector y = trace.getYVector();
-        double peakX = (trace.getXforMaxValue() + trace.getXforMinValue()) / 2;
-        double peakY = (trace.getMaxValue() - trace.getMinValue()) / 2;
+        double peakX = (trace.getXforMaxYValue() + trace.getXforMinYValue()) / 2;
+        double peakY = (trace.getMaxY() - trace.getMinY()) / 2;
         x = x.mapSubtract(peakX);
         y = y.mapDivide(peakY);
         return new Trace(x.toArray(), y.toArray());

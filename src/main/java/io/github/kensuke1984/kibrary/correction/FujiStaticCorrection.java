@@ -290,12 +290,12 @@ public class FujiStaticCorrection extends Operation {
         // create synthetic timewindow
         Trace synTrace = synSac.createTrace().cutWindow(startSec, endSec);
         // which point gives the maximum value
-        double synP2P = synTrace.getMaxValue() - synTrace.getMinValue();
+        double synP2P = synTrace.getMaxY() - synTrace.getMinY();
         int maxPoint = synTrace.getIndexOfPeak()[0];
 
         // create observed timewindow
         Trace obsTrace = obsSac.createTrace().cutWindow(startSec - shift, endSec - shift);
-        double obsP2P = obsTrace.getMaxValue() - obsTrace.getMinValue();
+        double obsP2P = obsTrace.getMaxY() - obsTrace.getMinY();
 
         return obsP2P / synP2P;
     }

@@ -493,7 +493,7 @@ public final class Trace {
      * @param target value of x to look for the nearest x value to
      * @return the index of the closest x to the target
      */
-    public int getNearestXIndex(double target) {
+    public int findNearestXIndex(double target) {
         return nearPoints(1, target)[0];
     }
 
@@ -501,8 +501,8 @@ public final class Trace {
      * @param target value of x to look for the nearest x value to
      * @return the closest x to the target
      */
-    public double getNearestX(double target) {
-        return xArray[getNearestXIndex(target)];
+    public double findNearestX(double target) {
+        return xArray[findNearestXIndex(target)];
     }
 
     /**
@@ -534,13 +534,6 @@ public final class Trace {
     }
 
     /**
-     * @return the number of elements
-     */
-    public int getLength() {
-        return xArray.length;
-    }
-
-    /**
      * @param i index for <i>x</i> [0, length -1]
      * @return x[i], second at the ith point
      */
@@ -557,31 +550,52 @@ public final class Trace {
     }
 
     /**
-     * @return x which gives maximum y
+     * @return the number of elements
      */
-    public double getXforMaxValue() {
-        return xArray[yVector.getMaxIndex()];
+    public int getLength() {
+        return xArray.length;
+    }
+
+    /**
+     * @return minimum value of x
+     */
+    public double getMinX() {
+        return xVector.getMinValue();
+    }
+
+    /**
+     * @return maximum value of x
+     */
+    public double getMaxX() {
+        return xVector.getMaxValue();
     }
 
     /**
      * @return x which gives minimum y
      */
-    public double getXforMinValue() {
+    public double getXforMinYValue() {
         return xArray[yVector.getMinIndex()];
     }
 
     /**
-     * @return maximum value of y
+     * @return x which gives maximum y
      */
-    public double getMaxValue() {
-        return yVector.getMaxValue();
+    public double getXforMaxYValue() {
+        return xArray[yVector.getMaxIndex()];
     }
 
     /**
      * @return minimum value of y
      */
-    public double getMinValue() {
+    public double getMinY() {
         return yVector.getMinValue();
+    }
+
+    /**
+     * @return maximum value of y
+     */
+    public double getMaxY() {
+        return yVector.getMaxValue();
     }
 
     /**

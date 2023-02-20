@@ -531,7 +531,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation_old {
 	private double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
-		int startPoint = trace.getNearestXIndex(startTime);
+		int startPoint = trace.findNearestXIndex(startTime);
 		double[] waveData = trace.getY();
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
 	}
