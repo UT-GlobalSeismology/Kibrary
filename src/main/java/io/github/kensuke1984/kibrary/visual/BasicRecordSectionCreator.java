@@ -371,6 +371,7 @@ public class BasicRecordSectionCreator extends Operation {
         private GnuplotFile gnuplot;
         private double obsMeanMax;
         private double synMeanMax;
+        private boolean firstPlot = true;
 
         /**
          * @param eventDir
@@ -478,7 +479,7 @@ public class BasicRecordSectionCreator extends Operation {
             gnuplot.setMarginH(15, 25);
             gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
-            gnuplot.unsetCommonKey();
+            gnuplot.setCommonKey(true, false, "top right");
 
             gnuplot.setCommonTitle(eventPath.getFileName().toString());
             if (alignPhases != null) {
@@ -508,17 +509,20 @@ public class BasicRecordSectionCreator extends Operation {
             double synAmp = BasicPlotAid.selectAmp(synAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
 
             // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
-            String obsUsingString;
+            String shiftedUsingString;
+            String unshiftedUsingString;
             String synUsingString;
             if (!byAzimuth) {
                 gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
                         "graph", 1.01, "first", distance);
-                obsUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
+                unshiftedUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
+                shiftedUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
                 synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reduceTime, synAmp, distance);
             } else {
                 gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
                         "graph", 1.01, "first", azimuth);
-                obsUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
+                unshiftedUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
+                shiftedUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
                 synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
             }
 
@@ -527,19 +531,25 @@ public class BasicRecordSectionCreator extends Operation {
             String eventName = eventPath.getFileName().toString();
             Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
             if (unshiftedObsStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), obsUsingString, BasicPlotAid.switchObservedAppearance(unshiftedObsStyle), unshiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), unshiftedUsingString, BasicPlotAid.switchObservedAppearance(unshiftedObsStyle),
+                        (firstPlot ? unshiftedObsName : ""));
             if (shiftedObsStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), obsUsingString, BasicPlotAid.switchObservedAppearance(shiftedObsStyle), shiftedObsName);
+                gnuplot.addLine(mainFilePath.toString(), shiftedUsingString, BasicPlotAid.switchObservedAppearance(shiftedObsStyle),
+                        (firstPlot ? shiftedObsName : ""));
             if (mainSynStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
+                gnuplot.addLine(mainFilePath.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
+                        (firstPlot ? mainSynName : ""));
             if (refSynStyle1 != 0) {
                 Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-                gnuplot.addLine(refFilePath1.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
+                gnuplot.addLine(refFilePath1.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
+                        (firstPlot ? refSynName1 : ""));
             }
             if (refSynStyle2 != 0) {
                 Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-                gnuplot.addLine(refFilePath2.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
+                gnuplot.addLine(refFilePath2.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
+                        (firstPlot ? refSynName2 : ""));
             }
+            firstPlot = false;
         }
 
         private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
@@ -608,7 +618,7 @@ public class BasicRecordSectionCreator extends Operation {
                         }
                     }
                 }
-                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, phase);
+                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
         }
     }

@@ -36,15 +36,18 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
  * Creates and plots binned stacks for each event included in a {@link BasicIDFile}e.
+ * Time-shift from corrections will be applied to observed waveform when being plotted.
+ * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
+ * Travel time curves can be drawn on the graph.
  * <p>
- * A pair of a basic ID file and basic waveform file is required as input.
+ * A basic waveform folder is required as input.
+ * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
  * <p>
- * Event directories will be created under workPath if they do not already exist.
- * Text files of waveform data for each bin will be written under the event directories.
- * They will be regenerated each time beacause their contents depend on the settings used
- * (such as which observers to use, plotting by distance or by azimuth, standarization method, etc.).
+ * The entries to plot will be determined by whether they are included in mainBasicPath.
+ * When plotting additional synthetic waveforms, their amplitudes will be adjusted with parameters for the main synthetic waveforms.
  * <p>
- * Output pdf files and their corresponding plt files will be created under each of the event directories.
+ * Text files of stacked waveform data for each bin will be created in event folders under the output folder,
+ * along with output pdf files and their corresponding plt files.
  *
  * @author otsuru
  * @since 2022/7/27 divided from visual.RecordSectionCreater
@@ -368,6 +371,7 @@ public class BasicBinnedStackCreator extends Operation {
         private GnuplotFile gnuplot;
         private double obsMeanMax;
         private double synMeanMax;
+        private boolean firstPlot = true;
 
         /**
          * @param eventDir
@@ -524,7 +528,7 @@ public class BasicBinnedStackCreator extends Operation {
             gnuplot.setMarginH(15, 10);
             gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
-            gnuplot.unsetCommonKey();
+            gnuplot.setCommonKey(true, false, "top right");
 
             gnuplot.setCommonTitle(eventPath.getFileName().toString());
             if (alignPhases != null) {
@@ -553,19 +557,24 @@ public class BasicBinnedStackCreator extends Operation {
             }
 
             String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
-            gnuplot.addLine(fileName, obsUsingString, BasicPlotAid.SHIFTED_APPEARANCE, "observed");
+            gnuplot.addLine(fileName, obsUsingString, BasicPlotAid.SHIFTED_APPEARANCE,
+                    (firstPlot ? "observed" : ""));
             if (mainSynStyle != 0) {
                 String mainSynUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, mainSynUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
+                gnuplot.addLine(fileName, mainSynUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
+                        (firstPlot ? mainSynName : ""));
             }
             if (refSynStyle1 != 0) {
                 String refSynUsingString1 = String.format("1:($4/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString1, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
+                gnuplot.addLine(fileName, refSynUsingString1, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
+                        (firstPlot ? refSynName1 : ""));
             }
             if (refSynStyle2 != 0) {
                 String refSynUsingString2 = String.format("1:($5/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
+                gnuplot.addLine(fileName, refSynUsingString2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
+                        (firstPlot ? refSynName2 : ""));
             }
+            firstPlot = false;
         }
 
         /**
@@ -712,7 +721,7 @@ public class BasicBinnedStackCreator extends Operation {
                         }
                     }
                 }
-                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, phase);
+                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
         }
     }
