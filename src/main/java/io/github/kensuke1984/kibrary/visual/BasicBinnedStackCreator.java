@@ -55,6 +55,18 @@ public class BasicBinnedStackCreator extends Operation {
      * The interval of exporting travel times
      */
     private static final double TRAVEL_TIME_INTERVAL = 1;
+    /**
+     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
+     */
+    private static final int GRAPH_SIZE_INTERVAL = 2;
+    /**
+     * How much space to provide at the rim of the graph in the y axis
+     */
+    private static final int Y_AXIS_RIM = 2;
+    /**
+     * How much space to provide at the rim of the graph in the time axis
+     */
+    private static final int TIME_RIM = 10;
 
     private final Property property;
     /**
@@ -131,6 +143,7 @@ public class BasicBinnedStackCreator extends Operation {
 
     private List<BasicID> refBasicIDs1;
     private List<BasicID> refBasicIDs2;
+    private double samplingStep;
 
     /**
      * Inxtance of tool to use to compute travel times
@@ -287,6 +300,14 @@ public class BasicBinnedStackCreator extends Operation {
            return;
        }
 
+       // check sampling rate
+       double[] samplingHzs = mainBasicIDs.stream().mapToDouble(id -> id.getSamplingHz()).distinct().toArray();
+       if (samplingHzs.length != 1) {
+           Arrays.stream(samplingHzs).forEach(hz -> System.err.print(hz + " "));
+           throw new IllegalStateException("Data with different sampling rates exist");
+       }
+       samplingStep = 1 / samplingHzs[0];
+
        // read reference basic waveform folders
        if (refBasicPath1 != null && refSynStyle1 != 0) {
            refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
@@ -370,6 +391,10 @@ public class BasicBinnedStackCreator extends Operation {
             List<BasicID> obsList = pairer.getObsList();
             List<BasicID> mainSynList = pairer.getSynList();
 
+            // calculate the average of the maximum amplitudes of waveforms
+            obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+            synMeanMax = mainSynList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+
             // create array to insert stacked waveforms
             Trace[] obsStacks;
             Trace[] mainSynStacks;
@@ -387,9 +412,11 @@ public class BasicBinnedStackCreator extends Operation {
                 refSynStacks2 = new Trace[(int) Math.ceil(360 / binWidth)];
             }
 
-            // calculate the average of the maximum amplitudes of waveforms
-            obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
-            synMeanMax = mainSynList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
+            // variables to find the minimum and maximum distance for this event
+            double minTime = Double.MAX_VALUE;
+            double maxTime = -Double.MAX_VALUE;
+            double minDistance = Double.MAX_VALUE;
+            double maxDistance = -Double.MAX_VALUE;
 
             // for each pair of observed and synthetic waveforms
             for (int i = 0; i < obsList.size(); i++) {
@@ -407,14 +434,6 @@ public class BasicBinnedStackCreator extends Operation {
                     continue;
                 }
 
-                // decide which bin to add waveform to
-                int k;
-                if (!byAzimuth) {
-                    k = (int) Math.floor(distance / binWidth);
-                } else {
-                    k = (int) Math.floor(azimuth / binWidth);
-                }
-
                 // compute reduce time by distance or phase travel time
                 double reduceTime = 0;
                 if (alignPhases != null) {
@@ -427,6 +446,22 @@ public class BasicBinnedStackCreator extends Operation {
                     reduceTime = timeTool.getArrival(0).getTime();
                 } else {
                     reduceTime = reductionSlowness * distance;
+                }
+
+                // update ranges
+                double startTime = mainSynID.getStartTime() - reduceTime;
+                double endTime = mainSynID.getStartTime() + mainSynID.getNpts() / mainSynID.getSamplingHz() - reduceTime;
+                if (startTime < minTime) minTime = startTime;
+                if (endTime > maxTime) maxTime = endTime;
+                if (distance < minDistance) minDistance = distance;
+                if (distance > maxDistance) maxDistance = distance;
+
+                // decide which bin to add waveform to
+                int k;
+                if (!byAzimuth) {
+                    k = (int) Math.floor(distance / binWidth);
+                } else {
+                    k = (int) Math.floor(azimuth / binWidth);
                 }
 
                 //~add waveform
@@ -458,16 +493,23 @@ public class BasicBinnedStackCreator extends Operation {
 
             binStackPlotSetup();
 
-            // for each bin
+            // plot for each bin
             for (int j = 0; j < obsStacks.length; j++) {
                 if (obsStacks[j] != null && mainSynStacks[j] != null) {
                     binStackPlotContent(obsStacks[j], mainSynStacks[j], refSynStacks1[j], refSynStacks2[j], (j + 0.5) * binWidth);
                 }
             }
 
+            // set ranges
+            if (minDistance > maxDistance || minTime > maxTime) return;
+            int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
+            int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
+            gnuplot.setCommonYrange(startDistance, endDistance);
+            gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
+
             // add travel time curves
             if (displayPhases != null) {
-                plotTravelTimeCurve(lowerDistance, upperDistance);
+                plotTravelTimeCurve(startDistance, endDistance);
             }
 
             gnuplot.write();
@@ -566,17 +608,19 @@ public class BasicBinnedStackCreator extends Operation {
         }
 
         /**
-         * Shifts time of dataTrace by reductionTime, then adds it onto sumTrace.
+         * Shifts time of dataTrace by reductionTime, then adds the waveform onto sumTrace.
          * @param sumTrace ({@link Trace}) Summing-up waveform. X axis is reduced time.
          *                                 May be null when calling this method with the first data waveform.
          * @param dataTrace ({@link Trace}) Data waveform. X axis is time from event.
-         * @param reductionTime (double) Time to reduce the data waveform
+         * @param reductionTime (double) Time to reduce from the time of data waveform
          * @return ({@link Trace}) New Trace instance with added waveform values. X axis is reduced time.
          */
         private Trace addUponShift(Trace sumTrace, Trace dataTrace, double reductionTime) {
-            // shift x values by approximately the reduction time so that one of the x values becomes 0
-            double approximatedReductionTime = dataTrace.findNearestX(reductionTime);
-            Trace shiftedTrace = dataTrace.shiftX(-approximatedReductionTime);
+            // shift x values by approximately the reduction time so that x values become multiples of samplingStep
+            double startTime = dataTrace.getXAt(0);
+            double shiftedTime = startTime - reductionTime;
+            double roundedTime = Math.round(shiftedTime / samplingStep) * samplingStep;
+            Trace shiftedTrace = dataTrace.shiftX(roundedTime - startTime);
 
             if (sumTrace == null) {
                 return shiftedTrace;
@@ -589,17 +633,15 @@ public class BasicBinnedStackCreator extends Operation {
 
                 for (int i = 0; i < newX.length; i++) {
                     double x = newX[i];
-                    System.err.print(x + " ");
                     double sum = 0;
                     if (sumTrace.getMinX() <= x && x <= sumTrace.getMaxX()) {
-                        sum += sumTrace.getXAt(sumTrace.findNearestXIndex(x));
+                        sum += sumTrace.getYAt(sumTrace.findNearestXIndex(x));
                     }
                     if (shiftedTrace.getMinX() <= x && x <= shiftedTrace.getMaxX()) {
-                        sum += shiftedTrace.getXAt(shiftedTrace.findNearestXIndex(x));
+                        sum += shiftedTrace.getYAt(shiftedTrace.findNearestXIndex(x));
                     }
                     newY[i] = sum;
                 }
-                System.err.println();
                 return new Trace(newX, newY);
             }
         }
