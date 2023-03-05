@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -215,7 +217,7 @@ public class ModelSetMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
-        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
+        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, GadgetAid.getTemporaryString());
@@ -244,8 +246,15 @@ public class ModelSetMapper extends Operation {
                 Files.createDirectories(outBasisPath);
 
                 for (VariableType variable : variableTypes) {
-                    Path outputPercentPath = outBasisPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
-                    PerturbationListFile.writePercentForType(variable, model, outputPercentPath);
+                    String variableName = variable.toString().toLowerCase();
+                    // output discrete perturbation file
+                    Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
+                    Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
+                    PerturbationListFile.write(discreteMap, outputDiscretePath);
+                    // output interpolated perturbation file
+                    Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval, mosaic);
+                    Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
+                    PerturbationListFile.write(interpolatedMap, outputInterpolatedPath);
                 }
             }
         }
@@ -254,9 +263,8 @@ public class ModelSetMapper extends Operation {
         for (VariableType variable : variableTypes) {
             String variableName = variable.toString().toLowerCase();
             writeParentShellscript(variableName, outPath.resolve(variableName + "PercentAllMap.sh"));
-            PerturbationMapShellscript script
-                    = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, positionInterval, scale, variableName + "Percent", nPanelsPerRow);
-            script.setMosaic(mosaic);
+            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
+                    gridInterval, scale, variableName + "Percent", nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);
             System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentAllMap.sh");

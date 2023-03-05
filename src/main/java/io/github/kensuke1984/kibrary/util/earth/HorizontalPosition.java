@@ -1,6 +1,9 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
+import java.util.Set;
+
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
@@ -33,6 +36,22 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     private final Longitude longitude;
 
     /**
+     * Find the latitude interval of a given set of positions.
+     * The latitudes must be equally spaced.
+     * @param positions (Set of {@link FullPosition})
+     * @return (double) interval
+     */
+    public static double findLatitudeInterval(Set<FullPosition> positions) {
+        FullPosition pos0 = positions.iterator().next();
+        return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
+                .filter(diff -> !Precision.equals(diff, 0, FullPosition.LATITUDE_EPSILON)).min().getAsDouble();
+    }
+
+    public static double latitudeFor(double theta) {
+        return Latitude.valueFor(theta);
+    }
+
+    /**
      * Creates an instance with geographic latitude and longitude
      *
      * @param latitude  [deg] geographic latitude [-90, 90]
@@ -41,10 +60,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     public HorizontalPosition(double latitude, double longitude) {
         this.latitude = new Latitude(latitude);
         this.longitude = new Longitude(longitude);
-    }
-
-    public static double latitudeFor(double theta) {
-        return Latitude.valueFor(theta);
     }
 
     /**

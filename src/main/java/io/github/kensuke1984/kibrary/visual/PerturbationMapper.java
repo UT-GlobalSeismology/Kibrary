@@ -136,7 +136,7 @@ public class PerturbationMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
-        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
+        double positionInterval = FullPosition.findLatitudeInterval(positions);
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, GadgetAid.getTemporaryString());
@@ -162,7 +162,7 @@ public class PerturbationMapper extends Operation {
         // output shellscripts
         PerturbationMapShellscript script;
         script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, positionInterval, scale, fileNameRoot, nPanelsPerRow);
-        script.setMosaic(mosaic);
+//        script.setMosaic(mosaic);TODO
         if (displayLayers != null) script.setDisplayLayers(displayLayers);
         if (maskPath != null) script.setMask(maskFileNameRoot, maskThreshold);
         script.write(outPath);

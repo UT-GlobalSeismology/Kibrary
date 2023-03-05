@@ -162,7 +162,7 @@ public class SensitivityKernelMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
-        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
+        double positionInterval = FullPosition.findLatitudeInterval(positions);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", folderTag, GadgetAid.getTemporaryString());
 
@@ -203,7 +203,7 @@ public class SensitivityKernelMapper extends Operation {
 
             PerturbationMapShellscript script
                     = new PerturbationMapShellscript(VariableType.Vs, radii, boundaries, mapRegion, positionInterval, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct
-            script.setMosaic(mosaic);
+//            script.setMosaic(mosaic);TODO
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(observerPath);
         }
