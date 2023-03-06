@@ -121,6 +121,7 @@ public final class BasicIDFile {
             for (BasicID id : basicIDs) {
                 wdw.addBasicID(id);
             }
+            wdw.flush();
         }
     }
 
