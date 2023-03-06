@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * Operation to design the fusion of {@link UnknownParameter}s to create a coarse grid.
  * <p>
- * The border latitudes, longitudes, and radii given as input are rough guidlines to decide which voxels to combine;
+ * The border latitudes, longitudes, and radii given as input are rough guidelines to decide which voxels to combine;
  * they will not be used to compute the positions or volumes of the fused voxels.
  * The positions/volumes will be instead computed by averaging/summing those of the original voxels.
  *
@@ -110,14 +110,14 @@ public class CoarseGridDesigner extends Operation {
             pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg] (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset for latitude [deg], must be positive (2.5)");
+            pw.println("##(double) Offset of boundary latitude [deg], must be positive (2.5)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg] (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset for longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
+            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
             pw.println("#longitudeOffset ");
             pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
             pw.println("#crossDateLine ");
