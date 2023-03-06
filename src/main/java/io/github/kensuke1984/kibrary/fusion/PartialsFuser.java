@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,16 +37,12 @@ public class PartialsFuser extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String fileTag;
+    private String folderTag;
 
     /**
-     * path of partial ID file
-     */
-    private Path partialIDPath;
-    /**
-     * path of partial data
+     * path of partial waveform folder
      */
     private Path partialPath;
     /**
@@ -77,12 +72,10 @@ public class PartialsFuser extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
-            pw.println("#fileTag ");
-            pw.println("##Path of a partial ID file, must be set");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file, must be set");
-            pw.println("#partialPath partial.dat");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("#partialPath partial");
             pw.println("##Path of a fusion information file, must be set");
             pw.println("#fusionPath fusion.inf");
         }
@@ -96,12 +89,10 @@ public class PartialsFuser extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         fusionPath = property.parsePath("fusionPath", null, true, workPath);
-
     }
 
     @Override
@@ -109,7 +100,7 @@ public class PartialsFuser extends Operation {
         List<PartialID> fusedPartialIDs = new ArrayList<>();
 
         // read input
-        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
         fusionDesign = FusionInformationFile.read(fusionPath);
 
         // work for each fused parameter
@@ -155,14 +146,15 @@ public class PartialsFuser extends Operation {
         System.err.println();
 
         // collect fused IDs and the original IDs that are not fused
-        List<PartialID> newPartialIDs = Arrays.stream(partialIDs).filter(id -> !isFused(id)).collect(Collectors.toList());
+        List<PartialID> newPartialIDs = partialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
         newPartialIDs.addAll(fusedPartialIDs);
 
+        // prepare output folder
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
         // output
-        String dateStr = GadgetAid.getTemporaryString();
-        Path idPath = workPath.resolve(DatasetAid.generateOutputFileName("partialID", fileTag, dateStr, ".dat"));
-        Path wavePath = workPath.resolve(DatasetAid.generateOutputFileName("partial", fileTag, dateStr, ".dat"));
-        PartialIDFile.write(newPartialIDs, idPath, wavePath);
+        PartialIDFile.write(newPartialIDs, outPath);
     }
 
     private boolean isFused(PartialID id) {

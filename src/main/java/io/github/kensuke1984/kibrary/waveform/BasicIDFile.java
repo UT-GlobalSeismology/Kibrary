@@ -307,7 +307,7 @@ public final class BasicIDFile {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("The input basic waveform folder").build());
+                .desc("The input basic waveform folder (.)").build());
         options.addOption(Option.builder("w").longOpt("waveform")
                 .desc("Export waveforms in event directories under current path").build());
         // output

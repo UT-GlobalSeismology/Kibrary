@@ -356,8 +356,8 @@ public final class PartialIDFile {
     public static Options defineOptions() throws IOException{
         Options options = Summon.defaultOptions();
         //input
-        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("partailIDFile").required()
-                .desc("Export content of partial ID file").build());
+        options.addOption(Option.builder("p").longOpt("partial").hasArg().argName("partailFolder")
+                .desc("The input partial waveform folder (.)").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Set path of output file").build());
@@ -370,18 +370,22 @@ public final class PartialIDFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException{
-        BasicID[] ids;
-        ids = read(Paths.get(cmdLine.getOptionValue("i")));
-        Path outputIdsPath;
+        Path partialPath = cmdLine.hasOption("p") ? Paths.get(cmdLine.getOptionValue("p")) : Paths.get(".");
+        List<PartialID> ids = read(partialPath, false);
+
         if (cmdLine.hasOption("o")) {
-            outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
+            Path outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
-                pw.println("#station, network, eventID, component, samplingHz, startTime, npts, period[0], period[1], "
-                        + "usablephases, startByte, isConvolved, perturbationLocation, partialType");
-                Arrays.stream(Arrays.copyOfRange(ids,0,10)).forEach(pw::println);
+                pw.println("#station, network, lat, lon, event, component, startTime, npts, samplingHz, "
+                        + "minPeriod, maxPeriod, phases, convolved, voxelPosition{lat, lon, rad}, partialType");
+                for (int i = 0; i < 10; i++)
+                    pw.println(ids.get(i));
             }
         } else {
-            for(int i=0; i<10; i++) System.out.println(Arrays.copyOfRange(ids,0,10)[i]);
+            System.out.println("#station, network, lat, lon, event, component, startTime, npts, samplingHz, "
+                    + "minPeriod, maxPeriod, phases, convolved, voxelPosition{lat, lon, rad}, partialType");
+            for (int i = 0; i < 10; i++)
+                System.out.println(ids.get(i));
         }
     }
 }

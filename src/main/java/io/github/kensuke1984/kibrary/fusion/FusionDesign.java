@@ -29,7 +29,8 @@ public class FusionDesign {
     }
 
     public void addFusion(List<UnknownParameter> params) {
-        if (params.size() <= 1) return;
+        if (params.size() < 1) throw new IllegalStateException("No parameters for fusion are given.");
+
         PartialType type = params.get(0).getPartialType();
         for (UnknownParameter param : params) {
             if (param.getPartialType() != type) {
@@ -56,7 +57,8 @@ public class FusionDesign {
     }
 
     public void add(List<UnknownParameter> originalParams, UnknownParameter fusedParam) {
-        if (originalParams.size() <= 1) return;
+        if (originalParams.size() < 1) throw new IllegalStateException("No parameters for fusion are given.");
+
         PartialType type = fusedParam.getPartialType();
         for (UnknownParameter param : originalParams) {
             if (param.getPartialType() != type) {
