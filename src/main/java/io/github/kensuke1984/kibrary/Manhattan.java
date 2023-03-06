@@ -12,11 +12,12 @@ import io.github.kensuke1984.kibrary.entrance.DataRequestor;
 import io.github.kensuke1984.kibrary.entrance.NetworkLookup;
 import io.github.kensuke1984.kibrary.filter.FilterDivider;
 import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
+import io.github.kensuke1984.kibrary.fusion.AdaptiveGridDesigner;
+import io.github.kensuke1984.kibrary.fusion.CoarseGridDesigner;
+import io.github.kensuke1984.kibrary.fusion.PartialsFuser;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
-import io.github.kensuke1984.kibrary.multigrid.MultigridDesigner;
-import io.github.kensuke1984.kibrary.multigrid.MultigridPartialsForger;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
@@ -88,7 +89,8 @@ enum Manhattan {
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
-    MultigridDesigner(53, MultigridDesigner.class),
+    CoarseGridDesigner(52, CoarseGridDesigner.class),
+    AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     // Partial 60
     ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
     PartialWaveformAssembler3D(61, PartialWaveformAssembler3D.class),
@@ -96,7 +98,7 @@ enum Manhattan {
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
     OneDPartialDSMSetup(65, OneDPartialDSMSetup.class), //
-    MultigridPartialsForger(67, MultigridPartialsForger.class),
+    PartialsFuser(67, PartialsFuser.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),

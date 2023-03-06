@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.multigrid;
+package io.github.kensuke1984.kibrary.fusion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -25,13 +24,13 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Operation that creates new {@link PartialID}s for fused voxels in {@link MultigridDesign}
+ * Operation that creates new {@link PartialID}s for fused voxels in {@link FusionDesign}
  * by averaging partial waveforms of existing {@link PartialID}s.
  *
  * @author otsuru
  * @since 2022/8/10
  */
-public class MultigridPartialsForger extends Operation {
+public class PartialsFuser extends Operation {
 
     private final Property property;
     /**
@@ -52,9 +51,14 @@ public class MultigridPartialsForger extends Operation {
      */
     private Path partialPath;
     /**
-     * Path of a {@link MultigridInformationFile}
+     * Path of a {@link FusionInformationFile}
      */
-    private Path multigridPath;
+    private Path fusionPath;
+
+    /**
+     * The design of the fusion of unknown parameters
+     */
+    private FusionDesign fusionDesign;
 
     /**
      * @param args  none to create a property file <br>
@@ -79,13 +83,13 @@ public class MultigridPartialsForger extends Operation {
             pw.println("#partialIDPath partialID.dat");
             pw.println("##Path of a partial waveform file, must be set");
             pw.println("#partialPath partial.dat");
-            pw.println("##Path of a multigrid information file, must be set");
-            pw.println("#multigridPath multigrid.inf");
+            pw.println("##Path of a fusion information file, must be set");
+            pw.println("#fusionPath fusion.inf");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public MultigridPartialsForger(Property property) throws IOException {
+    public PartialsFuser(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -96,22 +100,22 @@ public class MultigridPartialsForger extends Operation {
 
         partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
-        multigridPath = property.parsePath("multigridPath", null, true, workPath);
+        fusionPath = property.parsePath("fusionPath", null, true, workPath);
 
     }
 
     @Override
     public void run() throws IOException {
-        List<PartialID> forgedPartialIDs = new ArrayList<>();
+        List<PartialID> fusedPartialIDs = new ArrayList<>();
 
         // read input
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-        MultigridDesign multigrid = MultigridInformationFile.read(multigridPath);
+        fusionDesign = FusionInformationFile.read(fusionPath);
 
         // work for each fused parameter
-        for (int i = 0; i < multigrid.getFusedParameters().size(); i++) {
-            UnknownParameter fusedParam = multigrid.getFusedParameters().get(i);
-            List<UnknownParameter> originalParams = multigrid.getOriginalParameters().get(i);
+        for (int i = 0; i < fusionDesign.getFusedParameters().size(); i++) {
+            UnknownParameter fusedParam = fusionDesign.getFusedParameters().get(i);
+            List<UnknownParameter> originalParams = fusionDesign.getOriginalParameters().get(i);
 
             // collect partialIDs that are for these originalParams
             List<PartialID> originalPartialIDs = new ArrayList<>();
@@ -124,7 +128,7 @@ public class MultigridPartialsForger extends Operation {
                 }
             }
 
-            // pair up partialIDs and forge into a new one
+            // pair up partialIDs and fuse into a new one
             // this process is repeated while removing used IDs out of the list
             while (originalPartialIDs.size() > 0) {
                 // get the first ID in list
@@ -139,17 +143,20 @@ public class MultigridPartialsForger extends Operation {
                         pairPartialIDs.add(idK);
                     }
                 }
-                // forge partialID for this fusedParam
-                forgedPartialIDs.add(forge(pairPartialIDs, fusedParam));
+                // fuse partialID for this fusedParam
+                fusedPartialIDs.add(fuse(pairPartialIDs, originalParams, fusedParam));
                 // remove used IDs from the collected IDs
                 for (PartialID id : pairPartialIDs) {
                     originalPartialIDs.remove(id);
                 }
             }
+            System.err.print(".");
         }
+        System.err.println();
 
-        // add forged IDs into the array of all original IDs
-        List<PartialID> newPartialIDs = Stream.concat(Arrays.stream(partialIDs), forgedPartialIDs.stream()).collect(Collectors.toList());
+        // collect fused IDs and the original IDs that are not fused
+        List<PartialID> newPartialIDs = Arrays.stream(partialIDs).filter(id -> !isFused(id)).collect(Collectors.toList());
+        newPartialIDs.addAll(fusedPartialIDs);
 
         // output
         String dateStr = GadgetAid.getTemporaryString();
@@ -158,30 +165,50 @@ public class MultigridPartialsForger extends Operation {
         PartialIDFile.write(newPartialIDs, idPath, wavePath);
     }
 
+    private boolean isFused(PartialID id) {
+        List<List<UnknownParameter>> originalParamsList = fusionDesign.getOriginalParameters();
+        for (List<UnknownParameter> originalParams : originalParamsList) {
+            for (UnknownParameter originalParam : originalParams) {
+                if (id.getPartialType().equals(originalParam.getPartialType()) && id.getVoxelPosition().equals(originalParam.getPosition())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Creates a new {@link PartialID} based on input {@link PartialID}s.
-     * TODO Is taking a simple average OK?
+     * The average waveform, taken considering the volume of voxels, is computed.
      *
      * @param ids
      * @param fusedParam
      * @return
      */
-    private PartialID forge(List<PartialID> ids, UnknownParameter fusedParam) {
+    private PartialID fuse(List<PartialID> ids, List<UnknownParameter> originalParams, UnknownParameter fusedParam) {
         // add waveforms
         RealVector sumVector = null;
+        double volumeTotal = 0;
         for (PartialID id : ids) {
+            // find volume of corresponding voxel
+            UnknownParameter originalParam = originalParams.stream()
+                    .filter(param -> id.getPartialType().equals(param.getPartialType()) && id.getVoxelPosition().equals(param.getPosition()))
+                    .findFirst().get();
+            double volume = originalParam.getWeighting();
+            volumeTotal += volume;
+            // add the waveform, multiplied by volume
             RealVector vector = new ArrayRealVector(id.getData());
-            sumVector = (sumVector == null) ? vector : sumVector.add(vector);
+            sumVector = (sumVector == null) ? vector.mapMultiply(volume) : sumVector.add(vector.mapMultiply(volume));
         }
         // compute average waveform
-        double[] averageWaveform = sumVector.mapDivide(ids.size()).toArray();
+        double[] averageWaveform = sumVector.mapDivide(volumeTotal).toArray();
 
         // create forged ID
         PartialID id0 = ids.get(0);
-        PartialID forgedID = new PartialID(id0.getObserver(), id0.getGlobalCMTID(), id0.getSacComponent(),
+        PartialID fusedID = new PartialID(id0.getObserver(), id0.getGlobalCMTID(), id0.getSacComponent(),
                 id0.getSamplingHz(), id0.getStartTime(), id0.getNpts(), id0.getMinPeriod(), id0.getMaxPeriod(),
                 id0.getPhases(), id0.getStartByte(), id0.isConvolved(),
                 fusedParam.getPosition(), fusedParam.getPartialType(), averageWaveform);
-        return forgedID;
+        return fusedID;
     }
 }

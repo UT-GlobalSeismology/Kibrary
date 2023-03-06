@@ -67,6 +67,7 @@ public class SensitivityKernelMapper extends Operation {
     private int[] displayLayers;
     private int nPanelsPerRow;
     private String mapRegion;
+    private double amplification;
     private double scale;
     /**
      * Whether to display map as mosaic without smoothing
@@ -114,6 +115,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#nPanelsPerRow ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##(double) The factor to amplify the sensitivity values (1e29)");
+            pw.println("#amplification ");
             pw.println("##(double) Range of scale (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
@@ -145,6 +148,7 @@ public class SensitivityKernelMapper extends Operation {
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        amplification = property.parseDouble("amplification", "1e29");
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
     }
@@ -194,7 +198,7 @@ public class SensitivityKernelMapper extends Operation {
                 Files.createFile(filePath);
 
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath, StandardOpenOption.APPEND))) {
-                pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * 1e31);
+                pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * amplification);
             }
 
             PerturbationMapShellscript script

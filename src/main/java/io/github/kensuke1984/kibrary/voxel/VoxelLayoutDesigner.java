@@ -101,18 +101,18 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
             pw.println("#structureName ");
             pw.println("##(double) Latitude spacing [km]. If this is unset, the following dLatitudeDeg will be used.");
-            pw.println("## The (roughly) median radius of target region will be used to convert this to degrees.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg] (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset for latitude [deg], must be positive (0)");
+            pw.println("##(double) Offset of boundary latitude [deg], must be positive (0)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
-            pw.println("## The (roughly) median radius of target region will be used to convert this to degrees.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg] (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset for longitude, when dLongitudeDeg is used [deg] [0:dLongitude) (0)");
+            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (0)");
             pw.println("#longitudeOffset ");
             pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
             pw.println("#crossDateLine ");
@@ -170,6 +170,7 @@ public class VoxelLayoutDesigner extends Operation {
 
         borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", "3480 3530 3580 3630 3680 3730 3780 3830 3880"))
                 .sorted().toArray();
+        if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii");
     }
 
     @Override
