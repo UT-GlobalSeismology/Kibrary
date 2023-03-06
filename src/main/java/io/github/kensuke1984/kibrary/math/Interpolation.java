@@ -79,8 +79,8 @@ public class Interpolation {
             }
 
             //~interpolate along each grid longitude (meridian)
-            double minLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getXAt(0)).min().getAsDouble(); //TODO getMinX
-            double maxLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getXAt(trace.getLength() - 1)).max().getAsDouble(); //TODO getMaxX
+            double minLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getMinX()).min().getAsDouble();
+            double maxLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
 //            double startLongitude = Math.ceil(minLongitude / gridInterval) * gridInterval;
 //            double endLongitude = Math.floor(maxLongitude / gridInterval) * gridInterval;
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
@@ -90,11 +90,11 @@ public class Interpolation {
                 // pack data values at original latitudes along this meridian in a Trace (x is the latitude direction here)
                 double[] x = Arrays.stream(latitudes).filter(latitude -> {
                     Trace latitudeTrace = eachLatitudeTraces.get(latitude);
-                    return (latitudeTrace.getXAt(0) <= longitude && longitude <= latitudeTrace.getXAt(latitudeTrace.getLength() - 1)); //TODO getMinX,getMaxX
+                    return (latitudeTrace.getMinX() <= longitude && longitude <= latitudeTrace.getMaxX());
                 }).sorted().toArray();
                 double[] y = Arrays.stream(x).map(latitude -> {
                     Trace latitudeTrace = eachLatitudeTraces.get(latitude);
-                    return latitudeTrace.getYAt(latitudeTrace.getNearestXIndex(longitude));
+                    return latitudeTrace.getYAt(latitudeTrace.findNearestXIndex(longitude));
                 }).toArray();
                 Trace discreteTrace = new Trace(x, y);
 
@@ -110,8 +110,8 @@ public class Interpolation {
     }
 
     private static Trace interpolate(Trace originalTrace, double gridInterval, boolean mosaic) {
-        double startLongitude = Math.ceil(originalTrace.getXAt(0) / gridInterval) * gridInterval; //TODO getMinX
-        double endLongitude = Math.floor(originalTrace.getXAt(originalTrace.getLength() - 1) / gridInterval) * gridInterval; //TODO getMaxX
+        double startLongitude = Math.ceil(originalTrace.getMinX() / gridInterval) * gridInterval;
+        double endLongitude = Math.floor(originalTrace.getMaxX() / gridInterval) * gridInterval;
         int nGridLongitudes = (int) Math.round((endLongitude - startLongitude) / gridInterval) + 1;
         double[] x = new double[nGridLongitudes];
         double[] y = new double[nGridLongitudes];
@@ -122,7 +122,7 @@ public class Interpolation {
         if (mosaic) {
             // use value at nearest index
             for (int i = 0; i < nGridLongitudes; i++) {
-                y[i] = originalTrace.getYAt(originalTrace.getNearestXIndex(x[i]));
+                y[i] = originalTrace.getYAt(originalTrace.findNearestXIndex(x[i]));
             }
         } else {
             // for each interval, which is 1 less than the number of points on the Trace
