@@ -23,7 +23,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -58,6 +57,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * This class also contains methods for exporting waveform data in ascii-format text files.
  * When the main method of this class is executed,
  * the input binary-format files can be exported in ascii format.
+ * If desired, waveform data can be exported in txt files under the basic waveform folder.
  *
  * @since a long time ago
  * @version 2021/11/3 moved from waveformdata to waveform
@@ -70,16 +70,22 @@ public final class BasicIDFile {
      */
     public static final int ONE_ID_BYTE = 48;
 
+    public static final String ID_FILE_NAME = "basicID.dat";
+    public static final String DATA_FILE_NAME = "basicData.dat";
+
     /**
-     * Write basicIDs into ID file and waveform file.
-     * @param basicIDs
-     * @param outputIDPath
-     * @param outputWavePath
+     * Write basicIDs into ID file and data file.
+     * @param basicIDs (List of BasicID)
+     * @param outPath (Path) The directory where basic ID and data files shall be created. The directory must exist.
      * @throws IOException
      *
      * @author otsuru
+     * @since 2023/1/29
      */
-    public static void write(List<BasicID> basicIDs, Path outputIDPath, Path outputWavePath) throws IOException {
+    public static void write(List<BasicID> basicIDs, Path outPath) throws IOException {
+        Files.createDirectories(outPath);
+        Path outputIDPath = outPath.resolve(ID_FILE_NAME);
+        Path outputDataPath = outPath.resolve(DATA_FILE_NAME);
 
         // extract set of observers, events, periods, and phases
         Set<Observer> observerSet = new HashSet<>();
@@ -109,9 +115,9 @@ public final class BasicIDFile {
 
         // output
         System.err.println("Outputting "
-                + MathAid.switchSingularPlural(basicIDs.size(), "basicID", "basicIDs") + " (total of obs and syn)");
-        System.err.println(" in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath, observerSet, eventSet, periodRanges, phases)) {
+                + MathAid.switchSingularPlural(basicIDs.size(), "basicID", "basicIDs") + " (total of obs and syn)"
+                + " in " + outPath);
+        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputDataPath, observerSet, eventSet, periodRanges, phases)) {
             for (BasicID id : basicIDs) {
                 wdw.addBasicID(id);
             }
@@ -119,7 +125,22 @@ public final class BasicIDFile {
     }
 
     /**
-     * Reads both the ID file and the waveform file.
+     * Reads basicIDs from file.
+     * @param inPath (Path) The directory containing basic ID and data files
+     * @param withData (boolean) Whether to read waveform data
+     * @return (List of BasicID)
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/1/29
+     */
+    public static List<BasicID> read(Path inPath, boolean withData) throws IOException {
+        if (withData) return Arrays.asList(read(inPath.resolve(ID_FILE_NAME), inPath.resolve(DATA_FILE_NAME)));
+        else return Arrays.asList(read(inPath.resolve(ID_FILE_NAME)));
+    }
+
+    /**
+     * Reads both the ID file and the data file.
      * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @param dataPath (Path) A data file, if it does not exist, an IOException
      * @return Array of {@link BasicID} containing waveform data
@@ -131,13 +152,14 @@ public final class BasicIDFile {
 
         // Read waveforms
         long t = System.nanoTime();
+        long nptsTotal = Arrays.stream(ids).mapToLong(BasicID::getNpts).sum();
         long dataSize = Files.size(dataPath);
-        BasicID lastID = ids[ids.length - 1];
-        if (dataSize != lastID.startByte + lastID.npts * 8)
+        if (dataSize != nptsTotal * Double.BYTES)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
+
         try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(dataPath))) {
             byte[][] bytes = new byte[ids.length][];
-            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * 8]);
+            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * Double.BYTES]);
             for (int i = 0; i < ids.length; i++)
                 bis.read(bytes[i]);
             IntStream.range(0, ids.length).parallel().forEach(i -> {
@@ -154,22 +176,7 @@ public final class BasicIDFile {
     }
 
     /**
-     * @param idPath
-     * @param dataPath
-     * @return
-     * @throws IOException
-     * @since 2022/12/11
-     * @author otsuru
-     */
-    public static List<BasicID> readAsList(Path idPath, Path dataPath) throws IOException {
-        return Arrays.asList(read(idPath, dataPath));
-    }
-    public static List<BasicID> readAsList(Path idPath) throws IOException {
-        return Arrays.asList(read(idPath));
-    }
-
-    /**
-     * Reads only the ID file (and not the waveform file).
+     * Reads only the ID file (and not the data file).
      * @param idPath (Path) An ID file, if it does not exist, an IOException
      * @return Array of {@link BasicID} without waveform data
      * @throws IOException if an I/O error occurs
@@ -265,20 +272,21 @@ public final class BasicIDFile {
         }
         Phase[] usablephases = new Phase[tmpset.size()];
         usablephases = tmpset.toArray(usablephases);
-        double startTime = bb.getFloat(); // starting time
-        int npts = bb.getInt(); // データポイント数
+        double startTime = bb.getFloat();
+        int npts = bb.getInt();
         double samplingHz = bb.getFloat();
         boolean isConvolved = 0 < bb.get();
+        // startByte is read, but not used
         long startByte = bb.getLong();
         BasicID bid = new BasicID(type, samplingHz, startTime, npts, station, event, component, period[0], period[1],
-                usablephases, startByte, isConvolved);
+                usablephases, isConvolved);
         return bid;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Exports data files in ascii format.
+     * Exports binary files in ascii format.
      * @param args [option]
      * @throws IOException if an I/O error occurs
      */
@@ -298,9 +306,9 @@ public final class BasicIDFile {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         //input
-        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("basicIDFile").required()
-                .desc("Export content of basic ID file").build());
-        options.addOption(Option.builder("w").longOpt("waveform").hasArg().argName("basicFile")
+        options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
+                .desc("The input basic waveform folder (.)").build());
+        options.addOption(Option.builder("w").longOpt("waveform")
                 .desc("Export waveforms in event directories under current path").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
@@ -316,14 +324,16 @@ public final class BasicIDFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        Path basicPath = cmdLine.hasOption("b") ? Paths.get(cmdLine.getOptionValue("b")) : Paths.get(".");
+
         // read input
         List<BasicID> ids;
         if (cmdLine.hasOption("w")) {
-            ids = readAsList(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
+            ids = read(basicPath, true);
             if (cmdLine.hasOption("n")) return;
-            outputWaveforms(ids);
+            outputWaveformTxts(ids, basicPath);
         } else {
-            ids = readAsList(Paths.get(cmdLine.getOptionValue("i")));
+            ids = read(basicPath, false);
             if (cmdLine.hasOption("n")) return;
         }
 
@@ -332,14 +342,13 @@ public final class BasicIDFile {
         if (cmdLine.hasOption("o")) {
             outputIdsPath = Paths.get(cmdLine.getOptionValue("o"));
         } else {
-            // set the output file name the same as the input, but with extension changed to txt
-            outputIdsPath = Paths.get(FileAid.extractNameRoot(Paths.get(cmdLine.getOptionValue("i"))) + ".txt");
+            outputIdsPath = Paths.get("basicID.txt");
         }
 
         // output
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
             pw.println("#station, network, lat, lon, event, component, type, startTime, npts, samplingHz, "
-                    + "minPeriod, maxPeriod, phases, convolved, startByte");
+                    + "minPeriod, maxPeriod, phases, convolved");
             ids.forEach(pw::println);
         }
     }
@@ -350,7 +359,7 @@ public final class BasicIDFile {
      * @param ids
      * @throws IOException
      */
-    private static void outputWaveforms(List<BasicID> ids) throws IOException {
+    public static void outputWaveformTxts(List<BasicID> ids, Path basicPath) throws IOException {
 
         BasicIDPairUp pairer = new BasicIDPairUp(ids);
         List<BasicID> obsList = pairer.getObsList();
@@ -360,8 +369,8 @@ public final class BasicIDFile {
 
         for (GlobalCMTID event : events) {
 
-            // create event directory under current path
-            Path eventPath = Paths.get(event.toString());
+            // create event directory under basicPath
+            Path eventPath = basicPath.resolve(event.toString());
             Files.createDirectories(eventPath);
 
             for (int i = 0; i < obsList.size(); i++) {
@@ -403,7 +412,7 @@ public final class BasicIDFile {
     }
 
     /**
-     * The name of text file which is to contain waveform data.
+     * The name of text file which is to contain waveform data. TODO there may be multiple timewindows for a dataEntry
      * @param oneID
      * @return
      */

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -103,7 +104,7 @@ public class DataEntryListFile {
      * Reads dataset information from an input source
      * and creates a data entry list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
-     * a timewindow file, or a basic ID file.
+     * a timewindow file, or a basic waveform folder.
      *
      * @param args
      * @throws IOException if an I/O error occurs
@@ -134,8 +135,8 @@ public class DataEntryListFile {
                 .desc("Use dataset folder containing event folders as input").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
                 .desc("Use timewindow file as input").build());
-        inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("basicIDFile")
-                .desc("Use basic ID file as input").build());
+        inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
+                .desc("Use basic waveform folder as input").build());
         options.addOptionGroup(inputOption);
 
         // output
@@ -168,8 +169,8 @@ public class DataEntryListFile {
                     .map(timewindow -> new DataEntry(timewindow.getGlobalCMTID(), timewindow.getObserver(), timewindow.getComponent()))
                     .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
-            BasicID[] basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")));
-            entrySet = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
+            List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
+            entrySet = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))
                     .map(id -> new DataEntry(id.getGlobalCMTID(), id.getObserver(), id.getSacComponent()))
                     .collect(Collectors.toSet());
         } else {

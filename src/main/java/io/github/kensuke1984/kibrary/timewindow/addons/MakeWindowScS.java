@@ -140,9 +140,9 @@ public class MakeWindowScS {
 				else
 					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("sc"))).read();
 				Trace synTrace = synData.createTrace().cutWindow(timeS - 15, timeS + 40);
-				double deltaTimeP2P = Math.abs(synTrace.getXforMaxValue() - synTrace.getXforMinValue());
-				double timeFirstPeak = synTrace.getXforMaxValue() < synTrace.getXforMinValue() ? synTrace.getXforMaxValue() : synTrace.getXforMinValue();
-				double timeLatePeak = synTrace.getXforMaxValue() > synTrace.getXforMinValue() ? synTrace.getXforMaxValue() : synTrace.getXforMinValue();
+				double deltaTimeP2P = Math.abs(synTrace.getXforMaxYValue() - synTrace.getXforMinYValue());
+				double timeFirstPeak = synTrace.getXforMaxYValue() < synTrace.getXforMinYValue() ? synTrace.getXforMaxYValue() : synTrace.getXforMinYValue();
+				double timeLatePeak = synTrace.getXforMaxYValue() > synTrace.getXforMinYValue() ? synTrace.getXforMaxYValue() : synTrace.getXforMinYValue();
 				double timeEndOfS = timeLatePeak + deltaTimeP2P * 0.9;
 				
 				SACFileAccess obsData = obsName.read();
@@ -210,7 +210,7 @@ public class MakeWindowScS {
 				if (select) {
 					Trace synScS = synData.createTrace().cutWindow(startTime, endTime);
 					Trace obsScS = obsData.createTrace().cutWindow(startTime, endTime);
-					double shift = synScS.getXforMaxValue() - obsScS.getXforMaxValue();
+					double shift = synScS.getXforMaxYValue() - obsScS.getXforMaxYValue();
 					
 					RealVector obsVector = obsData.createTrace().cutWindow(startTime - shift, endTime - shift).getYVector()
 							.mapMultiply(ratio_S);

@@ -24,9 +24,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -35,20 +34,19 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
- * Creates record section for each event included in a {@link BasicIDFile}.
- * Time-shift from corrections is applied to observed waveform when being plotted.
+ * Creates a record section for each event included in a {@link BasicIDFile}.
+ * Time-shift from corrections can be applied to observed waveform when being plotted.
  * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
  * Travel time curves can be drawn on the graph.
  * <p>
- * A pair of a basic ID file and basic waveform file is required as input.
+ * A basic waveform folder is required as input.
+ * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
  * <p>
- * Event directories will be created under workPath if they do not already exist.
- * Output files will be created under these event directories.
- * If text files of waveform data for each observer exist under event directories, they will be reused;
- * if not, they will be generated using {@link BasicIDFile}.
- * Rewriting should not be needed because the content of these files should always be the same.
+ * The entries to plot will be determined by whether they are included in mainBasicPath.
+ * When plotting additional synthetic waveforms, their amplitudes will be adjusted with parameters for the main synthetic waveforms.
  * <p>
- * Output pdf files and their corresponding plt files will be created under each of the event directories.
+ * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
+ * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
  * @author otsuru
  * @since 2021/12/11
@@ -88,27 +86,33 @@ public class BasicRecordSectionCreator extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic ID file
+     * Path of a basic waveform folder
      */
-    private Path basicIDPath;
+    private Path mainBasicPath;
     /**
-     * Path of a basic file
+     * Path of reference waveform folder 1
      */
-    private Path basicPath;
+    private Path refBasicPath1;
     /**
-     * Path of folder containing event folders with waveform txt files
+     * Path of reference waveform folder 2
      */
-    private Path referencePath;
+    private Path refBasicPath2;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
-    private AmpStyle obsAmpStyle;
-    private AmpStyle synAmpStyle;
+    private BasicPlotAid.AmpStyle obsAmpStyle;
+    private BasicPlotAid.AmpStyle synAmpStyle;
     private double ampScale;
 
+    /**
+     * Whether to plot the figure with azimuth as the Y-axis
+     */
     private boolean byAzimuth;
+    /**
+     * Whether to set the azimuth range to [-180:180) instead of [0:360)
+     */
     private boolean flipAzimuth;
     /**
      * Names of phases to plot travel time curves
@@ -132,7 +136,22 @@ public class BasicRecordSectionCreator extends Operation {
     private double lowerAzimuth;
     private double upperAzimuth;
 
+    private int unshiftedObsStyle;
+    private String unshiftedObsName;
+    private int shiftedObsStyle;
+    private String shiftedObsName;
+    private int mainSynStyle;
+    private String mainSynName;
+    private int refSynStyle1;
+    private String refSynName1;
+    private int refSynStyle2;
+    private String refSynName2;
+
+    /**
+     * Inxtance of tool to use to compute travel times
+     */
     private TauP_Time timeTool;
+    String dateStr;
 
     /**
      * @param args  none to create a property file <br>
@@ -151,17 +170,16 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
-            pw.println("##Path of a waveform folder, when also plotting reference waveforms");
-            pw.println("##  It must contain event folders with waveform txt files. Only observed waveforms will be plotted.");
-            pw.println("#referencePath ");
+            pw.println("##Path of a basic waveform folder (.)");
+            pw.println("#mainBasicPath ");
+            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms");
+            pw.println("#refBasicPath1 ");
+            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms");
+            pw.println("#refBasicPath2 ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
@@ -192,6 +210,26 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#lowerAzimuth ");
             pw.println("##(double) Upper limit of range of azimuth to be used [deg] (lowerAzimuth:360] (360)");
             pw.println("#upperAzimuth ");
+            pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black} (1)");
+            pw.println("#unshiftedObsStyle 0");
+            pw.println("##Name for unshifted observed waveform (unshifted)");
+            pw.println("#unshiftedObsName ");
+            pw.println("##Plot style for shifted observed waveform, from {0:no plot, 1:gray, 2:black} (2)");
+            pw.println("#shiftedObsStyle ");
+            pw.println("##Name for shifted observed waveform (shifted)");
+            pw.println("#shiftedObsName observed");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
+            pw.println("#mainSynStyle 2");
+            pw.println("##Name for main synthetic waveform (synthetic)");
+            pw.println("#mainSynName recovered");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("#refSynStyle1 1");
+            pw.println("##Name for reference synthetic waveform 1 (reference1)");
+            pw.println("#refSynName1 initial");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("#refSynStyle2 ");
+            pw.println("##Name for reference synthetic waveform 2 (reference2)");
+            pw.println("#refSynName2 ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -207,18 +245,19 @@ public class BasicRecordSectionCreator extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
-        basicPath = property.parsePath("basicPath", null, true, workPath);
-        if (property.containsKey("referencePath"))
-            referencePath = property.parsePath("referencePath", null, true, workPath);
+        mainBasicPath = property.parsePath("mainBasicPath", ".", true, workPath);
+        if (property.containsKey("refBasicPath1"))
+            refBasicPath1 = property.parsePath("refBasicPath1", ".", true, workPath);
+        if (property.containsKey("refBasicPath2"))
+            refBasicPath2 = property.parsePath("refBasicPath2", ".", true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                     .collect(Collectors.toSet());
         }
 
-        obsAmpStyle = AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
-        synAmpStyle = AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
+        obsAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
+        synAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
         ampScale = property.parseDouble("ampScale", "1.0");
 
         byAzimuth = property.parseBoolean("byAzimuth", "false");
@@ -240,53 +279,81 @@ public class BasicRecordSectionCreator extends Operation {
         upperAzimuth = property.parseDouble("upperAzimuth", "360");
         if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
             throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+
+        unshiftedObsStyle = property.parseInt("unshiftedObsStyle", "1");
+        unshiftedObsName = property.parseString("unshiftedObsName", "unshifted");
+        shiftedObsStyle = property.parseInt("shiftedObsStyle", "2");
+        shiftedObsName = property.parseString("shiftedObsName", "shifted");
+        mainSynStyle = property.parseInt("mainSynStyle", "1");
+        mainSynName = property.parseString("mainSynName", "synthetic");
+        refSynStyle1 = property.parseInt("refSynStyle1", "0");
+        refSynName1 = property.parseString("refSynName1", "reference1");
+        refSynStyle2 = property.parseInt("refSynStyle2", "0");
+        refSynName2 = property.parseString("refSynName2", "reference2");
+        if (refSynStyle1 != 0 && refBasicPath1 == null)
+            throw new IllegalArgumentException("refBasicPath1 must be set when refSynStyle1 != 0");
+        if (refSynStyle2 != 0 && refBasicPath2 == null)
+            throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
     }
 
    @Override
    public void run() throws IOException {
+       dateStr = GadgetAid.getTemporaryString();
+
+       // read main basic waveform folders and write waveforms to be used into txt files
+       List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
+               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+       if (!tendEvents.isEmpty()) {
+           mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+       }
+       BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
+
+       // collect events included in mainBasicIDs
+       Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+       if (!DatasetAid.checkNum(events.size(), "event", "events")) {
+           return;
+       }
+
+       // read reference basic waveform folders and write waveforms to be used into txt files
+       List<BasicID> refBasicIDs1 = null;
+       if (refBasicPath1 != null && refSynStyle1 != 0) {
+           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                   .collect(Collectors.toList());
+           BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
+       }
+       List<BasicID> refBasicIDs2 = null;
+       if (refBasicPath2 != null && refSynStyle2 != 0) {
+           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                   .collect(Collectors.toList());
+           BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
+       }
+
        try {
-           List<BasicID> ids = BasicIDFile.readAsList(basicIDPath, basicPath);
-
-           // get all events included in basicIDs
-           Set<GlobalCMTID> allEvents = ids.stream().filter(id -> components.contains(id.getSacComponent()))
-                   .map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-           // eventDirs of events to be used
-           Set<EventFolder> eventDirs;
-           if (tendEvents.isEmpty()) {
-               eventDirs = allEvents.stream()
-                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
-           } else {
-               // choose only events that are included in tendEvents
-               eventDirs = allEvents.stream().filter(event -> tendEvents.contains(event))
-                       .map(event -> new EventFolder(workPath.resolve(event.toString()))).collect(Collectors.toSet());
-           }
-           if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-               return;
-           }
-
            // set up taup_time tool
            if (alignPhases != null || displayPhases != null) {
                timeTool = new TauP_Time(structureName);
            }
 
-           for (EventFolder eventDir : eventDirs) {
-               // create event directory if it does not exist
-               Files.createDirectories(eventDir.toPath());
+           for (GlobalCMTID event : events) {
 
                // set event to taup_time tool
                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
                if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(eventDir.getGlobalCMTID().getEventData().getCmtPosition().getDepth());
+                   timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
                }
 
-               // create plot for each component
+               // create plots under workPath
+               Path eventPath = workPath.resolve(event.toString());
+               Files.createDirectories(eventPath);
                for (SACComponent component : components) {
-                   List<BasicID> useIds = ids.stream().filter(id -> id.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
-                           && id.getSacComponent().equals(component))
+                   List<BasicID> useIds = mainBasicIDs.stream()
+                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   Plotter plotter = new Plotter(eventDir, useIds, component);
+                   Plotter plotter = new Plotter(eventPath, useIds, component);
                    plotter.plot();
                }
            }
@@ -296,43 +363,33 @@ public class BasicRecordSectionCreator extends Operation {
        }
    }
 
-    private static enum AmpStyle {
-        obsEach,
-        synEach,
-        obsMean,
-        synMean
-    }
-
     private class Plotter {
-        private final GnuplotLineAppearance obsAppearance = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-        private final GnuplotLineAppearance synAppearance = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-        private final GnuplotLineAppearance resultAppearance = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
-        private final GnuplotLineAppearance phaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
-
-        private final EventFolder eventDir;
+        private final Path eventPath;
         private final List<BasicID> ids;
         private final SACComponent component;
 
-        private GnuplotFile profilePlot;
+        private GnuplotFile gnuplot;
         private double obsMeanMax;
         private double synMeanMax;
+        private boolean firstPlot = true;
 
         /**
          * @param eventDir
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(EventFolder eventDir, List<BasicID> ids, SACComponent component) {
-            this.eventDir = eventDir;
+        private Plotter(Path eventPath, List<BasicID> ids, SACComponent component) {
+            this.eventPath = eventPath;
             this.ids = ids;
             this.component = component;
         }
 
-        public void plot() throws IOException, TauModelException {
-            // prepare IDs
+        private void plot() throws IOException, TauModelException {
             if (ids.size() == 0) {
                 return;
             }
+
+            // prepare IDs
             BasicIDPairUp pairer = new BasicIDPairUp(ids);
             List<BasicID> obsList = pairer.getObsList();
             List<BasicID> synList = pairer.getSynList();
@@ -366,7 +423,7 @@ public class BasicRecordSectionCreator extends Operation {
                     continue;
                 }
 
-                // Compute reduce time by distance or phase travel time.
+                // compute reduce time by distance or phase travel time
                 double reduceTime = 0;
                 if (alignPhases != null) {
                     timeTool.setPhaseNames(alignPhases);
@@ -400,107 +457,99 @@ public class BasicRecordSectionCreator extends Operation {
             if (minDistance > maxDistance || minTime > maxTime) return;
             int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
             int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
-            profilePlot.setCommonYrange(startDistance, endDistance);
-            profilePlot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
+            gnuplot.setCommonYrange(startDistance, endDistance);
+            gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 
-            // add  travel time curves
+            // add travel time curves
             if (displayPhases != null) {
                 plotTravelTimeCurve(startDistance, endDistance);
             }
 
             // plot
-            profilePlot.write();
-            if (!profilePlot.execute()) System.err.println("gnuplot failed!!");
+            gnuplot.write();
+            if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
         }
 
         private void profilePlotSetup() {
-            String fileNameRoot;
-            if (fileTag == null) {
-                fileNameRoot = "profile_" + eventDir.toString() + "_" + component.toString();
-            } else {
-                fileNameRoot = "profile_" + fileTag + "_" + eventDir.toString() + "_" + component.toString();
-            }
-            profilePlot = new GnuplotFile(eventDir.toPath().resolve(fileNameRoot + ".plt"));
+            // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
+            String fileNameRoot = DatasetAid.generateOutputFileName("profile", fileTag, dateStr, "_" + component.toString());
 
-            profilePlot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-            profilePlot.setMarginH(15, 25);
-            profilePlot.setMarginV(15, 15);
-            profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
-            profilePlot.unsetCommonKey();
+            gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
+            gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            gnuplot.setMarginH(15, 25);
+            gnuplot.setMarginV(15, 15);
+            gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
+            gnuplot.setCommonKey(true, false, "top right");
 
-            profilePlot.setCommonTitle(eventDir.toString());
+            gnuplot.setCommonTitle(eventPath.getFileName().toString());
             if (alignPhases != null) {
-                profilePlot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
+                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
             } else {
-                profilePlot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+                gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                profilePlot.setCommonYlabel("Distance (deg)");
-                profilePlot.addLabel("station network azimuth", "graph", 1.0, 1.0);
+                gnuplot.setCommonYlabel("Distance (deg)");
+                gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
-                profilePlot.setCommonYlabel("Azimuth (deg)");
-                profilePlot.addLabel("station network distance", "graph", 1.0, 1.0);
+                gnuplot.setCommonYlabel("Azimuth (deg)");
+                gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }
 
         private void profilePlotContent(BasicID obsID, BasicID synID, double distance, double azimuth, double reduceTime)
                 throws IOException, TauModelException {
-
-            // output waveform data to text file if it has not already been done so
-            String fileName = BasicIDFile.getWaveformTxtFileName(obsID);
-            if (!Files.exists(eventDir.toPath().resolve(fileName))) {
-                BasicIDFile.outputWaveformTxt(eventDir.toPath(), obsID, synID);
-            }
+            String txtFileName = BasicIDFile.getWaveformTxtFileName(obsID);
 
             // decide the coefficient to amplify each waveform
             RealVector obsDataVector = new ArrayRealVector(obsID.getData());
             RealVector synDataVector = new ArrayRealVector(synID.getData());
             double obsMax = obsDataVector.getLInfNorm();
             double synMax = synDataVector.getLInfNorm();
-            double obsAmp = selectAmp(obsAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
-            double synAmp = selectAmp(synAmpStyle, obsMax, synMax, obsMeanMax, synMeanMax);
+            double obsAmp = BasicPlotAid.selectAmp(obsAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
+            double synAmp = BasicPlotAid.selectAmp(synAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
 
             // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
-            String obsUsingString;
+            String shiftedUsingString;
+            String unshiftedUsingString;
             String synUsingString;
             if (!byAzimuth) {
-                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
+                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
                         "graph", 1.01, "first", distance);
-                obsUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
+                unshiftedUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
+                shiftedUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
                 synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reduceTime, synAmp, distance);
             } else {
-                profilePlot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
+                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
                         "graph", 1.01, "first", azimuth);
-                obsUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
+                unshiftedUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
+                shiftedUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
                 synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
             }
 
-            // add plot
-            if (referencePath != null) {
-                // when reference (the actual observed) exists, plot the actual (shifted) observed in black and the new (obtained) in blue
-                Path referenceFilePath = Paths.get("..").resolve(referencePath).resolve(eventDir.toString()).resolve(fileName);
-                profilePlot.addLine(referenceFilePath.toString(), obsUsingString, obsAppearance, "observed"); //TODO: this is not valid when ampStyle is not synEach
-                profilePlot.addLine(fileName, synUsingString, synAppearance, "initial");
-                profilePlot.addLine(fileName, obsUsingString, resultAppearance, "result");
-            } else {
-                profilePlot.addLine(fileName, obsUsingString, obsAppearance, "observed");
-                profilePlot.addLine(fileName, synUsingString, synAppearance, "synthetic");
+            // plot waveforms
+            // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
+            String eventName = eventPath.getFileName().toString();
+            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+            if (unshiftedObsStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), unshiftedUsingString, BasicPlotAid.switchObservedAppearance(unshiftedObsStyle),
+                        (firstPlot ? unshiftedObsName : ""));
+            if (shiftedObsStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), shiftedUsingString, BasicPlotAid.switchObservedAppearance(shiftedObsStyle),
+                        (firstPlot ? shiftedObsName : ""));
+            if (mainSynStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
+                        (firstPlot ? mainSynName : ""));
+            if (refSynStyle1 != 0) {
+                Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath1.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
+                        (firstPlot ? refSynName1 : ""));
             }
-        }
-
-        private double selectAmp(AmpStyle style, double obsEachMax, double synEachMax, double obsMeanMax, double synMeanMax) {
-            switch (style) {
-            case obsEach:
-                return obsEachMax / ampScale;
-            case synEach:
-                return synEachMax / ampScale;
-            case obsMean:
-                return obsMeanMax / ampScale;
-            case synMean:
-                return synMeanMax / ampScale;
-            default:
-                throw new IllegalArgumentException("Input AmpStyle is unknown.");
+            if (refSynStyle2 != 0) {
+                Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath2.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
+                        (firstPlot ? refSynName2 : ""));
             }
+            firstPlot = false;
         }
 
         private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
@@ -538,8 +587,8 @@ public class BasicRecordSectionCreator extends Operation {
             // output file and add curve
             for (int p = 0; p < displayPhases.length; p++) {
                 String phase = displayPhases[p];
-                String curveFileName = "curve_" + eventDir.toString() + "_" + component + "_" + phase + ".txt";
-                Path curvePath = eventDir.toPath().resolve(curveFileName);
+                String curveFileName = DatasetAid.generateOutputFileName("curve", fileTag, dateStr, "_" + component + "_" + phase + ".txt");
+                Path curvePath = eventPath.resolve(curveFileName);
                 boolean wrotePhaseLabel = false;
                 try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
                     for (int i = 0; i < iNum; i++) {
@@ -554,7 +603,7 @@ public class BasicRecordSectionCreator extends Operation {
                                 }
                                 // add label at first appearance
                                 if (wrotePhaseLabel == false) {
-                                    profilePlot.addLabel(phase, "first", travelTimes[p][i] - alignTimes[i], distance, GnuplotColorName.turquoise);
+                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - alignTimes[i], distance, GnuplotColorName.turquoise);
                                     wrotePhaseLabel = true;
                                 }
                             } else {
@@ -562,14 +611,14 @@ public class BasicRecordSectionCreator extends Operation {
                                 pw.println(distance + " " + (travelTimes[p][i] - reduceTime));
                                 // add label at first appearance
                                 if (wrotePhaseLabel == false) {
-                                    profilePlot.addLabel(phase, "first", travelTimes[p][i] - reduceTime, distance, GnuplotColorName.turquoise);
+                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - reduceTime, distance, GnuplotColorName.turquoise);
                                     wrotePhaseLabel = true;
                                 }
                             }
                         }
                     }
                 }
-                profilePlot.addLine(curveFileName, 2, 1, phaseAppearance, phase);
+                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
         }
     }

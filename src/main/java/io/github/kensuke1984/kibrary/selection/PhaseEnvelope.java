@@ -622,15 +622,15 @@ public class PhaseEnvelope implements Operation_old {
 	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACFileAccess obsdata, SACFileAccess syndata, double threshold) {
 		Trace obstrace = obsdata.createTrace().cutWindow(0, 4000.);
 		Trace syntrace = syndata.createTrace().cutWindow(0, 4000);
-		double maxobs = obstrace.getMaxValue();
-		double maxsyn = obstrace.getMaxValue();
+		double maxobs = obstrace.getMaxY();
+		double maxsyn = obstrace.getMaxY();
 		double minAllowedAmplitude = threshold * Math.max(maxobs, maxsyn);
 		List<double[]> filteredTimewindowList = new ArrayList<>();
 		for (double[] tw : timewindows) {
 			Trace syn = syntrace.cutWindow(tw[0], tw[1]);
 			Trace obs = obstrace.cutWindow(tw[0], tw[1]);
-			maxobs = syn.getMaxValue();
-			maxsyn = obs.getMaxValue();
+			maxobs = syn.getMaxY();
+			maxsyn = obs.getMaxY();
 			RealVector synVector = syn.getYVector();
 			RealVector obsVector = obs.getYVector().getSubVector(0, synVector.getDimension());
 			double variance = Math.sqrt(obsVector.dotProduct(synVector)) / obsVector.getNorm();

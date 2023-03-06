@@ -767,7 +767,7 @@ public class PartialWaveformAssembler3D extends Operation {
                             double[] cutU = sampleOutput(u, info);
 
                             PartialID pid = new PartialID(observer, event, component, finalSamplingHz, info.getStartTime(),
-                                    cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0,
+                                    cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(),
                                     sourceTimeFunctionType != SourceTimeFunctionType.NONE, location, type, cutU);
 
                             try {
@@ -873,7 +873,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         // 書き込み準備
         Path idPath = outPath.resolve("partialID.dat");
-        Path datasetPath = outPath.resolve("partial.dat");
+        Path datasetPath = outPath.resolve("partialData.dat");
 
         partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
                 phases, voxelPositionSet);
@@ -1050,10 +1050,10 @@ public class PartialWaveformAssembler3D extends Operation {
                 System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
 
             PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), true, stationLocation, PartialType.TIME_RECEIVER,
                     cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
                     cutU);
 
             try {

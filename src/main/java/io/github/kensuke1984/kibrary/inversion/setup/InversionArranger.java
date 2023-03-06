@@ -46,23 +46,15 @@ public class InversionArranger extends Operation {
     private Path outPath;
 
     /**
-     * path of basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * path of waveform data
+     * basic waveform folder
      */
     private Path basicPath;
     /**
-     * path of partial ID file
-     */
-    private Path partialIDPath;
-    /**
-     * path of partial data
+     * partial waveform folder
      */
     private Path partialPath;
     /**
-     * Path of unknown parameter file
+     * unknown parameter file
      */
     private Path unknownParameterPath;
 
@@ -87,14 +79,10 @@ public class InversionArranger extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
-            pw.println("##Path of a partial ID file, must be set");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file, must be set");
-            pw.println("#partialPath partial.dat");
+            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("#basicPath actual");
+            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("#partialPath partial");
             pw.println("##Path of an unknown parameter list file, must be set");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
@@ -112,9 +100,7 @@ public class InversionArranger extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
-        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
@@ -125,8 +111,8 @@ public class InversionArranger extends Operation {
     public void run() throws IOException {
 
         // read input
-        BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
+        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
 
         // assemble matrices

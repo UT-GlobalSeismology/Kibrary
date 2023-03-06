@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion.setup;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,11 +38,11 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  */
 public final class AMatrixBuilder {
 
-    private final PartialID[] partialIDs;
+    private final List<PartialID> partialIDs;
     private final DVectorBuilder dVector;
     private final List<UnknownParameter> parameterList;
 
-    public AMatrixBuilder(PartialID[] partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
+    public AMatrixBuilder(List<PartialID> partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
         this.partialIDs = partialIDs;
         this.dVector = dVector;
         this.parameterList = parameterList;
@@ -67,7 +66,7 @@ public final class AMatrixBuilder {
         AtomicInteger count = new AtomicInteger();
         int nUnknowns = (int) parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial()).count();
 
-        Arrays.stream(partialIDs).parallel().forEach(id -> {
+        partialIDs.stream().parallel().forEach(id -> {
             if (count.get() == dVector.getNTimeWindow() * nUnknowns)
                 return;
 
