@@ -105,14 +105,14 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg] (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of boundary latitude [deg], must be positive (0)");
+            pw.println("##(double) Offset of boundary latitude [deg], must be positive (2.5)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg] (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (0)");
+            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
             pw.println("#longitudeOffset ");
             pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
             pw.println("#crossDateLine ");
@@ -148,7 +148,7 @@ public class VoxelLayoutDesigner extends Operation {
                 throw new IllegalArgumentException("dLatitudeDeg must be positive");
             setLatitudeByKm = false;
         }
-        latitudeOffset = property.parseDouble("latitudeOffset", "0");
+        latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
         if (latitudeOffset < 0)
             throw new IllegalArgumentException("latitudeOffset must be positive");
 
@@ -161,7 +161,7 @@ public class VoxelLayoutDesigner extends Operation {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
             if (dLongitudeDeg <= 0)
                 throw new IllegalArgumentException("dLongitudeDeg must be positive");
-            longitudeOffset = property.parseDouble("longitudeOffset", "0");
+            longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
             if (longitudeOffset < 0 || dLongitudeDeg <= longitudeOffset)
                 throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg)");
             setLongitudeByKm = false;
