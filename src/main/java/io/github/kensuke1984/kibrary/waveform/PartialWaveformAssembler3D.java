@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,7 +23,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
 
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -112,7 +112,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
      */
     private double partialSamplingHz = 20;
-
     /**
      * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
      */
@@ -135,11 +134,11 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Set<PartialType> partialTypes;
     /**
-     * FPpool このフォルダの直下に イベントフォルダ（FP）を置く
+     * FPpool folder, containig event folders
      */
     private Path fpPath;
     /**
-     * BPpool このフォルダの直下に 観測点をソースとしたフォルダ（BP）を置く
+     * BPpool folder, containig event folders with observers as sources
      */
     private Path bpPath;
     /**
@@ -176,7 +175,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * time length (DSM parameter)
      */
     private double tlen;
-
     /**
      * step of frequency domain (DSM parameter)
      */
@@ -185,7 +183,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * bandpassの最小周波数（Hz）
      */
     private double minFreq;
-
     /**
      * bandpassの最大周波数（Hz）
      */
@@ -217,15 +214,11 @@ public class PartialWaveformAssembler3D extends Operation {
     private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
     private String dateString;
-
-    private WaveformDataWriter partialDataWriter;
-
     private Path logPath;
 
+    private List<PartialID> partialIDs = Collections.synchronizedList(new ArrayList<>());
     private Set<Observer> observerSet;
     private Set<GlobalCMTID> eventSet;
-    private double[][] periodRanges;
-    private Phase[] phases;
     private Set<FullPosition> voxelPositionSet;
     private Map<GlobalCMTID, SourceTimeFunction> sourceTimeFunctions;
 
@@ -388,7 +381,14 @@ public class PartialWaveformAssembler3D extends Operation {
 
     @Override
     public void run() throws IOException {
-        setOutput();
+        dateString = GadgetAid.getTemporaryString();
+
+        // create output folder
+        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        logPath = outPath.resolve("assembler" + dateString + ".log");
+        Files.createFile(logPath);
+
         final int N_THREADS = Runtime.getRuntime().availableProcessors();
 //		final int N_THREADS = 1;
         writeLog("Running " + N_THREADS + " threads");
@@ -404,7 +404,6 @@ public class PartialWaveformAssembler3D extends Operation {
 
         // sacdataを何ポイントおきに取り出すか
         step = (int) (partialSamplingHz / finalSamplingHz);
-        setPartialFile();
         int fpnum = 0;
 
         // set source time functions
@@ -429,7 +428,7 @@ public class PartialWaveformAssembler3D extends Operation {
         for (GlobalCMTID event : eventSet) {
             System.err.println("Working for " + event.toPaddedString() + " " + ++num + "/" + eventSet.size());
 
-         // Set of observers for the components and events in the timewindow.
+            // Set of observers for the components and events in the timewindow.
             Set<Observer> observerSet = readObserver(event);
             if (observerSet.isEmpty())
                 continue;
@@ -487,14 +486,14 @@ public class PartialWaveformAssembler3D extends Operation {
                             e.printStackTrace();
                         }
                      }
-                    partialDataWriter.flush();
                     //System.err.println();
                     writeLog(touchedSet.size() + " events are processed");
                     writeLog(fpnum++ + "th " + fpEventPath + " for " + event + " was done ");
                 } // end observer loop
-            } // end partila type loop
+            } // end partial type loop
         } // end event loop
-        terminate();
+
+        PartialIDFile.write(partialIDs, outPath.resolve("partial"));
     }
 
     /**
@@ -526,8 +525,6 @@ public class PartialWaveformAssembler3D extends Operation {
             eventSet.add(t.getGlobalCMTID());
             observerSet.add(t.getObserver());
         });
-        phases = timewindowSet.parallelStream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
-                .distinct().toArray(Phase[]::new);
 
         boolean fpExistence = eventSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
         boolean bpExistence = observerSet.stream().allMatch(observer -> Files.exists(bpPath.resolve(observer.getPosition().toCode())));
@@ -771,7 +768,7 @@ public class PartialWaveformAssembler3D extends Operation {
                                     sourceTimeFunctionType != SourceTimeFunctionType.NONE, location, type, cutU);
 
                             try {
-                                partialDataWriter.addPartialID(pid);
+                                partialIDs.add(pid);
                                 //System.err.print(".");
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -857,32 +854,6 @@ public class PartialWaveformAssembler3D extends Operation {
         }
     }
 
-
-    private void setOutput() throws IOException {
-        synchronized (PartialWaveformAssembler3D.class) {
-            do {
-                dateString = GadgetAid.getTemporaryString();
-                outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, dateString);
-                logPath = outPath.resolve("assembler" + dateString + ".log");
-            } while (Files.exists(logPath));
-            Files.createFile(logPath);
-        }
-    }
-
-    private void setPartialFile() throws IOException {
-
-        // 書き込み準備
-        Path idPath = outPath.resolve("partialID.dat");
-        Path datasetPath = outPath.resolve("partialData.dat");
-
-        partialDataWriter = new WaveformDataWriter(idPath, datasetPath, observerSet, eventSet, periodRanges,
-                phases, voxelPositionSet);
-        writeLog("Creating " + idPath + " " + datasetPath);
-        System.err.println("Creating " + idPath + " " + datasetPath);
-
-    }
-
-
     private void setBandPassFilter() throws IOException {
         System.err.println("Designing filter.");
         double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
@@ -890,7 +861,6 @@ public class PartialWaveformAssembler3D extends Operation {
         filter = new BandPassFilter(omegaH, omegaL, filterNp);
         filter.setCausal(causal);
         writeLog(filter.toString());
-        periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
     }
 
     private void readPerturbationPoints() throws IOException {
@@ -922,7 +892,6 @@ public class PartialWaveformAssembler3D extends Operation {
                 e.printStackTrace();
             }
         }
-        partialDataWriter.flush();
         System.err.println();
     }
 
@@ -1056,14 +1025,10 @@ public class PartialWaveformAssembler3D extends Operation {
                     1 / maxFreq, 1 / minFreq, t.getPhases(), true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
                     cutU);
 
-            try {
-                if (partialTypes.contains(PartialType.TIME_RECEIVER))
-                    partialDataWriter.addPartialID(PIDReceiverSide);
-                if (partialTypes.contains(PartialType.TIME_SOURCE))
-                    partialDataWriter.addPartialID(PIDSourceSide);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            if (partialTypes.contains(PartialType.TIME_RECEIVER))
+                partialIDs.add(PIDReceiverSide);
+            if (partialTypes.contains(PartialType.TIME_SOURCE))
+                partialIDs.add(PIDSourceSide);
         }
 
         private WorkerTimePartial(EventFolder eventDir) {
@@ -1144,11 +1109,6 @@ public class PartialWaveformAssembler3D extends Operation {
         writeLog(observerSet.size() + " stations are found in " + event + " .");
         return observerSet;
 
-    }
-
-    private void terminate() throws IOException {
-        partialDataWriter.close();
-        writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");
     }
 
     private synchronized void writeLog(String line) throws IOException {

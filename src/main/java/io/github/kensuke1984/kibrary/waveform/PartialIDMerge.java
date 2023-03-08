@@ -67,7 +67,7 @@ public class PartialIDMerge extends Operation {
             pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " folder");
-                pw.println("#partialPath" + i + " assembled");
+                pw.println("#partialPath" + i + " partial");
             }
         }
         System.err.println(outPath + " is created.");

@@ -112,6 +112,7 @@ public final class PartialIDFile {
                 }
                 wdw.addPartialID(id);
             }
+            wdw.flush();
         }
     }
 

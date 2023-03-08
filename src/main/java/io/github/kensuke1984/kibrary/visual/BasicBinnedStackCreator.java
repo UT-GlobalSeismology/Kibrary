@@ -30,6 +30,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
@@ -144,8 +145,8 @@ public class BasicBinnedStackCreator extends Operation {
     private int refSynStyle2;
     private String refSynName2;
 
-    private List<BasicID> refBasicIDs1;
-    private List<BasicID> refBasicIDs2;
+    private List<BasicID> refSynBasicIDs1;
+    private List<BasicID> refSynBasicIDs2;
     private double samplingStep;
 
     /**
@@ -311,15 +312,17 @@ public class BasicBinnedStackCreator extends Operation {
        }
        samplingStep = 1 / samplingHzs[0];
 
-       // read reference basic waveform folders
+       // read reference basic waveform folders and collect only synthetic basicIDs
        if (refBasicPath1 != null && refSynStyle1 != 0) {
-           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+           refSynBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                   .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
+                           && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
        }
        if (refBasicPath2 != null && refSynStyle2 != 0) {
-           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+           refSynBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                   .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
+                           && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
        }
 
@@ -476,8 +479,8 @@ public class BasicBinnedStackCreator extends Operation {
                 // main synthetic
                 mainSynStacks[k] = addUponShift(mainSynStacks[k], mainSynID.toTrace(), reduceTime);
                 // reference synthetic 1
-                if (refBasicIDs1 != null) {
-                    List<BasicID> refSynIDCandidates1 = refBasicIDs1.stream()
+                if (refSynBasicIDs1 != null) {
+                    List<BasicID> refSynIDCandidates1 = refSynBasicIDs1.stream()
                             .filter(id -> BasicID.isPair(id, obsID)).collect(Collectors.toList());
                     if (refSynIDCandidates1.size() != 1)
                         throw new IllegalStateException("0 or more than 1 refSynID1 matching obsID" + obsID.toString());
@@ -485,8 +488,8 @@ public class BasicBinnedStackCreator extends Operation {
                     refSynStacks1[k] = addUponShift(refSynStacks1[k], refSynID1.toTrace(), reduceTime);
                 }
                 // reference synthetic 2
-                if (refBasicIDs2 != null) {
-                    List<BasicID> refSynIDCandidates2 = refBasicIDs2.stream()
+                if (refSynBasicIDs2 != null) {
+                    List<BasicID> refSynIDCandidates2 = refSynBasicIDs2.stream()
                             .filter(id -> BasicID.isPair(id, obsID)).collect(Collectors.toList());
                     if (refSynIDCandidates2.size() != 1)
                         throw new IllegalStateException("0 or more than 1 refSynID2 matching obsID" + obsID.toString());
