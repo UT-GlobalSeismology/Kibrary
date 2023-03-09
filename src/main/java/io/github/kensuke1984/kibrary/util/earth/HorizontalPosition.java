@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.commons.math3.util.FastMath;
@@ -45,6 +46,38 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         FullPosition pos0 = positions.iterator().next();
         return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
                 .filter(diff -> !Precision.equals(diff, 0, FullPosition.LATITUDE_EPSILON)).min().getAsDouble();
+    }
+
+    /**
+     * Judges whether a set of positions crosses the date line and not the prime meridian.
+     * If the positions cross both the prime meridian and the date line, returns false.
+     * @param positions (Set of {@link FullPosition}) Input positions
+     * @return (boolean) Whether the positions cross only the date line
+     *
+     * @author otsuru
+     * @since 2023/3/9
+     */
+    public static boolean crossesDateLine(Set<FullPosition> positions) {
+        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLongitude).distinct().sorted().toArray();
+        double[] negativeLongitudes = Arrays.stream(longitudes).filter(lon -> lon < 0).toArray();
+        double[] positiveLongitudes = Arrays.stream(longitudes).filter(lon -> lon >= 0).toArray();
+
+        // when all positions are clustered on either the western or eastern hemisphere
+        if (negativeLongitudes.length == 0 || positiveLongitudes.length == 0) {
+            return false;
+        }
+
+        double minNegativeLongitude = Arrays.stream(negativeLongitudes).min().getAsDouble();
+        double maxNegativeLongitude = Arrays.stream(negativeLongitudes).max().getAsDouble();
+        double minPositiveLongitude = Arrays.stream(positiveLongitudes).min().getAsDouble();
+        double maxPositiveLongitude = Arrays.stream(positiveLongitudes).max().getAsDouble();
+
+        // when longitudes on both sides of the prime meridian are closer to each other than those on both sides of the date line
+        if (minPositiveLongitude - maxNegativeLongitude < minNegativeLongitude + 360 - maxPositiveLongitude) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public static double latitudeFor(double theta) {

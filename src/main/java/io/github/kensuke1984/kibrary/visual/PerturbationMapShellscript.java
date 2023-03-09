@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Class to generate shellscript files that are to be used to map horizontal slices of perturbations using GMT.
@@ -262,7 +264,7 @@ public class PerturbationMapShellscript {
      * @return (double) Suggested value of grid spacing
      */
     static double decideGridSampling(Set<FullPosition> positions) {
-        double positionInterval = FullPosition.findLatitudeInterval(positions);
+        double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
         int power = (int) Math.floor(Math.log10(positionInterval));
         double coef = positionInterval / Math.pow(10, power);
         if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong");
@@ -278,17 +280,18 @@ public class PerturbationMapShellscript {
      * @return (String) "lonMin/lonMax/latMin/latMax"
      */
     static String decideMapRegion(Set<FullPosition> positions) {
-        double latMin = Double.MAX_VALUE;
-        double latMax = -Double.MAX_VALUE;
-        double lonMin = Double.MAX_VALUE;
-        double lonMax = -Double.MAX_VALUE;
-        // search all unknowns
-        for (FullPosition pos : positions) {
-            if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
-            if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
-            if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
-            if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
-        }
+        if (positions.size() == 0) throw new IllegalArgumentException("No positions are given");
+        // whether to use [0:360) instead of [-180:180)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        // map to latitude and longitude values
+        double[] latitudes = positions.stream().mapToDouble(FullPosition::getLatitude).toArray();
+        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLatitude)
+                .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+        // find min and max latitude and longitude
+        double latMin = Arrays.stream(latitudes).min().getAsDouble();
+        double latMax = Arrays.stream(latitudes).max().getAsDouble();
+        double lonMin = Arrays.stream(longitudes).min().getAsDouble();
+        double lonMax = Arrays.stream(longitudes).max().getAsDouble();
         // expand the region a bit more
         latMin = Math.floor(latMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
         latMax = Math.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;

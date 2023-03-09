@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.math;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Methods concerning interpolation of values on a line or surface.
@@ -70,6 +72,7 @@ public class Interpolation {
         Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
 
         Set<FullPosition> allPositions = originalMap.keySet();
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(allPositions);
         double[] radii = allPositions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         for (double radius : radii) {
@@ -84,10 +87,12 @@ public class Interpolation {
             for (double latitude : latitudes) {
                 List<FullPosition> inLatitudePositions = inLayerPositions.stream()
                         .filter(pos -> Precision.equals(pos.getLatitude(), latitude, FullPosition.LATITUDE_EPSILON))
-                        .sorted().collect(Collectors.toList());
+                        .sorted(Comparator.comparing(pos -> (crossDateLine && pos.getLongitude() < 0) ? pos.getLongitude() + 360 : pos.getLongitude()))
+                        .collect(Collectors.toList());
 
                 // pack data values at original points along this latitude in a Trace (x is the longitude direction here)
-                double[] x = inLatitudePositions.stream().mapToDouble(position -> position.getLongitude()).toArray();
+                double[] x = inLatitudePositions.stream().mapToDouble(position -> position.getLongitude())
+                        .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
                 double[] y = inLatitudePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
                 Trace originalTrace = new Trace(x, y);
 
