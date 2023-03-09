@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.data.Trace;
@@ -40,15 +41,31 @@ public class Interpolation {
     }
 
     /**
+     * Interpolation on each horizontal 2-D surface.
+     * This method supposes that
+     * <ul>
+     * <li> data points are given on several distinct radii </li>
+     * <li> data points are aligned, equally spaced, on several distinct latitudes </li>
+     * <li> longitudes of the points are equally spaced along each latitude </li>
+     * </ul>
+     *
+     * In mosaic mode, a two-step nearest-neighbor interpolation is done: first in the longitude direction, then in the latitude.
+     * In smooth interpolation, a two-step cubic interpolation is done: first in the longitude direction, then in the latitude.
+     *
      * @param originalMap (Map of {@link FullPosition}, Double) Map data to be interpolated
      * @param gridInterval (double) Grid spacing to be used in output map
+     * @param latitudeMargin (double) The margin to append at the northern and southern ends of the region
+     * @param latitudeInKm (boolean) Whether the above value is given in [km] or [deg]
+     * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region
+     * @param longitudeInKm (boolean) Whether the above value is given in [km] or [deg]
      * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
-     * @return (LinkedHashMap of {@link FullPosition}, Double) Interpolated map data
+     * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data
      *
      * @author otsuru
      * @since 2023/3/4
      */
-    public static Map<FullPosition, Double> inEachMapLayer(Map<FullPosition, Double> originalMap, double gridInterval, boolean mosaic) {
+    public static Map<FullPosition, Double> inEachMapLayer(Map<FullPosition, Double> originalMap, double gridInterval,
+            double latitudeMargin, boolean latitudeInKm, double longitudeMargin, boolean longitudeInKm, boolean mosaic) {
         // This is created as LinkedHashMap to preserve the order of grid points
         Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
 
@@ -75,14 +92,14 @@ public class Interpolation {
                 Trace originalTrace = new Trace(x, y);
 
                 // interpolate the Trace and store it
-                eachLatitudeTraces.put(latitude, interpolate(originalTrace, gridInterval, mosaic));
+                double smallCircleRadius = radius * Math.cos(Math.toRadians(latitude));
+                double longitudeMarginDeg = longitudeInKm ? Math.toDegrees(longitudeMargin / smallCircleRadius) : longitudeMargin;
+                eachLatitudeTraces.put(latitude, interpolateTraceOnGrid(originalTrace, gridInterval, longitudeMarginDeg, mosaic));
             }
 
             //~interpolate along each grid longitude (meridian)
             double minLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getMinX()).min().getAsDouble();
             double maxLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
-//            double startLongitude = Math.ceil(minLongitude / gridInterval) * gridInterval;
-//            double endLongitude = Math.floor(maxLongitude / gridInterval) * gridInterval;
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
             for (int i = 0; i < nGridLongitudes; i++) {
                 double longitude = minLongitude + i * gridInterval;
@@ -99,7 +116,8 @@ public class Interpolation {
                 Trace discreteTrace = new Trace(x, y);
 
                 // interpolate the Trace and resample at all grid points
-                Trace interpolatedTrace = interpolate(discreteTrace, gridInterval, mosaic);
+                double latitudeMarginDeg = latitudeInKm ? Math.toDegrees(latitudeMargin / radius) : latitudeMargin;
+                Trace interpolatedTrace = interpolateTraceOnGrid(discreteTrace, gridInterval, latitudeMarginDeg, mosaic);
                 for (int j = 0; j < interpolatedTrace.getLength(); j++) {
                     interpolatedMap.put(new FullPosition(interpolatedTrace.getXAt(j), longitude, radius), interpolatedTrace.getYAt(j));
                 }
@@ -109,10 +127,26 @@ public class Interpolation {
         return interpolatedMap;
     }
 
-    private static Trace interpolate(Trace originalTrace, double gridInterval, boolean mosaic) {
-        double startLongitude = Math.ceil(originalTrace.getMinX() / gridInterval) * gridInterval;
-        double endLongitude = Math.floor(originalTrace.getMaxX() / gridInterval) * gridInterval;
+    /**
+     * Interpolates a given 1-D plot at all points that are within the domain and are multiples of the specified grid interval.
+     * The domain is taken with a margin on either side, as [xMin-margin:xMax+margin].
+     * In mosaic mode, nearest-neighbor interpolation is done; otherwise, cubic interpolation.
+     *
+     * @param originalTrace ({@link Trace}) Original 1-D plot
+     * @param gridInterval (double) Grid interval at which to interpolate
+     * @param mosaic (boolean) Whether to interpolate as mosaic (nearest-neighbor). Otherwise, smooth (cubic) interpolation.
+     * @return ({@link Trace}) Interpolated 1-D plot, where x values are multiples of gridInterval
+     *
+     * @author otsuru
+     * @since 2023/3/4
+     */
+    private static Trace interpolateTraceOnGrid(Trace originalTrace, double gridInterval, double margin, boolean mosaic) {
+        int lastIndex = originalTrace.getLength() - 1;
+        // set the x range so that the margin is added to either end
+        double startLongitude = Math.ceil((originalTrace.getMinX() - margin) / gridInterval) * gridInterval;
+        double endLongitude = Math.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
         int nGridLongitudes = (int) Math.round((endLongitude - startLongitude) / gridInterval) + 1;
+        // array of x and y of interpolated Trace
         double[] x = new double[nGridLongitudes];
         double[] y = new double[nGridLongitudes];
         for (int i = 0; i < nGridLongitudes; i++) {
@@ -124,13 +158,94 @@ public class Interpolation {
             for (int i = 0; i < nGridLongitudes; i++) {
                 y[i] = originalTrace.getYAt(originalTrace.findNearestXIndex(x[i]));
             }
-        } else {
-            // for each interval, which is 1 less than the number of points on the Trace
-            for (int k = 0; k < originalTrace.getLength() - 1; k++) {
 
+        } else {
+            // for each interval, including both ends, which is 1 more than the number of points on the Trace
+            for (int k = -1; k < originalTrace.getLength(); k++) {
+                PolynomialFunction interpolatedFunc = cubic(originalTrace.getY(), k);
+                // the actual x values at the ends of the segment, instead of [0:1]
+                // At either end of the domain, margin*2 is appended so that only one side of the flipping mirror is used.
+                double xLower = (k == -1) ? originalTrace.getXAt(0) - margin * 2 : originalTrace.getXAt(k);
+                double xUpper = (k == lastIndex) ? originalTrace.getXAt(lastIndex) + margin * 2 : originalTrace.getXAt(k + 1);
+
+                // compute y values for points that are within this segment
+                for (int i = 0; i < nGridLongitudes; i++) {
+                    if (xLower <= x[i] && x[i] < xUpper) {
+                        double normalizedX = (x[i] - xLower) / (xUpper - xLower);
+                        y[i] = interpolatedFunc.value(normalizedX);
+                    }
+                }
             }
         }
         return new Trace(x, y);
+    }
+
+    /**
+     * Computes cubic interpolation for the segment of the specified index, given a list of values (y_0, y_1, y_2, ...).
+     * When specifying index 5, for example, the range [x_5:x_6] will be interpolated,
+     * but supposing the x values in that segment are in [0:1] (thus, x_4=-1, x_5=0, x_6=1, and x_7=2).
+     * <p>
+     * Both ends will be set as a flipped mirror, i.e. f(-1)=-f(0) and f'(-1)=f'(0), f(last+1)=-f(last) and f'(last+1)=f'(last).
+     * With indices -1 and lastIndex, the interpolated function to the left and right of the input range can be obtained.
+     *
+     * @param values (double[]) Data values y_0, y_1, y_2, ...
+     * @param iSegment (int) Index of segment to interpolate [-1:lastIndex]
+     * @return (PolynomialFunction) Cubic function
+     *
+     * @author otsuru
+     * @since 2023/3/8
+     */
+    private static PolynomialFunction cubic(double[] values, int iSegment) {
+        int lastIndex = values.length - 1;
+        if (iSegment < -1 || lastIndex < iSegment)
+            throw new IllegalArgumentException("iSegment " + iSegment + " out of bounds [-1:" + lastIndex + "]");
+
+        double f0;
+        double fPrime0;
+        double f1;
+        double fPrime1;
+
+        if (values.length == 1) {
+            f0 = (iSegment == -1) ? -values[0] : values[0];
+            f1 = (iSegment == -1) ? values[0] : -values[0];
+            fPrime0 = 0;
+            fPrime1 = 0;
+        } else if (iSegment == -1) {
+            // set left side as a flipped mirror, i.e. f(-1)=-f(0) and f'(-1)=f'(0)
+            f0 = -values[0];
+            fPrime0 = (values[1] + values[0]) / 2;
+            f1 = values[0];
+            fPrime1 = (values[1] + values[0]) / 2;
+        } else if (iSegment == lastIndex) {
+            // set right side as a flipped mirror, i.e. f(last+1)=-f(last) and f'(last+1)=f'(last)
+            f0 = values[lastIndex];
+            fPrime0 = (-values[lastIndex] - values[lastIndex - 1]) / 2;
+            f1 = -values[lastIndex];
+            fPrime1 = (-values[lastIndex] - values[lastIndex - 1]) / 2;
+        } else {
+            if (iSegment == 0) {
+                // the left end is a flipped mirror, i.e. f(-1)=-f(0)
+                f0 = values[0];
+                fPrime0 = (values[1] + values[0]) / 2;
+            } else {
+                f0 = values[iSegment];
+                fPrime0 = (values[iSegment + 1] - values[iSegment - 1]) / 2;
+            }
+            if (iSegment == lastIndex - 1) {
+                // the right end is a flipped mirror, i.e. f(last+1)=-f(last)
+                f1 = values[lastIndex];
+                fPrime1 = (-values[lastIndex] - values[lastIndex - 1]) / 2;
+            } else {
+                f1 = values[iSegment + 1];
+                fPrime1 = (values[iSegment + 2] - values[iSegment]) / 2;
+            }
+        }
+        double a = 2 * f0 - 2 * f1 + fPrime0 + fPrime1;
+        double b = -3 * f0 + 3 * f1 - 2 * fPrime0 - fPrime1;
+        double c = fPrime0;
+        double d = f0;
+        double[] coeffs = {d, c, b, a};
+        return new PolynomialFunction(coeffs);
     }
 
 }

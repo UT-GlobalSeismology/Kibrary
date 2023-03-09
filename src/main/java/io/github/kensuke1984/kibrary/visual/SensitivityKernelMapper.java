@@ -113,7 +113,7 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##(double) The factor to amplify the sensitivity values (1e29)");
             pw.println("#amplification ");

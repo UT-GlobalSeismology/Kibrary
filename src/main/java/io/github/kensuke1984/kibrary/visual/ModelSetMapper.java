@@ -86,6 +86,10 @@ public class ModelSetMapper extends Operation {
     private int[] displayLayers;
     private int nPanelsPerRow;
     private String mapRegion;
+    private double marginLatitude;
+    private boolean setLatitudeByKm;
+    private double marginLongitude;
+    private boolean setLongitudeByKm;
     private double scale;
     /**
      * Whether to display map as mosaic without smoothing
@@ -136,8 +140,18 @@ public class ModelSetMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
+            pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
+            pw.println("#marginLatitudeKm ");
+            pw.println("##(double) Latitude margin at both ends [deg] (2.5)");
+            pw.println("#marginLatitudeDeg ");
+            pw.println("##(double) Longitude margin at both ends [km]. If this is unset, the following marginLongitudeDeg will be used.");
+            pw.println("#marginLongitudeKm ");
+            pw.println("##(double) Longitude margin at both ends [deg] (2.5)");
+            pw.println("#marginLongitudeDeg ");
+            pw.println("##########Parameters for perturbation values");
             pw.println("##(double) Range of percent scale (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
@@ -179,6 +193,24 @@ public class ModelSetMapper extends Operation {
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+
+        if (property.containsKey("marginLatitudeKm")) {
+            marginLatitude = property.parseDouble("marginLatitudeKm", null);
+            setLatitudeByKm = true;
+        } else {
+            marginLatitude = property.parseDouble("marginLatitudeDeg", "2.5");
+            setLatitudeByKm = false;
+        }
+        if (marginLatitude <= 0) throw new IllegalArgumentException("marginLatitude must be positive");
+        if (property.containsKey("marginLongitudeKm")) {
+            marginLongitude = property.parseDouble("marginLongitudeKm", null);
+            setLongitudeByKm = true;
+        } else {
+            marginLongitude = property.parseDouble("marginLongitudeDeg", "2.5");
+            setLongitudeByKm = false;
+        }
+        if (marginLongitude <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
+
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
     }
@@ -252,7 +284,8 @@ public class ModelSetMapper extends Operation {
                     Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
                     PerturbationListFile.write(discreteMap, outputDiscretePath);
                     // output interpolated perturbation file
-                    Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval, mosaic);
+                    Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                            marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
                     Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
                     PerturbationListFile.write(interpolatedMap, outputInterpolatedPath);
                 }
