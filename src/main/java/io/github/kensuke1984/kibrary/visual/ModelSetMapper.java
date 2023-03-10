@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
@@ -249,6 +250,7 @@ public class ModelSetMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
@@ -283,11 +285,11 @@ public class ModelSetMapper extends Operation {
                     Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
                     Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
                     PerturbationListFile.write(discreteMap, outputDiscretePath);
-                    // output interpolated perturbation file
+                    // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                     Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                             marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
                     Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
-                    PerturbationListFile.write(interpolatedMap, outputInterpolatedPath);
+                    PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
                 }
             }
         }

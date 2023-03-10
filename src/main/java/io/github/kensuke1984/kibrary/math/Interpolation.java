@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.math;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
@@ -109,27 +111,54 @@ public class Interpolation {
             for (int i = 0; i < nGridLongitudes; i++) {
                 double longitude = minLongitude + i * gridInterval;
 
-                // pack data values at original latitudes along this meridian in a Trace (x is the latitude direction here)
-                double[] x = Arrays.stream(latitudes).filter(latitude -> {
-                    Trace latitudeTrace = eachLatitudeTraces.get(latitude);
+                // extract indices of latitudes with values defined on this longitude
+                int[] indicesWithValue = IntStream.range(0, latitudes.length).filter(j -> {
+                    Trace latitudeTrace = eachLatitudeTraces.get(latitudes[j]);
                     return (latitudeTrace.getMinX() <= longitude && longitude <= latitudeTrace.getMaxX());
                 }).sorted().toArray();
-                double[] y = Arrays.stream(x).map(latitude -> {
-                    Trace latitudeTrace = eachLatitudeTraces.get(latitude);
-                    return latitudeTrace.getYAt(latitudeTrace.findNearestXIndex(longitude));
-                }).toArray();
-                Trace discreteTrace = new Trace(x, y);
+                // split into groups of consequtive latitudes
+                List<int[]> indexGroups = splitIndexGroups(indicesWithValue);
+                for (int[] indexArray : indexGroups) {
+                    double[] x = Arrays.stream(indexArray).mapToDouble(j -> latitudes[j]).toArray();
+                    // pack data values at original latitudes along this meridian in a Trace (x is the latitude direction here)
+                    double[] y = Arrays.stream(x).map(latitude -> {
+                        Trace latitudeTrace = eachLatitudeTraces.get(latitude);
+                        return latitudeTrace.getYAt(latitudeTrace.findNearestXIndex(longitude));
+                    }).toArray();
+                    Trace discreteTrace = new Trace(x, y);
 
-                // interpolate the Trace and resample at all grid points
-                double latitudeMarginDeg = latitudeInKm ? Math.toDegrees(latitudeMargin / radius) : latitudeMargin;
-                Trace interpolatedTrace = interpolateTraceOnGrid(discreteTrace, gridInterval, latitudeMarginDeg, mosaic);
-                for (int j = 0; j < interpolatedTrace.getLength(); j++) {
-                    interpolatedMap.put(new FullPosition(interpolatedTrace.getXAt(j), longitude, radius), interpolatedTrace.getYAt(j));
+                    // interpolate the Trace and resample at all grid points
+                    double latitudeMarginDeg = latitudeInKm ? Math.toDegrees(latitudeMargin / radius) : latitudeMargin;
+                    Trace interpolatedTrace = interpolateTraceOnGrid(discreteTrace, gridInterval, latitudeMarginDeg, mosaic);
+                    for (int j = 0; j < interpolatedTrace.getLength(); j++) {
+                        interpolatedMap.put(new FullPosition(interpolatedTrace.getXAt(j), longitude, radius), interpolatedTrace.getYAt(j));
+                    }
                 }
             }
         }
 
         return interpolatedMap;
+    }
+
+    private static List<int[]> splitIndexGroups(int[] numbers) {
+        List<int[]> groupList = new ArrayList<>();
+        // first k of current group
+        int kStart = 0;
+        // number that corresponds to the last k
+        int lastNumber = numbers[0];
+        // we have set the values for k=0 above, so start from k=1
+        for (int k = 1; k < numbers.length; k++) {
+            if (numbers[k] != lastNumber + 1) {
+                // add the last group to groupList
+                groupList.add(Arrays.copyOfRange(numbers, kStart, k));
+                // set the next group starting from k
+                kStart = k;
+            }
+            lastNumber = numbers[k];
+        }
+        // add last group
+        groupList.add(Arrays.copyOfRange(numbers, kStart, numbers.length));
+        return groupList;
     }
 
     /**

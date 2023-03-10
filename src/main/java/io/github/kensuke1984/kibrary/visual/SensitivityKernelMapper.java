@@ -23,12 +23,21 @@ import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
+/**
+ * Maps the sensitivity kernel.
+ *
+ * NOTE: the voxel volume is NOT multiplied.
+ *
+ * @author otsuru
+ *
+ */
 public class SensitivityKernelMapper extends Operation {
 
     private final Property property;
@@ -192,6 +201,7 @@ public class SensitivityKernelMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
@@ -240,11 +250,11 @@ public class SensitivityKernelMapper extends Operation {
                             String fileNameRoot = "kernel_" + phaselist + "_" + component+ "_" + partialType + String.format("_t0%d", (int) startTime);
                             Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
                             PerturbationListFile.write(discreteMap, outputDiscretePath);
-                            // output interpolated perturbation file
+                            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                                     marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
                             Path outputInterpolatedPath = observerPath.resolve(fileNameRoot + "XYZ.lst");
-                            PerturbationListFile.write(interpolatedMap, outputInterpolatedPath);
+                            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
                             PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii,
                                     boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct

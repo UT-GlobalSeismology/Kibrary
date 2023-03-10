@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Creates shellscripts to map {@link PerturbationListFile}.
@@ -171,6 +172,7 @@ public class PerturbationMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
@@ -185,7 +187,7 @@ public class PerturbationMapper extends Operation {
         Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                 marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
         Path outputInterpolatedPath = outPath.resolve(fileNameRoot + "XYZ.lst");
-        PerturbationListFile.write(interpolatedMap, outputInterpolatedPath);
+        PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
         String maskFileNameRoot = null;
         if (maskPath != null) {
@@ -193,12 +195,12 @@ public class PerturbationMapper extends Operation {
             maskFileNameRoot = FileAid.extractNameRoot(maskPath) + "_forMask";
             Path outMaskPath = outPath.resolve(maskFileNameRoot + ".lst");
             Files.copy(maskPath, outMaskPath);
-            // output interpolated perturbation file
+            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Map<FullPosition, Double> discreteMaskMap = PerturbationListFile.read(maskPath);
             Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
                     marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
             Path outputInterpolatedMaskPath = outPath.resolve(maskFileNameRoot + "XYZ.lst");
-            PerturbationListFile.write(interpolatedMaskMap, outputInterpolatedMaskPath);
+            PerturbationListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }
 
         // output shellscripts
