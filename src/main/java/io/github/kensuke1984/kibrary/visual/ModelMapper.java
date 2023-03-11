@@ -32,6 +32,7 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 /**
  * Creates shellscripts to map {@link KnownParameterFile}.
  *
+ * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
  * @since 2022/7/17
  */

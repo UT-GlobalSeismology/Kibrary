@@ -58,9 +58,10 @@ public class Interpolation {
      *
      * @param originalMap (Map of {@link FullPosition}, Double) Map data to be interpolated
      * @param gridInterval (double) Grid spacing to be used in output map
-     * @param latitudeMargin (double) The margin to append at the northern and southern ends of the region
+     * @param latitudeMargin (double) The margin to append at the northern and southern ends of the region (including edges of voxel gaps)
      * @param latitudeInKm (boolean) Whether the above value is given in [km] or [deg]
-     * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region
+     * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region (including edges of voxel gaps).
+     *          Also used to recognize voxel gaps in the longitude direction.
      * @param longitudeInKm (boolean) Whether the above value is given in [km] or [deg]
      * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
      * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data
@@ -83,7 +84,7 @@ public class Interpolation {
             double[] latitudes = inLayerPositions.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
 
             // a Map to store interpolated Traces at each latitude
-            Map<Double, Trace> eachLatitudeTraces = new HashMap<>();
+            Map<Double, List<Trace>> eachLatitudeTraces = new HashMap<>();
 
             //~interpolate along each latitude containing data points
             for (double latitude : latitudes) {
@@ -98,34 +99,35 @@ public class Interpolation {
                 double[] y = inLatitudePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
                 Trace originalTrace = new Trace(x, y);
 
-                // interpolate the Trace and store it
+                // split the trace at gaps
                 double smallCircleRadius = radius * Math.cos(Math.toRadians(latitude));
                 double longitudeMarginDeg = longitudeInKm ? Math.toDegrees(longitudeMargin / smallCircleRadius) : longitudeMargin;
-                eachLatitudeTraces.put(latitude, interpolateTraceOnGrid(originalTrace, gridInterval, longitudeMarginDeg, mosaic));
+                List<Trace> splitTraces = splitTraceAtGaps(originalTrace, longitudeMarginDeg);
+                // interpolate each of the split traces and store the results
+                List<Trace> interpolatedTraces = splitTraces.stream()
+                        .map(trace -> interpolateTraceOnGrid(trace, gridInterval, longitudeMarginDeg, mosaic)).collect(Collectors.toList());
+                eachLatitudeTraces.put(latitude, interpolatedTraces);
             }
 
             //~interpolate along each grid longitude (meridian)
-            double minLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getMinX()).min().getAsDouble();
-            double maxLongitude = eachLatitudeTraces.values().stream().mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
+            double minLongitude = eachLatitudeTraces.values().stream().flatMap(List::stream)
+                    .mapToDouble(trace -> trace.getMinX()).min().getAsDouble();
+            double maxLongitude = eachLatitudeTraces.values().stream().flatMap(List::stream)
+                    .mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
             for (int i = 0; i < nGridLongitudes; i++) {
                 double longitude = minLongitude + i * gridInterval;
 
                 // extract indices of latitudes with values defined on this longitude
-                int[] indicesWithValue = IntStream.range(0, latitudes.length).filter(j -> {
-                    Trace latitudeTrace = eachLatitudeTraces.get(latitudes[j]);
-                    return (latitudeTrace.getMinX() <= longitude && longitude <= latitudeTrace.getMaxX());
-                }).sorted().toArray();
+                int[] indicesWithValue = IntStream.range(0, latitudes.length)
+                        .filter(j -> hasValueInTraceList(longitude, eachLatitudeTraces.get(latitudes[j]))).sorted().toArray();
                 // split into groups of consequtive latitudes
                 List<int[]> indexGroups = splitIndexGroups(indicesWithValue);
                 for (int[] indexArray : indexGroups) {
-                    double[] x = Arrays.stream(indexArray).mapToDouble(j -> latitudes[j]).toArray();
+                    double[] xs = Arrays.stream(indexArray).mapToDouble(j -> latitudes[j]).toArray();
                     // pack data values at original latitudes along this meridian in a Trace (x is the latitude direction here)
-                    double[] y = Arrays.stream(x).map(latitude -> {
-                        Trace latitudeTrace = eachLatitudeTraces.get(latitude);
-                        return latitudeTrace.getYAt(latitudeTrace.findNearestXIndex(longitude));
-                    }).toArray();
-                    Trace discreteTrace = new Trace(x, y);
+                    double[] ys = Arrays.stream(xs).map(latitude -> findValueInTraceList(longitude, eachLatitudeTraces.get(latitude))).toArray();
+                    Trace discreteTrace = new Trace(xs, ys);
 
                     // interpolate the Trace and resample at all grid points
                     double latitudeMarginDeg = latitudeInKm ? Math.toDegrees(latitudeMargin / radius) : latitudeMargin;
@@ -140,6 +142,35 @@ public class Interpolation {
         return interpolatedMap;
     }
 
+    private static boolean hasValueInTraceList(double x, List<Trace> traceList) {
+        for (Trace trace : traceList) {
+            if (trace.getMinX() <= x && x <= trace.getMaxX()) return true;
+        }
+        return false;
+    }
+    private static double findValueInTraceList(double x, List<Trace> traceList) {
+        for (Trace trace : traceList) {
+            if (trace.getMinX() <= x && x <= trace.getMaxX()) {
+                return trace.getYAt(trace.findNearestXIndex(x));
+            }
+        }
+        throw new IllegalArgumentException("Value not found for x=" + x + " in Trace list.");
+    }
+
+    private static List<Trace> splitTraceAtGaps(Trace trace, double margin) {
+        List<Trace> traceList = new ArrayList<>();
+        int iStart = 0;
+        // from i=1, check if [x(i-1),x(i)] is much larger than margin*2
+        for (int i = 1; i < trace.getLength(); i++) {
+            if (trace.getXAt(i) - trace.getXAt(i - 1) > margin * 2.5) {
+                traceList.add(trace.subTrace(iStart, i));
+                iStart = i;
+            }
+        }
+        // add last trace
+        traceList.add(trace.subTrace(iStart, trace.getLength()));
+        return traceList;
+    }
     private static List<int[]> splitIndexGroups(int[] numbers) {
         List<int[]> groupList = new ArrayList<>();
         // first k of current group
@@ -181,16 +212,16 @@ public class Interpolation {
         double endLongitude = Math.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
         int nGridLongitudes = (int) Math.round((endLongitude - startLongitude) / gridInterval) + 1;
         // array of x and y of interpolated Trace
-        double[] x = new double[nGridLongitudes];
-        double[] y = new double[nGridLongitudes];
+        double[] xs = new double[nGridLongitudes];
+        double[] ys = new double[nGridLongitudes];
         for (int i = 0; i < nGridLongitudes; i++) {
-            x[i] = startLongitude + i * gridInterval;
+            xs[i] = startLongitude + i * gridInterval;
         }
 
         if (mosaic) {
             // use value at nearest index
             for (int i = 0; i < nGridLongitudes; i++) {
-                y[i] = originalTrace.getYAt(originalTrace.findNearestXIndex(x[i]));
+                ys[i] = originalTrace.getYAt(originalTrace.findNearestXIndex(xs[i]));
             }
 
         } else {
@@ -204,14 +235,14 @@ public class Interpolation {
 
                 // compute y values for points that are within this segment
                 for (int i = 0; i < nGridLongitudes; i++) {
-                    if (xLower <= x[i] && x[i] < xUpper) {
-                        double normalizedX = (x[i] - xLower) / (xUpper - xLower);
-                        y[i] = interpolatedFunc.value(normalizedX);
+                    if (xLower <= xs[i] && xs[i] < xUpper) {
+                        double normalizedX = (xs[i] - xLower) / (xUpper - xLower);
+                        ys[i] = interpolatedFunc.value(normalizedX);
                     }
                 }
             }
         }
-        return new Trace(x, y);
+        return new Trace(xs, ys);
     }
 
     /**

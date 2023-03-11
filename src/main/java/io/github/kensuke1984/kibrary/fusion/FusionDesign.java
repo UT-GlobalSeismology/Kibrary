@@ -3,8 +3,11 @@ package io.github.kensuke1984.kibrary.fusion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
@@ -46,10 +49,14 @@ public class FusionDesign {
         // add original parameters
         originalParameters.add(params);
 
+        Set<FullPosition> positions = params.stream().map(param -> param.getPosition()).collect(Collectors.toSet());
+        // whether to use longitude range [0:360) instead of [-180,180)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         // add new parameter
-        double latitude = params.stream().mapToDouble(param -> param.getPosition().getLatitude()).average().getAsDouble();
-        double longitude = params.stream().mapToDouble(param -> param.getPosition().getLongitude()).average().getAsDouble();
-        double radius = params.stream().mapToDouble(param -> param.getPosition().getR()).average().getAsDouble();
+        double latitude = positions.stream().mapToDouble(pos -> pos.getLatitude()).average().getAsDouble();
+        double longitude = positions.stream().mapToDouble(pos -> pos.getLongitude())
+                .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).average().getAsDouble();
+        double radius = positions.stream().mapToDouble(pos -> pos.getR()).average().getAsDouble();
         FullPosition position = new FullPosition(latitude, longitude, radius);
         double weight = params.stream().mapToDouble(param -> param.getWeighting()).sum();
         UnknownParameter fusedParam = new Physical3DParameter(type, position, weight);

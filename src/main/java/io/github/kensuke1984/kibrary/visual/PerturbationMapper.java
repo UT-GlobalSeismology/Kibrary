@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * Creates shellscripts to map {@link PerturbationListFile}.
  * The values of input files should be in percent.
  *
+ * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
  * @since 2022/7/18
  */

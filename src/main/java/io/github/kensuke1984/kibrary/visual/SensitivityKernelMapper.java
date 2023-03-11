@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -35,6 +36,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  *
  * NOTE: the voxel volume is NOT multiplied.
  *
+ * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
  *
  */
@@ -218,21 +220,21 @@ public class SensitivityKernelMapper extends Operation {
                                 && partial.getGlobalCMTID().equals(event)
                                 && partial.getObserver().toString().equals(observerName))
                                 .collect(Collectors.toList());
+                        if (partialsForEntry.size() == 0) continue;
+                        System.err.println("Working for " + component  + " " + partialType + " " + event + " " + observerName);
 
                         Path eventPath = outPath.resolve(event.toString());
                         Path observerPath = eventPath.resolve(observerName.toString());
                         Files.createDirectories(observerPath);
 
-                        double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).toArray();
+                        double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
 
                         for (double startTime : startTimes) {
                             List<PartialID> partialsForWindow = partialsForEntry.stream()
                                     .filter(partial -> partial.getStartTime() == startTime).collect(Collectors.toList());
 
-                            String phaselist = "";
-                            for (Phase phase : partialsForEntry.get(0).getPhases()) {
-                                phaselist = phaselist + "-" + phase;
-                            }
+                            List<String> phaseStrings = Stream.of(partialsForEntry.get(0).getPhases()).map(Phase::toString).collect(Collectors.toList());
+                            String phaselist = String.join("-", phaseStrings);
 
                             // compute sensitivity at each voxel
                             Map<FullPosition, Double> discreteMap = new HashMap<>();
@@ -267,7 +269,6 @@ public class SensitivityKernelMapper extends Operation {
         }
         System.err.println("After this finishes, please enter each " + outPath
                 + "/eventFolder/observerFolder/ and run *Grid.sh and *Map.sh");
-
     }
 
 }

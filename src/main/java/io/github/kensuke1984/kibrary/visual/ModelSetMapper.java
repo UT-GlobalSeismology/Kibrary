@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * Creates shellscripts to map a set of inversion results.
  *
+ * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
  * @since 2022/4/9
  * @version 2022/7/17 moved and renamed from model.VelocityModelMapper to visual.ModelSetMapper
