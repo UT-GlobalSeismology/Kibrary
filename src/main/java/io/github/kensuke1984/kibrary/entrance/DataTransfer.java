@@ -20,6 +20,7 @@ import org.apache.commons.net.ftp.FTPReply;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
@@ -124,11 +125,10 @@ public final class DataTransfer {
             System.err.println("Downloading in 10 s");
             Thread.sleep(10 * 1000);
 
-            // download
-            Path outPath = Paths.get("transferred" + GadgetAid.getTemporaryString());
-            Files.createDirectories(outPath);
-            System.err.println("Output folder is " + outPath);
+            // create output folder
+            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, GadgetAid.getTemporaryString());
 
+            // download
             for (FTPFile ffile : ffiles) {
 
                 // get event ID and create event directory

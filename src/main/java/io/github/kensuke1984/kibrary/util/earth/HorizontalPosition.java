@@ -39,13 +39,13 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Find the latitude interval of a given set of positions.
      * The latitudes must be equally spaced.
-     * @param positions (Set of {@link FullPosition})
+     * @param positions (Set of {@link HorizontalPosition})
      * @return (double) interval
      */
-    public static double findLatitudeInterval(Set<FullPosition> positions) {
-        FullPosition pos0 = positions.iterator().next();
+    public static double findLatitudeInterval(Set<? extends HorizontalPosition> positions) {
+        HorizontalPosition pos0 = positions.iterator().next();
         return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
-                .filter(diff -> !Precision.equals(diff, 0, FullPosition.LATITUDE_EPSILON)).min().getAsDouble();
+                .filter(diff -> !Precision.equals(diff, 0, LATITUDE_EPSILON)).min().getAsDouble();
     }
 
     /**
@@ -57,8 +57,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @author otsuru
      * @since 2023/3/9
      */
-    public static boolean crossesDateLine(Set<FullPosition> positions) {
-        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLongitude).distinct().sorted().toArray();
+    public static boolean crossesDateLine(Set<? extends HorizontalPosition> positions) {
+        double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
         double[] negativeLongitudes = Arrays.stream(longitudes).filter(lon -> lon < 0).toArray();
         double[] positiveLongitudes = Arrays.stream(longitudes).filter(lon -> lon >= 0).toArray();
 

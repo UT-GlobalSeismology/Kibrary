@@ -121,7 +121,7 @@ public class RaypathMapper extends Operation {
     private String insideFileName;
     private String outsideFileName;
     private String turningPointFileName;
-    private String perturbationFileName;
+    private String pixelFileName;
     private String gmtFileName;
     private String psFileName;
 
@@ -248,7 +248,7 @@ public class RaypathMapper extends Operation {
         insideFileName = "raypathInside.lst";
         outsideFileName = "raypathOutside.lst";
         turningPointFileName = "turningPoint.lst";
-        perturbationFileName = "perturbation.lst";
+        pixelFileName = "pixel.lst";
         gmtFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".sh");
         psFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".eps");
     }
@@ -266,8 +266,9 @@ public class RaypathMapper extends Operation {
 
         if (voxelPath != null) {
             List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
-            List<String> perturbationLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
-            Files.write(outPath.resolve(perturbationFileName), perturbationLines);
+            List<String> pixelLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
+            Files.write(outPath.resolve(pixelFileName), pixelLines);
+            // NOTE: HorizontalPosition.crossesDateLine() is not needed here, as psxy can plot points on longitude+360
         }
 
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
@@ -504,10 +505,10 @@ public class RaypathMapper extends Operation {
                 pw.println("");
             }
 
-            // perturbation points
+            // pixel points
             if (voxelPath != null) {
-                pw.println("#------- Perturbation");
-                pw.println("gmt psxy " + perturbationFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest -J -R -P -O -K >> $outputps");
+                pw.println("#------- Pixels");
+                pw.println("gmt psxy " + pixelFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest -J -R -P -O -K >> $outputps");
                 pw.println("");
             }
 
