@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.visual;
+package io.github.kensuke1984.kibrary.visual.plot;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -24,10 +24,10 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;

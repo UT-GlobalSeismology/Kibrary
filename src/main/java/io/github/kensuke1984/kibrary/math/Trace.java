@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util.data;
+package io.github.kensuke1984.kibrary.math;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.visual;
+package io.github.kensuke1984.kibrary.visual.plot;
 
 import java.io.FileWriter;
 import java.io.IOException;

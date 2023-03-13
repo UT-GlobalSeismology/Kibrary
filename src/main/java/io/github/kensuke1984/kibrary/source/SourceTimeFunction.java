@@ -16,7 +16,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.ArithmeticUtils;
 
-import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 
 /**

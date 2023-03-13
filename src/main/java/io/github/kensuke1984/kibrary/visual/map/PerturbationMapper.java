@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.visual;
+package io.github.kensuke1984.kibrary.visual.map;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -6,37 +6,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.fusion.FusionDesign;
-import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.voxel.KnownParameter;
-import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
 /**
- * Creates shellscripts to map {@link KnownParameterFile}.
+ * Creates shellscripts to map {@link PerturbationListFile}.
+ * The values of input files should be in percent.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
- * @since 2022/7/17
+ * @since 2022/7/18
  */
-public class ModelMapper extends Operation {
+public class PerturbationMapper extends Operation {
 
     private final Property property;
     /**
@@ -49,31 +41,15 @@ public class ModelMapper extends Operation {
     private String folderTag;
 
     /**
-     * Path of model file
+     * Path of perturbation file
      */
-    private Path modelPath;
+    private Path perturbationPath;
     /**
-     * file of 1D structure used in inversion
+     * Path of perturbation file to be used as mask
      */
-    private Path initialStructurePath;
-    /**
-     * name of 1D structure used in inversion
-     */
-    private String initialStructureName;
-    /**
-     * file of 1D structure to map perturbations against
-     */
-    private Path referenceStructurePath;
-    /**
-     * name of 1D structure to map perturbations against
-     */
-    private String referenceStructureName;
-    /**
-     * Path of a {@link FusionInformationFile}
-     */
-    private Path fusionPath;
-    private Set<VariableType> variableTypes;
+    private Path maskPath;
 
+    private VariableType variable;
     private double[] boundaries;
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
@@ -90,6 +66,7 @@ public class ModelMapper extends Operation {
      * Whether to display map as mosaic without smoothing
      */
     private boolean mosaic;
+    private double maskThreshold;
 
     /**
      * @param args  none to create a property file <br>
@@ -110,20 +87,12 @@ public class ModelMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
-            pw.println("##Path of model file, must be set.");
-            pw.println("#modelPath model.lst");
-            pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
-            pw.println("#initialStructurePath ");
-            pw.println("##Name of an initial structure model used in inversion (PREM)");
-            pw.println("#initialStructureName ");
-            pw.println("##Path of a structure file to map perturbations against. If this is unset, the following referenceStructureName will be referenced.");
-            pw.println("#referenceStructurePath ");
-            pw.println("##Name of a structure model to map perturbations against (PREM)");
-            pw.println("#referenceStructureName ");
-            pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted");
-            pw.println("#fusionPath fusion.inf");
-            pw.println("##Variable types to map, listed using spaces (Vs)");
-            pw.println("#variableTypes ");
+            pw.println("##Path of perturbation file, must be set");
+            pw.println("#perturbationPath vsPercent.lst");
+            pw.println("##Path of perturbation file for mask, when mask is to be applied");
+            pw.println("#maskPath vsPercentRatio.lst");
+            pw.println("##Variable type of perturbation file (Vs)");
+            pw.println("#variable ");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
@@ -147,11 +116,13 @@ public class ModelMapper extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
             pw.println("#mosaic ");
+            pw.println("##(double) Threshold for mask (0.3)");
+            pw.println("#maskThreshold ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public ModelMapper(Property property) throws IOException {
+    public PerturbationMapper(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -160,23 +131,12 @@ public class ModelMapper extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        modelPath = property.parsePath("modelPath", null, true, workPath);
-        if (property.containsKey("initialStructurePath")) {
-            initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
-        } else {
-            initialStructureName = property.parseString("initialStructureName", "PREM");
+        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
+        if (property.containsKey("maskPath")) {
+            maskPath = property.parsePath("maskPath", null, true, workPath);
         }
-        if (property.containsKey("referenceStructurePath")) {
-            referenceStructurePath = property.parsePath("referenceStructurePath", null, true, workPath);
-        } else {
-            referenceStructureName = property.parseString("referenceStructureName", "PREM");
-        }
-        if (property.containsKey("fusionPath"))
-            fusionPath = property.parsePath("fusionPath", null, true, workPath);
 
-        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
-                .collect(Collectors.toSet());
-
+        variable = VariableType.valueOf(property.parseString("variable", "Vs"));
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
@@ -201,73 +161,58 @@ public class ModelMapper extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        maskThreshold = property.parseDouble("maskThreshold", "0.3");
     }
 
     @Override
     public void run() throws IOException {
 
-        // read initial structure
-        System.err.print("Initial structure: ");
-        PolynomialStructure initialStructure = null;
-        if (initialStructurePath != null) {
-            initialStructure = PolynomialStructureFile.read(initialStructurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(initialStructureName);
-        }
-        // read reference structure
-        System.err.print("Reference structure: ");
-        PolynomialStructure referenceStructure = null;
-        if (referenceStructurePath != null) {
-            referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
-        } else {
-            referenceStructure = PolynomialStructure.of(referenceStructureName);
-        }
-
-        // read knowns
-        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
-        Set<FullPosition> positions = KnownParameter.extractParameterList(knowns).stream()
-                .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
+        Map<FullPosition, Double> discreteMap = PerturbationListFile.read(perturbationPath);
+        Set<FullPosition> positions = discreteMap.keySet();
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
-
-        // read and apply fusion file
-        if (fusionPath != null) {
-            FusionDesign fusionDesign = FusionInformationFile.read(fusionPath);
-            knowns = fusionDesign.reverseFusion(knowns);
-        }
-
-        // build model
-        PerturbationModel model = new PerturbationModel(knowns, initialStructure);
-        if (!referenceStructure.equals(initialStructure)) {
-            model = model.withReferenceStructureAs(referenceStructure);
-        }
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
+        // create output folder
+        Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        for (VariableType variable : variableTypes) {
-            String variableName = variable.toString().toLowerCase();
-            // output discrete perturbation file
-            Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
-            Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
-            PerturbationListFile.write(discreteMap, outputDiscretePath);
+        // copy discrete perturbation file to outPath
+        String fileNameRoot = FileAid.extractNameRoot(perturbationPath);
+        Path outputDiscretePath = outPath.resolve(fileNameRoot + ".lst");
+        Files.copy(perturbationPath, outputDiscretePath);
+        // output interpolated perturbation file
+        Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
+        Path outputInterpolatedPath = outPath.resolve(fileNameRoot + "XYZ.lst");
+        PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+
+        String maskFileNameRoot = null;
+        if (maskPath != null) {
+            // copy discrete mask file to outPath
+            maskFileNameRoot = FileAid.extractNameRoot(maskPath) + "_forMask";
+            Path outMaskPath = outPath.resolve(maskFileNameRoot + ".lst");
+            Files.copy(maskPath, outMaskPath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-            Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+            Map<FullPosition, Double> discreteMaskMap = PerturbationListFile.read(maskPath);
+            Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
                     marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
-            Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
-            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
-            // output shellscripts
-            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
-                    gridInterval, scale, variableName + "Percent", nPanelsPerRow);
-            if (displayLayers != null) script.setDisplayLayers(displayLayers);
-            script.write(outPath);
-            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentGrid.sh and "
-                    + variableName + "PercentMap.sh");
+            Path outputInterpolatedMaskPath = outPath.resolve(maskFileNameRoot + "XYZ.lst");
+            PerturbationListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }
+
+        // output shellscripts
+        PerturbationMapShellscript script;
+        script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow);
+        if (displayLayers != null) script.setDisplayLayers(displayLayers);
+        if (maskPath != null) script.setMask(maskFileNameRoot, maskThreshold);
+        script.write(outPath);
+        System.err.println("After this finishes, please enter " + outPath
+                + "/ and run " + fileNameRoot + "Grid.sh and " + fileNameRoot + "Map.sh");
     }
+
 
 }

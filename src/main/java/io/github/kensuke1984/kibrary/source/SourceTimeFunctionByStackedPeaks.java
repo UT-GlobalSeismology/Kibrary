@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.source;
 
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.stacking.PeakStack;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;

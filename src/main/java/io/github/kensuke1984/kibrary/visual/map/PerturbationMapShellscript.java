@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.visual;
+package io.github.kensuke1984.kibrary.visual.map;
 
 import java.io.IOException;
 import java.io.PrintWriter;

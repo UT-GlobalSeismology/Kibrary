@@ -7,7 +7,7 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
-import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.math.Trace;
 
 /**
  * 波形のノイズを作る
