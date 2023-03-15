@@ -44,7 +44,7 @@ public class VarianceComputer {
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder").required()
                 .desc("Use basic waveform folder as input").build());
-        options.addOption(Option.builder("t").longOpt("type").hasArg().argName("weightingType").required()
+        options.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingType").required()
                 .desc("Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL}").build());
         options.addOption(Option.builder("p").longOpt("improvement").hasArg().argName("improvementWindowFile")
                 .desc("Input improvement window file, if it is to be used").build());
@@ -59,7 +59,7 @@ public class VarianceComputer {
     public static void run(CommandLine cmdLine) throws IOException {
 
         List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), true);
-        WeightingType weightingType = WeightingType.valueOf(cmdLine.getOptionValue("t"));
+        WeightingType weightingType = WeightingType.valueOf(cmdLine.getOptionValue("w"));
 
         // cut out improvement windows if the file is given
         if (cmdLine.hasOption("p")) {
