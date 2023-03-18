@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
@@ -124,7 +123,7 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private boolean mpi;
     private boolean jointCMT;
-    private boolean catalogue;
+    private boolean catalogMode;
     /**
      * epicentral distances for catalog
      */
@@ -188,9 +187,9 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#mpi ");
             pw.println("##(boolean) Whether to compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
             pw.println("#jointCMT ");
-            pw.println("##(boolean) Wavefield catalogue mode (false)");
-            pw.println("#catalogue ");
-            pw.println("##Catalogue distance range: thetamin thetamax dtheta");
+            pw.println("##(boolean) Wavefield catalog mode (false)");
+            pw.println("#catalogMode ");
+            pw.println("##Catalog distance range: thetamin thetamax dtheta");
             pw.println("#thetaRange ");
         }
         System.err.println(outPath + " is created.");
@@ -224,17 +223,14 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         jointCMT = property.parseBoolean("jointCMT", "false");
 
-        catalogue = property.parseBoolean("catalogue", "false");
-        if (catalogue) {
+        catalogMode = property.parseBoolean("catalogMode", "false");
+        if (catalogMode) {
             double[] tmpthetainfo = Stream.of(property.parseStringArray("thetaRange", null))
                     .mapToDouble(Double::parseDouble).toArray();
             thetamin = tmpthetainfo[0];
             thetamax = tmpthetainfo[1];
             dtheta = tmpthetainfo[2];
         }
-
-        // additional info
-        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
 
     @Override
@@ -332,7 +328,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                 fp.writeSHFP(eventPoolPath.resolve(header + "_SH.inf"));
                 fp.writePSVFP(eventPoolPath.resolve(header + "_PSV.inf"));
 
-                if (catalogue) {
+                if (catalogMode) {
                      Path catInfPath = fpCatPath.resolve(event.toString());
                      Files.createDirectories(catInfPath.resolve(header));
                      fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
@@ -395,7 +391,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + bpPoolPath);
 
-        if (catalogue) {
+        if (catalogMode) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);
             Files.createDirectories(bpCatPath.resolve(header));
             bp.writeSHBPCat(bpCatPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
