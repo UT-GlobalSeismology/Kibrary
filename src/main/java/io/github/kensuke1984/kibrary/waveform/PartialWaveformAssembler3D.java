@@ -50,30 +50,32 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
  * Operation that assembles partial waveforms from SPC files created by shfp、shbp、psvfp, and psvbp.
+ * Output is written in the format of {@link PartialIDFile}.
+ * <p>
+ * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
+ * </ul>
  * <p>
  * SPC files for FP must be inside fpPath/eventDir/modelName/.
- * SPC files for BP must be inside bpPath/observerPositionCode/modelName/ (default) or bpPath/modelName (when using epicentral distance catalogue).
+ * SPC files for BP must be inside bpPath/observerPositionCode/modelName/ (default) or bpPath/modelName (when using BP catalog).
  * For information about observerPositionCode, see {@link HorizontalPosition#toCode}.
- * Input SPC file names should take the form:
- * (point name).(observerPositionCode or eventID).(PB or PF)...(sh or psv).spc
+ * Input SPC file names should take the form:<br>
+ * (point name).(observerPositionCode or eventID).(PB or PF)...(sh or psv).spc<br>
+ * It is possible to use only SH or only PSV, as well as to use both.
  * <p>
- * A timewindow data file, a voxel information file, and a set of partialTypes to work for must be specified.
- * TODO organize this program file and decide which set of data is worked for.
- *
+ * A set of partialTypes to work for must be specified.
+ * When a voxel information file is provided, only the voxels included in it will be handled;
+ * otherwise, all voxel points that have been computed for in FP and BP folders will be used.
+ * This class does NOT handle time partials.
  * <p>
- * halfDurationはevent informationファイルから読み取る
- *
- * time window informationファイルの中からtime windowを見つける。 その中に入っている震源観測点成分の組み合わせのみ計算する
- *
- * バンドパスをかけて保存する
- *
- *
- * TODO station とかの書き出し
- *
- * 例： directory/19841006/*spc directory/0000KKK/*spc
- *
- * 摂動点の情報がない摂動点に対しては計算しない
- *
+ * Source time functions and filters can be applied to the waveforms.
+ * <p>
+ * When using BP catalog, the BP waveforms will be interpolated from waveforms in the catalog
+ * based on the epicentral distance from the source (= observer) to the voxel position.
+ * <p>
+ * Resulting entries can be specified by a (event, observer, component, partialType, voxelPosition, timeframe)-pair.
  *
  * @author Kensuke Konishi
  * @since version 2.3.0.5
@@ -196,10 +198,9 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private boolean causal;
     /**
-     * structure for Q partial
+     * structure file for Q partial
      */
-    private PolynomialStructure structure;
-    private Path timePartialPath;
+    private Path qStructurePath;
 
 
     private int nThreads;
@@ -215,6 +216,10 @@ public class PartialWaveformAssembler3D extends Operation {
      * sacdataを何ポイントおきに取り出すか
      */
     private int step;
+    /**
+     * structure for Q partial
+     */
+    private PolynomialStructure qStructure;
     private List<PartialID> partialIDs = Collections.synchronizedList(new ArrayList<>());
 
     private int bpCatNum;
@@ -252,7 +257,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a voxel information file, if you want to select the voxels to be worked for");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##PartialTypes to compute for, listed using spaces (MU)");
+            pw.println("##PartialTypes to compute for at each voxel, listed using spaces (MU)");
             pw.println("#partialTypes ");
             pw.println("##Path of a forward propagate spc folder (FPpool)");
             pw.println("#fpPath ");
@@ -260,7 +265,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#bpPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
-            pw.println("##The mode of spc files that have been computed, from {PSV, SH, BOTH} (SH)");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (SH)");
             pw.println("#usableSPCMode ");
             pw.println("##########Settings for BP catalog");
             pw.println("##(boolean) Whether to interpolate BP from a catalog (false)");
@@ -290,9 +295,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
             pw.println("##File for Qstructure (if no file, then PREM)");
-            pw.println("#qinf ");
-            pw.println("##Path of the time partials directory, must be set if PartialType contains TIME_SOURCE or TIME_RECEIVER");
-            pw.println("#timePartialPath ");
+            pw.println("#qStructurePath ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -319,8 +322,12 @@ public class PartialWaveformAssembler3D extends Operation {
         if (property.containsKey("voxelPath")) {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
+
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
+        for (PartialType type : partialTypes)
+            if (type.isTimePartial()) throw new IllegalArgumentException("This class does not handle time partials.");
+
         fpPath = property.parsePath("fpPath", "FPpool", true, workPath);
         bpPath = property.parsePath("bpPath", "BPpool", true, workPath);
 
@@ -353,11 +360,8 @@ public class PartialWaveformAssembler3D extends Operation {
         filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
 
-        if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
-            timePartialPath = property.parsePath("timePartialPath", null, true, workPath);
-        }
-        if (property.containsKey("qinf")) {
-            structure = PolynomialStructureFile.read(property.parsePath("qinf", null, true, workPath));
+        if (property.containsKey("qStructurePath")) {
+            qStructurePath = property.parsePath("qinf", null, true, workPath);
         }
     }
 
@@ -390,6 +394,7 @@ public class PartialWaveformAssembler3D extends Operation {
         // read BP catalog
         // This is independent of event or observer, thus is read here (not later in the loops).
         if (bpCatalogMode) {
+            System.err.println("Using BP catalog");
             if (usableSPCMode != UsableSPCMode.PSV)
                 bpCatalogSH = SpcFileAid.collectOrderedSHSpcFileName(bpCatalogPath.resolve(modelName));
             if (usableSPCMode != UsableSPCMode.SH)
@@ -413,10 +418,9 @@ public class PartialWaveformAssembler3D extends Operation {
                 sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, eventSet);
         sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen, partialSamplingHz);
 
-        // time partials for each event
-//        if (timePartialPath != null) {
-//            computeTimePartial(N_THREADS);
-//        }
+        // read Q structure
+        if (qStructurePath != null)
+            qStructure = PolynomialStructureFile.read(qStructurePath);
 
         // create output folder
         outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
@@ -427,7 +431,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         // loop for each event
         int num = 0;
-        for (GlobalCMTID event : eventSet) {
+        for (GlobalCMTID event : eventSet.stream().sorted().collect(Collectors.toList())) {
             System.err.println("Working for " + event.toPaddedString() + " : " + (++num) + "/" + eventSet.size());
 
             // assemble all partials for this event
@@ -449,7 +453,6 @@ public class PartialWaveformAssembler3D extends Operation {
         Path fpModelPath = fpPath.resolve(event.toString()).resolve(modelName);
 
         for (PartialType type : partialTypes) {
-            if (type.isTimePartial()) continue;
 
             // list of FP spc files, collected for each pixel
             // Up to 2 files (SH and PSV) can exist for each pixel.
@@ -486,8 +489,8 @@ public class PartialWaveformAssembler3D extends Operation {
                         e.printStackTrace();
                     }
                  }
-            } // end observer loop
-        } // end partial type loop
+            }
+        }
     }
 
     private List<List<SPCFileName>> collectFPNames(Path fpModelPath, PartialType type) throws IOException {
@@ -540,38 +543,21 @@ public class PartialWaveformAssembler3D extends Operation {
         return bpNames;
     }
 
-//    private void computeTimePartial(int N_THREADS) throws IOException {
-//        ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-//        Set<EventFolder> timePartialEventDirs = DatasetAid.eventFolderSet(timePartialPath);
-//        for (EventFolder eventDir : timePartialEventDirs) {
-//            execs.execute(new WorkerTimePartial(eventDir));
-//            System.err.println("Working for time partials for " + eventDir);
-//        }
-//        execs.shutdown();
-//        while (!execs.isTerminated()) {
-//            try {
-//                Thread.sleep(100);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        System.err.println();
-//    }
-
-
     private void checkSPCExistence(Set<GlobalCMTID> eventSet, Set<Observer> observerSet) {
         Set<GlobalCMTID> fpNonExistingEvents = eventSet.stream()
-                .filter(id -> !Files.exists(fpPath.resolve(id.toString()))).collect(Collectors.toSet());
+                .filter(id -> !Files.exists(fpPath.resolve(id.toString()).resolve(modelName)))
+                .collect(Collectors.toSet());
         if (fpNonExistingEvents.size() > 0) {
             fpNonExistingEvents.forEach(event -> System.err.println(event));
-            throw new RuntimeException("FP files are not enough for " + timewindowPath);
+            throw new IllegalStateException("FP files are not enough for " + timewindowPath);
         }
         if (!bpCatalogMode) {
             Set<Observer> bpNonExistingObservers = observerSet.stream()
-                    .filter(observer -> !Files.exists(bpPath.resolve(observer.getPosition().toCode()))).collect(Collectors.toSet());
+                    .filter(observer -> !Files.exists(bpPath.resolve(observer.getPosition().toCode()).resolve(modelName)))
+                    .collect(Collectors.toSet());
             if (bpNonExistingObservers.size() > 0) {
                 bpNonExistingObservers.forEach(observer -> System.err.println(observer));
-                throw new RuntimeException("BP files are not enough for " + timewindowPath);
+                throw new IllegalStateException("BP files are not enough for " + timewindowPath);
             }
         }
     }
@@ -735,8 +721,8 @@ public class PartialWaveformAssembler3D extends Operation {
                 }
             }
             threedPartialMaker.setSourceTimeFunction(sourceTimeFunctions.get(event));
-            if (structure != null)
-                threedPartialMaker.setStructure(structure);
+            if (qStructure != null)
+                threedPartialMaker.setStructure(qStructure);
 
             // assemble partial derivatives for waveform at i-th depth
             Set<SACComponent> neededComponents = timewindows.stream().map(TimewindowData::getComponent).collect(Collectors.toSet());
@@ -804,6 +790,5 @@ public class PartialWaveformAssembler3D extends Operation {
         PSV,
         BOTH
     }
-
 
 }

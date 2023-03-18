@@ -53,7 +53,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * Operation that exports dataset containing observed and synthetic waveforms. <br>
- * The write is a set of an ID and waveform files.
+ * Output is written in the format of {@link BasicIDFile}.
  * <p>
  * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
