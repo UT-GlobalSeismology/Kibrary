@@ -244,10 +244,9 @@ public class FujiStaticCorrection extends Operation {
         return peaks;
     }
 
-    private static double[] cutSac(SACFileAccess sacData, double tStart, double tEnd) {
+    private double[] cutSac(SACFileAccess sacData, double tStart, double tEnd) {
         Trace t = sacData.createTrace();
-        t = t.cutWindow(tStart, tEnd);
-        return t.getY();
+        return t.cutWindow(tStart, tEnd, sacSamplingHz).getY();
     }
 
     /**

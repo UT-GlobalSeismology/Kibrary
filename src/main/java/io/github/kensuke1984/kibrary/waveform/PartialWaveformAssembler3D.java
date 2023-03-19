@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
@@ -23,9 +24,11 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -265,7 +268,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#bpPath ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
-            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (SH)");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (BOTH)");
             pw.println("#usableSPCMode ");
             pw.println("##########Settings for BP catalog");
             pw.println("##(boolean) Whether to interpolate BP from a catalog (false)");
@@ -332,7 +335,7 @@ public class PartialWaveformAssembler3D extends Operation {
         bpPath = property.parsePath("bpPath", "BPpool", true, workPath);
 
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
-        usableSPCMode = UsableSPCMode.valueOf(property.parseString("usableSPCMode", "SH").toUpperCase());
+        usableSPCMode = UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
 
         bpCatalogMode = property.parseBoolean("bpCatalogMode", "false");
         if (bpCatalogMode) {
@@ -734,20 +737,32 @@ public class PartialWaveformAssembler3D extends Operation {
                 for (SACComponent component : neededComponents) {
                     double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type);
 
-                    timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(info -> {
-                        Complex[] u;
-                        u = cutPartial(partial, info);
-
-                        u = filter.applyFilter(u);
-                        double[] cutU = sampleOutput(u, info);
-
-                        PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, info.getStartTime(),
-                                cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(),
-                                sourceTimeFunctionType != SourceTimeFunctionType.NONE, voxelPosition, type, cutU);
+                    timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
+                        Trace cutTrace = cutAndFilter(partial, window);
+                        PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, cutTrace.getMinX(),
+                                cutTrace.getLength(), 1 / maxFreq, 1 / minFreq, window.getPhases(),
+                                sourceTimeFunctionType != SourceTimeFunctionType.NONE, voxelPosition, type, cutTrace.getY());
                         partialIDs.add(partialID);
                     });
                 }
             }
+        }
+
+        private Trace cutAndFilter(double[] partial, Timewindow timewindow) {
+            // cut to long window for filtering
+            int iStart = (int) (timewindow.getStartTime() * partialSamplingHz) - ext;
+            int iEnd = (int) (timewindow.getEndTime() * partialSamplingHz) + ext;
+            double[] cutPartial = new double[iEnd - iStart];
+            // if cutstart < 0 (i.e. before event time), zero-pad the beginning part
+            Arrays.parallelSetAll(cutPartial, i -> (i + iStart < 0 ? 0 : partial[i + iStart]));
+
+            // filter
+            double[] filteredPartial = filter.applyFilter(cutPartial);
+
+            // cut and resample in timewindow
+            double[] xs = IntStream.range(0, iEnd - iStart).mapToDouble(i -> (i + iStart) / partialSamplingHz).toArray();
+            Trace filteredTrace = new Trace(xs, filteredPartial);
+            return filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
         }
 
         /**

@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import edu.sc.seis.TauP.TauModelException;
@@ -289,11 +288,9 @@ public class DataSelection extends Operation {
      * @param timeWindow time window
      * @return new Trace for the timewindow [tStart:tEnd]
      */
-    private static RealVector cutSAC(SACFileAccess sac, Timewindow timeWindow) {
+    private RealVector cutSAC(SACFileAccess sac, Timewindow timewindow) {
         Trace trace = sac.createTrace();
-        double tStart = timeWindow.getStartTime();
-        double tEnd = timeWindow.getEndTime();
-        return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
+        return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
     }
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {

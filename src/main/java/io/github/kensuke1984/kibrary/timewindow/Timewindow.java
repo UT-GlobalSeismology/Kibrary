@@ -70,6 +70,15 @@ public class Timewindow implements Comparable<Timewindow> {
         return new Timewindow(newStart, newEnd);
     }
 
+    /**
+     * Shift timewindow (in positive direction) by specified time.
+     * @param shift (double) Time to shift timewindow
+     * @return ({@link Timewindow}) Shifted timewindow
+     */
+    public Timewindow shift(double shift) {
+        return new Timewindow(startTime + shift, endTime + shift);
+    }
+
     @Override
     public int compareTo(Timewindow o) {
         int c = Double.compare(startTime, o.startTime);

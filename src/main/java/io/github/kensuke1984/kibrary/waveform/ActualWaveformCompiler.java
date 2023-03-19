@@ -35,6 +35,7 @@ import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -407,13 +408,11 @@ public class ActualWaveformCompiler extends Operation {
         return corrs.get(0);
     }
 
-    private double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {
+    private double[] cutDataSac(SACFileAccess sac, Timewindow window) {
         Trace trace = sac.createTrace();
-        int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.findNearestXIndex(startTime);
-        double[] waveData = trace.getY();
-        return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
+        return trace.resampleInWindow(window, sacSamplingHz, finalSamplingHz).getY();
     }
+
     /**
      * @param sac
      * @param startTime
@@ -618,7 +617,7 @@ public class ActualWaveformCompiler extends Operation {
                 return;
             }
 
-            int npts = (int) ((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz);
+            int npts = (int) Math.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
             double startTime = timewindow.getStartTime();
             double shift = 0;
             double ratio = 1;
@@ -670,8 +669,8 @@ public class ActualWaveformCompiler extends Operation {
             if (addNoise)
                 obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
             else
-                obsData = cutDataSac(obsSac, startTime - shift, npts);
-            double[] synData = cutDataSac(synSac, startTime, npts);
+                obsData = cutDataSac(obsSac, timewindow.shift(-shift));
+            double[] synData = cutDataSac(synSac, timewindow);
 
             // check
             RealVector obsVec = new ArrayRealVector(obsData);

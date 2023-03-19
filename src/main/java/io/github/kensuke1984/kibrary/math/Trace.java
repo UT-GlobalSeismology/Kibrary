@@ -328,7 +328,7 @@ public final class Trace {
     /**
      * Cut out the part of this Trace in the specified range.
      * @param iStart (int) Start index of the range to be copied, inclusive
-     * @param iEnd (int) End index of the range to be copied, exclusive
+     * @param iEnd (int) End index of the range to be copied, EXCLUSIVE
      * @return ({@link Trace}) Cut out Trace
      *
      * @author otsuru
@@ -339,36 +339,151 @@ public final class Trace {
     }
 
     /**
-     * Cut out part of the Trace in window xStart &le; x &le; xEnd.
+     * Cut out while resampling the part of this Trace in the specified range.
+     * @param iStart (int) Start index of the range to be copied, inclusive
+     * @param step (int) Interval in which to resample
+     * @param npts (int) Number of points that the resampled trace should include
+     * @return ({@link Trace}) Cut out and resampled Trace
      *
-     * @param xStart (int) Start x of window, inclusive
-     * @param xEnd (int) End x of window, INCLUSIVE!!
-     * @return (Trace) Trace cut out in the window (deep copy)
+     * @author otsuru
+     * @since 2023/3/19
      */
-    public Trace cutWindow(double xStart, double xEnd) {
-        List<Double> xList = new ArrayList<>();
-        List<Double> yList = new ArrayList<>();
-        IntStream.range(0, xArray.length).filter(i -> xStart <= xArray[i] && xArray[i] <= xEnd).forEach(i -> {
-            xList.add(xArray[i]);
-            yList.add(yArray[i]);
-        });
-        if (xList.isEmpty()) throw new IllegalStateException("No data in [" + xStart + ", " + xEnd + "]");
-        return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
-                yList.stream().mapToDouble(Double::doubleValue).toArray());
+    public Trace resampleByStep(int iStart, int step, int npts) {
+        double[] sampledX = IntStream.range(0, npts).parallel().mapToDouble(i -> xArray[iStart + i * step]).toArray();
+        double[] sampledY = IntStream.range(0, npts).parallel().mapToDouble(i -> yArray[iStart + i * step]).toArray();
+        return new Trace(sampledX, sampledY);
     }
 
     /**
-     * Cuts out the part of the Trace (with x as the time) that is within the given timewindow.
+     * Cut out part of the Trace (with x as the time) that corresponds to the given time range.
+     * The start and end points will each be the points with x values closest to xStart and xEnd.
+     * The input time range does not have to be completely included in the time range of the Trace;
+     * in that case, only the overlapping part will be returned.
+     * The original Trace is not changed.
+     * @param xStart (int) Start x of window (closest point will be chosen)
+     * @param xEnd (int) End x of window (closest point will be chosen; inclusive)
+     * @return ({@link Trace}) New trace that is cut out around the time range (deep copy)
+     */
+    public Trace cutWindow(double xStart, double xEnd) {
+        int iStart = findNearestXIndex(xStart);
+        int iEnd = findNearestXIndex(xEnd);
+        return subTrace(iStart, iEnd + 1);
+    }
+
+    public Trace cutWindowInside(double xStart, double xEnd) {
+        List<Double> xList = new ArrayList<>();
+        List<Double> yList = new ArrayList<>();
+        IntStream.range(0, xArray.length).filter(i -> xStart <= xArray[i] && xArray[i] <= xEnd).forEach(i -> {
+             xList.add(xArray[i]);
+             yList.add(yArray[i]);
+         });
+         if (xList.isEmpty()) throw new IllegalStateException("No data in [" + xStart + ", " + xEnd + "]");
+         return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
+                 yList.stream().mapToDouble(Double::doubleValue).toArray());
+    }
+
+    /**
+     * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow.
+     * The start and end points will each be the points with x values closest to those of the timewindow.
      * The timewindow does not have to be completely included in the time range of the Trace;
      * in that case, only the overlapping part will be returned.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) timewindow for cut
-     * @return ({@link Trace}) New trace that is cut out
+     * @param timewindow ({@link Timewindow}) Timewindow of cut range
+     * @return ({@link Trace}) New trace that is cut out around the timewindow (deep copy)
      */
     public Trace cutWindow(Timewindow timewindow) {
         return cutWindow(timewindow.getStartTime(), timewindow.getEndTime());
     }
 
+    /**
+     * Cut out part of the Trace (with x as the time) that corresponds to the given time range.
+     * The start point will be the point with an x value closest to xStart.
+     * The number of points will be decided by rounding (xEnd-xStart)*samplingHz, so that it is not affected by time shifts.
+     * The input time range MUST be completely included in the time range of the Trace.
+     * The original Trace is not changed.
+     * @param xStart (int) Start x of window (closest point will be chosen)
+     * @param xEnd (int) End x of window (used to decide number of points)
+     * @param samplingHz (double) Sampling rate of this trace (used to decide number of points)
+     * @return ({@link Trace}) New trace that is cut out around the time range (deep copy)
+     *
+     * @author otsuru
+     * @since 2023/3/19
+     */
+    public Trace cutWindow(double xStart, double xEnd, double samplingHz) {
+        if (xStart < getMinX() || getMaxX() < xEnd)
+            throw new IllegalArgumentException("Specified time range exceeds x range.");
+        int iStart = findNearestXIndex(xStart);
+        // Here, npts is rounded (and not rounded down) because a point close to the edge of the time range shall be used.
+        int npts = (int) Math.round((xEnd - xStart) * samplingHz) + 1;
+        return subTrace(iStart, iStart + npts);
+    }
+
+    /**
+     * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow.
+     * The start point will be the point with an x value closest to xStart.
+     * The number of points will be decided by rounding (xEnd-xStart)*samplingHz+1, so that it is not affected by time shifts.
+     * The input timewindow MUST be completely included in the time range of the Trace.
+     * The original Trace is not changed.
+     * @param timewindow ({@link Timewindow}) Timewindow of cut range
+     * @param samplingHz (double) Sampling rate of this trace (used to decide number of points)
+     * @return ({@link Trace}) New trace that is cut out around the timewindow (deep copy)
+     *
+     * @author otsuru
+     * @since 2023/3/19
+     */
+    public Trace cutWindow(Timewindow timewindow, double samplingHz) {
+        return cutWindow(timewindow.getStartTime(), timewindow.getEndTime(), samplingHz);
+    }
+
+    /**
+     * Cut out part of the Trace (with x as the time) that corresponds to the given time range, and resample at a lower sampling rate.
+     * The start point will be the point with an x value closest to xStart.
+     * The number of points will be decided by rounding down (xEnd-xStart)*finalSamplingHz+1, so that it is not affected by time shifts.
+     * The input time range MUST be completely included in the time range of the Trace.
+     * The original Trace is not changed.
+     * @param xStart (int) Start x of window (closest point will be chosen)
+     * @param xEnd (int) End x of window (used to decide number of points)
+     * @param originalSamplingHz (double) Sampling rate of this trace
+     * @param finalSamplingHz (double) Sampling rate to resample the trace
+     * @return ({@link Trace}) New trace that is cut out around the time range and resampled (deep copy)
+     *
+     * @author otsuru
+     * @since 2023/3/19
+     */
+    public Trace resampleInWindow(double xStart, double xEnd, double originalSamplingHz, double finalSamplingHz) {
+        if (xStart < getMinX() || getMaxX() < xEnd)
+            throw new IllegalArgumentException("Specified time range exceeds x range.");
+        int iStart = findNearestXIndex(xStart);
+        // Here, npts is rounded down because a point far outside the time range should not be used.
+        int npts = (int) Math.floor((xEnd - xStart) * finalSamplingHz) + 1;
+        int step = (int) Math.round(originalSamplingHz / finalSamplingHz);
+        return resampleByStep(iStart, step, npts);
+    }
+
+    /**
+     * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow, and resample at a lower sampling rate.
+     * The start point will be the point with an x value closest to xStart.
+     * The number of points will be decided by rounding (xEnd-xStart)*finalSamplingHz, so that it is not affected by time shifts.
+     * The input timewindow MUST be completely included in the time range of the Trace.
+     * The original Trace is not changed.
+     * @param timewindow ({@link Timewindow}) Timewindow of cut range
+     * @param originalSamplingHz (double) Sampling rate of this trace
+     * @param finalSamplingHz (double) Sampling rate to resample the trace
+     * @return ({@link Trace}) New trace that is cut out around the timewindow and resampled (deep copy)
+     *
+     * @author otsuru
+     * @since 2023/3/19
+     */
+    public Trace resampleInWindow(Timewindow timewindow, double originalSamplingHz, double finalSamplingHz) {
+        return resampleInWindow(timewindow.getStartTime(), timewindow.getEndTime(), originalSamplingHz, finalSamplingHz);
+    }
+
+    /**
+     * Truncate the trace to a given length.
+     * The original Trace is not changed.
+     * @param length (int) Length to truncate the trace
+     * @return ({@link Trace}) New trace that is truncated (deep copy)
+     */
     public Trace truncateToLength(int length) {
         return new Trace(Arrays.copyOfRange(xArray, 0, length), Arrays.copyOfRange(yArray, 0, length));
     }
