@@ -17,7 +17,7 @@ public class Timewindow implements Comparable<Timewindow> {
     /**
      * the number of decimal places to round off the time values
      */
-    static final int PRECISION = 3;
+    public static final int PRECISION = 2;
     /**
      * Margin to decide whether two timewindows have the same startTime and/or endTime
      */

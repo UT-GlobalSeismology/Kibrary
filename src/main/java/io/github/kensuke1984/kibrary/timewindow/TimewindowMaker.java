@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,6 +25,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -156,6 +158,7 @@ public class TimewindowMaker extends Operation {
      */
     private boolean useDuplicatePhases;
 
+    private Set<DataEntry> entrySet;
     private Set<TimewindowData> timewindowSet = Collections.synchronizedSet(new HashSet<>());
     private Set<TravelTimeInformation> travelTimeSet = Collections.synchronizedSet(new HashSet<>());
 
@@ -260,7 +263,6 @@ public class TimewindowMaker extends Operation {
         System.err.println("Invalid files, if any, will be listed in " + outInvalidPath);
 
         // read input file
-        Set<DataEntry> entrySet;
         if (dataEntryPath != null) {
             entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
                     .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
@@ -277,8 +279,27 @@ public class TimewindowMaker extends Operation {
         }
         Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
 
-        // loop for each event
-        for (GlobalCMTID event : eventSet) {
+        // work for each event
+        ExecutorService es = ThreadAid.createFixedThreadPool();
+        eventSet.stream().map(this::process).forEach(es::execute);
+        es.shutdown();
+        while (!es.isTerminated()) {
+            ThreadAid.sleep(100);
+        }
+        // this println() is for starting new line after writing "."s
+        System.err.println();
+
+        // output
+        if (timewindowSet.isEmpty()) {
+            System.err.println("No timewindows are created.");
+        } else {
+            TimewindowDataFile.write(timewindowSet, outTimewindowPath);
+        }
+        TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
+    }
+
+    private Runnable process(GlobalCMTID event) {
+        return () -> {
             try {
                 // set up taup_time tool
                 // This is done per event (not reusing a single tool) because each thread needs its own instance.
@@ -294,17 +315,12 @@ public class TimewindowMaker extends Operation {
                 for (DataEntry entry: correspondingEntrySet) {
                     makeTimeWindows(entry, timeTool);
                 }
-            } catch (TauModelException e) {
+                System.err.print(".");
+            } catch (Exception e) {
+                System.err.println("!!! Error on " + event);
                 e.printStackTrace();
             }
-        }
-
-        if (timewindowSet.isEmpty()) {
-            System.err.println("No timewindows are created.");
-        } else {
-            TimewindowDataFile.write(timewindowSet, outTimewindowPath);
-        }
-        TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
+        };
     }
 
     /**
