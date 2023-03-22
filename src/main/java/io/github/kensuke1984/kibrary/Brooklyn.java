@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
+import io.github.kensuke1984.kibrary.abandon.ThreeDPartialCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
@@ -73,6 +74,7 @@ enum Brooklyn {
     VoxelMapper(52, VoxelMapper.class),
     // Partial 60
     PartialIDFile(65, PartialIDFile.class),
+    ThreeDPartialCleanup(69, ThreeDPartialCleanup.class),
     // Inversion 70
     PerturbationComparison(71, PerturbationComparison.class),
     // Temporal 100

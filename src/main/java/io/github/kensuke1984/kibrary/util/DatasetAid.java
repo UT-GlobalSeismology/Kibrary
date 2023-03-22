@@ -72,6 +72,7 @@ public final class DatasetAid {
      * @throws IOException if an I/O error occurs
      */
     public static Set<GlobalCMTID> globalCMTIDSet(Path path) throws IOException {
+        // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(path)) {
             return Collections
                     .unmodifiableSet(stream.filter(dir -> GlobalCMTID.isGlobalCMTID(dir.getFileName().toString()))
@@ -86,6 +87,7 @@ public final class DatasetAid {
      * @throws IOException if an I/O error occurs
      */
     public static Set<EventFolder> eventFolderSet(Path path) throws IOException {
+        // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(path)) {
             return stream.filter(file -> GlobalCMTID.isGlobalCMTID(file.getFileName().toString()))
                     .map(file -> new EventFolder(file.toString())).collect(Collectors.toSet());

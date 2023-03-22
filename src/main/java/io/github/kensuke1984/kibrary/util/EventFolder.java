@@ -93,6 +93,7 @@ public class EventFolder extends File {
      * @throws IOException if an I/O error occurs
      */
     public Set<SACFileName> sacFileSet() throws IOException {
+        // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(toPath())) {
             return stream.filter(SACFileName::isSacFileName).map(SACFileName::new).collect(Collectors.toSet());
         }
