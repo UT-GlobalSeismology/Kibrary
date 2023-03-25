@@ -212,7 +212,7 @@ public class Interpolation {
         throw new IllegalArgumentException("Value not found for x=" + x + " in Trace list.");
     }
 
-    private static List<Trace> splitTraceAtGaps(Trace trace, double margin) {
+    public static List<Trace> splitTraceAtGaps(Trace trace, double margin) {
         List<Trace> traceList = new ArrayList<>();
         int iStart = 0;
         // from i=1, check if [x(i-1),x(i)] is much larger than margin*2
@@ -261,7 +261,7 @@ public class Interpolation {
      * @author otsuru
      * @since 2023/3/4
      */
-    private static Trace interpolateTraceOnGrid(Trace originalTrace, double gridInterval, double margin, boolean mosaic) {
+    public static Trace interpolateTraceOnGrid(Trace originalTrace, double gridInterval, double margin, boolean mosaic) {
         // set the x range so that the margin is added to either end
         double startX = Math.ceil((originalTrace.getMinX() - margin) / gridInterval) * gridInterval;
         double endX = Math.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
@@ -323,6 +323,49 @@ public class Interpolation {
             }
         }
         return new Trace(xs, ys);
+    }
+
+    /**
+     * Interpolates a given 1-D plot at a specified point.
+     * The domain is taken with a margin on either side, as [xMin-margin:xMax+margin].
+     * In mosaic mode, nearest-neighbor interpolation is done; otherwise, cubic interpolation.
+     *
+     * @param originalTrace ({@link Trace}) Original 1-D plot.
+     * @param samplePoint (double) Point at which to interpolate. Must be in domain; otherwise, Exception is thrown.
+     * @param margin (double) The length of margin to add at either end of the domain.
+     * @param mosaic (boolean) Whether to interpolate as mosaic (nearest-neighbor). Otherwise, smooth (cubic) interpolation.
+     * @return (double) Interpolated value.
+     *
+     * @author otsuru
+     * @since 2023/3/25
+     */
+    public static double interpolateTraceAtPoint(Trace originalTrace, double samplePoint, double margin, boolean mosaic) {
+        int lastIndex = originalTrace.getLength() - 1;
+        // set the x range so that the margin is added to either end
+        double startX = originalTrace.getMinX() - margin;
+        double endX = originalTrace.getMaxX() + margin;
+        if (samplePoint < startX || endX < samplePoint) throw new IllegalArgumentException("samplePoint " + samplePoint + "out of range.");
+
+        if (mosaic) {
+            return originalTrace.getYAt(originalTrace.findNearestXIndex(samplePoint));
+
+        } else {
+            // find which interval samplePoint is in
+            int interval = -1;
+            for (int k = 0; k < originalTrace.getLength(); k++) {
+                if (samplePoint >= originalTrace.getXAt(k)) interval = k;
+            }
+
+            // the actual x values at the ends of the segment, instead of [0:1]
+            // At either end of the domain, margin*2 is appended so that only one side of the flipping mirror is used.
+            double xLower = (interval == -1) ? originalTrace.getXAt(0) - margin * 2 : originalTrace.getXAt(interval);
+            double xUpper = (interval == lastIndex) ? originalTrace.getXAt(lastIndex) + margin * 2 : originalTrace.getXAt(interval + 1);
+
+            // interpolate at samplePoint
+            double normalizedX = (samplePoint - xLower) / (xUpper - xLower);
+            PolynomialFunction interpolatedFunc = cubic(originalTrace.getY(), interval);
+            return interpolatedFunc.value(normalizedX);
+        }
     }
 
     /**
