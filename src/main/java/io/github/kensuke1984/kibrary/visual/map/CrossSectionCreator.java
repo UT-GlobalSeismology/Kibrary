@@ -207,17 +207,26 @@ public class CrossSectionCreator extends Operation {
         } else {
             endPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), afterPosDeg);
         }
+        System.err.println(pos0);
+        System.err.println(pos1);
+        System.err.println(startPosition);
+        System.err.println(endPosition);
 
         //~decide horizontal positions at which to sample values
         Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
         double distance = startPosition.computeEpicentralDistanceDeg(endPosition);
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(discretePositions);
-        int nSamplePosition = (int) Math.floor(distance / gridInterval) + 1;
+        int nSamplePosition = (int) Math.round(distance / gridInterval) + 1;
         for (int i = 0; i < nSamplePosition; i++) {
             HorizontalPosition position = startPosition.pointAlongAzimuth(azimuth, i * gridInterval);
             samplePositionMap.put(i * gridInterval, position);
         }
+        System.err.println(distance + " " + gridInterval + " " + nSamplePosition);
+        System.err.println(samplePositionMap.get(0.0));
+        System.err.println(samplePositionMap.get(gridInterval));
+        System.err.println(samplePositionMap.get((nSamplePosition - 2) * gridInterval));
+        System.err.println(samplePositionMap.get((nSamplePosition - 1) * gridInterval));
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, GadgetAid.getTemporaryString());
@@ -240,6 +249,7 @@ public class CrossSectionCreator extends Operation {
                 .distinct().sorted().toArray();
         Map<FullPosition, Double> resampledMap = Interpolation.inEachWestEastLine(discreteMap, sampleLongitudes,
                 marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
+        System.err.println(sampleLongitudes.length);
 
         // acquire some information
         Set<FullPosition> resampledPositions = resampledMap.keySet();
@@ -257,10 +267,14 @@ public class CrossSectionCreator extends Operation {
             Set<FullPosition> positionsInMeridian = resampledPositions.stream()
                     .filter(pos -> Precision.equals(pos.getLongitude(), sampleLongitude, HorizontalPosition.LONGITUDE_EPSILON))
                     .collect(Collectors.toSet());
-            double[] latitudesInMeridian = positionsInMeridian.stream().mapToDouble(pos -> pos.getLatitude()).toArray();
+            double[] latitudesInMeridian = positionsInMeridian.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
             double[] latitudesExtracted = extractContinuousLatitudeSequence(latitudesInMeridian, sampleLatitude, marginLatitudeDeg);
             // skip this sample point if sampleLatitude is not included in a latitude sequence (thus cannot be interpolated)
-            if (latitudesExtracted == null) continue;
+            if (latitudesExtracted == null) {
+                System.err.println("No data for longitude " + sampleLongitude);
+                System.err.println(latitudesInMeridian.length + " " + latitudesInMeridian[0] + " " + latitudesInMeridian[latitudesInMeridian.length - 1] + " " + sampleLatitude);
+                continue;
+            }
 
             //~create vertical trace at this sample point
             double[] values = new double[radii.length];
@@ -276,6 +290,7 @@ public class CrossSectionCreator extends Operation {
             verticalTrace = Interpolation.interpolateTraceOnGrid(verticalTrace, radialGridInterval, marginRadius, mosaic);
             sampledTraceMap.put(sampleEntry.getKey(), verticalTrace);
         }
+        System.err.println(sampledTraceMap.keySet().size());
 
         output(samplePositionMap, sampledTraceMap, outputPath);
     }
@@ -295,8 +310,8 @@ public class CrossSectionCreator extends Operation {
 
     /**
      * @see PerturbationMapShellscript#decideGridSampling(Set)
-     * @param radii
-     * @return
+     * @param radii (double[]) Radii of input voxels. Must be distinct and sorted.
+     * @return (double) Decided grid sampling.
      */
     private static double decideRadialGridSampling(double[] radii) {
         // average radius interval
@@ -330,7 +345,7 @@ public class CrossSectionCreator extends Operation {
      * Split a series of latitudes at gaps so that they become continuous sequences,
      * and return the one that includes a specified latitude.
      * @see Interpolation#splitTraceAtGaps(Trace, double)
-     * @param latitudesInMeridian (double[]) Array of latitudes which may include gaps.
+     * @param latitudesInMeridian (double[]) Array of latitudes which may include gaps. Must be distinct and sorted.
      * @param targetLatitude (double) A sequence including this latitude in its domain shall be searched for.
      * @param margin (double) The length of margin to add at either end of the domain of each sequence.
      * @return (double[]) A continuous sequence of latitudes that includes targetLatitude in its range.

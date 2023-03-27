@@ -28,6 +28,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.map.CrossSectionCreator;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
@@ -107,6 +108,7 @@ enum Manhattan {
     ModelSetMapper(74, ModelSetMapper.class),
     ModelMapper(75, ModelMapper.class),
     PerturbationMapper(76, PerturbationMapper.class),
+    CrossSectionCreator(77, CrossSectionCreator.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),
