@@ -284,12 +284,12 @@ public class ModelSetMapper extends Operation {
                     String variableName = variable.toString().toLowerCase();
                     // output discrete perturbation file
                     Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
-                    Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
+                    Path outputDiscretePath = outBasisPath.resolve(variableName + "Percent.lst");
                     PerturbationListFile.write(discreteMap, outputDiscretePath);
                     // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                     Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                             marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-                    Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
+                    Path outputInterpolatedPath = outBasisPath.resolve(variableName + "PercentXYZ.lst");
                     PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
                 }
             }
