@@ -48,6 +48,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
@@ -399,9 +400,9 @@ public class PartialWaveformAssembler3D extends Operation {
         if (bpCatalogMode) {
             System.err.println("Using BP catalog");
             if (usableSPCMode != UsableSPCMode.PSV)
-                bpCatalogSH = SpcFileAid.collectOrderedSHSpcFileName(bpCatalogPath.resolve(modelName));
+                bpCatalogSH = SpcFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.SH);
             if (usableSPCMode != UsableSPCMode.SH)
-                bpCatalogPSV = SpcFileAid.collectOrderedPSVSpcFileName(bpCatalogPath.resolve(modelName));
+                bpCatalogPSV = SpcFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.PSV);
             bpCatNum = (int) ((thetamax - thetamin) / dtheta) + 1;
         }
 
@@ -459,7 +460,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
             // list of FP spc files, collected for each pixel
             // Up to 2 files (SH and PSV) can exist for each pixel.
-            List<List<SPCFileName>> fpNames = collectFPNames(fpModelPath, type);
+            List<List<SPCFileName>> fpNames = collectSPCFileNames(fpModelPath, type);
 
             for (Observer observer : observersForEvent) {
                 Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
@@ -470,7 +471,7 @@ public class PartialWaveformAssembler3D extends Operation {
                 List<List<SPCFileName>> bpNames = null;
                 if (!bpCatalogMode) {
                     Path bpModelPath = bpPath.resolve(observer.getPosition().toCode()).resolve(modelName);
-                    bpNames = collectBPNames(bpModelPath, type);
+                    bpNames = collectSPCFileNames(bpModelPath, type);
                 }
 
                 // create ThreadPool for each set of corresponding FP and BP files (= for each pixel)
@@ -496,54 +497,29 @@ public class PartialWaveformAssembler3D extends Operation {
         }
     }
 
-    private List<List<SPCFileName>> collectFPNames(Path fpModelPath, PartialType type) throws IOException {
-        List<List<SPCFileName>> fpNames = new ArrayList<>();
+    private List<List<SPCFileName>> collectSPCFileNames(Path spcModelPath, PartialType type) throws IOException {
+        List<List<SPCFileName>> spcNames = new ArrayList<>();
 
         // collect all psv and sh files
         List<SPCFileName> shList = null;
         List<SPCFileName> psvList = null;
         if (type.isDensity()) {
-            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedUFUBSHSpcFileName(fpModelPath);
-            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedUFUBPSVSpcFileName(fpModelPath);
+            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.SH);
+            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.PSV);
         } else {
-            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSHSpcFileName(fpModelPath);
-            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedPSVSpcFileName(fpModelPath);
+            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.SH);
+            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.PSV);
         }
 
         // organize for each pixel
         int num = (shList != null) ? shList.size() : psvList.size();
         for (int i = 0; i < num; i++) {
-            List<SPCFileName> fpsForPixel = new ArrayList<>();
-            if (shList != null) fpsForPixel.add(shList.get(i));
-            if (psvList != null) fpsForPixel.add(psvList.get(i));
-            fpNames.add(fpsForPixel);
+            List<SPCFileName> spcsForPixel = new ArrayList<>();
+            if (shList != null) spcsForPixel.add(shList.get(i));
+            if (psvList != null) spcsForPixel.add(psvList.get(i));
+            spcNames.add(spcsForPixel);
         }
-        return fpNames;
-    }
-
-    private List<List<SPCFileName>> collectBPNames(Path bpModelPath, PartialType type) throws IOException {
-        List<List<SPCFileName>> bpNames = new ArrayList<>();
-
-        // collect all psv and sh files
-        List<SPCFileName> shList = null;
-        List<SPCFileName> psvList = null;
-        if (type.isDensity()) {
-            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedUFUBSHSpcFileName(bpModelPath);
-            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedUFUBPSVSpcFileName(bpModelPath);
-        } else {
-            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSHSpcFileName(bpModelPath);
-            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedPSVSpcFileName(bpModelPath);
-        }
-
-        // organize for each pixel
-        int num = (shList != null) ? shList.size() : psvList.size();
-        for (int i = 0; i < num; i++) {
-            List<SPCFileName> bpsForPixel = new ArrayList<>();
-            if (shList != null) bpsForPixel.add(shList.get(i));
-            if (psvList != null) bpsForPixel.add(psvList.get(i));
-            bpNames.add(bpsForPixel);
-        }
-        return bpNames;
+        return spcNames;
     }
 
     private void checkSPCExistence(Set<GlobalCMTID> eventSet, Set<Observer> observerSet) {

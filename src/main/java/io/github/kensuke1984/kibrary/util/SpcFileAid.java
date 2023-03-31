@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 
 /**
  * Utilities for collecting SPC files.
@@ -29,9 +31,40 @@ public final class SpcFileAid {
      * @throws IOException if an I/O error occurs
      */
     public static Set<SPCFileName> collectSpcFileName(Path path) throws IOException {
+        // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(path)) {
             return stream.filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toSet());
         }
+    }
+
+    public static List<SPCFileName> collectOrderedSpcFileNamePFPB(Path path, SPCMode spcMode) throws IOException {
+        List<SPCFileName> fileNameList;
+        // CAUTION: Files.list() must be in try-with-resources.
+        try (Stream<Path> stream = Files.list(path)) {
+            fileNameList = stream.filter(p -> (p.getFileName().toString().endsWith("PF..." + spcMode + ".spc")
+                            || p.getFileName().toString().endsWith("PB..." + spcMode + ".spc")))
+                    .sorted(Comparator.comparing(filePath -> filePath.getFileName().toString()))
+                    .filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toList());
+        }
+        if (fileNameList.get(fileNameList.size() - 1).getObserverID().equals("XY" + fileNameList.size()) == false) {
+            throw new IllegalStateException("Error when collecting SPC files in " + path);
+        }
+        return fileNameList;
+    }
+
+    public static List<SPCFileName> collectOrderedSpcFileNameUFUB(Path path, SPCMode spcMode) throws IOException {
+        List<SPCFileName> fileNameList;
+        // CAUTION: Files.list() must be in try-with-resources.
+        try (Stream<Path> stream = Files.list(path)) {
+            fileNameList = stream.filter(p -> (p.getFileName().toString().endsWith("UF..." + spcMode + ".spc")
+                            || p.getFileName().toString().endsWith("UB..." + spcMode + ".spc")))
+                    .sorted(Comparator.comparing(filePath -> filePath.getFileName().toString()))
+                    .filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toList());
+        }
+        if (fileNameList.get(fileNameList.size() - 1).getObserverID().equals("XY" + fileNameList.size()) == false) {
+            throw new IllegalStateException("Error when collecting SPC files in " + path);
+        }
+        return fileNameList;
     }
 
     /**
@@ -39,6 +72,7 @@ public final class SpcFileAid {
      * @return
      * @throws IOException
      * @author anselme
+     * @deprecated
      */
     public static List<SPCFileName> collectOrderedSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
@@ -84,6 +118,7 @@ public final class SpcFileAid {
      * @return
      * @throws IOException
      * @author anselme
+     * @deprecated
      */
     public static List<SPCFileName> collectOrderedSHSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
@@ -129,6 +164,7 @@ public final class SpcFileAid {
      * @return
      * @throws IOException
      * @author rei
+     * @deprecated
      */
     public static List<SPCFileName> collectOrderedUFUBSHSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
@@ -232,6 +268,7 @@ public final class SpcFileAid {
      * @return
      * @throws IOException
      * @author anselme
+     * @deprecated
      */
     public static List<SPCFileName> collectOrderedPSVSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();
@@ -277,6 +314,7 @@ public final class SpcFileAid {
      * @return
      * @throws IOException
      * @author rei
+     * @deprecated
      */
     public static List<SPCFileName> collectOrderedUFUBPSVSpcFileName(Path path) throws IOException {
         List<SPCFileName> list = new ArrayList<>();

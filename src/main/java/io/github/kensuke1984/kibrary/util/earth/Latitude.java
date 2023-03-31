@@ -38,7 +38,7 @@ final class Latitude implements Comparable<Latitude> {
      * @param theta [rad] spherical coordinates [0, &pi;]
      * @return geographic latitude [deg]
      */
-    static double valueFor(double theta) {
+    static double valueForTheta(double theta) {
         if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
                 "Invalid theta (must be in [0, pi]): " + theta + " @" +
                         Thread.currentThread().getStackTrace()[1].getMethodName());
