@@ -29,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.map.CrossSectionCreator;
+import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
@@ -64,6 +65,7 @@ enum Manhattan {
     DatasetMerge(1, DatasetMerge.class),
     PolynomialStructurePerturber(2, PolynomialStructurePerturber.class),
     PolynomialStructurePlotter(3, PolynomialStructurePlotter.class),
+    GreatArcMapper(5, GreatArcMapper.class),
     RaypathMapper(6, RaypathMapper.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),
