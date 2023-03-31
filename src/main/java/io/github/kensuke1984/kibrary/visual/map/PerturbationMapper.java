@@ -187,7 +187,7 @@ public class PerturbationMapper extends Operation {
         // output interpolated perturbation file
         Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-        Path outputInterpolatedPath = outPath.resolve(fileNameRoot + "XYZ.lst");
+        Path outputInterpolatedPath = outPath.resolve(fileNameRoot + "XY.lst");
         PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
         String maskFileNameRoot = null;
@@ -200,7 +200,7 @@ public class PerturbationMapper extends Operation {
             Map<FullPosition, Double> discreteMaskMap = PerturbationListFile.read(maskPath);
             Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-            Path outputInterpolatedMaskPath = outPath.resolve(maskFileNameRoot + "XYZ.lst");
+            Path outputInterpolatedMaskPath = outPath.resolve(maskFileNameRoot + "XY.lst");
             PerturbationListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }
 

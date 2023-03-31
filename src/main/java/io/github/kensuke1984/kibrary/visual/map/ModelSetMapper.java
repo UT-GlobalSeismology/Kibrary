@@ -289,7 +289,7 @@ public class ModelSetMapper extends Operation {
                     // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                     Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                             marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-                    Path outputInterpolatedPath = outBasisPath.resolve(variableName + "PercentXYZ.lst");
+                    Path outputInterpolatedPath = outBasisPath.resolve(variableName + "PercentXY.lst");
                     PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
                 }
             }
