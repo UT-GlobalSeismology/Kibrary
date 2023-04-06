@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -250,12 +249,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         }
 
         // set structure
-        PolynomialStructure structure = null;
-        if (structurePath != null) {
-            structure = PolynomialStructureFile.read(structurePath);
-        } else {
-            structure = PolynomialStructure.of(structureName);
-        }
+        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // set outPath
         if (reusePath != null) {

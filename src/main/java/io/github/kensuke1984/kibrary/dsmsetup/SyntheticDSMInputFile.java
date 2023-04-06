@@ -74,17 +74,16 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // source
             FullPosition eventLocation = event.getCmtPosition();
             pw.println("c parameter for the source");
-            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
-                    " r0(km), lat, lon (deg)");
-            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString)
-                    .collect(Collectors.joining(" ")) + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
+                    + " r0(km), lat, lon (deg)");
+            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
 
-            // station
+            // receiver
             pw.println("c parameter for the station");
             pw.println("c the number of stations");
             pw.println(observers.size() + " nsta");
             pw.println("c latitude longitude (deg)");
-
             observers.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
@@ -119,12 +118,12 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // source
             FullPosition eventLocation = event.getCmtPosition();
             pw.println("c parameter for the source");
-            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
-                    " r0(km), lat, lon (deg)");
-            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString)
-                    .collect(Collectors.joining(" ")) + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
+                    + " r0(km), lat, lon (deg)");
+            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
 
-            // station
+            // receiver
             pw.println("c parameter for the station");
             pw.println("c the number of stations");
             pw.println(observers.size() + " nsta");

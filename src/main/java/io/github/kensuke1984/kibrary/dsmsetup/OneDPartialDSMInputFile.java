@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.1
+ * @since version 0.0.6.1
  * @author anselme add system to comment out perturbations that are too close to the source and takes too long to compute
  * add PAR0 (partial for density)
  */
@@ -65,16 +65,16 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            Arrays.stream(structure.toPSVlines()).forEach(pw::println);
-
-            FullPosition eventLocation = event.getCmtPosition();
+            String[] structurePart = structure.toPSVlines();
+            Arrays.stream(structurePart).forEach(pw::println);
 
             // source
+            FullPosition eventLocation = event.getCmtPosition();
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
-            pw.println(
-                    Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
-                            + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
+
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("PSV.spc");
@@ -119,14 +119,16 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            Arrays.stream(structure.toPSVlines()).forEach(pw::println);
+            String[] structurePart = structure.toPSVlines();
+            Arrays.stream(structurePart).forEach(pw::println);
+
             FullPosition eventLocation = event.getCmtPosition();
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
-            pw.println(
-                    Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
-                            + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
+
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("PSV.spc");
@@ -168,14 +170,16 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            Arrays.stream(structure.toSHlines()).forEach(pw::println);
+            String[] structurePart = structure.toSHlines();
+            Arrays.stream(structurePart).forEach(pw::println);
+
             FullPosition eventLocation = event.getCmtPosition();
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
-            pw.println(
-                    Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
-                            + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
+
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("SH.spc");
@@ -216,14 +220,16 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(header).forEach(pw::println);
 
             // structure
-            Arrays.stream(structure.toSHlines()).forEach(pw::println);
-            FullPosition eventLocation = event.getCmtPosition();
+            String[] structurePart = structure.toSHlines();
+            Arrays.stream(structurePart).forEach(pw::println);
+
             // source
+            FullPosition eventLocation = event.getCmtPosition();
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
-            pw.println(
-                    Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
-                            + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
+
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("SH.spc");
@@ -249,7 +255,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
     }
 
     /**
-     * @return [km] radii for the perturbation points
+     * @return (double[]) radii for the perturbation points [km]
      */
     public double[] getPerturbationPointDepth() {
         return radii.clone();

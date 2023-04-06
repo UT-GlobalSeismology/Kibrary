@@ -5,6 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -13,6 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -158,6 +163,48 @@ public final class DatasetAid {
             }
         };
         ThreadAid.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Set up Map of event and observer pair information
+     * by either reading a {@link DataEntryListFile} or collecting from a dataset folder.
+     * Only entries with a component in the specified components will be considered.
+     * @param entryPath (Path) A {@link DataEntryListFile}.
+     * @param obsPath (Path) A dataset folder.
+     * @param components (Set of {@link SACComponent}) Components to consider.
+     * @return (Map of {@link GlobalCMTID} to Set of {@link Observer}) Created map of events to thier corresponding observers.
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/4/5
+     */
+    public static Map<GlobalCMTID, Set<Observer>> setupArcMapFromFileOrFolder(Path entryPath, Path obsPath,
+            Set<SACComponent> components) throws IOException {
+        // create set of events and observers to set up DSM for
+        Map<GlobalCMTID, Set<Observer>> arcMap = new HashMap<>();
+        if (entryPath != null) {
+            Map<GlobalCMTID, Set<DataEntry>> entryMap = DataEntryListFile.readAsMap(entryPath);
+            // refill into Map<GlobalCMTID, Set<Observer>>
+            for (GlobalCMTID event : entryMap.keySet()) {
+                Set<Observer> observers = entryMap.get(event).stream()
+                        .filter(entry -> components.contains(entry.getComponent()))
+                        .map(DataEntry::getObserver).collect(Collectors.toSet());
+                arcMap.put(event, observers);
+            }
+        } else if (obsPath != null){
+            Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
+            // collect observers for each event
+            for (EventFolder eventDir : eventDirs) {
+                Set<Observer> observers = eventDir.sacFileSet().stream()
+                        .filter(name -> name.isOBS() && components.contains(name.getComponent()))
+                        .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                        .map(Observer::of).collect(Collectors.toSet());
+                arcMap.put(eventDir.getGlobalCMTID(), observers);
+            }
+        } else {
+            throw new IllegalStateException("Either entryPath or obsPath must be specified.");
+        }
+        return arcMap;
     }
 
     /**

@@ -8,25 +8,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -182,7 +176,7 @@ public class SyntheticDSMSetup extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
-        header = property.parseString("header", "PREM").split("\\s+")[0];
+        header = property.parseStringSingle("header", "PREM");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -221,46 +215,11 @@ public class SyntheticDSMSetup extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
-        Map<GlobalCMTID, Set<Observer>> rayMap = new HashMap<>();
+        Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(entryPath, obsPath, components);
+        if (!DatasetAid.checkNum(arcMap.size(), "event", "events")) return;
 
-        if (entryPath != null) {
-            Map<GlobalCMTID, Set<DataEntry>> entryMap = DataEntryListFile.readAsMap(entryPath);
-            if (!DatasetAid.checkNum(entryMap.size(), "event", "events")) {
-                return;
-            }
-
-            for (GlobalCMTID event : entryMap.keySet()) {
-                Set<Observer> observers = entryMap.get(event).stream()
-                        .filter(entry -> components.contains(entry.getComponent()))
-                        .map(DataEntry::getObserver).collect(Collectors.toSet());
-                rayMap.put(event, observers);
-            }
-
-        } else if (obsPath != null){
-            Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-            if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-                return;
-            }
-
-            for (EventFolder eventDir : eventDirs) {
-                Set<Observer> observers = eventDir.sacFileSet().stream()
-                        .filter(name -> name.isOBS() && components.contains(name.getComponent()))
-                        .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                        .map(Observer::of).collect(Collectors.toSet());
-                rayMap.put(eventDir.getGlobalCMTID(), observers);
-            }
-
-        } else {
-            throw new IllegalStateException("Either entryMap or obsPath must be specified.");
-        }
-
-        // set structure to use
-        PolynomialStructure structure = null;
-        if (structurePath != null) {
-            structure = PolynomialStructureFile.read(structurePath);
-        } else {
-            structure = PolynomialStructure.of(structureName);
-        }
+        // set structure
+        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -279,9 +238,9 @@ public class SyntheticDSMSetup extends Operation {
 
         // output information files in each event folder
         List<String> sourceList = new ArrayList<>();
-        for (GlobalCMTID event : rayMap.keySet()) {
+        for (GlobalCMTID event : arcMap.keySet()) {
             try {
-                Set<Observer> observers = rayMap.get(event);
+                Set<Observer> observers = arcMap.get(event);
                 if (syntheticDataset)
                     observers = synObserverSet;
                 if (observers.isEmpty())
@@ -290,8 +249,7 @@ public class SyntheticDSMSetup extends Operation {
                 // in the same event folder, observers with the same name should have same position
                 int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different position for "
-                            + event);
+                    System.err.println("!Caution there are observers with the same name and different position for " + event);
 
                 Path eventOut = outPath.resolve(event.toString());
 
@@ -301,8 +259,7 @@ public class SyntheticDSMSetup extends Operation {
                     info.writePSV(eventOut.resolve(header + "_PSV.inf"));
                     info.writeSH(eventOut.resolve(header + "_SH.inf"));
                     sourceList.add(event.toString());
-                }
-                else {
+                } else {
                     System.err.println(event + "is not in the catalog");
                 }
             } catch (IOException e) {
@@ -315,7 +272,7 @@ public class SyntheticDSMSetup extends Operation {
         // output shellscripts for execution of tipsv and tish
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceList);
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, rayMap.size(), header);
+        DSMShellscript shell = new DSMShellscript(outPath, mpi, arcMap.size(), header);
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
         shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);

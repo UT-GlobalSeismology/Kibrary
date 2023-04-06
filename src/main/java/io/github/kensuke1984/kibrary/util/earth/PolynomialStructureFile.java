@@ -123,7 +123,7 @@ public class PolynomialStructureFile {
     }
 
     public static PolynomialStructure readDsm(Path inputPath) throws IOException{
-    	InformationFileReader reader = new InformationFileReader(inputPath, false);
+        InformationFileReader reader = new InformationFileReader(inputPath, false);
         String[] structureLines = reader.getNonCommentLines();
 
         String[] headerParts = structureLines[6].split("\\s+");
@@ -131,7 +131,7 @@ public class PolynomialStructureFile {
         int nCoreZone = 2; //nCoreZone should be parameter. //TODO
         if (nZone < 1)
             throw new IllegalStateException("nzone is invalid.");
-        
+
         double[] rmin = new double[nZone];
         double[] rmax = new double[nZone];
         PolynomialFunction[] rho = new PolynomialFunction[nZone];
@@ -182,6 +182,8 @@ public class PolynomialStructureFile {
         System.err.println("Read " + inputPath);
         return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
+
+
     /**
      * Create a polynomial structure file under the working folder.
      * The structure can be specified by its name or by using a DSM PSV input file.
@@ -237,20 +239,19 @@ public class PolynomialStructureFile {
             structureName = cmdLine.getOptionValue("n");
             structure = PolynomialStructure.of(structureName);
         } else if(cmdLine.hasOption("d")) {
-    		dsmPsvPath = Paths.get(cmdLine.getOptionValue("d"));
-    		fileName = dsmPsvPath.getFileName().toString();
-    		structureName = fileName.substring(0, fileName.lastIndexOf('.'));
-    		structure = PolynomialStructureFile.readDsm(dsmPsvPath);
-    	} else {
-    		System.err.println("No StructureName and dsmPsvFile.");
-    		return;
-    	}
+            dsmPsvPath = Paths.get(cmdLine.getOptionValue("d"));
+            fileName = dsmPsvPath.getFileName().toString();
+            structureName = fileName.substring(0, fileName.lastIndexOf('.'));
+            structure = PolynomialStructureFile.readDsm(dsmPsvPath);
+        } else {
+            System.err.println("No StructureName and dsmPsvFile.");
+            return;
+        }
 
         Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
                 : Paths.get(structureName + ".structure");
 
         write(structure, outputPath);
         System.err.println(outputPath + " is created.");
-
     }
 }

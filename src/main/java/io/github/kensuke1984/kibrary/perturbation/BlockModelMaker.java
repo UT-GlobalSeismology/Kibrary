@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
@@ -165,12 +164,7 @@ public class BlockModelMaker extends Operation {
     public void run() throws IOException {
 
         // set structure to use
-        PolynomialStructure initialStructure = null;
-        if (structurePath != null) {
-            initialStructure = PolynomialStructureFile.read(structurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(structureName);
-        }
+        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
