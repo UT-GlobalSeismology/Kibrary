@@ -44,10 +44,6 @@ public class BasicIDRebuilder extends Operation {
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic ID and waveform files
-     */
-    private String nameRoot;
-    /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
@@ -95,8 +91,6 @@ public class BasicIDRebuilder extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output files (actual)");
-            pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##Path of a basic waveform folder, must be set");
@@ -121,7 +115,6 @@ public class BasicIDRebuilder extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        nameRoot = property.parseStringSingle("nameRoot", "actual");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
