@@ -127,14 +127,14 @@ public final class Observer implements Comparable<Observer> {
         return new Observer(name, network, new HorizontalPosition(bb.getDouble(), bb.getDouble()));
     }
 
-    public static Observer createObserver(String stationLine) {
-        String[] ss = stationLine.trim().split("\\s+");
-        String stationName = ss[0];
+    public static Observer createObserver(String observerLine) {
+        String[] ss = observerLine.trim().split("\\s+");
+        String station = ss[0];
         String network = ss[1];
         double latitude = Double.parseDouble(ss[2]);
         double longitude = Double.parseDouble(ss[3]);
         HorizontalPosition position = new HorizontalPosition(latitude, longitude);
-        return new Observer(stationName, network, position);
+        return new Observer(station, network, position);
     }
 
     @Override
@@ -219,17 +219,23 @@ public final class Observer implements Comparable<Observer> {
         return position;
     }
 
+    /**
+     * Return name of observer in STA_NET format.
+     */
     @Override
     public String toString() {
         return station + "_" + network;
     }
 
+    /**
+     * @return (String) "station network"
+     */
     public String toPaddedString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH);
     }
 
     /**
-     * @return (String) station network latitude longitude
+     * @return (String) "station network latitude longitude"
      */
     public String toPaddedInfoString() {
         return StringUtils.rightPad(station, STA_LENGTH) + " " + StringUtils.rightPad(network, NET_LENGTH)

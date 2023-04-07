@@ -75,9 +75,12 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
+            // output files
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("PSV.spc");
+
+            // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
@@ -87,10 +90,10 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
                 pw.println(n + "." + event + ".PARL");
                 pw.println(n + "." + event + ".PARN");
             });
-
             observers.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
+            // radii
             int nComment = (int) IntStream.range(0, commentPerturbationR.length)
                 .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
             pw.println(radii.length - nComment + " nr");
@@ -129,10 +132,12 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
+            // output files
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("PSV.spc");
 
+            // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
@@ -142,6 +147,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             observers.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
+            // radii
             int nComment = (int) IntStream.range(0, commentPerturbationR.length)
                     .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
             pw.println(radii.length - nComment + " nr");
@@ -180,19 +186,22 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
+            // output files
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("SH.spc");
 
+            // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARL");
                 pw.println(n + "." + event + ".PARN");
             });
-
             observers.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
+
+            // radii
             int nComment = (int) IntStream.range(0, commentPerturbationR.length)
                     .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
             pw.println(radii.length - nComment + " nr");
@@ -230,9 +239,12 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
+            // output files
             pw.println("c directory of outputs");
             pw.println(output + "/");
             pw.println("SH.spc");
+
+            // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
                 pw.println(n + "." + event + ".PAR0");
@@ -241,6 +253,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             observers.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
+            // radii
             int nComment = (int) IntStream.range(0, commentPerturbationR.length)
                     .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
             pw.println(radii.length - nComment + " nr");

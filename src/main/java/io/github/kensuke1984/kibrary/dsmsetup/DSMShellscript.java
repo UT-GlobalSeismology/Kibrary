@@ -81,7 +81,7 @@ class DSMShellscript {
 
     /**
      * Writes a shellscript file to execute DSM.
-     * @param type ({@link SPCType}) SYNTHETIC, PF, or PB
+     * @param type ({@link SPCType}) SYNTHETIC, PF, or PB ; PAR2 for 1dIsotropic and PARN for TI (TODO refine)
      * @param mode ({@link SPCMode}) PSV or SH
      * @throws IOException
      *
@@ -108,6 +108,16 @@ class DSMShellscript {
             enterFolder = "./BPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
+            break;
+        case PAR2:
+            enterFolder = "./";
+            exitFolder = "../";
+            programName = (mode == SPCMode.PSV ? "sshpsvi" : "sshshi");
+            break;
+        case PARN:
+            enterFolder = "./";
+            exitFolder = "../";
+            programName = (mode == SPCMode.PSV ? "sshpsv" : "sshsh");
             break;
         default:
             throw new IllegalArgumentException("This SPCType is not supported yet.");
@@ -146,13 +156,9 @@ class DSMShellscript {
             pw.println("echo \"end  : $(date -d \"@${end}\" +'%Y-%m-%d %H:%M:%S (%:z)')\"");
             pw.println("elapsed=$(echo \"$end - $start\" | bc)");
             pw.println("((sec=elapsed%60, min=(elapsed%3600)/60, hrs=elapsed/3600))");
-//            pw.println("let hrs=\"$elapsed / 3600\"");
-//            pw.println("let min=\"($elapsed % 3600) / 60\"");
-//            pw.println("let sec=\"$elapsed % 60\"");
             pw.println("timestamp=$(printf \"%d:%02d:%02d\" \"$hrs\" \"$min\" \"$sec\")");
             pw.println("echo \"Finished in $timestamp\"");
         }
     }
-
 
 }

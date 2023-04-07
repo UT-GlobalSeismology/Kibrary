@@ -68,7 +68,7 @@ public class SyntheticDSMSetup extends Operation {
      */
     private String folderTag;
     /**
-     * Information file name is header_[psv,sh].inf (default:PREM)
+     * Information file name is header_[sh,psv].inf (default:PREM)
      */
     private String header;
     /**
@@ -140,12 +140,12 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
-            pw.println("#entryPath ");
+            pw.println("#entryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
@@ -157,7 +157,7 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
-            pw.println("#mpi ");
+            pw.println("#mpi false");
             pw.println("##(boolean) If a virtual set of observers is to be created (false)");
             pw.println("#syntheticDataset ");
             pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
@@ -203,7 +203,6 @@ public class SyntheticDSMSetup extends Operation {
 
         // write additional info
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
-
     }
 
     /**
@@ -240,6 +239,10 @@ public class SyntheticDSMSetup extends Operation {
         List<String> sourceList = new ArrayList<>();
         for (GlobalCMTID event : arcMap.keySet()) {
             try {
+                if (event.getEventData() == null) {
+                    System.err.println(event + "is not in the catalog");
+                    continue;
+                }
                 Set<Observer> observers = arcMap.get(event);
                 if (syntheticDataset)
                     observers = synObserverSet;
@@ -251,17 +254,12 @@ public class SyntheticDSMSetup extends Operation {
                 if (numberOfObserver != observers.size())
                     System.err.println("!Caution there are observers with the same name and different position for " + event);
 
-                Path eventOut = outPath.resolve(event.toString());
-
-                if (event.getEventData() != null) {
-                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
-                    Files.createDirectories(eventOut.resolve(header));
-                    info.writePSV(eventOut.resolve(header + "_PSV.inf"));
-                    info.writeSH(eventOut.resolve(header + "_SH.inf"));
-                    sourceList.add(event.toString());
-                } else {
-                    System.err.println(event + "is not in the catalog");
-                }
+                SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
+                Path outEventPath = outPath.resolve(event.toString());
+                Files.createDirectories(outEventPath.resolve(header));
+                info.writeSH(outEventPath.resolve(header + "_SH.inf"));
+                info.writePSV(outEventPath.resolve(header + "_PSV.inf"));
+                sourceList.add(event.toString());
             } catch (IOException e) {
                 // If there are any problems, move on to the next event.
                 System.err.println("Error on " + event);
@@ -273,11 +271,11 @@ public class SyntheticDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceList);
         DSMShellscript shell = new DSMShellscript(outPath, mpi, arcMap.size(), header);
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
-        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
         shell.write(SPCType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
-        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
+        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
+        System.err.println("After this finishes, please run " + outSHPath + " and " + outPSVPath);
     }
 
 }

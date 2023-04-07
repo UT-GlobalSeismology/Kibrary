@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,9 +21,11 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
- * Information file for SSHSH
+ * Information file for SSHSH and SSHPSV
  *
  * @author Kensuke Konishi
  * @since version 0.1.3
@@ -39,7 +43,7 @@ public class OneDPartialDSMSetup extends Operation {
      */
     private String folderTag;
     /**
-     * Information file name is header_[psv,sh].inf (default:PREM)
+     * Information file name is header_[sh,psv].inf (default:PREM)
      */
     private String header;
     /**
@@ -59,6 +63,7 @@ public class OneDPartialDSMSetup extends Operation {
      * perturbation radii
      */
     private double[] perturbationR;
+    private boolean forTIParameters;
     /**
      * structure file instead of PREM
      */
@@ -96,16 +101,18 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
-            pw.println("##SacComponents to be used (Z R T)");
-            pw.println("#components");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
-            pw.println("#entryPath ");
+            pw.println("#entryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##(double[]) Depths for computation, listed using spaces, must be set");
             pw.println("#perturbationR 3500 3600");
+            pw.println("##(boolean) Whether to compute partial derivatives for TI parameters. Otherwise, isotropic. (false)");
+            pw.println("#forTIParameters true");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
@@ -115,7 +122,7 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
-            pw.println("#mpi ");
+            pw.println("#mpi false");
         }
         System.err.println(outPath + " is created.");
     }
@@ -138,6 +145,7 @@ public class OneDPartialDSMSetup extends Operation {
             obsPath = property.parsePath("obsPath", ".", true, workPath);
         }
         perturbationR = property.parseDoubleArray("perturbationR", null);
+        forTIParameters = property.parseBoolean("forTIParameters", "false");
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
@@ -150,6 +158,7 @@ public class OneDPartialDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
+        String dateStr = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(entryPath, obsPath, components);
@@ -159,36 +168,61 @@ public class OneDPartialDSMSetup extends Operation {
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
+        List<String> sourceList = new ArrayList<>();
         for (GlobalCMTID event : arcMap.keySet()) {
-            Set<Observer> observers = arcMap.get(event);
-            if (observers.isEmpty())
-                continue;
+            try {
+                if (event.getEventData() == null) {
+                    System.err.println(event + "is not in the catalog");
+                    continue;
+                }
+                Set<Observer> observers = arcMap.get(event);
+                if (observers.isEmpty())
+                    continue;
 
-            // in the same event folder, observers with the same name should have same position
-            int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
-            if (numberOfObserver != observers.size())
-                System.err.println("!Caution there are observers with the same name and different position for " + event);
+                // in the same event folder, observers with the same name should have same position
+                int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
+                if (numberOfObserver != observers.size())
+                    System.err.println("!Caution there are observers with the same name and different position for " + event);
 
-            Path outEvent = outPath.resolve(event.toString());
-            Path modelPath = outEvent.resolve(header);
-            Files.createDirectories(outEvent);
-            Files.createDirectories(modelPath);
-            OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, event.getEventData(), observers, header, perturbationR,
-                    tlen, np);
-            info.writeTIPSV(outEvent.resolve("par5_" + header + "_PSV.inf"));
-            info.writeTISH(outEvent.resolve("par5_" + header + "_SH.inf"));
-            info.writeISOPSV(outEvent.resolve("par2_" + header + "_PSV.inf"));
-            info.writeISOSH(outEvent.resolve("par2_" + header + "_SH.inf"));
+                OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, event.getEventData(), observers, header,
+                        perturbationR, tlen, np);
+                Path outEventPath = outPath.resolve(event.toString());
+                Files.createDirectories(outEventPath.resolve(header));
+                if (forTIParameters) {
+                    info.writeTISH(outEventPath.resolve(header + "_SH.inf"));
+                    info.writeTIPSV(outEventPath.resolve(header + "_PSV.inf"));
+                } else {
+                    info.writeISOSH(outEventPath.resolve(header + "_SH.inf"));
+                    info.writeISOPSV(outEventPath.resolve(header + "_PSV.inf"));
+                }
+                sourceList.add(event.toString());
+            } catch (IOException e) {
+                // If there are any problems, move on to the next event.
+                System.err.println("Error on " + event);
+                e.printStackTrace();
+            }
         }
-        // output shellscripts for execution of tipsv and tish
-        //TODO PAR2の場合とPAR5の場合で場合分け
+        // output shellscripts for execution of sshsh and sshpsv
+        String listFileName = "sourceList.txt";
+        Files.write(outPath.resolve(listFileName), sourceList);
         DSMShellscript shell = new DSMShellscript(outPath, mpi, arcMap.size(), header);
-//        shell.write(SPCType.PAR0, SPCMode.PSV);
-//        shell.write(SPCType.PAR0, SPCMode.SH);
-        System.err.println("After this finishes, please run " + outPath + "/runDSM_PSV.sh and " + outPath + "/runDSM_SH.sh");
+        Path outSHPath;
+        Path outPSVPath;
+        if (forTIParameters) {
+            outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparTI_SH", null, dateStr, ".sh"));
+            outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparTI_PSV", null, dateStr, ".sh"));
+            shell.write(SPCType.PARN, SPCMode.SH, listFileName, outSHPath);  // TODO using PARN here is not a clean program
+            shell.write(SPCType.PARN, SPCMode.PSV, listFileName, outPSVPath);
+        } else {
+            outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparI_SH", null, dateStr, ".sh"));
+            outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparI_PSV", null, dateStr, ".sh"));
+            shell.write(SPCType.PAR2, SPCMode.SH, listFileName, outSHPath);  // TODO using PAR2 here is not a clean program
+            shell.write(SPCType.PAR2, SPCMode.PSV, listFileName, outPSVPath);
+        }
+        System.err.println("After this finishes, please run " + outSHPath + " and " + outPSVPath);
     }
 }
