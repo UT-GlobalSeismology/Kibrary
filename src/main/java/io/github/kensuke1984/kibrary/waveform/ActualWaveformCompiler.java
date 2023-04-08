@@ -41,8 +41,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -302,20 +300,8 @@ public class ActualWaveformCompiler extends Operation {
 
    @Override
    public void run() throws IOException {
-       if (dataEntryPath != null) {
-           // read entry set to be used for selection
-           Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-
-           // read timewindows and select based on component and entries
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                   .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
-                   .collect(Collectors.toSet());
-       } else {
-           // read timewindows and select based on component
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                   .filter(window -> components.contains(window.getComponent()))
-                   .collect(Collectors.toSet());
-       }
+       // read timewindow file and select based on component and entries
+       sourceTimewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
        // read static correction data
        if (correctTime || amplitudeCorrectionType > 0) {

@@ -109,7 +109,7 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#entryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
-            pw.println("##(double[]) Depths for computation, listed using spaces, must be set");
+            pw.println("##(double[]) Radii of perturbation points, listed using spaces, must be set");
             pw.println("#perturbationR 3500 3600");
             pw.println("##(boolean) Whether to compute partial derivatives for TI parameters. Otherwise, isotropic. (false)");
             pw.println("#forTIParameters true");

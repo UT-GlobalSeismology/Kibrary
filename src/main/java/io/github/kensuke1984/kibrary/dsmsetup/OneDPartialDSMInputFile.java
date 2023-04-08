@@ -83,7 +83,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
-                pw.println(n + "." + event + ".PAR0");
+//                pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARA");
                 pw.println(n + "." + event + ".PARC");
                 pw.println(n + "." + event + ".PARF");
@@ -140,7 +140,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
-                pw.println(n + "." + event + ".PAR0");
+//                pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PAR1");
                 pw.println(n + "." + event + ".PAR2");
             });
@@ -194,7 +194,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
-                pw.println(n + "." + event + ".PAR0");
+//                pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PARL");
                 pw.println(n + "." + event + ".PARN");
             });
@@ -247,7 +247,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observers.size() + " nsta");
             observers.stream().sorted().map(Observer::toString).forEach(n -> {
-                pw.println(n + "." + event + ".PAR0");
+//                pw.println(n + "." + event + ".PAR0");
                 pw.println(n + "." + event + ".PAR2");
             });
             observers.stream().sorted().map(Observer::getPosition)
@@ -265,12 +265,5 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             }
             pw.println("end");
         }
-    }
-
-    /**
-     * @return (double[]) radii for the perturbation points [km]
-     */
-    public double[] getPerturbationPointDepth() {
-        return radii.clone();
     }
 }

@@ -63,4 +63,10 @@ public final class SpcFileAid {
         return fileNameList;
     }
 
+    public static enum UsableSPCMode {
+        SH,
+        PSV,
+        BOTH
+    }
+
 }

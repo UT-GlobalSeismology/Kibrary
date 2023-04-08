@@ -809,6 +809,9 @@ public class ThreeDPartialMaker {
         return bpBody1.interpolate(bpBody2, unitDistance);
     }
 
+    /**
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to use. Set this null when none is to be applied.
+     */
     public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         this.sourceTimeFunction = sourceTimeFunction;
     }

@@ -33,6 +33,8 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -158,13 +160,44 @@ public final class TimewindowDataFile {
     }
 
     /**
-     * Read timewindow information from binary format file
+     * Read timewindow data from a binary format {@link TimewindowDataFile}
+     * and select those to use based on {@link DataEntry}s and {@link SACComponent}s.
      *
-     * @param inputPath of the information file to read
-     * @return <b>unmodifiable</b> Set of timewindow information
+     * @param timewindowPath (Path) The {@link TimewindowDataFile} to read.
+     * @param dataEntryPath (Path) The {@link DataEntryListFile} for selection.
+     * @param components (Set of {@link SACComponent}) Components to use.
+     * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Timewindows that are read.
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/4/8
+     */
+    public static Set<TimewindowData> readAndSelect(Path timewindowPath, Path dataEntryPath, Set<SACComponent> components) throws IOException {
+        Set<TimewindowData> timewindowSet;
+        if (dataEntryPath != null) {
+            // read entry set to be used for selection
+            Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+
+            // read timewindows and select based on component and entries
+            timewindowSet = TimewindowDataFile.read(timewindowPath).stream()
+                    .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
+                    .collect(Collectors.toSet());
+        } else {
+            // read timewindows and select based on component
+            timewindowSet = TimewindowDataFile.read(timewindowPath).stream()
+                    .filter(window -> components.contains(window.getComponent()))
+                    .collect(Collectors.toSet());
+        }
+        return Collections.unmodifiableSet(timewindowSet);
+    }
+
+    /**
+     * Read timewindow data from a binary format {@link TimewindowDataFile}.
+     *
+     * @param inputPath (Path) The {@link TimewindowDataFile} to read.
+     * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Timewindows that are read.
      * @throws IOException if an I/O error occurs
      * @author Kensuke Konishi
-     * @author anselme add phase information
      */
     public static Set<TimewindowData> read(Path inputPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(inputPath)));) {

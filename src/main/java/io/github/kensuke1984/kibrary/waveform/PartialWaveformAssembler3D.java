@@ -34,8 +34,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -154,7 +152,7 @@ public class PartialWaveformAssembler3D extends Operation {
     /**
      * The SPC modes that shall be used: SH, PSV, or BOTH
      */
-    private UsableSPCMode usableSPCMode;
+    private SpcFileAid.UsableSPCMode usableSPCMode;
 
     /**
      * Whether to use BP catalog
@@ -208,6 +206,9 @@ public class PartialWaveformAssembler3D extends Operation {
 
 
     private int nThreads;
+    /**
+     * Timewindows to work for.
+     */
     private Set<TimewindowData> timewindowSet;
     private Set<FullPosition> voxelPositionSet;
     private Map<GlobalCMTID, SourceTimeFunction> sourceTimeFunctions;
@@ -224,6 +225,9 @@ public class PartialWaveformAssembler3D extends Operation {
      * structure for Q partial
      */
     private PolynomialStructure qStructure;
+    /**
+     * Created {@link PartialID}s.
+     */
     private List<PartialID> partialIDs = Collections.synchronizedList(new ArrayList<>());
 
     private int bpCatNum;
@@ -336,7 +340,7 @@ public class PartialWaveformAssembler3D extends Operation {
         bpPath = property.parsePath("bpPath", "BPpool", true, workPath);
 
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
-        usableSPCMode = UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
+        usableSPCMode = SpcFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
 
         bpCatalogMode = property.parseBoolean("bpCatalogMode", "false");
         if (bpCatalogMode) {
@@ -372,22 +376,10 @@ public class PartialWaveformAssembler3D extends Operation {
     @Override
     public void run() throws IOException {
         System.err.println("Using mode " + usableSPCMode);
+        System.err.println("Model name is " + modelName);
 
-        // read timewindow file
-        if (dataEntryPath != null) {
-            // read entry set to be used for selection
-            Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-
-            // read timewindows and select based on component and entries
-            timewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                    .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
-                    .collect(Collectors.toSet());
-        } else {
-            // read timewindows and select based on component
-            timewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                    .filter(window -> components.contains(window.getComponent()))
-                    .collect(Collectors.toSet());
-        }
+        // read timewindow file and select based on component and entries
+        timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
         Set<GlobalCMTID> eventSet = timewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
         Set<Observer> observerSet = timewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
@@ -399,9 +391,9 @@ public class PartialWaveformAssembler3D extends Operation {
         // This is independent of event or observer, thus is read here (not later in the loops).
         if (bpCatalogMode) {
             System.err.println("Using BP catalog");
-            if (usableSPCMode != UsableSPCMode.PSV)
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV)
                 bpCatalogSH = SpcFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.SH);
-            if (usableSPCMode != UsableSPCMode.SH)
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH)
                 bpCatalogPSV = SpcFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.PSV);
             bpCatNum = (int) ((thetamax - thetamin) / dtheta) + 1;
         }
@@ -504,11 +496,11 @@ public class PartialWaveformAssembler3D extends Operation {
         List<SPCFileName> shList = null;
         List<SPCFileName> psvList = null;
         if (type.isDensity()) {
-            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.SH);
-            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.PSV);
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.SH);
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.PSV);
         } else {
-            if (usableSPCMode != UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.SH);
-            if (usableSPCMode != UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.PSV);
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.SH);
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.PSV);
         }
 
         // organize for each pixel
@@ -636,10 +628,10 @@ public class PartialWaveformAssembler3D extends Operation {
                 dhBP[0] = (distanceBP - theta) / dtheta;
 
                 // add BP file to list
-                if (usableSPCMode != UsableSPCMode.PSV) {
+                if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) {
                     bpFiles.add(SPCFile.getInstance(bpCatalogSH.get(ipointBP + i), phiBP, voxelPos, observerPos, voxelName));
                 }
-                if (usableSPCMode != UsableSPCMode.SH) {
+                if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) {
                     bpFiles.add(SPCFile.getInstance(bpCatalogPSV.get(ipointBP + i), phiBP, voxelPos, observerPos, voxelName));
                 }
             }
@@ -774,12 +766,6 @@ public class PartialWaveformAssembler3D extends Operation {
             else return true;
         }
 
-    }
-
-    private static enum UsableSPCMode {
-        SH,
-        PSV,
-        BOTH
     }
 
 }
