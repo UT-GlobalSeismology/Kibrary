@@ -432,6 +432,140 @@ public class PartialWaveformAssembler1D extends Operation {
     }
 
 
+    private class Worker2 implements Runnable {
+
+        private final GlobalCMTID event;
+        private final Path shModelPath;
+        private final Path psvModelPath;
+
+        private Worker2(GlobalCMTID event) {
+            this.event = event;
+            shModelPath = shPath.resolve(event.toString()).resolve(modelName);
+            psvModelPath = psvPath.resolve(event.toString()).resolve(modelName);
+        }
+
+        @Override
+        public void run() {
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV && Files.exists(shModelPath) == false) {
+                System.err.println(shModelPath + " does not exist...");
+                return;
+            }
+            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH && Files.exists(psvModelPath) == false) {
+                System.err.println(psvModelPath + " does not exist...");
+                return;
+            }
+
+            Set<Observer> correspondingObservers = timewindowSet.stream()
+                    .filter(timewindow -> timewindow.getGlobalCMTID().equals(event))
+                    .map(TimewindowData::getObserver).collect(Collectors.toSet());
+
+            for (Observer observer : correspondingObservers) {
+                for (PartialType partialType : partialTypes) {
+                    try {
+                        addPartialSpectrum(observer, partialType);
+                    } catch (IOException e) {
+                        // this println() is for starting new line after writing "."s
+                        System.err.println();
+                        System.err.println("Failure for " + observer + " " + partialType);
+                        e.printStackTrace();
+                    }
+                }
+            }
+            System.err.print(".");
+        }
+
+        private void addPartialSpectrum(Observer observer, PartialType partialType) throws IOException {
+            Path shSPCPath = shModelPath.resolve(observer + "." + event + "." + partialType + "...SH.spc");
+            if (!SPCFileName.isFormatted(shSPCPath)) {
+                System.err.println(shSPCPath + " has invalid SPC file name.");
+                return;
+            }
+            SPCFileName shSPCName = new FormattedSPCFileName(shSPCPath);
+            SPCFileAccess shSPCFile = shSPCName.read();
+            if (shSPCFile.tlen() != tlen || shSPCFile.np() != np) {
+                System.err.println(shSPCFile + " has different np or tlen.");
+                return;
+            }
+            process(shSPCFile);
+
+            Path psvSPCPath = psvModelPath.resolve(observer + "." + event + "." + partialType + "...PSV.spc");
+            if (!SPCFileName.isFormatted(psvSPCPath)) {
+                System.err.println(psvSPCPath + " has invalid SPC file name.");
+                return;
+            }
+            SPCFileName psvSPCName = new FormattedSPCFileName(psvSPCPath);
+            SPCFileAccess psvSPCFile = psvSPCName.read();
+            if (psvSPCFile.tlen() != tlen || psvSPCFile.np() != np) {
+                System.err.println(psvSPCFile + " has different np or tlen.");
+                return;
+            }
+            process(psvSPCFile);
+
+            Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
+                    .filter(timewindow -> timewindow.getGlobalCMTID().equals(event) && timewindow.getObserver().equals(observer))
+                    .collect(Collectors.toSet());
+
+            for (TimewindowData t : correspondingTimewindows) {
+                for (int k = 0; k < shSPCFile.nbody(); k++) { //TODO loop for r:bodyR, so that error can be thrown when data for a radius doesn't exist
+                    double currentBodyR = shSPCFile.getBodyR()[k];
+                    boolean exists = false;
+                    for (double r : bodyR)
+                        if (Precision.equals(r, currentBodyR, eps))
+                            exists = true;
+                    if (!exists)
+                        continue;
+                    double[] ut = shSPCFile.getSpcBodyList().get(k).getSpcComponent(t.getComponent()).getTimeseries();
+
+                    // applying the filter
+                    double[] filteredUt = filter.applyFilter(ut);
+                    cutAndWrite(observer, filteredUt, t, currentBodyR, partialType);
+                }
+            }
+        }
+
+        private void process(SPCFileAccess spcFile) {
+            for (SACComponent component : components)
+                spcFile.getSpcBodyList().stream().map(body -> body.getSpcComponent(component))
+                        .forEach(spcComponent -> {
+                            spcComponent.applySourceTimeFunction(sourceTimeFunctions.get(event));
+                            spcComponent.toTimeDomain(lsmooth);
+                            spcComponent.applyGrowingExponential(spcFile.omegai(), tlen);
+                            spcComponent.amplitudeCorrection(tlen);
+                        });
+        }
+
+        private void cutAndWrite(Observer observer, double[] filteredUt, TimewindowData t, double bodyR,
+                PartialType partialType) {
+
+            double[] cutU = sampleOutput(filteredUt, t);
+
+            PartialID partialID = new PartialID(observer, event, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
+                    new FullPosition(0, 0, bodyR), partialType, cutU);
+            partialIDs.add(partialID);
+        }
+
+        /**
+         * @param u
+         *            partial waveform
+         * @param timewindowInformation
+         *            cut information
+         * @return u cut by considering sampling Hz
+         */
+        private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {//TODO check
+            int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
+            // 書きだすための波形
+            int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
+                    * finalSamplingHz);
+            double[] sampleU = new double[outnpts];
+            // cutting a waveform for outputting
+            Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
+
+            return sampleU;
+        }
+
+    }
+
     private class Worker implements Runnable {
 
         private GlobalCMTID event;
@@ -444,6 +578,7 @@ public class PartialWaveformAssembler1D extends Operation {
 
         @Override
         public void run() {
+            //OK
             try {
                 writeLog("Running on " + event);
             } catch (IOException e1) {
@@ -451,11 +586,13 @@ public class PartialWaveformAssembler1D extends Operation {
             }
             Path spcFolder = eventDir.toPath().resolve(modelName); // SPCの入っているフォルダ
 
+            //OK
             if (!Files.exists(spcFolder)) {
                 System.err.println(spcFolder + " does not exist...");
                 return;
             }
 
+            //OK
             Set<SPCFileName> spcFileNames;
             try {
                 if (usableSPCMode == SpcFileAid.UsableSPCMode.SH) {
@@ -475,20 +612,20 @@ public class PartialWaveformAssembler1D extends Operation {
                 return;
             }
 
-            Set<TimewindowData> timewindowCurrentEvent = null;
-            synchronized (this) {
-                timewindowCurrentEvent = timewindowSet
-                    .stream()
-                    .filter(tw -> tw.getGlobalCMTID().equals(event))
-                    .collect(Collectors.toSet());
-            }
+            //OK
+            Set<TimewindowData> timewindowCurrentEvent = timewindowSet.stream()
+                .filter(tw -> tw.getGlobalCMTID().equals(event))
+                .collect(Collectors.toSet());
 
             // すべてのspcファイルに対しての処理
             for (SPCFileName spcFileName : spcFileNames) {
+
+                //OK
                 // 理論波形（非偏微分係数波形）ならスキップ
                 if (spcFileName.isSynthetic())
                     continue;
 
+                //OK
                 if (!spcFileName.getSourceID().equals(event.toString())) {
                     try {
                         writeLog(spcFileName + " has an invalid global CMT ID.");
@@ -498,19 +635,24 @@ public class PartialWaveformAssembler1D extends Operation {
                     }
                 }
 
+                //OK
                 SPCType spcFileType = spcFileName.getFileType();
 
+                //OK
                 // 3次元用のスペクトルなら省く
                 if (spcFileType == SPCType.PF || spcFileType == SPCType.PB)
                     continue;
 
+                //OK
                 // check if the partialtype is included in computing list.
                 PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
+                //OK
                 if (!(partialTypes.contains(partialType)
                         || (partialTypes.contains(PartialType.PARQ) && spcFileType == SPCType.PAR2)))
                     continue;
 
+                //OK
                 SPCFileName shspcname = null;
                 if (usableSPCMode == SpcFileAid.UsableSPCMode.BOTH) {
                     if (spcFileType.equals(SPCType.PARN)
@@ -566,6 +708,7 @@ public class PartialWaveformAssembler1D extends Operation {
         }
 
         private void addPartialSpectrum(SPCFileName spcname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+            //OK
             Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
                     .filter(info -> info.getObserver().getStation().equals(spcname.getStationCode())
                             && info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
@@ -576,6 +719,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 return;
             }
 
+            //OK
             System.out.println(spcname);
             SPCFileAccess spectrum = spcname.read();
             if (spectrum.tlen() != tlen || spectrum.np() != np) {
@@ -584,10 +728,13 @@ public class PartialWaveformAssembler1D extends Operation {
                 return;
             }
 
+            //OK
             String stationName = spcname.getStationCode();
             String network = spcname.getNetworkCode();
             Observer station = new Observer(stationName, network, spectrum.getObserverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
+
+            //OK
             SPCFileAccess qSpectrum = null;
             if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
                 qSpectrum = fujiConversion.convert(spectrum);
@@ -596,11 +743,14 @@ public class PartialWaveformAssembler1D extends Operation {
             process(spectrum);
 
             for (SACComponent component : components) {
+
+                //OK
                 Set<TimewindowData> tw = tmpTws.stream()
                         .filter(info -> info.getObserver().equals(station))
                         .filter(info -> info.getGlobalCMTID().equals(event))
                         .filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
+                //OK
                 if (tw.isEmpty()) {
                     tmpTws.forEach(window -> {
                         System.out.println(window);
@@ -611,6 +761,7 @@ public class PartialWaveformAssembler1D extends Operation {
                     continue;
                 }
 
+                //OK
                 for (int k = 0; k < spectrum.nbody(); k++) {
                     double bodyR = spectrum.getBodyR()[k];
                     boolean exists = false;
@@ -646,6 +797,7 @@ public class PartialWaveformAssembler1D extends Operation {
         }
 
         private void addPartialSpectrum(SPCFileName spcname, SPCFileName shspcname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
+            //OK
             Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
                     .filter(info -> info.getObserver().getStation().equals(spcname.getStationCode())
                             && info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
@@ -655,6 +807,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 return;
             }
 
+            //OK
             System.out.println(spcname);
             SPCFileAccess spectrum = spcname.read();
             if (spectrum.tlen() != tlen || spectrum.np() != np) {
@@ -663,6 +816,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 return;
             }
 
+            //OK
             System.out.println(shspcname);
             SPCFileAccess shspectrum = shspcname.read();
             if (shspectrum.tlen() != tlen || shspectrum.np() != np) {
@@ -677,25 +831,31 @@ public class PartialWaveformAssembler1D extends Operation {
                 return;
             }
 
+            //OK
             String stationName = spcname.getStationCode();
             String network = spcname.getNetworkCode();
             Observer station = new Observer(stationName, network, spectrum.getObserverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
+
             SPCFileAccess qSpectrum = null;
             if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
                 qSpectrum = fujiConversion.convert(spectrum);
                 process(qSpectrum);
             }
 
+            //OK
             process(spectrum);
             process(shspectrum);
 
             for (SACComponent component : components) {
+
+                //OK
                 Set<TimewindowData> tw = tmpTws.stream()
                         .filter(info -> info.getObserver().equals(station))
                         .filter(info -> info.getGlobalCMTID().equals(event))
                         .filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
+                //OK
                 if (tw.isEmpty()) {
                     tmpTws.forEach(window -> {
                         System.out.println(window);
