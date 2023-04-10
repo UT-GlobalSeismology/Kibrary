@@ -174,9 +174,6 @@ public final class AMatrixBuilder {
             case PAR2:
             case PARVS:
             case PARVP:
-            case PARG:
-            case PARM:
-            case PAR00:
                 if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
                     return i;
                 break;

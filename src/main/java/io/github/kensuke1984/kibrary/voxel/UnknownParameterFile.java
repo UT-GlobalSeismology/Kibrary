@@ -92,19 +92,16 @@ public class UnknownParameterFile {
                     parts[2],
                     new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]))), Integer.parseInt(parts[5]));
             break;
+        case PAR1:
+        case PAR2:
         case PARA:
         case PARC:
         case PARF:
         case PARL:
         case PARN:
         case PARQ:
-        case PAR2:
         case PARVS:
         case PARVP:
-        case PARG:
-        case PARM:
-        case PAR00:
-        case PAR1:
             unknown = new Physical1DParameter(type, Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
             break;
         case A:

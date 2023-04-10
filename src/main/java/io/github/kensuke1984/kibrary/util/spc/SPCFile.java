@@ -135,10 +135,10 @@ public class SPCFile implements SPCFileAccess {
                 specFile.nComponent = 9;
                 specFile.spcFileType = SPCType.PFSHCAT;
                 break;
-            case 11: // Optimized forward propagation SH catalog. 11 is an identifier. The actual number of component is 9.
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PFSHO;
-                break;
+//            case 11: // Optimized forward propagation SH catalog. 11 is an identifier. The actual number of component is 9.
+//                specFile.nComponent = 9;
+//                specFile.spcFileType = SPCType.PFSHO;
+//                break;
             case 12: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
                 specFile.nComponent = 9;
                 specFile.spcFileType = SPCType.PFPSVCAT;
@@ -166,7 +166,7 @@ public class SPCFile implements SPCFileAccess {
                     || specFile.spcFileType.equals(SPCType.PBPSVCAT)
                     || specFile.spcFileType.equals(SPCType.PFSHCAT)
                     || specFile.spcFileType.equals(SPCType.PFPSVCAT)
-                    || specFile.spcFileType.equals(SPCType.PFSHO)
+//                    || specFile.spcFileType.equals(SPCType.PFSHO)
                     || specFile.spcFileType.equals(SPCType.UB)
                     || specFile.spcFileType.equals(SPCType.UF))
 
@@ -221,9 +221,9 @@ public class SPCFile implements SPCFileAccess {
                 break;
             case UF:
             case PF:
-            case PFSHO:
-                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
-                break;
+//            case PFSHO:
+//                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+//                break;
             case PFSHCAT:
             case PFPSVCAT:
                 if (sourceLocation == null)
@@ -362,14 +362,14 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
                     }
-                    else if (specFile.spcFileType.equals(SPCType.PFSHO)) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
-                            if (SPCTensorComponent.isFPSHzero(k+1))
-                                u[k] = Complex.ZERO;
-                            else
-                                u[k] = new Complex(dis.readDouble(), dis.readDouble());
-                        }
-                    }
+//                    else if (specFile.spcFileType.equals(SPCType.PFSHO)) {
+//                        for (int k = 0; k < specFile.nComponent; k++) {
+//                            if (SPCTensorComponent.isFPSHzero(k+1))
+//                                u[k] = Complex.ZERO;
+//                            else
+//                                u[k] = new Complex(dis.readDouble(), dis.readDouble());
+//                        }
+//                    }
                     else {
                         for (int k = 0; k < specFile.nComponent; k++) {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());

@@ -656,38 +656,38 @@ public class ObservationEquation_old {
         }
 
         //normalize PAR00
-        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count() > 0
-                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
-            double empiricalFactor = 1.;
-            meanAColumnNorm = 0;
-            double meanAQNorm = 0;
-            ntmp = 0;
-            int ntmpQ = 0;
-            for (int j = 0; j < a.getColumnDimension(); j++) {
-                if (PARAMETER_LIST.get(j).getPartialType().isTimePartial())
-                    continue;
-                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00)) {
-                    meanAQNorm += a.getColumnVector(j).getNorm();
-                    ntmpQ++;
-                }
-                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARVS)){
-                    meanAColumnNorm += a.getColumnVector(j).getNorm();
-                    ntmp++;
-                }
-            }
-            meanAColumnNorm /= ntmp;
-            meanAQNorm /= ntmpQ;
-            if (ntmpQ > 0) {
-                for (int j = 0; j < a.getColumnDimension(); j++) {
-                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00))
-                        continue;
-                    if (ntmp == 0 || ntmpQ == 0)
-                        continue;
-                    a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
-                }
-                System.out.println("PARVS / PAR00 = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
-            }
-        }
+//        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count() > 0
+//                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
+//            double empiricalFactor = 1.;
+//            meanAColumnNorm = 0;
+//            double meanAQNorm = 0;
+//            ntmp = 0;
+//            int ntmpQ = 0;
+//            for (int j = 0; j < a.getColumnDimension(); j++) {
+//                if (PARAMETER_LIST.get(j).getPartialType().isTimePartial())
+//                    continue;
+//                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00)) {
+//                    meanAQNorm += a.getColumnVector(j).getNorm();
+//                    ntmpQ++;
+//                }
+//                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARVS)){
+//                    meanAColumnNorm += a.getColumnVector(j).getNorm();
+//                    ntmp++;
+//                }
+//            }
+//            meanAColumnNorm /= ntmp;
+//            meanAQNorm /= ntmpQ;
+//            if (ntmpQ > 0) {
+//                for (int j = 0; j < a.getColumnDimension(); j++) {
+//                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00))
+//                        continue;
+//                    if (ntmp == 0 || ntmpQ == 0)
+//                        continue;
+//                    a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+//                }
+//                System.out.println("PARVS / PAR00 = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+//            }
+//        }
     }
 
     /**
@@ -782,9 +782,6 @@ public class ObservationEquation_old {
             case PAR2:
             case PARVS:
             case PARVP:
-            case PARG:
-            case PARM:
-            case PAR00:
                 if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getPerturbationR())
                     return i;
                 break;

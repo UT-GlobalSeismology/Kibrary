@@ -209,10 +209,10 @@ public class Partial1DSpcMaker implements Operation_old {
 
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
-        if (partialTypes.contains(PartialType.PAR00)) {
-            par00 = true;
-            partialTypes.remove(PartialType.PAR00);
-        }
+//        if (partialTypes.contains(PartialType.PAR00)) {
+//            par00 = true;
+//            partialTypes.remove(PartialType.PAR00);
+//        }
 
         if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
                 timePartialPath = Paths.get(property.getProperty("timePartialPath"));

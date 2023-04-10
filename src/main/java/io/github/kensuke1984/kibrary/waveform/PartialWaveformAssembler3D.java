@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -184,11 +182,11 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private int np;
     /**
-     * bandpassの最小周波数（Hz）
+     * lower frequency of bandpass [Hz]
      */
     private double minFreq;
     /**
-     * bandpassの最大周波数（Hz）
+     * upper frequency of bandpass [Hz]
      */
     private double maxFreq;
     /**
@@ -217,10 +215,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * バンドパスを安定させるためwindowを左右に ext = max period(s) ずつ伸ばす
      */
     private int ext;
-    /**
-     * sacdataを何ポイントおきに取り出すか
-     */
-    private int step;
     /**
      * structure for Q partial
      */
@@ -405,9 +399,6 @@ public class PartialWaveformAssembler3D extends Operation {
         filter = designBandPassFilter();
         // to stablize bandpass filtering, extend window at both ends for ext = max period(s) each
         ext = (int) (1 / minFreq * partialSamplingHz);
-
-        // sacdataを何ポイントおきに取り出すか
-        step = (int) (partialSamplingHz / finalSamplingHz);
 
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
@@ -731,34 +722,6 @@ public class PartialWaveformAssembler3D extends Operation {
             double[] xs = IntStream.range(0, iEnd - iStart).mapToDouble(i -> (i + iStart) / partialSamplingHz).toArray();
             Trace filteredTrace = new Trace(xs, filteredPartial);
             return filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
-        }
-
-        /**
-         * Cut partial derivative in [start-ext, start+ext]. The ext is for filtering.
-         *
-         * @param u
-         * @param property
-         * @return
-         */
-        private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
-            int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
-            int cutend = (int) (timewindowInformation.getEndTime() * partialSamplingHz) + ext;
-            Complex[] cut = new Complex[cutend - cutstart];
-            // if cutstart < 0 (i.e. before event time), zero-pad the beginning part
-            Arrays.parallelSetAll(cut, i -> (i + cutstart < 0 ? new Complex(0) : new Complex(u[i + cutstart])));
-
-            return cut;
-        }
-
-        private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation) {
-            // data points of waveform that is to be output
-            int outNpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
-                    * finalSamplingHz);
-            double[] sampleU = new double[outNpts];
-
-            // cut waveform for output
-            Arrays.parallelSetAll(sampleU, j -> u[ext + j * step].getReal());
-            return sampleU;
         }
 
         private boolean forSameVoxel(SPCFileAccess spc1, SPCFileAccess spc2) {

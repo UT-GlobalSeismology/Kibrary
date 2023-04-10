@@ -15,9 +15,10 @@ import java.util.Arrays;
  */
 public enum PartialType {
 
-    A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9), PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(14),
-    PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23), PAR0(24), PAR00(25), KAPPA(26), LAMBDA2MU(27), R(28), Vs(29),
-    PARVS(30), PARVSIM(31), PARVP(32), PARM(33), PARG(34), RHO(35);
+    A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9),
+    PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(14), PARL(15), PARN(16), PARQ(17), PAR0(24),
+    KAPPA(26), LAMBDA2MU(27), R(28), Vs(29),
+    PARVS(30), PARVP(32), RHO(35);
 
     private int value;
 
@@ -79,51 +80,35 @@ public enum PartialType {
     // TODO hmm...
     public SPCType toSpcFileType() {
         switch (this) {
-        case A:
-        case PARA:
-            return SPCType.PARA;
+        case PAR0:
+            return SPCType.PAR0;
         case LAMBDA:
         case PAR1:
             return SPCType.PAR1;
-        case C:
-        case PARC:
-            return SPCType.PARC;
         case MU:
         case PAR2:
             return SPCType.PAR2;
+        case A:
+        case PARA:
+            return SPCType.PARA;
+        case C:
+        case PARC:
+            return SPCType.PARC;
         case F:
-            return SPCType.PARF;
         case PARF:
-            return SPCType.PAR3;
+            return SPCType.PARF;
         case L:
         case PARL:
-            return SPCType.PAR4;
+            return SPCType.PARL;
         case N:
         case PARN:
-            return SPCType.PAR5;
+            return SPCType.PARN;
         case PARQ:
         case Q:
             return SPCType.PARQ;
-        case G1:
-            return SPCType.G1;
-        case G2:
-            return SPCType.G2;
-        case G3:
-            return SPCType.G3;
-        case G4:
-            return SPCType.G4;
-        case G5:
-            return SPCType.G5;
-        case G6:
-            return SPCType.G6;
-        case PAR0:
-            return SPCType.PAR0;
         case PARVS:
             return SPCType.PARVS;
-        case PAR00:
-        case PARM:
         case PARVP:
-        case PARG:
             throw new RuntimeException("Not SpcFileType");
         default:
             throw new RuntimeException("unexpected");

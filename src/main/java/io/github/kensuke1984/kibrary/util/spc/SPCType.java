@@ -9,8 +9,7 @@ package io.github.kensuke1984.kibrary.util.spc;
  * @author rei add several partial types
  */
 public enum SPCType {
-    PAR0, PAR1, PAR2, PAR3, PAR4, PAR5, PARA, PARC, PARF,
-    PARL, PARN, PARQ, PB, PBSHCAT, PBPSVCAT, PF, PFSHCAT,
-    PFPSVCAT, PFSHO, SYNTHETIC, G1, G2, G3, G4, G5, G6,
-    PARVS, PARVSIM, UF, UB;
+    PAR0, PAR1, PAR2, PARA, PARC, PARF, PARL, PARN, PARQ, PARVS,
+    PF, PFSHCAT, PFPSVCAT, PB, PBSHCAT, PBPSVCAT, UF, UB,
+    SYNTHETIC;
 }
