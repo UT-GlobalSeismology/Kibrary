@@ -23,14 +23,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 public class VarianceComputer {
 
     /**
-     * Exports data files in ascii format.
-     *
-     * @param args [option]
-     * <ul>
-     * <li> [-i IDFile] : exports ID file in standard output</li>
-     * <li> [-w IDFile WaveformFile] : exports waveforms in event directories under current path</li>
-     * </ul>
-     * You must specify one or the other.
+     * Computes normalized variance of residual waveforms in a basic waveform folder.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -49,10 +42,8 @@ public class VarianceComputer {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         //input
-        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("basicIDFile").required()
-                .desc("Input basic ID file").build());
-        options.addOption(Option.builder("w").longOpt("waveform").hasArg().argName("basicFile").required()
-                .desc("Input basic waveform file").build());
+        options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder").required()
+                .desc("Use basic waveform folder as input").build());
         options.addOption(Option.builder("t").longOpt("type").hasArg().argName("weightingType").required()
                 .desc("Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL}").build());
         options.addOption(Option.builder("p").longOpt("improvement").hasArg().argName("improvementWindowFile")
@@ -67,7 +58,7 @@ public class VarianceComputer {
      */
     public static void run(CommandLine cmdLine) throws IOException {
 
-        List<BasicID> basicIDs = BasicIDFile.readAsList(Paths.get(cmdLine.getOptionValue("i")), Paths.get(cmdLine.getOptionValue("w")));
+        List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), true);
         WeightingType weightingType = WeightingType.valueOf(cmdLine.getOptionValue("t"));
 
         // cut out improvement windows if the file is given
@@ -134,19 +125,17 @@ public class VarianceComputer {
                 double[] cutSynY = synID.toTrace().cutWindow(startTime, endTime).getY();
 
                 // add new synID
-                // Start byte cannot be set because we are not writing out basicIDs into files here
                 cutOutBasicIDs.add(new BasicID(synID.getWaveformType(), synID.getSamplingHz(), startTime, npts,
                         synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(),
                         synID.getMinPeriod(), synID.getMaxPeriod(), improvementWindow.getPhases(),
-                        0, synID.isConvolved(), cutSynY));
+                        synID.isConvolved(), cutSynY));
                 // add new obsID
                 // Time shift is the same as before cutting.
-                // Start byte cannot be set because we are not writing out basicIDs into files here.
                 double shift = obsID.getStartTime() - synID.getStartTime();
                 cutOutBasicIDs.add(new BasicID(obsID.getWaveformType(), obsID.getSamplingHz(), startTime + shift, npts,
                         obsID.getObserver(), obsID.getGlobalCMTID(), obsID.getSacComponent(),
                         obsID.getMinPeriod(), obsID.getMaxPeriod(), improvementWindow.getPhases(),
-                        0, obsID.isConvolved(), cutObsY));
+                        obsID.isConvolved(), cutObsY));
             }
 
         }

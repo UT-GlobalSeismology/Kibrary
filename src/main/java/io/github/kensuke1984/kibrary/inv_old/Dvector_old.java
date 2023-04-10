@@ -1041,7 +1041,7 @@ public class Dvector_old {
                 break;
             case FINAL:
                 Trace obstrace = obsIDs[i].toTrace();
-                weighting[i] *= obstrace.getMaxValue() > -obstrace.getMinValue() ? 1. / obstrace.getMaxValue() : -1. / obstrace.getMinValue();
+                weighting[i] *= obstrace.getMaxY() > -obstrace.getMinY() ? 1. / obstrace.getMaxY() : -1. / obstrace.getMinY();
                 break;
             default:
                 break;

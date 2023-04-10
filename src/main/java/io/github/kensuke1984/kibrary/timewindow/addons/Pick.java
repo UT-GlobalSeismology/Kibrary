@@ -39,8 +39,8 @@ public class Pick {
         double start = synHeader.getValue(SACHeaderEnum.T0) - 20;
         double end = synHeader.getValue(SACHeaderEnum.T1) + 20;
         Trace trace = data.createTrace().cutWindow(start, end);
-        double x_max = trace.getXforMaxValue();
-        double x_min = trace.getXforMinValue();
+        double x_max = trace.getXforMaxYValue();
+        double x_min = trace.getXforMinYValue();
         int[] downIndex = trace.getIndexOfDownwardConvex();
         int[] upIndex = trace.getIndexOfUpwardConvex();
         if (downIndex.length < 2 || upIndex.length < 2)

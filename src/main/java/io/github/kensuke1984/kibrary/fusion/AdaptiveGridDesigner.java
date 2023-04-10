@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.multigrid;
+package io.github.kensuke1984.kibrary.fusion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,14 +29,15 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Computes correlation between partial waveforms of each unknown parameter, and creates a multigrid design.
+ * Computes correlation between partial waveforms of each unknown parameter,
+ * and designs an adaptive grid by fusing voxels with large correlation between their partial waveforms.
  *
  * TODO when A~B and B~C (A~C may or may not be true)
  *
  * @author otsuru
  * @since 2022/8/1
  */
-public class MultigridDesigner extends Operation {
+public class AdaptiveGridDesigner extends Operation {
 
     private final Property property;
     /**
@@ -57,19 +58,11 @@ public class MultigridDesigner extends Operation {
      */
     private Path ataPath;
     /**
-     * path of basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * path of waveform data
+     * path of basic waveform folder
      */
     private Path basicPath;
     /**
-     * path of partial ID file
-     */
-    private Path partialIDPath;
-    /**
-     * path of partial data
+     * path of partial waveform folder
      */
     private Path partialPath;
     /**
@@ -110,14 +103,10 @@ public class MultigridDesigner extends Operation {
             pw.println("##Path of an AtA file");
             pw.println("#ataPath ata.lst");
             pw.println("##########If the previous section is set, this section is not neeeded.");
-            pw.println("##Path of a basic ID file");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file");
-            pw.println("#basicPath actual.dat");
-            pw.println("##Path of a partial ID file");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file");
-            pw.println("#partialPath partial.dat");
+            pw.println("##Path of a basic waveform folder");
+            pw.println("#basicPath actual");
+            pw.println("##Path of a partial waveform folder");
+            pw.println("#partialPath partial");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weightingType ");
             pw.println("##########Other settings.");
@@ -135,7 +124,7 @@ public class MultigridDesigner extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public MultigridDesigner(Property property) throws IOException {
+    public AdaptiveGridDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -147,9 +136,7 @@ public class MultigridDesigner extends Operation {
         if (property.containsKey("ataPath")) {
             ataPath = property.parsePath("ataPath", null, true, workPath);
         } else {
-            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
             basicPath = property.parsePath("basicPath", null, true, workPath);
-            partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
             partialPath = property.parsePath("partialPath", null, true, workPath);
         }
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
@@ -176,8 +163,8 @@ public class MultigridDesigner extends Operation {
                 throw new IllegalArgumentException("AtA size does not match number of parameters.");
         } else {
             // read input
-            BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicPath);
-            PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
+            List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
+            List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
             // assemble matrices
             MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType, false);
@@ -185,12 +172,12 @@ public class MultigridDesigner extends Operation {
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "multigrid", folderTag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output unknown parameter with large diagonal component and correlation
-        Path logPath = outPath.resolve("multigridDesigner.log");
-        MultigridDesign multigrid = new MultigridDesign();
+        Path logPath = outPath.resolve("adaptiveGridDesigner.log");
+        FusionDesign fusionDesign = new FusionDesign();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(logPath))) {
             GadgetAid.dualPrintln(pw, "# i j AtA(i,i) AtA(i,j) coeff");
 
@@ -200,7 +187,7 @@ public class MultigridDesigner extends Operation {
 
                 for (int j = 0; j < parameterList.size(); j++) {
                     if (i == j) continue;
-                    if (partialTypes != null && partialTypes.contains(parameterList.get(j).getPartialType()) == false)
+                    if (!parameterList.get(i).getPartialType().equals(parameterList.get(j).getPartialType()))
                         continue;
 
                     double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
@@ -209,20 +196,20 @@ public class MultigridDesigner extends Operation {
                         GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(j));
-                        multigrid.addFusion(parameterList.get(i), parameterList.get(j));
+                        fusionDesign.addFusion(parameterList.get(i), parameterList.get(j));
                     }
                 }
             }
         }
 
-        // output multigrid design file
-        Path outputMultigridPath = outPath.resolve("multigrid.inf");
-        MultigridInformationFile.write(multigrid, outputMultigridPath);
+        // output fusion design file
+        Path outputFusionPath = outPath.resolve("fusion.inf");
+        FusionInformationFile.write(fusionDesign, outputFusionPath);
 
         // output unknown parameter file
         List<UnknownParameter> fusedParameterList = parameterList.stream()
-                .filter(param -> !multigrid.fuses(param)).collect(Collectors.toList());
-        fusedParameterList.addAll(multigrid.getFusedParameters());
+                .filter(param -> !fusionDesign.fuses(param)).collect(Collectors.toList());
+        fusedParameterList.addAll(fusionDesign.getFusedParameters());
         Path outputUnknownsPath = outPath.resolve("unknowns.lst");
         UnknownParameterFile.write(fusedParameterList, outputUnknownsPath);
     }

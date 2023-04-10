@@ -9,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -46,10 +45,6 @@ public class BasicIDRebuilder extends Operation {
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic ID and waveform files
-     */
-    private String nameRoot;
-    /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
@@ -59,11 +54,7 @@ public class BasicIDRebuilder extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * path of basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * path of waveform data
+     * path of basic waveform folder
      */
     private Path basicPath;
     /**
@@ -105,16 +96,12 @@ public class BasicIDRebuilder extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output files (actual)");
-            pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("#basicPath actual");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
@@ -135,12 +122,10 @@ public class BasicIDRebuilder extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        nameRoot = property.parseStringSingle("nameRoot", "actual");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
@@ -158,11 +143,8 @@ public class BasicIDRebuilder extends Operation {
 
     @Override
     public void run() throws IOException {
-
-        List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
-        basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))
-                .sorted(Comparator.comparing(BasicID::getObserver))
-                .collect(Collectors.toList());
+        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true).stream()
+                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
         // sort observed and synthetic
         BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
@@ -193,9 +175,7 @@ public class BasicIDRebuilder extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
-        Path outputIDPath = outPath.resolve(nameRoot + "ID.dat");
-        Path outputWavePath = outPath.resolve(nameRoot + ".dat");
-        BasicIDFile.write(finalList, outputIDPath, outputWavePath);
+        BasicIDFile.write(finalList, outPath);
 
     }
 

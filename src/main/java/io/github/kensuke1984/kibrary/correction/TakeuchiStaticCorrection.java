@@ -163,11 +163,11 @@ public class TakeuchiStaticCorrection implements Operation_old {
         Observer station = obsSac.getObserver();
         Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
         Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
-        double obsT = (obsTrace.getXforMaxValue() + obsTrace.getXforMinValue()) / 2;
-        double synT = (synTrace.getXforMaxValue() + synTrace.getXforMinValue()) / 2;
+        double obsT = (obsTrace.getXforMaxYValue() + obsTrace.getXforMinYValue()) / 2;
+        double synT = (synTrace.getXforMaxYValue() + synTrace.getXforMinYValue()) / 2;
         double timeShift = synT - obsT;
-        double obsAmp = (obsTrace.getMaxValue() - obsTrace.getMinValue()) / 2;
-        double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
+        double obsAmp = (obsTrace.getMaxY() - obsTrace.getMinY()) / 2;
+        double synAmp = (synTrace.getMaxY() - synTrace.getMinY()) / 2;
         double amplitudeRatio = obsAmp / synAmp;
         StaticCorrectionData sc =
                 new StaticCorrectionData(station, id, component, timeWindow.getStartTime(),

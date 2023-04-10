@@ -58,7 +58,7 @@ public class BasicID {
     protected final double startTime;
     protected final int npts;
     protected final Observer observer;
-    protected final GlobalCMTID event;
+    protected final GlobalCMTID eventID;
     protected final SACComponent component;
     protected final Phase[] phases;
     /**
@@ -71,8 +71,9 @@ public class BasicID {
     protected final double maxPeriod;
     /**
      * byte where this data starts
+     * @deprecated
      */
-    protected final long startByte;
+    protected long startByte;
     protected final boolean convolved;
     /**
      * waveform
@@ -93,6 +94,7 @@ public class BasicID {
      * @param startByte    [byte] where the waveform data for this ID starts in the file
      * @param convolved    If the data is convolved.
      * @param waveformData the waveform data for this ID.
+     * @deprecated startByte unneeded
      */
     public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Observer observer,
             GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases, long startByte,
@@ -102,12 +104,45 @@ public class BasicID {
         this.startTime = Precision.round(startTime, 3);
         this.npts = npts;
         this.observer = observer;
-        this.event = globalCMTID;
+        this.eventID = globalCMTID;
         this.component = sacComponent;
         this.phases = phases;
         this.minPeriod = Precision.round(minPeriod, 3);
         this.maxPeriod = Precision.round(maxPeriod, 3);
         this.startByte = startByte;
+        this.convolved = convolved;
+        if (waveformData.length != 0 && waveformData.length != npts)
+            throw new IllegalArgumentException("Input waveform data length is invalid");
+        this.data = waveformData.clone();
+    }
+
+    /**
+     * @param waveFormType Type of waveform data.
+     * @param samplingHz   [Hz] Sampling Hz.
+     * @param startTime    [s] start time of the time window.
+     * @param npts         Number of data points
+     * @param observer      Information of observer.
+     * @param eventID  Event ID for the data.
+     * @param sacComponent Component of the data.
+     * @param minPeriod    [s] minimum period of the applied filter if none, 0
+     * @param maxPeriod    [s] minimum period of the applied filter if none, {@link Double#POSITIVE_INFINITY}
+     * @param phases       Array of phases
+     * @param convolved    If the data is convolved.
+     * @param waveformData the waveform data for this ID.
+     */
+    public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Observer observer,
+            GlobalCMTID eventID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases,
+            boolean convolved, double... waveformData) {
+        this.type = waveFormType;
+        this.samplingHz = Precision.round(samplingHz, 3);
+        this.startTime = Precision.round(startTime, 3);
+        this.npts = npts;
+        this.observer = observer;
+        this.eventID = eventID;
+        this.component = sacComponent;
+        this.phases = phases;
+        this.minPeriod = Precision.round(minPeriod, 3);
+        this.maxPeriod = Precision.round(maxPeriod, 3);
         this.convolved = convolved;
         if (waveformData.length != 0 && waveformData.length != npts)
             throw new IllegalArgumentException("Input waveform data length is invalid");
@@ -121,8 +156,8 @@ public class BasicID {
      * @return BasicID with the input data
      */
     public BasicID withData(double[] data) {
-        return new BasicID(type, samplingHz, startTime, npts, observer, event, component, minPeriod,
-                maxPeriod, phases, startByte, convolved, data);
+        return new BasicID(type, samplingHz, startTime, npts, observer, eventID, component, minPeriod,
+                maxPeriod, phases, convolved, data);
     }
 
     /**
@@ -133,7 +168,7 @@ public class BasicID {
      */
     public Set<TimewindowData> findAllOverlappingWindows(Set<TimewindowData> timewindowSet) {
         Set<TimewindowData> overlappingWindows = timewindowSet.stream()
-                .filter(window -> window.getGlobalCMTID().equals(event)
+                .filter(window -> window.getGlobalCMTID().equals(eventID)
                         && window.getObserver().equals(observer)
                         && window.getComponent().equals(component)
                         // there must be some overlap between the windows
@@ -145,7 +180,8 @@ public class BasicID {
 
     /**
      * Decides whether two IDs (BasicID and/or PartialID) are pairs. (Note that {@link PartialID} extends {@link BasicID}.)
-     * They are regarded as same if observer, globalCMTID, component, npts, sampling Hz, start time, max & min period are same.
+     * They are regarded as same if eventID, observer, component, npts, samplingHz, max & min period are same
+     * and startTime difference is within the maximum time shift.
      * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
      *
      * @param id0 {@link BasicID}
@@ -153,10 +189,10 @@ public class BasicID {
      * @return if the IDs are same
      */
     public static boolean isPair(BasicID id0, BasicID id1) {
-        boolean res = id0.getObserver().equals(id1.getObserver()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+        boolean res = id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) && id0.getObserver().equals(id1.getObserver())
                 && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                && id0.getSamplingHz() == id1.getSamplingHz()
                 && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && id0.getSamplingHz() == id1.getSamplingHz()
                 && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
                 && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
         return res;
@@ -166,7 +202,7 @@ public class BasicID {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((event == null) ? 0 : event.hashCode());
+        result = prime * result + ((eventID == null) ? 0 : eventID.hashCode());
         result = prime * result + (convolved ? 1231 : 1237);
         long temp;
         temp = Double.doubleToLongBits(maxPeriod);
@@ -185,7 +221,6 @@ public class BasicID {
     }
 
     /**
-     * The startPoint is ignored.
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -194,9 +229,9 @@ public class BasicID {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         BasicID other = (BasicID) obj;
-        if (event == null) {
-            if (other.event != null) return false;
-        } else if (!event.equals(other.event)) return false;
+        if (eventID == null) {
+            if (other.eventID != null) return false;
+        } else if (!eventID.equals(other.eventID)) return false;
         if (convolved != other.convolved) return false;
         if (Double.doubleToLongBits(maxPeriod) != Double.doubleToLongBits(other.maxPeriod)) return false;
         if (Double.doubleToLongBits(minPeriod) != Double.doubleToLongBits(other.minPeriod)) return false;
@@ -220,7 +255,7 @@ public class BasicID {
     }
 
     public GlobalCMTID getGlobalCMTID() {
-        return event;
+        return eventID;
     }
 
     public SACComponent getSacComponent() {
@@ -277,6 +312,7 @@ public class BasicID {
     /**
      * If this is 100, then the data for this ID starts from 100th byte in the waveform file.
      * @return [byte]
+     * @deprecated
      */
     public long getStartByte() {
         return startByte;
@@ -308,14 +344,14 @@ public class BasicID {
      * @author otsuru
      */
     public DataEntry toDataEntry() {
-        return new DataEntry(event, observer, component);
+        return new DataEntry(eventID, observer, component);
     }
 
     @Override
     public String toString() {
-        String basicString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
+        String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
                 + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
-                + TimewindowData.phasesAsString(phases) + " " + convolved + " " + startByte;
+                + TimewindowData.phasesAsString(phases) + " " + convolved;
         return basicString;
     }
 

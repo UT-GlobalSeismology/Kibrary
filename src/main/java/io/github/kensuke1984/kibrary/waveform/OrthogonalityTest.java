@@ -62,37 +62,24 @@ public class OrthogonalityTest extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * path of partial ID file for the target region
-     */
-    private Path mainPartialIDPath;
-    /**
-     * path of partial data for the target region
+     * partial waveform folder for the target region
      */
     private Path mainPartialPath;
     /**
-     * Path of unknown parameter file for the target region
+     * unknown parameter file for the target region
      */
     private Path mainUnknownsPath;
     /**
-     * path of partial ID file created for this test
-     */
-    private Path testPartialIDPath;
-    /**
-     * path of partial data created for this test
+     * partial waveform folder created for this test
      */
     private Path testPartialPath;
     /**
-     * Path of unknown parameter file created for this test
+     * unknown parameter file created for this test
      */
     private Path testUnknownsPath;
     /**
-     * path of basic ID file
-     * This is used to align the two sets of partial waveforms in the same order.
-     */
-    private Path basicIDPath;
-    /**
-     * path of waveform data
-     * This is needed in addition to the basicIDPath to compute the weightings.
+     * basic waveform folder
+     * This is used to align the two sets of partial waveforms in the same order and to compute the weightings.
      */
     private Path basicPath;
     private WeightingType weightingType;
@@ -121,24 +108,18 @@ public class OrthogonalityTest extends Operation {
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##########Information for voxels in the target region");
-            pw.println("##Path of a partial ID file for the target region, must be set");
-            pw.println("#mainPartialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file for the target region, must be set");
-            pw.println("#mainPartialPath partial.dat");
+            pw.println("##Path of a partial waveform folder for the target region, must be set");
+            pw.println("#mainPartialPath partial");
             pw.println("##Path of an unknown parameter list file　for the target region, must be set");
             pw.println("#mainUnknownsPath unknowns.lst");
             pw.println("##########Information for the test voxels");
-            pw.println("##Path of a partial ID file created for this test, must be set");
-            pw.println("#testPartialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file created for this test, must be set");
-            pw.println("#testPartialPath partial.dat");
+            pw.println("##Path of a partial waveform folder created for this test, must be set");
+            pw.println("#testPartialPath partial");
             pw.println("##Path of an unknown parameter list file　created for this test, must be set");
             pw.println("#testUnknownsPath unknowns.lst");
             pw.println("##########Information of event-observer pairs");
-            pw.println("##Path of a basic ID file, must be set");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, must be set");
-            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("#basicPath actual");
             pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
             pw.println("#weightingType ");
             pw.println("##GCMT ID of a specific event, must be set");
@@ -160,14 +141,11 @@ public class OrthogonalityTest extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        mainPartialIDPath = property.parsePath("mainPartialIDPath", null, true, workPath);
         mainPartialPath = property.parsePath("mainPartialPath", null, true, workPath);
         mainUnknownsPath = property.parsePath("mainUnknownsPath", null, true, workPath);
-        testPartialIDPath = property.parsePath("testPartialIDPath", null, true, workPath);
         testPartialPath = property.parsePath("testPartialPath", null, true, workPath);
         testUnknownsPath = property.parsePath("testUnknownsPath", null, true, workPath);
 
-        basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
         basicPath = property.parsePath("basicPath", null, true, workPath);
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
         specificEvent = new GlobalCMTID(property.parseString("specificEvent", null));
@@ -179,7 +157,7 @@ public class OrthogonalityTest extends Operation {
        List<UnknownParameter> mainUnknowns = UnknownParameterFile.read(mainUnknownsPath);
        List<UnknownParameter> testUnknowns = UnknownParameterFile.read(testUnknownsPath);
 
-       List<BasicID> basicIDs = BasicIDFile.readAsList(basicIDPath, basicPath);
+       List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
        basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
        long nSpecificObserver = basicIDs.stream().map(BasicID::getObserver)
                .filter(observer -> observer.toString().equals(specificObserverName)).distinct().count();
@@ -189,8 +167,8 @@ public class OrthogonalityTest extends Operation {
            System.err.println("CAUTION: more than 1 observer with the name " + specificObserverName + "!");
        }
 
-       PartialID[] mainPartialIDs = PartialIDFile.read(mainPartialIDPath, mainPartialPath);
-       PartialID[] testPartialIDs = PartialIDFile.read(testPartialIDPath, testPartialPath);
+       List<PartialID> mainPartialIDs = PartialIDFile.read(mainPartialPath, true);
+       List<PartialID> testPartialIDs = PartialIDFile.read(testPartialPath, true);
 
        double[][] correlations;
        Path outputPath;
@@ -234,7 +212,7 @@ public class OrthogonalityTest extends Operation {
        createPlot(mainUnknowns, testUnknowns);
    }
 
-   private double[][] computeCorrelations(PartialID[] mainPartialIDs, PartialID[] testPartialIDs,
+   private double[][] computeCorrelations(List<PartialID> mainPartialIDs, List<PartialID> testPartialIDs,
            List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, List<BasicID> basicIDs) {
 
        // set DVector

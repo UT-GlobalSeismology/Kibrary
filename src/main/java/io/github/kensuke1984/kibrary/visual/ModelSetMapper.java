@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.fusion.FusionDesign;
+import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.multigrid.MultigridDesign;
-import io.github.kensuke1984.kibrary.multigrid.MultigridInformationFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -68,9 +68,9 @@ public class ModelSetMapper extends Operation {
      */
     private String referenceStructureName;
     /**
-     * Path of a {@link MultigridInformationFile}
+     * Path of a {@link FusionInformationFile}
      */
-    private Path multigridPath;
+    private Path fusionPath;
     private Set<VariableType> variableTypes;
     /**
      * Solvers for equation
@@ -119,8 +119,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#referenceStructurePath ");
             pw.println("##Name of a structure model to map perturbations against (PREM)");
             pw.println("#referenceStructureName ");
-            pw.println("##Path of a multigrid information file, if multigrid inversion is conducted");
-            pw.println("#multigridPath multigrid.inf");
+            pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted");
+            pw.println("#fusionPath fusion.inf");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
@@ -164,8 +164,8 @@ public class ModelSetMapper extends Operation {
         } else {
             referenceStructureName = property.parseString("referenceStructureName", "PREM");
         }
-        if (property.containsKey("multigridPath"))
-            multigridPath = property.parsePath("multigridPath", null, true, workPath);
+        if (property.containsKey("fusionPath"))
+            fusionPath = property.parsePath("fusionPath", null, true, workPath);
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -207,10 +207,10 @@ public class ModelSetMapper extends Operation {
                 .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
-        // read multigrid file
-        MultigridDesign multigrid = null;
-        if (multigridPath != null) {
-            multigrid = MultigridInformationFile.read(multigridPath);
+        // read fusion file
+        FusionDesign fusionDesign = null;
+        if (fusionPath != null) {
+            fusionDesign = FusionInformationFile.read(fusionPath);
         }
 
         // decide map region
@@ -233,7 +233,7 @@ public class ModelSetMapper extends Operation {
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
 
-                if (multigridPath != null) knowns = multigrid.reverseFusion(knowns);
+                if (fusionPath != null) knowns = fusionDesign.reverseFusion(knowns);
 
                 PerturbationModel model = new PerturbationModel(knowns, initialStructure);
                 if (!referenceStructure.equals(initialStructure)) {

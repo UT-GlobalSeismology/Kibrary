@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
@@ -7,8 +9,6 @@ import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
-
-import java.util.Arrays;
 
 /**
  * Data for one element in one {@link SPCBody} in a {@link SPCFile}

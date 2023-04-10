@@ -6,9 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -145,8 +145,8 @@ public class EventListFile {
                 .desc("Use data entry file as input").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
                 .desc("Use timewindow file as input").build());
-        inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("basicIDFile")
-                .desc("Use basic ID file as input").build());
+        inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
+                .desc("Use basic waveform folder as input").build());
         options.addOptionGroup(inputOption);
 
         // option
@@ -179,8 +179,8 @@ public class EventListFile {
             Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             eventSet = timewindows.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
-            BasicID[] basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")));
-            eventSet = Arrays.stream(basicIDs).map(BasicID::getGlobalCMTID).collect(Collectors.toSet());
+            List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
+            eventSet = basicIDs.stream().map(BasicID::getGlobalCMTID).collect(Collectors.toSet());
         } else {
             String pathString = "";
             Path inPath;

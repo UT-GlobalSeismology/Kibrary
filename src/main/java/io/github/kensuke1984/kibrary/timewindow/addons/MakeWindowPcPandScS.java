@@ -204,8 +204,8 @@ public class MakeWindowPcPandScS {
 				Trace synTrace_P = synData.createTrace().cutWindow(timeP - 5, timeP + 20);
 				
 				//traveltimes S
-				double deltaTimeP2P_S = Math.abs(synTrace_S.getXforMaxValue() - synTrace_S.getXforMinValue());
-				double timeLatePeak_S = synTrace_S.getXforMaxValue() > synTrace_S.getXforMinValue() ? synTrace_S.getXforMaxValue() : synTrace_S.getXforMinValue();
+				double deltaTimeP2P_S = Math.abs(synTrace_S.getXforMaxYValue() - synTrace_S.getXforMinYValue());
+				double timeLatePeak_S = synTrace_S.getXforMaxYValue() > synTrace_S.getXforMinYValue() ? synTrace_S.getXforMaxYValue() : synTrace_S.getXforMinYValue();
 				double timeEndOfS = timeLatePeak_S + deltaTimeP2P_S * 1.;
 				
 				double startTime_ScS = timeScS - timeBeforeScS;
@@ -229,7 +229,7 @@ public class MakeWindowPcPandScS {
 					
 					Trace synScS = synData_T.createTrace().cutWindow(startTime_ScS, endTime_ScS);
 					Trace obsScS = obsData_T.createTrace().cutWindow(startTime_ScS, endTime_ScS);
-					shift_ScS = synScS.getXforMaxValue() - obsScS.getXforMaxValue();
+					shift_ScS = synScS.getXforMaxYValue() - obsScS.getXforMaxYValue();
 					
 					RealVector obsVector = obsData.createTrace().cutWindow(startTime_ScS - shift_ScS, endTime_ScS - shift_ScS).getYVector();
 					RealVector synVector = new ArrayRealVector(Arrays.copyOf(synScS.getY(), obsVector.getDimension()));
@@ -260,8 +260,8 @@ public class MakeWindowPcPandScS {
 				infoSetP.add(timewindow_P);
 				
 				//traveltimes P
-				double deltaTimeP2P_P = Math.abs(synTrace_P.getXforMaxValue() - synTrace_P.getXforMinValue());
-				double timeLatePeak_P = synTrace_P.getXforMaxValue() > synTrace_P.getXforMinValue() ? synTrace_P.getXforMaxValue() : synTrace_P.getXforMinValue();
+				double deltaTimeP2P_P = Math.abs(synTrace_P.getXforMaxYValue() - synTrace_P.getXforMinYValue());
+				double timeLatePeak_P = synTrace_P.getXforMaxYValue() > synTrace_P.getXforMinYValue() ? synTrace_P.getXforMaxYValue() : synTrace_P.getXforMinYValue();
 				double timeEndOfP = timeLatePeak_P + deltaTimeP2P_P * 1.;
 				
 				double startTime_PcP = timePcP - timeBeforePcP;
@@ -296,7 +296,7 @@ public class MakeWindowPcPandScS {
 					
 					Trace synPcP = synData.createTrace().cutWindow(startTime_PcP, endTime_ScS);
 					Trace obsPcP = obsData.createTrace().cutWindow(startTime_PcP, endTime_ScS);
-					shift_ScS = synPcP.getXforMaxValue() - obsPcP.getXforMaxValue();
+					shift_ScS = synPcP.getXforMaxYValue() - obsPcP.getXforMaxYValue();
 					
 					RealVector obsVector = obsData.createTrace().cutWindow(startTime_PcP - shift_PcP, endTime_PcP - shift_PcP).getYVector();
 					RealVector synVector = new ArrayRealVector(Arrays.copyOf(synPcP.getY(), obsVector.getDimension()));
