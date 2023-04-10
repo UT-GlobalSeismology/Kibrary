@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
- * Creates and plots binned stacks for each event included in a {@link BasicIDFile}e.
+ * Creates and plots binned stacks for each event included in a {@link BasicIDFile}.
  * Time-shift from corrections will be applied to observed waveform when being plotted.
  * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
  * Travel time curves can be drawn on the graph.
@@ -313,13 +313,13 @@ public class BasicBinnedStackCreator extends Operation {
        samplingStep = 1 / samplingHzs[0];
 
        // read reference basic waveform folders and collect only synthetic basicIDs
-       if (refBasicPath1 != null && refSynStyle1 != 0) {
+       if (refBasicPath1 != null) {
            refSynBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
                    .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
                            && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
        }
-       if (refBasicPath2 != null && refSynStyle2 != 0) {
+       if (refBasicPath2 != null) {
            refSynBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
                    .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
                            && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
