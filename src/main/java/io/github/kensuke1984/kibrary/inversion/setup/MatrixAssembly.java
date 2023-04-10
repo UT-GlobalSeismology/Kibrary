@@ -44,7 +44,7 @@ public class MatrixAssembly {
      * @param parameterList
      * @param weightingType
      */
-    public MatrixAssembly(BasicID[] basicIDs, PartialID[] partialIDs, List<UnknownParameter> parameterList,
+    public MatrixAssembly(List<BasicID> basicIDs, List<PartialID> partialIDs, List<UnknownParameter> parameterList,
             WeightingType weightingType) {
         this(basicIDs, partialIDs, parameterList, weightingType, false);
     }
@@ -63,7 +63,7 @@ public class MatrixAssembly {
      * @param weightingType
      * @param fillEmptyPartial (boolean)
      */
-    public MatrixAssembly(BasicID[] basicIDs, PartialID[] partialIDs, List<UnknownParameter> parameterList,
+    public MatrixAssembly(List<BasicID> basicIDs, List<PartialID> partialIDs, List<UnknownParameter> parameterList,
             WeightingType weightingType, boolean fillEmptyPartial) {
 
         // set DVector

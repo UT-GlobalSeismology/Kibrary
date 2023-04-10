@@ -35,6 +35,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
+ * Plots partial waveforms.
  *
  * @author otsuru
  * @since 2022/7/24
@@ -65,19 +66,11 @@ public class PartialWaveformPlotter extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * path of partial ID file
-     */
-    private Path partialIDPath;
-    /**
-     * path of partial data
+     * partial waveform folder
      */
     private Path partialPath;
     /**
-     * Path of a basic ID file
-     */
-    private Path basicIDPath;
-    /**
-     * Path of a basic waveform file
+     * basic waveform folder
      */
     private Path basicPath;
     /**
@@ -109,7 +102,7 @@ public class PartialWaveformPlotter extends Operation {
      * Set of information of travel times
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
-    private BasicID[] basicIDs;
+    private List<BasicID> basicIDs;
 
 
     /**
@@ -133,14 +126,10 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#folderTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a partial ID file, must be set");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file, must be set");
-            pw.println("#partialPath partial.dat");
-            pw.println("##Path of a basic ID file, if plotting residual waveform");
-            pw.println("#basicIDPath actualID.dat");
-            pw.println("##Path of a basic waveform file, if plotting residual waveform");
-            pw.println("#basicPath actual.dat");
+            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("#partialPath partial");
+            pw.println("##Path of a basic waveform folder, if plotting residual waveform");
+            pw.println("#basicPath actual");
             pw.println("##Path of a travel time information file, if plotting travel times");
             pw.println("#travelTimePath travelTime.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
@@ -172,10 +161,8 @@ public class PartialWaveformPlotter extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
-        if (property.containsKey("basicIDPath") && property.containsKey("basicPath")) {
-            basicIDPath = property.parsePath("basicIDPath", null, true, workPath);
+        if (property.containsKey("basicPath")) {
             basicPath = property.parsePath("basicPath", null, true, workPath);
         }
         if (property.containsKey("travelTimePath"))
@@ -194,17 +181,16 @@ public class PartialWaveformPlotter extends Operation {
 
    @Override
    public void run() throws IOException {
-       PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
-       partialIDs = Arrays.stream(partialIDs).filter(id ->
+       List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
                components.contains(id.getSacComponent())
                && tendEvents.contains(id.getGlobalCMTID())
                && tendObserverNames.contains(id.getObserver().toString())
                && checkPosition(id.getVoxelPosition()))
-               .toArray(PartialID[]::new);
+               .collect(Collectors.toList());
 
        // read basicIDs
-       if (basicIDPath != null && basicPath != null) {
-           basicIDs = BasicIDFile.read(basicIDPath, basicPath);
+       if (basicPath != null) {
+           basicIDs = BasicIDFile.read(basicPath, true);
        }
 
        // read travel time information
@@ -218,20 +204,20 @@ public class PartialWaveformPlotter extends Operation {
 
        for (GlobalCMTID event : tendEvents) {
            for (String observerName : tendObserverNames) {
-               Path rayPath = outPath.resolve(event + "_" + observerName);
-               Files.createDirectories(rayPath);
+               Path eventObserverPath = outPath.resolve(event + "_" + observerName);
+               Files.createDirectories(eventObserverPath);
 
                for (SACComponent component : components) {
-                   PartialID[] useIDs = Arrays.stream(partialIDs).filter(id ->
+                   List<PartialID> useIDs = partialIDs.stream().filter(id ->
                            id.getSacComponent().equals(component)
                            && id.getGlobalCMTID().equals(event)
                            && id.getObserver().toString().equals(observerName))
                            .sorted(Comparator.comparing(PartialID::getVoxelPosition))
-                           .toArray(PartialID[]::new);
-                   if (useIDs.length == 0) continue;
+                           .collect(Collectors.toList());
+                   if (useIDs.size() == 0) continue;
 
                    String fileNameRoot = "plot_" + event + "_" + observerName + "_" + component;
-                   createPlot(rayPath, useIDs, fileNameRoot);
+                   createPlot(eventObserverPath, useIDs, fileNameRoot);
                }
            }
        }
@@ -273,27 +259,28 @@ public class PartialWaveformPlotter extends Operation {
        return flag;
    }
 
-   private void createPlot(Path rayPath, PartialID[] ids, String fileNameRoot) throws IOException {
-       if (ids.length == 0) {
+   private void createPlot(Path rayPath, List<PartialID> ids, String fileNameRoot) throws IOException {
+       if (ids.size() == 0) {
            return;
        }
 
        // output partial data in text file
-       String fileName = "partialWaveforms." + ids[0].getSacComponent() + ".txt";
+       String fileName = "partialWaveforms." + ids.get(0).getSacComponent() + ".txt";
        outputWaveformTxt(rayPath.resolve(fileName), ids);
 
        // output waveform data to text file
        boolean wroteBasic = false;
        String basicFileName = null;
        if (basicIDs != null) {
-           BasicID[] pairIDs = Arrays.stream(basicIDs).filter(basic -> BasicID.isPair(basic, ids[0])).toArray(BasicID[]::new);
-           if (pairIDs.length != 2) {
-               System.err.println(pairIDs.length);
+           List<BasicID> pairIDs = basicIDs.stream().filter(basic -> BasicID.isPair(basic, ids.get(0))).collect(Collectors.toList());
+           if (pairIDs.size() != 2) {
+               System.err.println(pairIDs.size());
                for (BasicID basic : pairIDs) System.err.println(basic);
-               System.err.println("Failed to find basicIDs for " + ids[0].getGlobalCMTID() + " " + ids[0].getObserver() + " " + ids[0].getSacComponent());
+               System.err.println("Failed to find basicIDs for " + ids.get(0).getGlobalCMTID() + " " + ids.get(0).getObserver()
+                       + " " + ids.get(0).getSacComponent());
            } else {
-               BasicID obsID = (pairIDs[0].getWaveformType() == WaveformType.OBS) ? pairIDs[0] : pairIDs[1];
-               BasicID synID = (pairIDs[0].getWaveformType() == WaveformType.SYN) ? pairIDs[0] : pairIDs[1];
+               BasicID obsID = (pairIDs.get(0).getWaveformType() == WaveformType.OBS) ? pairIDs.get(0) : pairIDs.get(1);
+               BasicID synID = (pairIDs.get(0).getWaveformType() == WaveformType.SYN) ? pairIDs.get(0) : pairIDs.get(1);
                basicFileName = BasicIDFile.getWaveformTxtFileName(obsID);
                BasicIDFile.outputWaveformTxt(rayPath, obsID, synID);
                wroteBasic = true;
@@ -314,8 +301,8 @@ public class PartialWaveformPlotter extends Operation {
        gnuplot.setCommonKey(true, false, "top right");
 
        int i;
-       for (i = 0; i < ids.length; i++) {
-           PartialID id = ids[i];
+       for (i = 0; i < ids.size(); i++) {
+           PartialID id = ids.get(i);
 
            // set xrange
            gnuplot.setXrange(id.getStartTime() - FRONT_MARGIN, id.getStartTime() - FRONT_MARGIN + timeLength);
@@ -349,7 +336,7 @@ public class PartialWaveformPlotter extends Operation {
            }
 
            // this is not done for the last obsID because we don't want an extra blank page to be created
-           if ((i + 1) < ids.length) {
+           if ((i + 1) < ids.size()) {
                if ((i + 1) % NUM_PER_PAGE == 0) {
                    gnuplot.nextPage();
                } else {
@@ -373,10 +360,10 @@ public class PartialWaveformPlotter extends Operation {
      * @param ids (PartialID[]) Partial IDs, must have same start time and sampling Hz.
      * @throws IOException
      */
-    private static void outputWaveformTxt(Path outputPath, PartialID[] ids) throws IOException {
-       double startTime = ids[0].getStartTime();
-       double samplingHz = ids[0].getSamplingHz();
-       List<double[]> dataList = Arrays.stream(ids).map(PartialID::getData).collect(Collectors.toList());
+    private static void outputWaveformTxt(Path outputPath, List<PartialID> ids) throws IOException {
+       double startTime = ids.get(0).getStartTime();
+       double samplingHz = ids.get(0).getSamplingHz();
+       List<double[]> dataList = ids.stream().map(PartialID::getData).collect(Collectors.toList());
 
        try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath))){
 
@@ -386,7 +373,7 @@ public class PartialWaveformPlotter extends Operation {
                pwTrace.print(time);
 
                // each Partial ID
-               for (int k = 0; k < ids.length; k++) {
+               for (int k = 0; k < ids.size(); k++) {
                    pwTrace.print(" " + dataList.get(k)[j]);
                }
                pwTrace.println();

@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,29 +82,6 @@ public final class ObserverListFile {
                 throw new RuntimeException("There is duplication of " + observer + " in " + inputPath + ".");
         }
 
-//        // If there are observers with same name and different position, write them in standard output. TODO: should become unneeded?
-//        if (observerSet.size() != observerSet.stream().map(Observer::toString).distinct().count()){
-//            System.err.println("CAUTION!! Observers with same station and network but different positions detected!");
-//            Map<String, List<Observer>> nameToObserver = new HashMap<>();
-//            observerSet.forEach(sta -> {
-//                if (nameToObserver.containsKey(sta.toString())) {
-//                    List<Observer> tmp = nameToObserver.get(sta.toString());
-//                    tmp.add(sta);
-//                    nameToObserver.put(sta.toString(), tmp);
-//                }
-//                else {
-//                    List<Observer> tmp = new ArrayList<>();
-//                    tmp.add(sta);
-//                    nameToObserver.put(sta.toString(), tmp);
-//                }
-//            });
-//            nameToObserver.forEach((name, obs) -> {
-//                if (obs.size() > 1) {
-//                    obs.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
-//                }
-//            });
-//        }
-
         DatasetAid.checkNum(observerSet.size(), "observer", "observers");
         return Collections.unmodifiableSet(observerSet);
     }
@@ -145,8 +123,8 @@ public final class ObserverListFile {
                 .desc("Use data entry file as input").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
                 .desc("Use timewindow file as input").build());
-        inputOption.addOption(Option.builder("b").longOpt("basicID").hasArg().argName("basicIDFile")
-                .desc("Use basic ID file as input").build());
+        inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
+                .desc("Use basic waveform folder as input").build());
         options.addOptionGroup(inputOption);
 
         // output
@@ -181,8 +159,8 @@ public final class ObserverListFile {
             observerSet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
                     .map(TimewindowData::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
-            BasicID[] basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")));
-            observerSet = Arrays.stream(basicIDs).filter(id -> components.contains(id.getSacComponent()))
+            List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
+            observerSet = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))
                     .map(BasicID::getObserver).collect(Collectors.toSet());
         } else {
             String pathString = "";

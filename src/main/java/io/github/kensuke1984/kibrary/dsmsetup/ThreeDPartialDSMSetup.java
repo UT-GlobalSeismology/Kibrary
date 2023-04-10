@@ -356,7 +356,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         DSMShellscript shellFP = new DSMShellscript(outPath, mpi, nCreated, header);
         shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, outPSVPath);
         shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, outSHPath);
-        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run " + outPSVPath.getFileName() + " and " + outSHPath.getFileName());
     }
 
     private void setupBPs(Set<Observer> observerSet, PolynomialStructure structure) throws IOException {
@@ -410,7 +410,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         DSMShellscript shellBP = new DSMShellscript(outPath, mpi, nCreated, header);
         shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, outPSVPath);
         shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, outSHPath);
-        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run " + outPSVPath.getFileName() + " and " + outSHPath.getFileName());
     }
 
     /**

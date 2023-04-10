@@ -100,8 +100,8 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         Trace[] synTraces = Arrays.stream(synSacs).map(this::createTrace).toArray(Trace[]::new);
         ampRatio = new double[obsTraces.length];
         for (int i = 0; i < obsTraces.length; i++) {
-            double obsP2P = obsTraces[i].getMaxValue() - obsTraces[i].getMinValue();
-            double synP2P = synTraces[i].getMaxValue() - synTraces[i].getMinValue();
+            double obsP2P = obsTraces[i].getMaxY() - obsTraces[i].getMinY();
+            double synP2P = synTraces[i].getMaxY() - synTraces[i].getMinY();
             ampRatio[i] = obsP2P / synP2P;
         }
 

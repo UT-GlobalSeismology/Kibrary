@@ -51,11 +51,23 @@ public class PartialID extends BasicID {
      */
     protected final PartialType partialType;
 
+    /**
+     * @deprecated startByte unneeded
+     */
     public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
             double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
             FullPosition voxelPosition, PartialType partialType, double... waveformData) {
         super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
                 phases, startByte, isConvolved, waveformData);
+        this.partialType = partialType;
+        this.voxelPosition = voxelPosition;
+    }
+
+    public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
+            double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, boolean isConvolved,
+            FullPosition voxelPosition, PartialType partialType, double... waveformData) {
+        super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
+                phases, isConvolved, waveformData);
         this.partialType = partialType;
         this.voxelPosition = voxelPosition;
     }
@@ -66,8 +78,8 @@ public class PartialID extends BasicID {
      */
     @Override
     public PartialID withData(double[] data) {
-        return new PartialID(observer, event, component, samplingHz, startTime, data.length, minPeriod, maxPeriod,
-                phases, startByte, convolved, voxelPosition, partialType, data);
+        return new PartialID(observer, eventID, component, samplingHz, startTime, data.length, minPeriod, maxPeriod,
+                phases, convolved, voxelPosition, partialType, data);
     }
 
     @Override
@@ -102,10 +114,10 @@ public class PartialID extends BasicID {
 
     @Override
     public String toString() {
-        String partialString = observer.toPaddedInfoString() + " " + event.toPaddedString() + " " + component + " "
+        String partialString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
                 + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved + " "
-                + voxelPosition + " " + partialType + " " + startByte;
+                + voxelPosition + " " + partialType;
         return partialString;
     }
 

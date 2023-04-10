@@ -36,7 +36,7 @@ public class SurfaceWaveDetector {
 	private int[] detect() {
 		int[] surfaceWavePoints = null;
 		// Initial rough detection using amplitude threshold
-		double threshold = envelopeTrace.getMaxValue() * 0.1;
+		double threshold = envelopeTrace.getMaxY() * 0.1;
 		if (threshold == 0) {
 			System.out.println("Warning: zero trace; return null");
 			return null;
