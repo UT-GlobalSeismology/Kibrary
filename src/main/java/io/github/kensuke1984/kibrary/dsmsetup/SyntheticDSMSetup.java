@@ -25,10 +25,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
- * Operation that makes DSM input files to be used in tish and tipsv,
+ * Operation that generates DSM input files to be used in tish and tipsv,
  * and prepares the environment to run these programs.
  * DSM input files can be made either for existing observed dataset in event folders, for a data entry list file,
  * or for a virtual set of observers.
@@ -77,15 +76,15 @@ public class SyntheticDSMSetup extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * The data entry list file
+     * Path of a data entry list file
      */
-    private Path entryPath;
+    private Path dataEntryPath;
     /**
      * The root folder containing event folders which have observed SAC files
      */
     private Path obsPath;
     /**
-     * Structure file to use instead of PREM
+     * Path of structure file to use instead of PREM
      */
     private Path structurePath;
     /**
@@ -145,7 +144,7 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
-            pw.println("#entryPath dataEntry.lst");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
@@ -180,8 +179,8 @@ public class SyntheticDSMSetup extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        if (property.containsKey("entryPath")) {
-            entryPath = property.parsePath("entryPath", null, true, workPath);
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         } else {
             obsPath = property.parsePath("obsPath", ".", true, workPath);
         }
@@ -214,7 +213,7 @@ public class SyntheticDSMSetup extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
-        Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(entryPath, obsPath, components);
+        Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
         if (!DatasetAid.checkNum(arcMap.size(), "event", "events")) return;
 
         // set structure
@@ -270,12 +269,13 @@ public class SyntheticDSMSetup extends Operation {
         // output shellscripts for execution of tipsv and tish
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceList);
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, arcMap.size(), header);
+        DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
-        shell.write(SPCType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
-        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
-        System.err.println("After this finishes, please run " + outSHPath + " and " + outPSVPath);
+        shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
+        shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 
 }

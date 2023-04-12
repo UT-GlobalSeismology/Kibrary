@@ -121,14 +121,14 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeShort(periodRanges.length);
         idStream.writeShort(phases.length);
         if (voxelPositions != null) idStream.writeShort(voxelPositions.size());
-        makeObserverMap(observerSet);
-        makeGlobalCMTIDMap(globalCMTIDSet);
+        makeAndWriteObserverMap(observerSet);
+        makeAndWriteGlobalCMTIDMap(globalCMTIDSet);
         for (int i = 0; i < periodRanges.length; i++) {
             idStream.writeDouble(periodRanges[i][0]);
             idStream.writeDouble(periodRanges[i][1]);
         }
-        makePhaseMap(phases);
-        if (voxelPositions != null) makePerturbationMap(voxelPositions);
+        makeAndWritePhaseMap(phases);
+        if (voxelPositions != null) makeAndWritePerturbationMap(voxelPositions);
         mode = (voxelPositions == null ? 0 : 1);
     }
 
@@ -159,16 +159,28 @@ public class WaveformDataWriter implements Closeable, Flushable {
         dataStream.flush();
     }
 
-    private void makeGlobalCMTIDMap(Set<GlobalCMTID> globalCMTIDSet) throws IOException {
+    private void makeAndWriteGlobalCMTIDMap(Set<GlobalCMTID> globalCMTIDSet) throws IOException {
         int i = 0;
         globalCMTIDMap = new HashMap<>();
         for (GlobalCMTID id : globalCMTIDSet) {
             globalCMTIDMap.put(id, i++);
-            idStream.writeBytes(StringUtils.rightPad(id.toString(), 15));
+            idStream.writeBytes(StringUtils.rightPad(id.toString(), GlobalCMTID.MAX_LENGTH));
         }
     }
 
-    private void makePerturbationMap(Set<FullPosition> perturbationMap) throws IOException {
+    private void makeAndWriteObserverMap(Set<Observer> observerSet) throws IOException {
+        int i = 0;
+        observerMap = new HashMap<>();
+        for (Observer observer : observerSet) {
+            observerMap.put(observer, i++);
+            idStream.writeBytes(StringUtils.rightPad(observer.toString(), Observer.MAX_LENGTH));
+            HorizontalPosition pos = observer.getPosition();
+            idStream.writeDouble(pos.getLatitude());
+            idStream.writeDouble(pos.getLongitude());
+        }
+    }
+
+    private void makeAndWritePerturbationMap(Set<FullPosition> perturbationMap) throws IOException {
         int i = 0;
         perturbationLocationMap = new HashMap<>();
         for (FullPosition loc : perturbationMap) {
@@ -179,25 +191,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
         }
     }
 
-    private void makePhaseMap(Phase[] phases) throws IOException {
+    private void makeAndWritePhaseMap(Phase[] phases) throws IOException {
         int i = 0;
         phaseMap = new HashMap<>();
         for (Phase phase : phases)	{
             phaseMap.put(phase, i++);
             idStream.writeBytes(StringUtils.rightPad(phase.toString(), 16));
-        }
-    }
-
-    private void makeObserverMap(Set<Observer> observerSet) throws IOException {
-        int i = 0;
-        observerMap = new HashMap<>();
-        for (Observer observer : observerSet) {
-            observerMap.put(observer, i++);
-            idStream.writeBytes(StringUtils.rightPad(observer.getStation(), 8));
-            idStream.writeBytes(StringUtils.rightPad(observer.getNetwork(), 8));
-            HorizontalPosition pos = observer.getPosition();
-            idStream.writeDouble(pos.getLatitude());
-            idStream.writeDouble(pos.getLongitude());
         }
     }
 

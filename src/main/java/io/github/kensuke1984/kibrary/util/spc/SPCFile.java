@@ -24,10 +24,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class SPCFile implements SPCFileAccess {
 
-    private String stationCode;
-    private String networkCode;
     private String sourceID;
-    private String observerID;
+    private String receiverID;
     private SPCFileName spcFileName;
     private double tlen;
     private int np;
@@ -35,11 +33,11 @@ public class SPCFile implements SPCFileAccess {
     /**
      * 震源の位置
      */
-    private FullPosition sourceLocation;
+    private FullPosition sourcePosition;
     /**
      * 観測点の位置 深さの情報は含まない
      */
-    private HorizontalPosition observerPosition;
+    private HorizontalPosition receiverPosition;
     private double omegai;
     private List<SPCBody> spcBody;
     private int nbody;
@@ -48,7 +46,7 @@ public class SPCFile implements SPCFileAccess {
     private SPCType spcFileType;
 
     public SPCFile(SPCFileName spcFileName) {
-        this.spcFileName = spcFileName; // TODO
+        this.spcFileName = spcFileName;
     }
 
     /**
@@ -82,14 +80,12 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme add content for BP/FP catalog
      * @author rei add content for UB/UF catalog
      */
-    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition observerPosition
-            , FullPosition sourceLocation, String observerName) throws IOException {
+    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition receiverPosition
+            , FullPosition sourcePosition) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
             SPCFile specFile = new SPCFile(spcFileName);
             specFile.sourceID = spcFileName.getSourceID();
-            //TODO
-            specFile.stationCode = spcFileName.getStationCode();
-            specFile.observerID = spcFileName.getObserverID();
+            specFile.receiverID = spcFileName.getReceiverID();
             // read header PF
             // tlen
             double tlen = dis.readDouble();
@@ -151,29 +147,6 @@ public class SPCFile implements SPCFileAccess {
                 throw new RuntimeException("component can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), 9(fp), 10(fpshcat), or 27(bp) right now");
             }
 
-            if (observerName == null) {
-                specFile.stationCode = spcFileName.getStationCode();
-                specFile.observerID = spcFileName.getObserverID();
-            }
-            else {
-                specFile.stationCode = observerName;
-                specFile.observerID = observerName;
-            }
-
-
-            if (specFile.spcFileType.equals(SPCType.PB) || specFile.spcFileType.equals(SPCType.PF)
-                    || specFile.spcFileType.equals(SPCType.PBSHCAT)
-                    || specFile.spcFileType.equals(SPCType.PBPSVCAT)
-                    || specFile.spcFileType.equals(SPCType.PFSHCAT)
-                    || specFile.spcFileType.equals(SPCType.PFPSVCAT)
-//                    || specFile.spcFileType.equals(SPCType.PFSHO)
-                    || specFile.spcFileType.equals(SPCType.UB)
-                    || specFile.spcFileType.equals(SPCType.UF))
-
-                specFile.networkCode = null;
-            else
-                specFile.networkCode = spcFileName.getNetworkCode();
-
             //System.out.println(nbody);
             specFile.nbody = nbody;
             specFile.np = np;
@@ -186,12 +159,12 @@ public class SPCFile implements SPCFileAccess {
             // data part
             specFile.omegai = dis.readDouble();
 
-            if (observerPosition == null)
-                specFile.observerPosition = new HorizontalPosition(dis.readDouble(), dis.readDouble());
+            if (receiverPosition == null)
+                specFile.receiverPosition = new HorizontalPosition(dis.readDouble(), dis.readDouble());
             else {
                 dis.readDouble();
                 dis.readDouble();
-                specFile.observerPosition = observerPosition;
+                specFile.receiverPosition = receiverPosition;
             }
 
             //
@@ -205,18 +178,18 @@ public class SPCFile implements SPCFileAccess {
             case PARL:
             case PARN:
             case SYNTHETIC:
-                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 break;
             case PBSHCAT:
             case PBPSVCAT:
-                if (sourceLocation == null)
-                    specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), 0);
+                if (sourcePosition == null)
+                    specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0);
                 else {
                     dis.readDouble();
                     dis.readDouble();
-                    if (sourceLocation.getR() != Earth.EARTH_RADIUS)
-                        throw new RuntimeException("Error: BP source depth should be 0. " + sourceLocation.getR() + " " + Earth.EARTH_RADIUS);
-                    specFile.sourceLocation = sourceLocation;
+                    if (sourcePosition.getR() != Earth.EARTH_RADIUS)
+                        throw new RuntimeException("Error: BP source depth should be 0. " + sourcePosition.getR() + " " + Earth.EARTH_RADIUS);
+                    specFile.sourcePosition = sourcePosition;
                 }
                 break;
             case UF:
@@ -226,18 +199,18 @@ public class SPCFile implements SPCFileAccess {
 //                break;
             case PFSHCAT:
             case PFPSVCAT:
-                if (sourceLocation == null)
-                    specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                if (sourcePosition == null)
+                    specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 else {
                     dis.readDouble();
                     dis.readDouble();
                     dis.readDouble();
-                    specFile.sourceLocation = sourceLocation;
+                    specFile.sourcePosition = sourcePosition;
                 }
                 break;
             case UB:
             case PB:
-                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
+                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
                 break;
             default:
                 throw new RuntimeException("Unexpected");
@@ -389,7 +362,7 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme
      */
     public static final SPCFile getInstance(SPCFileName spcFileName, double phi) throws IOException {
-        return getInstance(spcFileName, phi, null, null, null);
+        return getInstance(spcFileName, phi, null, null);
     }
 
     /**
@@ -399,7 +372,7 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme
      */
     public static final SPCFile getInstance(SPCFileName spcFileName) throws IOException {
-        return getInstance(spcFileName, 0., null, null, null);
+        return getInstance(spcFileName, 0., null, null);
     }
 
     /**
@@ -408,23 +381,20 @@ public class SPCFile implements SPCFileAccess {
      * (else) Return obsever code
      */
     @Override
-    public String getObserverID() {
-        return observerID;
+    public String getReceiverID() {
+        return receiverID;
     }
 
-    /**
-     * (PB, PF, UB, UF) Return perturbation point code
-     * <p>
-     * (else) Return station code
-     */
     @Override
+    @Deprecated
     public String getStationCode() {
-        return stationCode;
+        return null;
     }
 
     @Override
+    @Deprecated
     public String getNetworkCode() {
-        return networkCode;
+        return null;
     }
 
     /**
@@ -439,12 +409,12 @@ public class SPCFile implements SPCFileAccess {
 
     @Override
     public FullPosition getSourcePosition() {
-        return sourceLocation;
+        return sourcePosition;
     }
 
     @Override
-    public HorizontalPosition getObserverPosition() {
-        return observerPosition;
+    public HorizontalPosition getReceiverPosition() {
+        return receiverPosition;
     }
 
     public SPCFileName getSpcFileName() {

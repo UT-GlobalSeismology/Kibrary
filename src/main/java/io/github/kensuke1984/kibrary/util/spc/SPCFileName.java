@@ -60,12 +60,12 @@ public abstract class SPCFileName extends File {
             // synthetics files have both station name and network name
             if (8 < station.length()) System.err.println(station + "Name of station cannot be over 8 characters");
             if (8 < network.length()) System.err.println(network + "Name of network cannot be over 8 characters");
-        } else {
-            // bp and fp files have only a station name
-            if (8 < station.length()) {
-                System.err.println("Name of station cannot be over 8 characters.");
-                return false;
-            }
+//        } else {
+//            // bp and fp files have only a station name
+//            if (8 < station.length()) {
+//                System.err.println("Name of station cannot be over 8 characters.");
+//                return false;
+//            }
         }
 
         return true;
@@ -132,7 +132,7 @@ public abstract class SPCFileName extends File {
     /**
      * @return ID of observer (station_network)
      */
-    public abstract String getObserverID();
+    public abstract String getReceiverID();
 
     /**
      * @return STATION code of the observer

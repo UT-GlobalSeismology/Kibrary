@@ -22,10 +22,33 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
- * Information file for SSHSH and SSHPSV
+ * Operation that generates DSM input files to be used in SSHSHI and SSHPSVI, or SSHSH and SSHPSV,
+ * and prepares the environment to run these programs.
+ * DSM input files can be made either for existing observed dataset in event folders, or for a data entry list file.
+ *
+ * <p>
+ * If a dataset folder is assigned as input, SAC files that satisfy the following criteria will be chosen:
+ * <ul>
+ * <li> is observed waveform </li>
+ * <li> the component is included in the components specified in the property file </li>
+ * </ul>
+ * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
+ * If there is no valid data in a certain input event folder, the corresponding output event folder will not be created.
+ *
+ * <p>
+ * If a data entry list file is assigned as input, entries that satisfy the following criteria will be chosen:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * </ul>
+ * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
+ *
+ * <p>
+ * When working for isotropic parameters, DSM input files for SSHSHI and SSHPSVI will be generated.
+ * SSHSHI will work for the parameter PAR2, and SSHPSVI will work for PAR1 and PAR2.
+ * When working for TI parameters, DSM input files for SSHSH and SSHPSV will be generated.
+ * SSHSH will work for the parameters PARL and PARN, and SSHPSV will work for PARA, PARC, PARF, PARL, and PARN.
  *
  * @author Kensuke Konishi
  * @since version 0.1.3
@@ -52,9 +75,9 @@ public class OneDPartialDSMSetup extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * The data entry list file
+     * Path of a data entry list file
      */
-    private Path entryPath;
+    private Path dataEntryPath;
     /**
      * The root folder containing event folders which have observed SAC files
      */
@@ -65,7 +88,7 @@ public class OneDPartialDSMSetup extends Operation {
     private double[] perturbationR;
     private boolean forTIParameters;
     /**
-     * structure file instead of PREM
+     * Path of structure file to use instead of PREM
      */
     private Path structurePath;
     private String structureName;
@@ -106,7 +129,7 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
-            pw.println("#entryPath dataEntry.lst");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##(double[]) Radii of perturbation points, listed using spaces, must be set");
@@ -139,8 +162,8 @@ public class OneDPartialDSMSetup extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        if (property.containsKey("entryPath")) {
-            entryPath = property.parsePath("entryPath", null, true, workPath);
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         } else {
             obsPath = property.parsePath("obsPath", ".", true, workPath);
         }
@@ -161,7 +184,7 @@ public class OneDPartialDSMSetup extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
-        Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(entryPath, obsPath, components);
+        Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
         if (!DatasetAid.checkNum(arcMap.size(), "event", "events")) return;
 
         // set structure
@@ -209,20 +232,21 @@ public class OneDPartialDSMSetup extends Operation {
         // output shellscripts for execution of sshsh and sshpsv
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceList);
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, arcMap.size(), header);
+        DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
         Path outSHPath;
         Path outPSVPath;
         if (forTIParameters) {
             outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparTI_SH", null, dateStr, ".sh"));
             outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparTI_PSV", null, dateStr, ".sh"));
-            shell.write(SPCType.PARN, SPCMode.SH, listFileName, outSHPath);  // TODO using PARN here is not a clean program
-            shell.write(SPCType.PARN, SPCMode.PSV, listFileName, outPSVPath);
+            shell.write(DSMShellscript.DSMType.TI1D, SPCMode.SH, listFileName, outSHPath);
+            shell.write(DSMShellscript.DSMType.TI1D, SPCMode.PSV, listFileName, outPSVPath);
         } else {
             outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparI_SH", null, dateStr, ".sh"));
             outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparI_PSV", null, dateStr, ".sh"));
-            shell.write(SPCType.PAR2, SPCMode.SH, listFileName, outSHPath);  // TODO using PAR2 here is not a clean program
-            shell.write(SPCType.PAR2, SPCMode.PSV, listFileName, outPSVPath);
+            shell.write(DSMShellscript.DSMType.I1D, SPCMode.SH, listFileName, outSHPath);
+            shell.write(DSMShellscript.DSMType.I1D, SPCMode.PSV, listFileName, outPSVPath);
         }
-        System.err.println("After this finishes, please run " + outSHPath + " and " + outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 }

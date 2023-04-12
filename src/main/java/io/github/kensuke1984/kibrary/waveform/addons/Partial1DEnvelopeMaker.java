@@ -539,7 +539,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
 
             String stationName = spcname.getStationCode();
             String network = spcname.getNetworkCode();
-            Observer station = new Observer(stationName, network, spectrum.getObserverPosition());
+            Observer station = new Observer(stationName, network, spectrum.getReceiverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
             SPCFileAccess qSpectrum = null;
             if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
@@ -637,7 +637,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
 
             String stationName = spcname.getStationCode();
             String network = spcname.getNetworkCode();
-            Observer station = new Observer(stationName, network, spectrum.getObserverPosition());
+            Observer station = new Observer(stationName, network, spectrum.getReceiverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
             SPCFileAccess qSpectrum = null;
             if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {

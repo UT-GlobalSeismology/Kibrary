@@ -26,11 +26,10 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Operation that makes DSM input files to be used in SHFP, SHBP, PSVFP, and PSVBP,
+ * Operation that generates DSM input files to be used in SHFP, SHBP, PSVFP, and PSVBP,
  * and prepares the environment to run these programs.
  * <p>
  * As input, the following 3 files are needed:
@@ -90,19 +89,19 @@ public class ThreeDPartialDSMSetup extends Operation {
     private String header;
 
     /**
-     * information file of events.
+     * Path of an event list file.
      */
     private Path eventPath;
     /**
-     * information file of observers.
+     * Path of an osberver list file.
      */
     private Path observerPath;
     /**
-     * information file of locations of pertubation points.
+     * Path of a voxel information file.
      */
     private Path voxelPath;
     /**
-     * structure file instead of PREM
+     * Path of structure file to use instead of PREM
      */
     private Path structurePath;
     private String structureName;
@@ -343,10 +342,11 @@ public class ThreeDPartialDSMSetup extends Operation {
         Files.write(outPath.resolve(fpListFileName), fpSourceSet);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_SH", fileTag, dateStr, ".sh"));
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
-        DSMShellscript shellFP = new DSMShellscript(outPath, mpi, nCreated, header);
-        shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, outSHPath);
-        shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, outPSVPath);
-        System.err.println("After this finishes, please enter " + outPath + "/ and run " + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
+        DSMShellscript shellFP = new DSMShellscript(mpi, nCreated, header);
+        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.SH, fpListFileName, outSHPath);
+        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.PSV, fpListFileName, outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 
     private void setupBPs(Set<Observer> observerSet, PolynomialStructure structure) throws IOException {
@@ -397,10 +397,11 @@ public class ThreeDPartialDSMSetup extends Operation {
         Files.write(outPath.resolve(bpListFileName), bpSourceSet);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_SH", fileTag, dateStr, ".sh"));
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
-        DSMShellscript shellBP = new DSMShellscript(outPath, mpi, nCreated, header);
-        shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, outSHPath);
-        shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, outPSVPath);
-        System.err.println("After this finishes, please enter " + outPath + "/ and run " + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
+        DSMShellscript shellBP = new DSMShellscript(mpi, nCreated, header);
+        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.SH, bpListFileName, outSHPath);
+        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.PSV, bpListFileName, outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 
     /**

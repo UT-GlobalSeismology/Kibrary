@@ -42,7 +42,7 @@ public final class SpcFileAid {
                     .sorted(Comparator.comparing(filePath -> filePath.getFileName().toString()))
                     .filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toList());
         }
-        if (fileNameList.get(fileNameList.size() - 1).getObserverID().equals("XY" + fileNameList.size()) == false) {
+        if (fileNameList.get(fileNameList.size() - 1).getReceiverID().equals("XY" + fileNameList.size()) == false) {
             throw new IllegalStateException("Error when collecting SPC files in " + path);
         }
         return fileNameList;
@@ -57,7 +57,7 @@ public final class SpcFileAid {
                     .sorted(Comparator.comparing(filePath -> filePath.getFileName().toString()))
                     .filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toList());
         }
-        if (fileNameList.get(fileNameList.size() - 1).getObserverID().equals("XY" + fileNameList.size()) == false) {
+        if (fileNameList.get(fileNameList.size() - 1).getReceiverID().equals("XY" + fileNameList.size()) == false) {
             throw new IllegalStateException("Error when collecting SPC files in " + path);
         }
         return fileNameList;

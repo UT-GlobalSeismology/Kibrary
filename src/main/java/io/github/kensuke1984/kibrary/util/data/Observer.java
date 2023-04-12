@@ -45,11 +45,15 @@ public final class Observer implements Comparable<Observer> {
      */
     public static final String SYN = "DSM";
     /**
-     * maximum number of letters of station
+     * maximum length to allow for an observer ID
+     */
+    public static final int MAX_LENGTH = 16;
+    /**
+     * typical maximum number of letters of station
      */
     private static final int STA_LENGTH = 5;
     /**
-     * maximum number of letters of network
+     * typical maximum number of letters of network
      * (length may be 3 in case of 'DSM', but rightPad() won't cut it so it is OK.)
      */
     private static final int NET_LENGTH = 2;
@@ -81,13 +85,21 @@ public final class Observer implements Comparable<Observer> {
     }
 
     public Observer(String observerID, HorizontalPosition position) {
-        this(observerID.split("_")[0], observerID.split("_")[1], position);
+        if (observerID.split("_").length == 1) {
+            this.station = observerID;
+            this.network = null;
+            this.position = position;
+        } else {
+            this.station = observerID.split("_")[0];
+            this.network = observerID.split("_")[1];
+            this.position = position;
+        }
     }
 
-    public Observer(Observer station) {
-        this.station = station.station;
-        this.network = station.network;
-        this.position = station.position;
+    public Observer(Observer observer) {
+        this.station = observer.station;
+        this.network = observer.network;
+        this.position = observer.position;
     }
 
     /**
@@ -119,12 +131,10 @@ public final class Observer implements Comparable<Observer> {
      */
     public static Observer createObserver(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
-        byte[] str = new byte[8];
+        byte[] str = new byte[MAX_LENGTH];
         bb.get(str);
-        String name = new String(str).trim();
-        bb.get(str);
-        String network = new String(str).trim();
-        return new Observer(name, network, new HorizontalPosition(bb.getDouble(), bb.getDouble()));
+        String observerID = new String(str).trim();
+        return new Observer(observerID, new HorizontalPosition(bb.getDouble(), bb.getDouble()));
     }
 
     public static Observer createObserver(String observerLine) {
@@ -141,9 +151,10 @@ public final class Observer implements Comparable<Observer> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-//		result = prime * result + ((position == null) ? 0 : position.hashCode());
-//		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
-        result = 314159 * prime * station.hashCode() * network.hashCode();
+        result = prime * result + ((position == null) ? 0 : position.hashCode());
+        result = prime * result + ((station == null) ? 0 : station.hashCode());
+        result = prime * result + ((network == null) ? 0 : network.hashCode());
+//        result = 314159 * prime * station.hashCode() * network.hashCode();
         return result;
     }
 
@@ -224,7 +235,8 @@ public final class Observer implements Comparable<Observer> {
      */
     @Override
     public String toString() {
-        return station + "_" + network;
+        if (StringUtils.isEmpty(network)) return station;
+        else return station + "_" + network;
     }
 
     /**

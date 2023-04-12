@@ -18,7 +18,6 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  */
 class DSMShellscript {
 
-    private Path workPath;
     /**
      * Information file name is header_[psv,sh].inf
      */
@@ -46,13 +45,11 @@ class DSMShellscript {
      * Number of cores that will run simultaneously = nSimRun * nCore.
      * Number of sources that will be processed = nBlock * nSimRun.
      * If MPI is not used, nCore is ignored.
-     *
-     * @param workPath
-     * @param mpi (boolean) Whether to use MPI
-     * @param nSources (int) Number of sources to be processed
+     * @param mpi (boolean) Whether to use MPI.
+     * @param nSources (int) Number of sources to be processed.
+     * @param header (String) Prefix of information file name.
      */
-    public DSMShellscript(Path workPath, boolean mpi, int nSources, String header) {
-        this.workPath = workPath;
+    DSMShellscript(boolean mpi, int nSources, String header) {
         this.mpi = mpi;
         this.header = header;
         this.nSources = nSources;
@@ -88,7 +85,7 @@ class DSMShellscript {
      * @author otsuru
      * @since 2022/2/5
      */
-    public void write(SPCType type, SPCMode mode, String listFileName, Path outputPath) throws IOException {
+    void write(DSMType type, SPCMode mode, String listFileName, Path outputPath) throws IOException {
         String enterFolder;
         String exitFolder;
         String programName;
@@ -99,22 +96,22 @@ class DSMShellscript {
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "tipsv" : "tish");
             break;
-        case PF:
+        case FP:
             enterFolder = "./FPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvfp" : "shfp");
             break;
-        case PB:
+        case BP:
             enterFolder = "./BPpool/";
             exitFolder = "../../";
             programName = (mode == SPCMode.PSV ? "psvbp" : "shbp");
             break;
-        case PAR2:
+        case I1D:
             enterFolder = "./";
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "sshpsvi" : "sshshi");
             break;
-        case PARN:
+        case TI1D:
             enterFolder = "./";
             exitFolder = "../";
             programName = (mode == SPCMode.PSV ? "sshpsv" : "sshsh");
@@ -161,4 +158,9 @@ class DSMShellscript {
         }
     }
 
+    static enum DSMType {
+        SYNTHETIC,
+        FP, BP,
+        I1D, TI1D
+    }
 }

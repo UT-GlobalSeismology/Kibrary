@@ -119,7 +119,7 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Path timewindowPath;
     /**
-     * Path of a data entry file
+     * Path of a data entry list file
      */
     private Path dataEntryPath;
     /**
@@ -595,8 +595,7 @@ public class PartialWaveformAssembler3D extends Operation {
          * @throws IOException
          */
         private void selectBPFromCatalog() throws IOException {
-            HorizontalPosition voxelPos = fpFiles.get(0).getObserverPosition();
-            String voxelName = fpFiles.get(0).getObserverID();
+            HorizontalPosition voxelPos = fpFiles.get(0).getReceiverPosition();
             FullPosition observerPos = observer.getPosition().toFullPosition(Earth.EARTH_RADIUS);
             double distanceBP = observerPos.computeEpicentralDistanceDeg(voxelPos);
             double phiBP = Math.PI - observerPos.computeAzimuthRad(voxelPos);
@@ -620,10 +619,10 @@ public class PartialWaveformAssembler3D extends Operation {
 
                 // add BP file to list
                 if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) {
-                    bpFiles.add(SPCFile.getInstance(bpCatalogSH.get(ipointBP + i), phiBP, voxelPos, observerPos, voxelName));
+                    bpFiles.add(SPCFile.getInstance(bpCatalogSH.get(ipointBP + i), phiBP, voxelPos, observerPos));
                 }
                 if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) {
-                    bpFiles.add(SPCFile.getInstance(bpCatalogPSV.get(ipointBP + i), phiBP, voxelPos, observerPos, voxelName));
+                    bpFiles.add(SPCFile.getInstance(bpCatalogPSV.get(ipointBP + i), phiBP, voxelPos, observerPos));
                 }
             }
         }
@@ -689,7 +688,7 @@ public class PartialWaveformAssembler3D extends Operation {
             // assemble partial derivatives for waveform at i-th depth
             Set<SACComponent> neededComponents = timewindows.stream().map(TimewindowData::getComponent).collect(Collectors.toSet());
             for (int ibody = 0, nbody = fpFiles.get(0).nbody(); ibody < nbody; ibody++) {
-                FullPosition voxelPosition = fpFiles.get(0).getObserverPosition().toFullPosition(fpFiles.get(0).getBodyR()[ibody]);
+                FullPosition voxelPosition = fpFiles.get(0).getReceiverPosition().toFullPosition(fpFiles.get(0).getBodyR()[ibody]);
                 if (voxelPositionSet != null && voxelPositionSet.contains(voxelPosition) == false)
                     continue;
 
@@ -725,7 +724,7 @@ public class PartialWaveformAssembler3D extends Operation {
         }
 
         private boolean forSameVoxel(SPCFileAccess spc1, SPCFileAccess spc2) {
-            if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) return false;
+            if (!spc1.getReceiverPosition().equals(spc2.getReceiverPosition())) return false;
             else return true;
         }
 

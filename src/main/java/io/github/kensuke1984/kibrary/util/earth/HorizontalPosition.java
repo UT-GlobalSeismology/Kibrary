@@ -413,7 +413,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Turn the position value into a short String code.
+     * Turn the position value into a short String code with 14 letters.
      * Begins with latitude: 1 letter ("P" for positive or "M" for negative)
      * followed by 2 + {@value Latitude#PRECISION} digits,
      * then longitude: 1 letter ("N" for -100 and under, "M" for under 0, "P" for under 100, "Q" for 100 and above)

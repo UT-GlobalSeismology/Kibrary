@@ -87,14 +87,13 @@ public final class TimewindowDataFile {
     public static final int ONE_WINDOW_BYTE = 33;
 
     /**
-     * Output TimeWindowInformation in binary format
+     * Output {@link TimewindowData} in binary format.
      *
-     * @param outputPath to write the information on
-     * @param infoSet    Set of timewindow information
-     * @param options    for write
+     * @param infoSet (Set of {@link TimewindowData}) Timewindows to write.
+     * @param outputPath (Path) The output file.
+     * @param options (OpenOptions...) Options for write.
      * @throws IOException if an I/O error occurs.
      * @author Kensuke Konishi
-     * @author anselme add phase information
      */
     public static void write(Set<TimewindowData> infoSet, Path outputPath, OpenOption... options)
             throws IOException {
@@ -123,15 +122,14 @@ public final class TimewindowDataFile {
             dos.writeShort(phases.length);
             for (int i = 0; i < observers.length; i++) {
                 observerMap.put(observers[i], i);
-                dos.writeBytes(StringUtils.rightPad(observers[i].getStation(), 8));
-                dos.writeBytes(StringUtils.rightPad(observers[i].getNetwork(), 8));
+                dos.writeBytes(StringUtils.rightPad(observers[i].toString(), Observer.MAX_LENGTH));
                 HorizontalPosition pos = observers[i].getPosition();
                 dos.writeDouble(pos.getLatitude());
                 dos.writeDouble(pos.getLongitude());
             }
             for (int i = 0; i < events.length; i++) {
                 eventMap.put(events[i], i);
-                dos.writeBytes(StringUtils.rightPad(events[i].toString(), 15));
+                dos.writeBytes(StringUtils.rightPad(events[i].toString(), GlobalCMTID.MAX_LENGTH));
             }
             for (int i = 0; i < phases.length; i++) {
                 phaseMap.put(phases[i], i);
@@ -151,8 +149,8 @@ public final class TimewindowDataFile {
                         dos.writeShort(-1);
                 }
                 dos.writeByte(info.getComponent().valueOf());
-                float startTime = (float) Precision.round(info.startTime, 3);
-                float endTime = (float) Precision.round(info.endTime, 3);
+                float startTime = (float) info.startTime;
+                float endTime = (float) info.endTime;
                 dos.writeFloat(startTime);
                 dos.writeFloat(endTime);
             }
@@ -202,21 +200,24 @@ public final class TimewindowDataFile {
     public static Set<TimewindowData> read(Path inputPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(inputPath)));) {
             long fileSize = Files.size(inputPath);
+
             // Read header
+            // short * 3
             Observer[] observers = new Observer[dis.readShort()];
             GlobalCMTID[] events = new GlobalCMTID[dis.readShort()];
             Phase[] phases = new Phase[dis.readShort()];
-            int headerBytes = 3 * 2 + (8 + 8 + 8 * 2) * observers.length + 15 * events.length + 16 * phases.length;
+            int headerBytes = Short.BYTES * 3 + (Observer.MAX_LENGTH + Double.BYTES * 2) * observers.length
+                    + GlobalCMTID.MAX_LENGTH * events.length + 16 * phases.length;
             long windowParts = fileSize - headerBytes;
             if (windowParts % ONE_WINDOW_BYTE != 0)
-                throw new RuntimeException(inputPath + " has some problems.");
-            // station(8),network(8),position(8*2)
-            byte[] observerBytes = new byte[32];
+                throw new IllegalStateException(inputPath + " has some problems.");
+
+            byte[] observerBytes = new byte[Observer.MAX_LENGTH + Double.BYTES * 2];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
                 observers[i] = Observer.createObserver(observerBytes);
             }
-            byte[] eventBytes = new byte[15];
+            byte[] eventBytes = new byte[GlobalCMTID.MAX_LENGTH];
             for (int i = 0; i < events.length; i++) {
                 dis.read(eventBytes);
                 events[i] = new GlobalCMTID(new String(eventBytes).trim());
@@ -226,20 +227,21 @@ public final class TimewindowDataFile {
                 dis.read(phaseBytes);
                 phases[i] = Phase.create(new String(phaseBytes).trim());
             }
-            int nwindow = (int) (windowParts / ONE_WINDOW_BYTE);
-            byte[][] bytes = new byte[nwindow][ONE_WINDOW_BYTE];
-            for (int i = 0; i < nwindow; i++)
+
+            int nWindow = (int) (windowParts / ONE_WINDOW_BYTE);
+            byte[][] bytes = new byte[nWindow][ONE_WINDOW_BYTE];
+            for (int i = 0; i < nWindow; i++)
                 dis.read(bytes[i]);
 
-            Set<TimewindowData> infoSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
+            Set<TimewindowData> timewindowSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
-            DatasetAid.checkNum(infoSet.size(), "timewindow", "timewindows");
-            return Collections.unmodifiableSet(infoSet);
+            DatasetAid.checkNum(timewindowSet.size(), "timewindow", "timewindows");
+            return Collections.unmodifiableSet(timewindowSet);
         }
     }
 
     /**
-     * create an instance for 1 timewindow information
+     * Create an instance for 1 timewindow.
      *
      * @param bytes    byte array
      * @param observers station array

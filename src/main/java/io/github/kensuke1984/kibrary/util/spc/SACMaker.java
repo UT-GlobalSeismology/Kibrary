@@ -278,8 +278,8 @@ public class SACMaker implements Runnable {
             isOK = false;
         }
 
-        if (!spc1.getObserverID().equals(spc2.getObserverID())) {
-            System.err.println("Observer IDs are different " + spc1.getObserverID() + " " + spc2.getObserverID());
+        if (!spc1.getReceiverID().equals(spc2.getReceiverID())) {
+            System.err.println("Observer IDs are different " + spc1.getReceiverID() + " " + spc2.getReceiverID());
             isOK = false;
         }
 
@@ -310,7 +310,7 @@ public class SACMaker implements Runnable {
             isOK = false;
         }
 
-        if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
+        if (!spc1.getReceiverPosition().equals(spc2.getReceiverPosition())) {
             System.err.println("locations of stations of input spcfiles are different");
             isOK = false;
         }
@@ -417,7 +417,7 @@ public class SACMaker implements Runnable {
     }
 
     private void setInformation() {
-        observer = new Observer(primeSPC.getObserverID(), primeSPC.getObserverPosition());
+        observer = new Observer(primeSPC.getReceiverID(), primeSPC.getReceiverPosition());
         if (globalCMTID != null && beginDateTime == null)
             beginDateTime = pde ? globalCMTID.getEventData().getPDETime() : globalCMTID.getEventData().getCMTTime();
         npts = findNPTS();

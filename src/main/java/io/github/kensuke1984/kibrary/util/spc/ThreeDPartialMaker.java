@@ -363,11 +363,11 @@ public class ThreeDPartialMaker {
         // FP and BP have no observation network, thus we do not check it
 
         // 場所
-        if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
+        if (!fp.getReceiverPosition().equals(bp.getReceiverPosition())) {
             System.err.println("perturbation point Positions are different.");
-            System.err.println("perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", "
-                    + fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() + ", "
-                    + bp.getObserverPosition().getLongitude() + ")");
+            System.err.println("perturbation point of fp, bp are" + "(" + fp.getReceiverPosition().getLatitude() + ", "
+                    + fp.getReceiverPosition().getLongitude() + "), (" + bp.getReceiverPosition().getLatitude() + ", "
+                    + bp.getReceiverPosition().getLongitude() + ")");
             validity = false;
         }
         return validity;
@@ -440,11 +440,11 @@ public class ThreeDPartialMaker {
         // FP and BP have no observation network, thus we do not check it
 
         // 場所
-        if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
+        if (!fp.getReceiverPosition().equals(bp.getReceiverPosition())) {
             System.err.println("perturbation point Positions are different.");
-            System.err.println("perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", "
-                    + fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() + ", "
-                    + bp.getObserverPosition().getLongitude() + ")");
+            System.err.println("perturbation point of fp, bp are" + "(" + fp.getReceiverPosition().getLatitude() + ", "
+                    + fp.getReceiverPosition().getLongitude() + "), (" + bp.getReceiverPosition().getLatitude() + ", "
+                    + bp.getReceiverPosition().getLongitude() + ")");
             validity = false;
         }
         return validity;
@@ -531,12 +531,12 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            public HorizontalPosition getObserverPosition() {
+            public HorizontalPosition getReceiverPosition() {
                 return observerPosition;
             }
 
             @Override
-            public String getObserverID() {
+            public String getReceiverID() {
                 return observerID + "_" + observerNetwork;
             }
 
@@ -863,7 +863,7 @@ public class ThreeDPartialMaker {
     private void setAngles() {
         HorizontalPosition event = fp.getSourcePosition();
         HorizontalPosition station = bp.getSourcePosition();
-        HorizontalPosition point = bp.getObserverPosition();
+        HorizontalPosition point = bp.getReceiverPosition();
         angleForTensor = Earth.computeAzimuthRad(point, station) - Earth.computeAzimuthRad(point, event);
 
         angleForVector = 2 * Math.PI - Earth.computeAzimuthRad(station, event);

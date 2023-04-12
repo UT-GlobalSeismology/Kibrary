@@ -90,7 +90,7 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private Path timewindowPath;
     /**
-     * Path of a data entry file
+     * Path of a data entry list file
      */
     private Path dataEntryPath;
     /**
@@ -406,16 +406,14 @@ public class PartialWaveformAssembler1D extends Operation {
 
         private SPCFileAccess findSPCFile(Observer observer, PartialType partialType, SPCMode mode) throws IOException {
             Path modelPath = (mode == SPCMode.SH) ? shModelPath : psvModelPath;
-            Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + partialType + "... " + mode + ".spc");
+            Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + partialType + "..." + mode + ".spc");
             if (!SPCFileName.isFormatted(spcPath)) {
-                System.err.println(spcPath + " has invalid SPC file name.");
-                return null;
+                throw new IllegalStateException(spcPath + " has invalid SPC file name.");
             }
             SPCFileName spcName = new FormattedSPCFileName(spcPath);
             SPCFileAccess spcFile = spcName.read();
             if (spcFile.tlen() != tlen || spcFile.np() != np) {
-                System.err.println(spcFile + " has different np or tlen.");
-                return null;
+                throw new IllegalStateException(spcFile + " has different np or tlen.");
             }
             process(spcFile);
             return spcFile;

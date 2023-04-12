@@ -33,8 +33,7 @@ public class FormattedSPCFileName extends SPCFileName {
      */
     private SPCType fileType;
     private String x, y;
-    private String stationCode;
-    private String networkCode;
+    private String receiverID;
     private String sourceID;
 
     //-------------------- create instance and read name --------------------//
@@ -83,16 +82,10 @@ public class FormattedSPCFileName extends SPCFileName {
      */
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid SPC file name.");
-//        observerID = fileName.split("\\.")[0];
         fileType = getFileType(fileName);
         mode = getMode(fileName);
         sourceID = getEventID(fileName);
-        stationCode = fileName.split("\\.")[0].split("_")[0];
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
-            networkCode = null;
-        else
-            networkCode = fileName.split("\\.")[0].split("_")[1];
+        receiverID = getReceiverID(fileName);
         x = getX(fileName);
         y = getY(fileName);
     }
@@ -128,6 +121,9 @@ public class FormattedSPCFileName extends SPCFileName {
             default:
                 throw new RuntimeException("Unexpected");
         }
+    }
+    private static String getReceiverID(String fileName) {
+        return fileName.split("\\.")[0];
     }
 
     private static String getX(String fileName) {
@@ -174,30 +170,20 @@ public class FormattedSPCFileName extends SPCFileName {
      * (else) Return obsever code
      */
     @Override
-    public String getObserverID() {
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
-            return stationCode;
-        else
-            return stationCode + "_" + networkCode;
+    public String getReceiverID() {
+        return receiverID;
     }
 
-    /**
-     * (PB, PF, UB, UF) Return perturbation point code
-     * <p>
-     * (else) Return station code
-     */
     @Override
+    @Deprecated
     public String getStationCode() {
-        return stationCode;
+        return null;
     }
 
     @Override
+    @Deprecated
     public String getNetworkCode() {
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
-            throw new RuntimeException("PB, PF, UB, and UF waveforms have no network");
-        return networkCode;
+        return null;
     }
 
     public String getX() {
