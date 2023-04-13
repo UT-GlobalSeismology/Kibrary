@@ -167,14 +167,14 @@ public final class AMatrixBuilder {
             case PARL:
             case PARN:
             case PARQ:
-                if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
+                if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getRadius())
                     return i;
                 break;
             case PAR1:
             case PAR2:
             case PARVS:
             case PARVP:
-                if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
+                if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getRadius())
                     return i;
                 break;
             case A:
@@ -188,7 +188,7 @@ public final class AMatrixBuilder {
             case KAPPA:
             case LAMBDA2MU:
             case Vs:
-                if (position.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation()))
+                if (position.equals(((Physical3DParameter) parameterList.get(i)).getPosition()))
                     return i;
                 break;
             default:

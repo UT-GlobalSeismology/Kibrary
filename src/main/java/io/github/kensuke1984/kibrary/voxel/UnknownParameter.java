@@ -17,18 +17,18 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 public interface UnknownParameter {
 
     /**
-     * Weighting may be a width of a layer or volume of voxel and so on...
-     *
-     * @return weighting for this parameter
-     */
-    public double getWeighting();
-
-    /**
-     * @return {@link PartialType} of a parameter
+     * @return ({@link PartialType}) Type of parameter.
      */
     public PartialType getPartialType();
 
     public FullPosition getPosition();
+
+    /**
+     * Weighting for this parameter. It may be the thickness of a layer, the volume of voxel, and so on...
+     *
+     * @return (double) Weighting for this parameter.
+     */
+    public double getWeighting();
 
     public byte[] getBytes();
 

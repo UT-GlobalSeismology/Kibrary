@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
 
 /**
  * Operation that generates DSM input files to be used in SSHSHI and SSHPSVI, or SSHSH and SSHPSV,
@@ -83,9 +84,13 @@ public class OneDPartialDSMSetup extends Operation {
      */
     private Path obsPath;
     /**
+     * Path of a layer information file.
+     */
+    private Path layerPath;
+    /**
      * perturbation radii
      */
-    private double[] perturbationR;
+    private double[] layerRadii;
     private boolean forTIParameters;
     /**
      * Path of structure file to use instead of PREM
@@ -132,8 +137,10 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
-            pw.println("##(double[]) Radii of perturbation points, listed using spaces, must be set");
-            pw.println("#perturbationR 3500 3600");
+            pw.println("##Path of a layer information file. If this is unset, the following layerRadii will be used.");
+            pw.println("#layerPath layer.inf");
+            pw.println("##(double[]) Center radii of layers to perturb, listed using spaces, must be set if layerPath is not set.");
+            pw.println("#layerRadii 3505 3555 3605 3655 3705 3755 3805 3855");
             pw.println("##(boolean) Whether to compute partial derivatives for TI parameters. Otherwise, isotropic. (false)");
             pw.println("#forTIParameters true");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
@@ -167,7 +174,11 @@ public class OneDPartialDSMSetup extends Operation {
         } else {
             obsPath = property.parsePath("obsPath", ".", true, workPath);
         }
-        perturbationR = property.parseDoubleArray("perturbationR", null);
+        if (property.containsKey("layerPath")) {
+            layerPath = property.parsePath("layerPath", null, true, workPath);
+        } else {
+            layerRadii = property.parseDoubleArray("layerRadii", null);
+        }
         forTIParameters = property.parseBoolean("forTIParameters", "false");
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
@@ -189,6 +200,11 @@ public class OneDPartialDSMSetup extends Operation {
 
         // set structure
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
+
+        // set radii
+        if (layerRadii == null) {
+            layerRadii = new LayerInformationFile(layerPath).getRadii();
+        }
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, dateStr);
@@ -212,7 +228,7 @@ public class OneDPartialDSMSetup extends Operation {
                     System.err.println("!Caution there are observers with the same name and different position for " + event);
 
                 OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, event.getEventData(), observers, header,
-                        perturbationR, tlen, np);
+                        layerRadii, tlen, np);
                 Path outEventPath = outPath.resolve(event.toString());
                 Files.createDirectories(outEventPath.resolve(header));
                 if (forTIParameters) {

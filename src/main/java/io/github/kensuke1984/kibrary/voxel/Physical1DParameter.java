@@ -4,25 +4,25 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
- * Elastic parameter (one dimension)
- * １次元として使う 摂動点の位置（半径位置）、 摂動の種類(PartialType) Unknown parameter for 1D weighting
- * should be a thickness of a layer
+ * Elastic parameter in a 1-D layer.
+ * <p>
+ * The weighting should be the thickness of the layer [km].
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @since version 0.0.3
  */
 public class Physical1DParameter implements UnknownParameter {
 
-    private final double perturbationR;
-    private final double weighting;
     private final PartialType partialType;
+    private final double layerRadius;
+    private final double weighting;
 
-    public Physical1DParameter(PartialType partialType, double perturbationR, double weighting) {
+    public Physical1DParameter(PartialType partialType, double layerRadius, double weighting) {
         this.partialType = partialType;
+        this.layerRadius = layerRadius;
         this.weighting = weighting;
-        this.perturbationR = perturbationR;
     }
 
     @Override
@@ -31,7 +31,7 @@ public class Physical1DParameter implements UnknownParameter {
         int result = 1;
         result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
         long temp;
-        temp = Double.doubleToLongBits(perturbationR);
+        temp = Double.doubleToLongBits(layerRadius);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         temp = Double.doubleToLongBits(weighting);
         result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -45,22 +45,8 @@ public class Physical1DParameter implements UnknownParameter {
         if (getClass() != obj.getClass()) return false;
         Physical1DParameter other = (Physical1DParameter) obj;
         if (partialType != other.partialType) return false;
-        return Double.doubleToLongBits(perturbationR) == Double.doubleToLongBits(other.perturbationR) &&
+        return Double.doubleToLongBits(layerRadius) == Double.doubleToLongBits(other.layerRadius) &&
                 Double.doubleToLongBits(weighting) == Double.doubleToLongBits(other.weighting);
-    }
-
-    @Override
-    public String toString() {
-        return partialType + " " + perturbationR + " " + getWeighting();
-    }
-
-    public double getPerturbationR() {
-        return perturbationR;
-    }
-
-    @Override
-    public double getWeighting() {
-        return weighting;
     }
 
     @Override
@@ -70,7 +56,21 @@ public class Physical1DParameter implements UnknownParameter {
 
     @Override
     public FullPosition getPosition() {
-        return new FullPosition(0., 0., perturbationR);
+        return new FullPosition(0., 0., layerRadius);
+    }
+
+    public double getRadius() {
+        return layerRadius;
+    }
+
+    @Override
+    public double getWeighting() {
+        return weighting;
+    }
+
+    @Override
+    public String toString() {
+        return partialType + " " + layerRadius + " " + weighting;
     }
 
     @Override

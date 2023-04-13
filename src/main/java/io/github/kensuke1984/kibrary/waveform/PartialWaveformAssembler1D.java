@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
@@ -43,15 +44,31 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 
 /**
- * Creates a pair of files containing 1-D partial derivatives
- *
- * TODO shとpsvの曖昧さ 両方ある場合ない場合等 現状では combineして対処している
- *
- * Time length (tlen) and the number of step in frequency domain (np) in DSM
- * software must be same. Those values are set in a parameter file.
- *
- * Only partials for radius written in a parameter file are computed.
- *
+ * Operation that assembles partial derivative waveforms for 1-D parameters
+ * from SPC files created by sshshi and sshpsvi, or sshsh and sshpsv.
+ * Output is written in the format of {@link PartialIDFile}.
+ * <p>
+ * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * <ul>
+ * <li> the component is included in the components specified in the property file </li>
+ * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
+ * </ul>
+ * <p>
+ * SPC files must be inside (shPath,psvPath)/eventDir/modelName/.
+ * It is possible to use only SH or only PSV, as well as to use both.
+ * Input SPC file names should take the form:<br>
+ * observerPositionCode.eventID.partialType...(SH or PSV).spc<br>
+ * For information about observerPositionCode, see {@link HorizontalPosition#toCode}.
+ * <p>
+ * A set of partialTypes and perturbation radii to work for must be specified.
+ * This class does NOT handle time partials.
+ * <p>
+ * Time length (tlen) and the number of steps in frequency domain (np) must be same as the values used when running DSM.
+ * <p>
+ * Source time functions and filters can be applied to the waveforms.
+ * The sample rate of the resulting data is {@link #finalSamplingHz}.
+ * <p>
+ * Resulting entries can be specified by a (event, observer, component, partialType, perturbationRadius, timeframe)-pair.
  *
  * @author Kensuke Konishi
  * @since version 0.2.0.3
@@ -98,9 +115,9 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private Set<PartialType> partialTypes;
     /**
-     * radius of perturbation
+     * Radii of layers, when selecting to work for certain layers.
      */
-    private double[] bodyR;
+    private double[] layerRadii;
     private Path shPath;
     private Path psvPath;
     /**
@@ -199,8 +216,8 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##PartialTypes to compute for at each voxel, listed using spaces (PAR2)");
             pw.println("#partialTypes ");
-            pw.println("##(double[]) Radii of perturbation points, listed using spaces, must be set");
-            pw.println("#bodyR 3505 3555 3605");
+            pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to be worked for.");
+            pw.println("#layerRadii ");
             pw.println("##Path of an SH folder (.)");
             pw.println("#shPath ");
             pw.println("##Path of a PSV folder (.)");
@@ -256,7 +273,9 @@ public class PartialWaveformAssembler1D extends Operation {
                 .collect(Collectors.toSet());
         for (PartialType type : partialTypes)
             if (type.isTimePartial()) throw new IllegalArgumentException("This class does not handle time partials.");
-        bodyR = property.parseDoubleArray("bodyR", null);
+        if (property.containsKey("layerRadii")) {
+            layerRadii = property.parseDoubleArray("layerRadii", null);
+        }
 
         shPath = property.parsePath("shPath", ".", true, workPath);
         psvPath = property.parsePath("psvPath", ".", true, workPath);
@@ -413,21 +432,23 @@ public class PartialWaveformAssembler1D extends Operation {
             SPCFileName spcName = new FormattedSPCFileName(spcPath);
             SPCFileAccess spcFile = spcName.read();
             if (spcFile.tlen() != tlen || spcFile.np() != np) {
-                throw new IllegalStateException(spcFile + " has different np or tlen.");
+                throw new IllegalStateException(spcFile + " has different tlen or np.");
             }
             process(spcFile);
             return spcFile;
         }
 
         private void buildPartialWaveform(SPCFileAccess spcFile, TimewindowData timewindow, PartialType partialType) {
-            for (int k = 0; k < spcFile.nbody(); k++) { //TODO loop for r:bodyR, so that error can be thrown when data for a radius doesn't exist
+            for (int k = 0; k < spcFile.nbody(); k++) {
                 double currentBodyR = spcFile.getBodyR()[k];
-                boolean exists = false;
-                for (double radius : bodyR)
-                    if (Precision.equals(radius, currentBodyR, FullPosition.RADIUS_EPSILON))
-                        exists = true;
-                if (!exists)
-                    continue;
+                if (layerRadii != null) {
+                    boolean exists = false;
+                    for (double radius : layerRadii)
+                        if (Precision.equals(radius, currentBodyR, FullPosition.RADIUS_EPSILON))
+                            exists = true;
+                    if (!exists)
+                        continue;
+                }
                 double[] ut = spcFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
 
                 // apply filter
@@ -437,17 +458,19 @@ public class PartialWaveformAssembler1D extends Operation {
             }
         }
         private void buildPartialWaveform(SPCFileAccess shSPCFile, SPCFileAccess psvSPCFile, TimewindowData timewindow, PartialType partialType) {
-            for (int k = 0; k < shSPCFile.nbody(); k++) { //TODO loop for r:bodyR, so that error can be thrown when data for a radius doesn't exist
+            for (int k = 0; k < shSPCFile.nbody(); k++) {
                 if (!Precision.equals(shSPCFile.getBodyR()[k], psvSPCFile.getBodyR()[k], FullPosition.RADIUS_EPSILON)) {
                     throw new RuntimeException("SH and PSV bodyR differ " + shSPCFile.getBodyR()[k] + " " + psvSPCFile.getBodyR()[k]);
                 }
                 double currentBodyR = shSPCFile.getBodyR()[k];
-                boolean exists = false;
-                for (double radius : bodyR)
-                    if (Precision.equals(radius, currentBodyR, FullPosition.RADIUS_EPSILON))
-                        exists = true;
-                if (!exists)
-                    continue;
+                if (layerRadii != null) {
+                    boolean exists = false;
+                    for (double radius : layerRadii)
+                        if (Precision.equals(radius, currentBodyR, FullPosition.RADIUS_EPSILON))
+                            exists = true;
+                    if (!exists)
+                        continue;
+                }
                 double[] shUt = shSPCFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
                 double[] psvUt = psvSPCFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
 

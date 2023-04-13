@@ -5,50 +5,34 @@ import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
- * Elastic parameter
- * 弾性定数の偏微分情報 ３次元的な摂動点の位置、 摂動の種類(PartialType) Unknown parameter for 3D. location
- * type
+ * Elastic parameter in a 3-D voxel.
+ * <p>
+ * The weighting should be the volume of the voxel [km^3].
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @since version 0.0.3.1
  */
 public class Physical3DParameter implements UnknownParameter {
 
+    public static final int oneUnknownByte = 42;
+
     private final PartialType partialType;
-    private final double weighting;
     /**
-     * location of the perturbation
+     * Position of voxel to perturb.
      */
-    private final FullPosition pointLocation;
-    public final static int oneUnknownByte = 42;
+    private final FullPosition voxelPosition;
+    private final double weighting;
 
-    public static void main(String[] args) {
-        UnknownParameter p = new Physical3DParameter(PartialType.MU, new FullPosition(0, 0, Earth.EARTH_RADIUS), 1.);
-        byte[] bytes = p.getBytes();
-        System.out.println(p);
-        System.out.println(create(bytes));
-    }
-
-    public Physical3DParameter(PartialType partialType, FullPosition pointLocation, double weighting) {
+    public Physical3DParameter(PartialType partialType, FullPosition voxelPosition, double weighting) {
         this.partialType = partialType;
+        this.voxelPosition = voxelPosition;
         this.weighting = weighting;
-        this.pointLocation = pointLocation;
-    }
-
-    public FullPosition getPointLocation() {
-        return pointLocation;
-    }
-
-    @Override
-    public String toString() {
-        return partialType + " " + pointLocation + " " + weighting;
     }
 
     @Override
@@ -56,7 +40,7 @@ public class Physical3DParameter implements UnknownParameter {
         int prime = 31;
         int result = 1;
         result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
-        result = prime * result + ((pointLocation == null) ? 0 : pointLocation.hashCode());
+        result = prime * result + ((voxelPosition == null) ? 0 : voxelPosition.hashCode());
         long temp;
         temp = Double.doubleToLongBits(weighting);
         result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -70,15 +54,10 @@ public class Physical3DParameter implements UnknownParameter {
         if (getClass() != obj.getClass()) return false;
         Physical3DParameter other = (Physical3DParameter) obj;
         if (partialType != other.partialType) return false;
-        if (pointLocation == null) {
-            if (other.pointLocation != null) return false;
-        } else if (!pointLocation.equals(other.pointLocation)) return false;
+        if (voxelPosition == null) {
+            if (other.voxelPosition != null) return false;
+        } else if (!voxelPosition.equals(other.voxelPosition)) return false;
         return Double.doubleToLongBits(weighting) == Double.doubleToLongBits(other.weighting);
-    }
-
-    @Override
-    public double getWeighting() {
-        return weighting;
     }
 
     @Override
@@ -88,7 +67,17 @@ public class Physical3DParameter implements UnknownParameter {
 
     @Override
     public FullPosition getPosition() {
-        return pointLocation;
+        return voxelPosition;
+    }
+
+    @Override
+    public double getWeighting() {
+        return weighting;
+    }
+
+    @Override
+    public String toString() {
+        return partialType + " " + voxelPosition + " " + weighting;
     }
 
     public byte[] getBytes() {
@@ -96,9 +85,9 @@ public class Physical3DParameter implements UnknownParameter {
         byte[] loc1 = new byte[8];
         byte[] loc2 = new byte[8];
         byte[] loc3 = new byte[8];
-        ByteBuffer.wrap(loc1).putDouble(pointLocation.getLatitude());
-        ByteBuffer.wrap(loc2).putDouble(pointLocation.getLongitude());
-        ByteBuffer.wrap(loc3).putDouble(pointLocation.getR());
+        ByteBuffer.wrap(loc1).putDouble(voxelPosition.getLatitude());
+        ByteBuffer.wrap(loc2).putDouble(voxelPosition.getLongitude());
+        ByteBuffer.wrap(loc3).putDouble(voxelPosition.getR());
         byte[] weightByte = new byte[8];
         ByteBuffer.wrap(weightByte).putDouble(weighting);
         byte[] bytes = new byte[oneUnknownByte];

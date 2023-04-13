@@ -775,14 +775,14 @@ public class ObservationEquation_old {
             case PARL:
             case PARN:
             case PARQ:
-                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getPerturbationR())
+                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getRadius())
                     return i;
                 break;
             case PAR1:
             case PAR2:
             case PARVS:
             case PARVP:
-                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getPerturbationR())
+                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getRadius())
                     return i;
                 break;
             case A:
@@ -796,7 +796,7 @@ public class ObservationEquation_old {
             case KAPPA:
             case LAMBDA2MU:
             case Vs:
-                if (location.equals(((Physical3DParameter) PARAMETER_LIST.get(i)).getPointLocation())) {
+                if (location.equals(((Physical3DParameter) PARAMETER_LIST.get(i)).getPosition())) {
                     return i;
                 }
                 break;

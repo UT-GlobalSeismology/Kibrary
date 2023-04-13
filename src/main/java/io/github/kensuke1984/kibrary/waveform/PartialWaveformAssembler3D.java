@@ -49,7 +49,8 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Operation that assembles partial waveforms from SPC files created by shfp、shbp、psvfp, and psvbp.
+ * Operation that assembles partial derivative waveforms for 3-D parameters
+ * from SPC files created by shfp、shbp、psvfp, and psvbp.
  * Output is written in the format of {@link PartialIDFile}.
  * <p>
  * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
@@ -62,7 +63,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * SPC files for BP must be inside bpPath/observerPositionCode/modelName/ (default) or bpPath/modelName (when using BP catalog).
  * For information about observerPositionCode, see {@link HorizontalPosition#toCode}.
  * Input SPC file names should take the form:<br>
- * (point name).(observerPositionCode or eventID).(PB or PF)...(sh or psv).spc<br>
+ * voxelPointID.(observerPositionCode or eventID).(PB or PF)...(SH or PSV).spc<br>
  * It is possible to use only SH or only PSV, as well as to use both.
  * <p>
  * A set of partialTypes to work for must be specified.
@@ -70,7 +71,10 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * otherwise, all voxel points that have been computed for in FP and BP folders will be used.
  * This class does NOT handle time partials.
  * <p>
+ * Time length (tlen) and the number of steps in frequency domain (np) must be same as the values used when running DSM.
+ * <p>
  * Source time functions and filters can be applied to the waveforms.
+ * The sample rate of the resulting data is {@link #finalSamplingHz}.
  * <p>
  * When using BP catalog, the BP waveforms will be interpolated from waveforms in the catalog
  * based on the epicentral distance from the source (= observer) to the voxel position.
