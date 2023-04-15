@@ -4,22 +4,27 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
+/**
+ * 時間シフトに対するパラメタ情報　du/dtに対するm (Am=d)における
+ * 観測点名
+ * <p>
+ * sideに観測点名を入れる
+ *
+ */
 public class TimeReceiverSideParameter implements UnknownParameter {
-    public FullPosition getPointLocation() {
-        return pointLocation;
-    }
-
-    @Override
-    public String toString() {
-        return partialType + " " + station.getStation() + " " + station.getNetwork() + " " + station.getPosition() + " " + bouncingOrder + " " + weighting;
-    }
 
     private final PartialType partialType = PartialType.TIME_RECEIVER;
-    private final double weighting = 1.;
+    private final Observer observer;
+    /**
+     * location of the perturbation
+     */
+    private final FullPosition position;
+    private final int bouncingOrder;
+    private final double size = 1.;
 
     public TimeReceiverSideParameter(Observer station, int bouncingOrder) {
-        this.station = station;
-        this.pointLocation = new FullPosition(station.getPosition().getLatitude(),
+        this.observer = station;
+        this.position = new FullPosition(station.getPosition().getLatitude(),
                 station.getPosition().getLongitude(), 0.);
         this.bouncingOrder = bouncingOrder;
     }
@@ -29,10 +34,10 @@ public class TimeReceiverSideParameter implements UnknownParameter {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
-        result = prime * result + ((station == null) ? 0 : station.hashCode());
+        result = prime * result + ((observer == null) ? 0 : observer.hashCode());
         result = prime * result + bouncingOrder;
         long temp;
-        temp = Double.doubleToLongBits(weighting);
+        temp = Double.doubleToLongBits(size);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
@@ -48,43 +53,21 @@ public class TimeReceiverSideParameter implements UnknownParameter {
         TimeReceiverSideParameter other = (TimeReceiverSideParameter) obj;
         if (partialType != other.partialType)
             return false;
-        if (pointLocation == null) {
-            if (other.pointLocation != null)
+        if (position == null) {
+            if (other.position != null)
                 return false;
-        } else if (!pointLocation.equals(other.pointLocation))
+        } else if (!position.equals(other.position))
             return false;
-        if (station == null) {
-            if (other.station != null)
+        if (observer == null) {
+            if (other.observer != null)
                 return false;
-        } else if (!station.equals(other.station))
+        } else if (!observer.equals(other.observer))
             return false;
         if (bouncingOrder != other.bouncingOrder)
             return false;
-        if (Double.doubleToLongBits(weighting) != Double.doubleToLongBits(other.weighting))
+        if (Double.doubleToLongBits(size) != Double.doubleToLongBits(other.size))
             return false;
         return true;
-    }
-
-    /**
-     * location of the perturbation
-     */
-    private final FullPosition pointLocation;
-
-    private final Observer station;
-
-    private final int bouncingOrder;
-
-    public Observer getStation() {
-        return station;
-    }
-
-    public int getBouncingOrder() {
-        return bouncingOrder;
-    }
-
-    @Override
-    public double getWeighting() {
-        return weighting;
     }
 
     @Override
@@ -92,11 +75,28 @@ public class TimeReceiverSideParameter implements UnknownParameter {
         return partialType;
     }
 
-    @Override
-    public FullPosition getPosition() {
-        return pointLocation;
+    public Observer getObserver() {
+        return observer;
     }
 
+    public int getBouncingOrder() {
+        return bouncingOrder;
+    }
+
+    @Override
+    public FullPosition getPosition() {
+        return position;
+    }
+
+    @Override
+    public double getSize() {
+        return size;
+    }
+
+    @Override
+    public String toString() {
+        return partialType + " " + observer.toPaddedInfoString() + " " + bouncingOrder + " " + size;
+    }
     @Override
     public byte[] getBytes() {
         return new byte[0];

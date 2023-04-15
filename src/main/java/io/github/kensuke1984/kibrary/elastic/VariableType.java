@@ -83,14 +83,14 @@ public enum VariableType {
 
     public static VariableType of(PartialType type) {
         switch (type) {
-        case RHO: return RHO;
-        case A: return A;
-        case C: return C;
-        case F: return F;
-        case L: return L;
-        case N: return N;
-        case LAMBDA: return LAMBDA;
-        case MU: return MU;
+        case PAR0: case RHO: return RHO;
+        case PARA: case A: return A;
+        case PARC: case C: return C;
+        case PARF: case F: return F;
+        case PARL: case L: return L;
+        case PARN: case N: return N;
+        case PAR1: case LAMBDA: return LAMBDA;
+        case PAR2: case MU: return MU;
         case LAMBDA2MU: return LAMBDA2MU;
         case KAPPA: return KAPPA;
 

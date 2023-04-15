@@ -448,7 +448,7 @@ public class ObservationEquation_old {
             int k = DVECTOR.whichTimewindow(id);
             if (k < 0) return;
             int row = DVECTOR.getStartPoints(k);
-            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getWeighting();
+            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getSize();
             double[] partial = id.getData();
             for (int j = 0; j < partial.length; j++)
                 a.setEntry(row + j, column, partial[j] * weighting);
@@ -514,7 +514,7 @@ public class ObservationEquation_old {
                 return;
             }
             int row = DVECTOR.getStartPoints(k);
-            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getWeighting();
+            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getSize();
 //			if (unknownParameterWeightType != null && unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT))
 //				weighting = 1.;
             weighting = DVECTOR.getWeighting(k); // TO CHANGE
@@ -522,7 +522,7 @@ public class ObservationEquation_old {
             RealVector weightingVector = DVECTOR.getWeightingVector(k);
 
             //only for 1D!!! TO CHANGE
-            weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getWeighting());
+            weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getSize());
 
             double[] partial = id.getData();
 
@@ -765,7 +765,7 @@ public class ObservationEquation_old {
                 bouncingOrders.add(1);
                 Collections.sort(bouncingOrders);
                 int lowestBouncingOrder = bouncingOrders.get(0);
-                if (station.equals( ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getStation() ) &&
+                if (station.equals( ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getObserver() ) &&
                         ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getBouncingOrder() == lowestBouncingOrder)
                     return i;
                 break;

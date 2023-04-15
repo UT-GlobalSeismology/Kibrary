@@ -430,8 +430,8 @@ public class VelocityField3D_deprec {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 			velocities[i][0] = toQ(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
@@ -612,7 +612,7 @@ public class VelocityField3D_deprec {
 				.filter(unknown -> !unknown.getPartialType().isTimePartial()
 						&& unknown.getPartialType().equals(type)).collect(Collectors.toList())) {
 			double rp = p.getPosition().getR();
-			double w = p.getWeighting();
+			double w = p.getSize();
 			double value = answerMap.get(p);
 			if (rp - w/2. < r && rp + w/2. >= r) {
 				if (!trs.isBoundaryParameter(p)) {

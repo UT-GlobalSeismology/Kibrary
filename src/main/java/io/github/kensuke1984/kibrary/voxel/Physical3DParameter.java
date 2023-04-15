@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 /**
  * Elastic parameter in a 3-D voxel.
  * <p>
- * The weighting should be the volume of the voxel [km^3].
+ * The size should be the volume of the voxel [km^3].
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
@@ -27,12 +27,12 @@ public class Physical3DParameter implements UnknownParameter {
      * Position of voxel to perturb.
      */
     private final FullPosition voxelPosition;
-    private final double weighting;
+    private final double size;
 
-    public Physical3DParameter(PartialType partialType, FullPosition voxelPosition, double weighting) {
+    public Physical3DParameter(PartialType partialType, FullPosition voxelPosition, double size) {
         this.partialType = partialType;
         this.voxelPosition = voxelPosition;
-        this.weighting = weighting;
+        this.size = size;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class Physical3DParameter implements UnknownParameter {
         result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
         result = prime * result + ((voxelPosition == null) ? 0 : voxelPosition.hashCode());
         long temp;
-        temp = Double.doubleToLongBits(weighting);
+        temp = Double.doubleToLongBits(size);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
@@ -57,7 +57,7 @@ public class Physical3DParameter implements UnknownParameter {
         if (voxelPosition == null) {
             if (other.voxelPosition != null) return false;
         } else if (!voxelPosition.equals(other.voxelPosition)) return false;
-        return Double.doubleToLongBits(weighting) == Double.doubleToLongBits(other.weighting);
+        return Double.doubleToLongBits(size) == Double.doubleToLongBits(other.size);
     }
 
     @Override
@@ -71,13 +71,13 @@ public class Physical3DParameter implements UnknownParameter {
     }
 
     @Override
-    public double getWeighting() {
-        return weighting;
+    public double getSize() {
+        return size;
     }
 
     @Override
     public String toString() {
-        return partialType + " " + voxelPosition + " " + weighting;
+        return partialType + " " + voxelPosition + " " + size;
     }
 
     public byte[] getBytes() {
@@ -88,8 +88,8 @@ public class Physical3DParameter implements UnknownParameter {
         ByteBuffer.wrap(loc1).putDouble(voxelPosition.getLatitude());
         ByteBuffer.wrap(loc2).putDouble(voxelPosition.getLongitude());
         ByteBuffer.wrap(loc3).putDouble(voxelPosition.getR());
-        byte[] weightByte = new byte[8];
-        ByteBuffer.wrap(weightByte).putDouble(weighting);
+        byte[] sizeByte = new byte[8];
+        ByteBuffer.wrap(sizeByte).putDouble(size);
         byte[] bytes = new byte[oneUnknownByte];
 
         for (int i = 0; i < 10; i++)
@@ -101,7 +101,7 @@ public class Physical3DParameter implements UnknownParameter {
         for (int i = 0; i < 8; i++)
             bytes[i + 26] = loc3[i];
         for (int i = 0; i < 8; i++)
-            bytes[i + 34] = weightByte[i];
+            bytes[i + 34] = sizeByte[i];
 
         return bytes;
     }
@@ -111,15 +111,15 @@ public class Physical3DParameter implements UnknownParameter {
         byte[] loc1 = Arrays.copyOfRange(bytes, 10, 18);
         byte[] loc2 = Arrays.copyOfRange(bytes, 18, 26);
         byte[] loc3 = Arrays.copyOfRange(bytes, 26, 34);
-        byte[] weightByte = Arrays.copyOfRange(bytes, 34, 42);
+        byte[] sizeByte = Arrays.copyOfRange(bytes, 34, 42);
 
         PartialType partialType = PartialType.valueOf(new String(part1).trim());
         double latitude = ByteBuffer.wrap(loc1).getDouble();
         double longitude = ByteBuffer.wrap(loc2).getDouble();
         double r = ByteBuffer.wrap(loc3).getDouble();
-        double weight = ByteBuffer.wrap(weightByte).getDouble();
+        double size = ByteBuffer.wrap(sizeByte).getDouble();
 
-        return new Physical3DParameter(partialType, new FullPosition(latitude, longitude, r), weight);
+        return new Physical3DParameter(partialType, new FullPosition(latitude, longitude, r), size);
     }
 
 }

@@ -133,7 +133,7 @@ public class Weighting {
 		
 		for (int i = 0; i < eqA.getRowDimension(); i++) {
 			for (int k = 0; k < eqA.getColumnDimension(); k++)
-				eqA.setEntry(i, k, eqA.getEntry(i, k) * parameterList.get(k).getWeighting()); // multiply by the weight (volume) of each voxel in case voxels have different volumes)
+				eqA.setEntry(i, k, eqA.getEntry(i, k) * parameterList.get(k).getSize()); // multiply by the weight (volume) of each voxel in case voxels have different volumes)
 		}
 		
 		double maxEqA = Double.MIN_VALUE;

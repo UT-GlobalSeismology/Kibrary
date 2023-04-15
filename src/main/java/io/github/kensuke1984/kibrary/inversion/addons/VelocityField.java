@@ -288,10 +288,10 @@ public class VelocityField {
 			}
 			else if (i > 0) {
 				rmin = (m.getPosition().getR() - parameterOrder.get(i-1).getPosition().getR()) / 2. + parameterOrder.get(i-1).getPosition().getR();
-				rmax = m.getPosition().getR() + m.getWeighting() - (m.getPosition().getR() - parameterOrder.get(i-1).getPosition().getR()) / 2.;
+				rmax = m.getPosition().getR() + m.getSize() - (m.getPosition().getR() - parameterOrder.get(i-1).getPosition().getR()) / 2.;
 			}
 			else {
-				rmin = m.getPosition().getR() - m.getWeighting() + (parameterOrder.get(i+1).getPosition().getR() - m.getPosition().getR()) / 2.;
+				rmin = m.getPosition().getR() - m.getSize() + (parameterOrder.get(i+1).getPosition().getR() - m.getPosition().getR()) / 2.;
 				rmax = (parameterOrder.get(i+1).getPosition().getR() - m.getPosition().getR()) / 2. + m.getPosition().getR();
 			}
 			velocities[i] = toVelocity(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure);
@@ -323,8 +323,8 @@ public class VelocityField {
 //				rmin = (Double) m.getLocation() - m.getWeighting() + ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2.;
 //				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
 //			}
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 
 			velocities[i][0] = toVelocity(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
@@ -346,8 +346,8 @@ public class VelocityField {
 			double rmin = 0;
 			double rmax = 0;
 //			
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 
 			velocities[i][0] = toVp(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
@@ -368,8 +368,8 @@ public class VelocityField {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 			velocities[i][0] = toQ(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
@@ -388,8 +388,8 @@ public class VelocityField {
 			UnknownParameter mC1 = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = mC1.getPosition().getR() - mC1.getWeighting() / 2.;
-			rmax = mC1.getPosition().getR() + mC1.getWeighting() / 2.;
+			rmin = mC1.getPosition().getR() - mC1.getSize() / 2.;
+			rmax = mC1.getPosition().getR() + mC1.getSize() / 2.;
 			Qs[i][0] = getSimpsonVS(rmin, rmax, structure, answerMap.get(mC1));
 			Qs[i][1] = rmin;
 			Qs[i][2] = rmax;
@@ -408,8 +408,8 @@ public class VelocityField {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 			Vs[i][0] = getSimpsonVS(rmin, rmax, structure, answerMap.get(m));
 			Vs[i][1] = rmin;
 			Vs[i][2] = rmax;
@@ -428,8 +428,8 @@ public class VelocityField {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 			Vs[i][0] = getSimpsonVP(rmin, rmax, structure, answerMap.get(m));
 			Vs[i][1] = rmin;
 			Vs[i][2] = rmax;
@@ -629,7 +629,7 @@ public class VelocityField {
 				.filter(unknown -> !unknown.getPartialType().isTimePartial()
 						&& unknown.getPartialType().equals(type)).collect(Collectors.toList())) {
 			double rp = p.getPosition().getR();
-			double w = p.getWeighting();
+			double w = p.getSize();
 			double value = answerMap.get(p);
 			if (rp - w/2. < r && rp + w/2. >= r) {
 				if (!trs.isBoundaryParameter(p)) {

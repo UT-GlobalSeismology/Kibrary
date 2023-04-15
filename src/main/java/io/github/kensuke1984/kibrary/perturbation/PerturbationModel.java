@@ -47,7 +47,7 @@ public class PerturbationModel {
 
             // otherwise, create new voxel
             if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getWeighting(), initialStructure);
+                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getSize(), initialStructure);
                 voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
                 voxelList.add(voxel);
             }
@@ -76,7 +76,7 @@ public class PerturbationModel {
 
             // otherwise, create new voxel
             if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getWeighting(), initialStructure);
+                PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getSize(), initialStructure);
                 voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
                 voxelList.add(voxel);
             }

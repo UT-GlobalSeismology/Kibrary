@@ -100,7 +100,7 @@ public final class AMatrixBuilder {
             // set weighting
             // This includes the volumes of voxels.
             RealVector weightingVector = weighting.get(k);
-            weightingVector = weightingVector.mapMultiply(parameterList.get(column).getWeighting());
+            weightingVector = weightingVector.mapMultiply(parameterList.get(column).getSize());
 
             // set A
             for (int j = 0; j < dVector.nptsOfWindow(k); j++) {
@@ -157,7 +157,7 @@ public final class AMatrixBuilder {
                 bouncingOrders.add(1);
                 Collections.sort(bouncingOrders);
                 int lowestBouncingOrder = bouncingOrders.get(0);
-                if (observer.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation() ) &&
+                if (observer.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getObserver() ) &&
                         ((TimeReceiverSideParameter) parameterList.get(i)).getBouncingOrder() == lowestBouncingOrder)
                     return i;
                 break;

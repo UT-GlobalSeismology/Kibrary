@@ -58,8 +58,8 @@ public class FusionDesign {
                 .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).average().getAsDouble();
         double radius = positions.stream().mapToDouble(pos -> pos.getR()).average().getAsDouble();
         FullPosition position = new FullPosition(latitude, longitude, radius);
-        double weight = params.stream().mapToDouble(param -> param.getWeighting()).sum();
-        UnknownParameter fusedParam = new Physical3DParameter(type, position, weight);
+        double size = params.stream().mapToDouble(param -> param.getSize()).sum();
+        UnknownParameter fusedParam = new Physical3DParameter(type, position, size);
         fusedParameters.add(fusedParam);
     }
 

@@ -217,7 +217,7 @@ public class PartialsFuser extends Operation {
             UnknownParameter originalParam = originalParams.stream()
                     .filter(param -> id.getPartialType().equals(param.getPartialType()) && id.getVoxelPosition().equals(param.getPosition()))
                     .findFirst().get();
-            double volume = originalParam.getWeighting();
+            double volume = originalParam.getSize();
             volumeTotal += volume;
             // add the waveform, multiplied by volume
             RealVector vector = new ArrayRealVector(id.getData());
