@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 
 /**
  * Class for creating input files for TIPSV and TISH
@@ -90,7 +91,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // write
             pw.println("c parameter for the write file");
             observers.stream().sorted()
-                    .forEach(s -> pw.println(output + "/" + SPCFileName.generate(s, event.getGlobalCMTID(), "PSV")));
+                    .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.PSV)));
             pw.println("end");
 
         }
@@ -134,7 +135,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // write
             pw.println("c parameter for the write file");
             observers.stream().sorted()
-                    .forEach(s -> pw.println(output + "/" + SPCFileName.generate(s, event.getGlobalCMTID(), "SH")));
+                    .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.SH)));
             pw.println("end");
         }
     }

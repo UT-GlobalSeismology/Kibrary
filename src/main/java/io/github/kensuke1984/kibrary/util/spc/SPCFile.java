@@ -169,14 +169,14 @@ public class SPCFile implements SPCFileAccess {
 
             //
             switch (specFile.spcFileType) {
-            case PAR0:
-            case PAR1:
-            case PAR2:
-            case PARA:
-            case PARC:
-            case PARF:
-            case PARL:
-            case PARN:
+            case RHO1D:
+            case LAMBDA1D:
+            case MU1D:
+            case A1D:
+            case C1D:
+            case F1D:
+            case L1D:
+            case N1D:
             case SYNTHETIC:
                 specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 break;

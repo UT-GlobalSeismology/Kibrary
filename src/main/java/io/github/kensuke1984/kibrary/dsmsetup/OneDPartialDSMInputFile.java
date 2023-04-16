@@ -88,12 +88,12 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observerPositions.size() + " nsta");
             observerPositions.stream().sorted().map(HorizontalPosition::toCode).forEach(obsPosCode -> {
-//                pw.println(obsPosCode + "." + event + "." + SPCType.PAR0);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARA);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARC);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARF);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARL);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARN);
+//                pw.println(obsPosCode + "." + event + "." + SPCType.RHO1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.A1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.C1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.F1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.L1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.N1D);
             });
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
@@ -144,9 +144,9 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observerPositions.size() + " nsta");
             observerPositions.stream().sorted().map(HorizontalPosition::toCode).forEach(obsPosCode -> {
-//                pw.println(obsPosCode + "." + event + "." + SPCType.PAR0);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PAR1);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PAR2);
+//                pw.println(obsPosCode + "." + event + "." + SPCType.RHO1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.LAMBDA1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.MU1D);
             });
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
@@ -197,9 +197,9 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observerPositions.size() + " nsta");
             observerPositions.stream().sorted().map(HorizontalPosition::toCode).forEach(obsPosCode -> {
-//                pw.println(obsPosCode + "." + event + "." + SPCType.PAR0);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARL);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PARN);
+//                pw.println(obsPosCode + "." + event + "." + SPCType.RHO1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.L1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.N1D);
             });
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
@@ -249,8 +249,8 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             // receiver
             pw.println(observerPositions.size() + " nsta");
             observerPositions.stream().sorted().map(HorizontalPosition::toCode).forEach(obsPosCode -> {
-//                pw.println(obsPosCode + "." + event + "." + SPCType.PAR0);
-                pw.println(obsPosCode + "." + event + "." + SPCType.PAR2);
+//                pw.println(obsPosCode + "." + event + "." + SPCType.RHO1D);
+                pw.println(obsPosCode + "." + event + "." + SPCType.MU1D);
             });
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 

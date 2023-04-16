@@ -33,7 +33,7 @@ public final class FujiConversion {
     }
 
     public SPCFileAccess convert(SPCFileAccess spectrum) {
-        if (spectrum.getSpcFileType() != SPCType.PAR2) throw new RuntimeException();
+        if (spectrum.getSpcFileType() != SPCType.MU1D) throw new RuntimeException();
 
         int nbody = spectrum.nbody();
         int np = spectrum.np();
@@ -115,7 +115,7 @@ public final class FujiConversion {
 
             @Override
             public SPCType getSpcFileType() {
-                return SPCType.PARQ;
+                return SPCType.Q1D;
             }
 
             @Override

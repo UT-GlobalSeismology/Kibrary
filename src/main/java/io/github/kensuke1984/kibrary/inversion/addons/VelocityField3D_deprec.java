@@ -169,7 +169,7 @@ public class VelocityField3D_deprec {
 			trs = new TriangleRadialSpline(nNewParameter, originalUnknowns);
 		}
 		Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
-		if (partialTypes.contains(PartialType.MU)) {
+		if (partialTypes.contains(PartialType.MU3D)) {
 			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 				Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocityInitialModel" + ".txt");
 				
@@ -224,7 +224,7 @@ public class VelocityField3D_deprec {
 						extendedPerturbationMap_toAK135 = extendedPerturbationMap(perturbationMap_toAK135, 2., perturbationRs);
 						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 2., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
-						if (partialTypes.contains(PartialType.PARQ)) {
+						if (partialTypes.contains(PartialType.Q1D)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
 							zeroQs = toQ(zeroMap, unknowns, structure, amplifyPerturbation);
 						}
@@ -234,7 +234,7 @@ public class VelocityField3D_deprec {
 					else {
 						velocities = toVelocity(answerMap, trs, structure);
 						zeroVelocities = toVelocity(zeroMap, trs, structure);
-						if (partialTypes.contains(PartialType.PARQ)) {
+						if (partialTypes.contains(PartialType.Q1D)) {
 							Qs = toQ(answerMap, trs, structure, amplifyPerturbation);
 							zeroQs = toQ(zeroMap, trs, structure, 1.);
 						}
@@ -244,7 +244,7 @@ public class VelocityField3D_deprec {
 						PrintWriter pwCS = new PrintWriter(Files.newBufferedWriter(outpathForCrosssection, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						PrintWriter pwQ = null;
 						PrintWriter pwIteration = new PrintWriter(Files.newBufferedWriter(outpathIteration, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-						if (partialTypes.contains(PartialType.PARQ)) {
+						if (partialTypes.contains(PartialType.Q1D)) {
 							pwQ = new PrintWriter(Files.newBufferedWriter(outpathQ, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 							pwQ.println("#perturbationR final_Q intial_Q");
 						}
@@ -262,7 +262,7 @@ public class VelocityField3D_deprec {
 								double perturbation_toAK135 = extendedPerturbationMap_toAK135.get(loc);
 								pwCS.println(loc + " " + perturbation + " " + zeroMeanPerturbation + " " + perturbation_toAK135);
 							}
-							if (partialTypes.contains(PartialType.PARQ)) {
+							if (partialTypes.contains(PartialType.Q1D)) {
 								for (int j = 0; j < Qs.length; j++) {
 										pwQ.println(Qs[j][1] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
 										pwQ.println(Qs[j][2] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
@@ -311,7 +311,7 @@ public class VelocityField3D_deprec {
 								double perturbation = perturbations.get(m);
 								pw.println(loc + " " + perturbation);
 							}
-							if (partialTypes.contains(PartialType.PARQ)) {
+							if (partialTypes.contains(PartialType.Q1D)) {
 								for (int j = 0; j < Qs.length; j++)
 									pwQ.println(Qs[j][0] + " " + Qs[j][1] + " " + zeroQs[j][1]);
 							}
@@ -319,7 +319,7 @@ public class VelocityField3D_deprec {
 						
 						pw.close();
 						pwCS.close();
-						if (partialTypes.contains(PartialType.PARQ))
+						if (partialTypes.contains(PartialType.Q1D))
 							pwQ.close();
 						pwIteration.close();
 					} catch (IOException e) {
@@ -421,7 +421,7 @@ public class VelocityField3D_deprec {
 	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure_old structure
 			, double amplifyPerturbation) {
 		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
-				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARQ))
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.Q1D))
 				.collect(Collectors.toList());
 		int n = parameterForStructure.size();
 		double[][] velocities = new double[n][];
@@ -447,7 +447,7 @@ public class VelocityField3D_deprec {
 			velocities[i] = new double[2];
 			double r = 3480 + (6371 - 3480) / (n - 1) * i;
 			velocities[i][0] = r;
-			double dMu = getTriangleSplineValue(r, PartialType.PAR2, trs, answerMap);
+			double dMu = getTriangleSplineValue(r, PartialType.MU1D, trs, answerMap);
 			velocities[i][1] = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
 		}
 		
@@ -487,7 +487,7 @@ public class VelocityField3D_deprec {
 			Qs[i][0] = r;
 //			double dQ = getTriangleSplineValue(r, PartialType.PARQ, trs, answerMap);
 //			Qs[i][1] = structure.getQmuAt(r) + dQ * amplifyPerturbation;
-			double dq = getTriangleSplineValue(r, PartialType.PARQ, trs, answerMap) * amplifyPerturbation;
+			double dq = getTriangleSplineValue(r, PartialType.Q1D, trs, answerMap) * amplifyPerturbation;
 			double dQ = -1 * structure.getQmuAt(r) * structure.getQmuAt(r) * dq;
 			Qs[i][1] = structure.getQmuAt(r) + dQ;
 		}

@@ -585,7 +585,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
         long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculus(component, iBody, iBody, type);
         long t1f = System.currentTimeMillis();
         System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
@@ -621,7 +621,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
 //        long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculusSerial(component, iBody, iBody, type);
 //        long t1f = System.currentTimeMillis();
 //		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
@@ -658,7 +658,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
         long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculusSerial(component, iBody, iBody, type);
         long t1f = System.currentTimeMillis();
 //		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
@@ -684,7 +684,7 @@ public class ThreeDPartialMaker {
     private Complex[] computeQpartial(SACComponent component, int iBody) {
         if (fujiConversion == null)
             fujiConversion = new FujiConversion(DefaultStructure.PREM);
-        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU));
+        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU3D));
         return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
 
     }

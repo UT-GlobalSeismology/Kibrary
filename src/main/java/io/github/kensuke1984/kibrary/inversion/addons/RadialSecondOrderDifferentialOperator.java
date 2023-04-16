@@ -31,7 +31,7 @@ public class RadialSecondOrderDifferentialOperator {
 	public static void main(String[] args) throws IOException {
 		List<UnknownParameter> parameters = UnknownParameterFile.read(Paths.get(
 				"/work/anselme/CA_ANEL_NEW/oneDPartialPREM/checkerboard/inversion/unknowns_PAR2_PARQ.inf"));
-		List<PartialType> types = Arrays.stream(new PartialType[] {PartialType.PAR2, PartialType.PARQ}).collect(Collectors.toList());
+		List<PartialType> types = Arrays.stream(new PartialType[] {PartialType.MU1D, PartialType.Q1D}).collect(Collectors.toList());
 		List<Double> coeffs = Arrays.stream(new Double[] {1., 1.}).collect(Collectors.toList());
 		
 		RadialSecondOrderDifferentialOperator op = new RadialSecondOrderDifferentialOperator(parameters, types, coeffs);

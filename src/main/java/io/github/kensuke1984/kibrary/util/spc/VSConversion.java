@@ -46,7 +46,7 @@ public final class VSConversion {
     }
 
     public SPCFileAccess convert(SPCFileAccess spectrum) {
-        if (spectrum.getSpcFileType() != SPCType.PAR2)
+        if (spectrum.getSpcFileType() != SPCType.MU1D)
             throw new RuntimeException();
 
         final int nbody = spectrum.nbody();
@@ -104,7 +104,7 @@ public final class VSConversion {
 
             @Override
             public SPCType getSpcFileType() {
-                return SPCType.PARVS;
+                return SPCType.VS1D;
             }
 
             @Override

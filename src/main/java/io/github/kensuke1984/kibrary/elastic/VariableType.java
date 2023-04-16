@@ -87,21 +87,21 @@ public enum VariableType {
     public SPCType to1DSpcType() {
         switch (this) {
         case RHO:
-            return SPCType.PAR0;
+            return SPCType.RHO1D;
         case LAMBDA:
-            return SPCType.PAR1;
+            return SPCType.LAMBDA1D;
         case MU:
-            return SPCType.PAR2;
+            return SPCType.MU1D;
         case A:
-            return SPCType.PARA;
+            return SPCType.A1D;
         case C:
-            return SPCType.PARC;
+            return SPCType.C1D;
         case F:
-            return SPCType.PARF;
+            return SPCType.F1D;
         case L:
-            return SPCType.PARL;
+            return SPCType.L1D;
         case N:
-            return SPCType.PARN;
+            return SPCType.N1D;
         default:
             throw new RuntimeException("unexpected");
         }

@@ -1,15 +1,13 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 /**
- * SpcFileの中身 par? (?:0 - 5, A, C, F, L, N, Q(Q<sup>-1</sup>)), PB, PF, SYNTHETIC
+ * Types of {@link SPCFile}.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.0.1
- * @author anselme add several partial types
- * @author rei add several partial types
+ * @since version 0.0.3.0.1
  */
 public enum SPCType {
-    PAR0, PAR1, PAR2, PARA, PARC, PARF, PARL, PARN, PARQ, PARVS,
+    RHO1D, LAMBDA1D, MU1D, A1D, C1D, F1D, L1D, N1D, VS1D, Q1D,
     PF, PFSHCAT, PFPSVCAT, PB, PBSHCAT, PBPSVCAT, UF, UB,
     SYNTHETIC;
 }

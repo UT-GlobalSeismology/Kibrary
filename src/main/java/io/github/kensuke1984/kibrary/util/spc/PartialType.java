@@ -6,22 +6,22 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
- * Partial types
- * <p>
- * 3D: A, C, F, L, N, LAMBDA, MU, Q<br>
- * 1D: PAR* (PAR1:LAMBDA PAR2:MU)<br>
- * TIME
+ * Partial type, which can be specified as a combination of {@link ParameterType} and {@link VariableType}.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1
- * @author anselme add several partial types
+ * @since version 0.0.3.1
  */
 public enum PartialType {
 
-    A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9),
-    PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(14), PARL(15), PARN(16), PARQ(17), PAR0(24),
-    KAPPA(26), LAMBDA2MU(27), R(28), Vs(29),
-    PARVS(30), PARVP(32), RHO(35);
+    RHO1D(0), LAMBDA1D(1), MU1D(2), KAPPA1D(3), LAMBDA2MU1D(4),
+    A1D(11), C1D(12), F1D(13), L1D(14), N1D(15),
+    VP1D(21), VS1D(22), R1D(23), Q1D(24),
+
+    RHO3D(30), LAMBDA3D(31), MU3D(32), KAPPA3D(33), LAMBDA2MU3D(34),
+    A3D(41), C3D(42), F3D(43), L3D(44), N3D(45),
+    VP3D(51), VS3D(52), R3D(53), Q3D(54),
+
+    TIME_SOURCE(80), TIME_RECEIVER(90);
 
     private int value;
 
@@ -34,16 +34,20 @@ public enum PartialType {
                 .orElseThrow(() -> new IllegalArgumentException("Input n " + n + " is invalid."));
     }
 
+    public boolean is1D() {
+        return 0 <= value && 30 < value;
+    }
+
     public boolean is3D() {
-        return 8 < value || value >= 26;
+        return 30 <= value && 60 < value;
     }
 
     public boolean isTimePartial() {
-        return value == 8 || value == 9;
+        return 80 <= value;
     }
 
     public boolean isDensity() {
-        return value == 35;
+        return value == 0 || value == 30;
     }
 
     public int getValue() {
@@ -57,23 +61,23 @@ public enum PartialType {
      */
     public WeightingFactor getWeightingFactor() {
         switch (this) {
-        case A:
+        case A3D:
             return WeightingFactor.A;
-        case C:
+        case C3D:
             return WeightingFactor.C;
-        case F:
+        case F3D:
             return WeightingFactor.F;
-        case L:
+        case L3D:
             return WeightingFactor.L;
-        case N:
+        case N3D:
             return WeightingFactor.N;
-        case MU:
+        case MU3D:
             return WeightingFactor.MU;
-        case LAMBDA:
+        case LAMBDA3D:
             return WeightingFactor.LAMBDA;
-        case KAPPA:
+        case KAPPA3D:
             return WeightingFactor.KAPPA;
-        case LAMBDA2MU:
+        case LAMBDA2MU3D:
             return WeightingFactor.LAMBDA2MU;
         default:
             throw new RuntimeException("Unexpected happens");
@@ -84,26 +88,26 @@ public enum PartialType {
     public static PartialType of(ParameterType parameterType, VariableType variableType) {
         if (parameterType.equals(ParameterType.LAYER)) {
             switch (variableType) {
-            case RHO: return PartialType.PAR0;
-            case LAMBDA: return PartialType.PAR1;
-            case MU: return PartialType.PAR2;
-            case A: return PartialType.PARA;
-            case C: return PartialType.PARC;
-            case F: return PartialType.PARF;
-            case L: return PartialType.PARL;
-            case N: return PartialType.PARN;
+            case RHO: return PartialType.RHO1D;
+            case LAMBDA: return PartialType.LAMBDA1D;
+            case MU: return PartialType.MU1D;
+            case A: return PartialType.A1D;
+            case C: return PartialType.C1D;
+            case F: return PartialType.F1D;
+            case L: return PartialType.L1D;
+            case N: return PartialType.N1D;
             default: throw new IllegalArgumentException("No corresponding PartialType");
             }
         } else if (parameterType.equals(ParameterType.VOXEL)) {
             switch (variableType) {
-            case RHO: return PartialType.RHO;
-            case LAMBDA: return PartialType.LAMBDA;
-            case MU: return PartialType.MU;
-            case A: return PartialType.A;
-            case C: return PartialType.C;
-            case F: return PartialType.F;
-            case L: return PartialType.L;
-            case N: return PartialType.N;
+            case RHO: return PartialType.RHO3D;
+            case LAMBDA: return PartialType.LAMBDA3D;
+            case MU: return PartialType.MU3D;
+            case A: return PartialType.A3D;
+            case C: return PartialType.C3D;
+            case F: return PartialType.F3D;
+            case L: return PartialType.L3D;
+            case N: return PartialType.N3D;
             default: throw new IllegalArgumentException("No corresponding PartialType");
             }
         } else if (parameterType.equals(ParameterType.SOURCE)) {
@@ -123,16 +127,16 @@ public enum PartialType {
 
     public VariableType toVariableType() {
         switch (this) {
-        case PAR0: case RHO: return VariableType.RHO;
-        case PARA: case A: return VariableType.A;
-        case PARC: case C: return VariableType.C;
-        case PARF: case F: return VariableType.F;
-        case PARL: case L: return VariableType.L;
-        case PARN: case N: return VariableType.N;
-        case PAR1: case LAMBDA: return VariableType.LAMBDA;
-        case PAR2: case MU: return VariableType.MU;
-        case LAMBDA2MU: return VariableType.LAMBDA2MU;
-        case KAPPA: return VariableType.KAPPA;
+        case RHO1D: case RHO3D: return VariableType.RHO;
+        case A1D: case A3D: return VariableType.A;
+        case C1D: case C3D: return VariableType.C;
+        case F1D: case F3D: return VariableType.F;
+        case L1D: case L3D: return VariableType.L;
+        case N1D: case N3D: return VariableType.N;
+        case LAMBDA1D: case LAMBDA3D: return VariableType.LAMBDA;
+        case MU1D: case MU3D: return VariableType.MU;
+        case LAMBDA2MU3D: return VariableType.LAMBDA2MU;
+        case KAPPA3D: return VariableType.KAPPA;
         default:
             throw new IllegalArgumentException("Illegal partial type");
         }
@@ -140,53 +144,45 @@ public enum PartialType {
 
     //TODO erase
     public ParameterType toParameterType() {
-        switch (this) {
-        case PAR0:
-        case PAR1:
-        case PAR2:
-        case PARA:
-        case PARC:
-        case PARF:
-        case PARL:
-        case PARN:
-            return ParameterType.LAYER;
-        default:
-            return ParameterType.VOXEL;
-        }
+        if (is1D()) return ParameterType.LAYER;
+        else if (is3D()) return ParameterType.VOXEL;
+        else if (this == TIME_SOURCE) return ParameterType.SOURCE;
+        else if (this == TIME_RECEIVER) return ParameterType.RECEIVER;
+        else throw new RuntimeException("unexpected");
     }
 
     // TODO hmm...
     public SPCType toSpcFileType() {
         switch (this) {
-        case PAR0:
-            return SPCType.PAR0;
-        case LAMBDA:
-        case PAR1:
-            return SPCType.PAR1;
-        case MU:
-        case PAR2:
-            return SPCType.PAR2;
-        case A:
-        case PARA:
-            return SPCType.PARA;
-        case C:
-        case PARC:
-            return SPCType.PARC;
-        case F:
-        case PARF:
-            return SPCType.PARF;
-        case L:
-        case PARL:
-            return SPCType.PARL;
-        case N:
-        case PARN:
-            return SPCType.PARN;
-        case PARQ:
-        case Q:
-            return SPCType.PARQ;
-        case PARVS:
-            return SPCType.PARVS;
-        case PARVP:
+        case RHO1D:
+            return SPCType.RHO1D;
+        case LAMBDA3D:
+        case LAMBDA1D:
+            return SPCType.LAMBDA1D;
+        case MU3D:
+        case MU1D:
+            return SPCType.MU1D;
+        case A3D:
+        case A1D:
+            return SPCType.A1D;
+        case C3D:
+        case C1D:
+            return SPCType.C1D;
+        case F3D:
+        case F1D:
+            return SPCType.F1D;
+        case L3D:
+        case L1D:
+            return SPCType.L1D;
+        case N3D:
+        case N1D:
+            return SPCType.N1D;
+        case Q1D:
+        case Q3D:
+            return SPCType.Q1D;
+        case VS1D:
+            return SPCType.VS1D;
+        case VP1D:
             throw new RuntimeException("Not SpcFileType");
         default:
             throw new RuntimeException("unexpected");
