@@ -21,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * Each line:
  * <ul>
- * <li> 3D(MU): PartialType lat lon r weighting value </li>
- * <li> 1D(PAR2): PartialType r weighting value </li>
+ * <li> 1D: ParameterType(LAYER) VariableType r weighting value </li>
+ * <li> 3D: ParameterType(VOXEL) VariableType lat lon r weighting value </li>
  * </ul>
  * <p>
  * Duplication is NOT allowed.
@@ -72,28 +72,29 @@ public class KnownParameterFile {
     }
 
     /**
-     * @param inputPath (Path) a known parameter file.
-     * @return <b>unmodifiable</b> List of known parameters in the path
+     * Read {@link KnownParameter}s from file.
+     * @param inputPath (Path) A known parameter file.
+     * @return (<b>unmodifiable</b> List of {@link KnownParameter}) Known parameters that are read in.
      * @throws IOException if an I/O error occurs.
      */
     public static List<KnownParameter> read(Path inputPath) throws IOException {
-        List<KnownParameter> pars = new ArrayList<>();
+        List<KnownParameter> parameters = new ArrayList<>();
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             UnknownParameter unknown = UnknownParameterFile.constructParameterFromParts(parts);
             double value = Double.parseDouble(parts[parts.length - 1]);
-            pars.add(new KnownParameter(unknown, value));
+            parameters.add(new KnownParameter(unknown, value));
         }
 
-        for (int i = 0; i < pars.size() - 1; i++)
-            for (int j = i + 1; j < pars.size(); j++)
-                if (pars.get(i).equals(pars.get(j)))
+        for (int i = 0; i < parameters.size() - 1; i++)
+            for (int j = i + 1; j < parameters.size(); j++)
+                if (parameters.get(i).equals(parameters.get(j)))
                     System.err.println("!Caution there is duplication in " + inputPath);
 
-        DatasetAid.checkNum(pars.size(), "known parameter", "known parameters");
-        return Collections.unmodifiableList(pars);
+        DatasetAid.checkNum(parameters.size(), "known parameter", "known parameters");
+        return Collections.unmodifiableList(parameters);
     }
 
 }

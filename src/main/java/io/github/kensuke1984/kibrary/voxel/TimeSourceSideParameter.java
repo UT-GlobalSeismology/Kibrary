@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.voxel;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -12,29 +13,29 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  *
  */
 public class TimeSourceSideParameter implements UnknownParameter {
+    private static final ParameterType PARAMETER_TYPE = ParameterType.SOURCE;
 
-    private final PartialType partialType = PartialType.TIME_SOURCE;
+    private final VariableType variableType = VariableType.TIME;
     private final GlobalCMTID id;
-    /**
-     * location of the perturbation
-     */
-    private final FullPosition position;
     private final double size = 1.;
+
+    public static TimeSourceSideParameter constructFromParts(String[] parts) {
+        return new TimeSourceSideParameter(new GlobalCMTID(parts[2]));
+    }
 
     public TimeSourceSideParameter(GlobalCMTID id) {
         this.id = id;
-        this.position = id.getEventData().getCmtPosition();
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         long temp;
         temp = Double.doubleToLongBits(size);
         result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + ((variableType == null) ? 0 : variableType.hashCode());
         return result;
     }
 
@@ -47,13 +48,6 @@ public class TimeSourceSideParameter implements UnknownParameter {
         if (getClass() != obj.getClass())
             return false;
         TimeSourceSideParameter other = (TimeSourceSideParameter) obj;
-        if (partialType != other.partialType)
-            return false;
-        if (position == null) {
-            if (other.position != null)
-                return false;
-        } else if (!position.equals(other.position))
-            return false;
         if (id == null) {
             if (other.id != null)
                 return false;
@@ -61,12 +55,25 @@ public class TimeSourceSideParameter implements UnknownParameter {
             return false;
         if (Double.doubleToLongBits(size) != Double.doubleToLongBits(other.size))
             return false;
+        if (variableType != other.variableType)
+            return false;
         return true;
     }
 
     @Override
+    @Deprecated
     public PartialType getPartialType() {
-        return partialType;
+        return variableType.toPartialType(PARAMETER_TYPE);
+    }
+
+    @Override
+    public ParameterType getParameterType() {
+        return PARAMETER_TYPE;
+    }
+
+    @Override
+    public VariableType getVariableType() {
+        return variableType;
     }
 
     public GlobalCMTID getGlobalCMTID() {
@@ -75,7 +82,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
 
     @Override
     public FullPosition getPosition() {
-        return position;
+        return id.getEventData().getCmtPosition();
     }
 
     @Override
@@ -85,7 +92,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
 
     @Override
     public String toString() {
-        return partialType + " " + id + " " + size;
+        return PARAMETER_TYPE + " " + variableType + " " + id + " " + size;
     }
 
     @Override

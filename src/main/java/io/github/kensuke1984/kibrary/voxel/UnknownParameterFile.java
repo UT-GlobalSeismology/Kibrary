@@ -6,16 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * File of parameters of which their values are not yet known. See {@link UnknownParameter}.
@@ -24,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * <p>
  * Each line:
  * <ul>
- * <li> 3D(MU): PartialType lat lon r weighting </li>
- * <li> 1D(PAR2): PartialType r weighting </li>
+ * <li> 1D: ParameterType(LAYER) VariableType r weighting </li>
+ * <li> 3D: ParameterType(VOXEL) VariableType lat lon r weighting </li>
  * </ul>
  * <p>
  * Duplication is NOT allowed.
@@ -34,15 +30,16 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * TODO ３次元と１次元の混在をさける
  *
  * @author Kensuke Konishi
- * @version 0.0.6
+ * @since version 0.0.6
  */
 public class UnknownParameterFile {
     private UnknownParameterFile() {}
 
     /**
-     * @param parameterList List of unknown parameters
-     * @param outputPath       for write
-     * @param options       for write
+     * Write {@link UnknownParameter}s into a file.
+     * @param parameterList (List of {@link UnknownParameter}) Parameters to write.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption... options) Options for write.
      * @throws IOException if an I/O error occurs
      */
     public static void write(List<UnknownParameter> parameterList, Path outputPath, OpenOption... options)
@@ -57,69 +54,43 @@ public class UnknownParameterFile {
     }
 
     /**
-     * @param inputPath of an unknown parameter file.
-     * @return <b>unmodifiable</b> List of unknown parameters in the path //TODO this is now modifiable
+     * Read {@link UnknownParameter}s from file.
+     * @param inputPath (Path) An unknown parameter file.
+     * @return (<b>unmodifiable</b> List of {@link UnknownParameter}) Unknown parameters that are read in.
      * @throws IOException if an I/O error occurs.
      */
     public static List<UnknownParameter> read(Path inputPath) throws IOException {
-        List<UnknownParameter> pars = new ArrayList<>();
+        List<UnknownParameter> parameters = new ArrayList<>();
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
-            pars.add(constructParameterFromParts(parts));
+            parameters.add(constructParameterFromParts(parts));
         }
 
-        for (int i = 0; i < pars.size() - 1; i++)
-            for (int j = i + 1; j < pars.size(); j++)
-                if (pars.get(i).equals(pars.get(j)))
+        for (int i = 0; i < parameters.size() - 1; i++)
+            for (int j = i + 1; j < parameters.size(); j++)
+                if (parameters.get(i).equals(parameters.get(j)))
                     System.err.println("!Caution there is duplication in " + inputPath);
 
-        DatasetAid.checkNum(pars.size(), "unknown parameter", "unknown parameters");
+        DatasetAid.checkNum(parameters.size(), "unknown parameter", "unknown parameters");
 
-//		return Collections.unmodifiableList(pars); //TODO why not this?
-        return pars;
+        return Collections.unmodifiableList(parameters);
     }
 
     public static UnknownParameter constructParameterFromParts(String[] parts) {
-        PartialType type = PartialType.valueOf(parts[0]);
-        UnknownParameter unknown;
+        ParameterType type = ParameterType.valueOf(parts[0]);
         switch (type) {
-        case TIME_SOURCE:
-            unknown = new TimeSourceSideParameter(new GlobalCMTID(parts[1]));
-            break;
-        case TIME_RECEIVER:
-            unknown = new TimeReceiverSideParameter(new Observer(parts[1],
-                    parts[2],
-                    new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]))), Integer.parseInt(parts[5]));
-            break;
-        case PAR1:
-        case PAR2:
-        case PARA:
-        case PARC:
-        case PARF:
-        case PARL:
-        case PARN:
-        case PARQ:
-        case PARVS:
-        case PARVP:
-            unknown = new Physical1DParameter(type, Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
-            break;
-        case A:
-        case C:
-        case F:
-        case L:
-        case N:
-        case Q:
-        case MU:
-        case LAMBDA:
-        case Vs:
-        case LAMBDA2MU:
-        case KAPPA:
+        case SOURCE:
+            return TimeSourceSideParameter.constructFromParts(parts);
+        case RECEIVER:
+            return TimeReceiverSideParameter.constructFromParts(parts);
+        case LAYER:
+            return Physical1DParameter.constructFromParts(parts);
+        case VOXEL:
+            return Physical3DParameter.constructFromParts(parts);
         default:
-            unknown = new Physical3DParameter(type, new FullPosition(Double.parseDouble(parts[1]),
-                    Double.parseDouble(parts[2]), Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));
+            throw new IllegalArgumentException("Unknown ParameterType.");
         }
-        return unknown;
     }
 
 }

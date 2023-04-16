@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.voxel;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -14,44 +15,74 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @since version 0.0.3
  */
 public class Physical1DParameter implements UnknownParameter {
+    private static final ParameterType PARAMETER_TYPE = ParameterType.LAYER;
 
-    private final PartialType partialType;
+    private final VariableType variableType;
     private final double layerRadius;
     private final double size;
 
+    public static Physical1DParameter constructFromParts(String[] parts) {
+        return new Physical1DParameter(VariableType.valueOf(parts[1]), Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
+    }
+
+    @Deprecated
     public Physical1DParameter(PartialType partialType, double layerRadius, double size) {
-        this.partialType = partialType;
+        this.variableType = VariableType.of(partialType);
+        this.layerRadius = layerRadius;
+        this.size = size;
+    }
+
+    public Physical1DParameter(VariableType variableType, double layerRadius, double size) {
+        this.variableType = variableType;
         this.layerRadius = layerRadius;
         this.size = size;
     }
 
     @Override
     public int hashCode() {
-        int prime = 31;
+        final int prime = 31;
         int result = 1;
-        result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
         long temp;
         temp = Double.doubleToLongBits(layerRadius);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         temp = Double.doubleToLongBits(size);
         result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + ((variableType == null) ? 0 : variableType.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
         Physical1DParameter other = (Physical1DParameter) obj;
-        if (partialType != other.partialType) return false;
-        return Double.doubleToLongBits(layerRadius) == Double.doubleToLongBits(other.layerRadius) &&
-                Double.doubleToLongBits(size) == Double.doubleToLongBits(other.size);
+        if (Double.doubleToLongBits(layerRadius) != Double.doubleToLongBits(other.layerRadius))
+            return false;
+        if (Double.doubleToLongBits(size) != Double.doubleToLongBits(other.size))
+            return false;
+        if (variableType != other.variableType)
+            return false;
+        return true;
     }
 
     @Override
+    @Deprecated
     public PartialType getPartialType() {
-        return partialType;
+        return variableType.toPartialType(PARAMETER_TYPE);
+    }
+
+    @Override
+    public ParameterType getParameterType() {
+        return PARAMETER_TYPE;
+    }
+
+    @Override
+    public VariableType getVariableType() {
+        return variableType;
     }
 
     @Override
@@ -70,7 +101,7 @@ public class Physical1DParameter implements UnknownParameter {
 
     @Override
     public String toString() {
-        return partialType + " " + layerRadius + " " + size;
+        return PARAMETER_TYPE + " " + variableType + " " + layerRadius + " " + size;
     }
 
     @Override

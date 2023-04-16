@@ -1,7 +1,9 @@
 package io.github.kensuke1984.kibrary.voxel;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -12,20 +14,21 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  *
  */
 public class TimeReceiverSideParameter implements UnknownParameter {
+    private static final ParameterType PARAMETER_TYPE = ParameterType.RECEIVER;
 
-    private final PartialType partialType = PartialType.TIME_RECEIVER;
+    private final VariableType variableType = VariableType.TIME;
     private final Observer observer;
-    /**
-     * location of the perturbation
-     */
-    private final FullPosition position;
     private final int bouncingOrder;
     private final double size = 1.;
 
-    public TimeReceiverSideParameter(Observer station, int bouncingOrder) {
-        this.observer = station;
-        this.position = new FullPosition(station.getPosition().getLatitude(),
-                station.getPosition().getLongitude(), 0.);
+    public static TimeReceiverSideParameter constructFromParts(String[] parts) {
+        return new TimeReceiverSideParameter(new Observer(parts[2], parts[3],
+                new HorizontalPosition(Double.parseDouble(parts[4]), Double.parseDouble(parts[5]))),
+                Integer.parseInt(parts[6]));
+    }
+
+    public TimeReceiverSideParameter(Observer observer, int bouncingOrder) {
+        this.observer = observer;
         this.bouncingOrder = bouncingOrder;
     }
 
@@ -33,12 +36,12 @@ public class TimeReceiverSideParameter implements UnknownParameter {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
-        result = prime * result + ((observer == null) ? 0 : observer.hashCode());
         result = prime * result + bouncingOrder;
+        result = prime * result + ((observer == null) ? 0 : observer.hashCode());
         long temp;
         temp = Double.doubleToLongBits(size);
         result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + ((variableType == null) ? 0 : variableType.hashCode());
         return result;
     }
 
@@ -51,28 +54,34 @@ public class TimeReceiverSideParameter implements UnknownParameter {
         if (getClass() != obj.getClass())
             return false;
         TimeReceiverSideParameter other = (TimeReceiverSideParameter) obj;
-        if (partialType != other.partialType)
-            return false;
-        if (position == null) {
-            if (other.position != null)
-                return false;
-        } else if (!position.equals(other.position))
+        if (bouncingOrder != other.bouncingOrder)
             return false;
         if (observer == null) {
             if (other.observer != null)
                 return false;
         } else if (!observer.equals(other.observer))
             return false;
-        if (bouncingOrder != other.bouncingOrder)
-            return false;
         if (Double.doubleToLongBits(size) != Double.doubleToLongBits(other.size))
+            return false;
+        if (variableType != other.variableType)
             return false;
         return true;
     }
 
     @Override
+    @Deprecated
     public PartialType getPartialType() {
-        return partialType;
+        return variableType.toPartialType(PARAMETER_TYPE);
+    }
+
+    @Override
+    public ParameterType getParameterType() {
+        return PARAMETER_TYPE;
+    }
+
+    @Override
+    public VariableType getVariableType() {
+        return variableType;
     }
 
     public Observer getObserver() {
@@ -85,7 +94,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 
     @Override
     public FullPosition getPosition() {
-        return position;
+        return observer.getPosition().toFullPosition(0);
     }
 
     @Override
@@ -95,7 +104,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 
     @Override
     public String toString() {
-        return partialType + " " + observer.toPaddedInfoString() + " " + bouncingOrder + " " + size;
+        return PARAMETER_TYPE + " " + variableType + " " + observer.toPaddedInfoString() + " " + bouncingOrder + " " + size;
     }
     @Override
     public byte[] getBytes() {

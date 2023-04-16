@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.voxel;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -17,8 +18,19 @@ public interface UnknownParameter {
 
     /**
      * @return ({@link PartialType}) Type of parameter.
+     * @deprecated
      */
     public PartialType getPartialType();
+
+    /**
+     * @return ({@link ParameterType}) Type of parameter.
+     */
+    public ParameterType getParameterType();
+
+    /**
+     * @return ({@link VariableType}) Type of variable of parameter.
+     */
+    public VariableType getVariableType();
 
     public FullPosition getPosition();
 
