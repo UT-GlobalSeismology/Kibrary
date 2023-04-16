@@ -280,7 +280,7 @@ public final class PartialIDFile {
         PartialType partialType = PartialType.getType(bb.get());
         FullPosition voxelPosition = voxelPositions[bb.getShort()];
         return new PartialID(observer, event, component, samplingHz, startTime, npts, period[0], period[1],
-                usablephases, isConvolved, voxelPosition, partialType);
+                usablephases, isConvolved, partialType.toParameterType(), partialType.toVariableType(), voxelPosition);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////

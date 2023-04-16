@@ -27,7 +27,7 @@ public class Physical1DParameter implements UnknownParameter {
 
     @Deprecated
     public Physical1DParameter(PartialType partialType, double layerRadius, double size) {
-        this.variableType = VariableType.of(partialType);
+        this.variableType = partialType.toVariableType();
         this.layerRadius = layerRadius;
         this.size = size;
     }
@@ -72,7 +72,7 @@ public class Physical1DParameter implements UnknownParameter {
     @Override
     @Deprecated
     public PartialType getPartialType() {
-        return variableType.toPartialType(PARAMETER_TYPE);
+        return PartialType.of(PARAMETER_TYPE, variableType);
     }
 
     @Override

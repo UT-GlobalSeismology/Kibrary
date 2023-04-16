@@ -2,6 +2,9 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.Arrays;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
+
 /**
  * Partial types
  * <p>
@@ -74,6 +77,81 @@ public enum PartialType {
             return WeightingFactor.LAMBDA2MU;
         default:
             throw new RuntimeException("Unexpected happens");
+        }
+    }
+
+    // TODO erase
+    public static PartialType of(ParameterType parameterType, VariableType variableType) {
+        if (parameterType.equals(ParameterType.LAYER)) {
+            switch (variableType) {
+            case RHO: return PartialType.PAR0;
+            case LAMBDA: return PartialType.PAR1;
+            case MU: return PartialType.PAR2;
+            case A: return PartialType.PARA;
+            case C: return PartialType.PARC;
+            case F: return PartialType.PARF;
+            case L: return PartialType.PARL;
+            case N: return PartialType.PARN;
+            default: throw new IllegalArgumentException("No corresponding PartialType");
+            }
+        } else if (parameterType.equals(ParameterType.VOXEL)) {
+            switch (variableType) {
+            case RHO: return PartialType.RHO;
+            case LAMBDA: return PartialType.LAMBDA;
+            case MU: return PartialType.MU;
+            case A: return PartialType.A;
+            case C: return PartialType.C;
+            case F: return PartialType.F;
+            case L: return PartialType.L;
+            case N: return PartialType.N;
+            default: throw new IllegalArgumentException("No corresponding PartialType");
+            }
+        } else if (parameterType.equals(ParameterType.SOURCE)) {
+            switch (variableType) {
+            case TIME: return PartialType.TIME_SOURCE;
+            default: throw new IllegalArgumentException("No corresponding PartialType");
+            }
+        } else if (parameterType.equals(ParameterType.RECEIVER)) {
+            switch (variableType) {
+            case TIME: return PartialType.TIME_RECEIVER;
+            default: throw new IllegalArgumentException("No corresponding PartialType");
+            }
+        } else {
+            throw new IllegalArgumentException("No corresponding PartialType");
+        }
+    }
+
+    public VariableType toVariableType() {
+        switch (this) {
+        case PAR0: case RHO: return VariableType.RHO;
+        case PARA: case A: return VariableType.A;
+        case PARC: case C: return VariableType.C;
+        case PARF: case F: return VariableType.F;
+        case PARL: case L: return VariableType.L;
+        case PARN: case N: return VariableType.N;
+        case PAR1: case LAMBDA: return VariableType.LAMBDA;
+        case PAR2: case MU: return VariableType.MU;
+        case LAMBDA2MU: return VariableType.LAMBDA2MU;
+        case KAPPA: return VariableType.KAPPA;
+        default:
+            throw new IllegalArgumentException("Illegal partial type");
+        }
+    }
+
+    //TODO erase
+    public ParameterType toParameterType() {
+        switch (this) {
+        case PAR0:
+        case PAR1:
+        case PAR2:
+        case PARA:
+        case PARC:
+        case PARF:
+        case PARL:
+        case PARN:
+            return ParameterType.LAYER;
+        default:
+            return ParameterType.VOXEL;
         }
     }
 

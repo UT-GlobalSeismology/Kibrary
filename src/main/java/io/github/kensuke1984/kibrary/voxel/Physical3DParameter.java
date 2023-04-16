@@ -39,7 +39,7 @@ public class Physical3DParameter implements UnknownParameter {
 
     @Deprecated
     public Physical3DParameter(PartialType partialType, FullPosition voxelPosition, double size) {
-        this.variableType = VariableType.of(partialType);
+        this.variableType = partialType.toVariableType();
         this.voxelPosition = voxelPosition;
         this.size = size;
     }
@@ -86,7 +86,7 @@ public class Physical3DParameter implements UnknownParameter {
     @Override
     @Deprecated
     public PartialType getPartialType() {
-        return variableType.toPartialType(PARAMETER_TYPE);
+        return PartialType.of(PARAMETER_TYPE, variableType);
     }
 
     @Override

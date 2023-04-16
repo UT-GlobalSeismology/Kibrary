@@ -20,6 +20,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -38,10 +39,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
  * Operation that assembles partial derivative waveforms for 1-D parameters
@@ -111,9 +112,9 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private Path dataEntryPath;
     /**
-     * set of partial type for computation
+     * set of variable types for computation
      */
-    private Set<PartialType> partialTypes;
+    private Set<VariableType> variableTypes;
     /**
      * Radii of layers, when selecting to work for certain layers.
      */
@@ -214,8 +215,8 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##PartialTypes to compute for at each voxel, listed using spaces (PAR2)");
-            pw.println("#partialTypes ");
+            pw.println("##VariableTypes to compute for at each voxel, listed using spaces (MU)");
+            pw.println("#variableTypes ");
             pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to be worked for.");
             pw.println("#layerRadii ");
             pw.println("##Path of an SH folder (.)");
@@ -269,10 +270,10 @@ public class PartialWaveformAssembler1D extends Operation {
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "PAR2")).map(PartialType::valueOf)
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "MU")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
-        for (PartialType type : partialTypes)
-            if (type.isTimePartial()) throw new IllegalArgumentException("This class does not handle time partials.");
+        for (VariableType type : variableTypes)
+            if (type.equals(VariableType.TIME)) throw new IllegalArgumentException("This class does not handle time partials.");
         if (property.containsKey("layerRadii")) {
             layerRadii = property.parseDoubleArray("layerRadii", null);
         }
@@ -315,7 +316,7 @@ public class PartialWaveformAssembler1D extends Operation {
         System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
         // information about output partial types
-        System.err.println(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
+        System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         setLsmooth();
 
@@ -388,13 +389,13 @@ public class PartialWaveformAssembler1D extends Operation {
                     .map(TimewindowData::getObserver).collect(Collectors.toSet());
 
             for (Observer observer : correspondingObservers) {
-                for (PartialType partialType : partialTypes) {
+                for (VariableType variableType : variableTypes) {
                     try {
-                        convertSPCToPartials(observer, partialType);
+                        convertSPCToPartials(observer, variableType);
                     } catch (IOException e) {
                         // this println() is for starting new line after writing "."s
                         System.err.println();
-                        System.err.println("Failure for " + observer + " " + partialType);
+                        System.err.println("Failure for " + observer + " " + variableType);
                         e.printStackTrace();
                     }
                 }
@@ -402,10 +403,10 @@ public class PartialWaveformAssembler1D extends Operation {
             System.err.print(".");
         }
 
-        private void convertSPCToPartials(Observer observer, PartialType partialType) throws IOException {
+        private void convertSPCToPartials(Observer observer, VariableType variableType) throws IOException {
             // collect SPC files
-            SPCFileAccess shSPCFile = (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) ? findSPCFile(observer, partialType, SPCMode.SH) : null;
-            SPCFileAccess psvSPCFile = (usableSPCMode != SpcFileAid.UsableSPCMode.SH) ? findSPCFile(observer, partialType, SPCMode.PSV) : null;
+            SPCFileAccess shSPCFile = (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) ? findSPCFile(observer, variableType, SPCMode.SH) : null;
+            SPCFileAccess psvSPCFile = (usableSPCMode != SpcFileAid.UsableSPCMode.SH) ? findSPCFile(observer, variableType, SPCMode.PSV) : null;
 
             // collect corresponding timewindows
             Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
@@ -414,18 +415,18 @@ public class PartialWaveformAssembler1D extends Operation {
 
             for (TimewindowData timewindow : correspondingTimewindows) {
                 if (usableSPCMode == SpcFileAid.UsableSPCMode.SH) {
-                    buildPartialWaveform(shSPCFile, timewindow, partialType);
+                    buildPartialWaveform(shSPCFile, timewindow, variableType);
                 } else if (usableSPCMode == SpcFileAid.UsableSPCMode.PSV) {
-                    buildPartialWaveform(psvSPCFile, timewindow, partialType);
+                    buildPartialWaveform(psvSPCFile, timewindow, variableType);
                 } else {
-                    buildPartialWaveform(shSPCFile, psvSPCFile, timewindow, partialType);
+                    buildPartialWaveform(shSPCFile, psvSPCFile, timewindow, variableType);
                 }
             }
         }
 
-        private SPCFileAccess findSPCFile(Observer observer, PartialType partialType, SPCMode mode) throws IOException {
+        private SPCFileAccess findSPCFile(Observer observer, VariableType variableType, SPCMode mode) throws IOException {
             Path modelPath = (mode == SPCMode.SH) ? shModelPath : psvModelPath;
-            Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + partialType + "..." + mode + ".spc");
+            Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + variableType.to1DSpcType() + "..." + mode + ".spc");
             if (!SPCFileName.isFormatted(spcPath)) {
                 throw new IllegalStateException(spcPath + " has invalid SPC file name.");
             }
@@ -438,7 +439,7 @@ public class PartialWaveformAssembler1D extends Operation {
             return spcFile;
         }
 
-        private void buildPartialWaveform(SPCFileAccess spcFile, TimewindowData timewindow, PartialType partialType) {
+        private void buildPartialWaveform(SPCFileAccess spcFile, TimewindowData timewindow, VariableType variableType) {
             for (int k = 0; k < spcFile.nbody(); k++) {
                 double currentBodyR = spcFile.getBodyR()[k];
                 if (layerRadii != null) {
@@ -454,10 +455,10 @@ public class PartialWaveformAssembler1D extends Operation {
                 // apply filter
                 double[] filteredUt = filter.applyFilter(ut);
 
-                cutAndWrite(timewindow.getObserver(), filteredUt, timewindow, currentBodyR, partialType);
+                cutAndWrite(timewindow.getObserver(), filteredUt, timewindow, currentBodyR, variableType);
             }
         }
-        private void buildPartialWaveform(SPCFileAccess shSPCFile, SPCFileAccess psvSPCFile, TimewindowData timewindow, PartialType partialType) {
+        private void buildPartialWaveform(SPCFileAccess shSPCFile, SPCFileAccess psvSPCFile, TimewindowData timewindow, VariableType variableType) {
             for (int k = 0; k < shSPCFile.nbody(); k++) {
                 if (!Precision.equals(shSPCFile.getBodyR()[k], psvSPCFile.getBodyR()[k], FullPosition.RADIUS_EPSILON)) {
                     throw new RuntimeException("SH and PSV bodyR differ " + shSPCFile.getBodyR()[k] + " " + psvSPCFile.getBodyR()[k]);
@@ -484,7 +485,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 for (int it = 0; it < filteredSHUt.length; it++)
                     summedUt[it] = filteredSHUt[it] + filteredPSVUt[it];
 
-                cutAndWrite(timewindow.getObserver(), summedUt, timewindow, currentBodyR, partialType);
+                cutAndWrite(timewindow.getObserver(), summedUt, timewindow, currentBodyR, variableType);
             }
         }
 
@@ -500,15 +501,15 @@ public class PartialWaveformAssembler1D extends Operation {
             }
         }
 
-        private void cutAndWrite(Observer observer, double[] filteredUt, TimewindowData timewindow, double bodyR, PartialType partialType) {
+        private void cutAndWrite(Observer observer, double[] filteredUt, TimewindowData timewindow, double bodyR, VariableType variableType) {
             double[] xs = IntStream.range(0, filteredUt.length).mapToDouble(i -> i / partialSamplingHz).toArray();
             Trace filteredTrace = new Trace(xs, filteredUt);
             Trace resampledTrace = filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
 
             PartialID partialID = new PartialID(observer, event, timewindow.getComponent(), finalSamplingHz,
-                    timewindow.getStartTime(), resampledTrace.getLength(),1 / maxFreq, 1 / minFreq,
+                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / maxFreq, 1 / minFreq,
                     timewindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
-                    new FullPosition(0, 0, bodyR), partialType, resampledTrace.getY());
+                    ParameterType.LAYER, variableType, new FullPosition(0, 0, bodyR), resampledTrace.getY());
             partialIDs.add(partialID);
         }
 

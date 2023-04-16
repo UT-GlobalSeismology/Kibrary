@@ -40,7 +40,7 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(unknowns.get(i).getPosition())) {
-                    voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
+                    voxel.setDelta(unknowns.get(i).getVariableType(), values[i]);
                     flag = true;
                 }
             }
@@ -48,7 +48,7 @@ public class PerturbationModel {
             // otherwise, create new voxel
             if (flag == false) {
                 PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getSize(), initialStructure);
-                voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
+                voxel.setDelta(unknowns.get(i).getVariableType(), values[i]);
                 voxelList.add(voxel);
             }
         }
@@ -69,7 +69,7 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(parameter.getPosition())) {
-                    voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
+                    voxel.setDelta(parameter.getVariableType(), value);
                     flag = true;
                 }
             }
@@ -77,7 +77,7 @@ public class PerturbationModel {
             // otherwise, create new voxel
             if (flag == false) {
                 PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getSize(), initialStructure);
-                voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
+                voxel.setDelta(parameter.getVariableType(), value);
                 voxelList.add(voxel);
             }
         }

@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.elastic;
 
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.voxel.ParameterType;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * Parameters of elastic medium.
@@ -84,52 +83,29 @@ public enum VariableType {
         }
     }
 
-    // TODO erase
-    public static VariableType of(PartialType type) {
-        switch (type) {
-        case PAR0: case RHO: return RHO;
-        case PARA: case A: return A;
-        case PARC: case C: return C;
-        case PARF: case F: return F;
-        case PARL: case L: return L;
-        case PARN: case N: return N;
-        case PAR1: case LAMBDA: return LAMBDA;
-        case PAR2: case MU: return MU;
-        case LAMBDA2MU: return LAMBDA2MU;
-        case KAPPA: return KAPPA;
-
+    // TODO hmm...
+    public SPCType to1DSpcType() {
+        switch (this) {
+        case RHO:
+            return SPCType.PAR0;
+        case LAMBDA:
+            return SPCType.PAR1;
+        case MU:
+            return SPCType.PAR2;
+        case A:
+            return SPCType.PARA;
+        case C:
+            return SPCType.PARC;
+        case F:
+            return SPCType.PARF;
+        case L:
+            return SPCType.PARL;
+        case N:
+            return SPCType.PARN;
         default:
-            throw new IllegalArgumentException("Illegal partial type");
+            throw new RuntimeException("unexpected");
         }
-    }
 
-    // TODO erase
-    public PartialType toPartialType(ParameterType parameterType) {
-        if (parameterType == ParameterType.LAYER) {
-            switch (this) {
-            case RHO: return PartialType.PAR0;
-            case LAMBDA: return PartialType.PAR1;
-            case MU: return PartialType.PAR2;
-            case A: return PartialType.PARA;
-            case C: return PartialType.PARC;
-            case F: return PartialType.PARF;
-            case L: return PartialType.PARL;
-            case N: return PartialType.PARN;
-            default: throw new IllegalArgumentException("no corresponding PartialType");
-            }
-        } else {
-            switch (this) {
-            case RHO: return PartialType.RHO;
-            case LAMBDA: return PartialType.LAMBDA;
-            case MU: return PartialType.MU;
-            case A: return PartialType.A;
-            case C: return PartialType.C;
-            case F: return PartialType.F;
-            case L: return PartialType.L;
-            case N: return PartialType.N;
-            default: throw new IllegalArgumentException("no corresponding PartialType");
-            }
-        }
     }
 
 }

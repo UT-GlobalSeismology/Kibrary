@@ -63,7 +63,7 @@ public class TimeSourceSideParameter implements UnknownParameter {
     @Override
     @Deprecated
     public PartialType getPartialType() {
-        return variableType.toPartialType(PARAMETER_TYPE);
+        return PartialType.of(PARAMETER_TYPE, variableType);
     }
 
     @Override

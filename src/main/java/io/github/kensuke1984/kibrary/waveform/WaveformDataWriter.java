@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Writer of BasicDataset and PartialDataset.
@@ -235,7 +236,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
             throw new RuntimeException("No such observer: " + basicID.observer + " " + basicID);
         }
 
-        switch (basicID.type) { // if it is obs 1Byte
+        switch (basicID.type) { // if it is obs; 1 Byte
         case OBS:
             idStream.writeBoolean(true);
             break;
@@ -247,10 +248,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
         }
         long startByte = dataLength;
         addWaveform(basicID.getData());
-        idStream.writeShort(ista);
-        idStream.writeShort(globalCMTIDMap.get(basicID.eventID));
-        idStream.writeByte(basicID.component.valueOf());
-        idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod));
+        idStream.writeShort(ista); // 2 Byte
+        idStream.writeShort(globalCMTIDMap.get(basicID.eventID)); // 2 Byte
+        idStream.writeByte(basicID.component.valueOf()); // 1 Byte
+        idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod)); // 1 Byte
         Phase[] phases = basicID.phases;
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
             if (i < phases.length) {
@@ -261,9 +262,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
         }
 
         // 4Byte * 3
-        idStream.writeFloat((float) basicID.getStartTime()); // start time
-        idStream.writeInt(basicID.getNpts()); // number of points
-        idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz
+        idStream.writeFloat((float) basicID.getStartTime()); // start time; 4 Byte
+        idStream.writeInt(basicID.getNpts()); // number of points; 4 Byte
+        idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz; 4 Byte
 
         // if its convolute  true for obs
         idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.convolved); // 1Byte
@@ -289,10 +290,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
         if (mode != 1) throw new RuntimeException("No Partial please, would you.");
         long startByte = dataLength;
         addWaveform(partialID.getData());
-        idStream.writeShort(observerMap.get(partialID.observer));
-        idStream.writeShort(globalCMTIDMap.get(partialID.eventID));
-        idStream.writeByte(partialID.component.valueOf());
-        idStream.writeByte(getIndexOfRange(partialID.minPeriod, partialID.maxPeriod));
+        idStream.writeShort(observerMap.get(partialID.observer)); // 2 Byte
+        idStream.writeShort(globalCMTIDMap.get(partialID.eventID)); // 2 Byte
+        idStream.writeByte(partialID.component.valueOf()); // 1 Byte
+        idStream.writeByte(getIndexOfRange(partialID.minPeriod, partialID.maxPeriod)); // 1 Byte
         Phase[] phases = partialID.phases;
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
             if (i < phases.length) {
@@ -301,14 +302,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
             else
                 idStream.writeShort(-1);
         }
-        idStream.writeFloat((float) partialID.startTime); // start time 4 Byte
-        idStream.writeInt(partialID.npts); // データポイント数 4 Byte
-        idStream.writeFloat((float) partialID.samplingHz); // sampling Hz 4 Byte
-        // convolutionされているか
-        idStream.writeBoolean(partialID.convolved); // 1Byte
-        idStream.writeLong(startByte); // データの格納場所 8 Byte
-        // partial type 1 Byte
-        idStream.writeByte(partialID.getPartialType().getValue());
-        idStream.writeShort(perturbationLocationMap.get(partialID.getVoxelPosition()));
+        idStream.writeFloat((float) partialID.startTime); // start time; 4 Byte
+        idStream.writeInt(partialID.npts); // number of points; 4 Byte
+        idStream.writeFloat((float) partialID.samplingHz); // sampling Hz; 4 Byte
+        idStream.writeBoolean(partialID.convolved); // whether waveform is convolved; 1 Byte
+        idStream.writeLong(startByte); // start byte of waveform data; 8 Byte
+        idStream.writeByte(PartialType.of(partialID.getParameterType(), partialID.getVariableType()).getValue()); // partial type; 1 Byte
+        idStream.writeShort(perturbationLocationMap.get(partialID.getVoxelPosition())); // 2 Byte
     }
 }
