@@ -15,11 +15,11 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -29,6 +29,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * The border latitudes, longitudes, and radii given as input are rough guidelines to decide which voxels to combine;
  * they will not be used to compute the positions or volumes of the fused voxels.
  * The positions/volumes will be instead computed by averaging/summing those of the original voxels.
+ *
+ * TODO: only checked for 3D. May or may not work for 1D.
  *
  * @author otsuru
  * @since 2022/1/19
@@ -56,7 +58,7 @@ public class CoarseGridDesigner extends Operation {
     /**
      * Partial types of parameters to be fused
      */
-    private List<PartialType> partialTypes;
+    private List<VariableType> variableTypes;
 
     private boolean fuseVertically;
     private double[] borderRadii;
@@ -94,8 +96,8 @@ public class CoarseGridDesigner extends Operation {
             pw.println("#folderTag ");
             pw.println("##Path of an unknown parameter list file, must be set");
             pw.println("#unknownParameterPath unknowns.lst");
-            pw.println("##Partial types of parameters to fuse. If not set, all partial types will be used.");
-            pw.println("#partialTypes ");
+            pw.println("##Variable types of parameters to fuse. If not set, all variable types will be used.");
+            pw.println("#variableTypes ");
             pw.println("##########Settings for vertical fusion of voxels");
             pw.println("##(boolean) Whether to fuse voxels vertically (false)");
             pw.println("#fuseVertically true");
@@ -134,8 +136,8 @@ public class CoarseGridDesigner extends Operation {
 
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
-        if (property.containsKey("partialTypes"))
-            partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
+        if (property.containsKey("variableTypes"))
+            variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
                     .collect(Collectors.toList());
 
         fuseVertically = property.parseBoolean("fuseVertically", "false");
@@ -186,15 +188,15 @@ public class CoarseGridDesigner extends Operation {
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
 
         // use all partial types when not specified
-        if (partialTypes == null) {
-            partialTypes = parameterList.stream().map(param -> param.getPartialType()).distinct().collect(Collectors.toList());
+        if (variableTypes == null) {
+            variableTypes = parameterList.stream().map(param -> param.getVariableType()).distinct().collect(Collectors.toList());
         }
 
         // fuse voxels
         fusionDesign = new FusionDesign();
-        for (PartialType partialType : partialTypes) {
+        for (VariableType variableType : variableTypes) {
             List<UnknownParameter> correspondingParameters = parameterList.stream()
-                    .filter(param -> param.getPartialType().equals(partialType)).collect(Collectors.toList());
+                    .filter(param -> param.getVariableType().equals(variableType)).collect(Collectors.toList());
             fuseHorizontally(correspondingParameters);
         }
 
