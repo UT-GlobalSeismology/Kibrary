@@ -190,9 +190,9 @@ public class TimewindowMaker extends Operation {
             pw.println("#obsPath ");
             pw.println("##########Settings of timewindows to be created.");
             pw.println("##TauPPhases to be included in timewindow, listed using spaces (S)");
-            pw.println("#usePhases ");
+            pw.println("#usePhases S ScS");
             pw.println("##TauPPhases not to be included in timewindow, listed using spaces, if any");
-            pw.println("#avoidPhases ");
+            pw.println("#avoidPhases sS sScS");
             pw.println("##(double) Time length to include before phase arrival of usePhases [sec] (20)");
             pw.println("#frontShift ");
             pw.println("##(double) Time length to include after phase arrival of usePhases [sec] (60)");

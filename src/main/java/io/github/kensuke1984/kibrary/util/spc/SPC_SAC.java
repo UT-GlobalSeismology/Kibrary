@@ -162,7 +162,7 @@ public final class SPC_SAC extends Operation {
             pw.println("##(boolean) If this is true, temporal partial is computed (false)");
             pw.println("#computeTimePartial ");
             pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed (false)");
-            pw.println("## This is only valid when computeTimePartial is false.");
+            pw.println("##  This is only valid when computeTimePartial is false.");
             pw.println("#computeAsObserved ");
         }
         System.err.println(outPath + " is created.");

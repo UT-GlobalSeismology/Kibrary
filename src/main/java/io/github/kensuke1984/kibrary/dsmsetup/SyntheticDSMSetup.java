@@ -6,12 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -235,7 +234,8 @@ public class SyntheticDSMSetup extends Operation {
         }
 
         // output information files in each event folder
-        List<String> sourceList = new ArrayList<>();
+        // TreeSet is used here to sort sources in the sourceList file
+        Set<String> sourceTreeSet = new TreeSet<>();
         for (GlobalCMTID event : arcMap.keySet()) {
             try {
                 if (event.getEventData() == null) {
@@ -258,7 +258,7 @@ public class SyntheticDSMSetup extends Operation {
                 Files.createDirectories(outEventPath.resolve(header));
                 info.writeSH(outEventPath.resolve(header + "_SH.inf"));
                 info.writePSV(outEventPath.resolve(header + "_PSV.inf"));
-                sourceList.add(event.toString());
+                sourceTreeSet.add(event.toString());
             } catch (IOException e) {
                 // If there are any problems, move on to the next event.
                 System.err.println("Error on " + event);
@@ -268,7 +268,7 @@ public class SyntheticDSMSetup extends Operation {
 
         // output shellscripts for execution of tipsv and tish
         String listFileName = "sourceList.txt";
-        Files.write(outPath.resolve(listFileName), sourceList);
+        Files.write(outPath.resolve(listFileName), sourceTreeSet);
         DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));

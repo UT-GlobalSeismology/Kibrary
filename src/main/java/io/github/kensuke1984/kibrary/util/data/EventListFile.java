@@ -65,7 +65,7 @@ public class EventListFile {
     }
 
     /**
-     * Reads an event lsit file. Only the GlobalCMTID is read in; other information are ignored.
+     * Reads an event list file. Only the GlobalCMTID is read in; other information are ignored.
      * @param inputPath of event information file
      * @return (<b>unmodifiable</b>) Set of events
      * @throws IOException if an I/O error occurs

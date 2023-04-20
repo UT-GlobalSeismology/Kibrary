@@ -214,7 +214,7 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a timewindow file, must be defined");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath selectedTimewindow.dat");
             pw.println("##Path of a timewindow file for a reference phase used to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a root folder containing observed dataset (.)");
@@ -222,14 +222,14 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved ");
+            pw.println("#convolved false");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file");
             pw.println("## If the following correctTime is true or amplitudeCorrectionType > 0, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(boolean) Whether time should be corrected (false)");
-            pw.println("#correctTime ");
+            pw.println("#correctTime true");
             pw.println("##(int) Type of amplitude correction to apply, from {0: none, 1: each trace, 2: event average} (0)");
             pw.println("#amplitudeCorrectionType ");
             pw.println("##Path of a mantle correction file");

@@ -274,7 +274,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         int nCreated = 0;
         int nSkipped = 0;
         // TreeSet is used here to sort the FP sources in the fpList file
-        Set<String> fpSourceSet = new TreeSet<>();
+        Set<String> fpSourceTreeSet = new TreeSet<>();
         for (GlobalCMTID event : eventSet) {
             GlobalCMTAccess eventData = event.getEventData();
 
@@ -329,7 +329,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                 }
             }
             nCreated++;
-            fpSourceSet.add(event.toString());
+            fpSourceTreeSet.add(event.toString());
         }
 
         if (nSkipped > 0)
@@ -339,7 +339,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         // output list and shellscripts for execution of shfp and psvfp
         String fpListFileName = DatasetAid.generateOutputFileName("fpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(fpListFileName), fpSourceSet);
+        Files.write(outPath.resolve(fpListFileName), fpSourceTreeSet);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_SH", fileTag, dateStr, ".sh"));
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
         DSMShellscript shellFP = new DSMShellscript(mpi, nCreated, header);
@@ -358,7 +358,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         int nCreated = 0;
         int nSkipped = 0;
         // TreeSet is used here to sort the BP sources in the bpList file
-        Set<String> bpSourceSet = new TreeSet<>();
+        Set<String> bpSourceTreeSet = new TreeSet<>();
         for (Observer observer : observerSet) {
             String observerCode = observer.getPosition().toCode();
 
@@ -377,7 +377,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             bp.writeSHBP(observerPoolPath.resolve(header + "_SH.inf"));
             bp.writePSVBP(observerPoolPath.resolve(header + "_PSV.inf"));
             nCreated++;
-            bpSourceSet.add(observerCode);
+            bpSourceTreeSet.add(observerCode);
         }
 
         if (nSkipped > 0)
@@ -394,7 +394,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
         // output list and shellscripts for execution of shbp and psvbp
         String bpListFileName = DatasetAid.generateOutputFileName("bpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(bpListFileName), bpSourceSet);
+        Files.write(outPath.resolve(bpListFileName), bpSourceTreeSet);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_SH", fileTag, dateStr, ".sh"));
         Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
         DSMShellscript shellBP = new DSMShellscript(mpi, nCreated, header);

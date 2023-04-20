@@ -4,9 +4,12 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
+import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
 
 /**
  * Partial type, which can be specified as a combination of {@link ParameterType} and {@link VariableType}.
+ *
+ * CAUTION: values must be in -128~127 (range of byte)!! (The value is written into files as byte; see {@link WaveformDataWriter}.)
  *
  * @author Kensuke Konishi
  * @since version 0.0.3.1
@@ -22,6 +25,7 @@ public enum PartialType {
     VP3D(51), VS3D(52), R3D(53), Q3D(54),
 
     TIME_SOURCE(80), TIME_RECEIVER(90);
+    // CAUTION: values must be in -128~127 (range of byte)!!
 
     private int value;
 
