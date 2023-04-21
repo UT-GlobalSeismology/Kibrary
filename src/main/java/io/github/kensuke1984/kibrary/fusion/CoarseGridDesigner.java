@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
@@ -70,7 +71,6 @@ public class CoarseGridDesigner extends Operation {
     private double dLongitudeDeg;
     private boolean setLongitudeByKm;
     private double longitudeOffset;
-    private boolean crossDateLine;
 
     private FusionDesign fusionDesign;
     /**
@@ -119,8 +119,6 @@ public class CoarseGridDesigner extends Operation {
             pw.println("#dLongitudeDeg ");
             pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
             pw.println("#longitudeOffset ");
-            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
-            pw.println("#crossDateLine ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -175,8 +173,6 @@ public class CoarseGridDesigner extends Operation {
                 throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg)");
             setLongitudeByKm = false;
         }
-        crossDateLine = property.parseBoolean("crossDateLine", "false");
-
     }
 
     @Override
@@ -217,8 +213,11 @@ public class CoarseGridDesigner extends Operation {
 
     private void fuseHorizontally(List<UnknownParameter> parameterList) {
         if (fuseHorizontally) {
+            Set<FullPosition> positions = parameterList.stream().map(UnknownParameter::getPosition).collect(Collectors.toSet());
+            // whether to use longitude range [0:360) instead of [-180,180)
+            boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
             // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
-            double averageRadius = parameterList.stream().mapToDouble(param -> param.getPosition().getR()).distinct().average().getAsDouble();
+            double averageRadius = positions.stream().mapToDouble(FullPosition::getR).distinct().average().getAsDouble();
             double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / averageRadius) : dLatitudeDeg;
 
             // decide number of latitude intervals

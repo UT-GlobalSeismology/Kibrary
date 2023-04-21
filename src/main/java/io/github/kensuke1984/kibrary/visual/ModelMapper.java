@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,11 +17,13 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
+import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
@@ -29,6 +32,7 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 /**
  * Creates shellscripts to map {@link KnownParameterFile}.
  *
+ * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
  * @since 2022/7/17
  */
@@ -77,6 +81,10 @@ public class ModelMapper extends Operation {
     private int[] displayLayers;
     private int nPanelsPerRow;
     private String mapRegion;
+    private double marginLatitude;
+    private boolean setLatitudeByKm;
+    private double marginLongitude;
+    private boolean setLongitudeByKm;
     private double scale;
     /**
      * Whether to display map as mosaic without smoothing
@@ -123,8 +131,18 @@ public class ModelMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
+            pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
+            pw.println("#marginLatitudeKm ");
+            pw.println("##(double) Latitude margin at both ends [deg] (2.5)");
+            pw.println("#marginLatitudeDeg ");
+            pw.println("##(double) Longitude margin at both ends [km]. If this is unset, the following marginLongitudeDeg will be used.");
+            pw.println("#marginLongitudeKm ");
+            pw.println("##(double) Longitude margin at both ends [deg] (2.5)");
+            pw.println("#marginLongitudeDeg ");
+            pw.println("##########Parameters for perturbation values");
             pw.println("##(double) Range of percent scale (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
@@ -163,6 +181,24 @@ public class ModelMapper extends Operation {
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+
+        if (property.containsKey("marginLatitudeKm")) {
+            marginLatitude = property.parseDouble("marginLatitudeKm", null);
+            setLatitudeByKm = true;
+        } else {
+            marginLatitude = property.parseDouble("marginLatitudeDeg", "2.5");
+            setLatitudeByKm = false;
+        }
+        if (marginLatitude <= 0) throw new IllegalArgumentException("marginLatitude must be positive");
+        if (property.containsKey("marginLongitudeKm")) {
+            marginLongitude = property.parseDouble("marginLongitudeKm", null);
+            setLongitudeByKm = true;
+        } else {
+            marginLongitude = property.parseDouble("marginLongitudeDeg", "2.5");
+            setLongitudeByKm = false;
+        }
+        if (marginLongitude <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
+
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
     }
@@ -207,20 +243,26 @@ public class ModelMapper extends Operation {
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
-        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (VariableType variable : variableTypes) {
             String variableName = variable.toString().toLowerCase();
-            // output perturbation file
-            Path outputPercentPath = outPath.resolve(variableName + "Percent.lst");
-            PerturbationListFile.writePercentForType(variable, model, outputPercentPath);
+            // output discrete perturbation file
+            Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
+            Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
+            PerturbationListFile.write(discreteMap, outputDiscretePath);
+            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
+            Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
+            Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
+            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
             // output shellscripts
-            PerturbationMapShellscript script
-                    = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, positionInterval, scale, variableName + "Percent", nPanelsPerRow);
-            script.setMosaic(mosaic);
+            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
+                    gridInterval, scale, variableName + "Percent", nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);
             System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentGrid.sh and "

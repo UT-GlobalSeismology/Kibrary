@@ -326,20 +326,33 @@ public final class Trace {
     }
 
     /**
-     * thisの start &le; x &le; endの部分を切り抜く
+     * Cut out the part of this Trace in the specified range.
+     * @param iStart (int) Start index of the range to be copied, inclusive
+     * @param iEnd (int) End index of the range to be copied, exclusive
+     * @return ({@link Trace}) Cut out Trace
      *
-     * @param start start x of window
-     * @param end   end x of window
-     * @return 対象部分のtraceを返す (deep copy)
+     * @author otsuru
+     * @since 2023/3/11
      */
-    public Trace cutWindow(double start, double end) {
+    public Trace subTrace(int iStart, int iEnd) {
+        return new Trace(Arrays.copyOfRange(xArray, iStart, iEnd), Arrays.copyOfRange(yArray, iStart, iEnd));
+    }
+
+    /**
+     * Cut out part of the Trace in window xStart &le; x &le; xEnd.
+     *
+     * @param xStart (int) Start x of window, inclusive
+     * @param xEnd (int) End x of window, INCLUSIVE!!
+     * @return (Trace) Trace cut out in the window (deep copy)
+     */
+    public Trace cutWindow(double xStart, double xEnd) {
         List<Double> xList = new ArrayList<>();
         List<Double> yList = new ArrayList<>();
-        IntStream.range(0, xArray.length).filter(i -> start <= xArray[i] && xArray[i] <= end).forEach(i -> {
+        IntStream.range(0, xArray.length).filter(i -> xStart <= xArray[i] && xArray[i] <= xEnd).forEach(i -> {
             xList.add(xArray[i]);
             yList.add(yArray[i]);
         });
-        if (xList.isEmpty()) throw new IllegalStateException("No data in [" + start + ", " + end + "]");
+        if (xList.isEmpty()) throw new IllegalStateException("No data in [" + xStart + ", " + xEnd + "]");
         return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
                 yList.stream().mapToDouble(Double::doubleValue).toArray());
     }

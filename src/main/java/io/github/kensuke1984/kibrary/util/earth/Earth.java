@@ -153,34 +153,31 @@ public final class Earth {
 
     /**
      * Compute volume within an input range.
+     * There is no limit on the longitude because the borders of voxels may surpass -180 or 360,
+     * and even then, there shouldn't be much of a problem.
      *
      * @param startA         [km] start of major axis [0,endA)
      * @param endA           [km] end of major axis (startA, ∞]
-     * @param startLatitude  [deg] [-90, endLatitude]
-     * @param endLatitude    [deg] [startLatitude, 90]
-     * @param startLongitude [deg] [-180, endLongitude]
-     * @param endLongitude   [deg] [startLongitude, 180]
+     * @param startLatitude  [deg] [-90, endLatitude)
+     * @param endLatitude    [deg] (startLatitude, 90]
+     * @param startLongitude [deg]
+     * @param endLongitude   [deg]
      * @return 長軸startAからendAまでの楕円弧 緯度 経度 に囲まれた領域の体積
      */
     public static double computeVolume(double startA, double endA, double startLatitude, double endLatitude,
                                    double startLongitude, double endLongitude) {
         // radius
         if (endA <= startA || startA < 0)
-            throw new IllegalArgumentException("endA: " + endA + " must be bigger than startA: " + startA);
+            throw new IllegalArgumentException("startA: " + startA + " must be [0,endA). endA: " + endA + " must be (startA,Infty]");
 
-        if (startLongitude < 0 && 180 < endLongitude) throw new IllegalArgumentException(
-                "startLongitude: " + startLongitude + ". endLongitude: " + endLongitude +
-                        ". Input region must be [0:360] or [-180:180].");
+        // latitude
+        if (startLatitude < -90 || startLatitude >= endLatitude || 90 < endLatitude) throw new IllegalArgumentException(
+                "startLatitude: " + startLatitude + " must be [-90,endLatitude). endLatitude: " + endLatitude +
+                        " must be (startLatitude,90].");
 
-        // //latitude
-        if (endLatitude <= startLatitude || startLatitude < -90 || 90 < endLatitude) throw new IllegalArgumentException(
-                "startLatitude: " + startLatitude + " must be [-90, endLatitude]. endLatitude: " + endLatitude +
-                        " must be [startLatitude, 90].");
-        // longitude
-        if (startLongitude < -180 || 360 < endLongitude || endLongitude <= startLongitude)
-            throw new IllegalArgumentException(
-                    "startLongitude: " + startLongitude + " must be [-180, endLongitude). endLongitude: " +
-                            endLongitude + " must be (startLongitude, 360].");
+        // Longitudes are not required to be in [-180,360) here
+        //   because we will not be able to compute for voxels near the edges of the valid longitude range.
+        //   (ex. a 5-deg wide voxel at -180 deg)
 
         // double dr =1;
         double dr = (endA - startA) * 0.01;
