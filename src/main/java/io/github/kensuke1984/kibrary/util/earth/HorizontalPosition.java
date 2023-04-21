@@ -1,6 +1,9 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
+import java.util.Set;
+
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
@@ -33,6 +36,54 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     private final Longitude longitude;
 
     /**
+     * Find the latitude interval of a given set of positions.
+     * The latitudes must be equally spaced.
+     * @param positions (Set of {@link FullPosition})
+     * @return (double) interval
+     */
+    public static double findLatitudeInterval(Set<FullPosition> positions) {
+        FullPosition pos0 = positions.iterator().next();
+        return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
+                .filter(diff -> !Precision.equals(diff, 0, FullPosition.LATITUDE_EPSILON)).min().getAsDouble();
+    }
+
+    /**
+     * Judges whether a set of positions crosses the date line and not the prime meridian.
+     * If the positions cross both the prime meridian and the date line, returns false.
+     * @param positions (Set of {@link FullPosition}) Input positions
+     * @return (boolean) Whether the positions cross only the date line
+     *
+     * @author otsuru
+     * @since 2023/3/9
+     */
+    public static boolean crossesDateLine(Set<FullPosition> positions) {
+        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLongitude).distinct().sorted().toArray();
+        if (longitudes.length <= 1) return false;
+
+        double largestGap = longitudes[0] + 360 - longitudes[longitudes.length - 1];
+        double gapStartLongitude = longitudes[longitudes.length - 1];
+        double gapEndLongitude = longitudes[0];
+        for (int i = 1; i < longitudes.length; i++) {
+            if (longitudes[i] - longitudes[i - 1] > largestGap) {
+                largestGap = longitudes[i] - longitudes[i - 1];
+                gapStartLongitude = longitudes[i - 1];
+                gapEndLongitude = longitudes[i];
+            }
+        }
+
+        // Return true when start of gap is in western hemisphere and end of gap is in eastern hemisphere,
+        //   thus the gap crosses the prime meridian but not the date line.
+        //   This is when the set of positions crosses the date line and not the prime meridian.
+        if (gapStartLongitude <= 0 && 0 <= gapEndLongitude) return true;
+        // Otherwise, false. (Either the positions are clustered on one hemisphere, or crosses the prime meridian.)
+        else return false;
+    }
+
+    public static double latitudeFor(double theta) {
+        return Latitude.valueFor(theta);
+    }
+
+    /**
      * Creates an instance with geographic latitude and longitude
      *
      * @param latitude  [deg] geographic latitude [-90, 90]
@@ -41,10 +92,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     public HorizontalPosition(double latitude, double longitude) {
         this.latitude = new Latitude(latitude);
         this.longitude = new Longitude(longitude);
-    }
-
-    public static double latitudeFor(double theta) {
-        return Latitude.valueFor(theta);
     }
 
     /**
@@ -342,9 +389,26 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         return RThetaPhi.toCartesian(r, getTheta(), getPhi());
     }
 
+    /**
+     * Print padded String so that all positions will have uniform number of digits.
+     */
     @Override
     public String toString() {
         return latitude.toString() + " " + longitude.toString();
+    }
+
+    /**
+     * Print padded String so that all positions will have uniform number of digits.
+     * Can be printed in range [0:360) instead of [-180:180).
+     *
+     * @param crossDateLine (boolean) Whether to use longitude range [0:360) instead of [-180:180).
+     * @return (String) Padded string of longitude
+     *
+     * @author otsuru
+     * @since 2023/3/10
+     */
+    public String toString(boolean crossDateLine) {
+        return latitude.toString() + " " + longitude.toString(crossDateLine);
     }
 
     /**

@@ -4,16 +4,18 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.IntStream;
-
-import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
+ * Class to generate shellscript files that are to be used to map horizontal slices of perturbations using GMT.
+ *
  * @author otsuru
  * @since 2022/4/12
  * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
@@ -39,7 +41,7 @@ public class PerturbationMapShellscript {
     /**
      * Number of nodes to divide an original node when smoothing
      */
-    private static final int SMOOTHING_FACTOR = 10;
+    public static final int SMOOTHING_FACTOR = 10;
 
     private final VariableType variable;
     private final double[] radii;
@@ -66,10 +68,6 @@ public class PerturbationMapShellscript {
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
      */
     private int[] displayLayers;
-    /**
-     * Whether to display map as mosaic without smoothing
-     */
-    private boolean mosaic = false;
 
     private String maskFileNameRoot;
     private double maskThreshold;
@@ -95,10 +93,6 @@ public class PerturbationMapShellscript {
     public void setMask(String maskFileNameRoot, double maskThreshold) {
         this.maskFileNameRoot = maskFileNameRoot;
         this.maskThreshold = maskThreshold;
-    }
-
-    public void setMosaic(boolean mosaic) {
-        this.mosaic = mosaic;
     }
 
     /**
@@ -176,29 +170,18 @@ public class PerturbationMapShellscript {
             pw.println("    dep=${depth%.0}");
 
             // grid model
-            pw.println("    grep \"$depth\" " + modelFileNameRoot + ".lst | \\");
+            pw.println("    grep \"$depth\" " + modelFileNameRoot + "XYZ.lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
-            if (mosaic) {
-                pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
-            } else {
-                pw.println("    gmt xyz2grd -Gtmp.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
-                pw.println("    gmt grdsample tmp.grd -G$dep\\model.grd -I" + (positionInterval / SMOOTHING_FACTOR));
-            }
+            pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
 
             // grid mask
             if (maskFileNameRoot != null) {
                 pw.println("    grep \"$depth\" " + maskFileNameRoot + ".lst | \\");
                 pw.println("    awk '{print $2,$1,$4}' | \\");
-                if (mosaic) {
-                    pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
-                } else {
-                    pw.println("    gmt xyz2grd -Gtmp.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
-                    pw.println("    gmt grdsample tmp.grd -G$dep\\mask.grd -I" + (positionInterval / SMOOTHING_FACTOR));
-                }
+                pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
             }
 
             pw.println("done");
-            pw.println("rm -f tmp.grd");
         }
     }
 
@@ -275,15 +258,20 @@ public class PerturbationMapShellscript {
     }
 
     /**
-     * Find the longitude interval of a given set of positions.
-     * The longitudes must be equally spaced.
-     * @param positions (Set of FullPosition)
-     * @return (double) interval
+     * Decides the interval in which to sample the grid in a map.
+     * This method sets the interval at roughly a tenth of the input position spacing.
+     * @param positions (Set of {@link FullPosition}) Input position set
+     * @return (double) Suggested value of grid spacing
      */
-    static double findPositionInterval(Set<FullPosition> positions) {
-        FullPosition pos0 = positions.iterator().next();
-        return positions.stream().mapToDouble(pos -> Math.abs(pos.getLongitude() - pos0.getLongitude())).distinct()
-                .filter(diff -> !Precision.equals(diff, 0, FullPosition.LONGITUDE_EPSILON)).min().getAsDouble();
+    static double decideGridSampling(Set<FullPosition> positions) {
+        double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
+        int power = (int) Math.floor(Math.log10(positionInterval));
+        double coef = positionInterval / Math.pow(10, power);
+        if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong");
+        else if (coef < 2) return 1.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
+        else if (coef < 5) return 2.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
+        else if (coef < 10) return 5.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
+        else throw new IllegalStateException("Grid interval decision went wrong");
     }
 
     /**
@@ -292,17 +280,18 @@ public class PerturbationMapShellscript {
      * @return (String) "lonMin/lonMax/latMin/latMax"
      */
     static String decideMapRegion(Set<FullPosition> positions) {
-        double latMin = Double.MAX_VALUE;
-        double latMax = -Double.MAX_VALUE;
-        double lonMin = Double.MAX_VALUE;
-        double lonMax = -Double.MAX_VALUE;
-        // search all unknowns
-        for (FullPosition pos : positions) {
-            if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
-            if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
-            if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
-            if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
-        }
+        if (positions.size() == 0) throw new IllegalArgumentException("No positions are given");
+        // whether to use [0:360) instead of [-180:180)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        // map to latitude and longitude values
+        double[] latitudes = positions.stream().mapToDouble(FullPosition::getLatitude).toArray();
+        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLongitude)
+                .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+        // find min and max latitude and longitude
+        double latMin = Arrays.stream(latitudes).min().getAsDouble();
+        double latMax = Arrays.stream(latitudes).max().getAsDouble();
+        double lonMin = Arrays.stream(longitudes).min().getAsDouble();
+        double lonMax = Arrays.stream(longitudes).max().getAsDouble();
         // expand the region a bit more
         latMin = Math.floor(latMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
         latMax = Math.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;

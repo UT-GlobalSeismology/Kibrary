@@ -7,23 +7,39 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.Interpolation;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
+/**
+ * Maps the sensitivity kernel.
+ *
+ * NOTE: the voxel volume is NOT multiplied.
+ *
+ * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
+ * @author otsuru
+ *
+ */
 public class SensitivityKernelMapper extends Operation {
 
     private final Property property;
@@ -53,11 +69,7 @@ public class SensitivityKernelMapper extends Operation {
     private Set<String> tendObservers = new HashSet<>();
 
     /**
-     * path of partial ID file
-     */
-    private Path partialIDPath;
-    /**
-     * path of partial data
+     * partial waveform folder
      */
     private Path partialPath;
     private double[] boundaries;
@@ -67,6 +79,10 @@ public class SensitivityKernelMapper extends Operation {
     private int[] displayLayers;
     private int nPanelsPerRow;
     private String mapRegion;
+    private double marginLatitude;
+    private boolean setLatitudeByKm;
+    private double marginLongitude;
+    private boolean setLongitudeByKm;
     private double amplification;
     private double scale;
     /**
@@ -96,10 +112,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#folderTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a partial ID file, must be set");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file, must be set");
-            pw.println("#partialPath partial.dat");
+            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("#partialPath partial");
             pw.println("##PartialTypes to be used, listed using spaces (MU)");
             pw.println("#partialTypes ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set");
@@ -113,8 +127,18 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90]");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
+            pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
+            pw.println("#marginLatitudeKm ");
+            pw.println("##(double) Latitude margin at both ends [deg] (2.5)");
+            pw.println("#marginLatitudeDeg ");
+            pw.println("##(double) Longitude margin at both ends [km]. If this is unset, the following marginLongitudeDeg will be used.");
+            pw.println("#marginLongitudeKm ");
+            pw.println("##(double) Longitude margin at both ends [deg] (2.5)");
+            pw.println("#marginLongitudeDeg ");
+            pw.println("##########Parameters for perturbation values");
             pw.println("##(double) The factor to amplify the sensitivity values (1e29)");
             pw.println("#amplification ");
             pw.println("##(double) Range of scale (3)");
@@ -136,7 +160,6 @@ public class SensitivityKernelMapper extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        partialIDPath = property.parsePath("partialIDPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU"))
                 .map(PartialType::valueOf).collect(Collectors.toSet());
@@ -148,6 +171,24 @@ public class SensitivityKernelMapper extends Operation {
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+
+        if (property.containsKey("marginLatitudeKm")) {
+            marginLatitude = property.parseDouble("marginLatitudeKm", null);
+            setLatitudeByKm = true;
+        } else {
+            marginLatitude = property.parseDouble("marginLatitudeDeg", "2.5");
+            setLatitudeByKm = false;
+        }
+        if (marginLatitude <= 0) throw new IllegalArgumentException("marginLatitude must be positive");
+        if (property.containsKey("marginLongitudeKm")) {
+            marginLongitude = property.parseDouble("marginLongitudeKm", null);
+            setLongitudeByKm = true;
+        } else {
+            marginLongitude = property.parseDouble("marginLongitudeDeg", "2.5");
+            setLongitudeByKm = false;
+        }
+        if (marginLongitude <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
+
         amplification = property.parseDouble("amplification", "1e29");
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
@@ -156,56 +197,78 @@ public class SensitivityKernelMapper extends Operation {
     @Override
     public void run() throws IOException {
 
-        PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
-        Set<FullPosition> positions = Arrays.stream(partials).map(partial -> partial.getVoxelPosition()).collect(Collectors.toSet());
+        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+        Set<FullPosition> positions = partialIDs.stream().map(partial -> partial.getVoxelPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region
         if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
-        double positionInterval = PerturbationMapShellscript.findPositionInterval(positions);
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
+        // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", folderTag, GadgetAid.getTemporaryString());
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        for (PartialID partial : partials) {
-            SACComponent component = partial.getSacComponent();
-            PartialType partialType = partial.getPartialType();
-            if (!components.contains(component)) continue;
-            if (!partialTypes.contains(partialType)) continue;
-            if (!tendEvents.contains(partial.getGlobalCMTID())) continue;
-            if (!tendObservers.contains(partial.getObserver().toString())) continue;
+        for (SACComponent component : components) {
+            for (PartialType partialType : partialTypes) {
+                for (GlobalCMTID event : tendEvents) {
+                    for (String observerName : tendObservers) {
+                        List<PartialID> partialsForEntry = partialIDs.stream().filter(partial ->
+                                partial.getSacComponent().equals(component)
+                                && partial.getPartialType().equals(partialType)
+                                && partial.getGlobalCMTID().equals(event)
+                                && partial.getObserver().toString().equals(observerName))
+                                .collect(Collectors.toList());
+                        if (partialsForEntry.size() == 0) continue;
+                        System.err.println("Working for " + component  + " " + partialType + " " + event + " " + observerName);
 
-            Path eventPath = outPath.resolve(partial.getGlobalCMTID().toString());
-            Path observerPath = eventPath.resolve(partial.getObserver().toString());
-            Files.createDirectories(observerPath);
+                        Path eventPath = outPath.resolve(event.toString());
+                        Path observerPath = eventPath.resolve(observerName.toString());
+                        Files.createDirectories(observerPath);
 
-            double[] data = partial.getData();
-            double t0 = partial.getStartTime();
+                        double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
 
-            String phaselist = "";
+                        for (double startTime : startTimes) {
+                            List<PartialID> partialsForWindow = partialsForEntry.stream()
+                                    .filter(partial -> partial.getStartTime() == startTime).collect(Collectors.toList());
 
-            for (Phase phase : partial.getPhases()) {
-                phaselist = phaselist + phase;
+                            List<String> phaseStrings = Stream.of(partialsForEntry.get(0).getPhases()).map(Phase::toString).collect(Collectors.toList());
+                            String phaselist = String.join("-", phaseStrings);
+
+                            // compute sensitivity at each voxel
+                            Map<FullPosition, Double> discreteMap = new HashMap<>();
+                            for (PartialID partial : partialsForWindow) {
+                                double[] data = partial.getData();
+
+                                double cumulativeSensitivity = 0;
+                                for (int i = 0; i < data.length; i++) {
+                                    cumulativeSensitivity += data[i] * data[i];
+                                }
+                                discreteMap.put(partial.getVoxelPosition(), cumulativeSensitivity * amplification);
+                            }
+
+                            // output discrete perturbation file
+                            String fileNameRoot = "kernel_" + phaselist + "_" + component+ "_" + partialType + String.format("_t0%d", (int) startTime);
+                            Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
+                            PerturbationListFile.write(discreteMap, outputDiscretePath);
+                            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
+                            Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
+                            Path outputInterpolatedPath = observerPath.resolve(fileNameRoot + "XYZ.lst");
+                            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+
+                            PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii,
+                                    boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct
+                            if (displayLayers != null) script.setDisplayLayers(displayLayers);
+                            script.write(observerPath);
+                        }
+                    }
+                }
             }
-
-            double cumulativeSensitivity = 0.;
-            for (int i = 0; i < data.length; i++) {
-                cumulativeSensitivity += data[i] * data[i];
-            }
-
-            String fileNameRoot = "kernel_" + phaselist + "_" + component+ "_" + partialType + String.format("_t0%d", (int) t0);
-            Path filePath = observerPath.resolve(fileNameRoot + ".lst");
-            if (!Files.exists(filePath))
-                Files.createFile(filePath);
-
-            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath, StandardOpenOption.APPEND))) {
-                pw.println(partial.getVoxelPosition() + " " + cumulativeSensitivity * amplification);
-            }
-
-            PerturbationMapShellscript script
-                    = new PerturbationMapShellscript(VariableType.Vs, radii, boundaries, mapRegion, positionInterval, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct
-            script.setMosaic(mosaic);
-            if (displayLayers != null) script.setDisplayLayers(displayLayers);
-            script.write(observerPath);
         }
+        System.err.println("After this finishes, please enter each " + outPath
+                + "/eventFolder/observerFolder/ and run *Grid.sh and *Map.sh");
     }
+
 }

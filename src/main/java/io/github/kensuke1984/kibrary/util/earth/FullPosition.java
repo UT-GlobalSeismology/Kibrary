@@ -220,9 +220,26 @@ public final class FullPosition extends HorizontalPosition {
         return newLocations;
     }
 
+    /**
+     * Print padded String so that all positions will have uniform number of digits.
+     */
     @Override
     public String toString() {
         return super.toString() + " " + MathAid.padToString(radius, 4, RADIUS_PRECISION, " ");
+    }
+
+    /**
+     * Print padded String so that all positions will have uniform number of digits.
+     * Can be printed in range [0:360) instead of [-180:180).
+     *
+     * @param crossDateLine (boolean) Whether to use longitude range [0:360) instead of [-180:180).
+     * @return (String) Padded string of longitude
+     *
+     * @author otsuru
+     * @since 2023/3/10
+     */
+    public String toString(boolean crossDateLine) {
+        return super.toString(crossDateLine) + " " + MathAid.padToString(radius, 4, RADIUS_PRECISION, " ");
     }
 
 }

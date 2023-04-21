@@ -1,9 +1,12 @@
 package io.github.kensuke1984.kibrary.perturbation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -104,6 +107,23 @@ public class PerturbationModel {
 
     public List<PerturbationVoxel> getVoxels() {
         return new ArrayList<>(voxelList);
+    }
+
+    /**
+     * Get perturbation values (in [%]) for a certain variable at all voxels.
+     * @param type ({@link VariableType})
+     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and perturbation value (in [%])
+     *
+     * @author otsuru
+     * @since 2023/3/4
+     */
+    public Map<FullPosition, Double> getPercentForType(VariableType type) {
+        // This is created as LinkedHashMap to preserve the order of voxels
+        Map<FullPosition, Double> map = new LinkedHashMap<>();
+        for (PerturbationVoxel voxel : voxelList) {
+            map.put(voxel.getPosition(), voxel.getPercent(type));
+        }
+        return map;
     }
 
 }

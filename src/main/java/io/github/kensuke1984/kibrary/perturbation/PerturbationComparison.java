@@ -113,6 +113,7 @@ public class PerturbationComparison {
     private static Map<FullPosition, Double> constructMapFromVector(List<FullPosition> positions, RealVector vector) {
         if (positions.size() != vector.getDimension()) throw new IllegalArgumentException("Sizes of keys and values do not match");
 
+        // This is created as LinkedHashMap to preserve the order of voxels
         Map<FullPosition, Double> map = new LinkedHashMap<>();
         for (int i = 0; i < positions.size(); i++) {
             map.put(positions.get(i), vector.getEntry(i));

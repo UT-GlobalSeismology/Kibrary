@@ -107,7 +107,7 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * Print String so that all longitudes will have uniform number of digits.
+     * Print padded String so that all longitudes will have uniform number of digits.
      * Total number of digits is the sum of:
      * <ul>
      * <li>1 (the minus sign)</li>
@@ -119,6 +119,28 @@ final class Longitude implements Comparable<Longitude> {
     @Override
     public String toString() {
         return MathAid.padToString(longitude, 4, PRECISION, " ");
+    }
+
+    /**
+     * Print padded String so that all longitudes will have uniform number of digits.
+     * Can be printed in range [0:360) instead of [-180:180).
+     * Total number of digits is the sum of:
+     * <ul>
+     * <li>1 (the minus sign)</li>
+     * <li>3 (the integer part; 0~360)</li>
+     * <li>1 (the period)</li>
+     * <li>{@value #PRECISION} (the decimal part)</li>
+     * <ul>
+     *
+     * @param crossDateLine (boolean) Whether to use range [0:360) instead of [-180:180).
+     * @return (String) Padded string of longitude
+     *
+     * @author otsuru
+     * @since 2023/3/10
+     */
+    public String toString(boolean crossDateLine) {
+        double correctedLongitude = ((crossDateLine && longitude < 0) ? longitude + 360 : longitude);
+        return MathAid.padToString(correctedLongitude, 4, PRECISION, " ");
     }
 
     /**
