@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -72,7 +73,7 @@ public class EventListFile {
      * @param options  for write
      * @throws IOException if an I/O error occurs
      */
-    public static void writeList(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
+    public static void writeFullInfo(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
         System.err.println("Outputting "
                 + MathAid.switchSingularPlural(eventSet.size(), "event", "events")
                 + " in " + outputPath);
@@ -80,8 +81,7 @@ public class EventListFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# yyyy/mm/dd latitude longitude depth Mw HalfDuration");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.getEventData().getCMTTime().getYear() + "/" +
-                        event.getEventData().getCMTTime().getMonthValue() + "/" + event.getEventData().getCMTTime().getDayOfMonth()
+                pw.println(event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/mm/dd"))
                         + " " + event.getEventData().getCmtPosition().getLatitude()
                         + " " + event.getEventData().getCmtPosition().getLongitude() + " " + event.getEventData().getCmtPosition().getDepth()
                         + " " + event.getEventData().getCmt().getMw() + " " + event.getEventData().getHalfDuration());
@@ -150,7 +150,8 @@ public class EventListFile {
         options.addOptionGroup(inputOption);
 
         // option
-        options.addOption("f2", "format2", false, "Select Out put format as Date, Latitude, Longitude, Depth, Mw, Half dur");
+        options.addOption(Option.builder("f").longOpt("full")
+                .desc("Select output full information (Date, Latitude, Longitude, Depth, Mw, Half dur)").build());
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
@@ -194,7 +195,7 @@ public class EventListFile {
 
         if (!DatasetAid.checkNum(eventSet.size(), "event", "events")) return;
 
-        if (cmdLine.hasOption("f2")) writeList(eventSet, outputPath);
+        if (cmdLine.hasOption("f")) writeFullInfo(eventSet, outputPath);
         else write(eventSet, outputPath);
     }
 
