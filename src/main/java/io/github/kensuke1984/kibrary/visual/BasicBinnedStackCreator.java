@@ -615,7 +615,7 @@ public class BasicBinnedStackCreator extends Operation {
                             + " " + (refSynStack1 != null ? refSynStack1.getYAt(j) : 0)
                             + " " + (refSynStack2 != null ? refSynStack2.getYAt(j) : 0);
                     pwTrace.println(line);
-                    }
+                }
             }
         }
 
