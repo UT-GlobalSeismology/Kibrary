@@ -81,7 +81,7 @@ public class EventListFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# yyyy/mm/dd latitude longitude depth Mw HalfDuration");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/mm/dd"))
+                pw.println(event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
                         + " " + event.getEventData().getCmtPosition().getLatitude()
                         + " " + event.getEventData().getCmtPosition().getLongitude() + " " + event.getEventData().getCmtPosition().getDepth()
                         + " " + event.getEventData().getCmt().getMw() + " " + event.getEventData().getHalfDuration());
