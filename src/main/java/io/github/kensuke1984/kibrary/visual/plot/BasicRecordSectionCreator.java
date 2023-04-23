@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.visual;
+package io.github.kensuke1984.kibrary.visual.plot;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
 
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
@@ -27,17 +27,15 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 
 /**
- * Creates and plots binned stacks for each event included in a {@link BasicIDFile}.
- * Time-shift from corrections will be applied to observed waveform when being plotted.
+ * Creates a record section for each event included in a {@link BasicIDFile}.
+ * Time-shift from corrections can be applied to observed waveform when being plotted.
  * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
  * Travel time curves can be drawn on the graph.
  * <p>
@@ -47,13 +45,14 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * The entries to plot will be determined by whether they are included in mainBasicPath.
  * When plotting additional synthetic waveforms, their amplitudes will be adjusted with parameters for the main synthetic waveforms.
  * <p>
- * Text files of stacked waveform data for each bin will be created in event folders under the output folder,
- * along with output pdf files and their corresponding plt files.
+ * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
+ * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
  * @author otsuru
- * @since 2022/7/27 divided from visual.RecordSectionCreater
+ * @since 2021/12/11
+ * @version 2022/7/27 renamed from visual.RecordSectionCreater to visual.BasicRecordSectionCreator and separated visual.BasicBinnedStackCreator
  */
-public class BasicBinnedStackCreator extends Operation {
+public class BasicRecordSectionCreator extends Operation {
 
     /**
      * The interval of exporting travel times
@@ -78,9 +77,9 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output folder name. When this is empty, no tag is used.
+     * A tag to include in output file names. When this is empty, no tag is used.
      */
-    private String folderTag;
+    private String fileTag;
     /**
      * components to be included in the dataset
      */
@@ -103,7 +102,6 @@ public class BasicBinnedStackCreator extends Operation {
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
-    private double binWidth;
     private BasicPlotAid.AmpStyle obsAmpStyle;
     private BasicPlotAid.AmpStyle synAmpStyle;
     private double ampScale;
@@ -125,7 +123,7 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private String[] alignPhases;
     /**
-     * apparent velocity to use when reducing time [s/deg]
+     * apparent slowness to use when reducing time [s/deg]
      */
     private double reductionSlowness;
     /**
@@ -138,6 +136,10 @@ public class BasicBinnedStackCreator extends Operation {
     private double lowerAzimuth;
     private double upperAzimuth;
 
+    private int unshiftedObsStyle;
+    private String unshiftedObsName;
+    private int shiftedObsStyle;
+    private String shiftedObsName;
     private int mainSynStyle;
     private String mainSynName;
     private int refSynStyle1;
@@ -145,14 +147,11 @@ public class BasicBinnedStackCreator extends Operation {
     private int refSynStyle2;
     private String refSynName2;
 
-    private List<BasicID> refSynBasicIDs1;
-    private List<BasicID> refSynBasicIDs2;
-    private double samplingStep;
-
     /**
      * Inxtance of tool to use to compute travel times
      */
     private TauP_Time timeTool;
+    String dateStr;
 
     /**
      * @param args  none to create a property file <br>
@@ -171,8 +170,8 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
-            pw.println("#folderTag ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a basic waveform folder (.)");
@@ -183,8 +182,6 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#refBasicPath2 ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
-            pw.println("##(double) The width of each bin [deg] (1.0)");
-            pw.println("#binWidth ");
             pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
             pw.println("#obsAmpStyle ");
             pw.println("##Method for standarization of synthetic waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
@@ -194,7 +191,7 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
             pw.println("#byAzimuth ");
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
-            pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
@@ -213,6 +210,14 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#lowerAzimuth ");
             pw.println("##(double) Upper limit of range of azimuth to be used [deg] (lowerAzimuth:360] (360)");
             pw.println("#upperAzimuth ");
+            pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black} (1)");
+            pw.println("#unshiftedObsStyle 0");
+            pw.println("##Name for unshifted observed waveform (unshifted)");
+            pw.println("#unshiftedObsName ");
+            pw.println("##Plot style for shifted observed waveform, from {0:no plot, 1:gray, 2:black} (2)");
+            pw.println("#shiftedObsStyle ");
+            pw.println("##Name for shifted observed waveform (shifted)");
+            pw.println("#shiftedObsName observed");
             pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
             pw.println("#mainSynStyle 2");
             pw.println("##Name for main synthetic waveform (synthetic)");
@@ -229,14 +234,14 @@ public class BasicBinnedStackCreator extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public BasicBinnedStackCreator(Property property) throws IOException {
+    public BasicRecordSectionCreator(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -251,7 +256,6 @@ public class BasicBinnedStackCreator extends Operation {
                     .collect(Collectors.toSet());
         }
 
-        binWidth = property.parseDouble("binWidth", "1.0");
         obsAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
         synAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
         ampScale = property.parseDouble("ampScale", "1.0");
@@ -276,6 +280,10 @@ public class BasicBinnedStackCreator extends Operation {
         if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
             throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
 
+        unshiftedObsStyle = property.parseInt("unshiftedObsStyle", "1");
+        unshiftedObsName = property.parseString("unshiftedObsName", "unshifted");
+        shiftedObsStyle = property.parseInt("shiftedObsStyle", "2");
+        shiftedObsName = property.parseString("shiftedObsName", "shifted");
         mainSynStyle = property.parseInt("mainSynStyle", "1");
         mainSynName = property.parseString("mainSynName", "synthetic");
         refSynStyle1 = property.parseInt("refSynStyle1", "0");
@@ -290,13 +298,15 @@ public class BasicBinnedStackCreator extends Operation {
 
    @Override
    public void run() throws IOException {
+       dateStr = GadgetAid.getTemporaryString();
 
-       // read main basic waveform folders
+       // read main basic waveform folders and write waveforms to be used into txt files
        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
        if (!tendEvents.isEmpty()) {
            mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
        }
+       BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
 
        // collect events included in mainBasicIDs
        Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
@@ -304,30 +314,21 @@ public class BasicBinnedStackCreator extends Operation {
            return;
        }
 
-       // check sampling rate
-       double[] samplingHzs = mainBasicIDs.stream().mapToDouble(id -> id.getSamplingHz()).distinct().toArray();
-       if (samplingHzs.length != 1) {
-           Arrays.stream(samplingHzs).forEach(hz -> System.err.print(hz + " "));
-           throw new IllegalStateException("Data with different sampling rates exist");
-       }
-       samplingStep = 1 / samplingHzs[0];
-
-       // read reference basic waveform folders and collect only synthetic basicIDs
+       // read reference basic waveform folders and write waveforms to be used into txt files
+       List<BasicID> refBasicIDs1 = null;
        if (refBasicPath1 != null) {
-           refSynBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
-                           && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
+           BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
        }
+       List<BasicID> refBasicIDs2 = null;
        if (refBasicPath2 != null) {
-           refSynBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
-                           && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
+           BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
        }
-
-       Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, GadgetAid.getTemporaryString());
-       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        try {
            // set up taup_time tool
@@ -343,19 +344,16 @@ public class BasicBinnedStackCreator extends Operation {
                    timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
                }
 
-               // create plots under outPath
-               Path eventPath = outPath.resolve(event.toString());
+               // create plots under workPath
+               Path eventPath = workPath.resolve(event.toString());
                Files.createDirectories(eventPath);
-
                for (SACComponent component : components) {
                    List<BasicID> useIds = mainBasicIDs.stream()
                            .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   String fileNameRoot = "binStack_" + component.toString();
-
-                   Plotter plotter = new Plotter(eventPath, useIds, component, fileNameRoot);
+                   Plotter plotter = new Plotter(eventPath, useIds, component);
                    plotter.plot();
                }
            }
@@ -369,7 +367,6 @@ public class BasicBinnedStackCreator extends Operation {
         private final Path eventPath;
         private final List<BasicID> ids;
         private final SACComponent component;
-        private final String fileNameRoot;
 
         private GnuplotFile gnuplot;
         private double obsMeanMax;
@@ -381,11 +378,10 @@ public class BasicBinnedStackCreator extends Operation {
          * @param ids (BasicID[]) BasicIDs to be plotted. All must be of the same event and component.
          * @param fileNameRoot
          */
-        private Plotter(Path eventPath, List<BasicID> ids, SACComponent component, String fileNameRoot) {
+        private Plotter(Path eventPath, List<BasicID> ids, SACComponent component) {
             this.eventPath = eventPath;
             this.ids = ids;
             this.component = component;
-            this.fileNameRoot = fileNameRoot;
         }
 
         private void plot() throws IOException, TauModelException {
@@ -396,28 +392,14 @@ public class BasicBinnedStackCreator extends Operation {
             // prepare IDs
             BasicIDPairUp pairer = new BasicIDPairUp(ids);
             List<BasicID> obsList = pairer.getObsList();
-            List<BasicID> mainSynList = pairer.getSynList();
+            List<BasicID> synList = pairer.getSynList();
+
+            // set up plotter
+            profilePlotSetup();
 
             // calculate the average of the maximum amplitudes of waveforms
             obsMeanMax = obsList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
-            synMeanMax = mainSynList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
-
-            // create array to insert stacked waveforms
-            Trace[] obsStacks;
-            Trace[] mainSynStacks;
-            Trace[] refSynStacks1;
-            Trace[] refSynStacks2;
-            if (!byAzimuth) {
-                obsStacks = new Trace[(int) Math.ceil(180 / binWidth)];
-                mainSynStacks = new Trace[(int) Math.ceil(180 / binWidth)];
-                refSynStacks1 = new Trace[(int) Math.ceil(180 / binWidth)];
-                refSynStacks2 = new Trace[(int) Math.ceil(180 / binWidth)];
-            } else {
-                obsStacks = new Trace[(int) Math.ceil(360 / binWidth)];
-                mainSynStacks = new Trace[(int) Math.ceil(360 / binWidth)];
-                refSynStacks1 = new Trace[(int) Math.ceil(360 / binWidth)];
-                refSynStacks2 = new Trace[(int) Math.ceil(360 / binWidth)];
-            }
+            synMeanMax = synList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
 
             // variables to find the minimum and maximum distance for this event
             double minTime = Double.MAX_VALUE;
@@ -428,12 +410,12 @@ public class BasicBinnedStackCreator extends Operation {
             // for each pair of observed and synthetic waveforms
             for (int i = 0; i < obsList.size(); i++) {
                 BasicID obsID = obsList.get(i);
-                BasicID mainSynID = mainSynList.get(i);
+                BasicID synID = synList.get(i);
 
-                double distance = obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeEpicentralDistanceDeg(obsID.getObserver().getPosition());
-                double azimuth = obsID.getGlobalCMTID().getEventData().getCmtPosition()
-                        .computeAzimuthDeg(obsID.getObserver().getPosition());
+                double distance = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
+                        .computeEpicentralDistanceRad(obsID.getObserver().getPosition()));
+                double azimuth = Math.toDegrees(obsID.getGlobalCMTID().getEventData().getCmtPosition()
+                        .computeAzimuthRad(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
@@ -456,54 +438,18 @@ public class BasicBinnedStackCreator extends Operation {
                 }
 
                 // update ranges
-                double startTime = mainSynID.getStartTime() - reduceTime;
-                double endTime = mainSynID.getStartTime() + mainSynID.getNpts() / mainSynID.getSamplingHz() - reduceTime;
+                double startTime = synID.getStartTime() - reduceTime;
+                double endTime = synID.getStartTime() + synID.getNpts() / synID.getSamplingHz() - reduceTime;
                 if (startTime < minTime) minTime = startTime;
                 if (endTime > maxTime) maxTime = endTime;
                 if (distance < minDistance) minDistance = distance;
                 if (distance > maxDistance) maxDistance = distance;
 
-                // decide which bin to add waveform to
-                int k;
-                if (!byAzimuth) {
-                    k = (int) Math.floor(distance / binWidth);
+                // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
+                if (flipAzimuth == true && 180 <= azimuth) {
+                    profilePlotContent(obsID, synID, distance, azimuth - 360, reduceTime);
                 } else {
-                    k = (int) Math.floor(azimuth / binWidth);
-                }
-
-                //~add waveform
-                // observed
-                // Time shift of static correction shall be applied to the observed waveform.
-                Trace obsTrace = obsID.toTrace().withXAs(mainSynID.toTrace().getX());
-                obsStacks[k] = addUponShift(obsStacks[k], obsTrace, reduceTime);
-                // main synthetic
-                mainSynStacks[k] = addUponShift(mainSynStacks[k], mainSynID.toTrace(), reduceTime);
-                // reference synthetic 1
-                if (refSynBasicIDs1 != null) {
-                    List<BasicID> refSynIDCandidates1 = refSynBasicIDs1.stream()
-                            .filter(id -> BasicID.isPair(id, obsID)).collect(Collectors.toList());
-                    if (refSynIDCandidates1.size() != 1)
-                        throw new IllegalStateException("0 or more than 1 refSynID1 matching obsID" + obsID.toString());
-                    BasicID refSynID1 = refSynIDCandidates1.get(0);
-                    refSynStacks1[k] = addUponShift(refSynStacks1[k], refSynID1.toTrace(), reduceTime);
-                }
-                // reference synthetic 2
-                if (refSynBasicIDs2 != null) {
-                    List<BasicID> refSynIDCandidates2 = refSynBasicIDs2.stream()
-                            .filter(id -> BasicID.isPair(id, obsID)).collect(Collectors.toList());
-                    if (refSynIDCandidates2.size() != 1)
-                        throw new IllegalStateException("0 or more than 1 refSynID2 matching obsID" + obsID.toString());
-                    BasicID refSynID2 = refSynIDCandidates2.get(0);
-                    refSynStacks2[k] = addUponShift(refSynStacks2[k], refSynID2.toTrace(), reduceTime);
-                }
-            }
-
-            binStackPlotSetup();
-
-            // plot for each bin
-            for (int j = 0; j < obsStacks.length; j++) {
-                if (obsStacks[j] != null && mainSynStacks[j] != null) {
-                    binStackPlotContent(obsStacks[j], mainSynStacks[j], refSynStacks1[j], refSynStacks2[j], (j + 0.5) * binWidth);
+                    profilePlotContent(obsID, synID, distance, azimuth, reduceTime);
                 }
             }
 
@@ -519,16 +465,18 @@ public class BasicBinnedStackCreator extends Operation {
                 plotTravelTimeCurve(startDistance, endDistance);
             }
 
+            // plot
             gnuplot.write();
             if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
         }
 
-        private void binStackPlotSetup() {
+        private void profilePlotSetup() {
+            // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
+            String fileNameRoot = DatasetAid.generateOutputFileName("recordSection", fileTag, dateStr, "_" + component.toString());
 
             gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
-
             gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-            gnuplot.setMarginH(15, 10);
+            gnuplot.setMarginH(15, 25);
             gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
             gnuplot.setCommonKey(true, false, "top right");
@@ -541,121 +489,67 @@ public class BasicBinnedStackCreator extends Operation {
             }
             if (!byAzimuth) {
                 gnuplot.setCommonYlabel("Distance (deg)");
+                gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
                 gnuplot.setCommonYlabel("Azimuth (deg)");
+                gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }
 
-        private void binStackPlotContent(Trace obsStack, Trace mainSynStack, Trace refSynStack1, Trace refSynStack2, double y) throws IOException {
-            String fileName = y + "." + component + ".txt";
-            outputBinStackTxt(obsStack, mainSynStack, refSynStack1, refSynStack2, fileName);
+        private void profilePlotContent(BasicID obsID, BasicID synID, double distance, double azimuth, double reduceTime)
+                throws IOException, TauModelException {
+            String txtFileName = BasicIDFile.getWaveformTxtFileName(obsID);
 
-            double obsMax = obsStack.getYVector().getLInfNorm();
-            double synMax = mainSynStack.getYVector().getLInfNorm();
+            // decide the coefficient to amplify each waveform
+            RealVector obsDataVector = new ArrayRealVector(obsID.getData());
+            RealVector synDataVector = new ArrayRealVector(synID.getData());
+            double obsMax = obsDataVector.getLInfNorm();
+            double synMax = synDataVector.getLInfNorm();
             double obsAmp = BasicPlotAid.selectAmp(obsAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
             double synAmp = BasicPlotAid.selectAmp(synAmpStyle, ampScale, obsMax, synMax, obsMeanMax, synMeanMax);
 
-            if (byAzimuth == true && flipAzimuth == true && 180 <= y) {
-                y -= 360;
+            // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
+            String shiftedUsingString;
+            String unshiftedUsingString;
+            String synUsingString;
+            if (!byAzimuth) {
+                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
+                        "graph", 1.01, "first", distance);
+                unshiftedUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
+                shiftedUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, distance);
+                synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reduceTime, synAmp, distance);
+            } else {
+                gnuplot.addLabel(obsID.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
+                        "graph", 1.01, "first", azimuth);
+                unshiftedUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
+                shiftedUsingString = String.format("($3-%.3f):($2/%.3e+%.2f) ", reduceTime, obsAmp, azimuth);
+                synUsingString = String.format("($3-%.3f):($4/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
             }
 
-            String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
-            gnuplot.addLine(fileName, obsUsingString, BasicPlotAid.SHIFTED_APPEARANCE,
-                    (firstPlot ? "observed" : ""));
-            if (mainSynStyle != 0) {
-                String mainSynUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, mainSynUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
+            // plot waveforms
+            // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
+            String eventName = eventPath.getFileName().toString();
+            Path mainFilePath = mainBasicPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+            if (unshiftedObsStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), unshiftedUsingString, BasicPlotAid.switchObservedAppearance(unshiftedObsStyle),
+                        (firstPlot ? unshiftedObsName : ""));
+            if (shiftedObsStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), shiftedUsingString, BasicPlotAid.switchObservedAppearance(shiftedObsStyle),
+                        (firstPlot ? shiftedObsName : ""));
+            if (mainSynStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
                         (firstPlot ? mainSynName : ""));
-            }
             if (refSynStyle1 != 0) {
-                String refSynUsingString1 = String.format("1:($4/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString1, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
+                Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath1.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
                         (firstPlot ? refSynName1 : ""));
             }
             if (refSynStyle2 != 0) {
-                String refSynUsingString2 = String.format("1:($5/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
+                Path refFilePath2 = refBasicPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath2.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
                         (firstPlot ? refSynName2 : ""));
             }
             firstPlot = false;
-        }
-
-        /**
-         * Outputs a text file including stacked waveform.
-         * <ul>
-         * <li> column 1: time </li>
-         * <li> column 2: obs </li>
-         * <li> column 3: main syn </li>
-         * <li> column 4: ref syn 1 </li>
-         * <li> column 5: ref syn 2 </li>
-         * </ul>
-         *
-         * @param obsStack
-         * @param mainSynStack
-         * @param refSynStack1
-         * @param refSynStack2
-         * @param fileName
-         * @throws IOException
-         */
-        private void outputBinStackTxt(Trace obsStack, Trace mainSynStack,
-                Trace refSynStack1, Trace refSynStack2, String fileName) throws IOException {
-            Path outputPath = eventPath.resolve(fileName);
-
-            try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
-                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
-                for (int j = 0; j < obsStack.getLength(); j++) {
-                    double time = obsStack.getXAt(j);
-
-                    if (mainSynStack.getXAt(j) != time
-                            || (refSynStack1 != null && refSynStack1.getXAt(j) != time)
-                            || (refSynStack2 != null && refSynStack2.getXAt(j) != time))
-                        throw new IllegalStateException("x values do not match");
-
-                    String line = time + " " + obsStack.getYAt(j) + " " + mainSynStack.getYAt(j)
-                            + " " + (refSynStack1 != null ? refSynStack1.getYAt(j) : 0)
-                            + " " + (refSynStack2 != null ? refSynStack2.getYAt(j) : 0);
-                    pwTrace.println(line);
-                }
-            }
-        }
-
-        /**
-         * Shifts time of dataTrace by reductionTime, then adds the waveform onto sumTrace.
-         * @param sumTrace ({@link Trace}) Summing-up waveform. X axis is reduced time.
-         *                                 May be null when calling this method with the first data waveform.
-         * @param dataTrace ({@link Trace}) Data waveform. X axis is time from event.
-         * @param reductionTime (double) Time to reduce from the time of data waveform
-         * @return ({@link Trace}) New Trace instance with added waveform values. X axis is reduced time.
-         */
-        private Trace addUponShift(Trace sumTrace, Trace dataTrace, double reductionTime) {
-            // shift x values by approximately the reduction time so that x values become multiples of samplingStep
-            double startTime = dataTrace.getXAt(0);
-            double shiftedTime = startTime - reductionTime;
-            double roundedTime = Math.round(shiftedTime / samplingStep) * samplingStep;
-            Trace shiftedTrace = dataTrace.shiftX(roundedTime - startTime);
-
-            if (sumTrace == null) {
-                return shiftedTrace;
-
-            } else {
-                // gather all x values that are contained in at least one of the traces
-                double[] newX = DoubleStream.concat(Arrays.stream(sumTrace.getX()), Arrays.stream(shiftedTrace.getX()))
-                        .distinct().sorted().toArray();
-                double[] newY = new double[newX.length];
-
-                for (int i = 0; i < newX.length; i++) {
-                    double x = newX[i];
-                    double sum = 0;
-                    if (sumTrace.getMinX() <= x && x <= sumTrace.getMaxX()) {
-                        sum += sumTrace.getYAt(sumTrace.findNearestXIndex(x));
-                    }
-                    if (shiftedTrace.getMinX() <= x && x <= shiftedTrace.getMaxX()) {
-                        sum += shiftedTrace.getYAt(shiftedTrace.findNearestXIndex(x));
-                    }
-                    newY[i] = sum;
-                }
-                return new Trace(newX, newY);
-            }
         }
 
         private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
@@ -693,7 +587,7 @@ public class BasicBinnedStackCreator extends Operation {
             // output file and add curve
             for (int p = 0; p < displayPhases.length; p++) {
                 String phase = displayPhases[p];
-                String curveFileName = "curve_" + component + "_" + phase + ".txt";
+                String curveFileName = DatasetAid.generateOutputFileName("curve", fileTag, dateStr, "_" + component + "_" + phase + ".txt");
                 Path curvePath = eventPath.resolve(curveFileName);
                 boolean wrotePhaseLabel = false;
                 try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {

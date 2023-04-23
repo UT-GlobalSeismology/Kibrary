@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util.addons;
 
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.math.Trace;
 
 public class Rotator {
 	private Trace trace1;

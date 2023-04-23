@@ -1,8 +1,8 @@
 package io.github.kensuke1984.kibrary.source;
 
 import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.data.Trace;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 import org.apache.commons.io.input.CloseShieldInputStream;

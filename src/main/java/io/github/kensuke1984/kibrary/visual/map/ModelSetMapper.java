@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.visual;
+package io.github.kensuke1984.kibrary.visual.map;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
+import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
@@ -28,15 +29,17 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 /**
- * Creates shellscripts to map {@link KnownParameterFile}.
+ * Creates shellscripts to map a set of inversion results.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
- * @since 2022/7/17
+ * @since 2022/4/9
+ * @version 2022/7/17 moved and renamed from model.VelocityModelMapper to visual.ModelSetMapper
  */
-public class ModelMapper extends Operation {
+public class ModelSetMapper extends Operation {
 
     private final Property property;
     /**
@@ -49,9 +52,9 @@ public class ModelMapper extends Operation {
     private String folderTag;
 
     /**
-     * Path of model file
+     * The root folder containing results of inversion
      */
-    private Path modelPath;
+    private Path resultPath;
     /**
      * file of 1D structure used in inversion
      */
@@ -73,7 +76,11 @@ public class ModelMapper extends Operation {
      */
     private Path fusionPath;
     private Set<VariableType> variableTypes;
-
+    /**
+     * Solvers for equation
+     */
+    private Set<InverseMethodEnum> inverseMethods;
+    private int maxNum;
     private double[] boundaries;
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
@@ -110,8 +117,8 @@ public class ModelMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
-            pw.println("##Path of model file, must be set.");
-            pw.println("#modelPath model.lst");
+            pw.println("##Path of a root folder containing results of inversion (.)");
+            pw.println("#resultPath ");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model used in inversion (PREM)");
@@ -124,6 +131,10 @@ public class ModelMapper extends Operation {
             pw.println("#fusionPath fusion.inf");
             pw.println("##Variable types to map, listed using spaces (Vs)");
             pw.println("#variableTypes ");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
+            pw.println("#inverseMethods ");
+            pw.println("##(int) Maximum number of basis vectors to map (10)");
+            pw.println("#maxNum ");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
@@ -151,7 +162,7 @@ public class ModelMapper extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public ModelMapper(Property property) throws IOException {
+    public ModelSetMapper(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -160,7 +171,7 @@ public class ModelMapper extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
-        modelPath = property.parsePath("modelPath", null, true, workPath);
+        resultPath = property.parsePath("resultPath", ".", true, workPath);
         if (property.containsKey("initialStructurePath")) {
             initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
         } else {
@@ -176,6 +187,9 @@ public class ModelMapper extends Operation {
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
+        inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
+                .collect(Collectors.toSet());
+        maxNum = property.parseInt("maxNum", "10");
 
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
@@ -223,22 +237,16 @@ public class ModelMapper extends Operation {
             referenceStructure = PolynomialStructure.of(referenceStructureName);
         }
 
-        // read knowns
-        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
-        Set<FullPosition> positions = KnownParameter.extractParameterList(knowns).stream()
+        // read parameters
+        Path unknownsPath = resultPath.resolve("unknowns.lst");
+        Set<FullPosition> positions = UnknownParameterFile.read(unknownsPath).stream()
                 .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
-        // read and apply fusion file
+        // read fusion file
+        FusionDesign fusionDesign = null;
         if (fusionPath != null) {
-            FusionDesign fusionDesign = FusionInformationFile.read(fusionPath);
-            knowns = fusionDesign.reverseFusion(knowns);
-        }
-
-        // build model
-        PerturbationModel model = new PerturbationModel(knowns, initialStructure);
-        if (!referenceStructure.equals(initialStructure)) {
-            model = model.withReferenceStructureAs(referenceStructure);
+            fusionDesign = FusionInformationFile.read(fusionPath);
         }
 
         // decide map region
@@ -246,27 +254,81 @@ public class ModelMapper extends Operation {
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
+        // create output folder
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
+        // write list files
+        for (InverseMethodEnum method : inverseMethods) {
+            Path methodPath = resultPath.resolve(method.simpleName());
+            if (!Files.exists(methodPath)) {
+                System.err.println("Results for " + method.simpleName() + " do not exist, skipping.");
+                continue;
+            }
+
+            for (int k = 1; k <= maxNum; k++){
+                Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
+                List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
+
+                if (fusionPath != null) knowns = fusionDesign.reverseFusion(knowns);
+
+                PerturbationModel model = new PerturbationModel(knowns, initialStructure);
+                if (!referenceStructure.equals(initialStructure)) {
+                    model = model.withReferenceStructureAs(referenceStructure);
+                }
+
+                Path outBasisPath = outPath.resolve(method.simpleName() + k);
+                Files.createDirectories(outBasisPath);
+
+                for (VariableType variable : variableTypes) {
+                    String variableName = variable.toString().toLowerCase();
+                    // output discrete perturbation file
+                    Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
+                    Path outputDiscretePath = outBasisPath.resolve(variableName + "Percent.lst");
+                    PerturbationListFile.write(discreteMap, outputDiscretePath);
+                    // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
+                    Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                            marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
+                    Path outputInterpolatedPath = outBasisPath.resolve(variableName + "PercentXYZ.lst");
+                    PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+                }
+            }
+        }
+
+        // write shellscripts for mapping
         for (VariableType variable : variableTypes) {
             String variableName = variable.toString().toLowerCase();
-            // output discrete perturbation file
-            Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
-            Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
-            PerturbationListFile.write(discreteMap, outputDiscretePath);
-            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-            Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
-            Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
-            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
-            // output shellscripts
+            writeParentShellscript(variableName, outPath.resolve(variableName + "PercentAllMap.sh"));
             PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
                     gridInterval, scale, variableName + "Percent", nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);
-            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentGrid.sh and "
-                    + variableName + "PercentMap.sh");
+            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentAllMap.sh");
+        }
+    }
+
+    private void writeParentShellscript(String paramName, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("#!/bin/sh");
+            for (InverseMethodEnum method : inverseMethods) {
+                pw.println("");
+                pw.println("for i in `seq 1 " + maxNum + "`");
+                pw.println("do");
+                pw.println("    cd " + method.simpleName() + "$i");
+                pw.println("    ln -s ../" + paramName + "PercentGrid.sh .");
+                pw.println("    ln -s ../" + paramName + "PercentMap.sh .");
+                pw.println("    ln -s ../cp_master.cpt .");
+                pw.println("    sh " + paramName + "PercentGrid.sh");
+                pw.println("    wait");
+                pw.println("    sh " + paramName + "PercentMap.sh");
+                pw.println("    wait");
+                pw.println("    rm -rf *.grd gmt.* cp.cpt");
+                pw.println("    unlink " + paramName + "PercentGrid.sh");
+                pw.println("    unlink " + paramName + "PercentMap.sh");
+                pw.println("    unlink cp_master.cpt");
+                pw.println("    cd ..");
+                pw.println("done");
+            }
         }
     }
 

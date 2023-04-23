@@ -11,7 +11,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.data.Trace;
+import io.github.kensuke1984.kibrary.math.Trace;
 
 /**
  * Read/Write of a SAC file. (SAC: seismic analysis code)

@@ -7,8 +7,8 @@ import java.util.List;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.filter.LowPassFilter;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.util.data.Trace;
 
 public class SurfaceWaveDetector {
 	private Trace trace;
