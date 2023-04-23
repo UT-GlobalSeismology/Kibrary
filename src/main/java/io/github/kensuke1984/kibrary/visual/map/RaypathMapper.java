@@ -610,6 +610,18 @@ public class RaypathMapper extends Operation {
                 if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
             }
 
+            if (cutAtPiercePoint) {
+                List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
+                for (String line : turningPointLines) {
+                    String[] parts = line.trim().split("\\s+");
+                    HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+                    if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
+                    if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
+                    if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
+                    if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
+                }
+            }
+
             // expand the region a bit more
             latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
             latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;

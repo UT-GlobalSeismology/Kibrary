@@ -444,9 +444,18 @@ public class FujiStaticCorrection extends Operation {
             // check delta
             double delta = 1 / sacSamplingHz;
             if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println(
-                        "!! Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA) + " , " +
-                                synSac + " " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
+                System.err.println();
+                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                        + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
+                return;
+            }
+
+            // check SAC file end time
+            if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E) - searchRange
+                    || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - searchRange) {
+                System.err.println();
+                System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
                 return;
             }
 
@@ -461,7 +470,8 @@ public class FujiStaticCorrection extends Operation {
                         timewindow.getStartTime(), shift, ratio, timewindow.getPhases());
                 staticCorrectionSet.add(correction);
             } catch (Exception e) {
-                System.err.println("!! " + timewindow + " is ignored because an error occurs.");
+                System.err.println();
+                System.err.println("!! Skipping because an error occurs: " + timewindow);
                 e.printStackTrace();
             }
         }

@@ -581,27 +581,30 @@ public class ActualWaveformCompiler extends Operation {
             // check delta
             double delta = 1 / sacSamplingHz;
             if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println("!! Deltas are invalid. Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                System.err.println();
+                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
                         + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                System.err.println("   " + timewindow);
+                return;
+            }
+
+            // check SAC file end time
+            if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                    || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                System.err.println();
+                System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
                 return;
             }
 
             // check and read bandpass
             if (obsSac.getValue(SACHeaderEnum.USER0) != synSac.getValue(SACHeaderEnum.USER0)
                     || obsSac.getValue(SACHeaderEnum.USER1) != synSac.getValue(SACHeaderEnum.USER1)) {
-                System.err.println("!! Band pass filter difference");
-                System.err.println("   " + timewindow);
+                System.err.println();
+                System.err.println("!! Band pass filter difference, skipping: " + timewindow);
                 return;
             }
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
-
-            if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) { // TODO should 10 be maxStaticShift ?
-                System.err.println("!! End time of timewindow too late");
-                System.err.println("   " + timewindow);
-                return;
-            }
 
             int npts = (int) Math.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
             double startTime = timewindow.getStartTime();
@@ -616,8 +619,7 @@ public class ActualWaveformCompiler extends Operation {
                     case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
                     }
                 } catch (NoSuchElementException e) {
-                    System.err.println("!! There is no static correction information for");
-                    System.err.println("   " + timewindow);
+                    System.err.println("!! No static correction information, skipping: " + timewindow);
                     return;
                 }
             }
@@ -626,8 +628,8 @@ public class ActualWaveformCompiler extends Operation {
                     StaticCorrectionData sc = getMantleCorrection(timewindow);
                     shift += sc.getTimeshift();
                 } catch (NoSuchElementException e) {
-                    System.err.println("!! There is no mantle correction information for");
-                    System.err.println("   " + timewindow);
+                    System.err.println();
+                    System.err.println("!! No mantle correction information, skipping: " + timewindow);
                     return;
                 }
             }
@@ -640,8 +642,8 @@ public class ActualWaveformCompiler extends Operation {
                         && tw.getObserver().equals(timewindow.getObserver())
                         && tw.getComponent().equals(timewindow.getComponent())).collect(Collectors.toList());
                 if (tmpwindows.size() != 1) {
-                    System.err.println("!! Reference timewindow does not exist:");
-                    System.err.println("   " + timewindow);
+                    System.err.println();
+                    System.err.println("!! Reference timewindow does not exist, skipping: " + timewindow);
                     return;
                 }
                 else {
@@ -661,8 +663,8 @@ public class ActualWaveformCompiler extends Operation {
             // check
             RealVector obsVec = new ArrayRealVector(obsData);
             if (Double.isNaN(obsVec.getLInfNorm()) || obsVec.getLInfNorm() == 0) {
-                System.err.println("!! Obs is 0 or NaN:");
-                System.err.println("   " + timewindow);
+                System.err.println();
+                System.err.println("!! Obs is 0 or NaN, skipping: " + timewindow);
                 return;
             }
 

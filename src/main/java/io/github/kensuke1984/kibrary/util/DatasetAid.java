@@ -258,6 +258,7 @@ public final class DatasetAid {
                 SACExtension obsExt = SACExtension.valueOfObserved(component);
                 SACFileName obsName = new SACFileName(obsEventPath.resolve(SACFileName.generate(observer, eventID, obsExt)));
                 if (!obsName.exists()) {
+                    System.err.println();
                     System.err.println("!! " + obsName + " does not exist, skippping.");
                     continue;
                 }
@@ -265,6 +266,7 @@ public final class DatasetAid {
                 try {
                     obsSac = obsName.read();
                 } catch (Exception e) {
+                    System.err.println();
                     System.err.println("!! Could not read " + obsName + " , skipping.");
                     e.printStackTrace();
                     continue;
@@ -275,6 +277,7 @@ public final class DatasetAid {
                         : SACExtension.valueOfSynthetic(component);
                 SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
                 if (!synName.exists()) {
+                    System.err.println();
                     System.err.println("!! " + synName + " does not exist, skippping.");
                     continue;
                 }
@@ -282,6 +285,7 @@ public final class DatasetAid {
                 try {
                     synSac = synName.read();
                 } catch (Exception e) {
+                    System.err.println();
                     System.err.println("!! Could not read " + synName + " , skipping.");
                     e.printStackTrace();
                     continue;
