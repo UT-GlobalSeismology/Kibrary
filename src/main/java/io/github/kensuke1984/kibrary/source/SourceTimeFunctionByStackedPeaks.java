@@ -1,5 +1,11 @@
 package io.github.kensuke1984.kibrary.source;
 
+import java.util.Arrays;
+import java.util.Set;
+
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.TransformType;
+
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.stacking.PeakStack;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -8,11 +14,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.TransformType;
-
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * Source time function estimation by stacked peaks.
@@ -78,7 +79,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
     private Trace createTrace(SACFileAccess sacFile) {
         Observer station = sacFile.getObserver();
         GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
-        SACComponent component = SACComponent.of(sacFile);
+        SACComponent component = sacFile.getComponent();
 
         TimewindowData window = timewindow.stream()
                 .filter(info -> info.getObserver().equals(station) && info.getGlobalCMTID().equals(id) &&
@@ -146,5 +147,5 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         }
         return sourceTimeFunction;
     }
-	
+
 }
