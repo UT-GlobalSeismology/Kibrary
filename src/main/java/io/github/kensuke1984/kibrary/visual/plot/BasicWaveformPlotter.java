@@ -163,7 +163,7 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#mainSynStyle 2");
             pw.println("##Name for main synthetic waveform (synthetic)");
             pw.println("#mainSynName recovered");
-            pw.println("##Plot style for main residual waveform, from {0:no plot, 1:purple} (1)");
+            pw.println("##Plot style for main residual waveform, from {0:no plot, 1:sky blue} (1)");
             pw.println("#residualStyle 0");
             pw.println("##Name for main residual waveform (residual)");
             pw.println("#residualName ");
@@ -243,14 +243,14 @@ public class BasicWaveformPlotter extends Operation {
 
        // read reference basic waveform folders and write waveforms to be used into txt files
        List<BasicID> refBasicIDs1 = null;
-       if (refBasicPath1 != null && refSynStyle1 != 0) {
+       if (refBasicPath1 != null) {
            refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
            BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
        }
        List<BasicID> refBasicIDs2 = null;
-       if (refBasicPath2 != null && refSynStyle2 != 0) {
+       if (refBasicPath2 != null) {
            refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
