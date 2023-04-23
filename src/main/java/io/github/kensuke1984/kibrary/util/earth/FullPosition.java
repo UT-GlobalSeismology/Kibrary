@@ -49,6 +49,16 @@ public final class FullPosition extends HorizontalPosition {
     }
 
     /**
+     * @param latitude  [deg] geographic latitude
+     * @param longitude [deg] longitude
+     * @param depth [km] depth
+     * @return new instance
+     */
+    public static FullPosition constructByDepth(double latitude, double longitude, double depth) {
+        return new FullPosition(latitude, longitude, Precision.round(Earth.EARTH_RADIUS - depth, RADIUS_PRECISION)); //TODO: consider ellipticity of Earth
+    }
+
+    /**
      * Checks whether this position is inside a given coordinate range.
      * @param minLatitude (double) [-90:maxLatitude)
      * @param maxLatitude (double) (minLatitude:90]
@@ -125,7 +135,7 @@ public final class FullPosition extends HorizontalPosition {
      * @return [km] depth (not radius)
      */
     public double getDepth() {
-        return Precision.round(6371 - radius, RADIUS_PRECISION); //TODO: consider ellipticity of Earth
+        return Precision.round(Earth.EARTH_RADIUS - radius, RADIUS_PRECISION); //TODO: consider ellipticity of Earth
     }
 
     /**

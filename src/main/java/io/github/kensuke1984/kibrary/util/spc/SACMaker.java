@@ -579,18 +579,19 @@ public class SACMaker implements Runnable {
 
         private SAC of(SACComponent component) {
             SAC sac = clone();
-            switch (component.valueOf()) {
-            case 1:
-                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "vertical");
-                break;
-            case 2:
-                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "radial");
-                break;
-            case 3:
-                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "trnsvers");
-                break;
-            default:
-            }
+            sac = sac.setSACString(SACHeaderEnum.KCMPNM, component.toString());
+//            switch (component.valueOf()) {
+//            case 1:
+//                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "vertical");
+//                break;
+//            case 2:
+//                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "radial");
+//                break;
+//            case 3:
+//                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "trnsvers");
+//                break;
+//            default:
+//            }
             return sac;
         }
 

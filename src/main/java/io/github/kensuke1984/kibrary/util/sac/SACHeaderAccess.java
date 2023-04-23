@@ -34,8 +34,7 @@ public interface SACHeaderAccess {
      * Earth radius is considered as 6371.
      */
     default FullPosition getEventLocation() {
-        return new FullPosition(getValue(SACHeaderEnum.EVLA), getValue(SACHeaderEnum.EVLO),
-                6371.0 - getValue(SACHeaderEnum.EVDP));
+        return FullPosition.constructByDepth(getValue(SACHeaderEnum.EVLA), getValue(SACHeaderEnum.EVLO), getValue(SACHeaderEnum.EVDP));
     }
 
     /**
@@ -48,7 +47,7 @@ public interface SACHeaderAccess {
     default SACHeaderAccess setEventLocation(FullPosition eventLocation) {
         return setValue(SACHeaderEnum.EVLA, eventLocation.getLatitude())
                 .setValue(SACHeaderEnum.EVLO, eventLocation.getLongitude())
-                .setValue(SACHeaderEnum.EVDP, 6371 - eventLocation.getR());
+                .setValue(SACHeaderEnum.EVDP, eventLocation.getDepth());
     }
 
     /**
@@ -103,11 +102,15 @@ public interface SACHeaderAccess {
      */
     default SACComponent getComponent() {
         switch (getSACString(SACHeaderEnum.KCMPNM)) {
-            case "vertical":
+            case "Z":
+            case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
+            case "vertical": //TODO erase: old format
                 return SACComponent.Z;
-            case "radial":
+            case "R":
+            case "radial": //TODO erase: old format
                 return SACComponent.R;
-            case "trnsvers":
+            case "T":
+            case "trnsvers": //TODO erase: old format
                 return SACComponent.T;
             default:
                 throw new RuntimeException("KCMPNM is invalid. must be vertical, radial or trnsvers");
