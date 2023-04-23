@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * An operation to select or resample BasicIDs.
@@ -47,6 +48,10 @@ public class BasicIDRebuilder extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * components to be included in the dataset
+     */
+    private Set<SACComponent> components;
 
     /**
      * path of basic waveform folder
@@ -93,6 +98,8 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("#components ");
             pw.println("##Path of a basic waveform folder, must be set");
             pw.println("#basicPath actual");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
@@ -116,6 +123,8 @@ public class BasicIDRebuilder extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        components = Arrays.stream(property.parseStringArray("components", "Z R T"))
+                .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
@@ -134,8 +143,9 @@ public class BasicIDRebuilder extends Operation {
 
     @Override
     public void run() throws IOException {
+        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true).stream()
+                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         // sort observed and synthetic
         BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
         obsIDs = pairer.getObsList();

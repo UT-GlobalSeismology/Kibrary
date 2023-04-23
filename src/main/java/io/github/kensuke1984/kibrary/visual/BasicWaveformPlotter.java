@@ -163,7 +163,7 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#mainSynStyle 2");
             pw.println("##Name for main synthetic waveform (synthetic)");
             pw.println("#mainSynName recovered");
-            pw.println("##Plot style for main residual waveform, from {0:no plot, 1:purple} (1)");
+            pw.println("##Plot style for main residual waveform, from {0:no plot, 1:sky blue} (1)");
             pw.println("#residualStyle 0");
             pw.println("##Name for main residual waveform (residual)");
             pw.println("#residualName ");
