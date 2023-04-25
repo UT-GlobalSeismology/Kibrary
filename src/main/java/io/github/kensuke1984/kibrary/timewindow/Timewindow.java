@@ -19,6 +19,10 @@ public class Timewindow implements Comparable<Timewindow> {
      */
     public static final int PRECISION = 2;
     /**
+     * The maximum number of digits of the integer part of a typical startTime or endTime.
+     */
+    public static final int TYPICAL_MAX_INTEGER_DIGITS = 4;
+    /**
      * Margin to decide whether two timewindows have the same startTime and/or endTime
      */
     public static final double TIME_EPSILON = 0.1;

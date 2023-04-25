@@ -8,7 +8,9 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -101,7 +103,7 @@ public class BasicID {
             boolean convolved, double... waveformData) {
         this.type = waveFormType;
         this.samplingHz = Precision.round(samplingHz, 3);
-        this.startTime = Precision.round(startTime, 3);
+        this.startTime = Precision.round(startTime, Timewindow.PRECISION);
         this.npts = npts;
         this.observer = observer;
         this.eventID = globalCMTID;
@@ -135,7 +137,7 @@ public class BasicID {
             boolean convolved, double... waveformData) {
         this.type = waveFormType;
         this.samplingHz = Precision.round(samplingHz, 3);
-        this.startTime = Precision.round(startTime, 3);
+        this.startTime = Precision.round(startTime, Timewindow.PRECISION);
         this.npts = npts;
         this.observer = observer;
         this.eventID = eventID;
@@ -349,8 +351,9 @@ public class BasicID {
 
     @Override
     public String toString() {
-        String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + type + " " + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
+        String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved;
         return basicString;
     }

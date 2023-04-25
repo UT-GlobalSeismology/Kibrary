@@ -8,7 +8,9 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -189,7 +191,8 @@ public class PartialID extends BasicID {
     @Override
     public String toString() {
         String partialString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved + " "
                 + parameterType + " " + variableType + " " + voxelPosition;
         return partialString;

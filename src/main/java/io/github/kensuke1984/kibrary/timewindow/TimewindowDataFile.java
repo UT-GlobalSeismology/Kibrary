@@ -25,7 +25,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
@@ -344,7 +343,8 @@ public final class TimewindowDataFile {
                         .computeEpicentralDistanceDeg(window.getObserver().getPosition());
                 double azimuth = window.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeAzimuthDeg(window.getObserver().getPosition());
-                pw.println(window.toString() + " " + Precision.round(distance, 2) + " " + Precision.round(azimuth, 2));
+                pw.println(window.toString() + " "
+                        + MathAid.padToString(distance, 3, 2, " ") + " " + MathAid.padToString(azimuth, 3, 2, " "));
             });
         }
     }

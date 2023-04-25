@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -374,12 +373,15 @@ public class ActualWaveformCompiler extends Operation {
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 static correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no static correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
+
     /**
      * @param window
      * @author anselme
@@ -387,11 +389,13 @@ public class ActualWaveformCompiler extends Operation {
      */
     private StaticCorrectionData getMantleCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 mantle correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no mantle correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
 
     private double[] cutDataSac(SACFileAccess sac, Timewindow window) {
@@ -611,27 +615,26 @@ public class ActualWaveformCompiler extends Operation {
             double shift = 0;
             double ratio = 1;
             if (correctTime || amplitudeCorrectionType > 0) {
-                try {
-                    StaticCorrectionData sc = getStaticCorrection(timewindow);
-                    if (correctTime) shift = sc.getTimeshift();
-                    switch (amplitudeCorrectionType) {
-                    case 1: ratio = sc.getAmplitudeRatio(); break;
-                    case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
-                    }
-                } catch (NoSuchElementException e) {
-                    System.err.println("!! No static correction information, skipping: " + timewindow);
+                StaticCorrectionData sc = getStaticCorrection(timewindow);
+                if (sc == null) {
+                    System.err.println();
+                    System.err.println("!! No static correction data, skipping: " + timewindow);
                     return;
+                }
+                if (correctTime) shift = sc.getTimeshift();
+                switch (amplitudeCorrectionType) {
+                case 1: ratio = sc.getAmplitudeRatio(); break;
+                case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
                 }
             }
             if (correctMantle) {
-                try {
-                    StaticCorrectionData sc = getMantleCorrection(timewindow);
-                    shift += sc.getTimeshift();
-                } catch (NoSuchElementException e) {
+                StaticCorrectionData sc = getMantleCorrection(timewindow);
+                if (sc == null) {
                     System.err.println();
-                    System.err.println("!! No mantle correction information, skipping: " + timewindow);
+                    System.err.println("!! No mantle correction data, skipping: " + timewindow);
                     return;
                 }
+                shift += sc.getTimeshift();
             }
 
             TimewindowData windowRef = null;
