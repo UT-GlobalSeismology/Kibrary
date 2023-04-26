@@ -38,26 +38,26 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Find the latitude interval of a given set of positions.
      * The latitudes must be equally spaced.
-     * @param positions (Set of {@link FullPosition})
+     * @param positions (Set of {@link HorizontalPosition})
      * @return (double) interval
      */
-    public static double findLatitudeInterval(Set<FullPosition> positions) {
-        FullPosition pos0 = positions.iterator().next();
+    public static double findLatitudeInterval(Set<? extends HorizontalPosition> positions) {
+        HorizontalPosition pos0 = positions.iterator().next();
         return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
-                .filter(diff -> !Precision.equals(diff, 0, FullPosition.LATITUDE_EPSILON)).min().getAsDouble();
+                .filter(diff -> !Precision.equals(diff, 0, LATITUDE_EPSILON)).min().getAsDouble();
     }
 
     /**
      * Judges whether a set of positions crosses the date line and not the prime meridian.
      * If the positions cross both the prime meridian and the date line, returns false.
-     * @param positions (Set of {@link FullPosition}) Input positions
+     * @param positions (Set of {@link HorizontalPosition}) Input positions
      * @return (boolean) Whether the positions cross only the date line
      *
      * @author otsuru
      * @since 2023/3/9
      */
-    public static boolean crossesDateLine(Set<FullPosition> positions) {
-        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLongitude).distinct().sorted().toArray();
+    public static boolean crossesDateLine(Set<? extends HorizontalPosition> positions) {
+        double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
         if (longitudes.length <= 1) return false;
 
         double largestGap = longitudes[0] + 360 - longitudes[longitudes.length - 1];

@@ -10,7 +10,6 @@ import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -260,10 +259,10 @@ public class PerturbationMapShellscript {
     /**
      * Decides the interval in which to sample the grid in a map.
      * This method sets the interval at roughly a tenth of the input position spacing.
-     * @param positions (Set of {@link FullPosition}) Input position set
+     * @param positions (Set of {@link HorizontalPosition}) Input position set
      * @return (double) Suggested value of grid spacing
      */
-    static double decideGridSampling(Set<FullPosition> positions) {
+    static double decideGridSampling(Set<? extends HorizontalPosition> positions) {
         double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
         int power = (int) Math.floor(Math.log10(positionInterval));
         double coef = positionInterval / Math.pow(10, power);
@@ -276,16 +275,16 @@ public class PerturbationMapShellscript {
 
     /**
      * Decides a rectangular region of a map that is sufficient to plot all parameter points.
-     * @param positions (Set of FullPosition) Positions that need to be included in map region
+     * @param positions (Set of {@link HorizontalPosition}) Positions that need to be included in map region
      * @return (String) "lonMin/lonMax/latMin/latMax"
      */
-    static String decideMapRegion(Set<FullPosition> positions) {
+    static String decideMapRegion(Set<? extends HorizontalPosition> positions) {
         if (positions.size() == 0) throw new IllegalArgumentException("No positions are given");
         // whether to use [0:360) instead of [-180:180)
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         // map to latitude and longitude values
-        double[] latitudes = positions.stream().mapToDouble(FullPosition::getLatitude).toArray();
-        double[] longitudes = positions.stream().mapToDouble(FullPosition::getLongitude)
+        double[] latitudes = positions.stream().mapToDouble(HorizontalPosition::getLatitude).toArray();
+        double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude)
                 .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
         // find min and max latitude and longitude
         double latMin = Arrays.stream(latitudes).min().getAsDouble();
@@ -297,6 +296,8 @@ public class PerturbationMapShellscript {
         latMax = Math.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
         lonMin = Math.floor(lonMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
         lonMax = Math.ceil(lonMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
+        if (latMin < -90) latMin = -90;
+        if (latMax > 90) latMax = 90;
         // return as String
         return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
     }
