@@ -50,7 +50,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Judges whether a set of positions crosses the date line and not the prime meridian.
      * If the positions cross both the prime meridian and the date line, returns false.
-     * @param positions (Set of {@link FullPosition}) Input positions
+     * @param positions (Set of {@link HorizontalPosition}) Input positions
      * @return (boolean) Whether the positions cross only the date line
      *
      * @author otsuru

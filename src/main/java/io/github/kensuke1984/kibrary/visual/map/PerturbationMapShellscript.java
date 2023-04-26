@@ -296,6 +296,8 @@ public class PerturbationMapShellscript {
         latMax = Math.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
         lonMin = Math.floor(lonMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
         lonMax = Math.ceil(lonMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
+        if (latMin < -90) latMin = -90;
+        if (latMax > 90) latMax = 90;
         // return as String
         return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
     }
