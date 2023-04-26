@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
-import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.commons.math3.util.FastMath;
@@ -51,7 +50,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Judges whether a set of positions crosses the date line and not the prime meridian.
      * If the positions cross both the prime meridian and the date line, returns false.
-     * @param positions (Set of {@link FullPosition}) Input positions
+     * @param positions (Set of {@link HorizontalPosition}) Input positions
      * @return (boolean) Whether the positions cross only the date line
      *
      * @author otsuru
@@ -59,25 +58,25 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      */
     public static boolean crossesDateLine(Set<? extends HorizontalPosition> positions) {
         double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
-        double[] negativeLongitudes = Arrays.stream(longitudes).filter(lon -> lon < 0).toArray();
-        double[] positiveLongitudes = Arrays.stream(longitudes).filter(lon -> lon >= 0).toArray();
+        if (longitudes.length <= 1) return false;
 
-        // when all positions are clustered on either the western or eastern hemisphere
-        if (negativeLongitudes.length == 0 || positiveLongitudes.length == 0) {
-            return false;
+        double largestGap = longitudes[0] + 360 - longitudes[longitudes.length - 1];
+        double gapStartLongitude = longitudes[longitudes.length - 1];
+        double gapEndLongitude = longitudes[0];
+        for (int i = 1; i < longitudes.length; i++) {
+            if (longitudes[i] - longitudes[i - 1] > largestGap) {
+                largestGap = longitudes[i] - longitudes[i - 1];
+                gapStartLongitude = longitudes[i - 1];
+                gapEndLongitude = longitudes[i];
+            }
         }
 
-        double minNegativeLongitude = Arrays.stream(negativeLongitudes).min().getAsDouble();
-        double maxNegativeLongitude = Arrays.stream(negativeLongitudes).max().getAsDouble();
-        double minPositiveLongitude = Arrays.stream(positiveLongitudes).min().getAsDouble();
-        double maxPositiveLongitude = Arrays.stream(positiveLongitudes).max().getAsDouble();
-
-        // when longitudes on both sides of the prime meridian are closer to each other than those on both sides of the date line
-        if (minPositiveLongitude - maxNegativeLongitude < minNegativeLongitude + 360 - maxPositiveLongitude) {
-            return false;
-        } else {
-            return true;
-        }
+        // Return true when start of gap is in western hemisphere and end of gap is in eastern hemisphere,
+        //   thus the gap crosses the prime meridian but not the date line.
+        //   This is when the set of positions crosses the date line and not the prime meridian.
+        if (gapStartLongitude <= 0 && 0 <= gapEndLongitude) return true;
+        // Otherwise, false. (Either the positions are clustered on one hemisphere, or crosses the prime meridian.)
+        else return false;
     }
 
     public static double latitudeFor(double theta) {

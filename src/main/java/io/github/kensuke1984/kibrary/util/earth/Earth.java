@@ -170,10 +170,14 @@ public final class Earth {
         if (endA <= startA || startA < 0)
             throw new IllegalArgumentException("startA: " + startA + " must be [0,endA). endA: " + endA + " must be (startA,Infty]");
 
-        // //latitude
+        // latitude
         if (startLatitude < -90 || startLatitude >= endLatitude || 90 < endLatitude) throw new IllegalArgumentException(
                 "startLatitude: " + startLatitude + " must be [-90,endLatitude). endLatitude: " + endLatitude +
                         " must be (startLatitude,90].");
+
+        // Longitudes are not required to be in [-180,360) here
+        //   because we will not be able to compute for voxels near the edges of the valid longitude range.
+        //   (ex. a 5-deg wide voxel at -180 deg)
 
         // double dr =1;
         double dr = (endA - startA) * 0.01;
