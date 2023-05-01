@@ -166,6 +166,7 @@ public class CheckerboardMaker extends Operation {
         double[] layerThicknesses = file.getThicknesses();
         double[] radii = file.getRadii();
         List<HorizontalPixel> pixels = file.getHorizontalPixels();
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(file.getHorizontalPositions());
 
         // set checkerboard model
         System.err.println("Creating checkerboard perturbations.");
@@ -181,7 +182,7 @@ public class CheckerboardMaker extends Operation {
                 FullPosition position = horizontalPosition.toFullPosition(radii[i]);
                 // find the sign shift with respect to referencePosition
                 int numDiff = (int) Math.round((position.getLatitude() - referencePosition.getLatitude()) / dLatitude)
-                        + (int) Math.round((position.getLongitude() - referencePosition.getLongitude()) / dLongitude)
+                        + (int) Math.round((position.getLongitude(crossDateLine) - referencePosition.getLongitude(crossDateLine)) / dLongitude)
                         + i + numForSuppressFlip(position);
 
                 // construct voxel

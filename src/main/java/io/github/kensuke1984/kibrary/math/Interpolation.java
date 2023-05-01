@@ -89,12 +89,11 @@ public class Interpolation {
             for (double latitude : latitudes) {
                 List<FullPosition> inLatitudePositions = inLayerPositions.stream()
                         .filter(pos -> Precision.equals(pos.getLatitude(), latitude, FullPosition.LATITUDE_EPSILON))
-                        .sorted(Comparator.comparing(pos -> (crossDateLine && pos.getLongitude() < 0) ? pos.getLongitude() + 360 : pos.getLongitude()))
+                        .sorted(Comparator.comparing(pos -> pos.getLongitude(crossDateLine)))
                         .collect(Collectors.toList());
 
                 // pack data values at original points along this latitude in a Trace (x is the longitude direction here)
-                double[] x = inLatitudePositions.stream().mapToDouble(position -> position.getLongitude())
-                        .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+                double[] x = inLatitudePositions.stream().mapToDouble(position -> position.getLongitude(crossDateLine)).toArray();
                 double[] y = inLatitudePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
                 Trace originalTrace = new Trace(x, y);
 

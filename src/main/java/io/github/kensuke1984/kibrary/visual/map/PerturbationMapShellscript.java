@@ -284,8 +284,7 @@ public class PerturbationMapShellscript {
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         // map to latitude and longitude values
         double[] latitudes = positions.stream().mapToDouble(HorizontalPosition::getLatitude).toArray();
-        double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude)
-                .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+        double[] longitudes = positions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).toArray();
         // find min and max latitude and longitude
         double latMin = Arrays.stream(latitudes).min().getAsDouble();
         double latMax = Arrays.stream(latitudes).max().getAsDouble();
