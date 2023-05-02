@@ -316,14 +316,14 @@ public class BasicRecordSectionCreator extends Operation {
 
        // read reference basic waveform folders and write waveforms to be used into txt files
        List<BasicID> refBasicIDs1 = null;
-       if (refBasicPath1 != null && refSynStyle1 != 0) {
+       if (refBasicPath1 != null) {
            refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
            BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
        }
        List<BasicID> refBasicIDs2 = null;
-       if (refBasicPath2 != null && refSynStyle2 != 0) {
+       if (refBasicPath2 != null) {
            refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
@@ -472,7 +472,7 @@ public class BasicRecordSectionCreator extends Operation {
 
         private void profilePlotSetup() {
             // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-            String fileNameRoot = DatasetAid.generateOutputFileName("profile", fileTag, dateStr, "_" + component.toString());
+            String fileNameRoot = DatasetAid.generateOutputFileName("recordSection", fileTag, dateStr, "_" + component.toString());
 
             gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
             gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);

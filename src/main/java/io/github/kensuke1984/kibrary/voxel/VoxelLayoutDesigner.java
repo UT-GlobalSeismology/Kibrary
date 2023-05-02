@@ -232,12 +232,12 @@ public class VoxelLayoutDesigner extends Operation {
         for (Raypath segment : insideSegments) {
             FullPosition startPosition = segment.getSource();
             HorizontalPosition endPosition = segment.getReceiver();
-            double epicentralDistanceDeg = startPosition.computeEpicentralDistanceDeg(endPosition);
+            double segmentDistanceDeg = startPosition.computeEpicentralDistanceDeg(endPosition);
             double azimuthDeg = startPosition.computeAzimuthDeg(endPosition);
 
             // distribute sample points equally along the raypath segment
-            int nSamplePointInterval = (int) Math.round(epicentralDistanceDeg / dDistanceRef);
-            double dDistanceDeg = epicentralDistanceDeg / nSamplePointInterval;
+            int nSamplePointInterval = (int) Math.round(segmentDistanceDeg / dDistanceRef);
+            double dDistanceDeg = segmentDistanceDeg / nSamplePointInterval;
 
             // sample points along the raypath segment, including startPosition and endPosition
             for (int i = 0; i <= nSamplePointInterval; i++) {
@@ -250,10 +250,10 @@ public class VoxelLayoutDesigner extends Operation {
                 // decide which colatitude interval the sample point is in
                 // latitudeOffset moves border latitudes to positive side, so moves border colatitudes to negative side.
                 // This way, sampleInterval will never become negative.
-                int sampleInterval = (int) ((sampleColatitude + latitudeOffset) / dLatitude);
+                int colatitudeIndex = (int) Math.floor((sampleColatitude + latitudeOffset) / dLatitude);
                 // reflect this sample point on longitude ranges
-                if (sampleLongitude < minLongitudes[sampleInterval]) minLongitudes[sampleInterval] = sampleLongitude;
-                if (sampleLongitude > maxLongitudes[sampleInterval]) maxLongitudes[sampleInterval] = sampleLongitude;
+                if (sampleLongitude < minLongitudes[colatitudeIndex]) minLongitudes[colatitudeIndex] = sampleLongitude;
+                if (sampleLongitude > maxLongitudes[colatitudeIndex]) maxLongitudes[colatitudeIndex] = sampleLongitude;
             }
         }
 
