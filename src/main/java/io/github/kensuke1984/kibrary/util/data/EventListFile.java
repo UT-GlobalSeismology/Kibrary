@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,30 @@ public class EventListFile {
             eventSet.stream().sorted().forEach(event -> {
                 pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition()
                          + " " + event.getEventData().getCmtPosition().getDepth() + " " + event.getEventData().getCmt().getMw());
+            });
+        }
+    }
+
+    /**
+     * Writes an event list file given a set of GlobalCMTIDs.
+     * Each line: Date, latitude, longitude, depth, Mw, Half duration
+     * @param eventSet Set of events
+     * @param outputPath  of write file
+     * @param options  for write
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeFullInfo(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(eventSet.size(), "event", "events")
+                + " in " + outputPath);
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
+            pw.println("# yyyy/mm/dd latitude longitude depth Mw HalfDuration");
+            eventSet.stream().sorted().forEach(event -> {
+                pw.println(event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
+                        + " " + event.getEventData().getCmtPosition().getLatitude()
+                        + " " + event.getEventData().getCmtPosition().getLongitude() + " " + event.getEventData().getCmtPosition().getDepth()
+                        + " " + event.getEventData().getCmt().getMw() + " " + event.getEventData().getHalfDuration());
             });
         }
     }
@@ -124,6 +149,10 @@ public class EventListFile {
                 .desc("Use basic waveform folder as input").build());
         options.addOptionGroup(inputOption);
 
+        // option
+        options.addOption(Option.builder("f").longOpt("full")
+                .desc("Select output full information (Date, Latitude, Longitude, Depth, Mw, Half dur)").build());
+
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Set path of output file").build());
@@ -165,7 +194,9 @@ public class EventListFile {
         }
 
         if (!DatasetAid.checkNum(eventSet.size(), "event", "events")) return;
-        write(eventSet, outputPath);
+
+        if (cmdLine.hasOption("f")) writeFullInfo(eventSet, outputPath);
+        else write(eventSet, outputPath);
     }
 
 }

@@ -59,8 +59,7 @@ public class FusionDesign {
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         // add new parameter
         double latitude = positions.stream().mapToDouble(pos -> pos.getLatitude()).average().getAsDouble();
-        double longitude = positions.stream().mapToDouble(pos -> pos.getLongitude())
-                .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).average().getAsDouble();
+        double longitude = positions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).average().getAsDouble();
         double radius = positions.stream().mapToDouble(pos -> pos.getR()).average().getAsDouble();
         FullPosition position = new FullPosition(latitude, longitude, radius);
         double size = params.stream().mapToDouble(param -> param.getSize()).sum();

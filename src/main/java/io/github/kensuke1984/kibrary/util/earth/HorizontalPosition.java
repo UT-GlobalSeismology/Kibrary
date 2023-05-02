@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
-import java.util.Arrays;
-import java.util.Set;
+import java.util.Collection;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -39,10 +38,10 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Find the latitude interval of a given set of positions.
      * The latitudes must be equally spaced.
-     * @param positions (Set of {@link HorizontalPosition})
+     * @param positions (Collection of {@link HorizontalPosition}) Input positions
      * @return (double) interval
      */
-    public static double findLatitudeInterval(Set<? extends HorizontalPosition> positions) {
+    public static double findLatitudeInterval(Collection<? extends HorizontalPosition> positions) {
         HorizontalPosition pos0 = positions.iterator().next();
         return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
                 .filter(diff -> !Precision.equals(diff, 0, LATITUDE_EPSILON)).min().getAsDouble();
@@ -51,33 +50,33 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Judges whether a set of positions crosses the date line and not the prime meridian.
      * If the positions cross both the prime meridian and the date line, returns false.
-     * @param positions (Set of {@link FullPosition}) Input positions
+     * @param positions (Collection of {@link HorizontalPosition}) Input positions
      * @return (boolean) Whether the positions cross only the date line
      *
      * @author otsuru
      * @since 2023/3/9
      */
-    public static boolean crossesDateLine(Set<? extends HorizontalPosition> positions) {
+    public static boolean crossesDateLine(Collection<? extends HorizontalPosition> positions) {
         double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
-        double[] negativeLongitudes = Arrays.stream(longitudes).filter(lon -> lon < 0).toArray();
-        double[] positiveLongitudes = Arrays.stream(longitudes).filter(lon -> lon >= 0).toArray();
+        if (longitudes.length <= 1) return false;
 
-        // when all positions are clustered on either the western or eastern hemisphere
-        if (negativeLongitudes.length == 0 || positiveLongitudes.length == 0) {
-            return false;
+        double largestGap = longitudes[0] + 360 - longitudes[longitudes.length - 1];
+        double gapStartLongitude = longitudes[longitudes.length - 1];
+        double gapEndLongitude = longitudes[0];
+        for (int i = 1; i < longitudes.length; i++) {
+            if (longitudes[i] - longitudes[i - 1] > largestGap) {
+                largestGap = longitudes[i] - longitudes[i - 1];
+                gapStartLongitude = longitudes[i - 1];
+                gapEndLongitude = longitudes[i];
+            }
         }
 
-        double minNegativeLongitude = Arrays.stream(negativeLongitudes).min().getAsDouble();
-        double maxNegativeLongitude = Arrays.stream(negativeLongitudes).max().getAsDouble();
-        double minPositiveLongitude = Arrays.stream(positiveLongitudes).min().getAsDouble();
-        double maxPositiveLongitude = Arrays.stream(positiveLongitudes).max().getAsDouble();
-
-        // when longitudes on both sides of the prime meridian are closer to each other than those on both sides of the date line
-        if (minPositiveLongitude - maxNegativeLongitude < minNegativeLongitude + 360 - maxPositiveLongitude) {
-            return false;
-        } else {
-            return true;
-        }
+        // Return true when start of gap is in western hemisphere and end of gap is in eastern hemisphere,
+        //   thus the gap crosses the prime meridian but not the date line.
+        //   This is when the set of positions crosses the date line and not the prime meridian.
+        if (gapStartLongitude <= 0 && 0 <= gapEndLongitude) return true;
+        // Otherwise, false. (Either the positions are clustered on one hemisphere, or crosses the prime meridian.)
+        else return false;
     }
 
     public static double latitudeForTheta(double theta) {
@@ -329,24 +328,37 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @return geographic latitude [deg] [-90, 90]
+     * @return (double) Geographic latitude [deg] [-90, 90]
      */
     public double getLatitude() {
         return latitude.getLatitude();
     }
 
     /**
-     * @return geocentric latitude [rad] [-&pi;/2, &pi;/2]
+     * @return (double) Geocentric latitude [rad] [-&pi;/2, &pi;/2]
      */
     public double getGeocentricLatitude() {
         return latitude.getGeocentricLatitudeRad();
     }
 
     /**
-     * @return geographic longitude [deg] [-180:180)
+     * Geographic longitude in range [-180, 180).
+     * @return (double) Geographic longitude [deg] [-180:180)
      */
     public double getLongitude() {
         return longitude.getLongitude();
+    }
+
+    /**
+     * Geographic longitude, either in range [0:360) or [-180, 180).
+     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
+     * @return (double) Geographic longitude [deg]
+     *
+     * @author otsuru
+     * @since 2023/4/30
+     */
+    public double getLongitude(boolean crossDateLine) {
+        return longitude.getLongitude(crossDateLine);
     }
 
     /**

@@ -24,6 +24,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class Interpolation {
 
+    private static final int GRID_PRECISION = 4;
+
     public static double threePointInterpolation(double x, double[] xi, double[] yi) {
         double[] h = new double[3];
         for (int i = 0; i < 3; i++)
@@ -70,12 +72,11 @@ public class Interpolation {
                 List<FullPosition> inLinePositions = allPositions.stream()
                         .filter(pos -> Precision.equals(pos.getLatitude(), latitude, FullPosition.LATITUDE_EPSILON)
                                 && Precision.equals(pos.getR(), radius, FullPosition.RADIUS_EPSILON))
-                        .sorted(Comparator.comparing(pos -> (crossDateLine && pos.getLongitude() < 0) ? pos.getLongitude() + 360 : pos.getLongitude()))
+                        .sorted(Comparator.comparing(pos -> pos.getLongitude(crossDateLine)))
                         .collect(Collectors.toList());
 
                 // pack data values at original points along this latitude in a Trace (x is the longitude direction here)
-                double[] x = inLinePositions.stream().mapToDouble(position -> position.getLongitude())
-                        .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+                double[] x = inLinePositions.stream().mapToDouble(position -> position.getLongitude(crossDateLine)).toArray();
                 double[] y = inLinePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
                 Trace originalTrace = new Trace(x, y);
 
@@ -145,12 +146,11 @@ public class Interpolation {
             for (double latitude : latitudes) {
                 List<FullPosition> inLatitudePositions = inLayerPositions.stream()
                         .filter(pos -> Precision.equals(pos.getLatitude(), latitude, FullPosition.LATITUDE_EPSILON))
-                        .sorted(Comparator.comparing(pos -> (crossDateLine && pos.getLongitude() < 0) ? pos.getLongitude() + 360 : pos.getLongitude()))
+                        .sorted(Comparator.comparing(pos -> pos.getLongitude(crossDateLine)))
                         .collect(Collectors.toList());
 
                 // pack data values at original points along this latitude in a Trace (x is the longitude direction here)
-                double[] x = inLatitudePositions.stream().mapToDouble(position -> position.getLongitude())
-                        .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+                double[] x = inLatitudePositions.stream().mapToDouble(position -> position.getLongitude(crossDateLine)).toArray();
                 double[] y = inLatitudePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
                 Trace originalTrace = new Trace(x, y);
 
@@ -171,11 +171,16 @@ public class Interpolation {
                     .mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
             for (int i = 0; i < nGridLongitudes; i++) {
-                double longitude = minLongitude + i * gridInterval;
+                double longitude = Precision.round(minLongitude + i * gridInterval, GRID_PRECISION);
 
                 // extract indices of latitudes with values defined on this longitude
                 int[] indicesWithValue = IntStream.range(0, latitudes.length)
                         .filter(j -> hasValueInTraceList(longitude, eachLatitudeTraces.get(latitudes[j]))).sorted().toArray();
+                if (indicesWithValue.length == 0) {
+                    System.err.println("!! No index for longitude " + longitude);
+                    System.err.println("    Did you set the margins properly?");
+                    continue;
+                }
                 // split into groups of consequtive latitudes
                 List<int[]> indexGroups = splitIndexGroups(indicesWithValue);
                 for (int[] indexArray : indexGroups) {
@@ -269,7 +274,7 @@ public class Interpolation {
         // array of sample points at which to interpolate
         double[] xs = new double[nGridXs];
         for (int i = 0; i < nGridXs; i++) {
-            xs[i] = startX + i * gridInterval;
+            xs[i] = Precision.round(startX + i * gridInterval, GRID_PRECISION);
         }
         return interpolateTraceAtPoints(originalTrace, xs, margin, mosaic);
     }

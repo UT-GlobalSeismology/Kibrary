@@ -89,12 +89,23 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * [-180, 180)
-     *
-     * @return longitude [deg]
+     * Geographic longitude in range [-180, 180).
+     * @return (double) longitude [deg]
      */
     public double getLongitude() {
         return longitude;
+    }
+
+    /**
+     * Geographic longitude, either in range [0:360) or [-180, 180).
+     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
+     * @return (double) longitude [deg]
+     *
+     * @author otsuru
+     * @since 2023/4/30
+     */
+    public double getLongitude(boolean crossDateLine) {
+        return (crossDateLine && longitude < 0) ? longitude + 360 : longitude;
     }
 
     /**
@@ -139,7 +150,7 @@ final class Longitude implements Comparable<Longitude> {
      * @since 2023/3/10
      */
     public String toString(boolean crossDateLine) {
-        double correctedLongitude = ((crossDateLine && longitude < 0) ? longitude + 360 : longitude);
+        double correctedLongitude = getLongitude(crossDateLine);
         return MathAid.padToString(correctedLongitude, 4, PRECISION, " ");
     }
 

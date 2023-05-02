@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,15 +58,6 @@ public class RaypathMapper extends Operation {
     private static final int BIN_AZIMUTH = 3;
     private static final int BIN_BACKAZIMUTH = 4;
     private static final int BIN_MIDAZIMUTH = 5;
-
-    /**
-     * The interval of deciding map size
-     */
-    private static final int INTERVAL = 5;
-    /**
-     * How much space to provide at the rim of the map
-     */
-    private static final int MAP_RIM = 5;
 
     private final Property property;
     /**
@@ -587,46 +579,28 @@ public class RaypathMapper extends Operation {
         if (mapRegion != null) {
             return mapRegion;
         } else {
-            double latMin = Double.MAX_VALUE;
-            double latMax = -Double.MAX_VALUE;
-            double lonMin = Double.MAX_VALUE;
-            double lonMax = -Double.MAX_VALUE;
-
-            Set<GlobalCMTID> events = EventListFile.read(outPath.resolve(eventFileName));
-            for (GlobalCMTID event : events) {
-                HorizontalPosition pos = event.getEventData().getCmtPosition();
-                if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
-                if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
-                if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
-                if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
-            }
-
-            Set<Observer> observers = ObserverListFile.read(outPath.resolve(observerFileName));
-            for (Observer observer : observers) {
-                HorizontalPosition pos = observer.getPosition();
-                if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
-                if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
-                if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
-                if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
-            }
-
+            // collect positions of events and observers
+            Set<HorizontalPosition> positions = new HashSet<>();
+            EventListFile.read(outPath.resolve(eventFileName)).stream()
+                    .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
+            ObserverListFile.read(outPath.resolve(observerFileName)).stream()
+                    .map(observer -> observer.getPosition()).forEach(positions::add);
             if (cutAtPiercePoint) {
                 List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
                 for (String line : turningPointLines) {
                     String[] parts = line.trim().split("\\s+");
                     HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-                    if (pos.getLatitude() < latMin) latMin = pos.getLatitude();
-                    if (pos.getLatitude() > latMax) latMax = pos.getLatitude();
-                    if (pos.getLongitude() < lonMin) lonMin = pos.getLongitude();
-                    if (pos.getLongitude() > lonMax) lonMax = pos.getLongitude();
+                    positions.add(pos);
                 }
             }
 
-            // expand the region a bit more
-            latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
-            latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
-            lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
-            lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
+            // decide on a region temporarily, and split up the returned String into coordinates
+            String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
+            double lonMin = Double.parseDouble(coordinateStrings[0]);
+            double lonMax = Double.parseDouble(coordinateStrings[1]);
+            double latMin = Double.parseDouble(coordinateStrings[2]);
+            double latMax = Double.parseDouble(coordinateStrings[3]);
+
             // space for legend
             if (colorMode > 0) {
                 double fix = forSlides ? 60 : 40;
@@ -637,6 +611,7 @@ public class RaypathMapper extends Operation {
                 }
             }
 
+            // recreate the region String
             return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }
     }

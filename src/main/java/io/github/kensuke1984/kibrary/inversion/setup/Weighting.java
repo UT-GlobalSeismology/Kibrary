@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * Weighting to be applied to A matrix and d vector in Am=d.
@@ -51,20 +52,61 @@ public final class Weighting {
         case IDENTITY:
             WEIGHTING_FUNCTION = (obs, syn) -> 1.;
             break;
+        case RECIPROCAL_TZ:
+            WEIGHTING_FUNCTION = (obs, syn) -> {
+                return 1. / obs.getLInfNorm();
+            };
+            break;
         default:
             throw new UnsupportedOperationException("Weighting type " + weightingType + " not supported yet.");
         }
 
-        for (int i = 0; i < dVector.getNTimeWindow(); i++) {
-            double weighting;
-            weighting = WEIGHTING_FUNCTION.applyAsDouble(dVector.getObsVec(i), dVector.getSynVec(i));
-
-            double[] ws = new double[dVector.getObsVec(i).getDimension()];
-            for (int j = 0; j < ws.length; j++) {
-                ws[j] = weighting;
+        switch (weightingType) {
+        // T, Z成分についての重み付け
+        case RECIPROCAL_TZ:
+            int zNum = 0;
+            int tNum = 0;
+            for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+                if (dVector.getObsID(i).getSacComponent().equals(SACComponent.Z)) zNum++;
+                else if (dVector.getObsID(i).getSacComponent().equals(SACComponent.T)) tNum++;
+                else  throw new UnsupportedOperationException("Component " + dVector.getObsID(i).getSacComponent() + " not supported yet.");
             }
-            weightingVectors[i] = new ArrayRealVector(ws);
+            //System.err.println("Z comp = " + zNum + " : T comp = " + tNum); //TODO
+            double zWeight = (zNum + tNum) / 2. / zNum;
+            double tWeight = (zNum + tNum) / 2. / tNum;
+            //System.err.println("Z comp = " + zWeight + " : T comp = " + tWeight); //TODO
+            for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+                double weighting;
+                weighting = WEIGHTING_FUNCTION.applyAsDouble(dVector.getObsVec(i), dVector.getSynVec(i));
+                if (dVector.getObsID(i).getSacComponent().equals(SACComponent.Z)) {
+                    weighting *= zWeight;
+                    //System.err.println("Z " + weighting); //TODO
+                }
+                else if (dVector.getObsID(i).getSacComponent().equals(SACComponent.T)) {
+                    weighting *= tWeight;
+                    //System.err.println("T " + weighting); //TODO
+                }
 
+                double[] ws = new double[dVector.getObsVec(i).getDimension()];
+                for (int j = 0; j < ws.length; j++) {
+                    ws[j] = weighting;
+                }
+                weightingVectors[i] = new ArrayRealVector(ws);
+            }
+            break;
+         // (end) T, Z成分についての重み付け
+        default:
+             for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+                 double weighting;
+                 weighting = WEIGHTING_FUNCTION.applyAsDouble(dVector.getObsVec(i), dVector.getSynVec(i));
+
+                 double[] ws = new double[dVector.getObsVec(i).getDimension()];
+                 for (int j = 0; j < ws.length; j++) {
+                     ws[j] = weighting;
+                 }
+                 weightingVectors[i] = new ArrayRealVector(ws);
+             }
+             break;
         }
         return weightingVectors;
     }
