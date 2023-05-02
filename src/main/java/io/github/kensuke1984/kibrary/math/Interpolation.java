@@ -24,6 +24,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class Interpolation {
 
+    private static final int GRID_PRECISION = 4;
+
     public static double threePointInterpolation(double x, double[] xi, double[] yi) {
         double[] h = new double[3];
         for (int i = 0; i < 3; i++)
@@ -114,11 +116,16 @@ public class Interpolation {
                     .mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
             for (int i = 0; i < nGridLongitudes; i++) {
-                double longitude = minLongitude + i * gridInterval;
+                double longitude = Precision.round(minLongitude + i * gridInterval, GRID_PRECISION);
 
                 // extract indices of latitudes with values defined on this longitude
                 int[] indicesWithValue = IntStream.range(0, latitudes.length)
                         .filter(j -> hasValueInTraceList(longitude, eachLatitudeTraces.get(latitudes[j]))).sorted().toArray();
+                if (indicesWithValue.length == 0) {
+                    System.err.println("!! No index for longitude " + longitude);
+                    System.err.println("    Did you set the margins properly?");
+                    continue;
+                }
                 // split into groups of consequtive latitudes
                 List<int[]> indexGroups = splitIndexGroups(indicesWithValue);
                 for (int[] indexArray : indexGroups) {
@@ -213,7 +220,7 @@ public class Interpolation {
         double[] xs = new double[nGridLongitudes];
         double[] ys = new double[nGridLongitudes];
         for (int i = 0; i < nGridLongitudes; i++) {
-            xs[i] = startLongitude + i * gridInterval;
+            xs[i] = Precision.round(startLongitude + i * gridInterval, GRID_PRECISION);
         }
 
         if (mosaic) {
