@@ -82,60 +82,21 @@ public class FormattedSPCFileName extends SPCFileName {
      */
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid SPC file name.");
-        fileType = getFileType(fileName);
-        mode = getMode(fileName);
-        sourceID = getSourceID(fileName);
-        receiverID = getReceiverID(fileName);
-        x = getX(fileName);
-        y = getY(fileName);
-    }
-
-    /**
-     * @param fileName name of SPC file
-     * @return which par or syn...なんのスペクトルファイルか
-     */
-    private static SPCType getFileType(String fileName) {
-        if (fileName.split("\\.").length == SYN_FILE_PARTS) return SPCType.SYNTHETIC;
-        else return SPCType.valueOf(fileName.split("\\.")[2]);
-    }
-
-    /**
-     * @param fileName name of SPC file
-     * @return PSV or SH
-     */
-    private static SPCMode getMode(String fileName) {
         String[] parts = fileName.split("\\.");
-        return SPCMode.valueOf(parts[parts.length - 2]);
+
+        receiverID = parts[0];
+        sourceID = parts[1];
+        fileType = (parts.length == SYN_FILE_PARTS ? SPCType.SYNTHETIC : SPCType.valueOf(fileName.split("\\.")[2]));
+        x = (parts.length == SYN_FILE_PARTS ? null : parts[3]);
+        y = (parts.length == SYN_FILE_PARTS ? null : parts[4]);
+        mode = SPCMode.valueOf(parts[parts.length - 2]);
     }
 
-    /**
-     * @param fileName name of spc file
-     * @return event ID
-     */
-    private static String getSourceID(String fileName) {
-        return fileName.split("\\.")[1];
-    }
-
-    private static String getReceiverID(String fileName) {
-        return fileName.split("\\.")[0];
-    }
-
-    private static String getX(String fileName) {
-        String[] parts = fileName.split("\\.");
-        return parts.length == SYN_FILE_PARTS ? null : parts[3];
-    }
-
-    private static String getY(String fileName) {
-        String[] parts = fileName.split("\\.");
-        return parts.length == SYN_FILE_PARTS ? null : parts[4];
-    }
-
-
-    //-------------------- get info of a certain instance --------------------//
+    //-------------------- get info of this certain instance --------------------//
 
     @Override
     public boolean isSynthetic() {
-        return isSynthetic(getName());
+        return fileType == SPCType.SYNTHETIC;
     }
 
     @Override

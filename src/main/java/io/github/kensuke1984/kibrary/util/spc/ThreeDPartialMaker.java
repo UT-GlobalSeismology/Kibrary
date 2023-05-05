@@ -355,9 +355,9 @@ public class ThreeDPartialMaker {
             validity = false;
         }
         // 摂動点名は同じかどうか
-        if (!(fp.getStationCode().equals(bp.getStationCode()))) {
+        if (!(fp.getReceiverID().equals(bp.getReceiverID()))) {
             System.err.println(
-                    "Perturbation points are different fp, bp: " + fp.getStationCode() + " ," + bp.getStationCode());
+                    "Perturbation points are different fp, bp: " + fp.getReceiverID() + " ," + bp.getReceiverID());
             validity = false;
         }
         // FP and BP have no observation network, thus we do not check it
@@ -431,15 +431,14 @@ public class ThreeDPartialMaker {
             System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
             validity = false;
         }
-        // 摂動点名は同じかどうか
-        if (!(fp.getStationCode().equals(bp.getStationCode()))) {
+        // check if voxel IDs are same
+        if (!(fp.getReceiverID().equals(bp.getReceiverID()))) {
             System.err.println(
-                    "Perturbation points are different fp, bp: " + fp.getStationCode() + " ," + bp.getStationCode());
+                    "Perturbation points are different. fp, bp: " + fp.getReceiverID() + " ," + bp.getReceiverID());
             validity = false;
         }
-        // FP and BP have no observation network, thus we do not check it
 
-        // 場所
+        // check if voxel positions are same
         if (!fp.getReceiverPosition().equals(bp.getReceiverPosition())) {
             System.err.println("perturbation point Positions are different.");
             System.err.println("perturbation point of fp, bp are" + "(" + fp.getReceiverPosition().getLatitude() + ", "
@@ -464,9 +463,7 @@ public class ThreeDPartialMaker {
         int nbody = bp.nbody();
         double omegai = bp.omegai();
         HorizontalPosition observerPosition = bp.getSourcePosition();
-        String observerID = bp.getSourceID(); //TODO check it
-//		String observerName = bp.getObserverID();
-        String observerNetwork = bp.getNetworkCode();
+        String observerID = bp.getSourceID();
         FullPosition sourceLocation = fp.getSourcePosition();
         String sourceID = fp.getSourceID();
         double[] bodyR = bp.getBodyR();
@@ -537,17 +534,19 @@ public class ThreeDPartialMaker {
 
             @Override
             public String getReceiverID() {
-                return observerID + "_" + observerNetwork;
-            }
-
-            @Override
-            public String getStationCode() {
                 return observerID;
             }
 
             @Override
+            @Deprecated
+            public String getStationCode() {
+                return null;
+            }
+
+            @Override
+            @Deprecated
             public String getNetworkCode() {
-                return observerNetwork;
+                return null;
             }
 
             @Override

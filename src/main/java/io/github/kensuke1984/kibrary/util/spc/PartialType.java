@@ -39,11 +39,11 @@ public enum PartialType {
     }
 
     public boolean is1D() {
-        return 0 <= value && 30 < value;
+        return 0 <= value && value < 30;
     }
 
     public boolean is3D() {
-        return 30 <= value && 60 < value;
+        return 30 <= value && value < 60;
     }
 
     public boolean isTimePartial() {
