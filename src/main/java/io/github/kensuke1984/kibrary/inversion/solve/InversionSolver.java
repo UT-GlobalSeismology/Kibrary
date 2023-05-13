@@ -90,7 +90,7 @@ public class InversionSolver extends Operation {
             pw.println("#unknownParameterPath ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
             pw.println("#inverseMethods ");
-            pw.println("##The empirical redundancy parameter alpha to compute AIC for, listed using spaces (1 100 1000)");
+            pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces (1 100 1000)");
             pw.println("#alpha ");
             pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC (100)");
             pw.println("#evaluateNum ");
