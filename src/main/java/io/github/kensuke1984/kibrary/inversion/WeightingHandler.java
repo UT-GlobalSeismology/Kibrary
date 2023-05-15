@@ -21,13 +21,15 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 /**
  * Class to decide weighting to be applied to A matrix and d vector in Am=d.
  * To be applied as the W matrix in WAm=Wd.
  * It is assumed to be a diagonal matrix, so the diagonal components are stored as a vector.
- * A weighting value is set for each timewindow.
+ * A weighting time-series is set for each timewindow.
  *
  * CAUTION: {@link RealVector} is not immutable, so be careful when handing it over to other methods without deep-copying!
  *
@@ -42,13 +44,13 @@ public class WeightingHandler {
     public static WeightingHandler IDENTITY = new WeightingHandler(new Property());
 
     private boolean amplitudeReciprocal;
-    private boolean balanceDistance;
-    private boolean balanceAzimuth;
-    private boolean balanceGeometry;
     private boolean balanceComponent;
     private double factorForZComponent;
     private double factorForRComponent;
     private double factorForTComponent;
+    private boolean balanceDistance;
+    private boolean balanceAzimuth;
+    private boolean balanceGeometry;
 
     private List<DataFeature> dataFeatures; // TODO apply
 
@@ -101,6 +103,12 @@ public class WeightingHandler {
             pw.println("#factorForRComponent ");
             pw.println("##(double) Factor to multiply to T component. (1.0)");
             pw.println("#factorForTComponent ");
+            pw.println("##(boolean) Whether to balance epicentral distances. (false)");
+            pw.println("#balanceDistance ");
+            pw.println("##(boolean) Whether to balance azimuths. (false)");
+            pw.println("#balanceAzimuth ");
+            pw.println("##(boolean) Whether to balance event & observer positions. (false)");
+            pw.println("#balanceGeometry ");
 
             //TODO
         }
@@ -123,6 +131,9 @@ public class WeightingHandler {
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
         factorForRComponent = property.parseDouble("factorForRComponent", "1.0");
         factorForTComponent = property.parseDouble("factorForTComponent", "1.0");
+        balanceDistance = property.parseBoolean("balanceDistance", "false");
+        balanceAzimuth = property.parseBoolean("balanceAzimuth", "false");
+        balanceGeometry = property.parseBoolean("balanceGeometry", "false");
 
         //TODO
     }
@@ -171,12 +182,18 @@ public class WeightingHandler {
                 break;
             }
 
+            // balance event & observer positions
+            if (balanceGeometry) {
+                weighting /= computeGeometryWeight(dVector.getObsID(i), dVector);
+            }
 
             //TODO
-            System.err.println(dVector.getObsID(i));
-            System.err.println(" " + dVector.getObsVec(i).getLInfNorm() + " " + weighting);
+            if (i % 500 == 0) {
+                System.err.println(dVector.getObsID(i));
+                System.err.println(" " + weighting);
+            }
 
-            // create vector with the value 'weighting' for the whole timewindow
+            //~create vector with the value 'weighting' for the whole timewindow
             double[] ws = new double[dVector.getObsVec(i).getDimension()];
             for (int j = 0; j < ws.length; j++) {
                 ws[j] = weighting;
@@ -185,5 +202,22 @@ public class WeightingHandler {
         }
 
         return weightingVectors;
+    }
+
+    private double computeGeometryWeight(BasicID basicID, DVectorBuilder dVector) {
+        HorizontalPosition eventPosition = basicID.getGlobalCMTID().getEventData().getCmtPosition();
+        HorizontalPosition observerPosition = basicID.getObserver().getPosition();
+
+        // count number of basicIDs with similar event & observer positions
+        int numClose = 0;
+        for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+            BasicID otherID = dVector.getObsID(i);
+            if (otherID.getSacComponent().equals(basicID.getSacComponent())
+                    && otherID.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistanceDeg(eventPosition) < 2.5
+                    && otherID.getObserver().getPosition().computeEpicentralDistanceDeg(observerPosition) < 2.5) {
+                numClose++;
+            }
+        }
+        return numClose;  //Math.sqrt() ??TODO
     }
 }
