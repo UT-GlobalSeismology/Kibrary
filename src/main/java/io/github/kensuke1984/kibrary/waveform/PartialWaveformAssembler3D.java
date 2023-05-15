@@ -563,7 +563,7 @@ public class PartialWaveformAssembler3D extends Operation {
         /**
          * Coefficients for interpolation
          */
-        private double[] dhBP = new double[3];
+        private double[] dhBP = new double[NUM_FROM_CATALOG];
 
         /**
          * Constructor for non-BPCatalogMode.
@@ -630,7 +630,7 @@ public class PartialWaveformAssembler3D extends Operation {
             for (int i = 0; i < NUM_FROM_CATALOG; i++) {
                 // Compute coefficients for interpolation
                 double theta = thetamin + (ipointBP + i) * dtheta;
-                dhBP[0] = (distanceBP - theta) / dtheta;
+                dhBP[i] = (distanceBP - theta) / dtheta;
 
                 // add BP file to list
                 if (usableSPCMode != UsableSPCMode.PSV) {
@@ -663,7 +663,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
             // check that the FP and BP files are pairs and are valid
             if (fpFiles.size() > 2) throw new IllegalStateException("Too many FP files; must be 1 or 2");
-            if (fpFiles.size() == 2 && forSameVoxel(fpFiles.get(0), fpFiles.get(1)) == false)
+            if (fpFiles.size() == 2 && forSamePixel(fpFiles.get(0), fpFiles.get(1)) == false)
                 throw new IllegalStateException("FP files do not match: " + fpFiles.get(0) + " " + fpFiles.get(1));
             if (fpFiles.get(0).tlen() != tlen || fpFiles.get(0).np() != np)
                 throw new IllegalStateException(fpFiles.get(0).toString() + " has invalid tlen or np: "
@@ -674,18 +674,18 @@ public class PartialWaveformAssembler3D extends Operation {
             } else {
                 if (fpFiles.size() != bpFiles.size()) throw new IllegalStateException("Number of FP and BP files do not match");
                 for (int i = 0; i < bpFiles.size(); i++) {
-                    if (!forSameVoxel(fpFiles.get(0), bpFiles.get(i)))
-                        throw new IllegalStateException("FP and BP files are not for same voxel: " + fpFiles.get(0) + " " + bpFiles.get(i));
+                    if (!forSamePixel(fpFiles.get(0), bpFiles.get(i)))
+                        throw new IllegalStateException("FP and BP files are not for same pixel: " + fpFiles.get(0) + " " + bpFiles.get(i));
                 }
             }
 
             ThreeDPartialMaker threedPartialMaker = null;
             if (bpCatalogMode) {
-                // when usableSCPMode==BOTH, fpFiles=[fpSH, fpPSV] and bpFiles=[bpSH0, bpSH1, bpSH2, bpPSV0, bpPSV1, bpPSV2]
+                // when usableSCPMode==BOTH, fpFiles=[fpSH, fpPSV] and bpFiles=[bpSH0, bpPSV0, bpSH1, bpPSV1, bpSH2, bpPSV2]
                 // otherwise, fpFiles=[fp] and bpFiles=[bp0, bp1, bp2]
                 if (fpFiles.size() == 2) {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(3),
-                            bpFiles.get(1), bpFiles.get(4), bpFiles.get(2), bpFiles.get(5), dhBP);
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1),
+                            bpFiles.get(2), bpFiles.get(3), bpFiles.get(4), bpFiles.get(5), dhBP);
                 } else {
                     threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), bpFiles.get(1), bpFiles.get(2), dhBP);
                 }
@@ -754,7 +754,7 @@ public class PartialWaveformAssembler3D extends Operation {
             return sampleU;
         }
 
-        private boolean forSameVoxel(SPCFileAccess spc1, SPCFileAccess spc2) {
+        private boolean forSamePixel(SPCFileAccess spc1, SPCFileAccess spc2) {
             if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) return false;
             else return true;
         }
