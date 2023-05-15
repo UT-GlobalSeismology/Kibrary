@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
 public enum VariableType {
     RHO(0),
     // iso
-    Vp(1), Vs(2), Vb(3),
+    Vp(1), Vs(2), Vb(3), R(22),
     LAMBDA(4), MU(5), LAMBDA2MU(6), KAPPA(7),
     // TI
     Vpv(8), Vph(9), Vsv(10), Vsh(11), ETA(12),

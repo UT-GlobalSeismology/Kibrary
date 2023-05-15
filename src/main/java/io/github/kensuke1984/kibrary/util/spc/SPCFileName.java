@@ -128,22 +128,9 @@ public abstract class SPCFileName extends File {
     public abstract String getSourceID();
 
     /**
-     * @return ID of observer (station_network)
+     * @return ID of receiver (for observers, STATION_NETWORK)
      */
     public abstract String getReceiverID();
-
-    /**
-     * @return STATION code of the observer
-     * @deprecated
-     */
-    public abstract String getStationCode(); // TODO: delete
-
-    /**
-     * @return NETWORK code of the observer
-     * @author anselme
-     * @deprecated
-     */
-    public abstract String getNetworkCode(); // TODO: delete
 
     /**
      * @return the PSV/SH pair file name

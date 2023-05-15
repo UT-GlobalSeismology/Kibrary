@@ -22,10 +22,12 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
@@ -33,7 +35,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -50,6 +51,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.util.spc.VSConversion;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
@@ -549,8 +551,8 @@ public class Partial1DSpcMaker implements Operation_old {
             }
 
             PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutPartialReFy.length,
-                    periodRange[0], periodRange[1], t.getPhases(), 0, sourceTimeFunction != null, new FullPosition(0, 0, bodyR), partialType,
-                    cutPartialSpcAmp);
+                    periodRange[0], periodRange[1], t.getPhases(), sourceTimeFunction != null, partialType.toParameterType(),
+                    partialType.toVariableType(), new FullPosition(0, 0, bodyR), cutPartialSpcAmp);
 
             try {
                 partialDataWriter.addPartialID(pid);
@@ -594,8 +596,7 @@ public class Partial1DSpcMaker implements Operation_old {
 
         private void addPartialSpectrum(SPCFileName spcname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
             Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
-                    .filter(info -> info.getObserver().getStation().equals(spcname.getStationCode())
-                            && info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
+                    .filter(info -> info.getObserver().toString().equals(spcname.getReceiverID()))
                     .collect(Collectors.toSet());
             if (tmpTws.size() == 0) {
 //				System.out.println("No timewindow found");
@@ -610,9 +611,7 @@ public class Partial1DSpcMaker implements Operation_old {
                 return;
             }
 
-            String stationName = spcname.getStationCode();
-            String network = spcname.getNetworkCode();
-            Observer station = new Observer(stationName, network, spectrum.getReceiverPosition());
+            Observer station = new Observer(spcname.getReceiverID(), spectrum.getReceiverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
             SPCFileAccess qSpectrum = null;
             SPCFileAccess vsimSpectrum = null;
@@ -642,7 +641,7 @@ public class Partial1DSpcMaker implements Operation_old {
                     double bodyR = spectrum.getBodyR()[k];
                     boolean exists = false;
                     for (double r : Partial1DSpcMaker.this.bodyR)
-                        if (MathAid.equalWithinEpsilon(r, bodyR, eps))
+                        if (Precision.equals(r, bodyR, eps))
                             exists = true;
                     if (!exists)
                         continue;
@@ -661,7 +660,7 @@ public class Partial1DSpcMaker implements Operation_old {
                         double bodyR = spectrum.getBodyR()[k];
                         boolean exists = false;
                         for (double r : Partial1DSpcMaker.this.bodyR)
-                            if (MathAid.equalWithinEpsilon(r, bodyR, eps))
+                            if (Precision.equals(r, bodyR, eps))
                                 exists = true;
                         if (!exists)
                             continue;
@@ -680,8 +679,7 @@ public class Partial1DSpcMaker implements Operation_old {
 
         private void addPartialSpectrum(SPCFileName spcname, SPCFileName shspcname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
             Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
-                    .filter(info -> info.getObserver().getStation().equals(spcname.getStationCode())
-                            && info.getObserver().getNetwork().equals(spcname.getNetworkCode()))
+                    .filter(info -> info.getObserver().toString().equals(spcname.getReceiverID()))
                     .collect(Collectors.toSet());
             if (tmpTws.size() == 0) {
 //				System.out.println("No timewindow found");
@@ -709,9 +707,7 @@ public class Partial1DSpcMaker implements Operation_old {
                 return;
             }
 
-            String stationName = spcname.getStationCode();
-            String network = spcname.getNetworkCode();
-            Observer station = new Observer(stationName, network, spectrum.getReceiverPosition());
+            Observer station = new Observer(spcname.getReceiverID(), spectrum.getReceiverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
             SPCFileAccess qSpectrum = null;
             if (spcname.getFileType() == SPCType.MU1D && partialTypes.contains(PartialType.Q1D)) {
@@ -744,7 +740,7 @@ public class Partial1DSpcMaker implements Operation_old {
                         throw new RuntimeException("sh and psv bodyR differ " + shspectrum.getBodyR()[k] + " " + bodyR);
                     boolean exists = false;
                     for (double r : Partial1DSpcMaker.this.bodyR)
-                        if (MathAid.equalWithinEpsilon(r, bodyR, eps))
+                        if (Precision.equals(r, bodyR, eps))
                             exists = true;
                     if (!exists)
                         continue;
@@ -772,7 +768,7 @@ public class Partial1DSpcMaker implements Operation_old {
                         double bodyR = spectrum.getBodyR()[k];
                         boolean exists = false;
                         for (double r : Partial1DSpcMaker.this.bodyR)
-                            if (MathAid.equalWithinEpsilon(r, bodyR, eps))
+                            if (Precision.equals(r, bodyR, eps))
                                 exists = true;
                         if (!exists)
                             continue;
@@ -956,11 +952,11 @@ public class Partial1DSpcMaker implements Operation_old {
                 System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
 
             PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    periodRange[0], periodRange[1], t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
-                    cutU);
+                    periodRange[0], periodRange[1], t.getPhases(), true,  ParameterType.RECEIVER, VariableType.TIME,
+                    stationLocation,cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    periodRange[0], periodRange[1], t.getPhases(), 0, true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
-                    cutU);
+                    periodRange[0], periodRange[1], t.getPhases(), true, ParameterType.SOURCE, VariableType.TIME,
+                    id.getEventData().getCmtPosition(), cutU);
 
             try {
                 partialDataWriter.addPartialID(PIDReceiverSide);

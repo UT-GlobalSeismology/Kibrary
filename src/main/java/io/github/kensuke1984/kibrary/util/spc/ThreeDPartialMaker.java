@@ -538,18 +538,6 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            @Deprecated
-            public String getStationCode() {
-                return null;
-            }
-
-            @Override
-            @Deprecated
-            public String getNetworkCode() {
-                return null;
-            }
-
-            @Override
             public double[] getBodyR() {
                 return bodyR;
             }
@@ -794,18 +782,6 @@ public class ThreeDPartialMaker {
             return component == SACComponent.Z ? tensorcalc.calc(0)
                     : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
         }
-    }
-
-    /**
-     * @param bpBody1
-     * @param bpBody2
-     * @param unitDistance
-     * @return
-     * @author anselme
-     */
-    @Deprecated
-    private SPCBody interpolate(SPCBody bpBody1, SPCBody bpBody2, double unitDistance) {
-        return bpBody1.interpolate(bpBody2, unitDistance);
     }
 
     /**

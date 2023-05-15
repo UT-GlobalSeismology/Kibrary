@@ -194,22 +194,6 @@ public final class MathAid {
     }
 
     /**
-     * Check if two values are equal, within a certain error range.
-     * @param v1
-     * @param v2
-     * @param eps
-     * @return
-     * @author anselme
-     * @deprecated use Precision.equals
-     */
-    public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
-        if (Math.abs(v1 - v2) > eps)
-            return false;
-        else
-            return true;
-    }
-
-    /**
      * Check if an angle is within a specified range.
      * @param angle [0:360)
      * @param lower [-360:upper)
