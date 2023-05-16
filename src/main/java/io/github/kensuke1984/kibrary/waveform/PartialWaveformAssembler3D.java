@@ -329,12 +329,10 @@ public class PartialWaveformAssembler3D extends Operation {
         for (PartialType type : partialTypes)
             if (type.isTimePartial()) throw new IllegalArgumentException("This class does not handle time partials.");
 
-        fpPath = property.parsePath("fpPath", "FPpool", true, workPath);
-        bpPath = property.parsePath("bpPath", "BPpool", true, workPath);
-
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
         usableSPCMode = UsableSPCMode.valueOf(property.parseString("usableSPCMode", "SH").toUpperCase());
 
+        fpPath = property.parsePath("fpPath", "FPpool", true, workPath);
         bpCatalogMode = property.parseBoolean("bpCatalogMode", "false");
         if (bpCatalogMode) {
             bpCatalogPath = property.parsePath("bpCatalogPath", "BPcat", true, workPath);
@@ -343,6 +341,8 @@ public class PartialWaveformAssembler3D extends Operation {
             thetamin = tmpthetainfo[0];
             thetamax = tmpthetainfo[1];
             dtheta = tmpthetainfo[2];
+        } else {
+            bpPath = property.parsePath("bpPath", "BPpool", true, workPath);
         }
 
         if (property.containsKey("userSourceTimeFunctionPath")) {
