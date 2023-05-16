@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -113,7 +114,9 @@ public class NetworkLookup extends Operation {
        Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
 
        // search for network names
+       System.err.println("Looking up networks ...");
        Set<Network> networkDataSet = new HashSet<>();
+       int nEventsDone = 0;
        for (GlobalCMTID eventID : eventSet) {
            Set<DataEntry> correspondingEntrySet = entrySet.stream().filter(entry -> entry.getEvent().equals(eventID))
                    .collect(Collectors.toSet());
@@ -125,10 +128,15 @@ public class NetworkLookup extends Operation {
                if (networkDescription != null) {
                    networkDataSet.add(new Network(networkCode, networkDescription));
                } else {
-                   System.err.println("No stationXML files found for " + networkCode + " " + eventID);
+                   System.err.println("!! No stationXML files found for " + networkCode + " " + eventID);
                }
            }
+
+           nEventsDone++;
+           if (nEventsDone % 100 == 0)
+               System.err.print("\r " + Math.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
        }
+       System.err.println("\r Finished handling all events.");
 
        // output
        String dateStr = GadgetAid.getTemporaryString();
@@ -158,8 +166,12 @@ public class NetworkLookup extends Operation {
            }
 
            // search stationXML file of the specified network in eventFolder/station/
-           List<Path> stationXMLPaths = Files.list(eventPath.resolve("station"))
-                   .filter(p -> p.getFileName().toString().startsWith("station." + network + ".")).collect(Collectors.toList());
+           List<Path> stationXMLPaths;
+           // CAUTION: Files.list() must be in try-with-resources.
+           try (Stream<Path> stream = Files.list(eventPath.resolve("station"))) {
+               stationXMLPaths = stream.filter(p -> p.getFileName().toString().startsWith("station." + network + "."))
+                       .collect(Collectors.toList());
+           }
            if (stationXMLPaths.size() == 0) {
                continue;
            }

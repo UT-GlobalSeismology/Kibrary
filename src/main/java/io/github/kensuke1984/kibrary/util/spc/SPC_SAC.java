@@ -112,6 +112,10 @@ public final class SPC_SAC extends Operation {
     private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
     private SourceTimeFunctionHandler stfHandler;
+    /**
+     * Number of sac files that are done creating
+     */
+    private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
 
     /**
      * @param args  none to create a property file <br>
@@ -283,8 +287,6 @@ public final class SPC_SAC extends Operation {
         }
         System.err.println("\rConverting finished.");
     }
-
-    private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
 
     /**
      * creates {@link SACMaker} from two SPC files(sh, psv)

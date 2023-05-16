@@ -106,6 +106,11 @@ public class FilterDivider extends Operation {
     private int npts;
 
     /**
+     * Number of processed event folders
+     */
+    private AtomicInteger processedFolders = new AtomicInteger();
+
+    /**
      * @param args  none to create a property file <br>
      *              [property file] to run
      * @throws IOException if any
@@ -202,8 +207,6 @@ public class FilterDivider extends Operation {
         }
         System.err.println("\r Finished handling all events.");
     }
-
-    private AtomicInteger processedFolders = new AtomicInteger(); // already processed
 
     private Runnable process(EventFolder eventDir) {
         return () -> {

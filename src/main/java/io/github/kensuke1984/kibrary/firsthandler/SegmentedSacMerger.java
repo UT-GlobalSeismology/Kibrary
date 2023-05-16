@@ -63,6 +63,7 @@ class SegmentedSacMerger {
      * @throws IOException
      */
     private void listUpSacFiles() throws IOException {
+        // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> sacFileStream = Files.list(eventPath)) {
             sacFileNameList =
                     sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SET"))

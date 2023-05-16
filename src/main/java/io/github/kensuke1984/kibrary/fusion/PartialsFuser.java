@@ -7,7 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -17,6 +20,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
@@ -25,6 +29,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 /**
  * Operation that creates new {@link PartialID}s for fused voxels in {@link FusionDesign}
  * by averaging partial waveforms of existing {@link PartialID}s.
+ * The average is taken considering the volume of each voxel.
  *
  * @author otsuru
  * @since 2022/8/10
@@ -54,6 +59,13 @@ public class PartialsFuser extends Operation {
      * The design of the fusion of unknown parameters
      */
     private FusionDesign fusionDesign;
+
+    List<PartialID> inputPartialIDs;
+    List<PartialID> fusedPartialIDs = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Number of processed parameters
+     */
+    private AtomicInteger nProcessedParam = new AtomicInteger();
 
     /**
      * @param args  none to create a property file <br>
@@ -97,56 +109,30 @@ public class PartialsFuser extends Operation {
 
     @Override
     public void run() throws IOException {
-        List<PartialID> fusedPartialIDs = new ArrayList<>();
 
         // read input
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+        inputPartialIDs = PartialIDFile.read(partialPath, true);
         fusionDesign = FusionInformationFile.read(fusionPath);
 
         // work for each fused parameter
-        for (int i = 0; i < fusionDesign.getFusedParameters().size(); i++) {
+        ExecutorService es = ThreadAid.createFixedThreadPool();
+        int nTotalParam = fusionDesign.getFusedParameters().size();
+        for (int i = 0; i < nTotalParam; i++) {
             UnknownParameter fusedParam = fusionDesign.getFusedParameters().get(i);
             List<UnknownParameter> originalParams = fusionDesign.getOriginalParameters().get(i);
 
-            // collect partialIDs that are for these originalParams
-            List<PartialID> originalPartialIDs = new ArrayList<>();
-            for (PartialID id : partialIDs) {
-                for (UnknownParameter originalParam : originalParams) {
-                    if (id.getPartialType().equals(originalParam.getPartialType()) && id.getVoxelPosition().equals(originalParam.getPosition())) {
-                        originalPartialIDs.add(id);
-                        break;
-                    }
-                }
-            }
-
-            // pair up partialIDs and fuse into a new one
-            // this process is repeated while removing used IDs out of the list
-            while (originalPartialIDs.size() > 0) {
-                // get the first ID in list
-                PartialID id0 = originalPartialIDs.get(0);
-                // list to add all pair IDs
-                List<PartialID> pairPartialIDs = new ArrayList<>();
-                pairPartialIDs.add(id0);
-                // add all pair IDs to the list
-                for (int k = 1; k < originalPartialIDs.size(); k++) {
-                    PartialID idK = originalPartialIDs.get(k);
-                    if (BasicID.isPair(id0, idK)) {
-                        pairPartialIDs.add(idK);
-                    }
-                }
-                // fuse partialID for this fusedParam
-                fusedPartialIDs.add(fuse(pairPartialIDs, originalParams, fusedParam));
-                // remove used IDs from the collected IDs
-                for (PartialID id : pairPartialIDs) {
-                    originalPartialIDs.remove(id);
-                }
-            }
-            System.err.print(".");
+            es.execute(process(fusedParam, originalParams));
         }
-        System.err.println();
+        es.shutdown();
+        System.err.println("Fusing parameters ...");
+        while (!es.isTerminated()) {
+            System.err.print("\r " + Math.ceil(100.0 * nProcessedParam.get() / nTotalParam) + "% of parameters done");
+            ThreadAid.sleep(100);
+        }
+        System.err.println("\r Finished handling all parameters.");
 
         // collect fused IDs and the original IDs that are not fused
-        List<PartialID> newPartialIDs = partialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
+        List<PartialID> newPartialIDs = inputPartialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
         newPartialIDs.addAll(fusedPartialIDs);
 
         // prepare output folder
@@ -155,6 +141,51 @@ public class PartialsFuser extends Operation {
 
         // output
         PartialIDFile.write(newPartialIDs, outPath);
+    }
+
+    private Runnable process(UnknownParameter fusedParam, List<UnknownParameter> originalParams) {
+        return () -> {
+            try {
+                // collect partialIDs that are for these originalParams
+                List<PartialID> originalPartialIDs = new ArrayList<>();
+                for (PartialID id : inputPartialIDs) {
+                    for (UnknownParameter originalParam : originalParams) {
+                        if (id.getPartialType().equals(originalParam.getPartialType()) && id.getVoxelPosition().equals(originalParam.getPosition())) {
+                            originalPartialIDs.add(id);
+                            break;
+                        }
+                    }
+                }
+
+                // pair up partialIDs and fuse into a new one
+                // this process is repeated while removing used IDs out of the list
+                while (originalPartialIDs.size() > 0) {
+                    // get the first ID in list
+                    PartialID id0 = originalPartialIDs.get(0);
+                    // list to add all pair IDs
+                    List<PartialID> pairPartialIDs = new ArrayList<>();
+                    pairPartialIDs.add(id0);
+                    // add all pair IDs to the list
+                    for (int k = 1; k < originalPartialIDs.size(); k++) {
+                        PartialID idK = originalPartialIDs.get(k);
+                        if (BasicID.isPair(id0, idK)) {
+                            pairPartialIDs.add(idK);
+                        }
+                    }
+                    // fuse partialID for this fusedParam
+                    fusedPartialIDs.add(fuse(pairPartialIDs, originalParams, fusedParam));
+                    // remove used IDs from the collected IDs
+                    for (PartialID id : pairPartialIDs) {
+                        originalPartialIDs.remove(id);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("!!! Error on " + fusedParam);
+                e.printStackTrace();
+            } finally {
+                nProcessedParam.incrementAndGet();
+            }
+        };
     }
 
     private boolean isFused(PartialID id) {

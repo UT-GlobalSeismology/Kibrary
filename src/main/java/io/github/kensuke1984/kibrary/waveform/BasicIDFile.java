@@ -126,25 +126,26 @@ public final class BasicIDFile {
     }
 
     /**
-     * Reads basicIDs from file.
+     * Reads basicIDs from a basic folder.
      * @param inPath (Path) The directory containing basic ID and data files
      * @param withData (boolean) Whether to read waveform data
-     * @return (List of BasicID)
+     * @return (List of BasicID) The basicIDs read in. Not sorted.
      * @throws IOException
      *
      * @author otsuru
      * @since 2023/1/29
      */
     public static List<BasicID> read(Path inPath, boolean withData) throws IOException {
+        System.err.println("Reading basic folder: " + inPath);
         if (withData) return Arrays.asList(read(inPath.resolve(ID_FILE_NAME), inPath.resolve(DATA_FILE_NAME)));
         else return Arrays.asList(read(inPath.resolve(ID_FILE_NAME)));
     }
 
     /**
      * Reads both the ID file and the data file.
-     * @param idPath (Path) An ID file, if it does not exist, an IOException
-     * @param dataPath (Path) A data file, if it does not exist, an IOException
-     * @return Array of {@link BasicID} containing waveform data
+     * @param idPath (Path) ID file
+     * @param dataPath (Path) Data file
+     * @return ({@link BasicID}[]) BasicIDs containing waveform data
      * @throws IOException if an I/O error occurs
      */
     public static BasicID[] read(Path idPath, Path dataPath) throws IOException {
@@ -152,6 +153,7 @@ public final class BasicIDFile {
         BasicID[] ids = read(idPath);
 
         // Read waveforms
+        System.err.print(" Reading data file ...");
         long t = System.nanoTime();
         long nptsTotal = Arrays.stream(ids).mapToLong(BasicID::getNpts).sum();
         long dataSize = Files.size(dataPath);
@@ -172,19 +174,19 @@ public final class BasicIDFile {
                 ids[i] = id.withData(data);
             });
         }
-        System.err.println(" Basic waveforms read in " + GadgetAid.toTimeString(System.nanoTime() - t));
+        System.err.println("\r Waveform data read in " + GadgetAid.toTimeString(System.nanoTime() - t));
         return ids;
     }
 
     /**
      * Reads only the ID file (and not the data file).
-     * @param idPath (Path) An ID file, if it does not exist, an IOException
-     * @return Array of {@link BasicID} without waveform data
+     * @param idPath (Path) ID file
+     * @return ({@link BasicID}[]) BasicIDs without waveform data
      * @throws IOException if an I/O error occurs
      */
     public static BasicID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
-            System.err.println("Reading basicID file: " + idPath);
+            System.err.print(" Reading ID file ...");
             long t = System.nanoTime();
             long fileSize = Files.size(idPath);
 
@@ -233,7 +235,7 @@ public final class BasicIDFile {
             IntStream.range(0, nid).parallel().forEach(i -> {
                 ids[i] = createID(bytes[i], observers, events, periodRanges, phases);
             });
-            System.err.println(" " + ids.length + " basicIDs are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
+            System.err.println("\r " + ids.length + " IDs read in " + GadgetAid.toTimeString(System.nanoTime() - t));
             return ids;
         }
     }
@@ -251,17 +253,20 @@ public final class BasicIDFile {
      * start time(4)<br>
      * number of points(4)<br>
      * sampling hz(4) <br>
-     * convoluted(or observed) or not(1)<br>
-     * position of a waveform for the ID in the datafile(8)
+     * convolved (or observed) or not(1)<br>
+     * position of a waveform for the ID in the data file(8)
      *
-     * @param bytes
-     *            for one ID
-     * @return an ID written in the bytes
+     * @param bytes (byte[]) Input data for one ID
+     * @param observers ({@link Observer}[]) Set of observers contained in dataset
+     * @param events ({@link GlobalCMTID}[]) Set of events contained in dataset
+     * @param periodRanges (double[][]) Set of period ranges contained in dataset
+     * @param phases ({@link Phase}[]) Set of phases contained in dataset
+     * @return ({@link BasicID}) Created ID
      */
-    private static BasicID createID(byte[] bytes, Observer[] stations, GlobalCMTID[] events, double[][] periodRanges, Phase[] phases) {
+    private static BasicID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] events, double[][] periodRanges, Phase[] phases) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         WaveformType type = 0 < bb.get() ? WaveformType.OBS : WaveformType.SYN;
-        Observer station = stations[bb.getShort()];
+        Observer station = observers[bb.getShort()];
         GlobalCMTID event = events[bb.getShort()];
         SACComponent component = SACComponent.getComponent(bb.get());
         double[] period = periodRanges[bb.get()];
@@ -279,9 +284,8 @@ public final class BasicIDFile {
         boolean isConvolved = 0 < bb.get();
         // startByte is read, but not used
         long startByte = bb.getLong();
-        BasicID bid = new BasicID(type, samplingHz, startTime, npts, station, event, component, period[0], period[1],
+        return new BasicID(type, samplingHz, startTime, npts, station, event, component, period[0], period[1],
                 usablephases, isConvolved);
-        return bid;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////

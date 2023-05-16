@@ -36,6 +36,11 @@ public class DataAligner {
     private final String datacenter;
 
     /**
+     * Number of processed event folders
+     */
+    private AtomicInteger processedFolders = new AtomicInteger();
+
+    /**
      * @param args [option]
      * @throws IOException
      */
@@ -146,8 +151,6 @@ public class DataAligner {
         }
         System.err.println("\r Finished handling all events.");
     }
-
-    private AtomicInteger processedFolders = new AtomicInteger(); // already processed
 
     private Runnable process(EventFolder eventDir) {
         return () -> {

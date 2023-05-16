@@ -53,7 +53,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * Operation that exports dataset containing observed and synthetic waveforms. <br>
- * The write is a set of an ID and waveform files.
+ * Output is written in the format of {@link BasicIDFile}.
  * <p>
  * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
@@ -306,13 +306,13 @@ public class ActualWaveformCompiler extends Operation {
            Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
            // read timewindows and select based on component and entries
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
-                   .stream().filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
+           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
+                   .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
                    .collect(Collectors.toSet());
        } else {
            // read timewindows and select based on component
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
-                   .stream().filter(window -> components.contains(window.getComponent()))
+           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
+                   .filter(window -> components.contains(window.getComponent()))
                    .collect(Collectors.toSet());
        }
 
@@ -349,10 +349,8 @@ public class ActualWaveformCompiler extends Operation {
            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
                    .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
-       eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
-               .collect(Collectors.toSet());
-       observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver)
-               .collect(Collectors.toSet());
+       eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+       observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
 
        outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));

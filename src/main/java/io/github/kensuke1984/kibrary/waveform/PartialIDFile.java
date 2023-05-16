@@ -117,83 +117,26 @@ public final class PartialIDFile {
     }
 
     /**
-     * Write partialIDs into ID file and waveform file.
-     * @param partialIDs
-     * @param outputIDPath
-     * @param outputWavePath
-     * @throws IOException
-     *
-     * @author otsuru
-     * @since 2022/8/11
-     * @deprecated
-     */
-    public static void write(List<PartialID> partialIDs, Path outputIDPath, Path outputWavePath) throws IOException {
-
-        // extract set of observers, events, voxels, periods, and phases
-        Set<Observer> observerSet = new HashSet<>();
-        Set<GlobalCMTID> eventSet = new HashSet<>();
-        Set<FullPosition> voxelPositionSet = new HashSet<>();
-        Set<double[]> periodSet = new HashSet<>();
-        Set<Phase> phaseSet = new HashSet<>();
-
-        partialIDs.forEach(id -> {
-            observerSet.add(id.getObserver());
-            eventSet.add(id.getGlobalCMTID());
-            voxelPositionSet.add(id.getVoxelPosition());
-            boolean add = true;
-            for (double[] periods : periodSet) {
-                if (id.getMinPeriod() == periods[0] && id.getMaxPeriod() == periods[1])
-                    add = false;
-            }
-            if (add)
-                periodSet.add(new double[] {id.getMinPeriod(), id.getMaxPeriod()});
-            for (Phase phase : id.getPhases())
-                phaseSet.add(phase);
-        });
-
-        double[][] periodRanges = new double[periodSet.size()][];
-        int j = 0;
-        for (double[] periods : periodSet)
-            periodRanges[j++] = periods;
-        Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
-
-        // output
-        System.err.println("Outputting in " + outputIDPath + " and " + outputWavePath);
-        try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputWavePath,
-                observerSet, eventSet, periodRanges, phases, voxelPositionSet)) {
-            partialIDs.forEach(id -> {
-                try {
-                    if (id.getWaveformType().equals(WaveformType.PARTIAL) == false) {
-                        throw new IllegalStateException(id.toString() + "is not a partial, it is a " + id.getWaveformType().toString());
-                    }
-                    wdw.addPartialID(id);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-    }
-
-    /**
-     * Reads partialIDs from file.
+     * Reads partialIDs from a partial folder.
      * @param inPath (Path) The directory containing partial ID and data files
      * @param withData (boolean) Whether to read waveform data
-     * @return (List of PartialID)
+     * @return (List of PartialID) The partialIDs read in. Not sorted.
      * @throws IOException
      *
      * @author otsuru
      * @since 2023/1/29
      */
     public static List<PartialID> read(Path inPath, boolean withData) throws IOException {
+        System.err.println("Reading partial folder: " + inPath);
         if (withData) return Arrays.asList(read(inPath.resolve(ID_FILE_NAME), inPath.resolve(DATA_FILE_NAME)));
         else return Arrays.asList(read(inPath.resolve(ID_FILE_NAME)));
     }
 
     /**
      * Reads both the ID file and the waveform file.
-     * @param idPath (Path) An ID file, if it does not exist, an IOException
-     * @param dataPath (Path) A data file, if it does not exist, an IOException
-     * @return Array of {@link PartialID} containing waveform data
+     * @param idPath (Path) ID file
+     * @param dataPath (Path) Data file
+     * @return ({@link PartialID}[]) PartialIDs containing waveform data
      * @throws IOException if an I/O error occurs
      */
     public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
@@ -201,36 +144,39 @@ public final class PartialIDFile {
         PartialID[] ids = read(idPath);
 
         // Read waveforms
+        System.err.print(" Reading data file ...");
         long t = System.nanoTime();
         long nptsTotal = Arrays.stream(ids).mapToLong(PartialID::getNpts).sum();
         long dataSize = Files.size(dataPath);
         if (dataSize != nptsTotal * Double.BYTES)
             throw new RuntimeException(dataPath + " is invalid for " + idPath);
 
-        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
-            for (int i = 0; i < ids.length; i++) {
-                double[] data = new double[ids[i].npts];
+        try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(dataPath))) {
+            byte[][] bytes = new byte[ids.length][];
+            Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * Double.BYTES]);
+            for (int i = 0; i < ids.length; i++)
+                bis.read(bytes[i]);
+            IntStream.range(0, ids.length).parallel().forEach(i -> {
+                PartialID id = ids[i];
+                ByteBuffer bb = ByteBuffer.wrap(bytes[i]);
+                double[] data = new double[id.npts];
                 for (int j = 0; j < data.length; j++)
-                    data[j] = dis.readDouble();
-                ids[i] = ids[i].withData(data);
-                if (i % (ids.length / 20) == 0)
-                    System.err.print("\r Reading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
-            }
-            System.err.println("\r Reading partial data ... 100.0 %");
+                    data[j] = bb.getDouble();
+                ids[i] = id.withData(data);
+            });
         }
-        System.err.println(" Partial waveforms read in " + GadgetAid.toTimeString(System.nanoTime() - t));
+        System.err.println("\r Waveform data read in " + GadgetAid.toTimeString(System.nanoTime() - t));
         return ids;
     }
-
     /**
-     * Reads only the ID file (and not the waveform file).
-     * @param idPath (Path) An ID file, if it does not exist, an IOException
-     * @return Array of {@link PartialID} without waveform data
+     * Reads only the ID file (and not the data file).
+     * @param idPath (Path) ID file
+     * @return ({@link PartialID}[]) PartialIDs without waveform data
      * @throws IOException if an I/O error occurs
      */
     public static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
-            System.err.println("Reading partialID file: " + idPath);
+            System.err.print(" Reading ID file ...");
             long t = System.nanoTime();
             long fileSize = Files.size(idPath);
 
@@ -283,12 +229,14 @@ public final class PartialIDFile {
             PartialID[] ids = new PartialID[nid];
             IntStream.range(0, nid).parallel()
                 .forEach(i -> ids[i] = createID(bytes[i], observers, events, periodRanges, phases, voxelPositions));
-            System.err.println(" " + ids.length + " partialIDs are read in " + GadgetAid.toTimeString(System.nanoTime() - t));
+            System.err.println("\r " + ids.length + " IDs read in " + GadgetAid.toTimeString(System.nanoTime() - t));
             return ids;
         }
     }
 
     /**
+     * Method for reading the actual ID part.
+     * <p>
      * An ID information contains<br>
      * observer number(2)<br>
      * event number(2)<br>
@@ -298,14 +246,18 @@ public final class PartialIDFile {
      * start time(4)<br>
      * number of points(4)<br>
      * sampling hz(4) <br>
-     * convoluted(or observed) or not(1)<br>
-     * position of a waveform for the ID in the datafile(8)<br>
+     * convolved (or observed) or not(1)<br>
+     * position of a waveform for the ID in the data file(8)<br>
      * type of partial(1)<br>
-     * point of perturbation(2)
+     * voxel number(2)
      *
-     * @param bytes
-     *            for one ID
-     * @return an ID written in the bytes
+     * @param bytes (byte[]) Input data for one ID
+     * @param observers ({@link Observer}[]) Set of observers contained in dataset
+     * @param events ({@link GlobalCMTID}[]) Set of events contained in dataset
+     * @param periodRanges (double[][]) Set of period ranges contained in dataset
+     * @param phases ({@link Phase}[]) Set of phases contained in dataset
+     * @param voxelPositions ({@link FullPosition}[]) Set of voxels contained in dataset
+     * @return ({@link PartialID}) Created ID
      */
     private static PartialID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] events, double[][] periodRanges,
              Phase[] phases, FullPosition[] voxelPositions) {
