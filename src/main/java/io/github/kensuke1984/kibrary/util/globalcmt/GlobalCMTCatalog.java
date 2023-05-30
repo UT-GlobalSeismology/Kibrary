@@ -19,12 +19,14 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Catalog of global CMT solutions.
  * <p>
- * The catalog contains list of events
- * from <b>1976 January - 2017 September</b>.
- * TODO add the latest catalogs
+ * The catalog can be updated using {@link GlobalCMTCatalogUpdate}.
+ * Virtual events can be added to the custom catalog file using {@link }. TODO
+ * <p>
+ * When no catalog can be found, a default catalog that contains a list of events
+ * from <b>1976 January - 2017 September</b> is downloaded.
  *
  * @author Kensuke Konishi
- * @version 0.1.8
+ * @since version 0.1.8
  */
 public final class GlobalCMTCatalog {
     private GlobalCMTCatalog() {}
@@ -34,17 +36,24 @@ public final class GlobalCMTCatalog {
      * This is set as package private so that {@link GlobalCMTCatalogUpdate} can access this.
      */
     static final Path CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("globalcmt.catalog");
+    static final Path CUSTOM_CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("custom.catalog");
 
     private static final Set<NDK> NDKs;
 
     static {
-        // if an activated catalog does not exist, download the default catalog
-        if (!Files.exists(CATALOG_PATH)) downloadCatalog();
+        // if neither an activated catalog nor a custom catalog exists, download the default catalog
+        if (!Files.exists(CATALOG_PATH) && !Files.exists(CUSTOM_CATALOG_PATH)) downloadCatalog();
 
-        // read the activated catalog
-        Set<NDK> readNDKSet = readCatalog(CATALOG_PATH, true);
-        // if the activated catalog cannot be read, ask for another catalog
-        if (null == readNDKSet) readNDKSet = readCatalog(selectCatalogFile(), false);
+        // read the activated catalog and/or custom catalog
+        Set<NDK> readNDKSet = new HashSet<>();
+        if (Files.exists(CATALOG_PATH)) {
+            readNDKSet.addAll(readCatalog(CATALOG_PATH, false));
+        }
+        if (Files.exists(CUSTOM_CATALOG_PATH)) {
+            readNDKSet.addAll(readCatalog(CUSTOM_CATALOG_PATH, false));
+        }
+        // if the catalogs cannot be read, ask for another catalog
+        if (readNDKSet.size() == 0) readNDKSet = readCatalog(selectCatalogFile(), false);
 
         // set NDK set
         NDKs = Collections.unmodifiableSet(readNDKSet);
@@ -90,17 +99,6 @@ public final class GlobalCMTCatalog {
     }
 
     /**
-     * When you want to create Events not contained in Global CMT Catalog, you
-     * can make it by yourself and use this.
-     *
-     * @param catalogFile arbitrary file containing cmt catalog
-     * @return {@link GlobalCMTAccess} written in catalogFile
-     */
-    public static Set<GlobalCMTAccess> readCatalog(Path catalogFile) {
-        return new HashSet<>(GlobalCMTCatalog.readCatalog(catalogFile, false));
-    }
-
-    /**
      * Reads catalog file and returns NDKs inside.
      *
      * @param catalogPath path of a catalog
@@ -110,7 +108,7 @@ public final class GlobalCMTCatalog {
     static Set<NDK> readCatalog(Path catalogPath, boolean allowNull) {
         try {
             List<String> lines = Files.readAllLines(catalogPath);
-            if (lines.size() % 5 != 0) throw new Exception(catalogPath + " is broken or invalid.");
+            if (lines.size() % 5 != 0) throw new IllegalStateException(catalogPath + " is broken or invalid.");
             return IntStream.range(0, lines.size() / 5).mapToObj(
                     i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
                             lines.get(i * 5 + 4))).collect(Collectors.toSet());
@@ -149,6 +147,10 @@ public final class GlobalCMTCatalog {
 
     public static Path getCatalogPath() {
         return CATALOG_PATH;
+    }
+
+    public static Path getCustomCatalogPath() {
+        return CUSTOM_CATALOG_PATH;
     }
 
 }

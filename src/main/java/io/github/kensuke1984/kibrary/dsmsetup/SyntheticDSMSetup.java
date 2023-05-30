@@ -172,10 +172,6 @@ public class SyntheticDSMSetup extends Operation {
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
 
-    /**
-     * @author Kensuke Konishi
-     * @author anselme add models, options for synthetic/specfem dataset, ...
-     */
     @Override
     public void run() throws IOException {
         String dateStr = GadgetAid.getTemporaryString();
