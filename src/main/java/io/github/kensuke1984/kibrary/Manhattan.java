@@ -32,6 +32,7 @@ import io.github.kensuke1984.kibrary.visual.map.CrossSectionCreator;
 import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
+import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
 import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper;
@@ -101,10 +102,11 @@ enum Manhattan {
     PartialIDMerge(62, PartialIDMerge.class),
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
-    OneDPartialDSMSetup(65, OneDPartialDSMSetup.class), //
-    PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class), //
+    OneDPartialDSMSetup(65, OneDPartialDSMSetup.class),
+    PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class),
     PartialsFuser(67, PartialsFuser.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
+    PartialsMovieMaker(69, PartialsMovieMaker.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
