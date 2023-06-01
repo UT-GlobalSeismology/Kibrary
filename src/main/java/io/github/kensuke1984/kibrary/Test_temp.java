@@ -1,25 +1,24 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
 
 import edu.sc.seis.TauP.TauModelException;
-import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
-import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.voxel.KnownParameter;
-import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
+        System.err.println(MathAid.padToString(234, 2, " "));
+        System.err.println(MathAid.padToString(234, 4, " "));
+        System.err.println(MathAid.padToString(-234, 2, " "));
+        System.err.println(MathAid.padToString(-234, 4, " "));
+        System.err.println(MathAid.padToString(-234, 6, " "));
+        System.err.println(MathAid.padToString(-234, 6, "0"));
+        System.err.println(MathAid.padToString(-234.567, 6, 1, "0"));
+        System.err.println(MathAid.padToString(-234.567, 0, 4, "0"));
+        System.err.println(MathAid.padToString(-234.567, 6, 0, " "));
 
+/*
         // read knowns
         List<KnownParameter> knowns = KnownParameterFile.read(Paths.get(args[0]));
 
@@ -31,7 +30,7 @@ public class Test_temp {
         Map<FullPosition, Double> discreteMap = model.getPercentForType(VariableType.Vs);
         Path outputDiscretePath = Paths.get("").resolve("vsPercent.lst");
         PerturbationListFile.write(discreteMap, outputDiscretePath);
-
+*/
 
 /*        HorizontalPosition posE = new HorizontalPosition(-14, -69);
         HorizontalPosition posS = new HorizontalPosition(-16, 28);
