@@ -18,7 +18,6 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -167,9 +166,6 @@ public class SyntheticDSMSetup extends Operation {
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
         mpi = property.parseBoolean("mpi", "true");
-
-        // write additional info
-        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
 
     @Override

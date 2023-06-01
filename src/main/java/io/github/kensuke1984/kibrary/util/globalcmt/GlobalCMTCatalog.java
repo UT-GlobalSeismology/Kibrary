@@ -1,10 +1,13 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -110,7 +113,7 @@ public final class GlobalCMTCatalog {
             List<String> lines = Files.readAllLines(catalogPath);
             if (lines.size() % 5 != 0) throw new IllegalStateException(catalogPath + " is broken or invalid.");
             return IntStream.range(0, lines.size() / 5).mapToObj(
-                    i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
+                    i -> NDK.constructFromLines(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
                             lines.get(i * 5 + 4))).collect(Collectors.toSet());
         } catch (NullPointerException e) {
             if (allowNull) {
@@ -130,6 +133,24 @@ public final class GlobalCMTCatalog {
     }
 
     /**
+     * Add an NDK to the custom catalog file.
+     * @param ndk
+     */
+    static void addInCustom(NDK ndk) throws IOException {
+        String[] lines = ndk.toLines();
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(CUSTOM_CATALOG_PATH,
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+            for (String line: lines) {
+                pw.println(line);
+            }
+        }
+    }
+
+    static boolean contains(GlobalCMTID id) {
+        return NDKs.parallelStream().anyMatch(ndk -> ndk.getGlobalCMTID().equals(id));
+    }
+
+    /**
      * @param id for the NDK
      * @return NDK of the input id
      */
@@ -143,14 +164,6 @@ public final class GlobalCMTCatalog {
      */
     static Set<NDK> allNDKs() {
         return NDKs;
-    }
-
-    public static Path getCatalogPath() {
-        return CATALOG_PATH;
-    }
-
-    public static Path getCustomCatalogPath() {
-        return CUSTOM_CATALOG_PATH;
     }
 
 }
