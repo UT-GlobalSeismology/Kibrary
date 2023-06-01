@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,9 +17,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -46,10 +43,6 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
  * <li> the component is included in the components specified in the property file </li>
  * </ul>
  * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
- *
- * <p>
- * For virtual datasets, virtual observers will be made in 1-degree intervals.
- * They will have the network name specified in {@link Observer#SYN}.
  *
  * @since a long time ago
  * @version 2021/11/2 renamed from SyntheticDSMInformationFileMaker
@@ -107,19 +100,6 @@ public class SyntheticDSMSetup extends Operation {
     private boolean mpi;
 
     /**
-     * whether a set of virtual observers are to be created
-     */
-    private boolean syntheticDataset;
-    /**
-     * minimum epicentral distance of virtual observers
-     */
-    private int synMinDistance;
-    /**
-     * maximum epicentral distance of virtual observers
-     */
-    private int synMaxDistance;
-
-    /**
      * @param args  none to create a property file <br>
      *              [property file] to run
      * @throws IOException if any
@@ -156,12 +136,6 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
             pw.println("#mpi false");
-            pw.println("##(boolean) If a virtual set of observers is to be created (false)");
-            pw.println("#syntheticDataset ");
-            pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
-            pw.println("#synMinDistance ");
-            pw.println("##Maximum epicentral distance of virtual observer, must be integer (170)");
-            pw.println("#synMaxDistance ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -192,21 +166,8 @@ public class SyntheticDSMSetup extends Operation {
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
         mpi = property.parseBoolean("mpi", "true");
-
-        syntheticDataset = property.parseBoolean("syntheticDataset", "false");
-        synMinDistance = property.parseInt("synMinDistance", "1");
-        synMaxDistance = property.parseInt("synMaxDistance", "170");
-        if (synMinDistance < 0 || synMinDistance > synMaxDistance || 360 < synMaxDistance)
-            throw new IllegalArgumentException("Distance range " + synMinDistance + " , " + synMaxDistance + " is invalid.");
-
-        // write additional info
-        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
 
-    /**
-     * @author Kensuke Konishi
-     * @author anselme add models, options for synthetic/specfem dataset, ...
-     */
     @Override
     public void run() throws IOException {
         String dateStr = GadgetAid.getTemporaryString();
@@ -221,18 +182,6 @@ public class SyntheticDSMSetup extends Operation {
         Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        // synthetic observer set
-        Set<Observer> synObserverSet = new HashSet<>();
-        if (syntheticDataset) {
-            for (int i = synMinDistance; i <= synMaxDistance; i+=1) {
-                double distance = i;
-                String stationName = String.format("%03d", i);
-                Observer observer = new Observer(stationName
-                        , Observer.SYN, new HorizontalPosition(0, distance));
-                synObserverSet.add(observer);
-            }
-        }
-
         // output information files in each event folder
         // TreeSet is used here to sort sources in the sourceList file
         Set<String> sourceTreeSet = new TreeSet<>();
@@ -243,8 +192,6 @@ public class SyntheticDSMSetup extends Operation {
                     continue;
                 }
                 Set<Observer> observers = arcMap.get(event);
-                if (syntheticDataset)
-                    observers = synObserverSet;
                 if (observers.isEmpty())
                     continue;
 

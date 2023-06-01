@@ -21,12 +21,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * (This is set at 8 letters probably because alphanumeric fields in SAC data format are 8 letters.
  * The actual maximum number of letters are 5 and 2;
  * see <a href=https://ds.iris.edu/ds/nodes/dmc/data/formats/seed/>SEED reference</a>.
- * However, network may be set 'DSM' as stated below, so the maximum length should be thought of as 3.)
+ * However, virtual observers with longer station or network names (up to 8 letters) may be created.)
  * <p>
  * Observers are considered equal if and only if
  * [network code is equal && station code is equal && position is {@link #equal(HorizontalPosition, HorizontalPosition)}].
- * If the network code is 'DSM', comparison of networks between instances is not done;
- * station code and horizontal position is considered.
  * <p>
  * At a single time moment, only one observer with the same network and station code exists.
  * However, at different times, observers with the same name but different positions can exist.
@@ -41,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public final class Observer implements Comparable<Observer> {
 
     /**
-     * network code for stations in synthetic datasets
+     * network code for stations in synthetic datasets TODO delete?
      */
     public static final String SYN = "DSM";
     /**
@@ -162,8 +160,6 @@ public final class Observer implements Comparable<Observer> {
      * Observers are considered equal if and only if
      * [network code is equal && station code is equal
      * && position is {@link HorizontalPosition#equals(Object)}].
-     * If the network code is 'DSM', comparison of networks between instances is not done;
-     * only station code and horizontal position are considered.
      */
     @Override
     public boolean equals(Object obj) {
@@ -187,11 +183,10 @@ public final class Observer implements Comparable<Observer> {
         } else if (!station.equals(other.station))
             return false;
 
-        if (network == null)
-            return other.network == null || other.network.equals(SYN);
-        else if (network.equals(SYN))
-            return true;
-        else if (other.network != null && !other.network.equals(SYN) && !network.equals(other.network))
+        if (network == null) {
+            if (other.network != null)
+                return false;
+        } else if (!network.equals(other.network))
             return false;
 
         return true;

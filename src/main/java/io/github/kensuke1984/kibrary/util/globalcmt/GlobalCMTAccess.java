@@ -10,33 +10,32 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * Data for global CMT data used frequently.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.0.1
+ * @since version 0.0.1.0.1
  */
 public interface GlobalCMTAccess {
+
+    GlobalCMTID getGlobalCMTID();
 
     double getMb();
 
     double getMs();
 
     MomentTensor getCmt();
+    GlobalCMTAccess withCMT(MomentTensor mt);
 
     FullPosition getCmtPosition();
 
     LocalDateTime getCMTTime();
 
-    SourceTimeFunctionType getSTFType();
-
-    double getHalfDuration();
-
     FullPosition getPDEPosition();
 
     LocalDateTime getPDETime();
 
-    GlobalCMTID getGlobalCMTID();
-
-    void setCMT(MomentTensor mt);
-
     double getTimeDifference();
+
+    SourceTimeFunctionType getSTFType();
+
+    double getHalfDuration();
 
     String getHypocenterReferenceCatalog();
 
