@@ -202,7 +202,7 @@ public class PartialsMovieMaker extends Operation {
                                 // output discrete perturbation file
                                 // The number part of output file names has to be padded with 0 for the "convert" command to work.
                                 String fileNameRoot = "snapshot_" + component + "_" + variableType + "_t"
-                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, "0");
+                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, true);
                                 Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
                                 PerturbationListFile.write(discreteMap, outputDiscretePath);
                             }

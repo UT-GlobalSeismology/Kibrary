@@ -8,15 +8,23 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
-        System.err.println(MathAid.padToString(234, 2, " "));
-        System.err.println(MathAid.padToString(234, 4, " "));
-        System.err.println(MathAid.padToString(-234, 2, " "));
-        System.err.println(MathAid.padToString(-234, 4, " "));
-        System.err.println(MathAid.padToString(-234, 6, " "));
-        System.err.println(MathAid.padToString(-234, 6, "0"));
-        System.err.println(MathAid.padToString(-234.567, 6, 1, "0"));
-        System.err.println(MathAid.padToString(-234.567, 0, 4, "0"));
-        System.err.println(MathAid.padToString(-234.567, 6, 0, " "));
+        System.err.println(MathAid.padToString(234, 2, false));
+        System.err.println(MathAid.padToString(234, 4, false));
+        System.err.println(MathAid.padToString(-234, 2, false));
+        System.err.println(MathAid.padToString(-234, 4, false));
+        System.err.println(MathAid.padToString(-234, 6, false));
+        System.err.println(MathAid.padToString(-234, 6, true));
+        System.err.println(MathAid.padToString(-234.567, 6, 1, true));
+        System.err.println(MathAid.padToString(-234.567, 1, 4, true));
+        System.err.println(MathAid.padToString(-234.567, 6, 0, false));
+        System.err.println(MathAid.padToString(-234.567, 6, 2, false, "d"));
+        System.err.println(MathAid.roundToString(-234.567, 2, "d"));
+        System.err.println(MathAid.roundToString(-234.567, 2));
+        System.err.println();
+        System.err.println(MathAid.simplestString(-234.567));
+        System.err.println(MathAid.simplestString(-234.0));
+        System.err.println(MathAid.simplestString(-234.567, "d"));
+        System.err.println(MathAid.simplestString(-234.0, "d"));
 
 /*
         // read knowns
