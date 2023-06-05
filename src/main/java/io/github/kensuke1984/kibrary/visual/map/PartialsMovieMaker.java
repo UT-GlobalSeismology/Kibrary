@@ -70,7 +70,7 @@ public class PartialsMovieMaker extends Operation {
      */
     private Path partialPath;
 
-    private double amplification;
+//    private double amplification;
     private double scale;
     /**
      * Whether to display map as mosaic without smoothing
@@ -109,8 +109,8 @@ public class PartialsMovieMaker extends Operation {
             pw.println("#tendObservers ");
 
             pw.println("##########Parameters for perturbation values");
-            pw.println("##(double) The factor to amplify the sensitivity values (1e29)");
-            pw.println("#amplification ");
+//            pw.println("##(double) The factor to amplify the sensitivity values (1e29)");
+//            pw.println("#amplification ");
             pw.println("##(double) Range of scale (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
@@ -137,7 +137,7 @@ public class PartialsMovieMaker extends Operation {
                 .collect(Collectors.toSet());
         tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
 
-        amplification = property.parseDouble("amplification", "1e29");
+//        amplification = property.parseDouble("amplification", "1e29");
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
     }
@@ -187,6 +187,8 @@ public class PartialsMovieMaker extends Operation {
                             double[] samplingHzTmp = partialsForWindow.stream().mapToDouble(PartialID::getNpts).distinct().sorted().toArray();
                             if (samplingHzTmp.length != 1) throw new IllegalStateException("samplingHz mismatch in partial IDs for " + event + " " + observerName);
                             double samplingHz = samplingHzTmp[0];
+                            double normalization = partialsForWindow.stream()
+                                    .mapToDouble(partialID -> partialID.toTrace().getYVector().getLInfNorm()).max().getAsDouble();
 
                             // for each time step
                             for (int i = 0; i < npts; i++) {
@@ -196,13 +198,13 @@ public class PartialsMovieMaker extends Operation {
                                 Map<FullPosition, Double> discreteMap = new HashMap<>();
                                 for (PartialID partial : partialsForWindow) {
                                     double[] data = partial.getData();
-                                    discreteMap.put(partial.getVoxelPosition(), data[i] * amplification);
+                                    discreteMap.put(partial.getVoxelPosition(), data[i] / normalization);
                                 }
 
                                 // output discrete perturbation file
                                 // The number part of output file names has to be padded with 0 for the "convert" command to work.
                                 String fileNameRoot = "snapshot_" + component + "_" + variableType + "_t"
-                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, true);
+                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, true, "d");
                                 Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
                                 PerturbationListFile.write(discreteMap, outputDiscretePath);
                             }

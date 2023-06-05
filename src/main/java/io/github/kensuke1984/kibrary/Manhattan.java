@@ -45,6 +45,7 @@ import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
+import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
 import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
@@ -98,6 +99,7 @@ enum Manhattan {
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
+    VoxelFileMaker(51,VoxelFileMaker.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     // Partial 60

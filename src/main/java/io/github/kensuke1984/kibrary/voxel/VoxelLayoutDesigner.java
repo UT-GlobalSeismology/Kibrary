@@ -33,6 +33,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * When using distance [km], it is converted to degrees at the (roughly) median radius of the target region.
  * <p>
  * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
+ * <p>
+ * Use {@link VoxelFileMaker} to decide the position range of voxels manually.
  *
  * @author otsuru
  * @since 2022/2/11
@@ -295,7 +297,7 @@ public class VoxelLayoutDesigner extends Operation {
                 // the min and max borders of longitude are set so that all sample points are included
                 double minLongitude = Math.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
                 double maxLongitude = Math.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                 int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
+                int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
                 for (int j = 0; j < nLongitude; j++) {
                     // center longitude of each horizontal pixel
                     double longitude = minLongitude + (j + 0.5) * dLongitudeDeg;
