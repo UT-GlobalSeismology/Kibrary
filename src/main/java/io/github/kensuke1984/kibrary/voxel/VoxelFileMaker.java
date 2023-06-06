@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -39,21 +40,26 @@ public class VoxelFileMaker extends Operation {
     private int upperLatitude;
     private int lowerLongitude;
     private int upperLongitude;
+
+    private double dLatitudeKm;
+    private double dLatitudeDeg;
+    private boolean setLatitudeByKm;
+    private double latitudeOffset;
+
+    private double dLongitudeKm;
+    private double dLongitudeDeg;
+    private boolean setLongitudeByKm;
+    private double longitudeOffset;
+
+    private double[] borderRadii;
     private int lowerRadius;
     private int upperRadius;
-
-//    private double dLatitudeKm;
-    private double dLatitudeDeg;
-//    private boolean setLatitudeByKm;
-//    private double latitudeOffset;
-
-//    private double dLongitudeKm;
-    private double dLongitudeDeg;
-//    private boolean setLongitudeByKm;
-//    private double longitudeOffset;
-//    private boolean crossDateLine;
-
     private double dRadius;
+
+    /**
+     * (roughly) median radius of target region
+     */
+    private double centerRadius;
 
     /**
      * @param args  none to create a property file <br>
@@ -74,36 +80,38 @@ public class VoxelFileMaker extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##########Parameters for the center positions of voxels to create.");
-            pw.println("##(int) Lower limit of latitude [deg] [-90:upperLatitude) (0)");
+            pw.println("##########Parameters for the CENTER positions of voxels to create.");
+            pw.println("##(int) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
             pw.println("#lowerLatitude ");
-            pw.println("##(int) Upper limit of latitude [deg] (lowerLatitude:90] (0)");
+            pw.println("##(int) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
             pw.println("#upperLatitude ");
-            pw.println("##(int) Lower limit of longitude [deg] [-180:upperLongitude) (0)");
+            pw.println("##(int) Lower limit of longitude [deg]; [-180:upperLongitude). (0)");
             pw.println("#lowerLongitude ");
-            pw.println("##(int) Upper limit of longitude [deg] (lowerLongitude:360] (180)");
+            pw.println("##(int) Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
             pw.println("#upperLongitude ");
-            pw.println("##(int) Lower limit of radius [km] [0:upperRadius) (0)");
-            pw.println("#lowerRadius ");
-            pw.println("##(int) Upper limit of radius [km] (lowerRadius:) (6371)");
-            pw.println("#upperRadius ");
-//            pw.println("##(double) Latitude spacing [km]. If this is unset, the following dLatitudeDeg will be used.");
-//            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
-//            pw.println("#dLatitudeKm ");
-            pw.println("##(double) Latitude spacing [deg] (5)");
+            pw.println("##(double) Latitude spacing [km]; (0:). If this is unset, the following dLatitudeDeg will be used.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
+            pw.println("#dLatitudeKm ");
+            pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-//            pw.println("##(double) Offset of boundary latitude [deg], must be positive (2.5)");
-//            pw.println("#latitudeOffset ");
-//            pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
-//            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
-//            pw.println("#dLongitudeKm ");
-            pw.println("##(double) Longitude spacing [deg] (5)");
+            pw.println("##(double) Offset of voxel-CENTER latitude [deg]; [0:). (0)");
+            pw.println("#latitudeOffset ");
+            pw.println("##(double) Longitude spacing [km]; (0:). If this is unset, the following dLongitudeDeg will be used.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
+            pw.println("#dLongitudeKm ");
+            pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
-//            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
-//            pw.println("#longitudeOffset ");
-//            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
-//            pw.println("#crossDateLine ");
-            pw.println("##(double) Radius spacing [km] (50)");
+            pw.println("##(double) Offset of voxel-CENTER longitude [deg], when dLongitudeDeg is used; [0:). (0)");
+            pw.println("#longitudeOffset ");
+            pw.println("##########Parameters for the BORDER radii of voxels to create.");
+            pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
+            pw.println("##  If unset, the following parameters are used.");
+            pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
+            pw.println("##(int) Lower limit of radius [km]; [0:upperRadius). (3480)");
+            pw.println("#lowerRadius ");
+            pw.println("##(int) Upper limit of radius [km]; (lowerRadius:). (3880)");
+            pw.println("#upperRadius ");
+            pw.println("##(double) Radius spacing [km]; (0:). (50)");
             pw.println("#dRadius ");
         }
         System.err.println(outPath + " is created.");
@@ -128,60 +136,76 @@ public class VoxelFileMaker extends Operation {
         if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
             throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
 
-        lowerRadius = property.parseInt("lowerRadius", "0");
-        upperRadius = property.parseInt("upperRadius", "6371");
-        if (lowerRadius < 0 || lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
-
-//        if (property.containsKey("dLatitudeKm")) {
-//            dLatitudeKm = property.parseDouble("dLatitudeKm", null);
-//            if (dLatitudeKm <= 0)
-//                throw new IllegalArgumentException("dLatitudeKm must be positive");
-//            setLatitudeByKm = true;
-//        } else {
+        if (property.containsKey("dLatitudeKm")) {
+            dLatitudeKm = property.parseDouble("dLatitudeKm", null);
+            if (dLatitudeKm <= 0)
+                throw new IllegalArgumentException("dLatitudeKm must be positive.");
+            setLatitudeByKm = true;
+        } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
             if (dLatitudeDeg <= 0)
-                throw new IllegalArgumentException("dLatitudeDeg must be positive");
-//            setLatitudeByKm = false;
-//        }
-//        latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
-//        if (latitudeOffset < 0)
-//            throw new IllegalArgumentException("latitudeOffset must be positive");
-//
-//        if (property.containsKey("dLongitudeKm")) {
-//            dLongitudeKm = property.parseDouble("dLongitudeKm", null);
-//            if (dLongitudeKm <= 0)
-//                throw new IllegalArgumentException("dLongitudeKm must be positive");
-//            setLongitudeByKm = true;
-//        } else {
+                throw new IllegalArgumentException("dLatitudeDeg must be positive.");
+            setLatitudeByKm = false;
+        }
+        latitudeOffset = property.parseDouble("latitudeOffset", "0");
+        if (latitudeOffset < 0)
+            throw new IllegalArgumentException("latitudeOffset must be non-negative.");
+
+        if (property.containsKey("dLongitudeKm")) {
+            dLongitudeKm = property.parseDouble("dLongitudeKm", null);
+            if (dLongitudeKm <= 0)
+                throw new IllegalArgumentException("dLongitudeKm must be positive.");
+            setLongitudeByKm = true;
+        } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
             if (dLongitudeDeg <= 0)
-                throw new IllegalArgumentException("dLongitudeDeg must be positive");
-//            longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
-//            if (longitudeOffset < 0 || dLongitudeDeg <= longitudeOffset)
-//                throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg)");
-//            setLongitudeByKm = false;
-//        }
-//        crossDateLine = property.parseBoolean("crossDateLine", "false");
+                throw new IllegalArgumentException("dLongitudeDeg must be positive.");
+            longitudeOffset = property.parseDouble("longitudeOffset", "0");
+            if (longitudeOffset < 0)
+                throw new IllegalArgumentException("longitudeOffset must be non-negative.");
+            setLongitudeByKm = false;
+        }
 
+        if (property.containsKey("borderRadii")) {
+            borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", null))
+                    .sorted().toArray();
+            if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii.");
+        } else {
+            lowerRadius = property.parseInt("lowerRadius", "3480");
+            upperRadius = property.parseInt("upperRadius", "3880");
+            if (lowerRadius < 0 || lowerRadius > upperRadius)
+                throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
             dRadius = property.parseDouble("dRadius", "50");
             if (dRadius <= 0)
-                throw new IllegalArgumentException("dRadius must be positive");
+                throw new IllegalArgumentException("dRadius must be non-negative.");
+        }
     }
 
     @Override
     public void run() throws IOException {
+        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2;
 
         // decide horizontal distribution of voxels
         List<HorizontalPixel> horizontalPixels = designHorizontalPixels();
 
         // set voxel layer information
-        int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
-        double[] layerThicknesses = new double[nRadius];
-        double[] voxelRadii = new double[nRadius];
-        for (int i = 0; i < nRadius; i++) {
-            layerThicknesses[i] = dRadius;
-            voxelRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+        double[] layerThicknesses;
+        double[] voxelRadii;
+        if (borderRadii != null) {
+            layerThicknesses = new double[borderRadii.length - 1];
+            voxelRadii = new double[borderRadii.length - 1];
+            for (int i = 0; i < borderRadii.length - 1; i++) {
+                layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
+                voxelRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+            }
+        } else {
+            int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+            layerThicknesses = new double[nRadius];
+            voxelRadii = new double[nRadius];
+            for (int i = 0; i < nRadius; i++) {
+                layerThicknesses[i] = dRadius;
+                voxelRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+            }
         }
 
         // output
@@ -192,27 +216,62 @@ public class VoxelFileMaker extends Operation {
     private List<HorizontalPixel> designHorizontalPixels() {
         List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
-        double dLatitude = dLatitudeDeg;
-        int lowerLatitudeIndex = (int) Math.ceil(lowerLatitude / dLatitude);
-        int upperLatitudeIndex = (int) Math.floor(upperLatitude / dLatitude);
+        // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
+        double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / centerRadius) : dLatitudeDeg;
+
+        int lowerLatitudeIndex = getLowerIndex(lowerLatitude, dLatitude, latitudeOffset);
+        int upperLatitudeIndex = getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
 
         for (int i = lowerLatitudeIndex; i <= upperLatitudeIndex; i++) {
             // compute center latitude of the voxel row
-            double latitude = i * dLatitude;
+            double latitude = i * dLatitude + latitudeOffset;
 
-            double dLongitude = dLongitudeDeg;
-            int lowerLongitudeIndex = (int) Math.ceil(lowerLongitude / dLongitude);
-            int upperLongitudeIndex = (int) Math.floor(upperLongitude / dLongitude);
+            if (setLongitudeByKm) {
+                // voxel points are aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm
+                // the min and max voxel-centers are set close to the longitude bounds
+                double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
+                double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
+                int nLongitude = (int) Math.ceil((upperLongitude - lowerLongitude) / dLongitudeForRow);
+                double centerLongitude = (lowerLongitude + upperLongitude) / 2;
 
-            for (int j = lowerLongitudeIndex; j <= upperLongitudeIndex; j++) {
-                // compute center longitude of the voxel row
-                double longitude = j * dLongitude;
+                double startLongitude;
+                if (nLongitude % 2 == 0) {
+                    // when even number, align evenly on both sides of center longitude
+                    startLongitude = centerLongitude - (nLongitude / 2 - 0.5) * dLongitudeForRow;
+                } else {
+                    // when odd number, set one pixel at center longitude
+                    // This is same equation as above but is rewritten for clarity.
+                    startLongitude = centerLongitude - (nLongitude - 1) / 2 * dLongitudeForRow;
+                }
+                for (int j = 0; j < nLongitude; j++) {
+                    double longitude = startLongitude + j * dLongitudeForRow;
+                    // add horizontal pixel to list
+                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
+                }
 
-                // add horizontal pixel to list
-                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitude));
+            } else {
+                // all longitudes are set on (n * dLongitudeDeg + longitudeOffset)
+                // voxel longitudes are set so that all voxel-centers are included in range
+                int lowerLongitudeIndex = getLowerIndex(lowerLongitude, dLongitudeDeg, longitudeOffset);
+                int upperLongitudeIndex = getUpperIndex(upperLongitude, dLongitudeDeg, longitudeOffset);
+                for (int j = lowerLongitudeIndex; j <= upperLongitudeIndex; j++) {
+                    // compute center longitude of the voxel
+                    double longitude = j * dLongitudeDeg + longitudeOffset;
+
+                    // add horizontal pixel to list
+                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeDeg));
+                }
             }
+
         }
         return horizontalPixels;
+    }
+
+    private static int getLowerIndex(double lowerValue, double interval, double offset) {
+        return (int) Math.ceil((lowerValue - offset) / interval);
+    }
+    private static int getUpperIndex(double upperValue, double interval, double offset) {
+        return (int) Math.floor((upperValue - offset) / interval);
     }
 
 }

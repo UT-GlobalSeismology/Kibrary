@@ -131,7 +131,7 @@ class DSMShellscript {
             pw.println("Nsimrun=" + nSimRun);
             pw.println("Ncore=" + nCore);
             pw.println();
-            pw.println("echo \"" + nSources + " sources\"");
+            pw.println("echo \"" + MathAid.switchSingularPlural(nSources, "source", "sources") + " \"");
             pw.println("start=$(date +'%s')");
             pw.println("echo \"start: $(date -d \"@${start}\" +'%Y-%m-%d %H:%M:%S (%:z)')\"");
             pw.println();
