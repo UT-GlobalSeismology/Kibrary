@@ -263,8 +263,12 @@ public class PartialsMovieMaker extends Operation {
                         if (partialsForEntry.size() == 0) continue;
                         System.err.println("Working for " + component  + " " + variableType + " " + event + " " + observerName);
 
-                        Path observerPath = outPath.resolve(event.toString() + "_" + observerName.toString());
-                        Files.createDirectories(observerPath);
+                        // create folder
+                        Path seriesPath = outPath.resolve(event + "_" + observerName + "_" + component + "_" + variableType);
+                        Files.createDirectories(seriesPath);
+
+                        // root for names of file of this variable type, regardless of timeiwndow or timestep
+                        String fileNameRoot = "d" + variableType + "Normalized";
 
                         double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
 
@@ -294,30 +298,56 @@ public class PartialsMovieMaker extends Operation {
                                     discreteMap.put(partial.getVoxelPosition(), data[i] / normalization);
                                 }
 
-                                // output discrete perturbation file
+                                // create folder for each snapshot
                                 // The number part of output file names has to be padded with 0 for the "convert" command to work.
-                                String fileNameRoot = "snapshot_" + component + "_" + variableType + "_t"
+                                String snapshotName = "snapshot_t"
                                         + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, true, "d");
-                                Path outSnapshotPath = observerPath.resolve(fileNameRoot);
+                                Path outSnapshotPath = seriesPath.resolve(snapshotName);
                                 Files.createDirectories(outSnapshotPath);
 
+                                // output discrete perturbation file
                                 Path outputDiscretePath = outSnapshotPath.resolve(fileNameRoot + ".lst");
                                 PerturbationListFile.write(discreteMap, outputDiscretePath);
+
+                                String scaleLabel = "dU/d" + variableType + " \\(normalized\\)";
 
                                 CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                                         beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                                         marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
                                         scale, mosaic, 0);
-
-                                worker.createCrossSection(discreteMap, null, variableType, outSnapshotPath);
+                                worker.createCrossSection(discreteMap, null, scaleLabel, outSnapshotPath, fileNameRoot);
                             }
                         }
+
+                        // write shellscript to map each snapshot and convert them to gif movie
+                        writeShellScript(fileNameRoot, seriesPath.resolve(fileNameRoot + "Movie.sh"));
                     }
                 }
             }
         }
         System.err.println("After this finishes, please enter each " + outPath
-                + "/event_observerFolder/ and run *Grid.sh and *Map.sh");
+                + "/event_observer_component_variable(Folder)/ and run d*NormailzedMovie.sh");
+    }
+
+    private void writeShellScript(String fileNameRoot, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("");
+            pw.println("echo \"Making snapshots\"");
+            pw.println("for i in $(ls -d snapshot_*)");
+            pw.println("do");
+            pw.println("  cd $i");
+            pw.println("  echo \"$i\"");
+            pw.println("  sh " + fileNameRoot + "Section.sh");
+            pw.println("  wait");
+            pw.println("  cd ..");
+            pw.println("done");
+            pw.println("");
+            pw.println("echo \"Making movie\"");
+            pw.println("convert -delay 30 -loop 1 snapshot_*/" + fileNameRoot + "Section.png " + fileNameRoot + "Movie.gif");
+            pw.println("echo \"Done!\"");
+            pw.println("");
+        }
     }
 
 }

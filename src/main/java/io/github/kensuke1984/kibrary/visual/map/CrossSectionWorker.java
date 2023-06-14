@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -85,7 +84,7 @@ public class CrossSectionWorker {
     }
 
     void createCrossSection(Map<FullPosition, Double> discreteMap, Map<FullPosition, Double> maskDiscreteMap,
-            VariableType variable, Path outPath) throws IOException {
+            String scaleLabel, Path outPath, String modelFileNameRoot) throws IOException {
         Set<FullPosition> discretePositions = discreteMap.keySet();
 
         //~decide start and end positions of cross section
@@ -117,15 +116,12 @@ public class CrossSectionWorker {
         double upperRadius = radii[radii.length - 1] + marginRadius;
 
         // output file names
-        String variableName = variable.toString().toLowerCase();
-        String modelFileNameRoot = variableName + "PercentSection";
-        Path interpolatedPath = outPath.resolve(modelFileNameRoot+ "XZ.txt");
+        Path interpolatedPath = outPath.resolve(modelFileNameRoot + "XZ.txt");
         Path maskInterpolatedPath = outPath.resolve(modelFileNameRoot + "_forMaskXZ.txt");
         Path cpMasterPath = outPath.resolve("cp_master.cpt");
         Path cpMaskPath = outPath.resolve("cp_mask.cpt");
         Path annotationPath = outPath.resolve("rAnnotation.txt");
-        Path gridPath = outPath.resolve(modelFileNameRoot + "Grid.sh");
-        Path gmtPath = outPath.resolve(modelFileNameRoot + "Map.sh");
+        Path gmtPath = outPath.resolve(modelFileNameRoot + "Section.sh");
 
         // compute cross section data and output
         computeCrossSectionData(discreteMap, radii, samplePositionMap, verticalGridInterval, interpolatedPath);
@@ -141,8 +137,8 @@ public class CrossSectionWorker {
 
         double[] annotationRadii = {lowerRadius, upperRadius};
         writeAnnotationFile(annotationRadii, annotationPath);
-        writeGridMaker(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, modelFileNameRoot, maskExists, gridPath);
-        writeMakeMap(distance, lowerRadius, upperRadius, modelFileNameRoot, maskExists, gmtPath, variable);
+        writeMakeMap(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, maskExists,
+                scaleLabel, gmtPath, modelFileNameRoot);
     }
 
     private void computeCrossSectionData(Map<FullPosition, Double> discreteMap, double[] radii, Map<Double, HorizontalPosition> samplePositionMap,
@@ -280,11 +276,13 @@ public class CrossSectionWorker {
         }
     }
 
-    private void writeGridMaker(double sectionDistance, double lowerRadius, double upperRadius,
-            double horizontalGridInterval, double verticalGridInterval, String modelFileNameRoot, boolean maskExists, Path outputPath) throws IOException {
+    private void writeMakeMap(double sectionDistance, double lowerRadius, double upperRadius,
+            double horizontalGridInterval, double verticalGridInterval,
+            boolean maskExists, String scaleLabel, Path outputPath, String modelFileNameRoot) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
+            pw.println("# create grid");
             pw.println("cat " + modelFileNameRoot + "XZ.txt | \\");
             pw.println("awk '{print $1,$4,$5}' | \\");
             pw.println("gmt xyz2grd -G0model.grd -R0/" + MathAid.simplestString(sectionDistance)
@@ -297,14 +295,6 @@ public class CrossSectionWorker {
                         + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
                         + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             }
-        }
-    }
-
-    private void writeMakeMap(double sectionDistance, double lowerRadius, double upperRadius, String modelFileNameRoot,
-            boolean maskExists, Path outputPath, VariableType variable) throws IOException {
-        String paramName = variable.toString();
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            pw.println("#!/bin/sh");
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
@@ -323,7 +313,7 @@ public class CrossSectionWorker {
             pw.println("J='-JP60+a+t" + MathAid.simplestString(sectionDistance / 2) + "'");
             pw.println("B='-BWeSn -Bx30f10 -BycrAnnotation.txt'");
             pw.println("");
-            pw.println("outputps=" + modelFileNameRoot + ".eps");
+            pw.println("outputps=" + modelFileNameRoot + "Section.eps");
             pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
@@ -334,7 +324,7 @@ public class CrossSectionWorker {
             }
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -Y2 -X5 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + scaleLabel + "\" -K -O -Y2 -X5 >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");

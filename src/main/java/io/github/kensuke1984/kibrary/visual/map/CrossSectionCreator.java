@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -207,13 +208,17 @@ public class CrossSectionCreator extends Operation {
         Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
+        String modelFileNameRoot = FileAid.extractNameRoot(perturbationPath);
+        String scaleLabel = "@~d@~" + variable + "/" + variable + " \\(\\%\\)";
+
         CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                 beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
                 scale, mosaic, maskThreshold);
+        worker.createCrossSection(discreteMap, maskDiscreteMap, scaleLabel, outPath, modelFileNameRoot);
 
-        worker.createCrossSection(discreteMap, maskDiscreteMap, variable, outPath);
-
+        System.err.println("After this finishes, please enter " + outPath
+                + "/ and run " + modelFileNameRoot + "Section.sh");
     }
 
 }
