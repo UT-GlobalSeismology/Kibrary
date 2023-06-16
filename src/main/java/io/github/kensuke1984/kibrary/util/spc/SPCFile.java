@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Spectrum file by DSM.
  *
- * @version 0.1.2
+ * @since version 0.1.2
  * @author Kensuke Konishi
  * @author anselme add content for BP/FP catalog
  */
@@ -82,10 +82,11 @@ public class SPCFile implements SPCFileAccess {
      */
     public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition receiverPosition
             , FullPosition sourcePosition) throws IOException {
+        SPCFile specFile = new SPCFile(spcFileName);
+        specFile.sourceID = spcFileName.getSourceID();
+        specFile.receiverID = spcFileName.getReceiverID();
+
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
-            SPCFile specFile = new SPCFile(spcFileName);
-            specFile.sourceID = spcFileName.getSourceID();
-            specFile.receiverID = spcFileName.getReceiverID();
             // read header PF
             // tlen
             double tlen = dis.readDouble();
@@ -227,7 +228,7 @@ public class SPCFile implements SPCFileAccess {
             double sin2phi = FastMath.sin(2 * phi);
 
             // read body
-            for (int i = 0; i < np + 1; i++)
+            for (int i = 0; i < np + 1; i++) {
                 for (SPCBody body : specFile.spcBody) {
                     Complex[] u = new Complex[specFile.nComponent];
                     int ip = dis.readInt();
@@ -348,10 +349,17 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
                         }
                     }
-                    body.add(ip, u);
+
+                    try {
+                        body.add(ip, u);
+                    } catch (Exception e) {
+                        System.err.println(spcFileName);
+                        throw e;
+                    }
                 }
-            return specFile;
+            }
         }
+        return specFile;
     }
 
     /**
