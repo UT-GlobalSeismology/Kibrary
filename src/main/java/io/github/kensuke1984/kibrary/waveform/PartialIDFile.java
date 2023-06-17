@@ -285,11 +285,12 @@ public final class PartialIDFile {
                 usablephases, isConvolved, partialType.toParameterType(), partialType.toVariableType(), voxelPosition);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Exports binary files in ascii format.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException{

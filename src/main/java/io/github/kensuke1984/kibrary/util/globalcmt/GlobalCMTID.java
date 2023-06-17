@@ -134,12 +134,13 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
         return ndk;
     }
 
-    /*-------------------------------------------------------*/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Displays information of input event IDs.
      * Results are written in the standard output.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {

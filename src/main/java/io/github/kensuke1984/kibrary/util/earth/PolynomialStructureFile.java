@@ -184,11 +184,12 @@ public class PolynomialStructureFile {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Create a polynomial structure file under the working folder.
      * The structure can be specified by its name or by using a DSM PSV input file.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {

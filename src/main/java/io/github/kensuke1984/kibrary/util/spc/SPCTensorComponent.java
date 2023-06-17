@@ -35,8 +35,7 @@ public enum SPCTensorComponent {
     }
 
     /**
-     * Returns component of ETAri,s for back propagate
-     * (ex. rtp when i=1, r=2, s=3).
+     * Returns component of ETAri,s for back propagate (ex. rtp when i=1, r=2, s=3).
      *
      * @param i 1, 2, 3
      * @param r 1, 2, 3

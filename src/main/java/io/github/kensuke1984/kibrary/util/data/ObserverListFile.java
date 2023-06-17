@@ -86,13 +86,15 @@ public final class ObserverListFile {
         return Collections.unmodifiableSet(observerSet);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Reads observer information from an input source
      * and creates an observer list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic ID file.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
