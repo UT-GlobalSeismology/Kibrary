@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,8 +141,8 @@ public class CrossSectionWorker {
         Set<FullPosition> resampledPositions = resampledMap.keySet();
 
         //~compute sampled trace at each sample point
-        Map<Double, Trace> sampledTraceMap = new TreeMap<>();
-        for (Map.Entry<Double, HorizontalPosition> sampleEntry : samplePositionMap.entrySet()) {
+        Map<Double, Trace> sampledTraceMap = Collections.synchronizedMap(new TreeMap<>());
+        samplePositionMap.entrySet().parallelStream().forEach(sampleEntry -> {
             double sampleLatitude = sampleEntry.getValue().getLatitude();
             double sampleLongitude = sampleEntry.getValue().getLongitude();
 
@@ -151,14 +152,14 @@ public class CrossSectionWorker {
                     .collect(Collectors.toSet());
             if (positionsInMeridian.size() == 0) {
 //                System.err.println("No positions for longitude " + sampleLongitude);
-                continue;
+                return;
             }
             double[] latitudesInMeridian = positionsInMeridian.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
             double[] latitudesExtracted = extractContinuousLatitudeSequence(latitudesInMeridian, sampleLatitude, marginLatitudeDeg);
             // skip this sample point if sampleLatitude is not included in a latitude sequence (thus cannot be interpolated)
             if (latitudesExtracted == null) {
 //                System.err.println("No data for longitude " + sampleLongitude);
-                continue;
+                return;
             }
 
             //~create vertical trace at this sample point
@@ -174,7 +175,7 @@ public class CrossSectionWorker {
             //~interpolate vertical trace on grid
             verticalTrace = Interpolation.interpolateTraceOnGrid(verticalTrace, verticalGridInterval, marginRadius, mosaic);
             sampledTraceMap.put(sampleEntry.getKey(), verticalTrace);
-        }
+        });
 
         outputData(samplePositionMap, sampledTraceMap, outputPath);
     }
@@ -326,7 +327,7 @@ public class CrossSectionWorker {
             }
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + scaleLabel + "\" -K -O -Y2 -X5 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B$MP+l\"" + scaleLabel + "\" -K -O -Y2 -X5 >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");
