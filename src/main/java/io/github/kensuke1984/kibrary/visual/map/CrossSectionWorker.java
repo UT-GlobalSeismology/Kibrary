@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,67 +32,43 @@ public class CrossSectionWorker {
      */
     public static final int VERTICAL_ENLARGE_FACTOR = 2;
 
-    private double pos0Latitude;
-    private double pos0Longitude;
-    private double pos1Latitude;
-    private double pos1Longitude;
-    private double beforePos0Deg;
-    private double afterPosDeg;
-    private boolean useAfterPos1;
+    private final HorizontalPosition startPosition;
+    private final HorizontalPosition endPosition;
+    private final Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
+    private final double distance;
+    private final double horizontalGridInterval;
+    private final double verticalGridInterval;
+    private final double[] radii;
 
-    private double zeroPointRadius;
-    private String zeroPointName;
-    private boolean flipVerticalAxis;
+    private final double marginLatitudeDeg;
+    private final double marginLongitudeDeg;
+    private final double marginRadius;
 
-    private double marginLatitudeRaw;
-    private boolean setMarginLatitudeByKm;
-    private double marginLongitudeRaw;
-    private boolean setMarginLongitudeByKm;
-    private double marginRadius;
+    private final double zeroPointRadius;
+    private final String zeroPointName;
+    private final boolean flipVerticalAxis;
 
-//    private double amplification;
-    private double scale;
+    private final double scale;
     /**
      * Whether to display map as mosaic without smoothing
      */
-    private boolean mosaic;
-    private double maskThreshold;
+    private final boolean mosaic;
+    private final boolean maskExists;
+    private final double maskThreshold;
+    private final String modelFileNameRoot;
+    private final Set<FullPosition> discretePositions;
 
 
     CrossSectionWorker(double pos0Latitude, double pos0Longitude, double pos1Latitude, double pos1Longitude,
             double beforePos0Deg, double afterPosDeg, boolean useAfterPos1, double zeroPointRadius,
             String zeroPointName, boolean flipVerticalAxis, double marginLatitudeRaw, boolean setMarginLatitudeByKm,
             double marginLongitudeRaw, boolean setMarginLongitudeByKm, double marginRadius, double scale,
-            boolean mosaic, double maskThreshold) {
-        this.pos0Latitude = pos0Latitude;
-        this.pos0Longitude = pos0Longitude;
-        this.pos1Latitude = pos1Latitude;
-        this.pos1Longitude = pos1Longitude;
-        this.beforePos0Deg = beforePos0Deg;
-        this.afterPosDeg = afterPosDeg;
-        this.useAfterPos1 = useAfterPos1;
-        this.zeroPointRadius = zeroPointRadius;
-        this.zeroPointName = zeroPointName;
-        this.flipVerticalAxis = flipVerticalAxis;
-        this.marginLatitudeRaw = marginLatitudeRaw;
-        this.setMarginLatitudeByKm = setMarginLatitudeByKm;
-        this.marginLongitudeRaw = marginLongitudeRaw;
-        this.setMarginLongitudeByKm = setMarginLongitudeByKm;
-        this.marginRadius = marginRadius;
-        this.scale = scale;
-        this.mosaic = mosaic;
-        this.maskThreshold = maskThreshold;
-    }
-
-    void createCrossSection(Map<FullPosition, Double> discreteMap, Map<FullPosition, Double> maskDiscreteMap,
-            String scaleLabel, Path outPath, String modelFileNameRoot) throws IOException {
-        Set<FullPosition> discretePositions = discreteMap.keySet();
+            boolean mosaic, boolean maskExists, double maskThreshold, String modelFileNameRoot, Set<FullPosition> discretePositions) {
 
         //~decide start and end positions of cross section
         HorizontalPosition pos0 = new HorizontalPosition(pos0Latitude, pos0Longitude);
         HorizontalPosition pos1 = new HorizontalPosition(pos1Latitude, pos1Longitude);
-        HorizontalPosition startPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), -beforePos0Deg);
-        HorizontalPosition endPosition;
+        startPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), -beforePos0Deg);
         if (useAfterPos1) {
             endPosition = pos1.pointAlongAzimuth(pos1.computeAzimuthDeg(pos0), -afterPosDeg);
         } else {
@@ -99,10 +76,9 @@ public class CrossSectionWorker {
         }
 
         //~decide horizontal positions at which to sample values
-        Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
-        double distance = startPosition.computeEpicentralDistanceDeg(endPosition);
+        distance = startPosition.computeEpicentralDistanceDeg(endPosition);
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
-        double horizontalGridInterval = PerturbationMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
+        horizontalGridInterval = PerturbationMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
         int nSamplePosition = (int) Math.round(distance / horizontalGridInterval) + 1;
         for (int i = 0; i < nSamplePosition; i++) {
             HorizontalPosition position = startPosition.pointAlongAzimuth(azimuth, i * horizontalGridInterval);
@@ -110,35 +86,49 @@ public class CrossSectionWorker {
         }
 
         // decide vertical settings
-        double verticalGridInterval = horizontalGridInterval * VERTICAL_ENLARGE_FACTOR;
-        double[] radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
-        double lowerRadius = radii[0] - marginRadius;
-        double upperRadius = radii[radii.length - 1] + marginRadius;
+        verticalGridInterval = horizontalGridInterval * VERTICAL_ENLARGE_FACTOR;
+        radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
+
+        // decide margins
+        double meanRadius = Arrays.stream(radii).average().getAsDouble();
+        this.marginLatitudeDeg = setMarginLatitudeByKm ? Math.toDegrees(marginLatitudeRaw / meanRadius) : marginLatitudeRaw;
+        this.marginLongitudeDeg = setMarginLongitudeByKm ? Math.toDegrees(marginLongitudeRaw / meanRadius) : marginLongitudeRaw;
+        this.marginRadius = marginRadius;
+
+        // other settings
+        this.zeroPointRadius = zeroPointRadius;
+        this.zeroPointName = zeroPointName;
+        this.flipVerticalAxis = flipVerticalAxis;
+        this.scale = scale;
+        this.mosaic = mosaic;
+        this.maskExists = maskExists;
+        this.maskThreshold = maskThreshold;
+        this.modelFileNameRoot = modelFileNameRoot;
+        this.discretePositions = discretePositions;
+    }
+
+    void computeCrossSection(Map<FullPosition, Double> discreteMap, Map<FullPosition, Double> maskDiscreteMap, Path outPath) throws IOException {
+        if (discreteMap.keySet().stream().anyMatch(pos -> !discretePositions.contains(pos))) {
+            throw new IllegalArgumentException("discreteMap contains illegal positions.");
+        }
+        if (maskExists) {
+            if (maskDiscreteMap == null) {
+                throw new IllegalArgumentException("maskDiscreteMap must be set.");
+            }
+            if (maskDiscreteMap.keySet().stream().anyMatch(pos -> !discretePositions.contains(pos))) {
+                throw new IllegalArgumentException("maskDiscreteMap contains illegal positions.");
+            }
+        }
 
         // output file names
         Path interpolatedPath = outPath.resolve(modelFileNameRoot + "XZ.txt");
         Path maskInterpolatedPath = outPath.resolve(modelFileNameRoot + "_forMaskXZ.txt");
-        Path cpMasterPath = outPath.resolve("cp_master.cpt");
-        Path cpMaskPath = outPath.resolve("cp_mask.cpt");
-        Path annotationPath = outPath.resolve("rAnnotation.txt");
-        Path gmtPath = outPath.resolve(modelFileNameRoot + "Section.sh");
 
         // compute cross section data and output
         computeCrossSectionData(discreteMap, radii, samplePositionMap, verticalGridInterval, interpolatedPath);
-        PerturbationMapShellscript.writeCpMaster(cpMasterPath);
-
-        boolean maskExists = false;
-        if (maskDiscreteMap != null) {
-            maskExists = true;
-            // compute cross section data and output
+        if (maskExists) {
             computeCrossSectionData(maskDiscreteMap, radii, samplePositionMap, verticalGridInterval, maskInterpolatedPath);
-            PerturbationMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
         }
-
-        double[] annotationRadii = {lowerRadius, upperRadius};
-        writeAnnotationFile(annotationRadii, annotationPath);
-        writeMakeMap(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, maskExists,
-                scaleLabel, gmtPath, modelFileNameRoot);
     }
 
     private void computeCrossSectionData(Map<FullPosition, Double> discreteMap, double[] radii, Map<Double, HorizontalPosition> samplePositionMap,
@@ -147,15 +137,12 @@ public class CrossSectionWorker {
         double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(HorizontalPosition::getLongitude)
                 .distinct().sorted().toArray();
         Map<FullPosition, Double> resampledMap = Interpolation.inEachWestEastLine(discreteMap, sampleLongitudes,
-                decideMarginLongitudeDeg(radii), mosaic);
-
-        // acquire some information
+                marginLongitudeDeg, mosaic);
         Set<FullPosition> resampledPositions = resampledMap.keySet();
-        double marginLatitudeDeg = decideMarginLatitudeDeg(radii);
 
         //~compute sampled trace at each sample point
-        Map<Double, Trace> sampledTraceMap = new TreeMap<>();
-        for (Map.Entry<Double, HorizontalPosition> sampleEntry : samplePositionMap.entrySet()) {
+        Map<Double, Trace> sampledTraceMap = Collections.synchronizedMap(new TreeMap<>());
+        samplePositionMap.entrySet().parallelStream().forEach(sampleEntry -> {
             double sampleLatitude = sampleEntry.getValue().getLatitude();
             double sampleLongitude = sampleEntry.getValue().getLongitude();
 
@@ -165,14 +152,14 @@ public class CrossSectionWorker {
                     .collect(Collectors.toSet());
             if (positionsInMeridian.size() == 0) {
 //                System.err.println("No positions for longitude " + sampleLongitude);
-                continue;
+                return;
             }
             double[] latitudesInMeridian = positionsInMeridian.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
             double[] latitudesExtracted = extractContinuousLatitudeSequence(latitudesInMeridian, sampleLatitude, marginLatitudeDeg);
             // skip this sample point if sampleLatitude is not included in a latitude sequence (thus cannot be interpolated)
             if (latitudesExtracted == null) {
 //                System.err.println("No data for longitude " + sampleLongitude);
-                continue;
+                return;
             }
 
             //~create vertical trace at this sample point
@@ -188,19 +175,9 @@ public class CrossSectionWorker {
             //~interpolate vertical trace on grid
             verticalTrace = Interpolation.interpolateTraceOnGrid(verticalTrace, verticalGridInterval, marginRadius, mosaic);
             sampledTraceMap.put(sampleEntry.getKey(), verticalTrace);
-        }
+        });
 
-        output(samplePositionMap, sampledTraceMap, outputPath);
-    }
-
-    private double decideMarginLatitudeDeg(double[] radii) {
-        double meanRadius = Arrays.stream(radii).average().getAsDouble();
-        return setMarginLatitudeByKm ? Math.toDegrees(marginLatitudeRaw / meanRadius) : marginLatitudeRaw;
-    }
-
-    private double decideMarginLongitudeDeg(double[] radii) {
-        double meanRadius = Arrays.stream(radii).average().getAsDouble();
-        return setMarginLongitudeByKm ? Math.toDegrees(marginLongitudeRaw / meanRadius) : marginLongitudeRaw;
+        outputData(samplePositionMap, sampledTraceMap, outputPath);
     }
 
     private Trace formMeridionalTrace(double[] latitudesExtracted, double longitude, double radius, Map<FullPosition, Double> resampledMap) {
@@ -248,7 +225,8 @@ public class CrossSectionWorker {
         return null;
     }
 
-    private static void output(Map<Double, HorizontalPosition> samplePositionMap, Map<Double, Trace> sampleTraceMap, Path outputPath) throws IOException {
+    private static void outputData(Map<Double, HorizontalPosition> samplePositionMap, Map<Double, Trace> sampleTraceMap,
+            Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (Map.Entry<Double, Trace> sampleTraceEntry : sampleTraceMap.entrySet()) {
                 Trace sampleTrace = sampleTraceEntry.getValue();
@@ -259,6 +237,31 @@ public class CrossSectionWorker {
                 }
             }
         }
+    }
+
+    /**
+     * Writes shellscript, color palette, and annotation file.
+     * @param scaleLabel (String) Label of scale that should be displayed. Special characters must be escaped twice (ex. ")" -> "\\)").
+     * @param outPath (Path) Folder where output files should be created.
+     * @throws IOException
+     */
+    void writeScripts(String scaleLabel, Path outPath) throws IOException {
+        Path cpMasterPath = outPath.resolve("cp_master.cpt");
+        Path cpMaskPath = outPath.resolve("cp_mask.cpt");
+        Path annotationPath = outPath.resolve("rAnnotation.txt");
+        Path gmtPath = outPath.resolve(modelFileNameRoot + "Section.sh");
+
+        PerturbationMapShellscript.writeCpMaster(cpMasterPath);
+        if (maskExists) {
+            PerturbationMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
+        }
+
+        double lowerRadius = radii[0] - marginRadius;
+        double upperRadius = radii[radii.length - 1] + marginRadius;
+        double[] annotationRadii = {lowerRadius, upperRadius};
+        writeAnnotationFile(annotationRadii, annotationPath);
+        writeShellscript(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, maskExists,
+                scaleLabel, gmtPath, modelFileNameRoot);
     }
 
     private void writeAnnotationFile(double[] radii, Path outputPath) throws IOException {
@@ -276,7 +279,7 @@ public class CrossSectionWorker {
         }
     }
 
-    private void writeMakeMap(double sectionDistance, double lowerRadius, double upperRadius,
+    private void writeShellscript(double sectionDistance, double lowerRadius, double upperRadius,
             double horizontalGridInterval, double verticalGridInterval,
             boolean maskExists, String scaleLabel, Path outputPath, String modelFileNameRoot) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
@@ -324,7 +327,7 @@ public class CrossSectionWorker {
             }
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + scaleLabel + "\" -K -O -Y2 -X5 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B$MP+l\"" + scaleLabel + "\" -K -O -Y2 -X5 >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");

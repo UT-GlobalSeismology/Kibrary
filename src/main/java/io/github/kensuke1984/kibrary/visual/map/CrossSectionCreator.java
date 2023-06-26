@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -197,10 +198,13 @@ public class CrossSectionCreator extends Operation {
 
         // read perturbation file
         Map<FullPosition, Double> discreteMap = PerturbationListFile.read(perturbationPath);
+        Set<FullPosition> discretePositions = discreteMap.keySet();
 
         // read mask perturbation file
         Map<FullPosition, Double> maskDiscreteMap = null;
+        boolean maskExists = false;
         if (maskPath != null) {
+            maskExists = true;
             maskDiscreteMap = PerturbationListFile.read(maskPath);
         }
 
@@ -214,11 +218,11 @@ public class CrossSectionCreator extends Operation {
         CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                 beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
-                scale, mosaic, maskThreshold);
-        worker.createCrossSection(discreteMap, maskDiscreteMap, scaleLabel, outPath, modelFileNameRoot);
+                scale, mosaic, maskExists, maskThreshold, modelFileNameRoot, discretePositions);
+        worker.computeCrossSection(discreteMap, maskDiscreteMap, outPath);
+        worker.writeScripts(scaleLabel, outPath);
 
-        System.err.println("After this finishes, please enter " + outPath
-                + "/ and run " + modelFileNameRoot + "Section.sh");
+        System.err.println("After this finishes, please enter " + outPath + "/ and run " + modelFileNameRoot + "Section.sh");
     }
 
 }
