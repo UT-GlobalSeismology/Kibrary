@@ -31,7 +31,7 @@ public final class DatasetAid {
      * @param workPath (Path) Path to create the output folder under
      * @param nameRoot (String) First part of output folder name
      * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
-     * @param dateStr (String) The date string part of output folder name
+     * @param dateStr (String) The date string part of output folder name. If null, this part will be excluded.
      * @return (Path) Path of created output folder
      * @throws IOException
      *
@@ -40,8 +40,14 @@ public final class DatasetAid {
      */
     public static Path createOutputFolder(Path workPath, String nameRoot, String tag, String dateStr) throws IOException {
         Path outPath;
-        if (tag == null) outPath = workPath.resolve(nameRoot + dateStr);
-        else outPath = workPath.resolve(nameRoot + "_" + tag + "_" + dateStr);
+        if (dateStr == null) {
+            if (tag == null) outPath = workPath.resolve(nameRoot);
+            else outPath = workPath.resolve(nameRoot + "_" + tag);
+        }
+        else {
+            if (tag == null) outPath = workPath.resolve(nameRoot + dateStr);
+            else outPath = workPath.resolve(nameRoot + "_" + tag + "_" + dateStr);
+        }
 
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);

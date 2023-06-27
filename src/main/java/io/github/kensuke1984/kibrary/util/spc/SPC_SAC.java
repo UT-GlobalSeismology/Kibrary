@@ -62,6 +62,10 @@ public final class SPC_SAC extends Operation {
      */
     private Path workPath;
     /**
+     * If this is true, a time stamp is included in output folder name.
+     */
+    private boolean timeStamp;
+    /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
@@ -134,6 +138,8 @@ public final class SPC_SAC extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
+            pw.println("##(boolean) Whether to include time stamp in output folder name (true)");
+            pw.println("#timeStamp false");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##SACComponents to be exported, listed using spaces (Z R T)");
@@ -175,6 +181,7 @@ public final class SPC_SAC extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        timeStamp = property.parseBoolean("timeStamp", "true");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -245,7 +252,9 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, GadgetAid.getTemporaryString());
+        if (timeStamp) outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, GadgetAid.getTemporaryString());
+        else outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, null);
+
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

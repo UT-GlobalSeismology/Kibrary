@@ -89,10 +89,23 @@ public class SourceTimeFunction {
 
     /**
      * ASYMMETRIC Triangle source time function
+     * <p>
+     * The width is determined by the half duration &tau;1 & &tau;2. <br>
+     * f(t) = (h/&tau;1) t + h (-&tau;1 &le; t &le; 0), -(h/&tau;2)
+     * t + h (0 &le; t &le; &tau;2), 0 (t &lt; -&tau;1, &tau;2
+     * &lt; t) <br>
+     * where h = 2 / (&tau;1+&tau;2) <br><br>
+     * Source time function is as follows; <br>
+     * Re[F(&omega;)] = h/&omega;<sup>2</sup> [1/&tau;1 + 1/&tau;2
+     * - cos(&omega;&tau;1)/&tau;1 - cos(&omega;&tau;2)/&tau;2)] <br>
+     * Im[F(&omega;)] = h/&omega;<sup>2</sup> [sin(&omega;&tau;1)/&tau;1 + sin(&omega;&tau;2)/&tau;2)]
+     *
      * @param np           the number of steps in frequency domain
      * @param tlen         [s] time length
      * @param samplingHz   [Hz]
-     * @param halfDuration [s] of the source
+     * @param halfDuration1 [s] of the source
+     * @param halfDuration2 [s] of the source
+     * @return SourceTimeFunction
      * @author lina
      */
     public static SourceTimeFunction asymmetricTriangleSourceTimeFunction(int np, double tlen, double samplingHz,
