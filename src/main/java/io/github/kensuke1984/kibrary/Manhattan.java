@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
+import io.github.kensuke1984.kibrary.visual.plot.SyntheticRecordSectionCreator;
 import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
@@ -72,6 +73,7 @@ enum Manhattan {
     // Synthetic  20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
+    SyntheticRecordSectionCreator(22, SyntheticRecordSectionCreator.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),
     TimewindowMaker(31, TimewindowMaker.class),

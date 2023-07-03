@@ -277,6 +277,21 @@ public class GnuplotFile {
     }
 
     /**
+     *
+     * @param fileName1 (String)
+     * @param fileName2 (String)
+     * @param plotPart (String) The content of the "using" part. (ex. 1:3, 1:($3+$1) )
+     * @param appearance ({@link GnuplotAppearance})
+     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     */
+    public void addLine(String fileName1, String fileName2, String plotPart, GnuplotLineAppearance appearance, String title) {
+        drawStarted = true;
+        // add line to current page
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLine(new GnuplotLine(fileName1, fileName2, plotPart, appearance, title));
+    }
+
+    /**
      * @param fileName (String)
      * @param columnX (double) The column number of input file to use for the x-axis
      * @param columnY (double) The column number of input file to use for the y-axis

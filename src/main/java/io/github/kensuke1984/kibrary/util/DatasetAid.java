@@ -66,8 +66,14 @@ public final class DatasetAid {
      */
     public static String generateOutputFileName(String nameRoot, String tag, String dateStr, String extension) {
         String fileName;
-        if (tag == null) fileName = nameRoot + dateStr + extension;
-        else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
+        if (dateStr == null) {
+            if (tag == null) fileName = nameRoot + extension;
+            else fileName = nameRoot + "_" + tag + extension;
+        }
+        else {
+            if (tag == null) fileName = nameRoot + dateStr + extension;
+            else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
+        }
         return fileName;
     }
 
