@@ -331,7 +331,7 @@ public interface SACFileAccess extends SACHeaderAccess {
                 for (SACFileName sacName : set) {
                     // set output
                     String fileName = sacName.toPath().getFileName().toString();
-                    Path outputPath = Paths.get(fileName + ".txt");
+                    Path outputPath = eventDir.toPath().resolve(fileName + ".txt");
 
                     // set input file path
                     SACFileAccess sacData = sacName.read();

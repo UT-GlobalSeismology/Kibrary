@@ -143,6 +143,8 @@ public class SyntheticRecordSectionCreator extends Operation {
      */
     private String structureName;
 
+    private double lowerTime;
+    private double upperTime;
     private double lowerDistance;
     private double upperDistance;
     private double lowerAzimuth;
@@ -218,6 +220,10 @@ public class SyntheticRecordSectionCreator extends Operation {
             pw.println("#reductionSlowness ");
             pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
             pw.println("#structureName ");
+            pw.println("##(double) Lower limit of range of time to be used [sec]. To use all time, leave this unset");
+            pw.println("#lowerTime ");
+            pw.println("##(double) Upper limit of range of time to be used [sec]. To use all time, leave this unset");
+            pw.println("#upperTime ");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
@@ -288,6 +294,9 @@ public class SyntheticRecordSectionCreator extends Operation {
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
         structureName = property.parseString("structureName", "prem").toLowerCase();
 
+        lowerTime = property.parseDouble("lowerTime", "NaN");
+        upperTime = property.parseDouble("upperTime", "NaN");
+
         lowerDistance = property.parseDouble("lowerDistance", "0");
         upperDistance = property.parseDouble("upperDistance", "180");
         if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
@@ -325,7 +334,7 @@ public class SyntheticRecordSectionCreator extends Operation {
            mainEventDirs = mainEventDirs.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
        SACFileAccess.outputSacFileTxt(mainEventDirs);
 
-       Set<GlobalCMTID> events = null;
+       Set<GlobalCMTID> events = new HashSet<>();
        mainEventDirs.forEach(dirs -> events.add(dirs.getGlobalCMTID()));
 
        // read reference synthetic dataset and write waveforms to be used into txt files
@@ -335,7 +344,7 @@ public class SyntheticRecordSectionCreator extends Operation {
            if (!tendEvents.isEmpty())
                refEventDirs1 = refEventDirs1.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
            // check the event directories are same as mainSynPath
-           Set<GlobalCMTID> refEvents1 = null;
+           Set<GlobalCMTID> refEvents1 = new HashSet<>();
            refEventDirs1.forEach(dirs -> refEvents1.add(dirs.getGlobalCMTID()));
            if (!refEvents1.equals(events))
                throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath1 is different");
@@ -348,7 +357,7 @@ public class SyntheticRecordSectionCreator extends Operation {
            if (!tendEvents.isEmpty())
                refEventDirs2 = refEventDirs2.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
            // check the event directories are same as mainSynPath
-           Set<GlobalCMTID> refEvents2 = null;
+           Set<GlobalCMTID> refEvents2 = new HashSet<>();
            refEventDirs2.forEach(dirs -> refEvents2.add(dirs.getGlobalCMTID()));
            if (!refEvents2.equals(events))
                throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath2 is different");
@@ -484,6 +493,8 @@ public class SyntheticRecordSectionCreator extends Operation {
             }
 
             // set ranges
+            if (!Double.isNaN(lowerTime)) minTime = lowerTime;
+            if (!Double.isNaN(upperTime)) maxTime = upperTime;
             if (minDistance > maxDistance || minTime > maxTime) return;
             int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
             int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
@@ -542,8 +553,8 @@ public class SyntheticRecordSectionCreator extends Operation {
             if (!byAzimuth) {
                 gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
                         "graph", 1.01, "first", distance);
-                synUsingString = String.format("($1-%.3f):(($2-$4)/%.3e+%.2f) ", reduceTime, synAmp, distance);
-                residualUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
+                synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, distance);
+                residualUsingString = String.format("($1-%.3f):(($2-$4)/%.3e+%.2f) ", reduceTime, synAmp, distance);
             } else {
                 gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
                         "graph", 1.01, "first", azimuth);
