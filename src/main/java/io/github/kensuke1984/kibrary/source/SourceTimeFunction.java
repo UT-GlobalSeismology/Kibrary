@@ -75,6 +75,7 @@ public class SourceTimeFunction {
         SourceTimeFunction boxcar = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
         SourceTimeFunction triangle = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
         SourceTimeFunction triangleA = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, halfDuration);
+        SourceTimeFunction gaussian = SourceTimeFunction.gaussianSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 
         Complex[] c1 = boxcar.getSourceTimeFunctionInFrequencyDomain();
         Complex[] c2 = triangle.getSourceTimeFunctionInFrequencyDomain();
@@ -82,9 +83,47 @@ public class SourceTimeFunction {
         Trace trace1 = boxcar.getSourceTimeFunctionInTimeDomain();
         Trace trace2 = triangle.getSourceTimeFunctionInTimeDomain();
         Trace trace3 = triangleA.getSourceTimeFunctionInTimeDomain();
+        Trace trace4 = gaussian.getSourceTimeFunctionInTimeDomain();
         for (int i = 0; i < trace1.getLength(); i++)
             if (trace1.getXAt(i) < 30)
-                System.out.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) + " " + trace3.getYAt(i));
+                System.out.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) +
+                        " " + trace3.getYAt(i) + " " + trace4.getYAt(i));
+    }
+
+    /**
+     * Gaussian source time function (see Borgeaud et al. 2016)
+     * <p>
+     * The width is determined by the half duration &tau;. <br>
+     * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
+     * &tau; &lt; t) <br>
+     * Source time function F(&omega;) = sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
+     *
+     * @param np           the number of steps in frequency domain
+     * @param tlen         [s] time length
+     * @param samplingHz   [Hz]
+     * @param halfDuration [s] of the source
+     * @return SourceTimeFunction
+     */
+    //TODO
+    public static final SourceTimeFunction gaussianSourceTimeFunction(int np, double tlen, double samplingHz, double halfDuration) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
+            @Override
+            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+                return sourceTimeFunction;
+            }
+        };
+        sourceTimeFunction.sourceTimeFunction = new Complex[np];
+        final double deltaF = 1.0 / tlen;
+        final double constant = 2 * Math.PI * deltaF * halfDuration;
+        for (int i = 0; i < np; i++) {
+            double omegaTau = (i + 1) * constant;
+            double coef1 = 0.5 * Math.exp( - Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
+            double coef2 = 0.5 * Math.exp( - Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
+            sourceTimeFunction.sourceTimeFunction[i] =
+                    new Complex(coef1 * Math.sin(0.5 * (Math.PI + omegaTau)) + coef2 * Math.sin(0.5 * (Math.PI - omegaTau)),
+                            coef1 * Math.cos(0.5 * (Math.PI + omegaTau)) + coef2 * Math.cos(0.5 * (Math.PI - omegaTau)));
+        }
+        return sourceTimeFunction;
     }
 
     /**

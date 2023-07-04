@@ -32,21 +32,19 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * Creates a record section for each event included in a {@link BasicIDFile}.
- * Time-shift from corrections can be applied to observed waveform when being plotted.
+ * Creates a record section for each event included in a Root folder.
  * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
  * Travel time curves can be drawn on the graph.
  * <p>
- * A basic waveform folder is required as input.
- * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
+ * A root folder containing SAC files is required as input.
+ * Additional folders containing SAC file can be given when plotting multiple synthetic seismograms or resudual seismograms.
  * <p>
- * The entries to plot will be determined by whether they are included in mainBasicPath.
+ * The entries to plot will be determined by whether they are included in mainSynPath.
  * When plotting additional synthetic waveforms, their amplitudes will be adjusted with parameters for the main synthetic waveforms.
  * <p>
- * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
+ * Text files of waveform data will be created in event folders under the input root folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
  * @author rei

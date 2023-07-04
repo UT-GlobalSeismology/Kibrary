@@ -8,7 +8,7 @@ import java.util.Arrays;
  * @since 2022/11/3
  */
 public enum SourceTimeFunctionType {
-    NONE(0), BOXCAR(1), TRIANGLE(2), ASYMMETRIC_TRIANGLE(3), AUTO(4);
+    NONE(0), BOXCAR(1), TRIANGLE(2), ASYMMETRIC_TRIANGLE(3), AUTO(4), GAUSSIAN(5);
 
     private int value;
 

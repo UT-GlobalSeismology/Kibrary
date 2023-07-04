@@ -99,6 +99,10 @@ public final class SPC_SAC extends Operation {
      * Catalog containing source time function durations
      */
     private Path sourceTimeFunctionCatalogPath;
+    /**
+     * Half duration. To use GCMT catalog value, set this NaN
+     */
+    private double halfDuration;
 
     /**
      * sampling Hz [Hz] must be 20 now.
@@ -158,11 +162,13 @@ public final class SPC_SAC extends Operation {
             pw.println("#modelName ");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian} (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
+            pw.println("##Half duration for source time functions. To use the GCMT catalog value, leave this unset");
+            pw.println("#halfDuration ");
             pw.println("##SamplingHz (20) !You can not change yet!");
             pw.println("#samplingHz ");
             pw.println("##(boolean) If this is true, temporal partial is computed (false)");
@@ -201,6 +207,7 @@ public final class SPC_SAC extends Operation {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
             sourceTimeFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("sourceTimeFunctionType", "0"));
+            halfDuration = property.parseDouble("halfDuration", "NaN");
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
@@ -236,7 +243,7 @@ public final class SPC_SAC extends Operation {
         System.err.println("Model name is " + modelName);
 
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, DatasetAid.globalCMTIDSet(workPath));
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration, DatasetAid.globalCMTIDSet(workPath));
 
         if (usePSV == false && useSH == false) {
             System.err.println("Both usePSV and useSH are false; nothing to do.");

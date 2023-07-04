@@ -22,11 +22,17 @@ public class SourceTimeFunctionHandler {
     private Set<GlobalCMTID> events;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Map<GlobalCMTID, String> sourceTimeFunctionCatalog;
+    private double halfDur;
 
     public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath, Set<GlobalCMTID> events) throws IOException {
+        this(type, catalogPath, userSTFPath, Double.NaN, events);
+    }
+
+    public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath, double halfDur, Set<GlobalCMTID> events) throws IOException {
         this.type = type;
         this.userSTFPath = userSTFPath;
         this.catalogPath = catalogPath;
+        this.halfDur = halfDur;
         this.events = events;
 
         if (catalogPath != null) {
@@ -69,7 +75,9 @@ public class SourceTimeFunctionHandler {
     }
 
     public SourceTimeFunction createSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID event) {
-        double halfDuration = event.getEventData().getHalfDuration();
+        double halfDuration;
+        if (Double.isNaN(halfDur)) halfDuration = event.getEventData().getHalfDuration();
+        else halfDuration = halfDur;
 
         if (userSTFPath != null) {
             SourceTimeFunction tmp = userSourceTimeFunctions.get(event);
@@ -112,6 +120,12 @@ public class SourceTimeFunctionHandler {
                     System.err.println("! Catalog data for " + event + " not found, using triangular instead.");
                     return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
                 }
+            case GAUSSIAN:
+                if (catalogPath != null && sourceTimeFunctionCatalog.containsKey(event)) {
+                    String[] ss = sourceTimeFunctionCatalog.get(event).split("\\s+");
+                    halfDuration = Double.parseDouble(ss[1]);
+                }
+                return SourceTimeFunction.gaussianSourceTimeFunction(np, tlen, samplingHz, halfDuration);
             default:
                 throw new RuntimeException("Invalid source time function type.");
             }
