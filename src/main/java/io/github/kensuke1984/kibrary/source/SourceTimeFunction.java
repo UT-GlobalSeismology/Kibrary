@@ -94,9 +94,8 @@ public class SourceTimeFunction {
      * Gaussian source time function (see Borgeaud et al. 2016)
      * <p>
      * The width is determined by the half duration &tau;. <br>
-     * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
-     * &tau; &lt; t) <br>
-     * Source time function F(&omega;) = sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
+     * f(t) = (18/&pi;&tau;<sup>2</sup>)<sup>1/2</sup> exp(-18/&tau;<sup>2</sup>(t - &tau;/2)<sup>2</sup>) sin(&pi;t/&tau;)<br>
+     * Source time function F(&omega;) = ???; TODO
      *
      * @param np           the number of steps in frequency domain
      * @param tlen         [s] time length
@@ -116,6 +115,7 @@ public class SourceTimeFunction {
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
         for (int i = 0; i < np; i++) {
+            // TODO check the correctness
             double omegaTau = (i + 1) * constant;
             double coef1 = 0.5 * Math.exp( - Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
             double coef2 = 0.5 * Math.exp( - Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
