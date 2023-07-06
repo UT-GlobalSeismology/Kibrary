@@ -5,18 +5,25 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.ArithmeticUtils;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 
 /**
@@ -66,12 +73,58 @@ public class SourceTimeFunction {
         nptsInTimeDomain = np * 2 * computeLsmooth(np, tlen, samplingHz);
     }
 
-    public static void main(String[] args) {
+    /**
+     * This main method is for debug.
+     * @param args
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        // setting options
+        Options options = new Options();
+        options.addOption(Option.builder("h").longOpt("halfDuration").hasArgs().argName("halfDuration")
+                .desc("Half duration for source time functions (3)").build());
+        options.addOption(Option.builder("u").longOpt("upperTime").hasArgs().argName("upper time")
+                .desc("Upper time to show the source time functions (30)").build());
+        options.addOption(Option.builder("o").longOpt("output").hasArgs().argName("outputFile")
+                .desc("Set path of output file").build());
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+       // set parameter
         int np = 32768;
         double tlen = 3276.8;
         double samplingHz = 20.;
-        double halfDuration = 3.;
+        double halfDuration = cmdLine.hasOption("h") ? Double.parseDouble(cmdLine.getOptionValue("h")) : 3.;
+        double upperTime = cmdLine.hasOption("u") ? Double.parseDouble(cmdLine.getOptionValue("u")) : 30.;
 
+        // set output
+        Path outputPath;
+        if (cmdLine.hasOption("o")) {
+            outputPath = Paths.get(cmdLine.getOptionValue("o"));
+        } else {
+            outputPath = Paths.get("stf" + GadgetAid.getTemporaryString() +  ".txt");
+        }
+
+        // Inverse Fourier transform the source time functions in periodic domain
         SourceTimeFunction boxcar = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
         SourceTimeFunction triangle = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
         SourceTimeFunction triangleA = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, halfDuration);
@@ -84,18 +137,27 @@ public class SourceTimeFunction {
         Trace trace2 = triangle.getSourceTimeFunctionInTimeDomain();
         Trace trace3 = triangleA.getSourceTimeFunctionInTimeDomain();
         Trace trace4 = gaussian.getSourceTimeFunctionInTimeDomain();
-        for (int i = 0; i < trace1.getLength(); i++)
-            if (trace1.getXAt(i) < 30)
-                System.out.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) +
-                        " " + trace3.getYAt(i) + " " + trace4.getYAt(i));
+
+        // output
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (int i = 0; i < trace1.getLength(); i++)
+                if (trace1.getXAt(i) <= upperTime)
+                    pw.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) +
+                            " " + trace3.getYAt(i) + " " + trace4.getYAt(i));
+        }
+        System.err.println("Output the boxcar function, tirangle function, asymmetric triangle function, and "
+                + "gaussian function in " + outputPath);
     }
 
     /**
-     * Gaussian source time function (see Borgeaud et al. 2016)
+     * Gaussian source time function. Note that this is NOT strictly gaussian function (see Borgeaud et al. 2016)
      * <p>
      * The width is determined by the half duration &tau;. <br>
      * f(t) = (18/&pi;&tau;<sup>2</sup>)<sup>1/2</sup> exp(-18/&tau;<sup>2</sup>(t - &tau;/2)<sup>2</sup>) sin(&pi;t/&tau;)<br>
-     * Source time function F(&omega;) = ???; TODO
+     * Source time function is as follows;<br>
+     * Re[F(&omega;)] = C<sub>1</sub>sin((&omega;&tau; + &pi;)/2) - C<sub>2</sub>sin((&omega;&tau; - &pi;)/2)<br>
+     * Im[F(&omega;)] = C<sub>1</sub>cos((&omega;&tau; + &pi;)/2) - C<sub>2</sub>cos((&omega;&tau; - &pi;)/2)<br>
+     * where C<sub>1</sub> = exp(-(&omega;&tau; + &pi;)<sup>2</sup>/72) and C<sub>2</sub> = exp(-(&omega;&tau; - &pi;)<sup>2</sup>/72)
      *
      * @param np           the number of steps in frequency domain
      * @param tlen         [s] time length
@@ -117,11 +179,11 @@ public class SourceTimeFunction {
         for (int i = 0; i < np; i++) {
             // TODO check the correctness
             double omegaTau = (i + 1) * constant;
-            double coef1 = 0.5 * Math.exp( - Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
-            double coef2 = 0.5 * Math.exp( - Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
+            double coef1 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
+            double coef2 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
             sourceTimeFunction.sourceTimeFunction[i] =
-                    new Complex(coef1 * Math.sin(0.5 * (Math.PI + omegaTau)) + coef2 * Math.sin(0.5 * (Math.PI - omegaTau)),
-                            coef1 * Math.cos(0.5 * (Math.PI + omegaTau)) + coef2 * Math.cos(0.5 * (Math.PI - omegaTau)));
+                    new Complex(coef1 * Math.sin(0.5 * (omegaTau + Math.PI)) - coef2 * Math.sin(0.5 * (omegaTau - Math.PI)),
+                            coef1 * Math.cos(0.5 * (omegaTau + Math.PI)) - coef2 * Math.cos(0.5 * (omegaTau - Math.PI)));
         }
         return sourceTimeFunction;
     }

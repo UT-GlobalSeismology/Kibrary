@@ -173,6 +173,10 @@ public class PartialWaveformAssembler3D extends Operation {
      * Catalog containing source time function durations
      */
     private Path sourceTimeFunctionCatalogPath;
+    /**
+     * Half duration. To use GCMT catalog value, set this NaN
+     */
+    private double halfDuration;
 
     /**
      * time length (DSM parameter)
@@ -278,7 +282,7 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("##########Computation settings");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian} (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
@@ -349,6 +353,7 @@ public class PartialWaveformAssembler3D extends Operation {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
             sourceTimeFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("sourceTimeFunctionType", "0"));
+            halfDuration = property.parseDouble("halfDuration", "NaN");
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
@@ -416,7 +421,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, eventSet);
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration, eventSet);
         sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen, partialSamplingHz);
 
         // read Q structure

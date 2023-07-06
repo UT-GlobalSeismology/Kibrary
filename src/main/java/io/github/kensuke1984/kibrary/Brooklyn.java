@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.quick.LookAtBPspc;
 import io.github.kensuke1984.kibrary.quick.LookAtFPspc;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -60,6 +61,7 @@ enum Brooklyn {
     LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
     SACFileAccess(21, SACFileAccess.class),
+    SourceTimeFunction(22, SourceTimeFunction.class),
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),

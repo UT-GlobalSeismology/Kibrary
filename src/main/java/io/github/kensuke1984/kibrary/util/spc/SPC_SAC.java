@@ -120,6 +120,7 @@ public final class SPC_SAC extends Operation {
     private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
     private SourceTimeFunctionHandler stfHandler;
+    private String dateStr;
     /**
      * Number of sac files that are done creating
      */
@@ -240,6 +241,9 @@ public final class SPC_SAC extends Operation {
 
     @Override
     public void run() throws IOException {
+        if (timeStamp) dateStr = GadgetAid.getTemporaryString();
+        else dateStr = null;
+
         System.err.println("Model name is " + modelName);
 
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
@@ -259,9 +263,7 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        if (timeStamp) outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, GadgetAid.getTemporaryString());
-        else outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, null);
-
+        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

@@ -105,11 +105,6 @@ public class SyntheticRecordSectionCreator extends Operation {
     private Path refSynPath2;
 
     /**
-     * if it is true, the dataset contains synthetic waveforms after
-     * convolution
-     */
-    private boolean convolved;
-    /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
@@ -163,7 +158,7 @@ public class SyntheticRecordSectionCreator extends Operation {
      * Inxtance of tool to use to compute travel times
      */
     private TauP_Time timeTool;
-    String dateStr;
+    private String dateStr;
 
     /**
      * @param args  none to create a property file <br>
@@ -196,8 +191,6 @@ public class SyntheticRecordSectionCreator extends Operation {
             pw.println("#refSynPath1 ");
             pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms");
             pw.println("#refSynPath2 ");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##Method for standarization of synthetic waveform amplitude, from {synEach,synMean} (synEach)");
@@ -273,7 +266,6 @@ public class SyntheticRecordSectionCreator extends Operation {
         if (property.containsKey("refSynPath2"))
             refSynPath2 = property.parsePath("refSynPath2", ".", true, workPath);
 
-        convolved = property.parseBoolean("convolved", "true");
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                     .collect(Collectors.toSet());
