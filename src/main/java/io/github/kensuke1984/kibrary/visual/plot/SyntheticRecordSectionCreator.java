@@ -374,10 +374,6 @@ public class SyntheticRecordSectionCreator extends Operation {
                Files.createDirectories(eventPath);
                for (SACComponent component : components) {
                    Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet();
-//                   List<BasicID> useIds = mainBasicIDs.stream()
-//                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
-//                           .sorted(Comparator.comparing(BasicID::getObserver))
-//                           .collect(Collectors.toList());
                    sacNames = sacNames.stream().filter(name -> name.getComponent().equals(component)).collect(Collectors.toSet());
 
                    Plotter plotter = new Plotter(eventPath, sacNames, component);
@@ -402,7 +398,7 @@ public class SyntheticRecordSectionCreator extends Operation {
         /**
          *
          * @param eventPath
-         * @param sacNames (Set<SACFileName>)
+         * @param sacNames (SACFileName) sac files to be plotted
          * @param component
          */
         private Plotter(Path eventPath, Set<SACFileName> sacNames, SACComponent component) {
@@ -652,4 +648,5 @@ public class SyntheticRecordSectionCreator extends Operation {
             }
         }
     }
+
 }
