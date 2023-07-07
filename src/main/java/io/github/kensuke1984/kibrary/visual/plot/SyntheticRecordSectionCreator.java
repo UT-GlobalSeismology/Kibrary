@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * Creates a record section for each event included in a Root folder.
+ * Creates a record section for each event included in a root folder.
  * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
  * Travel time curves can be drawn on the graph.
  * <p>
@@ -652,5 +652,4 @@ public class SyntheticRecordSectionCreator extends Operation {
             }
         }
     }
-
 }
