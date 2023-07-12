@@ -279,8 +279,8 @@ public class DataSelection extends Operation {
         System.err.println();
 
         System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
-        TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
-        DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
+        if (goodTimewindowSet.size() > 0) TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
+        if (dataFeatureSet.size() > 0) DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 
     /**

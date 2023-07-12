@@ -43,6 +43,7 @@ import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
@@ -117,6 +118,7 @@ enum Manhattan {
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
+    ModelStructurePlotter(73, ModelStructurePlotter.class),
     ModelSetMapper(74, ModelSetMapper.class),
     ModelMapper(75, ModelMapper.class),
     PerturbationMapper(76, PerturbationMapper.class),

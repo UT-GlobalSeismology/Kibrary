@@ -32,9 +32,9 @@ public class PolynomialStructureFile {
         double[] rmax = structure.getRmax();
         PolynomialFunction[] rho = structure.getRho();
         PolynomialFunction[] vpv = structure.getVpv();
-        PolynomialFunction[] vph = structure.getVpv();
+        PolynomialFunction[] vph = structure.getVph();
         PolynomialFunction[] vsv = structure.getVsv();
-        PolynomialFunction[] vsh = structure.getVsv();
+        PolynomialFunction[] vsh = structure.getVsh();
         PolynomialFunction[] eta = structure.getEta();
         double[] qMu = structure.getQMu();
         double[] qKappa = structure.getQKappa();
