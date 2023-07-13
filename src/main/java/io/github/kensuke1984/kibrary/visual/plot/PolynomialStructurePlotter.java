@@ -9,12 +9,18 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
@@ -29,20 +35,32 @@ public class PolynomialStructurePlotter extends Operation {
     private static final int MAX_INPUT = 3;
     private static final int NUM_VARIABLES = 6;
     private static final String[] COLORS = {
-            "dark-magenta", "web-green", "dark-orange", "web-blue", "red", "dark-gray",
-            "purple", "greenyellow", "goldenrod", "skyblue", "salmon", "gray",
-            "plum", "seagreen", "khaki", "light-cyan", "light-pink", "light-gray"};
+            "dark-magenta", "dark-orange", "web-green", "red", "web-blue", "dark-gray",
+            "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
+            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
 
     private final Property property;
     /**
      * Path of the work folder
      */
     private Path workPath;
+    /**
+     * A tag to include in output file names. When this is empty, no tag is used.
+     */
+    private String fileTag;
+
+    private Set<VariableType> variableTypes;
 
     private boolean colorByStructure;
     private boolean colorByVariable;
     private boolean dashByStructure;
     private boolean dashByVariable;
+
+    private double lowerRadius;
+    private double upperRadius;
+    private double lowerValue;
+    private double upperValue;
+
     /**
      * structure file instead of PREM
      */
@@ -67,6 +85,10 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
+            pw.println("#fileTag ");
+            pw.println("##Variable types to map, listed using spaces, from {RHO,Vpv,Vph,Vsv,Vsh,ETA}. (RHO Vpv Vph Vsv Vsh ETA)");
+            pw.println("#variableTypes ");
             pw.println("##(boolean) Whether to color structures differently. (true)");
             pw.println("#colorByStructure ");
             pw.println("##(boolean) Whether to color variables differently. (true)");
@@ -75,6 +97,14 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("#dashByStructure ");
             pw.println("##(boolean) Whether to dash variables differently. (false)");
             pw.println("#dashByVariable ");
+            pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (0)");
+            pw.println("#lowerRadius ");
+            pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (6371)");
+            pw.println("#upperRadius ");
+            pw.println("##(double) Lower limit of value; (:upperValue). (0)");
+            pw.println("#lowerValue ");
+            pw.println("##(double) Upper limit of value; (lowerValue:). (15)");
+            pw.println("#upperValue ");
             pw.println("##########From here on, list up models to plot.");
             pw.println("########## Up to " + MAX_INPUT + " models can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
@@ -96,11 +126,20 @@ public class PolynomialStructurePlotter extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "RHO Vpv Vph Vsv Vsh ETA")).map(VariableType::valueOf)
+                .collect(Collectors.toSet());
 
         colorByStructure = property.parseBoolean("colorByStructure", "true");
         colorByVariable = property.parseBoolean("colorByVariable", "true");
         dashByStructure = property.parseBoolean("dashByStructure", "false");
         dashByVariable = property.parseBoolean("dashByVariable", "false");
+
+        lowerRadius = property.parseDouble("lowerRadius", "0");
+        upperRadius = property.parseDouble("upperRadius", "6371");
+        lowerValue = property.parseDouble("lowerValue", "0");
+        upperValue = property.parseDouble("upperValue", "15");
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String pathKey = "structurePath" + i;
@@ -120,7 +159,7 @@ public class PolynomialStructurePlotter extends Operation {
 
    @Override
    public void run() throws IOException {
-       // set structure
+       // set structures
        List<PolynomialStructure> structures = new ArrayList<>();
        for (int i = 0; i < MAX_INPUT; i++) {
            if (structurePaths[i] != null || structureNames[i] != null) {
@@ -128,31 +167,31 @@ public class PolynomialStructurePlotter extends Operation {
                structures.add(structure);
            }
        }
-       createScript(workPath, "polynomial", structures);
+
+       // create script
+       Path scriptPath = workPath.resolve(DatasetAid.generateOutputFileName("polynomial", fileTag, GadgetAid.getTemporaryString(), ".plt"));
+       createScript(scriptPath, structures);
    }
 
-   private void createScript(Path outPath, String fileNameRoot, List<PolynomialStructure> structures) throws IOException {
-       Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
+   private void createScript(Path scriptPath, List<PolynomialStructure> structures) throws IOException {
+       String fileNameRoot = FileAid.extractNameRoot(scriptPath);
 
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
            pw.println("set samples 1000");
            pw.println("set trange [0:6371]");
-           pw.println("set yrange [0:6371]");
-           pw.println("set xrange [3.5:15]");
-           pw.println("set ytics 1000");
-           pw.println("set xtics 2");
-           pw.println("set mytics 2");
-           pw.println("set mxtics 2");
-           pw.println("set size ratio 2.0");
+           pw.println("set yrange [" + lowerRadius + ":" + upperRadius + "]");
+           pw.println("set xrange [" + lowerValue + ":" + upperValue + "]");
+           pw.println("#set ytics 1000");
+           pw.println("#set xtics 2");
            pw.println("set xlabel \"Velocity (km/s)\\nDensity (g/cm^3)\"");
            pw.println("set ylabel 'Radius (km)'");
            pw.println("set parametric");
-           pw.println("set term pngcairo enhanced font 'Helvetica,10'");
+           pw.println("set term pngcairo enhanced size 600,1200 font 'Helvetica,20'");
            pw.println("set output '" + fileNameRoot + ".png'");
-           pw.println("set xlabel font 'Helvetica,10");
-           pw.println("set ylabel font 'Helvetica,10");
-           pw.println("set tics font 'Helvetica,10");
-           pw.println("set key font 'Helvetica,10");
+           pw.println("set xlabel font 'Helvetica,20");
+           pw.println("set ylabel font 'Helvetica,20");
+           pw.println("set tics font 'Helvetica,20");
+           pw.println("set key font 'Helvetica,20");
            pw.println("set key samplen 1");
            pw.println("");
 
@@ -171,22 +210,22 @@ public class PolynomialStructurePlotter extends Operation {
 
            // plot the defined functions
            int i = 0;
-           pw.println("p rho" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 0) + " title '{/Symbol r}', \\");
-           pw.println("  vpv" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 1) + " title 'Vpv', \\");
-           pw.println("  vph" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 2) + " title 'Vph', \\");
-           pw.println("  vsv" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 3) + " title 'Vsv', \\");
-           pw.println("  vsh" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 4) + " title 'Vsh', \\");
-           pw.print("  eta" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 5) + " title '{/Symbol h}'");
+           pw.print("p");
+           if (variableTypes.contains(VariableType.RHO)) pw.println("  rho" + i + "(t),t w l lw 1 " + lineTypeFor(i, 0) + " title '{/Symbol r}', \\");
+           if (variableTypes.contains(VariableType.Vpv)) pw.println("  vpv" + i + "(t),t w l lw 1 " + lineTypeFor(i, 1) + " title 'Vpv', \\");
+           if (variableTypes.contains(VariableType.Vph)) pw.println("  vph" + i + "(t),t w l lw 1 " + lineTypeFor(i, 2) + " title 'Vph', \\");
+           if (variableTypes.contains(VariableType.Vsv)) pw.println("  vsv" + i + "(t),t w l lw 1 " + lineTypeFor(i, 3) + " title 'Vsv', \\");
+           if (variableTypes.contains(VariableType.Vsh)) pw.println("  vsh" + i + "(t),t w l lw 1 " + lineTypeFor(i, 4) + " title 'Vsh', \\");
+           if (variableTypes.contains(VariableType.ETA)) pw.println("  eta" + i + "(t),t w l lw 1 " + lineTypeFor(i, 5) + " title '{/Symbol h}', \\");
            for (i = 1; i < structures.size(); i++) {
-               pw.println(", \\");
-               pw.println("  rho" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 0) + " notitle, \\");
-               pw.println("  vpv" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 1) + " notitle, \\");
-               pw.println("  vph" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 2) + " notitle, \\");
-               pw.println("  vsv" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 3) + " notitle, \\");
-               pw.println("  vsh" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 4) + " notitle, \\");
-               pw.print("  eta" + i + "(t),t w l lw 0.5 " + lineTypeFor(i, 5) + " notitle");
+               if (variableTypes.contains(VariableType.RHO)) pw.println("  rho" + i + "(t),t w l lw 1 " + lineTypeFor(i, 0) + " notitle, \\");
+               if (variableTypes.contains(VariableType.Vpv)) pw.println("  vpv" + i + "(t),t w l lw 1 " + lineTypeFor(i, 1) + " notitle, \\");
+               if (variableTypes.contains(VariableType.Vph)) pw.println("  vph" + i + "(t),t w l lw 1 " + lineTypeFor(i, 2) + " notitle, \\");
+               if (variableTypes.contains(VariableType.Vsv)) pw.println("  vsv" + i + "(t),t w l lw 1 " + lineTypeFor(i, 3) + " notitle, \\");
+               if (variableTypes.contains(VariableType.Vsh)) pw.println("  vsh" + i + "(t),t w l lw 1 " + lineTypeFor(i, 4) + " notitle, \\");
+               if (variableTypes.contains(VariableType.ETA)) pw.println("  eta" + i + "(t),t w l lw 1 " + lineTypeFor(i, 5) + " notitle, \\");
            }
-           pw.println("");
+           pw.println("  0,t w l lw 0.5 dt 1 lc rgb 'black' notitle");
        }
 
        GnuplotFile plot = new GnuplotFile(scriptPath);
