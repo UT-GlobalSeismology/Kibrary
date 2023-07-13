@@ -311,33 +311,33 @@ public final class PolynomialStructure {
         }
 
         // add r1 and r2 as boundaries if they were not already
-        PolynomialStructure structureNew = this;
+        PolynomialStructure originalStructure = this;
         if (!foundR1)
-            structureNew = structureNew.withBoundaries(r1);
+            originalStructure = originalStructure.withBoundaries(r1);
         if (!foundR2)
-            structureNew = structureNew.withBoundaries(r2);
+            originalStructure = originalStructure.withBoundaries(r2);
 
         // get values of structureNew
-        int nZoneNew = structureNew.getNZone();
-        int nCoreZoneNew = structureNew.getNCoreZone();
-        double[] rminNew = structureNew.getRmin();
-        double[] rmaxNew = structureNew.getRmax();
-        PolynomialFunction[] rhoNew = structureNew.getRho();
-        PolynomialFunction[] vpvNew = structureNew.getVpv();
-        PolynomialFunction[] vphNew = structureNew.getVph();
-        PolynomialFunction[] vsvNew = structureNew.getVsv();
-        PolynomialFunction[] vshNew = structureNew.getVsh();
-        PolynomialFunction[] etaNew = structureNew.getEta();
-        double[] qMuNew = structureNew.getQMu();
-        double[] qKappaNew = structureNew.getQKappa();
+        int nZoneNew = originalStructure.getNZone();
+        int nCoreZoneNew = originalStructure.getNCoreZone();
+        double[] rminNew = originalStructure.getRmin();
+        double[] rmaxNew = originalStructure.getRmax();
+        PolynomialFunction[] rhoNew = originalStructure.getRho();
+        PolynomialFunction[] vpvNew = originalStructure.getVpv();
+        PolynomialFunction[] vphNew = originalStructure.getVph();
+        PolynomialFunction[] vsvNew = originalStructure.getVsv();
+        PolynomialFunction[] vshNew = originalStructure.getVsh();
+        PolynomialFunction[] etaNew = originalStructure.getEta();
+        double[] qMuNew = originalStructure.getQMu();
+        double[] qKappaNew = originalStructure.getQKappa();
 
         // create a constant function
         double coefficient = 1.0 + percent/100.0;
         PolynomialFunction p0 = new PolynomialFunction(new double[] {coefficient});
 
         // multiply the functions of the corresponding zones
-        int izoneR1 = structureNew.zoneOf(r1);
-        int izoneR2 = structureNew.zoneOf(r2);
+        int izoneR1 = originalStructure.zoneOf(r1);
+        int izoneR2 = originalStructure.zoneOf(r2);
         for (int izone = izoneR1; izone < izoneR2; izone++) {
             switch(variable) {
             case RHO:
