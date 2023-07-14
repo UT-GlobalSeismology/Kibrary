@@ -232,7 +232,7 @@ public class PolynomialStructurePlotter extends Operation {
        plot.execute();
    }
 
-   private void writeFunction(double[] rmin, double[] rmax, double planetRadius, PolynomialFunction[] functions, String funcName, PrintWriter pw) throws IOException {
+   static void writeFunction(double[] rmin, double[] rmax, double planetRadius, PolynomialFunction[] functions, String funcName, PrintWriter pw) throws IOException {
        // each layer
        for (int i = 0; i < functions.length; i++) {
            double[] coeffs = Arrays.copyOf(functions[i].getCoefficients(), 4);

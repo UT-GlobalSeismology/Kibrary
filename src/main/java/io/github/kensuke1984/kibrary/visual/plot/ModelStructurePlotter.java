@@ -15,18 +15,25 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
-import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 public class ModelStructurePlotter extends Operation {
+
+    private static final int NUM_VARIABLES = 6;
+    private static final String[] COLORS = {
+            "dark-magenta", "dark-orange", "web-green", "red", "web-blue", "dark-gray",
+            "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
+            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
 
     private final Property property;
     /**
@@ -58,6 +65,16 @@ public class ModelStructurePlotter extends Operation {
     private Set<InverseMethodEnum> inverseMethods;
     private int maxNum;
 
+    private boolean colorByStructure;
+    private boolean colorByVariable;
+    private boolean dashByStructure;
+    private boolean dashByVariable;
+
+    private double lowerRadius;
+    private double upperRadius;
+    private double lowerValue;
+    private double upperValue;
+
     /**
      * @param args  none to create a property file <br>
      *              [property file] to run
@@ -83,6 +100,28 @@ public class ModelStructurePlotter extends Operation {
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model used in inversion. (PREM)");
             pw.println("#initialStructureName ");
+            pw.println("##Variable types to plot, listed using spaces. (Vs)");
+            pw.println("#variableTypes ");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
+            pw.println("#inverseMethods ");
+            pw.println("##(int) Maximum number of basis vectors to map. (10)");
+            pw.println("#maxNum ");
+            pw.println("##(boolean) Whether to color structures differently. (true)");
+            pw.println("#colorByStructure ");
+            pw.println("##(boolean) Whether to color variables differently. (true)");
+            pw.println("#colorByVariable ");
+            pw.println("##(boolean) Whether to dash structures differently. (false)");
+            pw.println("#dashByStructure ");
+            pw.println("##(boolean) Whether to dash variables differently. (false)");
+            pw.println("#dashByVariable ");
+            pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (0)");
+            pw.println("#lowerRadius ");
+            pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (6371)");
+            pw.println("#upperRadius ");
+            pw.println("##(double) Lower limit of value; (:upperValue). (0)");
+            pw.println("#lowerValue ");
+            pw.println("##(double) Upper limit of value; (lowerValue:). (15)");
+            pw.println("#upperValue ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -109,6 +148,15 @@ public class ModelStructurePlotter extends Operation {
                 .collect(Collectors.toSet());
         maxNum = property.parseInt("maxNum", "10");
 
+        colorByStructure = property.parseBoolean("colorByStructure", "true");
+        colorByVariable = property.parseBoolean("colorByVariable", "true");
+        dashByStructure = property.parseBoolean("dashByStructure", "false");
+        dashByVariable = property.parseBoolean("dashByVariable", "false");
+
+        lowerRadius = property.parseDouble("lowerRadius", "0");
+        upperRadius = property.parseDouble("upperRadius", "6371");
+        lowerValue = property.parseDouble("lowerValue", "0");
+        upperValue = property.parseDouble("upperValue", "15");
     }
 
     @Override
@@ -117,12 +165,6 @@ public class ModelStructurePlotter extends Operation {
         // read initial structure
         System.err.print("Initial structure: ");
         PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
-
-        // read parameters
-        Path unknownsPath = resultPath.resolve("unknowns.lst");
-        Set<FullPosition> positions = UnknownParameterFile.read(unknownsPath).stream()
-                .map(unknown -> unknown.getPosition()).collect(Collectors.toSet());
-        double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelPlots", folderTag, GadgetAid.getTemporaryString());
@@ -155,9 +197,91 @@ public class ModelStructurePlotter extends Operation {
                     Path outputDiscretePath = outBasisPath.resolve(variableName + "Absolute.lst");
                     PerturbationListFile.write(discreteMap, outputDiscretePath);
                 }
+
+                Path outputScriptPath = outBasisPath.resolve("modelPlot.plt");
+                createScript(outputScriptPath, initialStructure);
             }
         }
 
+    }
+
+    private void createScript(Path scriptPath, PolynomialStructure structure) throws IOException {
+        String fileNameRoot = FileAid.extractNameRoot(scriptPath);
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
+            pw.println("set samples 1000");
+            pw.println("set trange [0:6371]");
+            pw.println("set yrange [" + lowerRadius + ":" + upperRadius + "]");
+            pw.println("set xrange [" + lowerValue + ":" + upperValue + "]");
+            pw.println("#set ytics 1000");
+            pw.println("#set xtics 2");
+            pw.println("set xlabel \"Velocity (km/s)\\nDensity (g/cm^3)\"");
+            pw.println("set ylabel 'Radius (km)'");
+            pw.println("set parametric");
+            pw.println("set term pngcairo enhanced size 600,1200 font 'Helvetica,20'");
+            pw.println("set output '" + fileNameRoot + ".png'");
+            pw.println("set xlabel font 'Helvetica,20");
+            pw.println("set ylabel font 'Helvetica,20");
+            pw.println("set tics font 'Helvetica,20");
+            pw.println("set key font 'Helvetica,20");
+            pw.println("set key samplen 1");
+            pw.println("");
+
+            // define functions
+            PolynomialStructurePlotter.writeFunction(structure.getRmin(), structure.getRmax(), structure.planetRadius(), structure.getRho(), "rho", pw);
+            PolynomialStructurePlotter.writeFunction(structure.getRmin(), structure.getRmax(), structure.planetRadius(), structure.getVpv(), "vpv", pw);
+            PolynomialStructurePlotter.writeFunction(structure.getRmin(), structure.getRmax(), structure.planetRadius(), structure.getVph(), "vph", pw);
+            PolynomialStructurePlotter.writeFunction(structure.getRmin(), structure.getRmax(), structure.planetRadius(), structure.getVsv(), "vsv", pw);
+            PolynomialStructurePlotter.writeFunction(structure.getRmin(), structure.getRmax(), structure.planetRadius(), structure.getVsh(), "vsh", pw);
+            PolynomialStructurePlotter.writeFunction(structure.getRmin(), structure.getRmax(), structure.planetRadius(), structure.getEta(), "eta", pw);
+
+            pw.println("");
+
+            // plot the defined functions
+            pw.print("p");
+            if (variableTypes.contains(VariableType.RHO)) pw.println("  rho(t),t w l lw 1 " + lineTypeFor(1, 0) + " title '{/Symbol r}', \\");
+            if (variableTypes.contains(VariableType.Vpv))
+                pw.println("  vpv(t),t w l lw 1 " + lineTypeFor(1, 1) + " title 'Vpv', \\");
+            if (variableTypes.contains(VariableType.Vph) || variableTypes.contains(VariableType.Vp))
+                pw.println("  vph(t),t w l lw 1 " + lineTypeFor(1, 2) + " title 'Vph', \\");
+            if (variableTypes.contains(VariableType.Vsv))
+                pw.println("  vsv(t),t w l lw 1 " + lineTypeFor(1, 3) + " title 'Vsv', \\");
+            if (variableTypes.contains(VariableType.Vsh) || variableTypes.contains(VariableType.Vs))
+                pw.println("  vsh(t),t w l lw 1 " + lineTypeFor(1, 4) + " title 'Vsh', \\");
+            if (variableTypes.contains(VariableType.ETA)) pw.println("  eta(t),t w l lw 1 " + lineTypeFor(1, 5) + " title '{/Symbol h}', \\");
+
+            // plot model
+            if (variableTypes.contains(VariableType.RHO)) pw.println("  \"rhoAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 0) + " notitle, \\");
+            if (variableTypes.contains(VariableType.Vpv)) pw.println("  \"vpvAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 1) + " notitle, \\");
+            if (variableTypes.contains(VariableType.Vph)) pw.println("  \"vphAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 2) + " notitle, \\");
+            if (variableTypes.contains(VariableType.Vp)) pw.println("  \"vpAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 2) + " notitle, \\");
+            if (variableTypes.contains(VariableType.Vsv)) pw.println("  \"vsvAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 3) + " notitle, \\");
+            if (variableTypes.contains(VariableType.Vsh)) pw.println("  \"vshAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 4) + " notitle, \\");
+            if (variableTypes.contains(VariableType.Vs)) pw.println("  \"vsAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 4) + " notitle, \\");
+            if (variableTypes.contains(VariableType.ETA)) pw.println("  \"etaAbsolute.lst\" u 4:3 w l lw 1 " + lineTypeFor(0, 5) + " notitle, \\");
+
+            pw.println("  0,t w l lw 0.5 dt 1 lc rgb 'black' notitle");
+        }
+
+        GnuplotFile plot = new GnuplotFile(scriptPath);
+        plot.execute();
+    }
+
+    private String lineTypeFor(int iStructure, int iVariable) {
+        int iColor;
+        if (colorByStructure && colorByVariable) iColor = iStructure * NUM_VARIABLES + iVariable;
+        else if (colorByStructure) iColor = iStructure;
+        else if (colorByVariable) iColor = iVariable;
+        else iColor = 0;
+
+        int iDash;
+        if (dashByStructure && dashByVariable) iDash = iStructure * NUM_VARIABLES + iVariable + 1;
+        else if (dashByStructure) iDash = iStructure + 1;
+        else if (dashByVariable) iDash = iVariable + 1;
+        else iDash = 1;
+
+        String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor] + "'";
+        return lineTypeString;
     }
 
 }
