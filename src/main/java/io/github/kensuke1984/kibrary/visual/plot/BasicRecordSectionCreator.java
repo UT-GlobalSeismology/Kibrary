@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,6 +17,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import edu.sc.seis.TauP.Arrival;
+import edu.sc.seis.TauP.SeismicPhase;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
@@ -553,68 +553,56 @@ public class BasicRecordSectionCreator extends Operation {
         }
 
         private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
-            int iNum = (int) Math.round((endDistance - startDistance) / TRAVEL_TIME_INTERVAL) + 1;
-
             // set names of all phases to display, and the phase to align if it is specified
             timeTool.setPhaseNames(displayPhases);
             if (alignPhases != null) {
                 for (String phase : alignPhases) timeTool.appendPhaseName(phase);
             }
 
-            // calculate travel times and store in arrays
-            Double[][] travelTimes = new Double[displayPhases.length][iNum];
-            Double[] alignTimes = new Double[iNum];
-            for (int i = 0; i < iNum; i++) {
-                double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
-                timeTool.calculate(distance);
-                List<Arrival> arrivals = timeTool.getArrivals();
-                for (int p = 0; p < displayPhases.length; p++) {
-                    String phase = displayPhases[p];
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
-                    if (arrivalOpt.isPresent()) {
-                        travelTimes[p][i] = arrivalOpt.get().getTime();
-                    }
-                }
-                if (alignPhases != null) {
-                    List<String> alignPhaseList = Arrays.asList(alignPhases);
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> alignPhaseList.contains(arrival.getPhase().getName())).findFirst();
-                    if (arrivalOpt.isPresent()) {
-                        alignTimes[i] = arrivalOpt.get().getTime();
-                    }
-                }
-            }
+            // compute travel times
+            List<SeismicPhase> phaseList = timeTool.getSeismicPhases();
+            List<String> alignPhaseNameList = Arrays.asList(alignPhases);
+            List<SeismicPhase> alignPhaseList = phaseList.stream().filter(phase -> alignPhaseNameList.contains(phase.getName())).collect(Collectors.toList());
 
-            // output file and add curve
-            for (int p = 0; p < displayPhases.length; p++) {
-                String phase = displayPhases[p];
-                String curveFileName = DatasetAid.generateOutputFileName("curve", fileTag, dateStr, "_" + component + "_" + phase + ".txt");
+            // output file and add curve for each phase
+            for (SeismicPhase phase : phaseList) {
+                if(!phase.hasArrivals()) {
+                    continue;
+                }
+
+                double[] dist = phase.getDist();
+                double[] time = phase.getTime();
+
+                String phaseName = phase.getName();
+                String curveFileName = DatasetAid.generateOutputFileName("curve", fileTag, dateStr, "_" + component + "_" + phaseName + ".txt");
                 Path curvePath = eventPath.resolve(curveFileName);
                 boolean wrotePhaseLabel = false;
+
+                // output file and add curve
                 try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
-                    for (int i = 0; i < iNum; i++) {
-                        // write only at distances where travel time exists
-                        if (travelTimes[p][i] != null) {
-                            double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
-                            // reduce time by alignPhase or reductionSlowness
-                            if (alignPhases != null) {
-                                // write only at distances where travel time of alignPhase exists
-                                if (alignTimes[i] != null) {
-                                    pw.println(distance + " " + (travelTimes[p][i] - alignTimes[i]));
-                                }
-                                // add label at first appearance
-                                if (wrotePhaseLabel == false) {
-                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - alignTimes[i], distance, GnuplotColorName.turquoise);
-                                    wrotePhaseLabel = true;
-                                }
-                            } else {
-                                double reduceTime = reductionSlowness * distance;
-                                pw.println(distance + " " + (travelTimes[p][i] - reduceTime));
-                                // add label at first appearance
-                                if (wrotePhaseLabel == false) {
-                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - reduceTime, distance, GnuplotColorName.turquoise);
-                                    wrotePhaseLabel = true;
-                                }
+                    for(int i = 0; i < dist.length; i++) {
+                        double distance = Math.toDegrees(dist[i]);
+                        double arrivalTime = time[i];
+
+                        // calculate time to reduce
+                        double reduceTime;
+                        if (alignPhases != null) {
+                            Arrival relativeArrival = SeismicPhase.getEarliestArrival(alignPhaseList, distance);
+                            if (relativeArrival == null) {
+                                // no relative arrival at this dist, skip
+                                continue;
                             }
+                            reduceTime = relativeArrival.getTime();
+                        } else {
+                            reduceTime = reductionSlowness * distance;
+                        }
+
+                        pw.println(distance + " " + (arrivalTime - reduceTime));
+
+                        // add label at first appearance
+                        if (wrotePhaseLabel == false && startDistance < distance && distance < endDistance) {
+                            gnuplot.addLabel(phaseName, "first", arrivalTime - reduceTime, distance, GnuplotColorName.turquoise);
+                            wrotePhaseLabel = true;
                         }
                     }
                 }
@@ -622,5 +610,4 @@ public class BasicRecordSectionCreator extends Operation {
             }
         }
     }
-
 }
