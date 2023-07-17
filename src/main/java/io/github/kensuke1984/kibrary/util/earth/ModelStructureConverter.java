@@ -6,22 +6,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.voxel.KnownParameter;
+import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
 /**
- * Operation that adds perturbations to a {@link PolynomialStructure}.
- * <p>
- * Perturbations can be added to a certain variable within a specified radius range.
+ * Operation that converts a 1-D model to a {@link PolynomialStructure}.
  *
  * @author otsuru
- * @since 2022/8/25
+ * @since 2023/7/17
  */
-public class PolynomialStructurePerturber extends Operation {
+public class ModelStructureConverter extends Operation {
 
     private final Property property;
     /**
@@ -38,19 +39,17 @@ public class PolynomialStructurePerturber extends Operation {
     private String fileTag;
 
     /**
-     * Structure file to use
+     * File of 1D structure used in inversion
      */
-    private Path structurePath;
+    private Path initialStructurePath;
     /**
-     * Structure to use
+     * Name of 1D structure used in inversion
      */
-    private String structureName;
-
-    private double lowerRadius;
-    private double upperRadius;
-    private VariableType variable;
-    private double percent;
-
+    private String initialStructureName;
+    /**
+     * Model file with perturbation information
+     */
+    private Path modelPath;
 
     /**
      * @param args  none to create a property file <br>
@@ -73,23 +72,17 @@ public class PolynomialStructurePerturber extends Operation {
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
             pw.println("#fileTag ");
-            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
-            pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use. (PREM)");
-            pw.println("#structureName ");
-            pw.println("##(double) Lower radius of layer to perturb; [0:upperRadius). (3480)");
-            pw.println("#lowerRadius ");
-            pw.println("##(double) Upper radius of layer to perturb; (lowerRadius:). (3580)");
-            pw.println("#upperRadius ");
-            pw.println("##Variable to perturb, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA,Qmu,Qkappa}. (Vs)");
-            pw.println("#variable ");
-            pw.println("##(double) Size of perturbation [%]. (2)");
-            pw.println("#percent ");
+            pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
+            pw.println("#initialStructurePath ");
+            pw.println("##Name of an initial structure model used in inversion. (PREM)");
+            pw.println("#initialStructureName ");
+            pw.println("##Path of a model file to use, must be set.");
+            pw.println("#modelPath ");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public PolynomialStructurePerturber(Property property) throws IOException {
+    public ModelStructureConverter(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -99,29 +92,26 @@ public class PolynomialStructurePerturber extends Operation {
         nameRoot = property.parseStringSingle("nameRoot", "PREM");
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
-        if (property.containsKey("structurePath")) {
-            structurePath = property.parsePath("structurePath", null, true, workPath);
+        if (property.containsKey("initialStructurePath")) {
+            initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
         } else {
-            structureName = property.parseString("structureName", "PREM");
+            initialStructureName = property.parseString("initialStructureName", "PREM");
         }
-
-        lowerRadius = property.parseDouble("lowerRadius", "3480");
-        upperRadius = property.parseDouble("upperRadius", "3580");
-        if (lowerRadius < 0 || lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
-        variable = VariableType.valueOf(property.parseString("variable", "Vs"));
-        percent = property.parseDouble("percent", "2");
+        modelPath = property.parsePath("modelPath", null, true, workPath);
     }
 
    @Override
    public void run() throws IOException {
        // set structure
-       PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
+       PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
 
-       structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
+       // read model
+       List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
+       PerturbationModel model = new PerturbationModel(knowns, initialStructure);
+
+       PolynomialStructure structure = null;
 
        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, GadgetAid.getTemporaryString(), ".structure"));
        PolynomialStructureFile.write(structure, outputPath);
    }
-
 }

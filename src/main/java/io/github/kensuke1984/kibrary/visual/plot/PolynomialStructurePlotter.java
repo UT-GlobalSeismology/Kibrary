@@ -25,7 +25,10 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
- * Operation that plots polynomial structures.
+ * Operation that plots {@link PolynomialStructure}s.
+ * <p>
+ * 6 variables (RHO, Vpv, Vph, Vsv, Vsh, ETA) can be plotted on a single graph.
+ * Multiple {@link PolynomialStructure}s can be overlaid on the same graph.
  *
  * @author otsuru
  * @since 2022/8/30
@@ -138,8 +141,12 @@ public class PolynomialStructurePlotter extends Operation {
 
         lowerRadius = property.parseDouble("lowerRadius", "0");
         upperRadius = property.parseDouble("upperRadius", "6371");
+        if (lowerRadius < 0 || lowerRadius > upperRadius)
+            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
         lowerValue = property.parseDouble("lowerValue", "0");
         upperValue = property.parseDouble("upperValue", "15");
+        if (lowerValue > upperValue)
+            throw new IllegalArgumentException("Value range " + lowerValue + " , " + upperValue + " is invalid.");
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String pathKey = "structurePath" + i;
@@ -154,7 +161,6 @@ public class PolynomialStructurePlotter extends Operation {
                 structureNames[0] = "PREM";
             }
         }
-
     }
 
    @Override

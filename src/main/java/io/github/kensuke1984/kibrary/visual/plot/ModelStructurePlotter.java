@@ -27,6 +27,15 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
+/**
+ * Operation that plots the 1-D models obtained from the inversion, along with its reference {@link PolynomialStructure}.
+ * <p>
+ * The models should be provided as {@link KnownParameterFile}s with path 'resultPath/method/{method}{vectorNum}.lst'.
+ * 8 types of variables (RHO, Vp, Vpv, Vph, Vs, Vsv, Vsh, ETA) can be plotted.
+ *
+ * @author otsuru
+ * @since 2023/7/12
+ */
 public class ModelStructurePlotter extends Operation {
 
     private static final int NUM_VARIABLES = 6;
@@ -58,11 +67,11 @@ public class ModelStructurePlotter extends Operation {
      */
     private Path resultPath;
     /**
-     * file of 1D structure used in inversion
+     * File of 1D structure used in inversion
      */
     private Path initialStructurePath;
     /**
-     * name of 1D structure used in inversion
+     * Name of 1D structure used in inversion
      */
     private String initialStructureName;
 
@@ -168,11 +177,15 @@ public class ModelStructurePlotter extends Operation {
         if (property.containsKey("lowerRadius")) {
             lowerRadius = property.parseDouble("lowerRadius", null);
             setLowerRadius = true;
+            if (lowerRadius < 0)
+                throw new IllegalArgumentException("Lower radius " + lowerRadius + " is invalid; must be positive.");
         }
         if (property.containsKey("upperRadius")) {
             upperRadius = property.parseDouble("upperRadius", null);
             setUpperRadius = true;
         }
+        if (setLowerRadius && setUpperRadius && lowerRadius > upperRadius)
+            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
         if (property.containsKey("lowerValue")) {
             lowerValue = property.parseDouble("lowerValue", null);
             setLowerValue = true;
@@ -181,6 +194,8 @@ public class ModelStructurePlotter extends Operation {
             upperValue = property.parseDouble("upperValue", null);
             setUpperValue = true;
         }
+        if (setLowerValue && setUpperValue && lowerValue > upperValue)
+            throw new IllegalArgumentException("Value range " + lowerValue + " , " + upperValue + " is invalid.");
     }
 
     @Override
