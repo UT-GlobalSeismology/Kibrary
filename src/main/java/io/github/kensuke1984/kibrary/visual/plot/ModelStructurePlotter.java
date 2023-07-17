@@ -34,6 +34,14 @@ public class ModelStructurePlotter extends Operation {
             "dark-magenta", "dark-orange", "web-green", "red", "web-blue", "dark-gray",
             "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
             "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
+    /**
+     * Margin in radius direction (y-axis)
+     */
+    private static final double MARGIN_RAD = 50;
+    /**
+     * Margin in value direction (x-axis)
+     */
+    private static final double MARGIN_VAL = 0.5;
 
     private final Property property;
     /**
@@ -70,9 +78,13 @@ public class ModelStructurePlotter extends Operation {
     private boolean dashByStructure;
     private boolean dashByVariable;
 
+    private boolean setLowerRadius = false;
     private double lowerRadius;
+    private boolean setUpperRadius = false;
     private double upperRadius;
+    private boolean setLowerValue = false;
     private double lowerValue;
+    private boolean setUpperValue = false;
     private double upperValue;
 
     /**
@@ -114,13 +126,13 @@ public class ModelStructurePlotter extends Operation {
             pw.println("#dashByStructure ");
             pw.println("##(boolean) Whether to dash variables differently. (false)");
             pw.println("#dashByVariable ");
-            pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (0)");
+            pw.println("##(double) Lower limit of radius [km], when setting manually; [0:upperRadius).");
             pw.println("#lowerRadius ");
-            pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (6371)");
+            pw.println("##(double) Upper limit of radius [km], when setting manually; (lowerRadius:).");
             pw.println("#upperRadius ");
-            pw.println("##(double) Lower limit of value; (:upperValue). (0)");
+            pw.println("##(double) Lower limit of value, when setting manually; (:upperValue).");
             pw.println("#lowerValue ");
-            pw.println("##(double) Upper limit of value; (lowerValue:). (15)");
+            pw.println("##(double) Upper limit of value, when setting manually; (lowerValue:).");
             pw.println("#upperValue ");
         }
         System.err.println(outPath + " is created.");
@@ -153,15 +165,26 @@ public class ModelStructurePlotter extends Operation {
         dashByStructure = property.parseBoolean("dashByStructure", "false");
         dashByVariable = property.parseBoolean("dashByVariable", "false");
 
-        lowerRadius = property.parseDouble("lowerRadius", "0");
-        upperRadius = property.parseDouble("upperRadius", "6371");
-        lowerValue = property.parseDouble("lowerValue", "0");
-        upperValue = property.parseDouble("upperValue", "15");
+        if (property.containsKey("lowerRadius")) {
+            lowerRadius = property.parseDouble("lowerRadius", null);
+            setLowerRadius = true;
+        }
+        if (property.containsKey("upperRadius")) {
+            upperRadius = property.parseDouble("upperRadius", null);
+            setUpperRadius = true;
+        }
+        if (property.containsKey("lowerValue")) {
+            lowerValue = property.parseDouble("lowerValue", null);
+            setLowerValue = true;
+        }
+        if (property.containsKey("upperValue")) {
+            upperValue = property.parseDouble("upperValue", null);
+            setUpperValue = true;
+        }
     }
 
     @Override
     public void run() throws IOException {
-
         // read initial structure
         System.err.print("Initial structure: ");
         PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
@@ -170,7 +193,8 @@ public class ModelStructurePlotter extends Operation {
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelPlots", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        // write list files
+        //~write list files
+        // loop for each inversion method
         for (InverseMethodEnum method : inverseMethods) {
             Path methodPath = resultPath.resolve(method.simpleName());
             if (!Files.exists(methodPath)) {
@@ -178,41 +202,51 @@ public class ModelStructurePlotter extends Operation {
                 continue;
             }
 
+            // loop for each vector
             for (int k = 1; k <= maxNum; k++){
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 if (!Files.exists(answerPath)) {
                     System.err.println("Results for " + method.simpleName() + k + " do not exist, skipping.");
                     continue;
                 }
+
+                // read model
                 List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
                 PerturbationModel model = new PerturbationModel(knowns, initialStructure);
 
+                // create output folder for this model & vector
                 Path outBasisPath = outPath.resolve(method.simpleName() + k);
                 Files.createDirectories(outBasisPath);
 
+                // instance to decide plot range
+                PlotRange plotRange = new PlotRange();
+
+                // compute values of the model for each variable type
                 for (VariableType variable : variableTypes) {
                     String variableName = variable.toString().toLowerCase();
                     // output discrete perturbation file
                     Map<FullPosition, Double> discreteMap = model.getAbsoluteForType(variable);
                     Path outputDiscretePath = outBasisPath.resolve(variableName + "Absolute.lst");
                     PerturbationListFile.write(discreteMap, outputDiscretePath);
+                    // update plot range based on these values
+                    plotRange.update(discreteMap);
                 }
 
+                // create gnuplot script
                 Path outputScriptPath = outBasisPath.resolve("modelPlot.plt");
-                createScript(outputScriptPath, initialStructure);
+                createScript(outputScriptPath, initialStructure, plotRange);
             }
         }
-
     }
 
-    private void createScript(Path scriptPath, PolynomialStructure structure) throws IOException {
+    private void createScript(Path scriptPath, PolynomialStructure structure, PlotRange plotRange) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set samples 1000");
             pw.println("set trange [0:6371]");
-            pw.println("set yrange [" + lowerRadius + ":" + upperRadius + "]");
-            pw.println("set xrange [" + lowerValue + ":" + upperValue + "]");
+            pw.println("set yrange [" + plotRange.lowerRadius() + ":" + plotRange.upperRadius() + "]");
+            pw.println("set xrange [" + plotRange.lowerValue() + ":" + plotRange.upperValue() + "]");
             pw.println("#set ytics 1000");
             pw.println("#set xtics 2");
             pw.println("set xlabel \"Velocity (km/s)\\nDensity (g/cm^3)\"");
@@ -282,6 +316,51 @@ public class ModelStructurePlotter extends Operation {
 
         String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor] + "'";
         return lineTypeString;
+    }
+
+    private class PlotRange {
+        private boolean first = true;
+        private double currentMinRadius;
+        private double currentMaxRadius;
+        private double currentMinValue;
+        private double currentMaxValue;
+
+        private PlotRange() {}
+
+        private void update(Map<FullPosition, Double> discreteMap) {
+            if (setLowerRadius == false) {
+                double minRadius = discreteMap.keySet().stream().mapToDouble(pos -> pos.getR()).min().getAsDouble();
+                if (first || minRadius < currentMinRadius) currentMinRadius = minRadius;
+
+            }
+            if (setUpperRadius == false) {
+                double maxRadius = discreteMap.keySet().stream().mapToDouble(pos -> pos.getR()).max().getAsDouble();
+                if (first || maxRadius > currentMaxRadius) currentMaxRadius = maxRadius;
+            }
+            if (setLowerValue == false) {
+                double minValue = discreteMap.values().stream().mapToDouble(Double::doubleValue).min().getAsDouble();
+                if (first || minValue < currentMinValue) currentMinValue = minValue;
+
+            }
+            if (setUpperValue == false) {
+                double maxValue = discreteMap.values().stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+                if (first || maxValue > currentMaxValue) currentMaxValue = maxValue;
+            }
+            first = false;
+        }
+
+        private double lowerRadius() {
+            return setLowerRadius ? lowerRadius : currentMinRadius - MARGIN_RAD;
+        }
+        private double upperRadius() {
+            return setUpperRadius ? upperRadius : currentMaxRadius + MARGIN_RAD;
+        }
+        private double lowerValue() {
+            return setLowerValue ? lowerValue : currentMinValue - MARGIN_VAL;
+        }
+        private double upperValue() {
+            return setUpperValue ? upperValue : currentMaxValue + MARGIN_VAL;
+        }
     }
 
 }
