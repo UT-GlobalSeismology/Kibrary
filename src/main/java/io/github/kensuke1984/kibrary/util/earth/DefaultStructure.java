@@ -49,8 +49,8 @@ public class DefaultStructure {
     private static PolynomialStructure initialAnisoPREM() {
         int nZone = 12;
         int nCoreZone = 2;
-        double[] rmin = new double[]{0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356};
-        double[] rmax = new double[]{1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356, 6371};
+        double[] rMin = new double[]{0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356};
+        double[] rMax = new double[]{1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356, 6371};
         double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
                 {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
                 {5.3197, -1.4836, 0, 0}, {11.2494, -8.0298, 0, 0}, {7.1089, -3.8045, 0, 0},
@@ -75,7 +75,7 @@ public class DefaultStructure {
                 {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {3.3687, -2.4778, 0, 0}, {3.3687, -2.4778, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
         double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600};
         double[] qKappa = new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
-        return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, true);
+        return new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, true);
     }
 
     private static PolynomialStructure initialIsoPREM() {
@@ -100,8 +100,8 @@ public class DefaultStructure {
     private static PolynomialStructure initialIASP91() {
         int nZone = 11;
         int nCoreZone = 2;
-        double[] rmin = new double[]{0, 1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
-        double[] rmax = new double[]{1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
+        double[] rMin = new double[]{0, 1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
+        double[] rMax = new double[]{1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
         double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
                 {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
                 {11.2494, -8.0298, 0, 0}, {7.1089, -3.8045, 0, 0},
@@ -118,14 +118,14 @@ public class DefaultStructure {
                 {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
         double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600};
         double[] qKappa = new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
-        return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vp, vp, vs, vs, eta, qMu, qKappa, true);
+        return new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vp, vp, vs, vs, eta, qMu, qKappa, true);
     }
 
     private static PolynomialStructure initialMIASP91() {
         int nZone = 12;
         int nCoreZone = 2;
-        double[] rmin = new double[]{0, 1221.5, 3480, 3630, 5610, 5641, 5781, 5891, 5971, 6030.9, 6160, 6281};
-        double[] rmax = new double[]{1221.5, 3480, 3630, 5610, 5641, 5781, 5891, 5971, 6030.9, 6160, 6281, 6371};
+        double[] rMin = new double[]{0, 1221.5, 3480, 3630, 5610, 5641, 5781, 5891, 5971, 6030.9, 6160, 6281};
+        double[] rMax = new double[]{1221.5, 3480, 3630, 5610, 5641, 5781, 5891, 5971, 6030.9, 6160, 6281, 6371};
         double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
                 {7.2586, -3.1016, 0, 0}, {7.9469, -6.4376, 5.4773, -3.0584}, {7.8896, -3.9208, 0, 0},
                 {22.3146, -20.2128, 0, 0}, {14.743076955227242, -11.868712364945988, 0, 0}, {14.743076955227242, -11.868712364945988, 0, 0},
@@ -142,14 +142,14 @@ public class DefaultStructure {
                 {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
         double[] qMu = new double[]{84.6, -1.0, 312.0, 312.0, 312.0, 312.0, 143.0, 143.0, 143.0, 143.0, 80.0, 600.0};
         double[] qKappa = new double[]{1327.7, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0};
-        return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vp, vp, vs, vs, eta, qMu, qKappa, true);
+        return new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vp, vp, vs, vs, eta, qMu, qKappa, true);
     }
 
     private static PolynomialStructure initialAK135() {
         int nzone = 11;
         int nCoreZone = 2;
-        double[] rmin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
-        double[] rmax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
+        double[] rMin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
+        double[] rMax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
         double[][] rho = new double[][]{{13.01224, -0.00072, -8.448571, 0}, {12.27867, 1.206494, -10.135214, 0},
                 {5.520665, -0.172417, 0, 0}, {9.404821, -14.092113, 17.721033, -9.221153}, {10.084566, -6.409226, 0, 0},
                 {11.384761, -8.109009, 0, 0}, {11.916663, -8.811093, 0, 0}, {9.878741, -6.703708, 0, 0},
@@ -166,7 +166,7 @@ public class DefaultStructure {
                 {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
         double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600};
         double[] qKappa = new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
-        return new PolynomialStructure(nzone, nCoreZone, rmin, rmax, rho, vp, vp, vs, vs, eta, qMu, qKappa, true);
+        return new PolynomialStructure(nzone, nCoreZone, rMin, rMax, rho, vp, vp, vs, vs, eta, qMu, qKappa, true);
     }
 
     /**
@@ -176,8 +176,8 @@ public class DefaultStructure {
         double eps = 1e-10;
         int nZone = 3;
         int nCoreZone = 2;
-        double[] rmin = new double[]{0, 1221.5, 3480.0};
-        double[] rmax = new double[]{1221.5, 3480.0, 6371};
+        double[] rMin = new double[]{0, 1221.5, 3480.0};
+        double[] rMax = new double[]{1221.5, 3480.0, 6371};
         double[][] rho = new double[][]{{10.0, 0.0, 0.0, 0.0}, {10.0, 0.0, 0.0, 0.0}, {10.0, 0.0, 0.0, 0.0}};
         double[][] vpv = new double[][]{{eps, 17., 0.0, 0.0}, {0., 17., 0.0, 0.0}, {0., 17., 0.0, 0.0}};
         double[][] vph = new double[][]{{eps, 17.51, 0.0, 0.0}, {0., 17.51, 0.0, 0.0}, {0., 17.51, 0.0, 0.0}};
@@ -187,7 +187,7 @@ public class DefaultStructure {
         double[][] eta = new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
         double[] qMu = new double[]{84.6, -1, 600};
         double[] qKappa = new double[]{1327.7, 57823, 57823};
-        return new PolynomialStructure(nZone, nCoreZone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, true);
+        return new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, true);
     }
 
 

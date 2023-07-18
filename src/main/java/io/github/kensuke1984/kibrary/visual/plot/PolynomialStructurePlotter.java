@@ -184,7 +184,7 @@ public class PolynomialStructurePlotter extends Operation {
 
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
            pw.println("set samples 1000");
-           pw.println("set trange [0:6371]");
+           pw.println("set trange [" + lowerRadius + ":" + upperRadius + "]");
            pw.println("set yrange [" + lowerRadius + ":" + upperRadius + "]");
            pw.println("set xrange [" + lowerValue + ":" + upperValue + "]");
            pw.println("#set ytics 1000");

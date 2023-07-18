@@ -75,6 +75,9 @@ public class ModelStructurePlotter extends Operation {
      */
     private String initialStructureName;
 
+    /**
+     * Variable types to plot
+     */
     private Set<VariableType> variableTypes;
     /**
      * Solvers for equation
@@ -121,7 +124,7 @@ public class ModelStructurePlotter extends Operation {
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model used in inversion. (PREM)");
             pw.println("#initialStructureName ");
-            pw.println("##Variable types to plot, listed using spaces. (Vs)");
+            pw.println("##Variable types to plot, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (Vs)");
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
