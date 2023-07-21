@@ -63,10 +63,6 @@ public class SyntheticWaveformPlotter extends Operation {
      */
     private Path workPath;
     /**
-     * If this is true, a time stamp is included in output folder name.
-     */
-    private boolean timeStamp;
-    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
@@ -105,17 +101,26 @@ public class SyntheticWaveformPlotter extends Operation {
     private String structureName;
 
     /**
-     * Events to work for. If this is empty, work for all events in workPath.
-     */
-    private Set<GlobalCMTID> tendEvents = new HashSet<>();
-    /**
      * Whether to export individual files for each component
      */
     private boolean splitComponents;
     /**
-     * The time length to plot
+     * Events to work for. If this is empty, work for all events in workPath.
      */
-    private double timeLength;
+    private Set<GlobalCMTID> tendEvents = new HashSet<>();
+
+    /**
+     * Definition of time range to plot.
+     * From front shift before the first arrival of display phases to rear shift after the last arrival of display phases.
+     * If this option is not used, lowerTime & upperTime option is to be used.
+     */
+    private double frontShift;
+    private double rearShift;
+    /**
+     * The upper & lower time to plot
+     */
+    private double lowerTime;
+    private double upperTime;
 
     private int mainSynStyle;
     private String mainSynName;
@@ -155,8 +160,6 @@ public class SyntheticWaveformPlotter extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(boolean) Whether to include time stamp in output folder name (true)");
-            pw.println("#timeStamp false");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
@@ -169,18 +172,30 @@ public class SyntheticWaveformPlotter extends Operation {
             pw.println("#refSynPath1 ");
             pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms");
             pw.println("#refSynPath2 ");
-            pw.println("##Path of a travel time information file, if plotting travel times");
+            pw.println("##If plotting travel times, set the following travelTimePath or displayPhases");
+            pw.println("##Path of a travel time information file. If this is unset, the following displayPhases will be referenced");
             pw.println("#travelTimePath travelTime.inf");
-            pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
+            pw.println("##Names of phases to plot travel time curves, listed using spaces.");
             pw.println("#displayPhases ");
             pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
             pw.println("#structureName ");
             pw.println("##(boolean) Whether to export individual files for each component (true)");
             pw.println("#splitComponents ");
-            pw.println("##(double) Time length of each plot [s] (150)");
-            pw.println("#timeLength ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
+            pw.println("##########Setting for time range to plot");
+            pw.println("##Time range of each plot defined from phases in tarvelTimePath or displayPhases");
+            pw.println("##If these are unset, the following lowerTime and upperTime will be referenced");
+            pw.println("##(double) Time range to plot before phase arrival of usePhases [sec]");
+            pw.println("#frontShift ");
+            pw.println("##(double) Time range to plot after phase arrival of usePhases [sec]");
+            pw.println("#rearShift ");
+            pw.println("##Time range of each plot designated directly");
+            pw.println("##(double) Lower limit of time range to be used [sec] (0)");
+            pw.println("#lowerTime ");
+            pw.println("##(double) Upper limit of time range to be used [sec] (150)");
+            pw.println("#upperTime ");
+            pw.println("##########Setting for plot style");
             pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
             pw.println("#mainSynStyle 2");
             pw.println("##Name for main synthetic waveform (synthetic)");
@@ -212,7 +227,6 @@ public class SyntheticWaveformPlotter extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        timeStamp = property.parseBoolean("timeStamp", "true");
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -233,10 +247,19 @@ public class SyntheticWaveformPlotter extends Operation {
         }
 
         splitComponents = property.parseBoolean("splitComponents", "true");
-        timeLength = property.parseDouble("timeLength", "150");
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                     .collect(Collectors.toSet());
+        }
+        frontShift = property.parseDouble("frontShift", "NaN");
+        rearShift = property.parseDouble("rearShift", "NaN");
+        if (Double.isNaN(frontShift) ^ Double.isNaN(rearShift)) // ^ : XOR
+            throw new IllegalArgumentException("Both frontShift and rearShift must be set");
+        if ((!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) && (travelTimePath == null && displayPhases == null))
+            throw new IllegalArgumentException("travelTimePath or dispalyPhases must be set when frontShift and rearShift is used");
+        if (Double.isNaN(frontShift) && Double.isNaN(rearShift)) {
+            lowerTime = property.parseDouble("lowerTime", "0");;
+            upperTime = property.parseDouble("upperTime", "150");
         }
 
         mainSynStyle = property.parseInt("mainSynStyle", "1");
@@ -249,16 +272,15 @@ public class SyntheticWaveformPlotter extends Operation {
         refSynName2 = property.parseString("refSynName2", "reference2");
         residualStyle2 = property.parseInt("residualStyle2", "0");
         residualName2 = property.parseString("residualName2", "residual2");
-        if (refSynStyle1 != 0 || residualStyle1 != 0 && refSynPath1 == null)
-            throw new IllegalArgumentException("refBasicPath1 must be set when refSynStyle1 != 0");
-        if (refSynStyle2 != 0 || residualStyle2 != 0&& refSynPath2 == null)
-            throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
+        if ((refSynStyle1 != 0 || residualStyle1 != 0) && refSynPath1 == null)
+            throw new IllegalArgumentException("refSynPath1 must be set when refSynStyle1 != 0");
+        if ((refSynStyle2 != 0 || residualStyle2 != 0) && refSynPath2 == null)
+            throw new IllegalArgumentException("refSynPath2 must be set when refSynStyle2 != 0");
     }
 
    @Override
    public void run() throws IOException {
-       if (timeStamp) dateStr = GadgetAid.getTemporaryString();
-       else dateStr = null;
+       dateStr = GadgetAid.getTemporaryString();
 
        // read main synthetic dataset and write waveforms to be used into txt files
        Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
@@ -366,15 +388,8 @@ public class SyntheticWaveformPlotter extends Operation {
        for (SACFileName sacName : sacNames) {
            SACFileAccess sacData = sacName.read();
            String txtFileName = sacName.toPath().getFileName().toString() + ".txt";
-
-           double delta = sacData.getValue(SACHeaderEnum.DELTA);
-           int npts = sacData.getInt(SACHeaderEnum.NPTS);
-           double b = (int) (sacData.getValue(SACHeaderEnum.B) / delta) * delta;
-           double startTime = b;
-           double endTime = b + npts * delta;
-
-           // set xrange
-           gnuplot.setXrange(startTime - FRONT_MARGIN, startTime - FRONT_MARGIN + timeLength);
+           double minTime = Double.MAX_VALUE;
+           double maxTime = -Double.MAX_VALUE;
 
            // display data of timewindow
            gnuplot.addLabel(sacData.getObserver().toPaddedInfoString() + " " + sacData.getComponent().toString(), "graph", 0.01, 0.95);
@@ -386,10 +401,10 @@ public class SyntheticWaveformPlotter extends Operation {
            gnuplot.addLine("0", BasicPlotAid.ZERO_APPEARANCE, "");
            Path mainFilePath = mainSynPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
            if (mainSynStyle != 0)
-               gnuplot.addLine(mainFilePath.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
+               gnuplot.addLine(mainFilePath.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
            if (refSynStyle1 != 0) {
                Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath1.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
+               gnuplot.addLine(refFilePath1.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
            }
            if (residualStyle1 != 0) {
                Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
@@ -397,29 +412,33 @@ public class SyntheticWaveformPlotter extends Operation {
            }
            if (refSynStyle2 != 0) {
                Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath2.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
+               gnuplot.addLine(refFilePath2.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
            }
            if (residualStyle2 != 0) {
                Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
                gnuplot.addLine(refFilePath2.toString(), mainFilePath.toString(), "1:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle2), residualName2);
            }
 
-           // add vertical lines and labels of travel times listed in travelTimeFile
+        // add vertical lines and labels of travel times listed in travelTimeFile
            if (travelTimePath != null) {
-               travelTimeInfoSet.stream()
-                       .filter(info -> info.getEvent().equals(sacData.getGlobalCMTID()) && info.getObserver().equals(sacData.getObserver()))
-                       .forEach(info -> {
-                           Map<Phase, Double> usePhaseMap = info.getUsePhases();
-                           for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                               gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
-                               gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
-                           }
-                           Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
-                           for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                               gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
-                               gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
-                           }
-                       });
+               Set<TravelTimeInformation> useInfoSet = travelTimeInfoSet.stream()
+                       .filter(info -> info.getEvent().equals(sacData.getGlobalCMTID()) && info.getObserver().equals(sacData.getObserver())).collect(Collectors.toSet());
+               for (TravelTimeInformation info : useInfoSet) {
+                   Map<Phase, Double> usePhaseMap = info.getUsePhases();
+                   for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
+                       gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                       gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
+                       if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
+                           if (entry.getValue() < minTime) minTime = entry.getValue();
+                           if (entry.getValue() > maxTime) maxTime = entry.getValue();
+                       }
+                   }
+                   Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
+                   for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
+                       gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
+                       gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
+                   }
+               }
            }
            // add vertical lines and labels of travel times computed by TauP
            else if (displayPhases != null) {
@@ -431,9 +450,23 @@ public class SyntheticWaveformPlotter extends Operation {
                    if (arrivalOpt.isPresent()) {
                        gnuplot.addVerticalLine(arrivalOpt.get().getTime(), BasicPlotAid.USE_PHASE_APPEARANCE);
                        gnuplot.addLabel(phase, "first", arrivalOpt.get().getTime(), "graph", 0.95, GnuplotColorName.turquoise);
+                       if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
+                           if (arrivalOpt.get().getTime() < minTime) minTime = arrivalOpt.get().getTime();
+                           if (arrivalOpt.get().getTime() > maxTime) maxTime = arrivalOpt.get().getTime();
+                       }
                    }
                }
            }
+           if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
+               minTime = minTime - frontShift;
+               maxTime = maxTime + rearShift;
+           }
+           if (Double.isNaN(frontShift) && Double.isNaN(rearShift)) {
+               maxTime = upperTime;
+               minTime = lowerTime;
+           }
+           // set xrange
+           gnuplot.setXrange(minTime - FRONT_MARGIN, maxTime + FRONT_MARGIN);
 
            // this is not done for the last obsID because we don't want an extra blank page to be created
            if ((i + 1) < sacNames.size()) {

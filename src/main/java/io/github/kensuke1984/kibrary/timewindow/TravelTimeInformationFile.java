@@ -106,7 +106,7 @@ public class TravelTimeInformationFile {
             Map<Phase, Double> usePhaseTimes = new HashMap<>();
             for (int i = 0; i < useList.size(); i++) {
                 String valString = parts[N_ENTRY_TAG + i];
-                if (valString != "-") {
+                if (!valString.equals("-")) {
                     usePhaseTimes.put(useList.get(i), Double.parseDouble(valString));
                 }
             }

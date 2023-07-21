@@ -75,10 +75,6 @@ public class SyntheticRecordSectionCreator extends Operation {
      */
     private Path workPath;
     /**
-     * If this is true, a time stamp is included in output folder name.
-     */
-    private boolean timeStamp;
-    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
@@ -108,7 +104,8 @@ public class SyntheticRecordSectionCreator extends Operation {
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
-    private BasicPlotAid.AmpStyle ampStyle;
+    private String ampStyle;
+    //private BasicPlotAid.AmpStyle ampStyle;
     private double ampScale;
 
     /**
@@ -177,8 +174,6 @@ public class SyntheticRecordSectionCreator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(boolean) Whether to include time stamp in output folder name (true)");
-            pw.println("#timeStamp false");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
@@ -254,7 +249,6 @@ public class SyntheticRecordSectionCreator extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        timeStamp = property.parseBoolean("timeStamp", "true");
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -271,7 +265,7 @@ public class SyntheticRecordSectionCreator extends Operation {
                     .collect(Collectors.toSet());
         }
 
-        ampStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
+        ampStyle = property.parseString("ampStyle", "synEach");
         ampScale = property.parseDouble("ampScale", "1.0");
 
         byAzimuth = property.parseBoolean("byAzimuth", "false");
@@ -307,16 +301,15 @@ public class SyntheticRecordSectionCreator extends Operation {
         refSynName2 = property.parseString("refSynName2", "reference2");
         residualStyle2 = property.parseInt("residualStyle2", "0");
         residualName2 = property.parseString("residualName2", "residual2");
-        if (refSynStyle1 != 0 || residualStyle1 != 0 && refSynPath1 == null)
-            throw new IllegalArgumentException("refBasicPath1 must be set when refSynStyle1 != 0");
-        if (refSynStyle2 != 0 || residualStyle2 != 0&& refSynPath2 == null)
-            throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
+        if ((refSynStyle1 != 0 || residualStyle1 != 0) && refSynPath1 == null)
+            throw new IllegalArgumentException("refSynPath1 must be set when refSynStyle1 != 0");
+        if ((refSynStyle2 != 0 || residualStyle2 != 0) && refSynPath2 == null)
+            throw new IllegalArgumentException("refSynPath2 must be set when refSynStyle2 != 0");
     }
 
    @Override
    public void run() throws IOException {
-       if (timeStamp) dateStr = GadgetAid.getTemporaryString();
-       else dateStr = null;
+       dateStr = GadgetAid.getTemporaryString();
 
        // read main synthetic dataset and write waveforms to be used into txt files
        Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
@@ -392,7 +385,7 @@ public class SyntheticRecordSectionCreator extends Operation {
         private final SACComponent component;
 
         private GnuplotFile gnuplot;
-        private double synMeanMax;
+        private double synMeanMax = 0;
         private boolean firstPlot = true;
 
         /**
@@ -416,19 +409,11 @@ public class SyntheticRecordSectionCreator extends Operation {
             profilePlotSetup();
 
             // calculate the average of the maximum amplitudes of waveforms
-            Set<SACFileAccess> sacDataSet = new HashSet<>();
-            sacNames.forEach(name -> {
-                try {
-                    sacDataSet.add(name.read());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            synMeanMax = sacDataSet.stream().collect(Collectors.averagingDouble(data -> new ArrayRealVector(data.getData()).getLInfNorm()));
+            if (ampStyle.equals("synMean")) calculateSynMeanMax(sacNames);
 
             // variables to find the minimum and maximum distance for this event
-            double minTime = Double.MAX_VALUE;
-            double maxTime = -Double.MAX_VALUE;
+            double minTime = Double.isNaN(lowerTime) ?  Double.MAX_VALUE : lowerTime;
+            double maxTime = Double.isNaN(upperTime) ? -Double.MAX_VALUE : upperTime;
             double minDistance = Double.MAX_VALUE;
             double maxDistance = -Double.MAX_VALUE;
 
@@ -465,8 +450,8 @@ public class SyntheticRecordSectionCreator extends Operation {
                 double b = (int) (sacData.getValue(SACHeaderEnum.B) / delta) * delta;
                 double startTime = b - reduceTime;
                 double endTime = b + npts * delta - reduceTime;
-                if (startTime < minTime) minTime = startTime;
-                if (endTime > maxTime) maxTime = endTime;
+                if (Double.isNaN(lowerTime) && (startTime < minTime)) minTime = startTime;
+                if (Double.isNaN(upperTime) && (endTime > maxTime)) maxTime = endTime;
                 if (distance < minDistance) minDistance = distance;
                 if (distance > maxDistance) maxDistance = distance;
 
@@ -479,8 +464,6 @@ public class SyntheticRecordSectionCreator extends Operation {
             }
 
             // set ranges
-            if (!Double.isNaN(lowerTime)) minTime = lowerTime;
-            if (!Double.isNaN(upperTime)) maxTime = upperTime;
             if (minDistance > maxDistance || minTime > maxTime) return;
             int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
             int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
@@ -529,9 +512,11 @@ public class SyntheticRecordSectionCreator extends Operation {
             SACFileAccess sacData = sacName.read();
 
             // decide the coefficient to amplify each waveform
-            RealVector synDataVector = new ArrayRealVector(sacData.getData());
-            double synMax = synDataVector.getLInfNorm();
-            double synAmp = BasicPlotAid.selectAmp(ampStyle, ampScale, synMax, synMax, synMeanMax, synMeanMax);
+            double synAmp;
+            if (ampStyle.equals("synMean")) synAmp = synMeanMax / ampScale;
+            else if (ampStyle.equals("synEach")) synAmp = calculateSynMax(sacData, reduceTime);
+            else throw new IllegalArgumentException("ampStyle must be set synEach or synMean");
+
 
             // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
             String synUsingString;
@@ -646,6 +631,58 @@ public class SyntheticRecordSectionCreator extends Operation {
                 }
                 gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
+        }
+
+        private void calculateSynMeanMax(Set<SACFileName> names) throws IOException, TauModelException {
+            for (SACFileName name : names) {
+                SACFileAccess data = name.read();
+                double distance = data.getValue(SACHeaderEnum.GCARC);
+                double rdTime = 0;
+                if (alignPhases != null) {
+                    timeTool.setPhaseNames(alignPhases);
+                    timeTool.calculate(distance);
+                    if (timeTool.getNumArrivals() < 1) {
+                        System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for " + name.toString() + " , skipping.");
+                        return;
+                    }
+                    rdTime = timeTool.getArrival(0).getTime();
+                } else {
+                    rdTime = reductionSlowness * distance;
+                }
+                RealVector dataVec = new ArrayRealVector(data.getData());
+                double delta = data.getValue(SACHeaderEnum.DELTA);
+                double b = data.getValue(SACHeaderEnum.B);
+                if (!Double.isNaN(upperTime)) {
+                    // cut a waveform from the biginning to upperTime + reduceTime
+                    int endPoint = (int)((upperTime + rdTime - b) / delta);
+                    dataVec = dataVec.getSubVector(0, endPoint + 1);
+                }
+                if (!Double.isNaN(lowerTime)) {
+                    // cut a waveform from lowerTime + reduceTime to the end
+                    int startPoint = (int)((lowerTime + rdTime - b) / delta);
+                    dataVec = dataVec.getSubVector(startPoint, dataVec.getDimension() - startPoint);
+                }
+                synMeanMax = synMeanMax + dataVec.getLInfNorm();
+            }
+            synMeanMax = synMeanMax / names.size();
+        }
+
+        private double calculateSynMax(SACFileAccess data, double reduceTime) {
+            RealVector dataVec = new ArrayRealVector(data.getData());
+            double delta = data.getValue(SACHeaderEnum.DELTA);
+            double b = data.getValue(SACHeaderEnum.B);
+            if (!Double.isNaN(upperTime)) {
+                // cut a waveform from the biginning to upperTime + reduceTime
+                int endPoint = (int)((upperTime + reduceTime - b) / delta);
+                dataVec = dataVec.getSubVector(0, endPoint + 1);
+            }
+            if (!Double.isNaN(lowerTime)) {
+                // cut a waveform from lowerTime + reduceTime to the end
+                int startPoint = (int)((lowerTime + reduceTime - b) / delta);
+                dataVec = dataVec.getSubVector(startPoint, dataVec.getDimension() - startPoint);
+            }
+            double max = dataVec.getLInfNorm();
+            return max / ampScale;
         }
     }
 

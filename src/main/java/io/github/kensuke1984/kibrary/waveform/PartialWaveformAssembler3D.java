@@ -95,6 +95,10 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Path workPath;
     /**
+     * If this is true, a time stamp is included in output folder name.
+     */
+    private boolean timeStamp;
+    /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
@@ -231,6 +235,8 @@ public class PartialWaveformAssembler3D extends Operation {
     private List<SPCFileName> bpCatalogSH;
     private List<SPCFileName> bpCatalogPSV;
 
+    private String dateStr;
+
     /**
      * @param args  none to create a property file <br>
      *              [property file] to run
@@ -312,6 +318,7 @@ public class PartialWaveformAssembler3D extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        timeStamp = property.parseBoolean("timeStamp", "true");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -373,6 +380,9 @@ public class PartialWaveformAssembler3D extends Operation {
 
     @Override
     public void run() throws IOException {
+        if (timeStamp) dateStr = GadgetAid.getTemporaryString();
+        else dateStr = null;
+
         System.err.println("Using mode " + usableSPCMode);
 
         // read timewindow file
@@ -429,7 +439,7 @@ public class PartialWaveformAssembler3D extends Operation {
             qStructure = PolynomialStructureFile.read(qStructurePath);
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         nThreads = Runtime.getRuntime().availableProcessors();

@@ -143,8 +143,6 @@ public final class SPC_SAC extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath ");
-            pw.println("##(boolean) Whether to include time stamp in output folder name (true)");
-            pw.println("#timeStamp false");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##SACComponents to be exported, listed using spaces (Z R T)");
