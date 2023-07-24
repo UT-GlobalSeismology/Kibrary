@@ -103,7 +103,7 @@ public class LetMeInvert extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
@@ -114,7 +114,7 @@ public class LetMeInvert extends Operation {
             pw.println("##Path of an unknown parameter list file, must be set.");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Path of a weighting properties file, must be set.");
-            pw.println("#weightingPropertiesPath ");
+            pw.println("#weightingPropertiesPath weighting.properties");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
@@ -154,10 +154,10 @@ public class LetMeInvert extends Operation {
     public void run() throws IOException {
 
         // read input
+        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
-        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
