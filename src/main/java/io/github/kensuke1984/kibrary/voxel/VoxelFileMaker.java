@@ -52,8 +52,8 @@ public class VoxelFileMaker extends Operation {
     private double longitudeOffset;
 
     private double[] borderRadii;
-    private int lowerRadius;
-    private int upperRadius;
+    private double lowerRadius;
+    private double upperRadius;
     private double dRadius;
 
     /**
@@ -107,9 +107,9 @@ public class VoxelFileMaker extends Operation {
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
             pw.println("##  If unset, the following parameters are used.");
             pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
-            pw.println("##(int) Lower limit of radius [km]; [0:upperRadius). (3480)");
+            pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (3480)");
             pw.println("#lowerRadius ");
-            pw.println("##(int) Upper limit of radius [km]; (lowerRadius:). (3880)");
+            pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (3880)");
             pw.println("#upperRadius ");
             pw.println("##(double) Radius spacing [km]; (0:). (50)");
             pw.println("#dRadius ");
@@ -171,8 +171,8 @@ public class VoxelFileMaker extends Operation {
                     .sorted().toArray();
             if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii.");
         } else {
-            lowerRadius = property.parseInt("lowerRadius", "3480");
-            upperRadius = property.parseInt("upperRadius", "3880");
+            lowerRadius = property.parseDouble("lowerRadius", "3480");
+            upperRadius = property.parseDouble("upperRadius", "3880");
             if (lowerRadius < 0 || lowerRadius > upperRadius)
                 throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
             dRadius = property.parseDouble("dRadius", "50");
@@ -190,27 +190,27 @@ public class VoxelFileMaker extends Operation {
 
         // set voxel layer information
         double[] layerThicknesses;
-        double[] voxelRadii;
+        double[] layerRadii;
         if (borderRadii != null) {
             layerThicknesses = new double[borderRadii.length - 1];
-            voxelRadii = new double[borderRadii.length - 1];
+            layerRadii = new double[borderRadii.length - 1];
             for (int i = 0; i < borderRadii.length - 1; i++) {
                 layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
-                voxelRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+                layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
             }
         } else {
             int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
-            voxelRadii = new double[nRadius];
+            layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {
                 layerThicknesses[i] = dRadius;
-                voxelRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+                layerRadii[i] = lowerRadius + (i + 0.5) * dRadius;
             }
         }
 
         // output
         Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
-        VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPixels, outputPath);
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels() {

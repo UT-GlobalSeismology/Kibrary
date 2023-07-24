@@ -22,9 +22,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * File of layer information.
  * <p>
- * The file should be as below: <br>
+ * The file format is as below: <br>
  * h1 h2 h3..... hn (Layer thicknesses, from the ones closer to the center of planet)<br>
  * r1 r2 r3..... rn (Radii, cannot have duplicate values, must be sorted)<br>
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author otsuru
  * @since 2023/4/12
@@ -34,11 +36,11 @@ public class LayerInformationFile {
     /**
      * thickness of each layer
      */
-    private double[] layerThicknesses;
+    private final double[] layerThicknesses;
     /**
      * Radii of voxel center points, sorted, no duplication
      */
-    private double[] layerRadii;
+    private final double[] layerRadii;
 
     /**
      * Writes a layer information file given arrays of radii.
@@ -88,11 +90,44 @@ public class LayerInformationFile {
     }
 
     /**
+     * Create information for layer file from array of border radii.
+     * @param borderRadii (double[]) Radii of layer borders [km]; [0:).
+     */
+    public LayerInformationFile(double[] borderRadii) {
+        layerThicknesses = new double[borderRadii.length - 1];
+        layerRadii = new double[borderRadii.length - 1];
+        for (int i = 0; i < borderRadii.length - 1; i++) {
+            layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
+            layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+        }
+    }
+
+    /**
+     * Create information for layer file from lower & upper border radus and dRadius.
+     * @param lowerRadius (double) Lower limit of radius [km]; [0:upperRadius).
+     * @param upperRadius (double) Upper limit of radius [km]; (lowerRadius:).
+     * @param dRadius (double) Radius spacing [km]; (0:).
+     */
+    public LayerInformationFile(double lowerRadius, double upperRadius, double dRadius) {
+        int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+        layerThicknesses = new double[nRadius];
+        layerRadii = new double[nRadius];
+        for (int i = 0; i < nRadius; i++) {
+            layerThicknesses[i] = dRadius;
+            layerRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+        }
+    }
+
+    public void write(Path outputPath, OpenOption... options) throws IOException {
+        write(layerThicknesses, layerRadii, outputPath, options);
+    }
+
+    /**
      * Get information of layer thicknesses.
      * @return (double[])
      */
     public double[] getThicknesses() {
-        return layerThicknesses;
+        return layerThicknesses.clone();
     }
 
     /**
@@ -100,7 +135,7 @@ public class LayerInformationFile {
      * @return (double[])
      */
     public double[] getRadii() {
-        return layerRadii;
+        return layerRadii.clone();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,8 +162,14 @@ public class LayerInformationFile {
         Options options = Summon.defaultOptions();
 
         // settings
-        options.addOption(Option.builder("r").longOpt("radii").hasArg().argName("borderRadii").required()
-                .desc("(double[]) Radii of layer borders, listed using commas. [km]").build());
+        options.addOption(Option.builder("r").longOpt("radii").hasArg().argName("borderRadii")
+                .desc("(double[]) Radii of layer borders, listed using commas [km]; [0:).").build());
+        options.addOption(Option.builder("l").longOpt("lower").hasArg().argName("lowerRadius")
+                .desc("(double) Lower limit of radius [km]; [0:upperRadius).").build());
+        options.addOption(Option.builder("u").longOpt("upper").hasArg().argName("upperRadius")
+                .desc("(double) Upper limit of radius [km]; (lowerRadius:).").build());
+        options.addOption(Option.builder("d").longOpt("dRadius").hasArg().argName("dRadius")
+                .desc("(double) Radius spacing [km]; (0:).").build());
 
         // output
         options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
@@ -143,22 +184,31 @@ public class LayerInformationFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        double[] borderRadii = Arrays.stream(cmdLine.getOptionValue("r").split(",")).mapToDouble(Double::parseDouble)
-                .sorted().toArray();
-        if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii");
+        LayerInformationFile layerFile;
+
+        if (cmdLine.hasOption("r")) {
+            double[] borderRadii = Arrays.stream(cmdLine.getOptionValue("r").split(",")).mapToDouble(Double::parseDouble)
+                    .sorted().toArray();
+            if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii");
+
+            layerFile = new LayerInformationFile(borderRadii);
+
+        } else if (cmdLine.hasOption("l") && cmdLine.hasOption("u") && cmdLine.hasOption("d")) {
+            double lowerRadius = Double.parseDouble(cmdLine.getOptionValue("l"));
+            double upperRadius = Double.parseDouble(cmdLine.getOptionValue("u"));
+            double dRadius = Double.parseDouble(cmdLine.getOptionValue("d"));
+
+            layerFile = new LayerInformationFile(lowerRadius, upperRadius, dRadius);
+
+        } else {
+            throw new IllegalArgumentException("Either '-r' or '-l & -u & -d' must be set.");
+        }
 
         String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
 
-        // set layer information
-        double[] layerThicknesses = new double[borderRadii.length - 1];
-        double[] layerRadii = new double[borderRadii.length - 1];
-        for (int i = 0; i < borderRadii.length - 1; i++) {
-            layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
-            layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
-        }
-
         Path outputPath = Paths.get(DatasetAid.generateOutputFileName("layer", tag, GadgetAid.getTemporaryString(), ".inf"));
         System.err.println("Outputting in "+ outputPath);
-        LayerInformationFile.write(layerThicknesses, layerRadii, outputPath);
+        layerFile.write(outputPath);
     }
+
 }
