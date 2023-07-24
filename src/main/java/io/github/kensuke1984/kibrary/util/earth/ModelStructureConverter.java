@@ -123,7 +123,7 @@ public class ModelStructureConverter extends Operation {
 
        // read model
        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
-       double[] radii = knowns.stream().mapToDouble(known -> known.getParameter().getPosition().getR()).toArray();
+       double[] radii = knowns.stream().mapToDouble(known -> known.getParameter().getPosition().getR()).distinct().sorted().toArray();
        PerturbationModel model = new PerturbationModel(knowns, initialStructure);
 
        // introduce perturbations in polynomial structure
@@ -135,7 +135,14 @@ public class ModelStructureConverter extends Operation {
    }
 
    private PolynomialStructure convertModel(PolynomialStructure initialStructure, double[] radii, PerturbationModel model) {
-       PolynomialStructure originalStructure = initialStructure.withBoundaries(radii);
+       // extend the topmost and bottommost layers by 0.5*layerThickness
+       double[] extendedRadii = new double[radii.length];
+       for (int i = 1; i < radii.length - 1; i++) extendedRadii[i] = radii[i];
+       extendedRadii[0] = (3 * radii[0] - radii[1]) / 2;
+       extendedRadii[radii.length - 1] = (3 * radii[radii.length - 1] - radii[radii.length - 2]) / 2;
+
+       // split up the polynomial structure at boundaries
+       PolynomialStructure originalStructure = initialStructure.withBoundaries(extendedRadii);
        // structure information
        int nZone = originalStructure.getNZone();
        int nCoreZone = originalStructure.getNCoreZone();
@@ -167,8 +174,8 @@ public class ModelStructureConverter extends Operation {
                PolynomialFunction lineFunction = new PolynomialFunction(coeffs);
 
                // which zones this layer corresponds to
-               int iZoneR1 = originalStructure.zoneOf(radii[i - 1]);
-               int iZoneR2 = originalStructure.zoneOf(radii[i]);
+               int iZoneR1 = originalStructure.zoneOf(extendedRadii[i - 1]);
+               int iZoneR2 = originalStructure.zoneOf(extendedRadii[i]);
 
                // overwrite structure information for all zones within this depth range
                for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
