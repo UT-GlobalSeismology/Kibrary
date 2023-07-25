@@ -244,10 +244,10 @@ public class CoarseGridDesigner extends Operation {
                 }
 
                 // decide number of longitude intervals
-                // When indivisible, the remainding range is not used so that the longitudes do not exceed 360.
+                // When indivisible, the remaining range is not used so that the longitudes do not exceed 360.
                 // It is not a good idea to include overlapped voxels 2 times (at both ends), anyway.
                 int nLongitude = (int) Math.floor(360 / dLongitudeForRow);
-                // loop for each latitude band (from north to south)
+                // loop for each longitude range
                 for (int j = 0; j < nLongitude; j++) {
                     // decide longitude range, depending on crossDateLine
                     double minLongitude = crossDateLine ? (j * dLongitudeForRow + longitudeOffset)
@@ -258,6 +258,7 @@ public class CoarseGridDesigner extends Operation {
                     List<UnknownParameter> correspondingParameters = parameterList.stream()
                             .filter(param -> param.getPosition().toHorizontalPosition().isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude))
                             .collect(Collectors.toList());
+                    if (correspondingParameters.size() == 0) continue;
                     fuseVertically(correspondingParameters);
                 }
             }
@@ -270,6 +271,7 @@ public class CoarseGridDesigner extends Operation {
                 List<UnknownParameter> correspondingParameters = parameterList.stream()
                         .filter(param -> param.getPosition().toHorizontalPosition().equals(pixelPosition))
                         .collect(Collectors.toList());
+                if (correspondingParameters.size() == 0) continue;
                 fuseVertically(correspondingParameters);
             }
         }
@@ -284,6 +286,7 @@ public class CoarseGridDesigner extends Operation {
                 List<UnknownParameter> correspondingParameters = parameterList.stream()
                         .filter(param -> lowerR <= param.getPosition().getR() && param.getPosition().getR() < upperR)
                         .collect(Collectors.toList());
+                if (correspondingParameters.size() == 0) continue;
                 fusionDesign.addFusion(correspondingParameters);
             }
 
@@ -294,6 +297,7 @@ public class CoarseGridDesigner extends Operation {
                 List<UnknownParameter> correspondingParameters = parameterList.stream()
                         .filter(param -> Precision.equals(param.getPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
                         .collect(Collectors.toList());
+                if (correspondingParameters.size() == 0) continue;
                 fusionDesign.addFusion(correspondingParameters);
             }
         }
