@@ -324,12 +324,12 @@ public class PartialWaveformPlotter extends Operation {
                        .forEach(info -> {
                            Map<Phase, Double> usePhaseMap = info.getUsePhases();
                            for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                               gnuplot.addVerticalLine(entry.getValue(), usePhaseAppearance);
+                               gnuplot.addArrow(entry.getValue(), usePhaseAppearance);
                                gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
                            }
                            Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
                            for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                               gnuplot.addVerticalLine(entry.getValue(), avoidPhaseAppearance);
+                               gnuplot.addArrow(entry.getValue(), avoidPhaseAppearance);
                                gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                            }
                        });

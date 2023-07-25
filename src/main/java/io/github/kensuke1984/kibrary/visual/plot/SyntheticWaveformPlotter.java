@@ -426,7 +426,7 @@ public class SyntheticWaveformPlotter extends Operation {
                for (TravelTimeInformation info : useInfoSet) {
                    Map<Phase, Double> usePhaseMap = info.getUsePhases();
                    for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                       gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                       gnuplot.addArrow(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
                        gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
                        if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
                            if (entry.getValue() < minTime) minTime = entry.getValue();
@@ -435,7 +435,7 @@ public class SyntheticWaveformPlotter extends Operation {
                    }
                    Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
                    for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                       gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
+                       gnuplot.addArrow(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
                        gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                    }
                }
@@ -448,7 +448,7 @@ public class SyntheticWaveformPlotter extends Operation {
                for (String phase : displayPhases) {
                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
                    if (arrivalOpt.isPresent()) {
-                       gnuplot.addVerticalLine(arrivalOpt.get().getTime(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                       gnuplot.addArrow(arrivalOpt.get().getTime(), BasicPlotAid.USE_PHASE_APPEARANCE);
                        gnuplot.addLabel(phase, "first", arrivalOpt.get().getTime(), "graph", 0.95, GnuplotColorName.turquoise);
                        if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
                            if (arrivalOpt.get().getTime() < minTime) minTime = arrivalOpt.get().getTime();

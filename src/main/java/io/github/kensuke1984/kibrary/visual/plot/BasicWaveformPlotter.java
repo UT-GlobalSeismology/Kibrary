@@ -356,12 +356,12 @@ public class BasicWaveformPlotter extends Operation {
                         .forEach(info -> {
                             Map<Phase, Double> usePhaseMap = info.getUsePhases();
                             for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                                gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                                gnuplot.addArrow(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
                             }
                             Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
                             for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                                gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
+                                gnuplot.addArrow(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                             }
                         });
