@@ -21,6 +21,12 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
+/**
+ * Class to create cross sections.
+ *
+ * @author otsuru
+ * @since 2023/6/10 Separated from visual.map.CrossSectionCreator.
+ */
 public class CrossSectionWorker {
 
     /**
@@ -44,8 +50,17 @@ public class CrossSectionWorker {
     private final double marginLongitudeDeg;
     private final double marginRadius;
 
+    /**
+     * Radius of zero point of vertical axis.
+     */
     private final double zeroPointRadius;
+    /**
+     * Name of zero point of vertical axis. (ex. "CMB")
+     */
     private final String zeroPointName;
+    /**
+     * Whether to flip vertical axis.
+     */
     private final boolean flipVerticalAxis;
 
     private final double scale;
@@ -59,6 +74,30 @@ public class CrossSectionWorker {
     private final Set<FullPosition> discretePositions;
 
 
+    /**
+     * Set parameters that should be used when creating cross sections.
+     * @param pos0Latitude (double) Latitude of position 0.
+     * @param pos0Longitude (double) Longitude of position 0.
+     * @param pos1Latitude (double) Latitude of position 1.
+     * @param pos1Longitude (double) Longitude of position 1.
+     * @param beforePos0Deg (double) Distance of the starting point along arc before position 0.
+     * @param afterPosDeg (double) Distance of the ending point along arc after either position 0 or position 1.
+     * @param useAfterPos1 (double) Whether the ending point should be decided with respect to position 0 or position 1.
+     * @param zeroPointRadius (double) Radius of zero point of vertical axis.
+     * @param zeroPointName (String) Name of zero point of vertical axis. (ex. "CMB")
+     * @param flipVerticalAxis (boolean) Whether to flip vertical axis.
+     * @param marginLatitudeRaw (double) Latitude margin at both ends of region.
+     * @param setMarginLatitudeByKm (boolean) Whether marginLatitudeRaw is set in [km] or [deg].
+     * @param marginLongitudeRaw (double) Longitude margin at both ends of region.
+     * @param setMarginLongitudeByKm (boolean) Whether marginLongitudeRaw is set in [km] or [deg].
+     * @param marginRadius (double) Radius margin at both ends of region [km].
+     * @param scale (double) Scale of contours.
+     * @param mosaic (boolean) Whether to display map as mosaic without smoothing.
+     * @param maskExists (boolean) Whether mask exists.
+     * @param maskThreshold (double) Threshold for mask.
+     * @param modelFileNameRoot (String) Name root of perturbation file.
+     * @param discretePositions (Set of {@link FullPosition}) Positions where input model is defined.
+     */
     CrossSectionWorker(double pos0Latitude, double pos0Longitude, double pos1Latitude, double pos1Longitude,
             double beforePos0Deg, double afterPosDeg, boolean useAfterPos1, double zeroPointRadius,
             String zeroPointName, boolean flipVerticalAxis, double marginLatitudeRaw, boolean setMarginLatitudeByKm,
@@ -107,6 +146,13 @@ public class CrossSectionWorker {
         this.discretePositions = discretePositions;
     }
 
+    /**
+     * Compute and output the data for cross section.
+     * @param discreteMap (Map of {@link FullPosition}, Double) Values of perturbations of the model that is to be mapped.
+     * @param maskDiscreteMap (Map of {@link FullPosition}, Double) Values of perturbations of the model that is to be used as a mask.
+     * @param outPath (Path) Output folder.
+     * @throws IOException
+     */
     void computeCrossSection(Map<FullPosition, Double> discreteMap, Map<FullPosition, Double> maskDiscreteMap, Path outPath) throws IOException {
         if (discreteMap.keySet().stream().anyMatch(pos -> !discretePositions.contains(pos))) {
             throw new IllegalArgumentException("discreteMap contains illegal positions.");
@@ -216,8 +262,7 @@ public class CrossSectionWorker {
         sequenceList.add(Arrays.copyOfRange(latitudesInMeridian, iStart, latitudesInMeridian.length));
 
         // find which sequence targetLatitude is in
-        for (int k = 0; k < sequenceList.size(); k++) {
-            double[] sequence = sequenceList.get(k);
+        for (double[] sequence : sequenceList) {
             if (sequence[0] - margin <= targetLatitude && targetLatitude < sequence[sequence.length - 1] + margin)
                 return sequence;
         }
@@ -264,6 +309,14 @@ public class CrossSectionWorker {
                 scaleLabel, gmtPath, modelFileNameRoot);
     }
 
+    /**
+     * Write annotation file. This file specifies the annotations and ticks on the vertical axis of the figure.
+     * @see <a href=https://docs.generic-mapping-tools.org/dev/cookbook/options.html#custom-axes>GMT manual</a>
+     *
+     * @param radii (double[]) Array of radii where annotations should be written.
+     * @param outputPath (Path) Output file.
+     * @throws IOException
+     */
     private void writeAnnotationFile(double[] radii, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < radii.length; i++) {
