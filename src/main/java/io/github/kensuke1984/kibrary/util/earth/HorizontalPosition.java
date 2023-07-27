@@ -79,8 +79,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         else return false;
     }
 
-    public static double latitudeFor(double theta) {
-        return Latitude.valueFor(theta);
+    public static double latitudeForTheta(double theta) {
+        return Latitude.valueForTheta(theta);
     }
 
     /**
@@ -240,7 +240,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         midXYZ = midXYZ.rotateaboutZ(getPhi());
         RThetaPhi midRTP = midXYZ.toSphericalCoordinate();
         // System.out.println(midRTP);
-        return new HorizontalPosition(Latitude.valueFor(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
+        return new HorizontalPosition(Latitude.valueForTheta(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
         // System.out.println(midLoc);
     }
 
@@ -320,7 +320,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         double phiP = getPhi() + Math.atan2(sinDPhi, cosDPhi);
 
         // set result position
-        double lat = 90 - Math.toDegrees(thetaP);
+        double lat = Latitude.valueForTheta(thetaP);
         double lon = Math.toDegrees(phiP);
         if (lon < -180) lon += 360;
         if (lon > 180) lon -= 360;

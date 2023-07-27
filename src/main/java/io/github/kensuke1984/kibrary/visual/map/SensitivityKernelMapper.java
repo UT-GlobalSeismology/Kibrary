@@ -255,7 +255,7 @@ public class SensitivityKernelMapper extends Operation {
                             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                                     marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
-                            Path outputInterpolatedPath = observerPath.resolve(fileNameRoot + "XYZ.lst");
+                            Path outputInterpolatedPath = observerPath.resolve(fileNameRoot + "XY.lst");
                             PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
                             PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii,
