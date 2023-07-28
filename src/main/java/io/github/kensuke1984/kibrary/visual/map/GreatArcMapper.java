@@ -77,27 +77,27 @@ public class GreatArcMapper extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
-            pw.println("##########Settings of great circle arc to display in the cross section");
-            pw.println("##(double) Latitude of position 0, must be set");
+            pw.println("##########Settings of great circle arc to display in the cross section.");
+            pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
-            pw.println("##(double) Longitude of position 0, must be set");
+            pw.println("##(double) Longitude of position 0, must be set.");
             pw.println("#pos0Longitude ");
-            pw.println("##(double) Latitude of position 1, must be set");
+            pw.println("##(double) Latitude of position 1, must be set.");
             pw.println("#pos1Latitude ");
-            pw.println("##(double) Longitude of position 1, must be set");
+            pw.println("##(double) Longitude of position 1, must be set.");
             pw.println("#pos1Longitude ");
-            pw.println("##(double) Distance along arc before position 0 (0)");
+            pw.println("##(double) Distance along arc before position 0. (0)");
             pw.println("#beforePos0Deg ");
             pw.println("##(double) Distance along arc after position 0. If not set, the following afterPos1Deg will be used.");
             pw.println("#afterPos0Deg ");
-            pw.println("##(double) Distance along arc after position 1 (0)");
+            pw.println("##(double) Distance along arc after position 1. (0)");
             pw.println("#afterPos1Deg ");
             pw.println("##########Settings for mapping");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].");
             pw.println("#mapRegion -180/180/-90/90");
         }
         System.err.println(outPath + " is created.");

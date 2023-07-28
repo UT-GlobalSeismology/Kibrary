@@ -75,15 +75,15 @@ public class StaticCorrectionForger extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a timewindow file, must be set");
+            pw.println("##Path of a timewindow file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a reference static correction file, must be set");
+            pw.println("##Path of a reference static correction file, must be set.");
             pw.println("#refStaticCorrectionPath staticCorrection.dat");
         }
         System.err.println(outPath + " is created.");

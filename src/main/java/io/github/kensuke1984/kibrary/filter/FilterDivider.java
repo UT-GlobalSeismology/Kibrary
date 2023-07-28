@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * The lower and upper period limits of the filter will be written in headers USER0 and USER1 of resulting SAC files.
  *
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2021/11/18 moved from selection.FilterDivider to filter.FilterDivider
  */
@@ -125,30 +126,30 @@ public class FilterDivider extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be applied the filter, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##DELTA in SAC files. The SAC files with other values of DELTA are to be ignored. (0.05)");
             pw.println("#delta ");
-            pw.println("##Filter type to be applied, from {lowpass, highpass, bandpass, bandstop} (bandpass)");
+            pw.println("##Filter type to be applied, from {lowpass, highpass, bandpass, bandstop}. (bandpass)");
             pw.println("#filterType ");
-            pw.println("##Lower limit of the frequency band [Hz] (0.005)");
+            pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
             pw.println("#lowFreq ");
-            pw.println("##Higher limit of the frequency band [Hz] (0.08)");
+            pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
             pw.println("#highFreq ");
-            pw.println("##The value of NP for the filter (4)");
+            pw.println("##The value of NP for the filter. (4)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
-            pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2");
-            pw.println("## When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
+            pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2.");
+            pw.println("##  When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
             pw.println("#npts ");
         }
         System.err.println(outPath + " is created.");

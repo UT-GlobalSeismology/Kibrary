@@ -63,8 +63,8 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
- * @author otsuru
- * @since a long time ago
+ * @author Kensuke Konishi
+ * @since version 0.0.5.3
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
 enum Manhattan {

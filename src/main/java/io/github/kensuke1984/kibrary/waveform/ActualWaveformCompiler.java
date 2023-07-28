@@ -72,6 +72,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * This class does not apply a digital filter, but extracts information about the passband written in SAC files.
  *
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2021/11/3 renamed from waveformdata.ObservedSyntheticDatasetMaker to waveform.ActualWaveformCompiler
  */
@@ -202,45 +203,45 @@ public class ActualWaveformCompiler extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
+            pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
             pw.println("#sacSamplingHz the value will be ignored");
-            pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
+            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
             pw.println("#finalSamplingHz ");
-            pw.println("##Path of a timewindow file, must be defined");
+            pw.println("##Path of a timewindow file, must be set.");
             pw.println("#timewindowPath selectedTimewindow.dat");
-            pw.println("##Path of a timewindow file for a reference phase used to correct spectral amplitude, can be ignored");
+            pw.println("##Path of a timewindow file for a reference phase used to correct spectral amplitude, can be ignored.");
             pw.println("#timewindowRefPath ");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved false");
-            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##Path of a static correction file");
-            pw.println("## If the following correctTime is true or amplitudeCorrectionType > 0, this path must be defined.");
+            pw.println("##Path of a static correction file.");
+            pw.println("##  If the following correctTime is true or amplitudeCorrectionType > 0, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##(boolean) Whether time should be corrected (false)");
+            pw.println("##(boolean) Whether time should be corrected. (false)");
             pw.println("#correctTime true");
-            pw.println("##(int) Type of amplitude correction to apply, from {0: none, 1: each trace, 2: event average} (0)");
+            pw.println("##(int) Type of amplitude correction to apply, from {0: none, 1: each trace, 2: event average}. (0)");
             pw.println("#amplitudeCorrectionType ");
-            pw.println("##Path of a mantle correction file");
+            pw.println("##Path of a mantle correction file.");
             pw.println("## If the following correctMantle is true, this path must be defined.");
             pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
-            pw.println("##(boolean) Whether mantle should be corrected for (false)");
+            pw.println("##(boolean) Whether mantle should be corrected for. (false)");
             pw.println("#correctMantle ");
             pw.println("#lowFreq "); // TODO: add explanation
             pw.println("#highFreq "); // TODO: add explanation
-            pw.println("##(boolean) Whether to add noise for synthetic test (false)");
+            pw.println("##(boolean) Whether to add noise for synthetic test. (false)");
             pw.println("#addNoise ");
-            pw.println("##Power of noise for synthetic test (1)"); //TODO what is the unit?
+            pw.println("##Power of noise for synthetic test. (1)"); //TODO what is the unit?
             pw.println("#noisePower ");
         }
         System.err.println(outPath + " is created.");

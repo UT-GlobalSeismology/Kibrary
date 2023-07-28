@@ -60,14 +60,14 @@ public class TimewindowMerge extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##########From here on, list up paths of timewindow files.");
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " file");
+                pw.println("##" + MathAid.ordinalNumber(i) + " file.");
                 pw.println("#timewindowPath" + i + " timewindow.dat");
             }
         }

@@ -104,9 +104,9 @@ public class CatalogueErrorCalculator extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#tag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##PartialTypes to be used, listed using spaces (MU)");
+            pw.println("##PartialTypes to be used, listed using spaces. (MU)");
             pw.println("#partialTypes ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
@@ -114,23 +114,23 @@ public class CatalogueErrorCalculator extends Operation {
             pw.println("#tendObservers ");
             pw.println("#Voxel to work for, in the form LAT LONG R, listed using spaces, must be set.");
             pw.println("#tendVoxelPosition ");
-            pw.println("##Path of a exact (without ericentral distance catalogue) partial ID file, must be set");
+            pw.println("##Path of an exact (without ericentral distance catalogue) partial ID file, must be set.");
             pw.println("#exactPartialIDPath partialID.dat");
-            pw.println("##Path of a exact partial waveform file, must be set");
+            pw.println("##Path of an exact partial waveform file, must be set.");
             pw.println("#exactPartialPath partial.dat");
             pw.println("##########From here on, list up sets of theta range for the BP catalogthe, paths of a catalogue partial ID file, a catalogue partial waveform file.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " set");
+                pw.println("##" + MathAid.ordinalNumber(i) + " set.");
                  pw.println("#dtheta" + i + " ");
                  pw.println("#catPartialIDPath" + i + " partialID" + i + ".dat");
                  pw.println("#catPartialPath" + i + " partial" + i + ".dat");
             }
-            pw.println("##Theta range for the BP catalog (0.01)");
+            pw.println("##Theta range for the BP catalog. (0.01)");
             pw.println("#dtheta ");
-            pw.println("##Path of a catalogue partial ID file, must be set");
+            pw.println("##Path of a catalogue partial ID file, must be set.");
             pw.println("#catPartialIDPath partialID.dat");
-            pw.println("##Path of a catalogue partial waveform file, must be set");
+            pw.println("##Path of a catalogue partial waveform file, must be set.");
             pw.println("#catPartialPath partial.dat");
         }
         System.err.println(outPath + " is created.");

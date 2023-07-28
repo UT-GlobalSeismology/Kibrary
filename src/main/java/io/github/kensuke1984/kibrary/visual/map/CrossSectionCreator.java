@@ -142,14 +142,14 @@ public class CrossSectionCreator extends Operation {
             pw.println("#pos1Latitude ");
             pw.println("##(double) Longitude of position 1, must be set.");
             pw.println("#pos1Longitude ");
-            pw.println("##(double) Distance along arc before position 0. (0)");
+            pw.println("##(double) Distance along arc before position 0 [deg]. (0)");
             pw.println("#beforePos0Deg ");
-            pw.println("##(double) Distance along arc after position 0. If not set, the following afterPos1Deg will be used.");
+            pw.println("##(double) Distance along arc after position 0 [deg]. If not set, the following afterPos1Deg will be used.");
             pw.println("#afterPos0Deg ");
-            pw.println("##(double) Distance along arc after position 1. (0)");
+            pw.println("##(double) Distance along arc after position 1 [deg]. (0)");
             pw.println("#afterPos1Deg ");
-            pw.println("##########Radius display settings");
-            pw.println("##(double) Radius of zero point of vertical axis. (0)");
+            pw.println("##########Radius display settings.");
+            pw.println("##(double) Radius of zero point of vertical axis [km]. (0)");
             pw.println("#zeroPointRadius 3480");
             pw.println("##Name of zero point of vertical axis. (0)");
             pw.println("#zeroPointName CMB");
@@ -166,7 +166,7 @@ public class CrossSectionCreator extends Operation {
             pw.println("#marginLongitudeDeg ");
             pw.println("##(double) Radius margin at both ends of region [km]. (25)");
             pw.println("#marginRadiusKm ");
-            pw.println("##########Parameters for perturbation values");
+            pw.println("##########Parameters for perturbation values.");
             pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");

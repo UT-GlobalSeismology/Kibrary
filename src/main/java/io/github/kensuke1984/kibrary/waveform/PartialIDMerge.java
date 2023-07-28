@@ -57,16 +57,16 @@ public class PartialIDMerge extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output partial waveform folder (partial)");
+            pw.println("##(String) The first part of the name of output partial waveform folder. (partial)");
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##########From here on, list up paths of partial waveform folders to merge.");
             pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder.");
                 pw.println("#partialPath" + i + " partial");
             }
         }

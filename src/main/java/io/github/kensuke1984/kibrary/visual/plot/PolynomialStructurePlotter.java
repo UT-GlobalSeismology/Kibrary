@@ -111,7 +111,7 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("##########From here on, list up models to plot.");
             pw.println("########## Up to " + MAX_INPUT + " models can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " model");
+                pw.println("##" + MathAid.ordinalNumber(i) + " model.");
                 pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
                 pw.println("#structurePath" + i + " ");
                 if (i == 1) pw.println("##Name of a structure model you want to use. (PREM)");

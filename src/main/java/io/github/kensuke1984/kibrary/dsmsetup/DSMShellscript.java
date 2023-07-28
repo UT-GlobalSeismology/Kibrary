@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * Class for automatically generating shellscript files to execute DSM programs such as TIPSV, SHFP, etc.
@@ -78,8 +77,10 @@ class DSMShellscript {
 
     /**
      * Writes a shellscript file to execute DSM.
-     * @param type ({@link SPCType}) SYNTHETIC, PF, or PB ; PAR2 for 1dIsotropic and PARN for TI (TODO refine)
-     * @param mode ({@link SPCMode}) PSV or SH
+     * @param type ({@link DSMType}) SYNTHETIC, FP, BP, I1D, or TI1D.
+     * @param mode ({@link SPCMode}) PSV or SH.
+     * @param listFileName (String) Name of file containing list of sources to compute for.
+     * @param outputPath (Path) Path of shellscript file to create.
      * @throws IOException
      *
      * @author otsuru
