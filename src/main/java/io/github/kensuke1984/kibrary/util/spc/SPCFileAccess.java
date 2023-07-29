@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  *
  * @author Kensuke Konishi
  * @since version 0.0.1
- * @author anselme add network
  */
 public interface SPCFileAccess {
 

@@ -24,6 +24,10 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
+ * Class to compare 2 models.
+ * The difference and ratio of the two models are exported.
+ * The cosine similarity and L2 model distance is also computed.
+ *
  * @author otsuru
  * @since 2022/12/1
  */

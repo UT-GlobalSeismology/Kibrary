@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * Removes timewindows of a timewindow file from those of another.
  *
  * @since a long time ago
- * @version 2022/8/29 moved & renamed from quick.Subtractwindow to timewindow.TimewindowSubtract
+ * @version 2022/8/29 moved & renamed from quick.Subtractwindow to timewindow.TimewindowSubtract.
  */
 public class TimewindowSubtract {
 

@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * and 2 variables (Qkappa, Qmu) are defined as constants.
  *
  * @author otsuru
- * @since 2022/6/15 extracted some parts of PolynomialStructure
+ * @since 2022/6/15 Extracted some parts of PolynomialStructure.
  */
 public class PolynomialStructureFile {
     private PolynomialStructureFile() {}

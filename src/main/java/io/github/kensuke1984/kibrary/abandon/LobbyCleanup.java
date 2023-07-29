@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.FileAid;
 /**
  * Class to clean data lobby folders when they are not needed any more.
  * This deletes the sac/ and resp/ folders.
+ *
  * @author otsuru
  * @since 2022/1/3
  */

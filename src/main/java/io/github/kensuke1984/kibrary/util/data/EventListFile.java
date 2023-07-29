@@ -38,8 +38,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * Only the globalCMTID is the part used to convey data;
  * the rest of the information is just for the users to see.
  *
- * @author ???
  * @since a long time ago
+ * @version 2022/4/22 Renamed from statistics.EventInformationFile to util.data.EventListFile.
  */
 public class EventListFile {
     private EventListFile() {}

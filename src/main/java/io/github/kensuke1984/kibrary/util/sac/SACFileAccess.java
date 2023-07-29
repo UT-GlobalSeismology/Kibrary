@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * SAC file (SAC: Seismic analysis code). Binary format.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.2
+ * @since version 0.0.1.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACFileAccess extends SACHeaderAccess {
