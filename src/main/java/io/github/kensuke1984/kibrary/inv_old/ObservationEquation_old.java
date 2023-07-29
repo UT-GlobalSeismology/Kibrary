@@ -26,7 +26,6 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
-import io.github.kensuke1984.kibrary.inversion.addons.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.Sensitivity;
 import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
@@ -71,7 +70,7 @@ public class ObservationEquation_old {
     private RealVector cmAtd;
     private ModelCovarianceMatrix cm;
     private List<Double> unknownParameterWeigths;
-    private ParameterMapping mapping;
+//    private ParameterMapping mapping;
 
     private double mul;
     private RealVector m;
@@ -109,7 +108,7 @@ public class ObservationEquation_old {
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
             , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath) {
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
             System.out.println("Using vertical mapping " + verticalMappingPath);
         }
@@ -147,7 +146,7 @@ public class ObservationEquation_old {
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
             , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath, boolean computeAtA) {
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
             System.out.println("Using vertical mapping " + verticalMappingPath);
         }
@@ -188,7 +187,7 @@ public class ObservationEquation_old {
             , Path verticalMappingPath) {
         CombinationType combinationType = null;
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             System.out.println("Using vertical mapping " + verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
         }
@@ -251,7 +250,7 @@ public class ObservationEquation_old {
             , double cm0, double cmH, double cmV, Path verticalMappingPath, boolean computeAtA) {
         CombinationType combinationType = null;
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             System.out.println("Using vertical mapping " + verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
         }

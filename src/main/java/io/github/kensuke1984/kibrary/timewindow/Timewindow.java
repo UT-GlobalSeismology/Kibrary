@@ -17,7 +17,7 @@ public class Timewindow implements Comparable<Timewindow> {
     /**
      * the number of decimal places to round off the time values
      */
-    static final int PRECISION = 3;
+    public static final int PRECISION = 2;
     /**
      * Margin to decide whether two timewindows have the same startTime and/or endTime
      */
@@ -68,6 +68,15 @@ public class Timewindow implements Comparable<Timewindow> {
         double newStart = startTime < timeWindow.startTime ? startTime : timeWindow.startTime;
         double newEnd = timeWindow.endTime < endTime ? endTime : timeWindow.endTime;
         return new Timewindow(newStart, newEnd);
+    }
+
+    /**
+     * Shift timewindow (in positive direction) by specified time.
+     * @param shift (double) Time to shift timewindow
+     * @return ({@link Timewindow}) Shifted timewindow
+     */
+    public Timewindow shift(double shift) {
+        return new Timewindow(startTime + shift, endTime + shift);
     }
 
     @Override

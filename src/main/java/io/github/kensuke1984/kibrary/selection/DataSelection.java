@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import edu.sc.seis.TauP.TauModelException;
@@ -289,11 +288,9 @@ public class DataSelection extends Operation {
      * @param timeWindow time window
      * @return new Trace for the timewindow [tStart:tEnd]
      */
-    private static RealVector cutSAC(SACFileAccess sac, Timewindow timeWindow) {
+    private RealVector cutSAC(SACFileAccess sac, Timewindow timewindow) {
         Trace trace = sac.createTrace();
-        double tStart = timeWindow.getStartTime();
-        double tEnd = timeWindow.getEndTime();
-        return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
+        return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
     }
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
@@ -374,21 +371,28 @@ public class DataSelection extends Operation {
             try {
                 SACComponent component = timewindow.getComponent();
 
-                // check phase
-                if (requirePhase && timewindow.getPhases().length == 0) {
-                    System.out.println("!! No phase: " + timewindow);
-                    return;
-                }
-
                 // check delta
-                if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println("!! DELTA does not match in obs and syn: " + timewindow);
+                double delta = 1 / sacSamplingHz;
+                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
+                    System.err.println();
+                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                     return;
                 }
 
                 // check SAC file end time
-                if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) { // TODO should 10 be maxStaticShift ?
-                    System.err.println("!! End time of timewindow too late: " + timewindow);
+                if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                        || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                    System.err.println();
+                    System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
+                    return;
+                }
+
+                // check phase
+                if (requirePhase && timewindow.getPhases().length == 0) {
+                    System.err.println();
+                    System.err.println("!! No phase, skipping: " + timewindow);
                     return;
                 }
 
@@ -421,7 +425,8 @@ public class DataSelection extends Operation {
                     shift = correction.getTimeshift();
                 }
                 if (Math.abs(shift) > maxStaticShift) {
-                    System.err.println("!! Time shift too large: " + timewindow);
+                    System.err.println();
+                    System.err.println("!! Time shift too large, skipping: " + timewindow);
                     return;
                 }
                 TimewindowData shiftedWindow = new TimewindowData(timewindow.getStartTime() - shift
@@ -446,7 +451,8 @@ public class DataSelection extends Operation {
                 dataFeatureSet.add(feature);
 
             } catch (Exception e) {
-                System.err.println("!! " + timewindow + " is ignored because an error occurs.");
+                System.err.println();
+                System.err.println("!! Skipping because an error occurs: " + timewindow);
                 e.printStackTrace();
             }
         }
