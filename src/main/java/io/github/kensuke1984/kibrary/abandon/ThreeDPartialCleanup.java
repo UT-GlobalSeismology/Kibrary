@@ -46,8 +46,8 @@ public class ThreeDPartialCleanup {
                 .desc("Path of FP folder (FPpool)").build());
         options.addOption(Option.builder("b").hasArg().argName("bpPath")
                 .desc("Path of BP folder (BPpool)").build());
-        options.addOption(Option.builder("m").hasArg().argName("model")
-                .desc("Model name (prem)").build());
+        options.addOption(Option.builder("h").hasArg().argName("header")
+                .desc("Header of model files (PREM)").build());
 
         return options;
     }
@@ -63,7 +63,7 @@ public class ThreeDPartialCleanup {
 
         Path fpPath = cmdLine.hasOption("f") ? Paths.get(cmdLine.getOptionValue("f")) : Paths.get("FPpool");
         Path bpPath = cmdLine.hasOption("b") ? Paths.get(cmdLine.getOptionValue("b")) : Paths.get("BPpool");
-        String modelName = cmdLine.hasOption("m") ?cmdLine.getOptionValue("m") : "PREM";
+        String modelName = cmdLine.hasOption("h") ? cmdLine.getOptionValue("h") : "PREM";
 
         // clean FP folder
         System.err.println("Cleaning " + fpPath);
