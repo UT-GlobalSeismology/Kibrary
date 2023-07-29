@@ -40,6 +40,8 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -168,8 +170,6 @@ public class ActualWaveformCompiler extends Operation {
     private Set<TimewindowData> refTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<StaticCorrectionData> mantleCorrectionSet;
-    private Set<Observer> observerSet;
-    private Set<GlobalCMTID> eventSet;
     private int finalFreqSamplingHz;
     /**
      * event-averaged amplitude corrections, used if amplitudeCorrection is False
@@ -336,14 +336,16 @@ public class ActualWaveformCompiler extends Operation {
            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
                    .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
-       eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
-       observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
+       Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+       Set<Observer> observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
+       Set<DataEntry> entrySet = sourceTimewindowSet.stream().map(TimewindowData::toDataEntry).collect(Collectors.toSet());
 
        outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        EventListFile.write(eventSet, outPath.resolve("event.lst"));
        ObserverListFile.write(observerSet, outPath.resolve("observer.lst"));
+       DataEntryListFile.writeFromSet(entrySet, outPath.resolve("dataEntry.lst"));
 
        Path actualPath = outPath.resolve("actual");
        Path envelopePath = outPath.resolve("envelope");
@@ -353,6 +355,7 @@ public class ActualWaveformCompiler extends Operation {
        Path spcImPath = outPath.resolve("spcIm");
 
        ExecutorService es = ThreadAid.createFixedThreadPool();
+       System.err.println("Working for " + eventSet.size() + " events.");
        // for each event, execute run() of class Worker, which is defined at the bottom of this java file
        eventSet.stream().map(Worker::new).forEach(es::execute);
        es.shutdown();
