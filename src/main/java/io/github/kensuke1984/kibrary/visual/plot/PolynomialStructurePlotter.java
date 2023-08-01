@@ -38,9 +38,10 @@ public class PolynomialStructurePlotter extends Operation {
     private static final int MAX_INPUT = 3;
     private static final int NUM_VARIABLES = 6;
     private static final String[] COLORS = {
-            "dark-magenta", "dark-orange", "web-green", "red", "web-blue", "dark-gray",
-            "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
-            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
+            "dark-violet", "dark-orange", "dark-green", "red", "medium-blue", "gray30",
+            "purple", "orange", "web-green", "light-red", "web-blue", "dark-gray",
+            "plum", "goldenrod", "greenyellow", "salmon", "skyblue", "gray"};
+//            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
 
     private final Property property;
     /**
@@ -166,8 +167,9 @@ public class PolynomialStructurePlotter extends Operation {
    @Override
    public void run() throws IOException {
        // set structures
+       // Structures existing in the input properties file are set in reverse order.
        List<PolynomialStructure> structures = new ArrayList<>();
-       for (int i = 0; i < MAX_INPUT; i++) {
+       for (int i = MAX_INPUT - 1; i >= 0; i--) {
            if (structurePaths[i] != null || structureNames[i] != null) {
                PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePaths[i], structureNames[i]);
                structures.add(structure);
