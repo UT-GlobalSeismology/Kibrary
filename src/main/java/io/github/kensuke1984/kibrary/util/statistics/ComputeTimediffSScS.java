@@ -248,9 +248,9 @@ public class ComputeTimediffSScS {
 					
 				
 				Path sacPath = eventPath.resolve(obsNamesArray[i].getName() + "sc");
-				synSacs[i].setTimeMarker(SACHeaderEnum.T2, tSynDownS)
-					.setTimeMarker(SACHeaderEnum.T3, tSynUpS)
-					.setTimeMarker(SACHeaderEnum.T4, tSynScS)
+				synSacs[i].withTimeMarker(SACHeaderEnum.T2, tSynDownS)
+					.withTimeMarker(SACHeaderEnum.T3, tSynUpS)
+					.withTimeMarker(SACHeaderEnum.T4, tSynScS)
 //					.setTimeMarker(SACHeaderEnum.T5, synScS.getXAt(synDownScS))
 //					.setTimeMarker(SACHeaderEnum.T6, t0ScS)
 //					.setTimeMarker(SACHeaderEnum.T7, t1ScS)
@@ -280,8 +280,8 @@ public class ComputeTimediffSScS {
 				
 				
 				sacPath = eventPath.resolve(obsNamesArray[i].getName());
-				obsSacs[i].setTimeMarker(SACHeaderEnum.T2, tObsS)
-					.setTimeMarker(SACHeaderEnum.T4, tObsScS)
+				obsSacs[i].withTimeMarker(SACHeaderEnum.T2, tObsS)
+					.withTimeMarker(SACHeaderEnum.T4, tObsScS)
 					.writeSAC(sacPath);
 				
 				int obsMeanS = (obsUpS + obsDownS) / 2;

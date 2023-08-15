@@ -96,10 +96,10 @@ public class PartialIDMerge extends Operation {
     public void run() throws IOException {
         int inputNum = partialPaths.size();
         if (inputNum == 0) {
-            System.err.println("No input folders found.");
+            System.err.println("!! No input folders found.");
             return;
         } else if (inputNum == 1) {
-            System.err.println("Only 1 input folder found. Merging will not be done.");
+            System.err.println("!! Only 1 input folder found. Merging will not be done.");
             return;
         }
 

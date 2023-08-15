@@ -216,7 +216,7 @@ public class ModelStructurePlotter extends Operation {
         for (InverseMethodEnum method : inverseMethods) {
             Path methodPath = resultPath.resolve(method.simpleName());
             if (!Files.exists(methodPath)) {
-                System.err.println("Results for " + method.simpleName() + " do not exist, skipping.");
+                System.err.println("!! Results for " + method.simpleName() + " do not exist, skipping.");
                 continue;
             }
 
@@ -224,7 +224,7 @@ public class ModelStructurePlotter extends Operation {
             for (int k = 1; k <= maxNum; k++){
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 if (!Files.exists(answerPath)) {
-                    System.err.println("Results for " + method.simpleName() + k + " do not exist, skipping.");
+                    System.err.println("!! Results for " + method.simpleName() + k + " do not exist, skipping.");
                     continue;
                 }
 

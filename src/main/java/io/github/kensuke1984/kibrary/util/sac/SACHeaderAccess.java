@@ -15,43 +15,31 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  *
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @since version 0.0.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACHeaderAccess {
 
     /**
-     * 論理値を返す。 数値が整数、文字列のときはエラー
-     *
-     * @param sacHeaderEnum a key to a boolean value
-     * @return true or false
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a boolean value
-     */
-    boolean getBoolean(SACHeaderEnum sacHeaderEnum);
-
-    /**
-     * @return {@link FullPosition} of the source made from EVLA, EVLO and EVDP.
-     * Earth radius is considered as 6371.
+     * @return ({@link FullPosition}) Position of the source made from EVLA, EVLO and EVDP.
      */
     default FullPosition getEventLocation() {
         return FullPosition.constructByDepth(getValue(SACHeaderEnum.EVLA), getValue(SACHeaderEnum.EVLO), getValue(SACHeaderEnum.EVDP));
     }
 
     /**
-     * Changes EVDP EVLO EVLA
-     *
-     * @param eventLocation {@link FullPosition} to be set to EVLA, EVLO and EVDP. Earth
-     *                      radius is considered as 6371.
-     * @return {@link SACHeaderAccess} with the location
+     * Creates a new instance with a new EVLA, EVLO, and EVDP value.
+     * @param eventPosition ({@link FullPosition}) Position to be set to EVLA, EVLO and EVDP.
+     * @return ({@link SACHeaderAccess}) New instance with the specified event position.
      */
-    default SACHeaderAccess setEventLocation(FullPosition eventLocation) {
-        return setValue(SACHeaderEnum.EVLA, eventLocation.getLatitude())
-                .setValue(SACHeaderEnum.EVLO, eventLocation.getLongitude())
-                .setValue(SACHeaderEnum.EVDP, eventLocation.getDepth());
+    default SACHeaderAccess withEventLocation(FullPosition eventPosition) {
+        return withValue(SACHeaderEnum.EVLA, eventPosition.getLatitude())
+                .withValue(SACHeaderEnum.EVLO, eventPosition.getLongitude())
+                .withValue(SACHeaderEnum.EVDP, eventPosition.getDepth());
     }
 
     /**
-     * @return date and time of CMT.
+     * @return (LocalDateTime) Date and time of CMT.
      */
     default LocalDateTime getEventTime() {
         return LocalDateTime.of(LocalDate.ofYearDay(getInt(SACHeaderEnum.NZYEAR), getInt(SACHeaderEnum.NZJDAY)),
@@ -60,45 +48,41 @@ public interface SACHeaderAccess {
     }
 
     /**
-     * Set(Change) event time and date
-     *
-     * @param eventDateTime to set in SacHeader
-     * @return {@link SACHeaderAccess} with the time
+     * Creates a new instance with a new event date and time.
+     * @param eventDateTime (LocalDateTime) Date and time to set in the SAC header.
+     * @return ({@link SACHeaderAccess}) New instance with the specified event date and time.
      */
-    default SACHeaderAccess setEventTime(LocalDateTime eventDateTime) {
-        return setInt(SACHeaderEnum.NZYEAR, eventDateTime.getYear())
-                .setInt(SACHeaderEnum.NZJDAY, eventDateTime.getDayOfYear())
-                .setInt(SACHeaderEnum.NZHOUR, eventDateTime.getHour())
-                .setInt(SACHeaderEnum.NZMIN, eventDateTime.getMinute())
-                .setInt(SACHeaderEnum.NZSEC, eventDateTime.getSecond())
-                .setInt(SACHeaderEnum.NZMSEC, eventDateTime.getNano() / 1000 / 1000);
+    default SACHeaderAccess withEventTime(LocalDateTime eventDateTime) {
+        return withInt(SACHeaderEnum.NZYEAR, eventDateTime.getYear())
+                .withInt(SACHeaderEnum.NZJDAY, eventDateTime.getDayOfYear())
+                .withInt(SACHeaderEnum.NZHOUR, eventDateTime.getHour())
+                .withInt(SACHeaderEnum.NZMIN, eventDateTime.getMinute())
+                .withInt(SACHeaderEnum.NZSEC, eventDateTime.getSecond())
+                .withInt(SACHeaderEnum.NZMSEC, eventDateTime.getNano() / 1000 / 1000);
     }
 
     /**
-     * @return Observer of this header.
+     * @return ({@link Observer}) Observer of this header.
      */
     default Observer getObserver() {
         return Observer.of(this);
     }
 
     /**
-     * Changes KSTNM, KNETWK, STLA, STLO
-     *
-     * @param observer to be set
-     * @return {@link SACHeaderAccess} with the station
+     * Creates a new instance with a new KSTNM, KNETWK, STLA, and STLO value.
+     * @param observer ({@link Observer}) Observer to be set.
+     * @return ({@link SACHeaderAccess}) New instance with the specified observer.
      */
-    default SACHeaderAccess setObserver(Observer observer) {
-        SACHeaderAccess sd = setSACString(SACHeaderEnum.KSTNM, observer.getStation());
-        sd = sd.setSACString(SACHeaderEnum.KNETWK, observer.getNetwork());
-        return sd.setValue(SACHeaderEnum.STLA, observer.getPosition().getLatitude())
-                .setValue(SACHeaderEnum.STLO, observer.getPosition().getLongitude());
+    default SACHeaderAccess withObserver(Observer observer) {
+        SACHeaderAccess sd = withSACString(SACHeaderEnum.KSTNM, observer.getStation());
+        sd = sd.withSACString(SACHeaderEnum.KNETWK, observer.getNetwork());
+        return sd.withValue(SACHeaderEnum.STLA, observer.getPosition().getLatitude())
+                .withValue(SACHeaderEnum.STLO, observer.getPosition().getLongitude());
     }
 
     /**
-     * KCMPNM (vertical, radial or trnsvers)
-     * vertical:Z, radial:R, trnsvers:T
-     *
-     * @return component
+     * Get the component in KCMPNM (vertical:Z, radial:R, trnsvers:T).
+     * @return ({@link SACComponent}) Component in KCMPNM.
      */
     default SACComponent getComponent() {
         switch (getSACString(SACHeaderEnum.KCMPNM)) {
@@ -113,93 +97,25 @@ public interface SACHeaderAccess {
             case "trnsvers": //TODO erase: old format
                 return SACComponent.T;
             default:
-                throw new RuntimeException("KCMPNM is invalid. must be vertical, radial or trnsvers");
+                throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");
         }
     }
 
     /**
-     * Returns an integer value
-     *
-     * @param sacHeaderEnum a key to an integer value
-     * @return an integer value to the input {@link SACHeaderEnum}
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an integer value
-     */
-    int getInt(SACHeaderEnum sacHeaderEnum);
-
-    /**
-     * @param sacHeaderEnum a key to a Enumerated value
-     * @return a enumerated value to the input {@link SACHeaderEnum}
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an Emumerated
-     *                                  value
-     */
-    int getSACEnumerated(SACHeaderEnum sacHeaderEnum);
-
-    /**
-     * @param sacHeaderEnum a key to a String value
-     * @return a String value to the input {@link SACHeaderEnum}
-     */
-    String getSACString(SACHeaderEnum sacHeaderEnum);
-
-    /**
-     * Returns a double value.
-     *
-     * @param sacHeaderEnum a key to a float value
-     * @return a double value of a float value to the input
-     * {@link SACHeaderEnum}
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a float value
-     */
-    double getValue(SACHeaderEnum sacHeaderEnum);
-
-    /**
-     * Set a boolean value
-     *
-     * @param sacHeaderEnum a key to a boolean value
-     * @param bool          to be set
-     * @return {@link SACHeaderAccess} with the bool
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a boolean value
-     *                                  of is a special boolean.
-     */
-    SACHeaderAccess setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
-
-    /**
-     * If the value KEVNM is not valid for GlobalCMTID, then it will throw RuntimeException.
-     *
-     * @return GlobalCMTID by KEVNM
+     * Get the globalCMTID in KEVNM.
+     * If the value KEVNM is not valid for GlobalCMTID, then RuntimeException will be thrown.
+     * @return ({@link GlobalCMTID}) Event ID in KEVNM.
      */
     default GlobalCMTID getGlobalCMTID() {
         return new GlobalCMTID(getSACString(SACHeaderEnum.KEVNM));
     }
 
     /**
-     * 整数値を代入する not enumerized TODO debug
-     *
-     * @param sacHeaderEnum a key to an integer value
-     * @param value         an integer value to be set
-     * @return {@link SACHeaderAccess} with the value
+     * @return (boolean) Whether the SACfile is filtered. true: filtered, false: not filtered.
      */
-    SACHeaderAccess setInt(SACHeaderEnum sacHeaderEnum, int value);
-
-    /**
-     * Enumeratedフィールドの代入 今は整数値で受け取る
-     *
-     * @param sacHeaderEnum a key to an Enumerated field
-     * @param value         a integer value to input
-     * @return {@link SACHeaderAccess} with the value
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an enumarated
-     *                                  value
-     */
-    SACHeaderAccess setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
-
-    /**
-     * Set a String value
-     *
-     * @param sacHeaderEnum a key to a String value
-     * @param string        to be set
-     * @return {@link SACHeaderAccess} with the string
-     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a String value,
-     *                                  if the input string has a invalid length.
-     */
-    SACHeaderAccess setSACString(SACHeaderEnum sacHeaderEnum, String string);
+    default boolean isFiltered() {
+        return getValue(SACHeaderEnum.USER0) != -12345 || getValue(SACHeaderEnum.USER1) != -12345;
+    }
 
     /**
      * マーカーに時間を設定する ぴっちりdelta * n の時刻に少し修正する round(time/delta)*delta Set a time
@@ -213,7 +129,7 @@ public interface SACHeaderAccess {
      * @return {@link SACHeaderAccess} with a time marker.
      * @throws IllegalArgumentException if marker is not Tn
      */
-    default SACHeaderAccess setTimeMarker(SACHeaderEnum marker, double time) {
+    default SACHeaderAccess withTimeMarker(SACHeaderEnum marker, double time) {
         if (marker != SACHeaderEnum.T0 && marker != SACHeaderEnum.T1 && marker != SACHeaderEnum.T2 &&
                 marker != SACHeaderEnum.T3 && marker != SACHeaderEnum.T4 && marker != SACHeaderEnum.T5 &&
                 marker != SACHeaderEnum.T6 && marker != SACHeaderEnum.T7 && marker != SACHeaderEnum.T8 &&
@@ -225,8 +141,78 @@ public interface SACHeaderAccess {
         double delta = getValue(SACHeaderEnum.DELTA);
         double inputTime = Math.round((time - b) / delta) * delta + b;
         // System.out.println(b + " " + inputTime);
-        return setValue(marker, inputTime);
+        return withValue(marker, inputTime);
     }
+
+    /**
+     * Get a boolean value of a header field.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) A key to a boolean value.
+     * @return (boolean) The value in the header field.
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a boolean value.
+     */
+    boolean getBoolean(SACHeaderEnum sacHeaderEnum);
+
+    /**
+     * Get an integer value of a header field.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) A key to an integer value.
+     * @return (int) The value in the header field.
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an integer value.
+     */
+    int getInt(SACHeaderEnum sacHeaderEnum);
+
+    /**
+     * @param sacHeaderEnum a key to a Enumerated value
+     * @return a enumerated value to the input {@link SACHeaderEnum}
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an Emumerated
+     *                                  value.
+     */
+    int getSACEnumerated(SACHeaderEnum sacHeaderEnum);
+
+    /**
+     * Get a double value of a header field. The value is set as a float value in the header.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) A key to a float value.
+     * @return (double) The value in the header field.
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a float value.
+     */
+    double getValue(SACHeaderEnum sacHeaderEnum);
+
+    /**
+     * Get an String value of a header field.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) A key to a String value.
+     * @return (String) The value in the header field.
+     */
+    String getSACString(SACHeaderEnum sacHeaderEnum);
+
+    /**
+     * Set a boolean value
+     *
+     * @param sacHeaderEnum a key to a boolean value
+     * @param bool          to be set
+     * @return {@link SACHeaderAccess} with the bool
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a boolean value
+     *                                  of is a special boolean.
+     */
+    SACHeaderAccess withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+
+    /**
+     * 整数値を代入する not enumerized TODO debug
+     *
+     * @param sacHeaderEnum a key to an integer value
+     * @param value         an integer value to be set
+     * @return {@link SACHeaderAccess} with the value
+     */
+    SACHeaderAccess withInt(SACHeaderEnum sacHeaderEnum, int value);
+
+    /**
+     * Enumeratedフィールドの代入 今は整数値で受け取る
+     *
+     * @param sacHeaderEnum a key to an Enumerated field
+     * @param value         a integer value to input
+     * @return {@link SACHeaderAccess} with the value
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of an enumarated
+     *                                  value
+     */
+    SACHeaderAccess withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
 
     /**
      * Set a double value. Note that a SAC file just holds values as Float not
@@ -236,14 +222,17 @@ public interface SACHeaderAccess {
      * @param value         a double value to be set
      * @return {@link SACHeaderAccess} with the value
      */
-    SACHeaderAccess setValue(SACHeaderEnum sacHeaderEnum, double value);
-
+    SACHeaderAccess withValue(SACHeaderEnum sacHeaderEnum, double value);
 
     /**
-     * @return if the SACfile is filtered. true: filtered, false: not filtered
+     * Set a String value
+     *
+     * @param sacHeaderEnum a key to a String value
+     * @param string        to be set
+     * @return {@link SACHeaderAccess} with the string
+     * @throws IllegalArgumentException if the input {@link SACHeaderEnum} is not of a String value,
+     *                                  if the input string has a invalid length.
      */
-    default boolean isFiltered() {
-        return getValue(SACHeaderEnum.USER0) != -12345 || getValue(SACHeaderEnum.USER1) != -12345;
-    }
+    SACHeaderAccess withSACString(SACHeaderEnum sacHeaderEnum, String string);
 
 }

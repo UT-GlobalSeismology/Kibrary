@@ -95,10 +95,10 @@ public class TimewindowMerge extends Operation {
     public void run() throws IOException {
         int fileNum = timewindowPaths.size();
         if (fileNum == 0) {
-            System.err.println("No input files found.");
+            System.err.println("!! No input files found.");
             return;
         } else if (fileNum == 1) {
-            System.err.println("Only 1 input file found. Merging will not be done.");
+            System.err.println("!! Only 1 input file found. Merging will not be done.");
             return;
         }
 

@@ -190,28 +190,6 @@ public interface SACFileAccess extends SACHeaderAccess {
         }
     }
 
-    double[] getData();
-
-    @Override
-    default SACFileAccess setEventLocation(FullPosition eventLocation) {
-        return (SACFileAccess) SACHeaderAccess.super.setEventLocation(eventLocation);
-    }
-
-    @Override
-    default SACFileAccess setEventTime(LocalDateTime eventDateTime) {
-        return (SACFileAccess) SACHeaderAccess.super.setEventTime(eventDateTime);
-    }
-
-    @Override
-    default SACFileAccess setObserver(Observer observer) {
-        return (SACFileAccess) SACHeaderAccess.super.setObserver(observer);
-    }
-
-    @Override
-    default SACFileAccess setTimeMarker(SACHeaderEnum marker, double time) {
-        return (SACFileAccess) SACHeaderAccess.super.setTimeMarker(marker, time);
-    }
-
     /**
      * DELTA will be rounded off to 4 decimal values
      * <p>
@@ -231,21 +209,43 @@ public interface SACFileAccess extends SACHeaderAccess {
     }
 
     @Override
-    SACFileAccess setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+    default SACFileAccess withEventLocation(FullPosition eventLocation) {
+        return (SACFileAccess) SACHeaderAccess.super.withEventLocation(eventLocation);
+    }
+
+    @Override
+    default SACFileAccess withEventTime(LocalDateTime eventDateTime) {
+        return (SACFileAccess) SACHeaderAccess.super.withEventTime(eventDateTime);
+    }
+
+    @Override
+    default SACFileAccess withObserver(Observer observer) {
+        return (SACFileAccess) SACHeaderAccess.super.withObserver(observer);
+    }
+
+    @Override
+    default SACFileAccess withTimeMarker(SACHeaderEnum marker, double time) {
+        return (SACFileAccess) SACHeaderAccess.super.withTimeMarker(marker, time);
+    }
+
+    @Override
+    SACFileAccess withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+
+    @Override
+    SACFileAccess withInt(SACHeaderEnum sacHeaderEnum, int value);
+
+    @Override
+    SACFileAccess withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
+
+    @Override
+    SACFileAccess withValue(SACHeaderEnum sacHeaderEnum, double value);
+
+    @Override
+    SACFileAccess withSACString(SACHeaderEnum sacHeaderEnum, String string);
 
     SACFileAccess applyButterworthFilter(ButterworthFilter filter);
 
-    @Override
-    SACFileAccess setValue(SACHeaderEnum sacHeaderEnum, double value);
-
-    @Override
-    SACFileAccess setInt(SACHeaderEnum sacHeaderEnum, int value);
-
-    @Override
-    SACFileAccess setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
-
-    @Override
-    SACFileAccess setSACString(SACHeaderEnum sacHeaderEnum, String string);
+    double[] getData();
 
     /**
      * DEEP copy input sacData on the sacData of this.
