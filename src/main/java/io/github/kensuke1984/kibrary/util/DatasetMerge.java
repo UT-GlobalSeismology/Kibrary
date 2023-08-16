@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
  * Operation for merging datasets of SAC files.
+ * Event directories are created in outPath, and symbolic links to each SAC file is created in the event directories.
  *
  * @author otsuru
  * @since 2022/4/18
@@ -112,7 +113,7 @@ public class DatasetMerge extends Operation {
             for (EventFolder eventDir : eventDirs) {
                 Set<SACFileName> sacFiles = eventDir.sacFileSet();
                 // skip event folder if it is empty
-                if(sacFiles.size() == 0) continue;
+                if (sacFiles.size() == 0) continue;
 
                 Path outEventPath = outPath.resolve(eventDir.getName());
                 Files.createDirectories(outEventPath);
@@ -121,8 +122,8 @@ public class DatasetMerge extends Operation {
                 for (SACFileName sacFile : sacFiles) {
 
                     Path outSacPath = outEventPath.resolve(sacFile.getName());
-                    if(Files.exists(outSacPath)) {
-                        System.err.println("Duplication of " + sacFile.getName() + " , skipping.");
+                    if (Files.exists(outSacPath)) {
+                        System.err.println("!! Duplication of " + sacFile.getName() + " , skipping.");
                     } else {
                         Files.createSymbolicLink(outSacPath, Paths.get("..", "..").resolve(sacFile.toPath()));
                     }
