@@ -383,9 +383,9 @@ public final class PolynomialStructure {
 
     /**
      * Find the number of the zone which includes the given radius.
+     * Note that the zone will be rmin &le; r &lt; rmax, except when r = planetRadius.
      * @param r (double) Radius [km]; [0, rmax].
      * @return (int) The number of the zone which includes r.
-     *          Note that the zone will be rmin &le; r &lt; rmax except when r = planetRadius.
      */
     public int zoneOf(double r) {
         if (r == rMax[nZone - 1])
