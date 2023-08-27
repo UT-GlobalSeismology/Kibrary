@@ -16,11 +16,11 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
-import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseProblem;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
+import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -88,6 +88,10 @@ public class LetMeInvert extends Operation {
      */
     private boolean fillEmptyPartial;
 
+    private double lambda_LS;
+    private Path tMatrixPath_LS;
+    private Path etaVectorPath_LS;
+
     /**
      * @param args  none to create a property file <br>
      *              [property file] to run
@@ -123,6 +127,13 @@ public class LetMeInvert extends Operation {
             pw.println("#evaluateNum ");
             pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
+            pw.println("##########Settings for Least Squares method");
+            pw.println("##(double) Reguralization parameter. (0)");
+            pw.println("#lambda_LS ");
+            pw.println("##(Path) Path of matrix for complex regularization patterns, when needed.");
+            pw.println("#tMatrixPath_LS ");
+            pw.println("##(Path) Path of vector that Tm should approach, when needed.");
+            pw.println("#etaVectorPath_LS ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -148,6 +159,12 @@ public class LetMeInvert extends Operation {
         evaluateNum = property.parseInt("evaluateNum", "100");
 
         fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
+
+        lambda_LS = property.parseDouble("lambda_LS", "0");
+        if (property.containsKey("tMatrixPath_LS"))
+            tMatrixPath_LS = property.parsePath("tMatrixPath_LS", null, true, workPath);
+        if (property.containsKey("etaVectorPath_LS"))
+            etaVectorPath_LS = property.parsePath("etaVectorPath_LS", null, true, workPath);
     }
 
     @Override
@@ -156,6 +173,8 @@ public class LetMeInvert extends Operation {
         // read input
         WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
+        RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
@@ -173,9 +192,9 @@ public class LetMeInvert extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output matrices
-        AtAFile.write(ata, outPath.resolve("ata.lst"));
-        AtdFile.write(atd, outPath.resolve("atd.lst"));
-        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        MatrixFile.write(ata, outPath.resolve("ata.lst"));
+        VectorFile.write(atd, outPath.resolve("atd.lst"));
+        MatrixAssembly.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
 
         // solve inversion and evaluate
@@ -184,12 +203,12 @@ public class LetMeInvert extends Operation {
             Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
-            InverseProblem inverseProblem = method.formProblem(ata, atd);
+            InverseProblem inverseProblem = InverseProblem.create(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS);
             inverseProblem.compute();
             inverseProblem.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
-            evaluation.evaluate(inverseProblem.getANS(), evaluateNum, alpha, outMethodPath);
+            evaluation.evaluate(inverseProblem.getAnswers(), evaluateNum, alpha, outMethodPath);
         }
     }
 

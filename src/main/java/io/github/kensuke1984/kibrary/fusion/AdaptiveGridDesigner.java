@@ -17,8 +17,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
-import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -159,7 +159,7 @@ public class AdaptiveGridDesigner extends Operation {
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
         RealMatrix ata;
         if (ataPath != null) {
-            ata = AtAFile.read(ataPath);
+            ata = MatrixFile.read(ataPath);
             if (ata.getColumnDimension() != parameterList.size())
                 throw new IllegalArgumentException("AtA size does not match number of parameters.");
         } else {

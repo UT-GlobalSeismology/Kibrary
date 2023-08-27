@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -23,25 +24,65 @@ public abstract class InverseProblem {
 
     public static InverseProblem create(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
             double lambda_LS, RealMatrix t_LS, RealVector eta_LS) {
+        if (!ata.isSquare()) throw new IllegalArgumentException("AtA must be square.");
+        if (ata.getRowDimension() != atd.getDimension()) throw new IllegalArgumentException("Dimension of AtA and Atd do not match.");
+
+        RealVector conditioner = null;
+
         switch (inverseMethod) {
         case CONJUGATE_GRADIENT:
             return new ConjugateGradientMethod(ata, atd);
         case LEAST_SQUARES_METHOD:
             return new LeastSquaresMethod(ata, atd, lambda_LS, t_LS, eta_LS);
+
+        //-----------------------
+        case SINGULAR_VALUE_DECOMPOSITION:
+            return new SingularValueDecomposition(ata, atd);
+        case FAST_CONJUGATE_GRADIENT:
+            return new FastConjugateGradientMethod(ata, atd, false); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
+        case FAST_CONJUGATE_GRADIENT_DAMPED:
+            if (conditioner == null) {
+                conditioner = new ArrayRealVector(atd.getDimension(), 1.);
+            }
+            return new FastConjugateGradientMethod(ata, atd, true, conditioner); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
+        case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
+            return new BiConjugateGradientStabilizedMethod(ata, atd);
+        //-----------------------
+
+
         default:
             return null;
         }
     }
-
-    public void setANS(int i, RealVector v) {
-        ans.setColumnVector(i - 1, v);
+    @Deprecated
+    InverseProblem getMethod(InverseMethodEnum inverseMethod, RealMatrix ata, RealMatrix a, RealVector u, RealVector s0) {
+        switch (inverseMethod) {
+        case NONLINEAR_CONJUGATE_GRADIENT:
+            return new NonlinearConjugateGradientMethod(ata, a, s0, u);
+        default:
+            throw new RuntimeException("soteigai");
+        }
     }
+    @Deprecated
+    InverseProblem getMethod(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd, RealMatrix h) {
+        switch (inverseMethod) {
+        case CONSTRAINED_CONJUGATE_GRADIENT:
+            return new ConstrainedConjugateGradientMethod(ata, atd, h);
+        default:
+            throw new RuntimeException("soteigai");
+        }
+    }
+
+
+//    public void setANS(int i, RealVector v) {
+//        ans.setColumnVector(i - 1, v);
+//    }
 
     private int getNAnswer() {
         return ans.getColumnDimension();
     }
 
-    public RealMatrix getANS() {
+    public RealMatrix getAnswers() {
         return ans;
     }
 
@@ -49,7 +90,7 @@ public abstract class InverseProblem {
      * @param i index (1, 2, ...)
      * @return i th answer
      */
-    public RealVector getAnsVec(int i) {
+    public RealVector getAnswerVector(int i) {
         if (i <= 0) throw new IllegalArgumentException("i must be a natural number.");
         return ans.getColumnVector(i - 1);
     }

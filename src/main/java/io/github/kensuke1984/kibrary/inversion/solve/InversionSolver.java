@@ -17,8 +17,9 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.ResultEvaluation;
-import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
-import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
+import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
+import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -62,6 +63,10 @@ public class InversionSolver extends Operation {
     private double[] alpha;
     private int evaluateNum;
 
+    private double lambda_LS;
+    private Path tMatrixPath_LS;
+    private Path etaVectorPath_LS;
+
 
     /**
      * @param args  none to create a property file <br>
@@ -94,6 +99,13 @@ public class InversionSolver extends Operation {
             pw.println("#alpha ");
             pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (100)");
             pw.println("#evaluateNum ");
+            pw.println("##########Settings for Least Squares method.");
+            pw.println("##(double) Reguralization parameter. (0)");
+            pw.println("#lambda_LS ");
+            pw.println("##(Path) Path of matrix for complex regularization patterns, when needed.");
+            pw.println("#tMatrixPath_LS ");
+            pw.println("##(Path) Path of vector that Tm should approach, when needed.");
+            pw.println("#etaVectorPath_LS ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -115,16 +127,24 @@ public class InversionSolver extends Operation {
                 .collect(Collectors.toSet());
         alpha = property.parseDoubleArray("alpha", "1 100 1000");
         evaluateNum = property.parseInt("evaluateNum", "100");
+
+        lambda_LS = property.parseDouble("lambda_LS", "0");
+        if (property.containsKey("tMatrixPath_LS"))
+            tMatrixPath_LS = property.parsePath("tMatrixPath_LS", null, true, workPath);
+        if (property.containsKey("etaVectorPath_LS"))
+            etaVectorPath_LS = property.parsePath("etaVectorPath_LS", null, true, workPath);
     }
 
     @Override
     public void run() throws IOException {
 
         // read input
-        RealMatrix ata = AtAFile.read(ataPath);
-        RealVector atd = AtdFile.read(atdPath);
-        double[] dInfo = AtdFile.readDInfo(dInfoPath);
+        RealMatrix ata = MatrixFile.read(ataPath);
+        RealVector atd = VectorFile.read(atdPath);
+        double[] dInfo = MatrixAssembly.readDInfo(dInfoPath);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
+        RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
 
         // solve inversion and evaluate
         ResultEvaluation evaluation = new ResultEvaluation(ata, atd, (int) dInfo[0], dInfo[1], dInfo[2]);
@@ -132,12 +152,12 @@ public class InversionSolver extends Operation {
             Path outMethodPath = workPath.resolve(method.simpleName());
 
             // solve problem
-            InverseProblem inverseProblem = method.formProblem(ata, atd);
+            InverseProblem inverseProblem = InverseProblem.create(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS);
             inverseProblem.compute();
             inverseProblem.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
-            evaluation.evaluate(inverseProblem.getANS(), evaluateNum, alpha, outMethodPath);
+            evaluation.evaluate(inverseProblem.getAnswers(), evaluateNum, alpha, outMethodPath);
         }
     }
 

@@ -1,18 +1,10 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
-import java.util.stream.IntStream;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-
 /**
- * Names of methods for inversion. such as conjugate gradient method, singular value decomposition.. etc
+ * Names of methods for inversion, such as conjugate gradient method, singular value decomposition, etc.
  *
  * @author Kensuke Konishi
- * @version 0.0.3
- * @author anselme added several methods
+ * @since version 0.0.3
  */
 public enum InverseMethodEnum {
     SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD,
@@ -20,43 +12,29 @@ public enum InverseMethodEnum {
     FAST_CONJUGATE_GRADIENT, FAST_CONJUGATE_GRADIENT_DAMPED, NONLINEAR_CONJUGATE_GRADIENT,
     CONSTRAINED_CONJUGATE_GRADIENT;
 
-    RealVector conditioner;
-
     public static InverseMethodEnum of(String simple) {
-        switch (simple) {
-        case "svd":
+        switch (simple.toUpperCase()) {
         case "SVD":
             return SINGULAR_VALUE_DECOMPOSITION;
-        case "cg":
         case "CG":
             return CONJUGATE_GRADIENT;
         case "LSM":
-        case "lsm":
             return LEAST_SQUARES_METHOD;
         case "NNLS":
-        case "nnls":
             return NON_NEGATIVE_LEAST_SQUARES_METHOD;
         case "BCGS":
-        case "bcgs":
             return BICONJUGATE_GRADIENT_STABILIZED_METHOD;
         case "FCG":
-        case "fcg":
             return FAST_CONJUGATE_GRADIENT;
         case "FCGD":
-        case "fcgd":
             return FAST_CONJUGATE_GRADIENT_DAMPED;
         case "NCG":
             return NONLINEAR_CONJUGATE_GRADIENT;
         case "CCG":
             return CONSTRAINED_CONJUGATE_GRADIENT;
         default:
-            throw new IllegalArgumentException("Invalid name for InverseMethod");
+            throw new IllegalArgumentException("Invalid name for InverseMethod.");
         }
-    }
-
-
-    public void setConditioner(RealVector m) {
-        conditioner = m;
     }
 
     public String simpleName() {
@@ -81,63 +59,7 @@ public enum InverseMethodEnum {
         case CONSTRAINED_CONJUGATE_GRADIENT:
             return "CCG";
         default:
-            throw new RuntimeException("Unexpected");
-        }
-    }
-
-    @Deprecated //moved to InverseProblem
-    public InverseProblem formProblem(RealMatrix ata, RealVector atd) {
-        int n = ata.getColumnDimension();
-        RealMatrix t = MatrixUtils.createRealIdentityMatrix(n);
-        for (int i = 0; i < n - 1; i++) {
-            t.addToEntry(i, i+1, -1);
-        }
-        t.multiplyEntry(n-1, n-1, 10);
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                System.err.print(t.getEntry(i, j) + " ");
-            }
-            System.err.println();
-        }
-        RealVector eta = new ArrayRealVector(n);
-
-        switch (this) {
-        case SINGULAR_VALUE_DECOMPOSITION:
-            return new SingularValueDecomposition(ata, atd);
-        case CONJUGATE_GRADIENT:
-            return new ConjugateGradientMethod(ata, atd);
-        case FAST_CONJUGATE_GRADIENT:
-            return new FastConjugateGradientMethod(ata, atd, false); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
-        case FAST_CONJUGATE_GRADIENT_DAMPED:
-            if (conditioner == null) {
-                conditioner = new ArrayRealVector(atd.getDimension());
-                IntStream.range(0, atd.getDimension()).forEach(i -> conditioner.setEntry(i, 1.));
-            }
-            return new FastConjugateGradientMethod(ata, atd, true, conditioner); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
-        case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
-            return new BiConjugateGradientStabilizedMethod(ata, atd);
-        case LEAST_SQUARES_METHOD:
-            return new LeastSquaresMethod(ata, atd, 1, t, eta);
-        default:
-            throw new RuntimeException("soteigai");
-        }
-    }
-
-    InverseProblem getMethod(RealMatrix ata, RealMatrix a, RealVector u, RealVector s0) {
-        switch (this) {
-        case NONLINEAR_CONJUGATE_GRADIENT:
-            return new NonlinearConjugateGradientMethod(ata, a, s0, u);
-        default:
-            throw new RuntimeException("soteigai");
-        }
-    }
-
-    InverseProblem getMethod(RealMatrix ata, RealVector atd, RealMatrix h) {
-        switch (this) {
-        case CONSTRAINED_CONJUGATE_GRADIENT:
-            return new ConstrainedConjugateGradientMethod(ata, atd, h);
-        default:
-            throw new RuntimeException("soteigai");
+            throw new UnsupportedOperationException("Unsupported inversion method.");
         }
     }
 

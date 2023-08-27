@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -50,25 +49,6 @@ public class LeastSquaresMethod extends InverseProblem {
     private RealVector eta;
 
 
-    public static void main(String[] args) {
-        double[][] x = new double[][]{{1, 0.000, 0}, {0.000, 1, 0}, {0.000, 0, 1}};
-        double[] d = new double[]{1, 2, 3};
-        RealMatrix X = new Array2DRowRealMatrix(x);
-        RealMatrix XtX = X.transpose().multiply(X);
-        RealVector y = new ArrayRealVector(d);
-        RealVector Xty = X.transpose().operate(y);
-        double lambda = 100.0;
-        RealMatrix w = new Array2DRowRealMatrix(new double[][]{{1, 0, -1}, {0, 2, 1}});
-        RealMatrix wtw = w.transpose().multiply(w);
-        double[][] t = new double[][]{{1, 1, 0}, {0, 1, 0}, {0, 1, 1}};
-        RealMatrix T = new Array2DRowRealMatrix(t);
-        double[] eta = new double[]{20, 100, -2.3};
-        RealVector ETA = new ArrayRealVector(eta);
-        LeastSquaresMethod lsm = new LeastSquaresMethod(XtX, Xty, lambda, T, ETA);
-        lsm.compute();
-        System.out.println(lsm.ans);
-    }
-
     /**
      * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup>.
      *
@@ -77,17 +57,6 @@ public class LeastSquaresMethod extends InverseProblem {
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd) {
         this(ata, atd, 0, null, null);
-    }
-
-    /**
-     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|m|<sup>2</sup>.
-     *
-     * @param ata (RealMatrix) A<sup>T</sup>A
-     * @param atd (RealVector) A<sup>T</sup>d
-     * @param lambda (double) &lambda;
-     */
-    public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda) {
-        this(ata, atd, lambda, MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension()), null);
     }
 
     /**
@@ -100,6 +69,10 @@ public class LeastSquaresMethod extends InverseProblem {
      * @param eta (RealVector) &eta;
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda, RealMatrix t, RealVector eta) {
+        if (t != null && t.getColumnDimension() != ata.getColumnDimension())
+            throw new IllegalArgumentException("Dimension of T is invalid.");
+        if (eta != null && t != null && eta.getDimension() != t.getRowDimension())
+            throw new IllegalArgumentException("Dimension of eta and T do not match.");
         this.ata = ata;
         this.atd = atd;
         this.lambda = lambda;
@@ -107,10 +80,20 @@ public class LeastSquaresMethod extends InverseProblem {
         this.eta = eta;
     }
 
-
     @Override
-    InverseMethodEnum getEnum() {
-        return InverseMethodEnum.LEAST_SQUARES_METHOD;
+    public void compute() {
+        RealMatrix j = ata;
+        RealVector k = atd;
+        if (0 < lambda) {
+            // when T is not set, set it as identity
+            if (t == null) t = MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
+            RealMatrix tt = t.transpose();
+            // At A + lambda Tt T
+            j = j.add(tt.multiply(t).scalarMultiply(lambda));
+            // At d - lambda Tt eta
+            if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
+        }
+        ans = new Array2DRowRealMatrix(MatrixUtils.inverse(j).operate(k).toArray());
     }
 
     @Override
@@ -120,20 +103,13 @@ public class LeastSquaresMethod extends InverseProblem {
     }
 
     @Override
-    public void compute() {
-        RealMatrix j = ata;
-        RealVector k = atd;
-        if (0 < lambda) {
-            RealMatrix tt = t.transpose();
-            j = j.add(tt.multiply(t).scalarMultiply(lambda));
-            if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
-        }
-        ans = new Array2DRowRealMatrix(MatrixUtils.inverse(j).operate(k).toArray());
+    public RealMatrix getBaseVectors() {
+        throw new RuntimeException("No base vectors.");
     }
 
     @Override
-    public RealMatrix getBaseVectors() {
-        throw new RuntimeException("No base vectors.");
+    InverseMethodEnum getEnum() {
+        return InverseMethodEnum.LEAST_SQUARES_METHOD;
     }
 
 }
