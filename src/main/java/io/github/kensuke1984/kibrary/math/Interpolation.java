@@ -48,9 +48,9 @@ public class Interpolation {
     /**
      * @param originalMap (Map of {@link FullPosition}, Double) Map data to be interpolated.
      * @param sampleLongitudes (double[]) Longitudes at which to interpolate.
-     * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region (including edges of voxel gaps).
+     * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region [deg]
+     *         (including edges of voxel gaps).
      *          Also used to recognize voxel gaps in the longitude direction.
-     * @param longitudeInKm (boolean) Whether the above value is given in [km] or [deg].
      * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
      * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data.
      *
@@ -58,7 +58,7 @@ public class Interpolation {
      * @since 2023/3/24
      */
     public static Map<FullPosition, Double> inEachWestEastLine(Map<FullPosition, Double> originalMap, double[] sampleLongitudes,
-            double longitudeMargin, boolean longitudeInKm, boolean mosaic) {
+            double longitudeMarginDeg, boolean mosaic) {
         // This is created as LinkedHashMap to preserve the order of grid points
         Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
 
@@ -81,8 +81,6 @@ public class Interpolation {
                 Trace originalTrace = new Trace(x, y);
 
                 // split the trace at gaps
-                double smallCircleRadius = radius * Math.cos(Math.toRadians(latitude));
-                double longitudeMarginDeg = longitudeInKm ? Math.toDegrees(longitudeMargin / smallCircleRadius) : longitudeMargin;
                 List<Trace> splitTraces = splitTraceAtGaps(originalTrace, longitudeMarginDeg);
                 // interpolate each of the split traces and store the results
                 List<Trace> interpolatedTraces = splitTraces.stream()

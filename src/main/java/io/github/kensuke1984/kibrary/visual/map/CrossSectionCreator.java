@@ -85,6 +85,8 @@ public class CrossSectionCreator extends Operation {
     private boolean mosaic;
     private double maskThreshold;
 
+    private double[] radii;
+
     /**
      * @param args  none to create a property file <br>
      *              [property file] to run
@@ -243,7 +245,7 @@ public class CrossSectionCreator extends Operation {
 
         // decide vertical settings
         double verticalGridInterval = horizontalGridInterval * VERTICAL_ENLARGE_FACTOR;
-        double[] radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
+        radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
         double lowerRadius = radii[0] - marginRadius;
         double upperRadius = radii[radii.length - 1] + marginRadius;
 
@@ -286,11 +288,10 @@ public class CrossSectionCreator extends Operation {
         double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(HorizontalPosition::getLongitude)
                 .distinct().sorted().toArray();
         Map<FullPosition, Double> resampledMap = Interpolation.inEachWestEastLine(discreteMap, sampleLongitudes,
-                marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
+                decideMarginLongitudeDeg(radii), mosaic);
 
         // acquire some information
         Set<FullPosition> resampledPositions = resampledMap.keySet();
-        double[] radii = resampledPositions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
         double marginLatitudeDeg = decideMarginLatitudeDeg(radii);
 
         //~compute sampled trace at each sample point
@@ -336,6 +337,11 @@ public class CrossSectionCreator extends Operation {
     private double decideMarginLatitudeDeg(double[] radii) {
         double meanRadius = Arrays.stream(radii).average().getAsDouble();
         return setMarginLatitudeByKm ? Math.toDegrees(marginLatitudeRaw / meanRadius) : marginLatitudeRaw;
+    }
+
+    private double decideMarginLongitudeDeg(double[] radii) {
+        double meanRadius = Arrays.stream(radii).average().getAsDouble();
+        return setMarginLongitudeByKm ? Math.toDegrees(marginLongitudeRaw / meanRadius) : marginLongitudeRaw;
     }
 
     private Trace formMeridionalTrace(double[] latitudesExtracted, double longitude, double radius, Map<FullPosition, Double> resampledMap) {
