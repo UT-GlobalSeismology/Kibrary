@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
@@ -62,6 +64,26 @@ public final class PolynomialStructure {
     private final PolynomialFunction[] eta;
     private final double[] qMu;
     private final double[] qKappa;
+
+    /**
+     * Set up a {@link PolynomialStructure} instance by either reading a {@link PolynomialStructureFile} or from a structure name.
+     * @param structurePath (Path) A {@link PolynomialStructureFile}.
+     * @param structureName (String) A structure name.
+     * @return ({@link PolynomialStructure}) Set structure.
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2023/4/5
+     */
+    public static PolynomialStructure setupFromFileOrName(Path structurePath, String structureName) throws IOException {
+        PolynomialStructure structure = null;
+        if (structurePath != null) {
+            structure = PolynomialStructureFile.read(structurePath);
+        } else {
+            structure = PolynomialStructure.of(structureName);
+        }
+        return structure;
+    }
 
     /**
      * Get a default structure.

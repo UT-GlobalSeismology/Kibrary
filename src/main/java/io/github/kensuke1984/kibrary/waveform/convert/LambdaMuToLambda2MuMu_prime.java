@@ -33,8 +33,8 @@ public class LambdaMuToLambda2MuMu_prime {
 		
 		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
-		List<PartialID> partialsLambda = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.LAMBDA)).collect(Collectors.toList());
-		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU)).collect(Collectors.toList());
+		List<PartialID> partialsLambda = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.LAMBDA3D)).collect(Collectors.toList());
+		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU3D)).collect(Collectors.toList());
 		
 		System.out.println(partialsMU.size());
 		
@@ -109,12 +109,12 @@ public class LambdaMuToLambda2MuMu_prime {
 			PartialID parMuPrime = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolved(), partialLambda.getVoxelPosition()
-					, PartialType.MU, muPrimeData);
+					, PartialType.MU3D, muPrimeData);
 			
 			PartialID parLambda2mu = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolved(), partialLambda.getVoxelPosition()
-					, PartialType.LAMBDA2MU, lambdaData);
+					, PartialType.LAMBDA2MU3D, lambdaData);
 			
 			partialsMUPrime.add(parMuPrime);
 			partialsLambda2mu.add(parLambda2mu);

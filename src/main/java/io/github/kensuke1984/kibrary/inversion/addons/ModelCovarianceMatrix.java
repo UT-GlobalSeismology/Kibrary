@@ -50,16 +50,16 @@ public class ModelCovarianceMatrix {
 		
 		//test
 		List<UnknownParameter> params = new ArrayList<>();
-		UnknownParameter p1 = new Physical3DParameter(PartialType.MU, new FullPosition(0, 0, 6371),  1.);
-		UnknownParameter p2 = new Physical3DParameter(PartialType.MU, new FullPosition(2, 0, 6371),  1.);
-		UnknownParameter p3 = new Physical3DParameter(PartialType.MU, new FullPosition(4, 0, 6371),  1.);
+		UnknownParameter p1 = new Physical3DParameter(PartialType.MU3D, new FullPosition(0, 0, 6371),  1.);
+		UnknownParameter p2 = new Physical3DParameter(PartialType.MU3D, new FullPosition(2, 0, 6371),  1.);
+		UnknownParameter p3 = new Physical3DParameter(PartialType.MU3D, new FullPosition(4, 0, 6371),  1.);
 		params.add(p1);
 		params.add(p2);
 		params.add(p3);
 		
-		UnknownParameter l1 = new Physical3DParameter(PartialType.LAMBDA, new FullPosition(0, 0, 6371),  1.);
-		UnknownParameter l2 = new Physical3DParameter(PartialType.LAMBDA, new FullPosition(2, 0, 6371),  1.);
-		UnknownParameter l3 = new Physical3DParameter(PartialType.LAMBDA, new FullPosition(4, 0, 6371),  1.);
+		UnknownParameter l1 = new Physical3DParameter(PartialType.LAMBDA3D, new FullPosition(0, 0, 6371),  1.);
+		UnknownParameter l2 = new Physical3DParameter(PartialType.LAMBDA3D, new FullPosition(2, 0, 6371),  1.);
+		UnknownParameter l3 = new Physical3DParameter(PartialType.LAMBDA3D, new FullPosition(4, 0, 6371),  1.);
 		params.add(l1);
 		params.add(l2);
 		params.add(l3);

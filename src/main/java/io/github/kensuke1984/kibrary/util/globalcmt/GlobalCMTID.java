@@ -37,6 +37,10 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             Pattern.compile("(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])[0789][0-9][A-Za-z]");
 
     /**
+     * maximum length to allow for an event ID
+     */
+    public static final int MAX_LENGTH = 15;
+    /**
      * maximum length of ID
      */
     private static final int LENGTH = 13;

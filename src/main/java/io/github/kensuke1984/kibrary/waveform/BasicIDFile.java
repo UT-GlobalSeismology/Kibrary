@@ -75,7 +75,7 @@ public final class BasicIDFile {
 
     /**
      * Write basicIDs into ID file and data file.
-     * @param basicIDs (List of BasicID)
+     * @param basicIDs (List of {@link BasicID}) BasicIDs to write.
      * @param outPath (Path) The directory where basic ID and data files shall be created. The directory must exist.
      * @throws IOException
      *
@@ -197,29 +197,27 @@ public final class BasicIDFile {
             double[][] periodRanges = new double[dis.readShort()][2];
             Phase[] phases = new Phase[dis.readShort()];
             // calculate number of bytes in header
-            int headerBytes = 2 * 4 + (8 + 8 + 8 * 2) * observers.length + 15 * events.length
-                    + 16 * phases.length + 8 * 2 * periodRanges.length;
+            int headerBytes = Short.BYTES * 4 + (Observer.MAX_LENGTH + Double.BYTES * 2) * observers.length
+                    + GlobalCMTID.MAX_LENGTH * events.length + 16 * phases.length
+                    + Double.BYTES * 2 * periodRanges.length;
             long idParts = fileSize - headerBytes;
             if (idParts % ONE_ID_BYTE != 0)
-                throw new RuntimeException(idPath + " is invalid.");
-            // station(8),network(8),position(8*2)
-            byte[] observerBytes = new byte[32];
+                throw new IllegalStateException(idPath + " is invalid.");
+
+            byte[] observerBytes = new byte[Observer.MAX_LENGTH + Double.BYTES * 2];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
                 observers[i] = Observer.createObserver(observerBytes);
             }
-            // eventID(15)
-            byte[] eventBytes = new byte[15];
+            byte[] eventBytes = new byte[GlobalCMTID.MAX_LENGTH];
             for (int i = 0; i < events.length; i++) {
                 dis.read(eventBytes);
                 events[i] = new GlobalCMTID(new String(eventBytes).trim());
             }
-            // period(8*2)
             for (int i = 0; i < periodRanges.length; i++) {
                 periodRanges[i][0] = dis.readDouble();
                 periodRanges[i][1] = dis.readDouble();
             }
-            // phase(16)
             byte[] phaseBytes = new byte[16];
             for (int i = 0; i < phases.length; i++) {
                 dis.read(phaseBytes);

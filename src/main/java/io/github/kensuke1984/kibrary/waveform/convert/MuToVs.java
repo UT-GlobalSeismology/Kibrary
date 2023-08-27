@@ -34,7 +34,7 @@ public class MuToVs {
 		
 		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
-		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU)).collect(Collectors.toList());
+		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU3D)).collect(Collectors.toList());
 		
 		System.out.println(partialsMU.size());
 		
@@ -47,7 +47,7 @@ public class MuToVs {
 			PartialID parVs = new PartialID(p.getObserver(), p.getGlobalCMTID(), p.getSacComponent(), p.getSamplingHz(),
 					p.getStartTime(), p.getNpts(), p.getMinPeriod(), p.getMaxPeriod(),
 					p.getPhases(), p.getStartByte(), p.isConvolved(), p.getVoxelPosition()
-					, PartialType.Vs, vsData);
+					, PartialType.VS3D, vsData);
 			return parVs;
 		}).collect(Collectors.toList());
 		

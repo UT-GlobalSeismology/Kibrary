@@ -57,7 +57,7 @@ final class Latitude implements Comparable<Latitude> {
                 "The input latitude: " + geographicLatitude + " is invalid (must be in [-90, 90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
-        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(geographicLatitude));
+        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(this.geographicLatitude));
         theta = 0.5 * Math.PI - geocentricLatitudeRad;
     }
 

@@ -74,15 +74,17 @@ public final class SPC_SAC extends Operation {
      */
     private Set<SACComponent> components;
 
-    private boolean usePSV;
-    private Path psvPath;
-    private boolean useSH;
     private Path shPath;
-
+    private Path psvPath;
+    /**
+     * The SPC modes that shall be used: SH, PSV, or BOTH
+     */
+    private SpcFileAid.UsableSPCMode usableSPCMode;
     /**
      * the name of a folder containing SPC files (e.g. PREM)（""）
      */
     private String modelName;
+
     /**
      * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
      */
@@ -109,8 +111,8 @@ public final class SPC_SAC extends Operation {
      */
     private boolean computeAsObserved;
 
-    private Set<SPCFileName> psvSPCs;
     private Set<SPCFileName> shSPCs;
+    private Set<SPCFileName> psvSPCs;
     private SourceTimeFunctionHandler stfHandler;
     /**
      * Number of sac files that are done creating
@@ -138,14 +140,12 @@ public final class SPC_SAC extends Operation {
             pw.println("#folderTag ");
             pw.println("##SACComponents to be exported, listed using spaces (Z R T)");
             pw.println("#components ");
-            pw.println("##(boolean) Whether to use PSV spectrums (true)");
-            pw.println("#usePSV ");
-            pw.println("##Path of a PSV folder (.)");
-            pw.println("#psvPath ");
-            pw.println("##(boolean) Whether to use SH spectrums (true)");
-            pw.println("#useSH ");
             pw.println("##Path of an SH folder (.)");
             pw.println("#shPath ");
+            pw.println("##Path of a PSV folder (.)");
+            pw.println("#psvPath ");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (BOTH)");
+            pw.println("#usableSPCMode ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
             pw.println("##  If this is unset, then automatically set as the name of the folder in the eventDirs");
             pw.println("##    but the eventDirs can have only one folder inside and they must be the same.");
@@ -162,7 +162,7 @@ public final class SPC_SAC extends Operation {
             pw.println("##(boolean) If this is true, temporal partial is computed (false)");
             pw.println("#computeTimePartial ");
             pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed (false)");
-            pw.println("## This is only valid when computeTimePartial is false.");
+            pw.println("##  This is only valid when computeTimePartial is false.");
             pw.println("#computeAsObserved ");
         }
         System.err.println(outPath + " is created.");
@@ -179,11 +179,9 @@ public final class SPC_SAC extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        usePSV = property.parseBoolean("usePSV", "true");
-        if (usePSV) psvPath = property.parsePath("psvPath", ".", true, workPath);
-        useSH = property.parseBoolean("useSH", "true");
-        if (useSH) shPath = property.parsePath("shPath", ".", true, workPath);
-
+        shPath = property.parsePath("shPath", ".", true, workPath);
+        psvPath = property.parsePath("psvPath", ".", true, workPath);
+        usableSPCMode = SpcFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
         if (property.containsKey("modelName")) {
             modelName = property.parseString("modelName", null);
         } else {
@@ -207,8 +205,8 @@ public final class SPC_SAC extends Operation {
     private String searchModelName() throws IOException {
         // gather all names of model folders
         Set<EventFolder> eventFolders = new HashSet<>();
-        if (usePSV) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
-        if (useSH) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
+        if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
+        if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
         Set<String> possibleNames =
                 eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
                         .collect(Collectors.toSet());
@@ -218,7 +216,7 @@ public final class SPC_SAC extends Operation {
         // set model name
         String modelName = possibleNames.iterator().next();
 
-        // check if all events contains the model folder
+        // check if all events contain the model folder
         if (eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists))
             return modelName;
         else throw new RuntimeException("There are some events without model folder " + modelName);
@@ -226,22 +224,19 @@ public final class SPC_SAC extends Operation {
 
     @Override
     public void run() throws IOException {
+        System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
 
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
                 sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, DatasetAid.globalCMTIDSet(workPath));
 
-        if (usePSV == false && useSH == false) {
-            System.err.println("Both usePSV and useSH are false; nothing to do.");
-            return;
-        }
-        if (usePSV == true && (psvSPCs = collectSPCs(SPCMode.PSV, psvPath)).isEmpty()) {
-            throw new FileNotFoundException("No PSV spectrum files are found.");
-        }
-        if (useSH == true && (shSPCs = collectSPCs(SPCMode.SH, shPath)).isEmpty()) {
+        if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV && (shSPCs = collectSPCsFromAllEvents(SPCMode.SH, shPath)).isEmpty()) {
             throw new FileNotFoundException("No SH spectrum files are found.");
         }
-        if (usePSV == true && useSH == true && psvSPCs.size() != shSPCs.size()) {
+        if (usableSPCMode != SpcFileAid.UsableSPCMode.SH && (psvSPCs = collectSPCsFromAllEvents(SPCMode.PSV, psvPath)).isEmpty()) {
+            throw new FileNotFoundException("No PSV spectrum files are found.");
+        }
+        if (usableSPCMode == SpcFileAid.UsableSPCMode.BOTH && psvSPCs.size() != shSPCs.size()) {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
@@ -252,29 +247,31 @@ public final class SPC_SAC extends Operation {
 
         int nSAC = 0;
         // single
-        if (usePSV == false || useSH == false) for (SPCFileName spc : (usePSV == true ? psvSPCs : shSPCs)) {
-            SPCFile one = SPCFile.getInstance(spc);
-            // create event folder under outPath
-            Files.createDirectories(outPath.resolve(spc.getSourceID()));
-            // operate method createSACMaker() -> instance of an anonymous inner class is returned
-            // -> executes the run() of that class defined in createSACMaker()
-            es.execute(createSACMaker(one, null));
-            nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " files");
+        if (usableSPCMode != SpcFileAid.UsableSPCMode.BOTH) {
+            for (SPCFileName spc : (usableSPCMode == SpcFileAid.UsableSPCMode.SH ? shSPCs : psvSPCs)) {
+                SPCFile spcFile = SPCFile.getInstance(spc);
+                // create event folder under outPath
+                Files.createDirectories(outPath.resolve(spc.getSourceID()));
+                // operate method createSACMaker() -> instance of an anonymous inner class is returned
+                // -> executes the run() of that class defined in createSACMaker()
+                es.execute(createSACMaker(spcFile, null));
+                nSAC++;
+                if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " files");
+            }
         }
         // both
-        else for (SPCFileName spc : psvSPCs) {
-            SPCFile one = SPCFile.getInstance(spc);
-            SPCFileName pair = pairFile(spc);
-            if (pair == null || !pair.exists()) {
-                throw new NoSuchFileException(pair + " does not exist");
+        else for (SPCFileName shSPC : shSPCs) {
+            SPCFileName psvSPC = pairPSVFile(shSPC);
+            if (psvSPC == null || !psvSPC.exists()) {
+                throw new NoSuchFileException(psvSPC + " does not exist");
             }
-            SPCFile two = SPCFile.getInstance(pairFile(spc));
+            SPCFile shFile = SPCFile.getInstance(shSPC);
+            SPCFile psvFile = SPCFile.getInstance(psvSPC);
             // create event folder under outPath
-            Files.createDirectories(outPath.resolve(spc.getSourceID()));
+            Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
             // operate method createSACMaker() -> instance of an anonymous inner class is returned
             // -> executes the run() of that class defined in createSACMaker()
-            es.execute(createSACMaker(one, two));
+            es.execute(createSACMaker(shFile, psvFile));
             nSAC++;
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
@@ -289,17 +286,17 @@ public final class SPC_SAC extends Operation {
     }
 
     /**
-     * creates {@link SACMaker} from two SPC files(sh, psv)
+     * Creates {@link SACMaker} from two SPC files (sh, psv).
      *
-     * @param primeSPC     spectrum file for SAC
-     * @param secondarySPC null is ok
-     * @return {@link SACMaker}
+     * @param primarySPC ({@link SPCFile}) First spectrum file for SAC.
+     * @param secondarySPC ({@link SPCFile}) Second spectrum file for SAC. null is OK.
+     * @return ({@link SACMaker})
      */
-    private SACMaker createSACMaker(SPCFile primeSPC, SPCFile secondarySPC) {
-        SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
-                new GlobalCMTID(primeSPC.getSourceID()));
+    private SACMaker createSACMaker(SPCFile primarySPC, SPCFile secondarySPC) {
+        SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primarySPC.np(), primarySPC.tlen(), samplingHz,
+                new GlobalCMTID(primarySPC.getSourceID()));
         // create instance of an anonymous inner class extending SACMaker with the following run() function
-        SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {
+        SACMaker sm = new SACMaker(primarySPC, secondarySPC, sourceTimeFunction) {
             @Override
             public void run() {
                 // execute run() in SACMaker
@@ -310,11 +307,11 @@ public final class SPC_SAC extends Operation {
         sm.setComponents(components);
         sm.setTemporalDifferentiation(computeTimePartial);
         sm.setAsObserved(computeAsObserved);
-        sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
+        sm.setOutPath(outPath.resolve(primarySPC.getSourceID()));
         return sm;
     }
 
-    private Set<SPCFileName> collectSPCs(SPCMode mode, Path inPath) throws IOException {
+    private Set<SPCFileName> collectSPCsFromAllEvents(SPCMode mode, Path inPath) throws IOException {
         Set<SPCFileName> spcSet = new HashSet<>();
         Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(inPath);
         for (EventFolder eventFolder : eventFolderSet) {
@@ -325,10 +322,10 @@ public final class SPC_SAC extends Operation {
         return spcSet;
     }
 
-    private FormattedSPCFileName pairFile(SPCFileName psvFileName) {
-        if (psvFileName.getMode() == SPCMode.SH) return null;
-        return new FormattedSPCFileName(shPath.resolve(psvFileName.getSourceID()).resolve(modelName)
-                .resolve(psvFileName.pairFileName()));
+    private FormattedSPCFileName pairPSVFile(SPCFileName shFileName) {
+        if (shFileName.getMode() != SPCMode.SH) return null;
+        return new FormattedSPCFileName(psvPath.resolve(shFileName.getSourceID()).resolve(modelName)
+                .resolve(shFileName.pairFileName()));
     }
 
 }

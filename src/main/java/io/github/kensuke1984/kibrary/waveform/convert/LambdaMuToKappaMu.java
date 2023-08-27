@@ -34,8 +34,8 @@ public class LambdaMuToKappaMu {
 		
 		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
-		List<PartialID> partialsLambda = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.LAMBDA)).collect(Collectors.toList());
-		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU)).collect(Collectors.toList());
+		List<PartialID> partialsLambda = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.LAMBDA3D)).collect(Collectors.toList());
+		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU3D)).collect(Collectors.toList());
 		
 //		final List<PartialID> partialsLambda = partialsLambdaTMP.stream().parallel().filter(p -> p.getGlobalCMTID().equals(new GlobalCMTID("031704A"))).collect(Collectors.toList());
 //		final List<PartialID> partialsMU = partialsMUTMP.stream().parallel().filter(p -> p.getGlobalCMTID().equals(new GlobalCMTID("031704A"))).collect(Collectors.toList());
@@ -119,12 +119,12 @@ public class LambdaMuToKappaMu {
 				PartialID parMuPrime = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 						partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 						partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolved(), partialLambda.getVoxelPosition()
-						, PartialType.MU, muPrimeData);
+						, PartialType.MU3D, muPrimeData);
 				
 				PartialID parKappa = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 						partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 						partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolved(), partialLambda.getVoxelPosition()
-						, PartialType.KAPPA, lambdaData);
+						, PartialType.KAPPA3D, lambdaData);
 				
 				partialsMUPrime.add(parMuPrime);
 				partialsKappa.add(parKappa);

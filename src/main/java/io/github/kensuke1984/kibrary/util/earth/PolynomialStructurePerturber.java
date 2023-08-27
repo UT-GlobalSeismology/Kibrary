@@ -111,13 +111,8 @@ public class PolynomialStructurePerturber extends Operation {
 
    @Override
    public void run() throws IOException {
-       // set structure to use
-       PolynomialStructure structure = null;
-       if (structurePath != null) {
-           structure = PolynomialStructureFile.read(structurePath);
-       } else {
-           structure = PolynomialStructure.of(structureName);
-       }
+       // set structure
+       PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
        structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
 

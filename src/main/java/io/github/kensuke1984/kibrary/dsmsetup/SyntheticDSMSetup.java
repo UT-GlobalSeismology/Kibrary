@@ -6,35 +6,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
- * Operation that makes DSM input files to be used in tish and tipsv,
+ * Operation that generates DSM input files to be used in tish and tipsv,
  * and prepares the environment to run these programs.
  * DSM input files can be made either for existing observed dataset in event folders, for a data entry list file,
  * or for a virtual set of observers.
@@ -74,7 +66,7 @@ public class SyntheticDSMSetup extends Operation {
      */
     private String folderTag;
     /**
-     * Information file name is header_[psv,sh].inf (default:PREM)
+     * Information file name is header_[sh,psv].inf (default:PREM)
      */
     private String header;
     /**
@@ -83,15 +75,15 @@ public class SyntheticDSMSetup extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * The data entry list file
+     * Path of a data entry list file
      */
-    private Path entryPath;
+    private Path dataEntryPath;
     /**
      * The root folder containing event folders which have observed SAC files
      */
     private Path obsPath;
     /**
-     * Structure file to use instead of PREM
+     * Path of structure file to use instead of PREM
      */
     private Path structurePath;
     /**
@@ -146,12 +138,12 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
-            pw.println("#entryPath ");
+            pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
@@ -163,7 +155,7 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
-            pw.println("#mpi ");
+            pw.println("#mpi false");
             pw.println("##(boolean) If a virtual set of observers is to be created (false)");
             pw.println("#syntheticDataset ");
             pw.println("##Minimum epicentral distance of virtual observer, must be integer (1)");
@@ -182,12 +174,12 @@ public class SyntheticDSMSetup extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
-        header = property.parseString("header", "PREM").split("\\s+")[0];
+        header = property.parseStringSingle("header", "PREM");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        if (property.containsKey("entryPath")) {
-            entryPath = property.parsePath("entryPath", null, true, workPath);
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         } else {
             obsPath = property.parsePath("obsPath", ".", true, workPath);
         }
@@ -209,7 +201,6 @@ public class SyntheticDSMSetup extends Operation {
 
         // write additional info
         property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
-
     }
 
     /**
@@ -221,46 +212,11 @@ public class SyntheticDSMSetup extends Operation {
         String dateStr = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
-        Map<GlobalCMTID, Set<Observer>> rayMap = new HashMap<>();
+        Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
+        if (!DatasetAid.checkNum(arcMap.size(), "event", "events")) return;
 
-        if (entryPath != null) {
-            Map<GlobalCMTID, Set<DataEntry>> entryMap = DataEntryListFile.readAsMap(entryPath);
-            if (!DatasetAid.checkNum(entryMap.size(), "event", "events")) {
-                return;
-            }
-
-            for (GlobalCMTID event : entryMap.keySet()) {
-                Set<Observer> observers = entryMap.get(event).stream()
-                        .filter(entry -> components.contains(entry.getComponent()))
-                        .map(DataEntry::getObserver).collect(Collectors.toSet());
-                rayMap.put(event, observers);
-            }
-
-        } else if (obsPath != null){
-            Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
-            if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-                return;
-            }
-
-            for (EventFolder eventDir : eventDirs) {
-                Set<Observer> observers = eventDir.sacFileSet().stream()
-                        .filter(name -> name.isOBS() && components.contains(name.getComponent()))
-                        .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                        .map(Observer::of).collect(Collectors.toSet());
-                rayMap.put(eventDir.getGlobalCMTID(), observers);
-            }
-
-        } else {
-            throw new IllegalStateException("Either entryMap or obsPath must be specified.");
-        }
-
-        // set structure to use
-        PolynomialStructure structure = null;
-        if (structurePath != null) {
-            structure = PolynomialStructureFile.read(structurePath);
-        } else {
-            structure = PolynomialStructure.of(structureName);
-        }
+        // set structure
+        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -278,10 +234,15 @@ public class SyntheticDSMSetup extends Operation {
         }
 
         // output information files in each event folder
-        List<String> sourceList = new ArrayList<>();
-        for (GlobalCMTID event : rayMap.keySet()) {
+        // TreeSet is used here to sort sources in the sourceList file
+        Set<String> sourceTreeSet = new TreeSet<>();
+        for (GlobalCMTID event : arcMap.keySet()) {
             try {
-                Set<Observer> observers = rayMap.get(event);
+                if (event.getEventData() == null) {
+                    System.err.println(event + "is not in the catalog");
+                    continue;
+                }
+                Set<Observer> observers = arcMap.get(event);
                 if (syntheticDataset)
                     observers = synObserverSet;
                 if (observers.isEmpty())
@@ -290,21 +251,14 @@ public class SyntheticDSMSetup extends Operation {
                 // in the same event folder, observers with the same name should have same position
                 int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different position for "
-                            + event);
+                    System.err.println("!Caution there are observers with the same name and different position for " + event);
 
-                Path eventOut = outPath.resolve(event.toString());
-
-                if (event.getEventData() != null) {
-                    SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
-                    Files.createDirectories(eventOut.resolve(header));
-                    info.writePSV(eventOut.resolve(header + "_PSV.inf"));
-                    info.writeSH(eventOut.resolve(header + "_SH.inf"));
-                    sourceList.add(event.toString());
-                }
-                else {
-                    System.err.println(event + "is not in the catalog");
-                }
+                SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
+                Path outEventPath = outPath.resolve(event.toString());
+                Files.createDirectories(outEventPath.resolve(header));
+                info.writeSH(outEventPath.resolve(header + "_SH.inf"));
+                info.writePSV(outEventPath.resolve(header + "_PSV.inf"));
+                sourceTreeSet.add(event.toString());
             } catch (IOException e) {
                 // If there are any problems, move on to the next event.
                 System.err.println("Error on " + event);
@@ -314,13 +268,14 @@ public class SyntheticDSMSetup extends Operation {
 
         // output shellscripts for execution of tipsv and tish
         String listFileName = "sourceList.txt";
-        Files.write(outPath.resolve(listFileName), sourceList);
-        DSMShellscript shell = new DSMShellscript(outPath, mpi, rayMap.size(), header);
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
+        Files.write(outPath.resolve(listFileName), sourceTreeSet);
+        DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
-        shell.write(SPCType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
-        shell.write(SPCType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
-        System.err.println("After this finishes, please run " + outPSVPath + " and " + outSHPath);
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
+        shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
+        shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 
 }

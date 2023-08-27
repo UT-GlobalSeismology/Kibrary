@@ -45,12 +45,12 @@ public class QMUPartialCorrelation {
 			for (int i = 0; i < unknowns.size(); i++) {
 				UnknownParameter iPar = unknowns.get(i);
 				double iloc = iPar.getPosition().getR();
-				if (!iPar.getPartialType().equals(PartialType.PAR2))
+				if (!iPar.getPartialType().equals(PartialType.MU1D))
 					continue;
 				for (int j = 0; j < unknowns.size(); j++) {
 					UnknownParameter jPar = unknowns.get(j);
 					double jloc = jPar.getPosition().getR();
-					if (jPar.getPartialType().equals(PartialType.PARQ)
+					if (jPar.getPartialType().equals(PartialType.Q1D)
 							&& iloc == jloc) {
 						double dot = ata.getEntry(i, j) / Math.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
 						double depth = iPar.getPosition().getR();

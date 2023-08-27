@@ -20,7 +20,6 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
@@ -68,12 +67,12 @@ public class CheckerboardMaker extends Operation {
      */
     private String structureName;
 
-    private List<VariableType> variableTypes;
+    private List<VariableType> perturbVariableTypes;
     private double[] percents;
     private boolean[] signFlips;
     private double[] suppressFlipLatitudes;
     private double[] suppressFlipLongitudes;
-    private List<PartialType> partialTypes;
+    private List<VariableType> outputVariableTypes;
 
     /**
      * @param args  none to create a property file <br>
@@ -101,7 +100,7 @@ public class CheckerboardMaker extends Operation {
             pw.println("##Name of a structure model you want to use (PREM)");
             pw.println("#structureName ");
             pw.println("##Variable types to perturb, listed using spaces, must be set.");
-            pw.println("#variableTypes ");
+            pw.println("#perturbVariableTypes ");
             pw.println("##(double) Percentage of perturbation, listed using spaces in the order of partialTypes, must be set.");
             pw.println("#percents ");
             pw.println("##(boolean) Whether to flip the sign, listed using spaces in the order of partialTypes, must be set.");
@@ -110,8 +109,8 @@ public class CheckerboardMaker extends Operation {
             pw.println("#suppressFlipLatitudes ");
             pw.println("##Longitudes to suppress sign flip, listed using spaces, if needed.");
             pw.println("#suppressFlipLongitudes ");
-            pw.println("##Partial types to set in model, listed using spaces, must be set.");
-            pw.println("#partialTypes ");
+            pw.println("##Variable types to set in model, listed using spaces, must be set.");
+            pw.println("#outputVariableTypes ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -132,13 +131,13 @@ public class CheckerboardMaker extends Operation {
             structureName = property.parseString("structureName", "PREM");
         }
 
-        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
+        perturbVariableTypes = Arrays.stream(property.parseStringArray("perturbVariableTypes", null)).map(VariableType::valueOf)
                 .collect(Collectors.toList());
         percents = property.parseDoubleArray("percents", null);
-        if (percents.length != variableTypes.size())
+        if (percents.length != perturbVariableTypes.size())
             throw new IllegalArgumentException("Number of percents does not match number of variableTypes.");
         signFlips = property.parseBooleanArray("signFlips", null);
-        if (signFlips.length != variableTypes.size())
+        if (signFlips.length != perturbVariableTypes.size())
             throw new IllegalArgumentException("Number of signFlips does not match number of variableTypes.");
 
         if (property.containsKey("suppressFlipLatitudes"))
@@ -146,7 +145,7 @@ public class CheckerboardMaker extends Operation {
         if (property.containsKey("suppressFlipLongitudes"))
             suppressFlipLongitudes = property.parseDoubleArray("suppressFlipLongitudes", null);
 
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
+        outputVariableTypes = Arrays.stream(property.parseStringArray("outputVariableTypes", null)).map(VariableType::valueOf)
                 .collect(Collectors.toList());
     }
 
@@ -154,12 +153,7 @@ public class CheckerboardMaker extends Operation {
     public void run() throws IOException {
 
         // set structure to use
-        PolynomialStructure initialStructure = null;
-        if (structurePath != null) {
-            initialStructure = PolynomialStructureFile.read(structurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(structureName);
-        }
+        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
@@ -188,10 +182,10 @@ public class CheckerboardMaker extends Operation {
                 // construct voxel
                 double volume = Earth.computeVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
-                for (int k = 0; k < variableTypes.size(); k++) {
+                for (int k = 0; k < perturbVariableTypes.size(); k++) {
                     // CAUTION: (numdiff % 2) can be either 1 or -1 !!
                     double percent = ((numDiff % 2 != 0) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
-                    voxel.setPercent(variableTypes.get(k), percent);
+                    voxel.setPercent(perturbVariableTypes.get(k), percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
@@ -203,18 +197,18 @@ public class CheckerboardMaker extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation list files.");
-        for (VariableType variable : variableTypes) {
-            Path paramPath = outPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
-            PerturbationListFile.writePercentForType(variable, model, paramPath);
+        for (VariableType perturbVariableType : perturbVariableTypes) {
+            Path paramPath = outPath.resolve(perturbVariableType.toString().toLowerCase() + "Percent.lst");
+            PerturbationListFile.writePercentForType(perturbVariableType, model, paramPath);
         }
 
         // set known parameters
         System.err.println("Setting checkerboard model parameters.");
         List<KnownParameter> knowns = new ArrayList<>();
-        for (PartialType partial : partialTypes) {
+        for (VariableType outputVariableType : outputVariableTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
-                UnknownParameter unknown = new Physical3DParameter(partial, voxel.getPosition(), voxel.getVolume());
-                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(VariableType.of(partial)));
+                UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getVolume());
+                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(outputVariableType));
                 knowns.add(known);
             }
         }

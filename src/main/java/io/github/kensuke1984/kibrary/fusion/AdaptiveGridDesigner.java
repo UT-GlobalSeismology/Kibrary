@@ -15,12 +15,12 @@ import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -33,6 +33,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * and designs an adaptive grid by fusing voxels with large correlation between their partial waveforms.
  *
  * TODO when A~B and B~C (A~C may or may not be true)
+ * TODO: only checked for 3D. May or may not work for 1D.
  *
  * @author otsuru
  * @since 2022/8/1
@@ -72,7 +73,7 @@ public class AdaptiveGridDesigner extends Operation {
     /**
      * Partial types of parameters to be fused
      */
-    private List<PartialType> partialTypes;
+    private List<VariableType> variableTypes;
 
     private WeightingType weightingType;
 
@@ -112,8 +113,8 @@ public class AdaptiveGridDesigner extends Operation {
             pw.println("##########Other settings.");
             pw.println("##Path of an unknown parameter list file, must be set and must match ata file if it is used");
             pw.println("#unknownParameterPath unknowns.lst");
-            pw.println("##Partial types of parameters to fuse. If not set, all partial types will be used.");
-            pw.println("#partialTypes ");
+            pw.println("##Variable types of parameters to fuse. If not set, all variable types will be used.");
+            pw.println("#variableTypes ");
             pw.println("##(double) Minimum value of correlation for a pair of voxels to be fused (0.8)");
             pw.println("#minCorrelation ");
             pw.println("##(double) Minimum value of amplitude ratio for a pair of voxels to be fused (0.9)");
@@ -141,8 +142,8 @@ public class AdaptiveGridDesigner extends Operation {
         }
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
-        if (property.containsKey("partialTypes"))
-            partialTypes = Arrays.stream(property.parseStringArray("partialTypes", null)).map(PartialType::valueOf)
+        if (property.containsKey("variableTypes"))
+            variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
                     .collect(Collectors.toList());
         weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
         minCorrelation = property.parseDouble("minCorrelation", "0.8");
@@ -182,12 +183,12 @@ public class AdaptiveGridDesigner extends Operation {
             GadgetAid.dualPrintln(pw, "# i j AtA(i,i) AtA(i,j) coeff");
 
             for (int i = 0; i < parameterList.size(); i++) {
-                if (partialTypes != null && partialTypes.contains(parameterList.get(i).getPartialType()) == false)
+                if (variableTypes != null && variableTypes.contains(parameterList.get(i).getVariableType()) == false)
                     continue;
 
                 for (int j = 0; j < parameterList.size(); j++) {
                     if (i == j) continue;
-                    if (!parameterList.get(i).getPartialType().equals(parameterList.get(j).getPartialType()))
+                    if (!parameterList.get(i).getVariableType().equals(parameterList.get(j).getVariableType()))
                         continue;
 
                     double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
