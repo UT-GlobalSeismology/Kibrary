@@ -1,35 +1,53 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
-import org.apache.commons.math3.linear.*;
-
-import java.util.Arrays;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 
 /**
  * Least squares method.
  * <p>
- * m = (<b>A</b><sup>T</sup><b>A</b>+&lambda;<b>I</b>)<sup>-1</sup><b>A</b>
- * <sup>T</sup>d
+ * The (typical) regularized least squares problem can be written as
+ *  (<b>A</b><sup>T</sup><b>A</b> + &lambda;<b>I</b>) m = <b>A</b><sup>T</sup>d . <br>
+ * In this case,
+ *  |d-<b>A</b>m|<sup>2</sup> + &lambda;|m|<sup>2</sup> is minimized.<br>
+ * The answer is
+ *  m = (<b>A</b><sup>T</sup><b>A</b> + &lambda;<b>I</b>)<sup>-1</sup> <b>A</b><sup>T</sup>d .
+ * <p>
+ * By setting the matrix <b>T</b>, Tikhonov regularization can be applied. This makes <b>T</b>m get close to 0.<br>
+ * In this case,
+ *  |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m|<sup>2</sup> is minimized.<br>
+ * The answer is
+ *  m = (<b>A</b><sup>T</sup><b>A</b> + &lambda;<b>T</b><sup>T</sup><b>T</b>)<sup>-1</sup> <b>A</b><sup>T</sup>d
+ * <p>
+ * By setting an additional vector &eta;, we can make <b>T</b>m+&eta; get close to 0. <br>
+ * In this case,
+ *  |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m+&eta;|<sup>2</sup> is minimized.<br>
+ * The answer is
+ *  m = (<b>A</b><sup>T</sup><b>A</b> + &lambda;<b>T</b><sup>T</sup><b>T</b>)<sup>-1</sup>
+ *   (<b>A</b><sup>T</sup>d - &lambda;<b>T</b><sup>T</sup>&eta;)
  *
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @since version 0.1.0
  */
 public class LeastSquaresMethod extends InverseProblem {
 
     /**
-     * &lambda; <b>T</b> + <b>&eta;</b> = <b>0</b>
+     * &lambda; : reguralization parameter.
      */
-    private final double LAMBDA;
-    private final double MU;
+    private final double lambda;
 
     /**
-     * &lambda; <b>T</b> + <b>&eta;</b> = <b>0</b>
+     * <b>T</b> : matrix that allows for more complex regularization patterns in Tikhonov regularization.
      */
-    private RealMatrix T;
+    private RealMatrix t;
 
     /**
-     * &lambda; <b>T</b> + <b>&eta;</b> = <b>0</b>
+     * &eta; : vector value that <b>T</b>m should approach.
      */
-    private RealVector ETA;
+    private RealVector eta;
 
 
     public static void main(String[] args) {
@@ -52,40 +70,41 @@ public class LeastSquaresMethod extends InverseProblem {
     }
 
     /**
-     * Find m which gives minimum |d-Am|<sup>2</sup>.
+     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup>.
      *
-     * @param ata Matrix A<sup>T</sup>A
-     * @param atd Vector A<sup>T</sup>d
+     * @param ata (RealMatrix) A<sup>T</sup>A
+     * @param atd (RealVector) A<sup>T</sup>d
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd) {
         this(ata, atd, 0, null, null);
     }
 
     /**
-     * Find m which gives minimum |d-Am|<sup>2</sup> + &lambda;|m|<sup>2</sup>.
+     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|m|<sup>2</sup>.
      *
-     * @param ata    Matrix A<sup>T</sup>A
-     * @param atd    Vector A<sup>T</sup>d
-     * @param lambda &lambda; for the equation
+     * @param ata (RealMatrix) A<sup>T</sup>A
+     * @param atd (RealVector) A<sup>T</sup>d
+     * @param lambda (double) &lambda;
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda) {
         this(ata, atd, lambda, MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension()), null);
     }
 
     /**
-     * @param ata    A<sup>T</sup>A
-     * @param atd    A<sup>T</sup>d
-     * @param lambda &lambda;
-     * @param t      t
-     * @param eta    &eta;
+     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m+&eta;|<sup>2</sup>.
+     *
+     * @param ata (RealMatrix) A<sup>T</sup>A
+     * @param atd (RealVector) A<sup>T</sup>d
+     * @param lambda (double) &lambda;
+     * @param t (RealMatrix) T
+     * @param eta (RealVector) &eta;
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda, RealMatrix t, RealVector eta) {
         this.ata = ata;
         this.atd = atd;
-        LAMBDA = lambda;
-        MU = 0;
-        T = t;
-        ETA = eta;
+        this.lambda = lambda;
+        this.t = t;
+        this.eta = eta;
     }
 
 
@@ -104,10 +123,10 @@ public class LeastSquaresMethod extends InverseProblem {
     public void compute() {
         RealMatrix j = ata;
         RealVector k = atd;
-        if (0 < LAMBDA) {
-            RealMatrix tt = T.transpose();
-            j = j.add(tt.multiply(T).scalarMultiply(LAMBDA));
-            if (ETA != null) k = k.subtract(tt.operate(ETA).mapMultiply(LAMBDA));
+        if (0 < lambda) {
+            RealMatrix tt = t.transpose();
+            j = j.add(tt.multiply(t).scalarMultiply(lambda));
+            if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
         }
         ans = new Array2DRowRealMatrix(MatrixUtils.inverse(j).operate(k).toArray());
     }

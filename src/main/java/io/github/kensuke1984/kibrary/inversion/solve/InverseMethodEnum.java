@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.inversion.solve;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -85,6 +86,20 @@ public enum InverseMethodEnum {
     }
 
     public InverseProblem formProblem(RealMatrix ata, RealVector atd) {
+        int n = ata.getColumnDimension();
+        RealMatrix t = MatrixUtils.createRealIdentityMatrix(n);
+        for (int i = 0; i < n - 1; i++) {
+            t.addToEntry(i, i+1, -1);
+        }
+        t.multiplyEntry(n-1, n-1, 10);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                System.err.print(t.getEntry(i, j) + " ");
+            }
+            System.err.println();
+        }
+        RealVector eta = new ArrayRealVector(n);
+
         switch (this) {
         case SINGULAR_VALUE_DECOMPOSITION:
             return new SingularValueDecomposition(ata, atd);
@@ -100,6 +115,8 @@ public enum InverseMethodEnum {
             return new FastConjugateGradientMethod(ata, atd, true, conditioner); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
         case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
             return new BiConjugateGradientStabilizedMethod(ata, atd);
+        case LEAST_SQUARES_METHOD:
+            return new LeastSquaresMethod(ata, atd, 1, t, eta);
         default:
             throw new RuntimeException("soteigai");
         }

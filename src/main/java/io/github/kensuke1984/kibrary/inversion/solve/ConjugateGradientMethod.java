@@ -10,7 +10,7 @@ import org.apache.commons.math3.linear.RealVector;
  * Conjugate gradient method
  *
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @since version 0.0.3.2
  * @see <a href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>
  */
@@ -51,6 +51,7 @@ public class ConjugateGradientMethod extends InverseProblem {
         p = MatrixUtils.createRealMatrix(column, column);
         ans = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
+
         p.setColumnVector(0, atd.mapMultiply(-1));
         RealVector r = atd; // r_k = Atd -AtAm_k (A35)
 

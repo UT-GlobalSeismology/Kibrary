@@ -25,6 +25,10 @@ public abstract class InverseProblem {
         ans.setColumnVector(i - 1, v);
     }
 
+    private int getNAnswer() {
+        return ans.getColumnDimension();
+    }
+
     public RealMatrix getANS() {
         return ans;
     }
@@ -59,7 +63,7 @@ public abstract class InverseProblem {
 
         Files.createDirectories(outPath);
         System.err.println("Outputting the answer files in " + outPath);
-        for (int i = 0; i < getNParameter(); i++) {
+        for (int i = 0; i < getNAnswer(); i++) {
             Path outputPath = outPath.resolve(getEnum().simpleName() + (i+1) + ".lst");
             double[] m = ans.getColumn(i);
             KnownParameterFile.write(unknowns, m, outputPath);
