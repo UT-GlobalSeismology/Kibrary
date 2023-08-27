@@ -21,6 +21,18 @@ public abstract class InverseProblem {
     RealMatrix ata;
     RealVector atd;
 
+    public static InverseProblem create(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
+            double lambda_LS, RealMatrix t_LS, RealVector eta_LS) {
+        switch (inverseMethod) {
+        case CONJUGATE_GRADIENT:
+            return new ConjugateGradientMethod(ata, atd);
+        case LEAST_SQUARES_METHOD:
+            return new LeastSquaresMethod(ata, atd, lambda_LS, t_LS, eta_LS);
+        default:
+            return null;
+        }
+    }
+
     public void setANS(int i, RealVector v) {
         ans.setColumnVector(i - 1, v);
     }

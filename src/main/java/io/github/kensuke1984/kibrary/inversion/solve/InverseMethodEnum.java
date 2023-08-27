@@ -85,6 +85,7 @@ public enum InverseMethodEnum {
         }
     }
 
+    @Deprecated //moved to InverseProblem
     public InverseProblem formProblem(RealMatrix ata, RealVector atd) {
         int n = ata.getColumnDimension();
         RealMatrix t = MatrixUtils.createRealIdentityMatrix(n);
