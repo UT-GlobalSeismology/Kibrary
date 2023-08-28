@@ -11,6 +11,8 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
+import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
@@ -53,6 +55,8 @@ enum Brooklyn {
     DataEntryListFile(4, DataEntryListFile.class),
     EventListFile(5, EventListFile.class),
     ObserverListFile(6, ObserverListFile.class),
+    VectorFile(7, VectorFile.class),
+    MatrixFile(8, MatrixFile.class),
     ColorBinInformationFile(9, ColorBinInformationFile.class),
     // Data download 10
     GlobalCMTID(10, GlobalCMTID.class),

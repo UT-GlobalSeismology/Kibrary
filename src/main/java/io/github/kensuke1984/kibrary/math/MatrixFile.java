@@ -5,12 +5,19 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 
+import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
@@ -23,6 +30,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 public class MatrixFile {
 
     public static void write(RealMatrix matrix, Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Writing in " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             for (int i = 0; i < matrix.getRowDimension(); i++) {
                 String[] rowAsString = Arrays.stream(matrix.getRow(i)).mapToObj(String::valueOf).toArray(String[]::new);
@@ -32,6 +41,8 @@ public class MatrixFile {
     }
 
     public static RealMatrix read(Path inputPath) throws IOException {
+        System.err.println("Reading " + inputPath);
+
         // read input file
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         String[] lines = reader.getNonCommentLines();
@@ -50,4 +61,112 @@ public class MatrixFile {
 
         return matrix;
     }
+
+    /**
+     * Create template matrix file.
+     * @param args Options.
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // dimension
+        options.addOption(Option.builder("s").longOpt("squareDimension").hasArg().argName("squareDimension")
+                .desc("Dimension of square matrix.").build());
+        options.addOption(Option.builder("r").longOpt("rowDimension").hasArg().argName("rowDimension")
+                .desc("Row dimension of matrix.").build());
+        options.addOption(Option.builder("c").longOpt("columnDimension").hasArg().argName("columnDimension")
+                .desc("Column dimension of matrix.").build());
+
+        // components
+        options.addOption(Option.builder("d").longOpt("diagonal").hasArg().argName("diagonal")
+                .desc("Value to add to diagonal components.").build());
+        options.addOption(Option.builder("l").longOpt("lowerDiagonal").hasArg().argName("lowerDiagonal")
+                .desc("Value to add to lower diagonal components.").build());
+        options.addOption(Option.builder("u").longOpt("upperDiagonal").hasArg().argName("upperDiagonal")
+                .desc("Value to add to upper diagonal components.").build());
+        options.addOption(Option.builder("a").longOpt("all").hasArg().argName("all")
+                .desc("Value to add to all components.").build());
+
+        // output
+        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
+                .desc("Set path of output file").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+
+        // decide matrix dimension
+        int rowDimension, columnDimension;
+        if (cmdLine.hasOption("s")) {
+            rowDimension = columnDimension = Integer.parseInt(cmdLine.getOptionValue("s"));
+        } else if (cmdLine.hasOption("r") && cmdLine.hasOption("c")) {
+            rowDimension = Integer.parseInt(cmdLine.getOptionValue("r"));
+            columnDimension = Integer.parseInt(cmdLine.getOptionValue("c"));
+        } else {
+            throw new IllegalArgumentException("Either -s, or both -r and -c, is needed.");
+        }
+
+        // construct zero-matrix
+        RealMatrix matrix = new Array2DRowRealMatrix(rowDimension, columnDimension);
+
+        // diagonal components
+        if (cmdLine.hasOption("d")) {
+            double value = Double.parseDouble(cmdLine.getOptionValue("d"));
+            int n = Math.min(rowDimension, columnDimension);
+            for (int i = 0; i < n; i++) {
+                matrix.addToEntry(i, i, value);
+            }
+        }
+        // lower diagonal components
+        if (cmdLine.hasOption("l")) {
+            double value = Double.parseDouble(cmdLine.getOptionValue("l"));
+            int n = (rowDimension <= columnDimension) ? rowDimension - 1 : columnDimension;
+            for (int i = 0; i < n; i++) {
+                matrix.addToEntry(i + 1, i, value);
+            }
+        }
+        // upper diagonal components
+        if (cmdLine.hasOption("u")) {
+            double value = Double.parseDouble(cmdLine.getOptionValue("u"));
+            int n = (columnDimension <= rowDimension) ? columnDimension - 1 : rowDimension;
+            for (int i = 0; i < n; i++) {
+                matrix.addToEntry(i, i + 1, value);
+            }
+        }
+        // all components
+        if (cmdLine.hasOption("a")) {
+            double value = Double.parseDouble(cmdLine.getOptionValue("a"));
+            for (int i = 0; i < rowDimension; i++) {
+                for (int j = 0; j < columnDimension; j++) {
+                    matrix.addToEntry(i, j, value);
+                }
+            }
+        }
+
+        // output
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
+                : Paths.get("matrix" + GadgetAid.getTemporaryString() + ".lst");
+        write(matrix, outputPath);
+    }
+
 }
