@@ -66,7 +66,7 @@ public class InversionSolver extends Operation {
     private double lambda_LS;
     private Path tMatrixPath_LS;
     private Path etaVectorPath_LS;
-
+    private Path m0VectorPath_CG;
 
     /**
      * @param args  none to create a property file <br>
@@ -93,7 +93,7 @@ public class InversionSolver extends Operation {
             pw.println("#dInfoPath ");
             pw.println("##Path of an unknown parameter list file. (unknowns.lst)");
             pw.println("#unknownParameterPath ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
             pw.println("#alpha ");
@@ -106,6 +106,9 @@ public class InversionSolver extends Operation {
             pw.println("#tMatrixPath_LS ");
             pw.println("##(Path) Path of vector that Tm should approach, when needed.");
             pw.println("#etaVectorPath_LS ");
+            pw.println("##########Settings for Conjugate Gradient method.");
+            pw.println("##(Path) Path of initial vector m_0, when needed.");
+            pw.println("#m0VectorPath_CG ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -133,6 +136,8 @@ public class InversionSolver extends Operation {
             tMatrixPath_LS = property.parsePath("tMatrixPath_LS", null, true, workPath);
         if (property.containsKey("etaVectorPath_LS"))
             etaVectorPath_LS = property.parsePath("etaVectorPath_LS", null, true, workPath);
+        if (property.containsKey("m0VectorPath_CG"))
+            m0VectorPath_CG = property.parsePath("m0VectorPath_CG", null, true, workPath);
     }
 
     @Override
@@ -145,6 +150,7 @@ public class InversionSolver extends Operation {
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
         RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
+        RealVector m0Vector_CG = (m0VectorPath_CG != null) ? VectorFile.read(m0VectorPath_CG) : null;
 
         // solve inversion and evaluate
         ResultEvaluation evaluation = new ResultEvaluation(ata, atd, (int) dInfo[0], dInfo[1], dInfo[2]);
@@ -152,7 +158,7 @@ public class InversionSolver extends Operation {
             Path outMethodPath = workPath.resolve(method.simpleName());
 
             // solve problem
-            InverseProblem inverseProblem = InverseProblem.create(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS);
+            InverseProblem inverseProblem = InverseProblem.create(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
             inverseProblem.compute();
             inverseProblem.outputAnswers(unknowns, outMethodPath);
 

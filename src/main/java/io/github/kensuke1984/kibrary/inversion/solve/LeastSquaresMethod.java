@@ -41,12 +41,12 @@ public class LeastSquaresMethod extends InverseProblem {
     /**
      * <b>T</b> : matrix that allows for more complex regularization patterns in Tikhonov regularization.
      */
-    private RealMatrix t;
+    private final RealMatrix t;
 
     /**
      * &eta; : vector value that <b>T</b>m should approach.
      */
-    private RealVector eta;
+    private final RealVector eta;
 
 
     /**
@@ -65,8 +65,8 @@ public class LeastSquaresMethod extends InverseProblem {
      * @param ata (RealMatrix) A<sup>T</sup>A
      * @param atd (RealVector) A<sup>T</sup>d
      * @param lambda (double) &lambda;
-     * @param t (RealMatrix) T
-     * @param eta (RealVector) &eta;
+     * @param t (RealMatrix) T. When null, identity matrix is used.
+     * @param eta (RealVector) &eta;. When null, it will not be used.
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda, RealMatrix t, RealVector eta) {
         if (t != null && t.getColumnDimension() != ata.getColumnDimension())
@@ -76,7 +76,8 @@ public class LeastSquaresMethod extends InverseProblem {
         this.ata = ata;
         this.atd = atd;
         this.lambda = lambda;
-        this.t = t;
+        // when T is not set, set it as identity
+        this.t = (t != null) ? t : MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
         this.eta = eta;
     }
 
@@ -85,8 +86,6 @@ public class LeastSquaresMethod extends InverseProblem {
         RealMatrix j = ata;
         RealVector k = atd;
         if (0 < lambda) {
-            // when T is not set, set it as identity
-            if (t == null) t = MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
             RealMatrix tt = t.transpose();
             // At A + lambda Tt T
             j = j.add(tt.multiply(t).scalarMultiply(lambda));
@@ -109,7 +108,7 @@ public class LeastSquaresMethod extends InverseProblem {
 
     @Override
     InverseMethodEnum getEnum() {
-        return InverseMethodEnum.LEAST_SQUARES_METHOD;
+        return InverseMethodEnum.LEAST_SQUARES;
     }
 
 }

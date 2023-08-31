@@ -23,7 +23,7 @@ public abstract class InverseProblem {
     RealVector atd;
 
     public static InverseProblem create(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
-            double lambda_LS, RealMatrix t_LS, RealVector eta_LS) {
+            double lambda_LS, RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
         if (!ata.isSquare()) throw new IllegalArgumentException("AtA must be square.");
         if (ata.getRowDimension() != atd.getDimension()) throw new IllegalArgumentException("Dimension of AtA and Atd do not match.");
 
@@ -31,8 +31,8 @@ public abstract class InverseProblem {
 
         switch (inverseMethod) {
         case CONJUGATE_GRADIENT:
-            return new ConjugateGradientMethod(ata, atd);
-        case LEAST_SQUARES_METHOD:
+            return new ConjugateGradientMethod(ata, atd, m0_CG);
+        case LEAST_SQUARES:
             return new LeastSquaresMethod(ata, atd, lambda_LS, t_LS, eta_LS);
 
         //-----------------------

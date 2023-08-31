@@ -17,14 +17,17 @@ import org.apache.commons.math3.linear.RealVector;
 public class ConjugateGradientMethod extends InverseProblem {
 
     /**
-     * m = ai*pi
+     * Alpha = (alpha1, alpha2, ...)
      */
-    private RealVector a;
-
+    private final RealVector alpha;
     /**
-     * P = (p1, p2,....)
+     * P = (p1, p2, ....)
      */
-    private RealMatrix p;
+    private final RealMatrix p;
+    /**
+     * m_0
+     */
+    private final RealVector m0;
 
     /**
      * AtAδm= AtD を解く
@@ -33,50 +36,60 @@ public class ConjugateGradientMethod extends InverseProblem {
      * @param atd AtD
      */
     public ConjugateGradientMethod(RealMatrix ata, RealVector atd) {
-        this.ata = ata;
-        this.atd = atd;
-        int column = ata.getColumnDimension();
-        p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
-        a = new ArrayRealVector(column);
+        this(ata, atd, null);
     }
 
     /**
-     * AtdをスタートにCGを解いていく CG法による答え i列目にi番目でのCGベクトルを用いた解(0:cg1...)
+     * Set up CG method to find m.
+     * @param ata (RealMatrix) A<sup>T</sup>A
+     * @param atd (RealVector) A<sup>T</sup>d
+     * @param m0 (RealVector) Initial vector m<sub>0</sub>
+     */
+    public ConjugateGradientMethod(RealMatrix ata, RealVector atd, RealVector m0) {
+        this.ata = ata;
+        this.atd = atd;
+        int column = ata.getColumnDimension();
+        // when initialVector is not set, set it as zero-vector
+        this.m0 = (m0 != null) ? m0 : new ArrayRealVector(column);
+        p = MatrixUtils.createRealMatrix(column, column);
+        ans = MatrixUtils.createRealMatrix(column, column);
+        alpha = new ArrayRealVector(column);
+    }
+
+    /**
+     * Compute using CG method.
+     * The i-th answer is stored in the (i-1)th column of {@link InverseProblem#ans} (0:CG1 , 1:CG2 , ...).
      */
     @Override
     public void compute() {
         System.err.println("Solving by CG method.");
-        int column = ata.getColumnDimension();
-        p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
-        a = new ArrayRealVector(column);
 
-        p.setColumnVector(0, atd.mapMultiply(-1));
-        RealVector r = atd; // r_k = Atd -AtAm_k (A35)
+        // r_0 = Atd - AtA m_0 (A35)
+        RealVector r = atd.subtract(ata.operate(m0));
+        // p_0 = r_0
+        p.setColumnVector(0, r);
 
+        // remember AtA p
         RealVector atap = ata.operate(p.getColumnVector(0));
+        // alpha = r p / p AtA p
+        alpha.setEntry(0, p.getColumnVector(0).dotProduct(r) / p.getColumnVector(0).dotProduct(atap));
+        // m_1 = m_0 + alpha p
+        ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)).add(m0));
 
-        a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
-
-        ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
-
-        // ///////
         for (int i = 1; i < ata.getColumnDimension(); i++) {
-            r = r.subtract(atap.mapMultiply(a.getEntry(i - 1)));
+            // r_{k+1} = r_k - alpha AtA p
+            r = r.subtract(atap.mapMultiply(alpha.getEntry(i - 1)));
+            // beta = - r AtA p / p AtA p
+            double b = - r.dotProduct(atap) / p.getColumnVector(i - 1).dotProduct(atap);
+            // p_{k+1} = r + beta p
+            p.setColumnVector(i, r.add(p.getColumnVector(i - 1).mapMultiply(b)));
 
-            double atapr = atap.dotProduct(r); // p AtA r
-            double patap = p.getColumnVector(i - 1).dotProduct(atap); // ptatap
-            double b = atapr / patap; // (A36)
-            p.setColumnVector(i, r.subtract(p.getColumnVector(i - 1).mapMultiply(b)));
-
+            // remember new AtA p
             atap = ata.operate(p.getColumnVector(i));
-            double paap = p.getColumnVector(i).dotProduct(atap);
-            double rp = r.dotProduct(p.getColumnVector(i));
-
-            a.setEntry(i, rp / paap);
-
-            ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(a.getEntry(i)).add(ans.getColumnVector(i - 1)));
+            // alpha = r p / p AtA p
+            alpha.setEntry(i, p.getColumnVector(i).dotProduct(r) / p.getColumnVector(i).dotProduct(atap));
+            // m_{k+1} = m_k + alpha p
+            ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(alpha.getEntry(i)).add(ans.getColumnVector(i - 1)));
         }
     }
 

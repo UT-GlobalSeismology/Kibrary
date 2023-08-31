@@ -7,7 +7,7 @@ package io.github.kensuke1984.kibrary.inversion.solve;
  * @since version 0.0.3
  */
 public enum InverseMethodEnum {
-    SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD,
+    SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES,
     NON_NEGATIVE_LEAST_SQUARES_METHOD, BICONJUGATE_GRADIENT_STABILIZED_METHOD,
     FAST_CONJUGATE_GRADIENT, FAST_CONJUGATE_GRADIENT_DAMPED, NONLINEAR_CONJUGATE_GRADIENT,
     CONSTRAINED_CONJUGATE_GRADIENT;
@@ -18,8 +18,8 @@ public enum InverseMethodEnum {
             return SINGULAR_VALUE_DECOMPOSITION;
         case "CG":
             return CONJUGATE_GRADIENT;
-        case "LSM":
-            return LEAST_SQUARES_METHOD;
+        case "LS":
+            return LEAST_SQUARES;
         case "NNLS":
             return NON_NEGATIVE_LEAST_SQUARES_METHOD;
         case "BCGS":
@@ -43,8 +43,8 @@ public enum InverseMethodEnum {
             return "SVD";
         case CONJUGATE_GRADIENT:
             return "CG";
-        case LEAST_SQUARES_METHOD:
-            return "LSM";
+        case LEAST_SQUARES:
+            return "LS";
         case NON_NEGATIVE_LEAST_SQUARES_METHOD:
             return "NNLS";
         case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
