@@ -237,12 +237,9 @@ public final class SPC_SAC extends Operation {
 
     @Override
     public void run() throws IOException {
-<<<<<<< HEAD
         if (timeStamp) dateStr = GadgetAid.getTemporaryString();
         else dateStr = null;
 
-=======
->>>>>>> 05bb397f4f6cd345ed80f97106a70a8f8a843391
         System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
 
