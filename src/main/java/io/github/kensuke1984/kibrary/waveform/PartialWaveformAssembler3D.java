@@ -737,10 +737,8 @@ public class PartialWaveformAssembler3D extends Operation {
             double[] cutPartial = new double[iEnd - iStart];
             // if cutstart < 0 (i.e. before event time), zero-pad the beginning part
             Arrays.parallelSetAll(cutPartial, i -> (i + iStart < 0 ? 0 : partial[i + iStart]));
-
             // filter
             double[] filteredPartial = filter.applyFilter(cutPartial);
-
             // cut and resample in timewindow
             double[] xs = IntStream.range(0, iEnd - iStart).mapToDouble(i -> (i + iStart) / partialSamplingHz).toArray();
             Trace filteredTrace = new Trace(xs, filteredPartial);
