@@ -26,7 +26,6 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
-import io.github.kensuke1984.kibrary.inversion.addons.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.addons.Sensitivity;
 import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
@@ -71,7 +70,7 @@ public class ObservationEquation_old {
     private RealVector cmAtd;
     private ModelCovarianceMatrix cm;
     private List<Double> unknownParameterWeigths;
-    private ParameterMapping mapping;
+//    private ParameterMapping mapping;
 
     private double mul;
     private RealVector m;
@@ -109,7 +108,7 @@ public class ObservationEquation_old {
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
             , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath) {
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
             System.out.println("Using vertical mapping " + verticalMappingPath);
         }
@@ -147,7 +146,7 @@ public class ObservationEquation_old {
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
             , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath, boolean computeAtA) {
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
             System.out.println("Using vertical mapping " + verticalMappingPath);
         }
@@ -188,7 +187,7 @@ public class ObservationEquation_old {
             , Path verticalMappingPath) {
         CombinationType combinationType = null;
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             System.out.println("Using vertical mapping " + verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
         }
@@ -251,7 +250,7 @@ public class ObservationEquation_old {
             , double cm0, double cmH, double cmV, Path verticalMappingPath, boolean computeAtA) {
         CombinationType combinationType = null;
         if (verticalMappingPath != null) {
-            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+//            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             System.out.println("Using vertical mapping " + verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
         }
@@ -449,7 +448,7 @@ public class ObservationEquation_old {
             int k = DVECTOR.whichTimewindow(id);
             if (k < 0) return;
             int row = DVECTOR.getStartPoints(k);
-            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getWeighting();
+            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getSize();
             double[] partial = id.getData();
             for (int j = 0; j < partial.length; j++)
                 a.setEntry(row + j, column, partial[j] * weighting);
@@ -515,7 +514,7 @@ public class ObservationEquation_old {
                 return;
             }
             int row = DVECTOR.getStartPoints(k);
-            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getWeighting();
+            double weighting = DVECTOR.getWeighting(k) * PARAMETER_LIST.get(column).getSize();
 //			if (unknownParameterWeightType != null && unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT))
 //				weighting = 1.;
             weighting = DVECTOR.getWeighting(k); // TO CHANGE
@@ -523,7 +522,7 @@ public class ObservationEquation_old {
             RealVector weightingVector = DVECTOR.getWeightingVector(k);
 
             //only for 1D!!! TO CHANGE
-            weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getWeighting());
+            weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getSize());
 
             double[] partial = id.getData();
 
@@ -588,8 +587,8 @@ public class ObservationEquation_old {
         }
 
         //normalize PARQ
-        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count() > 0
-                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PAR2)).count() > 0) {
+        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.Q1D)).count() > 0
+                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.MU1D)).count() > 0) {
             double empiricalFactor = 1.5;
             meanAColumnNorm = 0;
             double meanAQNorm = 0;
@@ -598,11 +597,11 @@ public class ObservationEquation_old {
             for (int j = 0; j < a.getColumnDimension(); j++) {
                 if (PARAMETER_LIST.get(j).getPartialType().isTimePartial())
                     continue;
-                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARQ)) {
+                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.Q1D)) {
                     meanAQNorm += a.getColumnVector(j).getNorm();
                     ntmpQ++;
                 }
-                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR2)){
+                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.MU1D)){
                     meanAColumnNorm += a.getColumnVector(j).getNorm();
                     ntmp++;
                 }
@@ -611,7 +610,7 @@ public class ObservationEquation_old {
             meanAQNorm /= ntmpQ;
             if (ntmpQ > 0) {
                 for (int j = 0; j < a.getColumnDimension(); j++) {
-                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARQ))
+                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.Q1D))
                         continue;
                     if (ntmp == 0 || ntmpQ == 0)
                         continue;
@@ -621,8 +620,8 @@ public class ObservationEquation_old {
             }
         }
 
-        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count() > 0
-                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
+        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.Q1D)).count() > 0
+                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.VS1D)).count() > 0) {
             double empiricalFactor = 1.5;
             meanAColumnNorm = 0;
             double meanAQNorm = 0;
@@ -631,11 +630,11 @@ public class ObservationEquation_old {
             for (int j = 0; j < a.getColumnDimension(); j++) {
                 if (PARAMETER_LIST.get(j).getPartialType().isTimePartial())
                     continue;
-                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARQ)) {
+                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.Q1D)) {
                     meanAQNorm += a.getColumnVector(j).getNorm();
                     ntmpQ++;
                 }
-                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARVS)){
+                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.VS1D)){
                     meanAColumnNorm += a.getColumnVector(j).getNorm();
                     ntmp++;
                 }
@@ -644,7 +643,7 @@ public class ObservationEquation_old {
 //			meanAQNorm /= ntmpQ;
             if (ntmpQ > 0) {
                 for (int j = 0; j < a.getColumnDimension(); j++) {
-                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARQ))
+                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.Q1D))
                         continue;
                     if (ntmp == 0 || ntmpQ == 0)
                         continue;
@@ -657,38 +656,38 @@ public class ObservationEquation_old {
         }
 
         //normalize PAR00
-        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count() > 0
-                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
-            double empiricalFactor = 1.;
-            meanAColumnNorm = 0;
-            double meanAQNorm = 0;
-            ntmp = 0;
-            int ntmpQ = 0;
-            for (int j = 0; j < a.getColumnDimension(); j++) {
-                if (PARAMETER_LIST.get(j).getPartialType().isTimePartial())
-                    continue;
-                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00)) {
-                    meanAQNorm += a.getColumnVector(j).getNorm();
-                    ntmpQ++;
-                }
-                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARVS)){
-                    meanAColumnNorm += a.getColumnVector(j).getNorm();
-                    ntmp++;
-                }
-            }
-            meanAColumnNorm /= ntmp;
-            meanAQNorm /= ntmpQ;
-            if (ntmpQ > 0) {
-                for (int j = 0; j < a.getColumnDimension(); j++) {
-                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00))
-                        continue;
-                    if (ntmp == 0 || ntmpQ == 0)
-                        continue;
-                    a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
-                }
-                System.out.println("PARVS / PAR00 = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
-            }
-        }
+//        if (PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count() > 0
+//                && PARAMETER_LIST.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
+//            double empiricalFactor = 1.;
+//            meanAColumnNorm = 0;
+//            double meanAQNorm = 0;
+//            ntmp = 0;
+//            int ntmpQ = 0;
+//            for (int j = 0; j < a.getColumnDimension(); j++) {
+//                if (PARAMETER_LIST.get(j).getPartialType().isTimePartial())
+//                    continue;
+//                if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00)) {
+//                    meanAQNorm += a.getColumnVector(j).getNorm();
+//                    ntmpQ++;
+//                }
+//                else if (PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PARVS)){
+//                    meanAColumnNorm += a.getColumnVector(j).getNorm();
+//                    ntmp++;
+//                }
+//            }
+//            meanAColumnNorm /= ntmp;
+//            meanAQNorm /= ntmpQ;
+//            if (ntmpQ > 0) {
+//                for (int j = 0; j < a.getColumnDimension(); j++) {
+//                    if (!PARAMETER_LIST.get(j).getPartialType().equals(PartialType.PAR00))
+//                        continue;
+//                    if (ntmp == 0 || ntmpQ == 0)
+//                        continue;
+//                    a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+//                }
+//                System.out.println("PARVS / PAR00 = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+//            }
+//        }
     }
 
     /**
@@ -766,41 +765,38 @@ public class ObservationEquation_old {
                 bouncingOrders.add(1);
                 Collections.sort(bouncingOrders);
                 int lowestBouncingOrder = bouncingOrders.get(0);
-                if (station.equals( ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getStation() ) &&
+                if (station.equals( ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getObserver() ) &&
                         ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getBouncingOrder() == lowestBouncingOrder)
                     return i;
                 break;
-            case PARA:
-            case PARC:
-            case PARF:
-            case PARL:
-            case PARN:
-            case PARQ:
-                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getPerturbationR())
+            case A1D:
+            case C1D:
+            case F1D:
+            case L1D:
+            case N1D:
+            case Q1D:
+                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getRadius())
                     return i;
                 break;
-            case PAR1:
-            case PAR2:
-            case PARVS:
-            case PARVP:
-            case PARG:
-            case PARM:
-            case PAR00:
-                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getPerturbationR())
+            case LAMBDA1D:
+            case MU1D:
+            case VS1D:
+            case VP1D:
+                if (location.getR() == ((Physical1DParameter) PARAMETER_LIST.get(i)).getRadius())
                     return i;
                 break;
-            case A:
-            case C:
-            case F:
-            case L:
-            case N:
-            case Q:
-            case MU:
-            case LAMBDA:
-            case KAPPA:
-            case LAMBDA2MU:
-            case Vs:
-                if (location.equals(((Physical3DParameter) PARAMETER_LIST.get(i)).getPointLocation())) {
+            case A3D:
+            case C3D:
+            case F3D:
+            case L3D:
+            case N3D:
+            case Q3D:
+            case MU3D:
+            case LAMBDA3D:
+            case KAPPA3D:
+            case LAMBDA2MU3D:
+            case VS3D:
+                if (location.equals(((Physical3DParameter) PARAMETER_LIST.get(i)).getPosition())) {
                     return i;
                 }
                 break;

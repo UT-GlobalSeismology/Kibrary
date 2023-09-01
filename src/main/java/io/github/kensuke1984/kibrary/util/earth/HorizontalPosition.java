@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
-import java.util.Set;
+import java.util.Collection;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -38,10 +38,10 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Find the latitude interval of a given set of positions.
      * The latitudes must be equally spaced.
-     * @param positions (Set of {@link HorizontalPosition})
+     * @param positions (Collection of {@link HorizontalPosition}) Input positions
      * @return (double) interval
      */
-    public static double findLatitudeInterval(Set<? extends HorizontalPosition> positions) {
+    public static double findLatitudeInterval(Collection<? extends HorizontalPosition> positions) {
         HorizontalPosition pos0 = positions.iterator().next();
         return positions.stream().mapToDouble(pos -> Math.abs(pos.getLatitude() - pos0.getLatitude())).distinct()
                 .filter(diff -> !Precision.equals(diff, 0, LATITUDE_EPSILON)).min().getAsDouble();
@@ -50,13 +50,13 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Judges whether a set of positions crosses the date line and not the prime meridian.
      * If the positions cross both the prime meridian and the date line, returns false.
-     * @param positions (Set of {@link HorizontalPosition}) Input positions
+     * @param positions (Collection of {@link HorizontalPosition}) Input positions
      * @return (boolean) Whether the positions cross only the date line
      *
      * @author otsuru
      * @since 2023/3/9
      */
-    public static boolean crossesDateLine(Set<? extends HorizontalPosition> positions) {
+    public static boolean crossesDateLine(Collection<? extends HorizontalPosition> positions) {
         double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
         if (longitudes.length <= 1) return false;
 
@@ -79,8 +79,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         else return false;
     }
 
-    public static double latitudeFor(double theta) {
-        return Latitude.valueFor(theta);
+    public static double latitudeForTheta(double theta) {
+        return Latitude.valueForTheta(theta);
     }
 
     /**
@@ -240,7 +240,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         midXYZ = midXYZ.rotateaboutZ(getPhi());
         RThetaPhi midRTP = midXYZ.toSphericalCoordinate();
         // System.out.println(midRTP);
-        return new HorizontalPosition(Latitude.valueFor(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
+        return new HorizontalPosition(Latitude.valueForTheta(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
         // System.out.println(midLoc);
     }
 
@@ -320,7 +320,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         double phiP = getPhi() + Math.atan2(sinDPhi, cosDPhi);
 
         // set result position
-        double lat = 90 - Math.toDegrees(thetaP);
+        double lat = Latitude.valueForTheta(thetaP);
         double lon = Math.toDegrees(phiP);
         if (lon < -180) lon += 360;
         if (lon > 180) lon -= 360;
@@ -328,24 +328,37 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @return geographic latitude [deg] [-90, 90]
+     * @return (double) Geographic latitude [deg] [-90, 90]
      */
     public double getLatitude() {
         return latitude.getLatitude();
     }
 
     /**
-     * @return geocentric latitude [rad] [-&pi;/2, &pi;/2]
+     * @return (double) Geocentric latitude [rad] [-&pi;/2, &pi;/2]
      */
     public double getGeocentricLatitude() {
         return latitude.getGeocentricLatitudeRad();
     }
 
     /**
-     * @return geographic longitude [deg] [-180:180)
+     * Geographic longitude in range [-180, 180).
+     * @return (double) Geographic longitude [deg] [-180:180)
      */
     public double getLongitude() {
         return longitude.getLongitude();
+    }
+
+    /**
+     * Geographic longitude, either in range [0:360) or [-180, 180).
+     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
+     * @return (double) Geographic longitude [deg]
+     *
+     * @author otsuru
+     * @since 2023/4/30
+     */
+    public double getLongitude(boolean crossDateLine) {
+        return longitude.getLongitude(crossDateLine);
     }
 
     /**
@@ -412,7 +425,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Turn the position value into a short String code.
+     * Turn the position value into a short String code with 14 letters.
      * Begins with latitude: 1 letter ("P" for positive or "M" for negative)
      * followed by 2 + {@value Latitude#PRECISION} digits,
      * then longitude: 1 letter ("N" for -100 and under, "M" for under 0, "P" for under 100, "Q" for 100 and above)

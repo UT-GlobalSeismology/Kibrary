@@ -63,7 +63,7 @@ public class LookAtBPspc {
         String obsName = dsmOutput.getStationCode();
         String netwkName = dsmOutput.getNetworkCode();
         String sourceID = dsmOutput.getSourceID();
-        HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
+        HorizontalPosition observerPosition = dsmOutput.getReceiverPosition();
         FullPosition sourceLocation = dsmOutput.getSourcePosition();
 
         double distance = sourceLocation.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
@@ -153,7 +153,7 @@ public class LookAtBPspc {
         String obsName = dsmOutput.getStationCode();
         String netwkName = dsmOutput.getNetworkCode();
         String sourceID = dsmOutput.getSourceID();
-        HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
+        HorizontalPosition observerPosition = dsmOutput.getReceiverPosition();
         FullPosition sourceLocation = dsmOutput.getSourcePosition();
 
         System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);

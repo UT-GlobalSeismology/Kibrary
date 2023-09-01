@@ -47,7 +47,7 @@ public interface SPCFileAccess {
     /**
      * @return ID of observer (station_network)
      */
-    String getObserverID();
+    String getReceiverID();
 
     /**
      * @return STATION code of the observer
@@ -63,7 +63,7 @@ public interface SPCFileAccess {
     /**
      * @return HorizontalPosition of an observer.
      */
-    HorizontalPosition getObserverPosition();
+    HorizontalPosition getReceiverPosition();
 
     /**
      * @return length of time

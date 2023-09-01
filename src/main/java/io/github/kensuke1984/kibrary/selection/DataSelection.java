@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import edu.sc.seis.TauP.TauModelException;
@@ -289,20 +288,20 @@ public class DataSelection extends Operation {
      * @param timeWindow time window
      * @return new Trace for the timewindow [tStart:tEnd]
      */
-    private static RealVector cutSAC(SACFileAccess sac, Timewindow timeWindow) {
+    private RealVector cutSAC(SACFileAccess sac, Timewindow timewindow) {
         Trace trace = sac.createTrace();
-        double tStart = timeWindow.getStartTime();
-        double tEnd = timeWindow.getEndTime();
-        return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
+        return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
     }
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 static correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no static correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
 
     private boolean check(DataFeature feature) throws IOException {
@@ -374,21 +373,28 @@ public class DataSelection extends Operation {
             try {
                 SACComponent component = timewindow.getComponent();
 
-                // check phase
-                if (requirePhase && timewindow.getPhases().length == 0) {
-                    System.out.println("!! No phase: " + timewindow);
-                    return;
-                }
-
                 // check delta
-                if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println("!! DELTA does not match in obs and syn: " + timewindow);
+                double delta = 1 / sacSamplingHz;
+                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
+                    System.err.println();
+                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                     return;
                 }
 
                 // check SAC file end time
-                if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) { // TODO should 10 be maxStaticShift ?
-                    System.err.println("!! End time of timewindow too late: " + timewindow);
+                if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                        || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                    System.err.println();
+                    System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
+                    return;
+                }
+
+                // check phase
+                if (requirePhase && timewindow.getPhases().length == 0) {
+                    System.err.println();
+                    System.err.println("!! No phase, skipping: " + timewindow);
                     return;
                 }
 
@@ -418,11 +424,17 @@ public class DataSelection extends Operation {
                 double shift = 0.;
                 if (!staticCorrectionSet.isEmpty()) {
                     StaticCorrectionData correction = getStaticCorrection(timewindow);
+                    if (correction == null) {
+                        System.err.println();
+                        System.err.println("!! No static correction data, skipping: " + timewindow);
+                        return;
+                    }
                     shift = correction.getTimeshift();
-                }
-                if (Math.abs(shift) > maxStaticShift) {
-                    System.err.println("!! Time shift too large: " + timewindow);
-                    return;
+                    if (Math.abs(shift) > maxStaticShift) {
+                        System.err.println();
+                        System.err.println("!! Time shift too large, skipping: " + timewindow);
+                        return;
+                    }
                 }
                 TimewindowData shiftedWindow = new TimewindowData(timewindow.getStartTime() - shift
                         , timewindow.getEndTime() - shift, timewindow.getObserver()
@@ -446,7 +458,8 @@ public class DataSelection extends Operation {
                 dataFeatureSet.add(feature);
 
             } catch (Exception e) {
-                System.err.println("!! " + timewindow + " is ignored because an error occurs.");
+                System.err.println();
+                System.err.println("!! Skipping because an error occurs: " + timewindow);
                 e.printStackTrace();
             }
         }

@@ -3,7 +3,9 @@ package io.github.kensuke1984.kibrary.correction;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -33,6 +35,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * TODO shouldn't this hold TimewindowData as a field, instead of obs/ev/comp/phases/start ? (2022/12/14 otsuru)
  */
 public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
+
+    private static final int AMPLITUDE_PRECISION = 2;
 
     private final Observer observer;
     private final GlobalCMTID eventID;
@@ -80,9 +84,9 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         this.observer = observer;
         this.eventID = eventID;
         this.component = component;
-        this.synStartTime = Precision.round(synStartTime, 2);
-        this.timeShift = Precision.round(timeShift, 2);
-        this.amplitudeRatio = Precision.round(amplitudeRatio, 2);
+        this.synStartTime = Precision.round(synStartTime, Timewindow.PRECISION);
+        this.timeShift = Precision.round(timeShift, Timewindow.PRECISION);
+        this.amplitudeRatio = Precision.round(amplitudeRatio, AMPLITUDE_PRECISION);
         this.phases = phases;
     }
 
@@ -151,7 +155,8 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + synStartTime + " " + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
+                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
     }
 
 }

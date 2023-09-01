@@ -203,10 +203,10 @@ public class Partial1DEnvelopeMaker implements Operation_old {
 
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
-        if (partialTypes.contains(PartialType.PAR00)) {
-            par00 = true;
-            partialTypes.remove(PartialType.PAR00);
-        }
+//        if (partialTypes.contains(PartialType.PAR00)) {
+//            par00 = true;
+//            partialTypes.remove(PartialType.PAR00);
+//        }
 
         if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
                 timePartialPath = Paths.get(property.getProperty("timePartialPath"));
@@ -398,15 +398,15 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                 PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
                 if (!(partialTypes.contains(partialType)
-                        || (partialTypes.contains(PartialType.PARQ) && spcFileType == SPCType.PAR2)))
+                        || (partialTypes.contains(PartialType.Q1D) && spcFileType == SPCType.MU1D)))
                     continue;
 
                 SPCFileName shspcname = null;
                 if (psvPath != null && shPath != null) {
-                    if (spcFileType.equals(SPCType.PARN)
-                    || spcFileType.equals(SPCType.PARL)
-                    || spcFileType.equals(SPCType.PAR0)
-                    || spcFileType.equals(SPCType.PAR2))
+                    if (spcFileType.equals(SPCType.N1D)
+                    || spcFileType.equals(SPCType.L1D)
+                    || spcFileType.equals(SPCType.RHO1D)
+                    || spcFileType.equals(SPCType.MU1D))
                         shspcname = new FormattedSPCFileName(spcFileName.getPath().replace("PSV.spc", "SH.spc"));
                 }
 
@@ -539,10 +539,10 @@ public class Partial1DEnvelopeMaker implements Operation_old {
 
             String stationName = spcname.getStationCode();
             String network = spcname.getNetworkCode();
-            Observer station = new Observer(stationName, network, spectrum.getObserverPosition());
+            Observer station = new Observer(stationName, network, spectrum.getReceiverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
             SPCFileAccess qSpectrum = null;
-            if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+            if (spcname.getFileType() == SPCType.MU1D && partialTypes.contains(PartialType.Q1D)) {
                 qSpectrum = fujiConversion.convert(spectrum);
                 process(qSpectrum);
             }
@@ -598,7 +598,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                             ButterworthFilter tmpfilter = filter.get(i);
                             double[] filteredUt = tmpfilter.applyFilter(ut);
                             for (TimewindowData t : tw)
-                                cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ, periodRanges[i]);
+                                cutAndWrite(station, filteredUt, t, bodyR, PartialType.Q1D, periodRanges[i]);
                         }
                     }
             }
@@ -637,10 +637,10 @@ public class Partial1DEnvelopeMaker implements Operation_old {
 
             String stationName = spcname.getStationCode();
             String network = spcname.getNetworkCode();
-            Observer station = new Observer(stationName, network, spectrum.getObserverPosition());
+            Observer station = new Observer(stationName, network, spectrum.getReceiverPosition());
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
             SPCFileAccess qSpectrum = null;
-            if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+            if (spcname.getFileType() == SPCType.MU1D && partialTypes.contains(PartialType.Q1D)) {
                 qSpectrum = fujiConversion.convert(spectrum);
                 process(qSpectrum);
             }
@@ -709,7 +709,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                             ButterworthFilter tmpfilter = filter.get(i);
                             double[] filteredUt = tmpfilter.applyFilter(ut);
                             for (TimewindowData t : tw)
-                                cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ, periodRanges[i]);
+                                cutAndWrite(station, filteredUt, t, bodyR, PartialType.Q1D, periodRanges[i]);
                         }
                     }
                 }

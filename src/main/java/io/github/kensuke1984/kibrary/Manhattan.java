@@ -28,6 +28,8 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
+import io.github.kensuke1984.kibrary.visual.map.CrossSectionCreator;
+import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
@@ -48,6 +50,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
 import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
+import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
@@ -65,6 +68,7 @@ enum Manhattan {
     DatasetMerge(1, DatasetMerge.class),
     PolynomialStructurePerturber(2, PolynomialStructurePerturber.class),
     PolynomialStructurePlotter(3, PolynomialStructurePlotter.class),
+    GreatArcMapper(5, GreatArcMapper.class),
     RaypathMapper(6, RaypathMapper.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),
@@ -102,6 +106,7 @@ enum Manhattan {
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
     OneDPartialDSMSetup(65, OneDPartialDSMSetup.class), //
+    PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class), //
     PartialsFuser(67, PartialsFuser.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     // Inversion 70
@@ -111,6 +116,7 @@ enum Manhattan {
     ModelSetMapper(74, ModelSetMapper.class),
     ModelMapper(75, ModelMapper.class),
     PerturbationMapper(76, PerturbationMapper.class),
+    CrossSectionCreator(77, CrossSectionCreator.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),

@@ -6,8 +6,6 @@ import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionByGridSearch;
-import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
-import io.github.kensuke1984.kibrary.waveform.addons.AtAMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
 import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
 import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
@@ -19,12 +17,11 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
  * @version 0.0.5.3
  */
 public enum Manhattan_old {
-    PartialWaveformAssembler1D(10, PartialWaveformAssembler1D.class), //
     PhaseEnvelope(12, PhaseEnvelope.class), //
     Result(14, Result.class), //
     SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
-    AtAMaker(22, AtAMaker.class),//
+//    AtAMaker(22, AtAMaker.class),//
     Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//
     Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //

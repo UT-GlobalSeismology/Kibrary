@@ -85,11 +85,11 @@ public class FilterDivider extends Operation {
      */
     private String filterType;
     /**
-     * minimum frequency [Hz] フィルターバンドの最小周波数
+     * lower cut-off frequency [Hz]
      */
     private double lowFreq;
     /**
-     * maximum frequency [Hz] フィルターバンドの最大周波数
+     * upper cut-off frequency [Hz]
      */
     private double highFreq;
     /**

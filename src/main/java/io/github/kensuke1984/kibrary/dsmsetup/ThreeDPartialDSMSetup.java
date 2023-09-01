@@ -23,15 +23,13 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Operation that makes DSM input files to be used in SHFP, SHBP, PSVFP, and PSVBP,
+ * Operation that generates DSM input files to be used in SHFP, SHBP, PSVFP, and PSVBP,
  * and prepares the environment to run these programs.
  * <p>
  * As input, the following 3 files are needed:
@@ -86,24 +84,24 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private Path outPath;
     /**
-     * Information file name is header_[psv,sh].inf
+     * Information file name is header_[sh,psv].inf
      */
     private String header;
 
     /**
-     * information file of events.
+     * Path of an event list file.
      */
     private Path eventPath;
     /**
-     * information file of observers.
+     * Path of an osberver list file.
      */
     private Path observerPath;
     /**
-     * information file of locations of pertubation points.
+     * Path of a voxel information file.
      */
     private Path voxelPath;
     /**
-     * structure file instead of PREM
+     * Path of structure file to use instead of PREM
      */
     private Path structurePath;
     private String structureName;
@@ -167,7 +165,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#folderTag ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##(String) Header for names of output files (as in header_[psv, sh].inf) (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set");
             pw.println("#eventPath event.lst");
@@ -184,7 +182,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
-            pw.println("#mpi ");
+            pw.println("#mpi false");
             pw.println("##(boolean) Whether to compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
             pw.println("#jointCMT ");
             pw.println("##(boolean) Wavefield catalog mode (false)");
@@ -250,12 +248,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         }
 
         // set structure
-        PolynomialStructure structure = null;
-        if (structurePath != null) {
-            structure = PolynomialStructureFile.read(structurePath);
-        } else {
-            structure = PolynomialStructure.of(structureName);
-        }
+        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // set outPath
         if (reusePath != null) {
@@ -281,7 +274,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         int nCreated = 0;
         int nSkipped = 0;
         // TreeSet is used here to sort the FP sources in the fpList file
-        Set<String> fpSourceSet = new TreeSet<>();
+        Set<String> fpSourceTreeSet = new TreeSet<>();
         for (GlobalCMTID event : eventSet) {
             GlobalCMTAccess eventData = event.getEventData();
 
@@ -336,7 +329,7 @@ public class ThreeDPartialDSMSetup extends Operation {
                 }
             }
             nCreated++;
-            fpSourceSet.add(event.toString());
+            fpSourceTreeSet.add(event.toString());
         }
 
         if (nSkipped > 0)
@@ -344,15 +337,16 @@ public class ThreeDPartialDSMSetup extends Operation {
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
 
-        // output list and shellscripts for execution of psvfp and shfp
+        // output list and shellscripts for execution of shfp and psvfp
         String fpListFileName = DatasetAid.generateOutputFileName("fpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(fpListFileName), fpSourceSet);
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
+        Files.write(outPath.resolve(fpListFileName), fpSourceTreeSet);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_SH", fileTag, dateStr, ".sh"));
-        DSMShellscript shellFP = new DSMShellscript(outPath, mpi, nCreated, header);
-        shellFP.write(SPCType.PF, SPCMode.PSV, fpListFileName, outPSVPath);
-        shellFP.write(SPCType.PF, SPCMode.SH, fpListFileName, outSHPath);
-        System.err.println("After this finishes, please enter " + outPath + "/ and run " + outPSVPath.getFileName() + " and " + outSHPath.getFileName());
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
+        DSMShellscript shellFP = new DSMShellscript(mpi, nCreated, header);
+        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.SH, fpListFileName, outSHPath);
+        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.PSV, fpListFileName, outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 
     private void setupBPs(Set<Observer> observerSet, PolynomialStructure structure) throws IOException {
@@ -364,7 +358,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         int nCreated = 0;
         int nSkipped = 0;
         // TreeSet is used here to sort the BP sources in the bpList file
-        Set<String> bpSourceSet = new TreeSet<>();
+        Set<String> bpSourceTreeSet = new TreeSet<>();
         for (Observer observer : observerSet) {
             String observerCode = observer.getPosition().toCode();
 
@@ -383,7 +377,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             bp.writeSHBP(observerPoolPath.resolve(header + "_SH.inf"));
             bp.writePSVBP(observerPoolPath.resolve(header + "_PSV.inf"));
             nCreated++;
-            bpSourceSet.add(observerCode);
+            bpSourceTreeSet.add(observerCode);
         }
 
         if (nSkipped > 0)
@@ -398,15 +392,16 @@ public class ThreeDPartialDSMSetup extends Operation {
             bp.writePSVBPCat(bpCatPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
         }
 
-        // output list and shellscripts for execution of psvbp and shbp
+        // output list and shellscripts for execution of shbp and psvbp
         String bpListFileName = DatasetAid.generateOutputFileName("bpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(bpListFileName), bpSourceSet);
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
+        Files.write(outPath.resolve(bpListFileName), bpSourceTreeSet);
         Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_SH", fileTag, dateStr, ".sh"));
-        DSMShellscript shellBP = new DSMShellscript(outPath, mpi, nCreated, header);
-        shellBP.write(SPCType.PB, SPCMode.PSV, bpListFileName, outPSVPath);
-        shellBP.write(SPCType.PB, SPCMode.SH, bpListFileName, outSHPath);
-        System.err.println("After this finishes, please enter " + outPath + "/ and run " + outPSVPath.getFileName() + " and " + outSHPath.getFileName());
+        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
+        DSMShellscript shellBP = new DSMShellscript(mpi, nCreated, header);
+        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.SH, bpListFileName, outSHPath);
+        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.PSV, bpListFileName, outPSVPath);
+        System.err.println("After this finishes, please enter " + outPath + "/ and run "
+                + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
 
     /**

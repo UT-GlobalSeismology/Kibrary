@@ -101,11 +101,11 @@ public class ThreeDPartialMaker {
      */
     public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dh) {
         ignoreBodyR = new HashSet<>();
-        if (!isGoodPairPermissive(fp, bp1)) //isGoodPair
+        if (!isGoodPair(fp, bp1))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPairPermissive(fp, bp2)) //isGoodPair
+        if (!isGoodPair(fp, bp2))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPairPermissive(fp, bp3)) //isGoodPair
+        if (!isGoodPair(fp, bp3))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
         ignoreBodyR.forEach(System.err::println);
         this.fp = fp;
@@ -135,11 +135,11 @@ public class ThreeDPartialMaker {
     public ThreeDPartialMaker(SPCFileAccess fpSH, SPCFileAccess fpPSV, SPCFileAccess bp1SH,
             SPCFileAccess bp1PSV, SPCFileAccess bp2SH, SPCFileAccess bp2PSV, SPCFileAccess bp3SH, SPCFileAccess bp3PSV, double[] dh) {
         ignoreBodyR = new HashSet<>();
-        if (!isGoodPairPermissive(fpSH, bp1SH)) //isGoodPair
+        if (!isGoodPair(fpSH, bp1SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPairPermissive(fpSH, bp2SH)) //isGoodPair
+        if (!isGoodPair(fpSH, bp2SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPairPermissive(fpSH, bp3SH)) //isGoodPair
+        if (!isGoodPair(fpSH, bp3SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
         ignoreBodyR.forEach(System.out::println);
 
@@ -188,11 +188,11 @@ public class ThreeDPartialMaker {
      */
     public ThreeDPartialMaker(SPCFileAccess fp1, SPCFileAccess fp2, SPCFileAccess fp3, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dhBP, double[] dhFP) {
         ignoreBodyR = new HashSet<>();
-        if (!isGoodPairPermissive(fp1, bp1)) //isGoodPair
+        if (!isGoodPair(fp1, bp1))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPairPermissive(fp2, bp2)) //isGoodPair
+        if (!isGoodPair(fp2, bp2))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPairPermissive(fp3, bp3)) //isGoodPair
+        if (!isGoodPair(fp3, bp3))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
         ignoreBodyR.forEach(System.out::println);
         this.fp = fp1;
@@ -229,11 +229,11 @@ public class ThreeDPartialMaker {
     public ThreeDPartialMaker(SPCFileAccess fp1PSV, SPCFileAccess fp1SH, SPCFileAccess fp2PSV,  SPCFileAccess fp2SH, SPCFileAccess fp3PSV, SPCFileAccess fp3SH,
             SPCFileAccess bp1PSV, SPCFileAccess bp1SH, SPCFileAccess bp2PSV, SPCFileAccess bp2SH, SPCFileAccess bp3PSV, SPCFileAccess bp3SH, double[] dhBP, double[] dhFP) {
         ignoreBodyR = new HashSet<>();
-        if (!isGoodPair(fp1SH, bp1SH)) //isGoodPair
+        if (!isGoodPair(fp1SH, bp1SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPair(fp2SH, bp2SH)) //isGoodPair
+        if (!isGoodPair(fp2SH, bp2SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-        if (!isGoodPair(fp3SH, bp3SH)) //isGoodPair
+        if (!isGoodPair(fp3SH, bp3SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
         ignoreBodyR.forEach(System.out::println);
 
@@ -304,7 +304,7 @@ public class ThreeDPartialMaker {
         }
 //		System.out.println("PSV and SH added");
 
-        if (!isGoodPairPermissive(fp, bp)) //isGoodPair
+        if (!isGoodPair(fp, bp)) //isGoodPair
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
         ignoreBodyR.forEach(System.err::println);
 
@@ -318,14 +318,15 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * SpcFileから３次元偏微分係数を作れるか
+     * Check whether the pair of fp and bp is valid for making partials.
      *
      * @param fp forward propagation
      * @param bp backward propagation
-     * @return if the pair of fp and bp is valid for making partials.
+     * @return (boolean) Whether the pair of fp and bp is valid for making partials.
      */
     private static boolean isGoodPair(SPCFileAccess fp, SPCFileAccess bp) {
         boolean validity = true;
+
         if (fp.nbody() != bp.nbody()) {
             System.err.println("nbodies are different. fp, bp: " + fp.nbody() + " ," + bp.nbody());
             validity = false;
@@ -344,35 +345,36 @@ public class ThreeDPartialMaker {
             System.err.println("Omegais are different. fp, bp: " + fp.omegai() + ", " + bp.omegai());
             validity = false;
         }
-
         if (fp.np() != bp.np()) {
             System.err.println("nps are different. fp, bp: " + fp.np() + ", " + bp.np());
             validity = false;
         }
-        // tlen
         if (fp.tlen() != bp.tlen()) {
             System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
             validity = false;
         }
-        // 摂動点名は同じかどうか
-        if (!(fp.getStationCode().equals(bp.getStationCode()))) {
-            System.err.println(
-                    "Perturbation points are different fp, bp: " + fp.getStationCode() + " ," + bp.getStationCode());
-            validity = false;
-        }
-        // FP and BP have no observation network, thus we do not check it
 
-        // 場所
-        if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
-            System.err.println("perturbation point Positions are different.");
-            System.err.println("perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", "
-                    + fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() + ", "
-                    + bp.getObserverPosition().getLongitude() + ")");
+        // check if voxel IDs are same
+//        if (!(fp.getReceiverID().equals(bp.getReceiverID()))) {
+//            System.err.println(
+//                    "Perturbation points are different fp, bp: " + fp.getReceiverID() + " ," + bp.getReceiverID());
+//            validity = false;
+//        }
+
+        // check if voxel positions are same
+        if (!fp.getReceiverPosition().equals(bp.getReceiverPosition())) {
+            System.err.print("Voxel positions are different: ");
+            System.err.println("(" + fp.getReceiverPosition().getLatitude() + ", "
+                    + fp.getReceiverPosition().getLongitude() + "), (" + bp.getReceiverPosition().getLatitude() + ", "
+                    + bp.getReceiverPosition().getLongitude() + ")");
             validity = false;
         }
+
         return validity;
     }
 
+    //TODO what is this for? Is this needed for FP catalog?
+    // If this is unneeded, delete. If this is needed, merge with isGoodPermissive() above. 2023/8/27 otsuru
     /**
      * @param fp
      * @param bp
@@ -431,20 +433,19 @@ public class ThreeDPartialMaker {
             System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
             validity = false;
         }
-        // 摂動点名は同じかどうか
-        if (!(fp.getStationCode().equals(bp.getStationCode()))) {
+        // check if voxel IDs are same
+        if (!(fp.getReceiverID().equals(bp.getReceiverID()))) {
             System.err.println(
-                    "Perturbation points are different fp, bp: " + fp.getStationCode() + " ," + bp.getStationCode());
+                    "Perturbation points are different. fp, bp: " + fp.getReceiverID() + " ," + bp.getReceiverID());
             validity = false;
         }
-        // FP and BP have no observation network, thus we do not check it
 
-        // 場所
-        if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
+        // check if voxel positions are same
+        if (!fp.getReceiverPosition().equals(bp.getReceiverPosition())) {
             System.err.println("perturbation point Positions are different.");
-            System.err.println("perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", "
-                    + fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() + ", "
-                    + bp.getObserverPosition().getLongitude() + ")");
+            System.err.println("perturbation point of fp, bp are" + "(" + fp.getReceiverPosition().getLatitude() + ", "
+                    + fp.getReceiverPosition().getLongitude() + "), (" + bp.getReceiverPosition().getLatitude() + ", "
+                    + bp.getReceiverPosition().getLongitude() + ")");
             validity = false;
         }
         return validity;
@@ -464,9 +465,7 @@ public class ThreeDPartialMaker {
         int nbody = bp.nbody();
         double omegai = bp.omegai();
         HorizontalPosition observerPosition = bp.getSourcePosition();
-        String observerID = bp.getSourceID(); //TODO check it
-//		String observerName = bp.getObserverID();
-        String observerNetwork = bp.getNetworkCode();
+        String observerID = bp.getSourceID();
         FullPosition sourceLocation = fp.getSourcePosition();
         String sourceID = fp.getSourceID();
         double[] bodyR = bp.getBodyR();
@@ -531,23 +530,25 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            public HorizontalPosition getObserverPosition() {
+            public HorizontalPosition getReceiverPosition() {
                 return observerPosition;
             }
 
             @Override
-            public String getObserverID() {
-                return observerID + "_" + observerNetwork;
-            }
-
-            @Override
-            public String getStationCode() {
+            public String getReceiverID() {
                 return observerID;
             }
 
             @Override
+            @Deprecated
+            public String getStationCode() {
+                return null;
+            }
+
+            @Override
+            @Deprecated
             public String getNetworkCode() {
-                return observerNetwork;
+                return null;
             }
 
             @Override
@@ -585,7 +586,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
         long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculus(component, iBody, iBody, type);
         long t1f = System.currentTimeMillis();
         System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
@@ -621,7 +622,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
 //        long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculusSerial(component, iBody, iBody, type);
 //        long t1f = System.currentTimeMillis();
 //		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
@@ -658,7 +659,7 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
         long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculusSerial(component, iBody, iBody, type);
         long t1f = System.currentTimeMillis();
 //		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
@@ -684,7 +685,7 @@ public class ThreeDPartialMaker {
     private Complex[] computeQpartial(SACComponent component, int iBody) {
         if (fujiConversion == null)
             fujiConversion = new FujiConversion(DefaultStructure.PREM);
-        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU));
+        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU3D));
         return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
 
     }
@@ -809,6 +810,9 @@ public class ThreeDPartialMaker {
         return bpBody1.interpolate(bpBody2, unitDistance);
     }
 
+    /**
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to use. Set this null when none is to be applied.
+     */
     public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         this.sourceTimeFunction = sourceTimeFunction;
     }
@@ -860,7 +864,7 @@ public class ThreeDPartialMaker {
     private void setAngles() {
         HorizontalPosition event = fp.getSourcePosition();
         HorizontalPosition station = bp.getSourcePosition();
-        HorizontalPosition point = bp.getObserverPosition();
+        HorizontalPosition point = bp.getReceiverPosition();
         angleForTensor = Earth.computeAzimuthRad(point, station) - Earth.computeAzimuthRad(point, event);
 
         angleForVector = 2 * Math.PI - Earth.computeAzimuthRad(station, event);

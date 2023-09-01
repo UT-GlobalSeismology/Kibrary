@@ -585,6 +585,14 @@ public class RaypathMapper extends Operation {
                     .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
             ObserverListFile.read(outPath.resolve(observerFileName)).stream()
                     .map(observer -> observer.getPosition()).forEach(positions::add);
+            if (cutAtPiercePoint) {
+                List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
+                for (String line : turningPointLines) {
+                    String[] parts = line.trim().split("\\s+");
+                    HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+                    positions.add(pos);
+                }
+            }
 
             // decide on a region temporarily, and split up the returned String into coordinates
             String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");

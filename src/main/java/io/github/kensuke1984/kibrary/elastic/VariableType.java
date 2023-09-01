@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.elastic;
 
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 
 /**
  * Parameters of elastic medium.
@@ -19,7 +19,9 @@ public enum VariableType {
     Vpv(8), Vph(9), Vsv(10), Vsh(11), ETA(12),
     A(13), C(14), F(15), L(16), N(17), XI(18),
     // Q
-    Qmu(19), Qkappa(20);
+    Qmu(19), Qkappa(20),
+    // others
+    TIME(21);
 
     private int value;
 
@@ -81,22 +83,29 @@ public enum VariableType {
         }
     }
 
-    public static VariableType of(PartialType type) {
-        switch (type) {
-        case RHO: return RHO;
-        case A: return A;
-        case C: return C;
-        case F: return F;
-        case L: return L;
-        case N: return N;
-        case LAMBDA: return LAMBDA;
-        case MU: return MU;
-        case LAMBDA2MU: return LAMBDA2MU;
-        case KAPPA: return KAPPA;
-
+    // TODO hmm...
+    public SPCType to1DSpcType() {
+        switch (this) {
+        case RHO:
+            return SPCType.RHO1D;
+        case LAMBDA:
+            return SPCType.LAMBDA1D;
+        case MU:
+            return SPCType.MU1D;
+        case A:
+            return SPCType.A1D;
+        case C:
+            return SPCType.C1D;
+        case F:
+            return SPCType.F1D;
+        case L:
+            return SPCType.L1D;
+        case N:
+            return SPCType.N1D;
         default:
-            throw new IllegalArgumentException("Illegal partial type");
+            throw new RuntimeException("unexpected");
         }
+
     }
 
 }

@@ -101,9 +101,7 @@ public final class TauPPierceWrapper {
                 // add results to Map
                 entryMap.put(entry, raypaths);
             }
-
         }
-
     }
 
     private static Raypath convertToRaypath(FullPosition eventPosition, HorizontalPosition observerPosition, Arrival arrival) {

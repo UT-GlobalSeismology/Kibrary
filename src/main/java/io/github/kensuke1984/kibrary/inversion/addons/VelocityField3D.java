@@ -263,30 +263,30 @@ public class VelocityField3D {
 		List<PerturbationValue> perturbations = new ArrayList<>();
 		Set<PartialType> partialTypes = typeValueMap.keySet();
 		
-		if (partialTypes.contains(PartialType.MU) && partialTypes.size() == 1) {
-			double dMu = typeValueMap.get(PartialType.MU);
+		if (partialTypes.contains(PartialType.MU3D) && partialTypes.size() == 1) {
+			double dMu = typeValueMap.get(PartialType.MU3D);
 			double dvs = getSimpsonVsPerturbation(rmin, rmax, structure, dMu) * 100;
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, dMu, 0.) * 100;
 			perturbations.add(new PerturbationValue(PerturbationType.Vs, dvs));
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, dvp));
 		}
-		if (partialTypes.contains(PartialType.Vs) && partialTypes.size() == 1) {
-			double dvs = typeValueMap.get(PartialType.Vs);
+		if (partialTypes.contains(PartialType.VS3D) && partialTypes.size() == 1) {
+			double dvs = typeValueMap.get(PartialType.VS3D);
 			dvs = getSimpsonVsPerturbationFromVs(rmin, rmax, structure, dvs) * 100;
 			perturbations.add(new PerturbationValue(PerturbationType.Vs, dvs));
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, 0.));
 			perturbations.add(new PerturbationValue(PerturbationType.Vb, 0.));
 		}
-		if (partialTypes.contains(PartialType.LAMBDA2MU) && partialTypes.size() == 1) {
-			double dLambda2mu = typeValueMap.get(PartialType.LAMBDA2MU);
+		if (partialTypes.contains(PartialType.LAMBDA2MU3D) && partialTypes.size() == 1) {
+			double dLambda2mu = typeValueMap.get(PartialType.LAMBDA2MU3D);
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, 0., dLambda2mu) * 100;
 			perturbations.add(new PerturbationValue(PerturbationType.Vs, 0.));
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, dvp));
 			perturbations.add(new PerturbationValue(PerturbationType.Vb, 0.));
 		}
-		if (partialTypes.contains(PartialType.MU) && partialTypes.contains(PartialType.LAMBDA)) {
-			double dMu = typeValueMap.get(PartialType.MU);
-			double dLambda = typeValueMap.get(PartialType.LAMBDA);
+		if (partialTypes.contains(PartialType.MU3D) && partialTypes.contains(PartialType.LAMBDA3D)) {
+			double dMu = typeValueMap.get(PartialType.MU3D);
+			double dLambda = typeValueMap.get(PartialType.LAMBDA3D);
 			double dKappa = dLambda + 2./3. * dMu;
 			double dvs = getSimpsonVsPerturbation(rmin, rmax, structure, dMu) * 100;
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, dMu, dLambda) * 100;
@@ -295,9 +295,9 @@ public class VelocityField3D {
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, dvp));
 			perturbations.add(new PerturbationValue(PerturbationType.Vb, dvb));
 		}
-		if (partialTypes.contains(PartialType.MU) && partialTypes.contains(PartialType.KAPPA)) {
-			double dMu = typeValueMap.get(PartialType.MU);
-			double dKappa = typeValueMap.get(PartialType.KAPPA);
+		if (partialTypes.contains(PartialType.MU3D) && partialTypes.contains(PartialType.KAPPA3D)) {
+			double dMu = typeValueMap.get(PartialType.MU3D);
+			double dKappa = typeValueMap.get(PartialType.KAPPA3D);
 			double dLambda = dKappa - 2./3. * dMu;
 			double dvs = getSimpsonVsPerturbation(rmin, rmax, structure, dMu) * 100;
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, dMu, dLambda) * 100;
@@ -306,9 +306,9 @@ public class VelocityField3D {
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, dvp));
 			perturbations.add(new PerturbationValue(PerturbationType.Vb, dvb));
 		}
-		if (partialTypes.contains(PartialType.MU) && partialTypes.contains(PartialType.LAMBDA2MU)) {
-			double dMu = typeValueMap.get(PartialType.MU);
-			double dLambda2Mu = typeValueMap.get(PartialType.LAMBDA2MU);
+		if (partialTypes.contains(PartialType.MU3D) && partialTypes.contains(PartialType.LAMBDA2MU3D)) {
+			double dMu = typeValueMap.get(PartialType.MU3D);
+			double dLambda2Mu = typeValueMap.get(PartialType.LAMBDA2MU3D);
 			double dKappa = dLambda2Mu - 4./3. * dMu;
 			double dvs = getSimpsonVsPerturbation(rmin, rmax, structure, dMu) * 100;
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, 0., dLambda2Mu) * 100;
@@ -317,16 +317,16 @@ public class VelocityField3D {
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, dvp));
 			perturbations.add(new PerturbationValue(PerturbationType.Vb, dvb));
 		}
-		if (partialTypes.contains(PartialType.KAPPA) && partialTypes.size() == 1) {
-			double dKappa = typeValueMap.get(PartialType.KAPPA);
+		if (partialTypes.contains(PartialType.KAPPA3D) && partialTypes.size() == 1) {
+			double dKappa = typeValueMap.get(PartialType.KAPPA3D);
 			double dvb = getSimpsonVbPerturbation(rmin, rmax, structure, dKappa) * 100;
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, 0, dKappa) * 100;
 			
 			perturbations.add(new PerturbationValue(PerturbationType.Vb, dvb));
 			perturbations.add(new PerturbationValue(PerturbationType.Vp, dvp));
 		}
-		if (partialTypes.contains(PartialType.LAMBDA) && partialTypes.size() == 1) {
-			double dlambda = typeValueMap.get(PartialType.LAMBDA);
+		if (partialTypes.contains(PartialType.LAMBDA3D) && partialTypes.size() == 1) {
+			double dlambda = typeValueMap.get(PartialType.LAMBDA3D);
 			double dMu = 0;
 			double dLambda = dlambda;
 			double dvp = getSimpsonVpPerturbation(rmin, rmax, structure, dMu, dLambda) * 100;

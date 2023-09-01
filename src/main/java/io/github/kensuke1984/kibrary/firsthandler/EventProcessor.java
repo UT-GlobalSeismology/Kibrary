@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -209,6 +210,8 @@ class EventProcessor implements Runnable {
                 deconvolveSacs();
                 // rotation ((.N,.E) & (.1,.2) -> (.R,.T))
                 rotate();
+                // fix Z component SAC files
+                fixZComponentSacs();
                 // eliminating duplicate instruments and close stations
                 // this is done after everything else so that we don't lose usable data (ex. if we choose an unrotatable triplet)
                 duplicationElimination();
@@ -624,6 +627,22 @@ class EventProcessor implements Runnable {
             for (Path yPath : yPaths) {
                 GadgetAid.dualPrintln(eliminatedWriter, "!! pair .X file unfound, unable to rotate : " + event.getGlobalCMTID() + " - " + yPath.getFileName());
                 FileAid.moveToDirectory(yPath, unRotatedPath, true);
+            }
+        }
+    }
+
+    /**
+     * Changes the KCMPNM of vertical component SAC files to "Z".
+     * @throws IOException
+     */
+    private void fixZComponentSacs() throws IOException {
+        try (DirectoryStream<Path> zStream = Files.newDirectoryStream(outputPath, "*.Z")) {
+            for (Path zPath : zStream) {
+                Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(zPath);
+                double[] sacdata = SACUtil.readSACData(zPath);
+
+                headerMap.put(SACHeaderEnum.KCMPNM, SACComponent.Z.toString());
+                SACUtil.writeSAC(zPath, headerMap, sacdata);
             }
         }
     }

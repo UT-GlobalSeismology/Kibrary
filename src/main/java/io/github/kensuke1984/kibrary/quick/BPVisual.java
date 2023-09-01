@@ -70,7 +70,7 @@ public class BPVisual {
 		for (SPCFileName spcName : SpcFileAid.collectSpcFileName(Paths.get("."))) {
 			SPCFileAccess bpSpc = spcName.read();
 			
-			HorizontalPosition obsPos = bpSpc.getObserverPosition();
+			HorizontalPosition obsPos = bpSpc.getReceiverPosition();
 			double[] bodyR = bpSpc.getBodyR();
 			
 			for (int i = 0; i < bpSpc.nbody(); i++) {

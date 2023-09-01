@@ -114,12 +114,12 @@ public class PerturbationMapShellscript {
      */
     public void write(Path outPath) throws IOException {
         writeCpMaster(outPath.resolve("cp_master.cpt"));
-        if (maskFileNameRoot != null) writeCpMask(outPath.resolve("cp_mask.cpt"));
+        if (maskFileNameRoot != null) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
         writeGridMaker(outPath.resolve(modelFileNameRoot + "Grid.sh"));
         writeMakeMap(outPath.resolve(modelFileNameRoot + "Map.sh"));
     }
 
-    private void writeCpMaster(Path outputPath) throws IOException {
+    static void writeCpMaster(Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("-3.5 129 14  30 -3.088235294117647 129 14  30");
             pw.println("-3.088235294117647 158 15  9 -2.6764705882352944 158 15  9");
@@ -144,7 +144,7 @@ public class PerturbationMapShellscript {
         }
     }
 
-    private void writeCpMask(Path outputPath) throws IOException {
+    static void writeCpMask(Path outputPath, double maskThreshold) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("0 black " + maskThreshold + " black");
             pw.println("B black");
@@ -169,13 +169,13 @@ public class PerturbationMapShellscript {
             pw.println("    dep=${depth%.0}");
 
             // grid model
-            pw.println("    grep \"$depth\" " + modelFileNameRoot + "XYZ.lst | \\");
+            pw.println("    grep \"$depth\" " + modelFileNameRoot + "XY.lst | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
             pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
 
             // grid mask
             if (maskFileNameRoot != null) {
-                pw.println("    grep \"$depth\" " + maskFileNameRoot + ".lst | \\");
+                pw.println("    grep \"$depth\" " + maskFileNameRoot + "XY.lst | \\");
                 pw.println("    awk '{print $2,$1,$4}' | \\");
                 pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
             }
@@ -284,8 +284,7 @@ public class PerturbationMapShellscript {
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         // map to latitude and longitude values
         double[] latitudes = positions.stream().mapToDouble(HorizontalPosition::getLatitude).toArray();
-        double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude)
-                .map(lon -> (crossDateLine && lon < 0) ? lon + 360 : lon).toArray();
+        double[] longitudes = positions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).toArray();
         // find min and max latitude and longitude
         double latMin = Arrays.stream(latitudes).min().getAsDouble();
         double latMax = Arrays.stream(latitudes).max().getAsDouble();

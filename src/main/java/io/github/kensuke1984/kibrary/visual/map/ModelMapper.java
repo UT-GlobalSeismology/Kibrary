@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -81,10 +80,10 @@ public class ModelMapper extends Operation {
     private int[] displayLayers;
     private int nPanelsPerRow;
     private String mapRegion;
-    private double marginLatitude;
-    private boolean setLatitudeByKm;
-    private double marginLongitude;
-    private boolean setLongitudeByKm;
+    private double marginLatitudeRaw;
+    private boolean setMarginLatitudeByKm;
+    private double marginLongitudeRaw;
+    private boolean setMarginLongitudeByKm;
     private double scale;
     /**
      * Whether to display map as mosaic without smoothing
@@ -183,21 +182,21 @@ public class ModelMapper extends Operation {
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
 
         if (property.containsKey("marginLatitudeKm")) {
-            marginLatitude = property.parseDouble("marginLatitudeKm", null);
-            setLatitudeByKm = true;
+            marginLatitudeRaw = property.parseDouble("marginLatitudeKm", null);
+            setMarginLatitudeByKm = true;
         } else {
-            marginLatitude = property.parseDouble("marginLatitudeDeg", "2.5");
-            setLatitudeByKm = false;
+            marginLatitudeRaw = property.parseDouble("marginLatitudeDeg", "2.5");
+            setMarginLatitudeByKm = false;
         }
-        if (marginLatitude <= 0) throw new IllegalArgumentException("marginLatitude must be positive");
+        if (marginLatitudeRaw <= 0) throw new IllegalArgumentException("marginLatitude must be positive");
         if (property.containsKey("marginLongitudeKm")) {
-            marginLongitude = property.parseDouble("marginLongitudeKm", null);
-            setLongitudeByKm = true;
+            marginLongitudeRaw = property.parseDouble("marginLongitudeKm", null);
+            setMarginLongitudeByKm = true;
         } else {
-            marginLongitude = property.parseDouble("marginLongitudeDeg", "2.5");
-            setLongitudeByKm = false;
+            marginLongitudeRaw = property.parseDouble("marginLongitudeDeg", "2.5");
+            setMarginLongitudeByKm = false;
         }
-        if (marginLongitude <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
+        if (marginLongitudeRaw <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
@@ -208,20 +207,10 @@ public class ModelMapper extends Operation {
 
         // read initial structure
         System.err.print("Initial structure: ");
-        PolynomialStructure initialStructure = null;
-        if (initialStructurePath != null) {
-            initialStructure = PolynomialStructureFile.read(initialStructurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(initialStructureName);
-        }
+        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
         // read reference structure
         System.err.print("Reference structure: ");
-        PolynomialStructure referenceStructure = null;
-        if (referenceStructurePath != null) {
-            referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
-        } else {
-            referenceStructure = PolynomialStructure.of(referenceStructureName);
-        }
+        PolynomialStructure referenceStructure = PolynomialStructure.setupFromFileOrName(referenceStructurePath, referenceStructureName);
 
         // read knowns
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
@@ -257,8 +246,8 @@ public class ModelMapper extends Operation {
             PerturbationListFile.write(discreteMap, outputDiscretePath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
-            Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXYZ.lst");
+                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
+            Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXY.lst");
             PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
             // output shellscripts
             PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
