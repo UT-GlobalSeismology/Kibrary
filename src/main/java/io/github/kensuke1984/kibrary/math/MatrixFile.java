@@ -13,7 +13,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import io.github.kensuke1984.kibrary.Summon;
@@ -50,7 +50,7 @@ public class MatrixFile {
         // construct matrix
         int rowDimension = lines.length;
         int columnDimension = lines[0].split("\\s+").length;
-        RealMatrix matrix = new Array2DRowRealMatrix(rowDimension, columnDimension);
+        RealMatrix matrix = MatrixUtils.createRealMatrix(rowDimension, columnDimension);
 
         // fill in values
         for (int i = 0; i < rowDimension; i++) {
@@ -127,7 +127,7 @@ public class MatrixFile {
         }
 
         // construct zero-matrix
-        RealMatrix matrix = new Array2DRowRealMatrix(rowDimension, columnDimension);
+        RealMatrix matrix = MatrixUtils.createRealMatrix(rowDimension, columnDimension);
 
         // diagonal components
         if (cmdLine.hasOption("d")) {

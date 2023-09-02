@@ -7,7 +7,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 /**
- * Conjugate gradient method
+ * Conjugate gradient method.
  *
  * @author Kensuke Konishi
  * @since version 0.0.3.2
@@ -49,8 +49,9 @@ public class ConjugateGradientMethod extends InverseProblem {
         this.ata = ata;
         this.atd = atd;
         int column = ata.getColumnDimension();
-        // when initialVector is not set, set it as zero-vector
+        // when initial vector is not set, set it as zero-vector
         this.m0 = (m0 != null) ? m0 : new ArrayRealVector(column);
+        // set up matrices
         p = MatrixUtils.createRealMatrix(column, column);
         ans = MatrixUtils.createRealMatrix(column, column);
         alpha = new ArrayRealVector(column);
@@ -62,7 +63,7 @@ public class ConjugateGradientMethod extends InverseProblem {
      */
     @Override
     public void compute() {
-        System.err.println("Solving by CG method.");
+        System.err.println("Solving by CG (conjugate gradient) method.");
 
         // r_0 = Atd - AtA m_0 (A35)
         RealVector r = atd.subtract(ata.operate(m0));

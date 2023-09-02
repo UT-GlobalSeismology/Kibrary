@@ -4,129 +4,115 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+
 /**
- * SVD inversion
+ * Inversion using singular value decomposition (SVD).
+ * <p>
+ * SVD is a factorization of the form A = U &Sigma; V<sup>T</sup>,
+ *  where U and V are orthogonal, and &Sigma; is an m &times; n diagonal matrix. <br>
+ * Then, the problem A<sup>T</sup>A<b>m</b> = A<sup>T</sup><b>d</b> becomes <br>
+ *  <b>m</b> = V (&Sigma;<sup>T</sup>&Sigma;)<sup>-1</sup> V<sup>T</sup> A<sup>T</sup> <b>d</b> = V <b>p</b>
+ *   = &Sigma;<sub>j=1</sub><sup>M</sup> p<sub>j</sub> <b>v</b><sub>j</sub> , <br>
+ *  where we define <b>p</b> = (&Sigma;<sup>T</sup>&Sigma;)<sup>-1</sup> V<sup>T</sup> A<sup>T</sup><b>d</b>.
+ * <p>
+ * Now, A<sup>T</sup>A = V &Sigma;<sup>T</sup> U<sup>T</sup> U &Sigma; V<sup>T</sup> = V &Sigma;<sup>T</sup>&Sigma; V<sup>T</sup>.
+ * This is the eigenvalue decomposition of A<sup>T</sup>A, with the diagonal matrix as D = &Sigma;<sup>T</sup>&Sigma;. <br>
+ * Thus, V and &Sigma;<sup>T</sup>&Sigma; can be computed via the eigenvalue decomposition of A<sup>T</sup>A.
+ * (Note that A<sup>T</sup>A is a real symmetric matrix, so V is orthogonal.)
+ * <p>
+ * To find the solution, we sum over the first n eigenvectors of the expansion as
+ *  <b>m</b><sub>n</sub> = &Sigma;<sub>j=1</sub><sup>n</sup> p<sub>j</sub> <b>v</b><sub>j</sub> .
+ * We can compute p<sub>j</sub> as
+ *  p<sub>j</sub> = (1 / &sigma;<sub>j</sub><sup>2</sup>) (V<sup>T</sup> A<sup>T</sup><b>d</b>)<sub>j</sub>.
+ * <p>
+ * See Fuji et al. (2010) for further explanations.
  *
  * @author Kensuke Konishi
  * @version 0.0.7.4
- * @see <a href= https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>,
+ * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  */
 public class SingularValueDecomposition extends InverseProblem {
 
-    private org.apache.commons.math3.linear.SingularValueDecomposition svdi;
+    private EigenDecomposition eigenDecomposition;
 
     public SingularValueDecomposition(RealMatrix ata, RealVector atd) {
         this.ata = ata;
         this.atd = atd;
-        ans = MatrixUtils.createRealMatrix(ata.getColumnDimension(), ata.getColumnDimension());
-    }
-
-    /**
-     * Output Vt
-     *
-     * @param outDir must not exist
-     * @throws IOException if any
-     */
-    public void ouputVt(Path outDir) throws IOException {
-        if (Files.exists(outDir))
-            return;
-        Files.createDirectories(outDir);
-        RealMatrix vt = svdi.getVT();
-        new Thread(() -> {
-            for (int i = 0; i < getNParameter(); i++) {
-                Path out = outDir.resolve(i + ".dat");
-                RealVector v = vt.getColumnVector(i);
-                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out))) {
-                    for (int j = 0; j < getNParameter(); j++)
-                        pw.println(v.getEntry(j));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        int column = ata.getColumnDimension();
+        // set up matrices
+        ans = MatrixUtils.createRealMatrix(column, column);
     }
 
     @Override
     public void compute() {
-        System.err.print("singular value decomposing AtA");
-        svdi = new org.apache.commons.math3.linear.SingularValueDecomposition(ata);
+        System.err.println("Solving by SVD (singular value decomposition).");
+
+        System.err.print(" Decomposing AtA ...");
+        eigenDecomposition = new EigenDecomposition(ata);
         System.err.println("  done");
-        RealMatrix vt = svdi.getVT();
+        // V^t
+        RealMatrix vt = eigenDecomposition.getVT();
+        // Sigma^t Sigma
+        RealMatrix sigma2 = eigenDecomposition.getD();
+        // size of matrices
+        int nParameter = ata.getRowDimension();
 
-        // BtB = VtAtAV VtStSV
-        RealMatrix btb = vt.multiply(ata).multiply(vt.transpose());
-        // sometime btb is too small to be LUdecomposed
-        final double factor = 1 / ata.getEntry(0, ata.getColumnDimension() - 1);
-        btb = btb.scalarMultiply(factor);
+        // compute V^t A^t d
+        RealVector vtatd = vt.operate(atd);
 
-        // Btd = VtAtd
-        RealVector btd = vt.operate(atd);
-
-        // m = Vp
-        RealVector p = new LUDecomposition(btb).getSolver().getInverse().operate(btd);
-        p.mapMultiplyToSelf(factor);
-
-        int parN = getNParameter();
-
-        // mj = pi vi (i<=j, V=(vi ...)
-        for (int j = 0; j < parN; j++) {
-            RealVector ans = new ArrayRealVector(parN);
-            for (int i = 0; i < j + 1; i++) {
-                RealVector vi = vt.getRowVector(i);
-                ans = ans.add(vi.mapMultiply(p.getEntry(i)));
-            }
-            this.ans.setColumnVector(j, ans);
+        // vector to store the answer m_j as accumulation of p_k v_k
+        RealVector mj = new ArrayRealVector(nParameter);
+        for (int j = 0; j < nParameter; j++) {
+            // p_j = (1 / sigma_j^2) (V^t A^t d)_j
+            double pj = vtatd.getEntry(j) / sigma2.getEntry(j, j);
+            // m_j = sum_{k=1}^j p_k v_k
+            mj = mj.add(vt.getRowVector(j).mapMultiply(pj));
+            ans.setColumnVector(j, mj);
         }
-
-        // output singular values
-        Path outpath = Paths.get("singularValues.txt");
-        try {
-            Files.createFile(outpath);
-            PrintWriter pw = new PrintWriter(outpath.toFile());
-            for (double lambda : svdi.getSingularValues())
-                pw.println(lambda);
-            pw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
 
     @Override
+    public void outputAnswers(List<UnknownParameter> unknowns, Path outPath) throws IOException {
+        super.outputAnswers(unknowns, outPath);
+
+        // output eigenvalues of AtA
+        Path outputPath = outPath.resolve("eigenvaluesOfAta.txt");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (double sigma2 : eigenDecomposition.getRealEigenvalues()) pw.println(sigma2);
+        }
+    }
+
+    /**
+     * Cov(<b>m</b><sub>j</sub>) = &sigma;<sub>D</sub><sup>2</sup> &Sigma;<sub>i=1</sub><sup>j</sup>
+     *  (1 / &sigma;<sub>i</sub><sup>2</sup>) <b>v</b><sub>i</sub> <b>v</b><sub>i</sub><sup>T</sup> <br>
+     * See Fuji et al. (2010) for explanations.
+     */
+    @Override
     public RealMatrix computeCovariance(double sigmaD, int j) {
-        RealMatrix covarianceMatrix = new Array2DRowRealMatrix(getNParameter(), getNParameter());
-        double[] lambda = svdi.getSingularValues();
-        double sigmaD2 = sigmaD * sigmaD;
+        RealMatrix covarianceMatrix = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
+        // array of sigma^2
+        double[] sigma2 = eigenDecomposition.getRealEigenvalues();
         for (int i = 0; i < j; i++) {
-            double sigmaD2lambda2 = sigmaD2 / lambda[i];
-            RealMatrix v = MatrixUtils.createColumnRealMatrix(svdi.getV().getColumn(i));
-            covarianceMatrix = covarianceMatrix.add(v.multiply(v.transpose()).scalarMultiply(sigmaD2lambda2));
+            double coeff = sigmaD * sigmaD / sigma2[i];
+            RealMatrix v = MatrixUtils.createColumnRealMatrix(eigenDecomposition.getV().getColumn(i));
+            covarianceMatrix = covarianceMatrix.add(v.multiply(v.transpose()).scalarMultiply(coeff));
         }
         return covarianceMatrix;
     }
 
-    public org.apache.commons.math3.linear.SingularValueDecomposition getSVDI() {
-        return svdi;
-    }
-
-    public RealMatrix computeCovariance() {
-        return new LUDecomposition(ata).getSolver().getInverse(); // TODO
-    }
-
-
     @Override
     public RealMatrix getBaseVectors() {
-        return svdi.getVT();
+        return eigenDecomposition.getV();
     }
 
     @Override

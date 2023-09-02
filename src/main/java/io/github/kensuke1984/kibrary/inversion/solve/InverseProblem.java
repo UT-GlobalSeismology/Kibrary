@@ -34,10 +34,10 @@ public abstract class InverseProblem {
             return new ConjugateGradientMethod(ata, atd, m0_CG);
         case LEAST_SQUARES:
             return new LeastSquaresMethod(ata, atd, lambda_LS, t_LS, eta_LS);
-
-        //-----------------------
         case SINGULAR_VALUE_DECOMPOSITION:
             return new SingularValueDecomposition(ata, atd);
+
+        //-----------------------
         case FAST_CONJUGATE_GRADIENT:
             return new FastConjugateGradientMethod(ata, atd, false); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
         case FAST_CONJUGATE_GRADIENT_DAMPED:
