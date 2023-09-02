@@ -30,7 +30,7 @@ import org.apache.commons.math3.linear.RealVector;
  * @author Kensuke Konishi
  * @since version 0.1.0
  */
-public class LeastSquaresMethod extends InverseProblem {
+public class LeastSquaresMethod extends InversionMethod {
 
     /**
      * &lambda; : reguralization parameter.
@@ -51,8 +51,8 @@ public class LeastSquaresMethod extends InverseProblem {
     /**
      * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup>.
      *
-     * @param ata (RealMatrix) A<sup>T</sup>A
-     * @param atd (RealVector) A<sup>T</sup>d
+     * @param ata (RealMatrix) A<sup>T</sup>A.
+     * @param atd (RealVector) A<sup>T</sup>d.
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd) {
         this(ata, atd, 0, null, null);
@@ -61,9 +61,9 @@ public class LeastSquaresMethod extends InverseProblem {
     /**
      * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m+&eta;|<sup>2</sup>.
      *
-     * @param ata (RealMatrix) A<sup>T</sup>A
-     * @param atd (RealVector) A<sup>T</sup>d
-     * @param lambda (double) &lambda;
+     * @param ata (RealMatrix) A<sup>T</sup>A.
+     * @param atd (RealVector) A<sup>T</sup>d.
+     * @param lambda (double) &lambda;.
      * @param t (RealMatrix) T. When null, identity matrix is used.
      * @param eta (RealVector) &eta;. When null, it will not be used.
      */
@@ -93,7 +93,7 @@ public class LeastSquaresMethod extends InverseProblem {
             // At d - lambda Tt eta
             if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
         }
-        ans = MatrixUtils.createColumnRealMatrix(MatrixUtils.inverse(j).operate(k).toArray());
+        answer = MatrixUtils.createColumnRealMatrix(MatrixUtils.inverse(j).operate(k).toArray());
     }
 
     @Override

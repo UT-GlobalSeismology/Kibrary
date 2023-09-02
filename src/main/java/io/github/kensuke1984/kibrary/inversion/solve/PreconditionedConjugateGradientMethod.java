@@ -17,7 +17,7 @@ import org.apache.commons.math3.linear.RealVector;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class PreconditionedConjugateGradientMethod extends InverseProblem {
+public class PreconditionedConjugateGradientMethod extends InversionMethod {
 
     public RealMatrix getP() {
         return p;
@@ -53,7 +53,7 @@ public class PreconditionedConjugateGradientMethod extends InverseProblem {
         this.m = m;
         int column = ata.getColumnDimension();
         p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
         z = MatrixUtils.createRealMatrix(column, column);
         r = MatrixUtils.createRealMatrix(column, column);
@@ -69,7 +69,7 @@ public class PreconditionedConjugateGradientMethod extends InverseProblem {
     public void compute() {
         int column = ata.getColumnDimension();
         p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
         System.err.println("Solving by CG method.");
         r.setColumnVector(0, atd); // r_k = Atd -AtAm_k (A35)
@@ -88,7 +88,7 @@ public class PreconditionedConjugateGradientMethod extends InverseProblem {
             RealVector atap = ata.operate(p.getColumnVector(i));
 
             a.setEntry(i, r.getColumnVector(i).dotProduct(z.getColumnVector(i)) / p.getColumnVector(i).dotProduct(atap));
-            ans.setColumnVector(i + 1, ans.getColumnVector(i).add(p.getColumnVector(i).mapMultiply(a.getEntry(i))));
+            answer.setColumnVector(i + 1, answer.getColumnVector(i).add(p.getColumnVector(i).mapMultiply(a.getEntry(i))));
             r.setColumnVector(i + 1, r.getColumnVector(i).subtract(atap.mapMultiply(a.getEntry(i))));
 
             z.setColumnVector(i + 1, multiply(m, r.getColumnVector(i + 1)));

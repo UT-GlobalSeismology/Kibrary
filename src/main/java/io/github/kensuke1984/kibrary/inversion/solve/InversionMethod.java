@@ -13,16 +13,18 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
+ * Abstract parent class of various inversion methods to solve the problem A<sup>T</sup>A<b>m</b> = A<sup>T</sup><b>d</b>.
+ *
  * @author Kensuke Konishi
  * @since version 0.0.4
  */
-public abstract class InverseProblem {
+public abstract class InversionMethod {
 
-    RealMatrix ans;
+    RealMatrix answer;
     RealMatrix ata;
     RealVector atd;
 
-    public static InverseProblem create(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
+    public static InversionMethod construct(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
             double lambda_LS, RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
         if (!ata.isSquare()) throw new IllegalArgumentException("AtA must be square.");
         if (ata.getRowDimension() != atd.getDimension()) throw new IllegalArgumentException("Dimension of AtA and Atd do not match.");
@@ -55,7 +57,7 @@ public abstract class InverseProblem {
         }
     }
     @Deprecated
-    InverseProblem getMethod(InverseMethodEnum inverseMethod, RealMatrix ata, RealMatrix a, RealVector u, RealVector s0) {
+    InversionMethod getMethod(InverseMethodEnum inverseMethod, RealMatrix ata, RealMatrix a, RealVector u, RealVector s0) {
         switch (inverseMethod) {
         case NONLINEAR_CONJUGATE_GRADIENT:
             return new NonlinearConjugateGradientMethod(ata, a, s0, u);
@@ -64,7 +66,7 @@ public abstract class InverseProblem {
         }
     }
     @Deprecated
-    InverseProblem getMethod(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd, RealMatrix h) {
+    InversionMethod getMethod(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd, RealMatrix h) {
         switch (inverseMethod) {
         case CONSTRAINED_CONJUGATE_GRADIENT:
             return new ConstrainedConjugateGradientMethod(ata, atd, h);
@@ -79,11 +81,11 @@ public abstract class InverseProblem {
 //    }
 
     private int getNAnswer() {
-        return ans.getColumnDimension();
+        return answer.getColumnDimension();
     }
 
     public RealMatrix getAnswers() {
-        return ans;
+        return answer;
     }
 
     /**
@@ -92,7 +94,7 @@ public abstract class InverseProblem {
      */
     public RealVector getAnswerVector(int i) {
         if (i <= 0) throw new IllegalArgumentException("i must be a natural number.");
-        return ans.getColumnVector(i - 1);
+        return answer.getColumnVector(i - 1);
     }
 
     /**
@@ -118,7 +120,7 @@ public abstract class InverseProblem {
         System.err.println("Outputting the answer files in " + outPath);
         for (int i = 0; i < getNAnswer(); i++) {
             Path outputPath = outPath.resolve(getEnum().simpleName() + (i+1) + ".lst");
-            double[] m = ans.getColumn(i);
+            double[] m = answer.getColumn(i);
             KnownParameterFile.write(unknowns, m, outputPath);
         }
     }

@@ -15,7 +15,8 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
- * Inversion using singular value decomposition (SVD).
+ * Inversion based on singular value decomposition (SVD).
+ * (Note: In the actual program, the eigenvalue decomposition of A<sup>T</sup>A is used instead of the SVD of A.)
  * <p>
  * SVD is a factorization of the form A = U &Sigma; V<sup>T</sup>,
  *  where U and V are orthogonal, and &Sigma; is an m &times; n diagonal matrix. <br>
@@ -41,16 +42,21 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  */
-public class SingularValueDecomposition extends InverseProblem {
+public class SingularValueDecomposition extends InversionMethod {
 
     private EigenDecomposition eigenDecomposition;
 
+    /**
+     * Set up method based on SVD to find m.
+     * @param ata (RealMatrix) A<sup>T</sup>A.
+     * @param atd (RealVector) A<sup>T</sup>d.
+     */
     public SingularValueDecomposition(RealMatrix ata, RealVector atd) {
         this.ata = ata;
         this.atd = atd;
         int column = ata.getColumnDimension();
         // set up matrices
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
     }
 
     @Override
@@ -77,7 +83,7 @@ public class SingularValueDecomposition extends InverseProblem {
             double pj = vtatd.getEntry(j) / sigma2.getEntry(j, j);
             // m_j = sum_{k=1}^j p_k v_k
             mj = mj.add(vt.getRowVector(j).mapMultiply(pj));
-            ans.setColumnVector(j, mj);
+            answer.setColumnVector(j, mj);
         }
     }
 
@@ -94,7 +100,7 @@ public class SingularValueDecomposition extends InverseProblem {
 
     /**
      * Cov(<b>m</b><sub>j</sub>) = &sigma;<sub>D</sub><sup>2</sup> &Sigma;<sub>i=1</sub><sup>j</sup>
-     *  (1 / &sigma;<sub>i</sub><sup>2</sup>) <b>v</b><sub>i</sub> <b>v</b><sub>i</sub><sup>T</sup> <br>
+     *  (1 / &sigma;<sub>i</sub><sup>2</sup>) <b>v</b><sub>i</sub> <b>v</b><sub>i</sub><sup>T</sup> . <br>
      * See Fuji et al. (2010) for explanations.
      */
     @Override
@@ -104,8 +110,9 @@ public class SingularValueDecomposition extends InverseProblem {
         double[] sigma2 = eigenDecomposition.getRealEigenvalues();
         for (int i = 0; i < j; i++) {
             double coeff = sigmaD * sigmaD / sigma2[i];
-            RealMatrix v = MatrixUtils.createColumnRealMatrix(eigenDecomposition.getV().getColumn(i));
-            covarianceMatrix = covarianceMatrix.add(v.multiply(v.transpose()).scalarMultiply(coeff));
+            // get v_i as a 1-column matrix
+            RealMatrix vi = eigenDecomposition.getV().getColumnMatrix(i);
+            covarianceMatrix = covarianceMatrix.add(vi.multiply(vi.transpose()).scalarMultiply(coeff));
         }
         return covarianceMatrix;
     }

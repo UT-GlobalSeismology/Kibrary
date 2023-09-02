@@ -17,7 +17,7 @@ import org.apache.commons.math3.linear.RealVector;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class NonlinearConjugateGradientMethod extends InverseProblem {
+public class NonlinearConjugateGradientMethod extends InversionMethod {
 
     public RealMatrix getP() {
         return p;
@@ -51,7 +51,7 @@ public class NonlinearConjugateGradientMethod extends InverseProblem {
         this.ata = ata;
         int column = ata.getColumnDimension();
         p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
         this.am = am;
         this.s0 = s0;
@@ -61,7 +61,7 @@ public class NonlinearConjugateGradientMethod extends InverseProblem {
 
     public void compute() {
         int column = ata.getColumnDimension();
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
         System.err.println("Solving by nonlinear CG method.");
 
         RealMatrix amt = am.transpose();
@@ -71,7 +71,7 @@ public class NonlinearConjugateGradientMethod extends InverseProblem {
         RealVector dx = costFunctionGradient(x0, amt).mapMultiply(-1).mapMultiply(1.e-4);
         RealVector x1 = lineSearch(dx, x0);
 
-        ans.setColumnVector(0, x1);
+        answer.setColumnVector(0, x1);
 
         int nmax = ata.getColumnDimension();
 
@@ -92,7 +92,7 @@ public class NonlinearConjugateGradientMethod extends InverseProblem {
 
             x1 = lineSearch(dx, x0);
 
-            ans.setColumnVector(i, x1);
+            answer.setColumnVector(i, x1);
 //			s0 = s1;
         }
     }

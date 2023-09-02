@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
  * @author Anselme
  * Implementation of the non negative least square algorithm of Stark and Parker (1993)
  */
-public class NonNegativeLeastSquaresMethod extends InverseProblem {
+public class NonNegativeLeastSquaresMethod extends InversionMethod {
 
     public static void main(String[] args) {
         // x^2 + 2x + 3

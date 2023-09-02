@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.solve.InverseProblem;
+import io.github.kensuke1984.kibrary.inversion.solve.InversionMethod;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -210,12 +210,12 @@ public class LetMeInvert extends Operation {
             Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
-            InverseProblem inverseProblem = InverseProblem.create(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
-            inverseProblem.compute();
-            inverseProblem.outputAnswers(unknowns, outMethodPath);
+            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
+            inversion.compute();
+            inversion.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
-            evaluation.evaluate(inverseProblem.getAnswers(), evaluateNum, alpha, outMethodPath);
+            evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
         }
     }
 

@@ -158,12 +158,12 @@ public class InversionSolver extends Operation {
             Path outMethodPath = workPath.resolve(method.simpleName());
 
             // solve problem
-            InverseProblem inverseProblem = InverseProblem.create(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
-            inverseProblem.compute();
-            inverseProblem.outputAnswers(unknowns, outMethodPath);
+            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
+            inversion.compute();
+            inversion.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
-            evaluation.evaluate(inverseProblem.getAnswers(), evaluateNum, alpha, outMethodPath);
+            evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
         }
     }
 

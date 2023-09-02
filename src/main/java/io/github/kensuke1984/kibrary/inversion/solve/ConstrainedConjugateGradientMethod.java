@@ -16,7 +16,7 @@ import org.apache.commons.math3.linear.RealVector;
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>,
  * <a href=https://core.ac.uk/download/pdf/82705384.pdf>Constrained CG method</a>
  */
-public class ConstrainedConjugateGradientMethod extends InverseProblem {
+public class ConstrainedConjugateGradientMethod extends InversionMethod {
 
     public RealMatrix getP() {
         return p;
@@ -47,7 +47,7 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
         this.atd = atd;
         int column = ata.getColumnDimension();
         p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
         this.h = h;
     }
@@ -57,7 +57,7 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
         System.err.println("Solving by Constrained CG method.");
         int column = ata.getColumnDimension();
         p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
+        answer = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
 
         RealVector r0 = atd.mapMultiply(-1); // r_k = Atd -AtAm_k (A35)
@@ -68,7 +68,7 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
 
         a.setEntry(0, -r0.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
-        ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
+        answer.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
 
         RealVector z;
         RealVector r;
@@ -92,7 +92,7 @@ public class ConstrainedConjugateGradientMethod extends InverseProblem {
 
             a.setEntry(i, -rp / paap);
 
-            ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(a.getEntry(i)).add(ans.getColumnVector(i - 1)));
+            answer.setColumnVector(i, p.getColumnVector(i).mapMultiply(a.getEntry(i)).add(answer.getColumnVector(i - 1)));
 
             r0 = r;
             z0 = z;
