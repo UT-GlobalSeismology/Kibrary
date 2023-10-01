@@ -26,11 +26,11 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * margin to decide whether two latitudes are the same value
      */
-    public static double LATITUDE_EPSILON = Math.pow(10, -Latitude.PRECISION)/2;
+    public static double LATITUDE_EPSILON = Math.pow(10, -Latitude.PRECISION) / 2;
     /**
      * margin to decide whether two longitudes are the same value
      */
-    public static double LONGITUDE_EPSILON = Math.pow(10, -Longitude.PRECISION)/2;
+    public static double LONGITUDE_EPSILON = Math.pow(10, -Longitude.PRECISION) / 2;
 
     private final Latitude latitude;
     private final Longitude longitude;
@@ -96,11 +96,12 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Checks whether this position is inside a given coordinate range.
+     * Lower limit is included; upper limit is excluded.
      * @param minLatitude (double) [-90:maxLatitude)
      * @param maxLatitude (double) (minLatitude:90]
      * @param minLongitude (double) [-180:maxLongitude)
      * @param maxLongitude (double) (minLongitude:360]
-     * @return (boolean) true if position is inside the given range
+     * @return (boolean) Whether this position is inside the given range.
      *
      * @author otsuru
      * @since 2021/11/21
@@ -113,19 +114,19 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         }
 
         //latitude
-        if (latitude.getLatitude() < minLatitude || maxLatitude < latitude.getLatitude()) return false;
+        if (latitude.getLatitude() < minLatitude || maxLatitude <= latitude.getLatitude()) return false;
 
         // longitude; min [-180, 180) and max [-180, 180)
         if (maxLongitude < 180) {
-            if (longitude.getLongitude() < minLongitude || maxLongitude < longitude.getLongitude()) return false;
+            if (longitude.getLongitude() < minLongitude || maxLongitude <= longitude.getLongitude()) return false;
         }
         // longitude; min [-180, 180) and max [180, 360]
         if (minLongitude < 180 && 180 <= maxLongitude) {
-            if (longitude.getLongitude() < minLongitude && maxLongitude - 360 < longitude.getLongitude()) return false;
+            if (longitude.getLongitude() < minLongitude && maxLongitude - 360 <= longitude.getLongitude()) return false;
         }
         // longitude; min [180, 360] and max [180, 360]
         if (180 <= minLongitude && 180 <= maxLongitude) {
-            if (longitude.getLongitude() < minLongitude - 360 || maxLongitude - 360 < longitude.getLongitude()) return false;
+            if (longitude.getLongitude() < minLongitude - 360 || maxLongitude - 360 <= longitude.getLongitude()) return false;
         }
 
         return true;
