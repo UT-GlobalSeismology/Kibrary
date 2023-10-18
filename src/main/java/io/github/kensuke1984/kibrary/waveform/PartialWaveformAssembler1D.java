@@ -154,11 +154,11 @@ public class PartialWaveformAssembler1D extends Operation {
     /**
      * lower frequency of bandpass [Hz]
      */
-    private double minFreq;
+    private double lowFreq;
     /**
      * upper frequency of bandpass [Hz]
      */
-    private double maxFreq;
+    private double highFreq;
     /**
      * see Saito, n
      */
@@ -239,11 +239,11 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#tlen ");
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
             pw.println("#np ");
-            pw.println("##(double) Minimum value of passban.d (0.005)");
-            pw.println("#minFreq ");
-            pw.println("##(double) Maximum value of passband. (0.08)");
-            pw.println("#maxFreq ");
-            pw.println("##(int) The value of np for the filter. (4)");
+            pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
+            pw.println("#lowFreq ");
+            pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
+            pw.println("#highFreq ");
+            pw.println("##(int) The value of NP for the filter. (4)");
             pw.println("#filterNp ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
@@ -294,8 +294,8 @@ public class PartialWaveformAssembler1D extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
-        maxFreq = property.parseDouble("maxFreq", "0.08");
-        minFreq = property.parseDouble("minFreq", "0.005");
+        lowFreq = property.parseDouble("lowFreq", "0.005");
+        highFreq = property.parseDouble("highFreq", "0.08");
         filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
     }
@@ -355,8 +355,8 @@ public class PartialWaveformAssembler1D extends Operation {
 
     private ButterworthFilter designBandPassFilter() throws IOException {
         System.err.println("Designing filter.");
-        double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
-        double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
+        double omegaH = highFreq * 2 * Math.PI / partialSamplingHz;
+        double omegaL = lowFreq * 2 * Math.PI / partialSamplingHz;
         ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
         filter.setCausal(causal);
         return filter;
@@ -508,7 +508,7 @@ public class PartialWaveformAssembler1D extends Operation {
             Trace resampledTrace = filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
 
             PartialID partialID = new PartialID(observer, event, timewindow.getComponent(), finalSamplingHz,
-                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / maxFreq, 1 / minFreq,
+                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / highFreq, 1 / lowFreq,
                     timewindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
                     ParameterType.LAYER, variableType, new FullPosition(0, 0, bodyR), resampledTrace.getY());
             partialIDs.add(partialID);

@@ -144,7 +144,7 @@ public class FilterDivider extends Operation {
             pw.println("#lowFreq ");
             pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
             pw.println("#highFreq ");
-            pw.println("##The value of NP for the filter. (4)");
+            pw.println("##(int) The value of NP for the filter. (4)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
