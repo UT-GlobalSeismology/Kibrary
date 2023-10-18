@@ -354,7 +354,7 @@ public class PartialWaveformAssembler1D extends Operation {
     }
 
     private ButterworthFilter designBandPassFilter() throws IOException {
-        System.err.println("Designing filter.");
+        System.err.println("Designing filter. " + lowFreq + " - " + highFreq);
         double omegaH = highFreq * 2 * Math.PI / partialSamplingHz;
         double omegaL = lowFreq * 2 * Math.PI / partialSamplingHz;
         ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
