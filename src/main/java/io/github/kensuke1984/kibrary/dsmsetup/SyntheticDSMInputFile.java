@@ -36,6 +36,28 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
 
     protected final GlobalCMTAccess event;
 
+    protected final boolean dsm1d;
+
+
+    /**
+     * @param structure of velocity
+     * @param event     {@link GlobalCMTID}
+     * @param observers observer information
+     * @param outputDir name of outputDir (relative PATH)
+     * @param tlen      TLEN[s]
+     * @param np        NP
+     * @param dsm1d     DSM1d mode
+     */
+    public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
+                            double tlen, int np, boolean dsm1d) {
+        super(tlen, np);
+        this.structure = structure;
+        this.event = event;
+        this.observers = Collections.unmodifiableSet(new HashSet<>(observers));
+        this.output = outputDir;
+        this.dsm1d = dsm1d;
+    }
+
     /**
      * @param structure of velocity
      * @param event     {@link GlobalCMTID}
@@ -45,12 +67,8 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @param np        NP
      */
     public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
-                            double tlen, int np) {
-        super(tlen, np);
-        this.structure = structure;
-        this.event = event;
-        this.observers = Collections.unmodifiableSet(new HashSet<>(observers));
-        this.output = outputDir;
+            double tlen, int np) {
+        this(structure, event, observers, outputDir, tlen, np, false);
     }
 
     /**
@@ -92,6 +110,13 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             pw.println("c parameter for the write file");
             observers.stream().sorted()
                     .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.PSV)));
+
+            // model for DSM1d
+            if (dsm1d) {
+                pw.println("c model file name");
+                pw.println("model_PSV.inf");
+            }
+
             pw.println("end");
 
         }
@@ -136,6 +161,13 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             pw.println("c parameter for the write file");
             observers.stream().sorted()
                     .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.SH)));
+
+            // model for DSM1d
+            if (dsm1d) {
+                pw.println("c model file name");
+                pw.println("model_SH.inf");
+            }
+
             pw.println("end");
         }
     }

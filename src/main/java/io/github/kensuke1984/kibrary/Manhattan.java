@@ -5,6 +5,7 @@ import java.util.Arrays;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
+import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSM1dSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.entrance.DataLobby;
@@ -76,6 +77,7 @@ enum Manhattan {
     // Synthetic  20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
+    SyntheticDSM1dSetup(22, SyntheticDSM1dSetup.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),
     TimewindowMaker(31, TimewindowMaker.class),
