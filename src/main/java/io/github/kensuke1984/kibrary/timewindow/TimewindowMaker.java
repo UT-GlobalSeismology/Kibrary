@@ -158,6 +158,14 @@ public class TimewindowMaker extends Operation {
      */
     private boolean useDuplicatePhases;
 
+    /**
+     * Make timewindows which times are explicitly defined.
+     * In this mode, phase data will be false.
+     */
+    private boolean defineTime;
+    private double startTime;
+    private double endTime;
+
     private Set<DataEntry> entrySet;
     private Set<TimewindowData> timewindowSet = Collections.synchronizedSet(new HashSet<>());
     private Set<TravelTimeInformation> travelTimeSet = Collections.synchronizedSet(new HashSet<>());
@@ -214,6 +222,13 @@ public class TimewindowMaker extends Operation {
             pw.println("##(boolean) Whether to use duplicate arrivals of usePhases when deciding timewindows (e.g. in case of triplication) (true)");
             pw.println("##  If not, only the first arrival of each usePhase will be considered.");
             pw.println("#useDuplicatePhases ");
+            pw.println("##(boolean) Explicitly define the timewindows (false)");
+            pw.println("##  If it is true, the followinf startTime and endTime will be used");
+            pw.println("#defineTime ");
+            pw.println("##The start time of timewindows, must be set when absTime is true.");
+            pw.println("#startTime ");
+            pw.println("##The end time of timewindows, must be set when absTime is true.");
+            pw.println("#endTime ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -246,6 +261,11 @@ public class TimewindowMaker extends Operation {
         structureName = property.parseString("structureName", "prem").toLowerCase();
         majorArc = property.parseBoolean("majorArc", "false");
         useDuplicatePhases = property.parseBoolean("useDuplicatePhases","true");
+        defineTime = property.parseBoolean("defineTime","false");
+        if (defineTime) {
+            startTime = property.parseDouble("startTime", null);
+            endTime = property.parseDouble("endTime", null);
+        }
 
         String dateStr = GadgetAid.getTemporaryString();
         outTimewindowPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", fileTag, dateStr, ".dat"));
@@ -295,7 +315,8 @@ public class TimewindowMaker extends Operation {
         } else {
             TimewindowDataFile.write(timewindowSet, outTimewindowPath);
         }
-        TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
+        if (!defineTime)
+            TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
     }
 
     private Runnable process(GlobalCMTID event) {
@@ -335,75 +356,81 @@ public class TimewindowMaker extends Operation {
         Observer observer = entry.getObserver();
         SACComponent component = entry.getComponent();
 
-        // Compute phase arrivals
-        double epicentralDistanceDeg = event.getEventData().getCmtPosition().computeEpicentralDistanceDeg(observer.getPosition());
-        timeTool.calculate(epicentralDistanceDeg);
-        List<Arrival> arrivals = timeTool.getArrivals();
-        List<Arrival> useArrivals = new ArrayList<>();
-        List<Arrival> avoidArrivals = new ArrayList<>();
-        if (useDuplicatePhases) {
-            // use all arrivals for usePhases
-            arrivals.stream().filter(arrival -> usePhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(useArrivals::add);
+        if (defineTime) {
+            // Explicitly define timewindows
+            Phase[] falsePhaseList = {Phase.S};
+            timewindowSet.add(new TimewindowData(startTime, endTime, observer, event, component, falsePhaseList));
         } else {
-            // use only the first arrival of each usePhase
-            for (Phase phase : usePhases) {
-                arrivals.stream().filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(phase)).findFirst().ifPresent(useArrivals::add);
-            }
-        }
-        // for avoidPhases, use all arrivals
-        arrivals.stream().filter(arrival -> avoidPhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(avoidArrivals::add);
-
-        // refine useArrivals
-        if (!majorArc) {
-            useArrivals.removeIf(arrival -> arrival.getDistDeg() >= 180.);
-        }
-        if (useArrivals.isEmpty()) {
-            writeInvalid(entry, "No usePhases arrive");
-            return;
-        }
-
-        // extract arrival times
-        double[] usePhaseTimes = useArrivals.stream().mapToDouble(Arrival::getTime).toArray();
-        double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
-
-        // create windows
-        Timewindow[] windows;
-        if (allowSplitWindows) {
-            // create windows allowing them to be split
-            windows = createWindowsAllowingSplits(usePhaseTimes, avoidPhaseTimes);
-        } else {
-            // find first and last usePhase arrival times
-            double firstUseTime = Arrays.stream(usePhaseTimes).min().getAsDouble();
-            double lastUseTime = Arrays.stream(usePhaseTimes).max().getAsDouble();
-            // skip if an avoidPhase is between or near usePhases
-            for (Arrival avoidArrival : avoidArrivals) {
-                double avoidTime = avoidArrival.getTime();
-                if (firstUseTime <= (avoidTime + avoidRearShift) && (avoidTime - avoidFrontShift) <= lastUseTime) {
-                    writeInvalid(entry, avoidArrival.getPhase().getName() + " arrives between or near usePhases");
-                    return;
+            // Compute phase arrivals
+            double epicentralDistanceDeg = event.getEventData().getCmtPosition().computeEpicentralDistanceDeg(observer.getPosition());
+            timeTool.calculate(epicentralDistanceDeg);
+            List<Arrival> arrivals = timeTool.getArrivals();
+            List<Arrival> useArrivals = new ArrayList<>();
+            List<Arrival> avoidArrivals = new ArrayList<>();
+            if (useDuplicatePhases) {
+                // use all arrivals for usePhases
+                arrivals.stream().filter(arrival -> usePhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(useArrivals::add);
+            } else {
+                // use only the first arrival of each usePhase
+                for (Phase phase : usePhases) {
+                    arrivals.stream().filter(arrival -> Phase.create(arrival.getPhase().getName()).equals(phase)).findFirst().ifPresent(useArrivals::add);
                 }
             }
-            // create single window
-            windows = createSingleWindow(firstUseTime, lastUseTime, avoidPhaseTimes);
-        }
-        if (windows == null) {
-            writeInvalid(entry, "Nothing remains after eliminating windows of avoidPhases");
-            return;
-        }
+            // for avoidPhases, use all arrivals
+            arrivals.stream().filter(arrival -> avoidPhases.contains(Phase.create(arrival.getPhase().getName()))).forEach(avoidArrivals::add);
 
-        // window fix and check
-        List<TimewindowData> windowList = Arrays.stream(windows)
-                .map(window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component,
-                        findContainedPhases(window, useArrivals)))
-                .filter(tw -> tw.getLength() > minLength).collect(Collectors.toList());
-        if (windowList.size() == 0) {
-            writeInvalid(entry, "Timewindow too short.");
-            return;
-        }
+            // refine useArrivals
+            if (!majorArc) {
+                useArrivals.removeIf(arrival -> arrival.getDistDeg() >= 180.);
+            }
+            if (useArrivals.isEmpty()) {
+                writeInvalid(entry, "No usePhases arrive");
+                return;
+            }
 
-        // add final result
-        timewindowSet.addAll(windowList);
-        travelTimeSet.add(new TravelTimeInformation(event, observer, useArrivals, avoidArrivals));
+            // extract arrival times
+            double[] usePhaseTimes = useArrivals.stream().mapToDouble(Arrival::getTime).toArray();
+            double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
+
+            // create windows
+            Timewindow[] windows;
+            if (allowSplitWindows) {
+                // create windows allowing them to be split
+                windows = createWindowsAllowingSplits(usePhaseTimes, avoidPhaseTimes);
+            } else {
+                // find first and last usePhase arrival times
+                double firstUseTime = Arrays.stream(usePhaseTimes).min().getAsDouble();
+                double lastUseTime = Arrays.stream(usePhaseTimes).max().getAsDouble();
+                // skip if an avoidPhase is between or near usePhases
+                for (Arrival avoidArrival : avoidArrivals) {
+                    double avoidTime = avoidArrival.getTime();
+                    if (firstUseTime <= (avoidTime + avoidRearShift) && (avoidTime - avoidFrontShift) <= lastUseTime) {
+                        writeInvalid(entry, avoidArrival.getPhase().getName() + " arrives between or near usePhases");
+                        return;
+                    }
+                }
+                // create single window
+                windows = createSingleWindow(firstUseTime, lastUseTime, avoidPhaseTimes);
+            }
+            if (windows == null) {
+                writeInvalid(entry, "Nothing remains after eliminating windows of avoidPhases");
+                return;
+            }
+
+            // window fix and check
+            List<TimewindowData> windowList = Arrays.stream(windows)
+                    .map(window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component,
+                            findContainedPhases(window, useArrivals)))
+                    .filter(tw -> tw.getLength() > minLength).collect(Collectors.toList());
+            if (windowList.size() == 0) {
+                writeInvalid(entry, "Timewindow too short.");
+                return;
+            }
+
+            // add final result
+            timewindowSet.addAll(windowList);
+            travelTimeSet.add(new TravelTimeInformation(event, observer, useArrivals, avoidArrivals));
+        }
 
     }
 
