@@ -129,25 +129,25 @@ public class DataEntryListFile {
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
-                .desc("Components to use, listed using commas").build());
+                .desc("Components to use, listed using commas.").build());
 
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
-                .desc("Use dataset folder containing event folders as input").build());
+                .desc("Use dataset folder containing event folders as input.").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input").build());
+                .desc("Use timewindow file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("Use basic waveform folder as input").build());
+                .desc("Use basic waveform folder as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
-                .desc("Use data entry file as input").build());
+                .desc("Use data entry file as input.").build());
         options.addOptionGroup(inputOption);
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Set path of output file.").build());
         options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
-                .desc("To convert entries to certain components, list then using commas").build());
+                .desc("To convert entries to certain components, list then using commas.").build());
 
         return options;
     }
@@ -166,6 +166,7 @@ public class DataEntryListFile {
         Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
                 : Paths.get("dataEntry" + GadgetAid.getTemporaryString() + ".lst");
 
+        // read input
         Set<DataEntry> entrySet;
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
@@ -198,6 +199,7 @@ public class DataEntryListFile {
             return;
         }
 
+        // convert components
         if (cmdLine.hasOption("x")) {
             Set<DataEntry> newEntrySet = new HashSet<>();
             Set<SACComponent> xComponents = Arrays.stream(cmdLine.getOptionValue("x").split(","))
@@ -207,6 +209,8 @@ public class DataEntryListFile {
             }
             entrySet = newEntrySet;
         }
+
+        // output
         writeFromSet(entrySet, outputPath);
     }
 
@@ -217,6 +221,5 @@ public class DataEntryListFile {
                 .map(header -> new DataEntry(header.getGlobalCMTID(), header.getObserver(), header.getComponent()))
                 .collect(Collectors.toSet());
     }
-
 
 }

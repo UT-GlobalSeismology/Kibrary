@@ -188,6 +188,7 @@ public final class TimewindowDataFile {
                     .filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
+        System.err.println("Selected " + timewindowSet.size() + " timewindows.");
         return Collections.unmodifiableSet(timewindowSet);
     }
 
