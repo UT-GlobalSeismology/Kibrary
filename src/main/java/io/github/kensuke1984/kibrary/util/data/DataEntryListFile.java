@@ -84,7 +84,7 @@ public class DataEntryListFile {
         Set<DataEntry> entrySet = new HashSet<>();
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
-        while(reader.hasNext()) {
+        while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             GlobalCMTID event = new GlobalCMTID(parts[0]);
             HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]));
@@ -139,11 +139,15 @@ public class DataEntryListFile {
                 .desc("Use timewindow file as input").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
                 .desc("Use basic waveform folder as input").build());
+        inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
+                .desc("Use data entry file as input").build());
         options.addOptionGroup(inputOption);
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Set path of output file").build());
+        options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
+                .desc("To convert entries to certain components, list then using commas").build());
 
         return options;
     }
@@ -166,15 +170,18 @@ public class DataEntryListFile {
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            Set<TimewindowData> timewindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             entrySet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
                     .map(timewindow -> new DataEntry(timewindow.getGlobalCMTID(), timewindow.getObserver(), timewindow.getComponent()))
                     .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
-            List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
+            List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             entrySet = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))
                     .map(id -> new DataEntry(id.getGlobalCMTID(), id.getObserver(), id.getSacComponent()))
                     .collect(Collectors.toSet());
+        } else if (cmdLine.hasOption("e")) {
+            entrySet = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")))
+                    .stream().filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
         } else {
             String pathString = "";
             Path inPath;
@@ -189,6 +196,16 @@ public class DataEntryListFile {
         if (entrySet.size() == 0) {
             System.err.println("No data entries created.");
             return;
+        }
+
+        if (cmdLine.hasOption("x")) {
+            Set<DataEntry> newEntrySet = new HashSet<>();
+            Set<SACComponent> xComponents = Arrays.stream(cmdLine.getOptionValue("x").split(","))
+                    .map(SACComponent::valueOf).collect(Collectors.toSet());
+            for (SACComponent component : xComponents) {
+                entrySet.stream().map(entry -> new DataEntry(entry.getEvent(), entry.getObserver(), component)).forEach(newEntrySet::add);
+            }
+            entrySet = newEntrySet;
         }
         writeFromSet(entrySet, outputPath);
     }
