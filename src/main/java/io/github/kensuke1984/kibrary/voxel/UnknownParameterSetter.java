@@ -90,12 +90,12 @@ public class UnknownParameterSetter {
         if (cmdLine.hasOption("l")) {
             // work for layer file
             Path layerPath = Paths.get(cmdLine.getOptionValue("l"));
-            parameterList = createParametersFor1D(layerPath, types, tag);
+            parameterList = createParametersFor1D(layerPath, types);
 
         } else if (cmdLine.hasOption("v")) {
             // work for voxel file
             Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
-            parameterList = createParametersFor3D(voxelPath, types, tag);
+            parameterList = createParametersFor3D(voxelPath, types);
 
         } else {
             throw new IllegalArgumentException("Either a layer information file or a voxel information file must be specified.");
@@ -106,7 +106,7 @@ public class UnknownParameterSetter {
         UnknownParameterFile.write(parameterList, outputPath);
     }
 
-    private static List<UnknownParameter> createParametersFor1D(Path layerPath, VariableType[] types, String tag) throws IOException {
+    private static List<UnknownParameter> createParametersFor1D(Path layerPath, VariableType[] types) throws IOException {
         // read voxel information
         LayerInformationFile file = new LayerInformationFile(layerPath);
         double[] layerThicknesses = file.getThicknesses();
@@ -126,7 +126,7 @@ public class UnknownParameterSetter {
         return parameterList;
     }
 
-    private static List<UnknownParameter> createParametersFor3D(Path voxelPath, VariableType[] types, String tag) throws IOException {
+    private static List<UnknownParameter> createParametersFor3D(Path voxelPath, VariableType[] types) throws IOException {
         // read voxel information
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
