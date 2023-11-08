@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Operation that generates DSM1d input files to be used in tish1d and tipsv1d.
+ * Operation that generates DSM1d input files and pertirbed model files to be used in tish1d and tipsv1d.
  * DSM input files can be made either for existing observed dataset in event folders, for a data entry list file,
  * or for a virtual set of observers.
  *
@@ -49,6 +49,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * For virtual datasets, virtual observers will be made in 1-degree intervals.
  * They will have the network name specified in {@link Observer#SYN}.
+ *
+ * <p>
+ * model files will be made in each event folder. In model files, number of zones and grides must be defined.
+ * The absolute perturbation value of density and elastic constances must be listed in each grid.
  *
  * @since 2023/10/23
  * @auther rei
