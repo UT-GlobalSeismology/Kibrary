@@ -83,8 +83,7 @@ class Queens {
         } else {
             System.err.println("You have finally found me! ");
             System.err.println("Thank you very much for working with Kibrary.");
-            System.err.println("Kibrary was developed in the laboratory of");
-            System.err.println("Dr. R.J.Geller and Dr. K.Kawai in the Univ. of Tokyo.");
+            System.err.println("Kibrary was developed by the Global Seismology Group at the Univ. of Tokyo.");
             System.err.println("You can see our site here:");
             System.err.println("https://utglobalseismology.org");
         }
