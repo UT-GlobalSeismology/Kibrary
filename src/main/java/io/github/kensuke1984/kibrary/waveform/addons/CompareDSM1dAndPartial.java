@@ -1,10 +1,18 @@
 package io.github.kensuke1984.kibrary.waveform.addons;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.inversion.setup.AMatrixBuilder;
+import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -20,58 +28,95 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * @author rei
  *
  */
-public class CompareDSM1dAndPartial {
+public class CompareDSM1dAndPartial extends Operation {
 
-    public void main(String[] args) {
-        if (args.length != 4) {
-            System.err.println("To run this class, 4 arguments are needed");
-            System.err.println("[1] Path to perturbed waveform");
-            System.err.println("[2] Path to original waveform");
-            System.err.println("[3] Path to partial");
-            System.err.println("[4] Path to unknown parameter file");
-            return;
+    private static final int MAX_PAIR = 10;
+
+    private final Property property;
+    /**
+     * Path of the work folder
+     */
+    private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String fileTag;
+    private Path perturbedBasicPath;
+    private Path originalBasicPath;
+    private List<Path> partialPaths;
+    private List<Path> unknownParameterPaths;
+    private List<String> xValues;
+    private List<String> yValues;
+
+    /**
+     * @param args  none to create a property file <br>
+     *              [property file] to run
+     * @throws IOException if any
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile();
+        else Operation.mainFromSubclass(args);
+    }
+
+    public static void writeDefaultPropertiesFile() throws IOException {
+        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
+        Path outPath = Property.generatePath(thisClass);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+             pw.println("manhattan " + thisClass.getSimpleName());
+             pw.println("##Path of a working directory. (.)");
+             pw.println("#workPath ");
+             pw.println("##(String) A tag to include in output file name. If no tag is needed, leave this blank.");
+             pw.println("#fileTag ");
+             for (int i = 1; i <= MAX_PAIR; i++) {
+                 pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                 pw.println("#basicPath" + i + " actual");
+             }
         }
+        System.err.println(outPath + " is created.");
+    }
 
-        Path perturbedBasicPath = Paths.get(args[0]);
-        Path originalBasicPath = Paths.get(args[1]);
-        Path partialPath = Paths.get(args[2]);
-        Path unknownParameterPath = Paths.get(args[3]);
+    public CompareDSM1dAndPartial(Property property) {
+        this.property = property;
+    }
 
-        try {
-            // Read files
-            List<BasicID> perturbedIDs = BasicIDFile.read(perturbedBasicPath, true);
-            List<BasicID> originalIDs = BasicIDFile.read(originalBasicPath, true);
-            List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
-            List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
-            for (BasicID originalID: originalIDs) {
-                BasicID perturbedID;
-                PartialID partialID;
-                boolean findPair = false;
-                // Find corresponding pertirbed basicID
-                for (BasicID pID: perturbedIDs) {
-                    if (BasicID.isPair(pID, originalID)) {
-                        perturbedID = pID;
-                        findPair = true;
-                    }
-                }
-                if (!findPair)
-                    throw new IllegalArgumentException("Basic ID pair is not found");
-                // Find corresponding partialID
-                findPair = false;
-                for (PartialID pID: partialIDs) {
-                    if (BasicID.isPair(pID, originalID)) {
-                        partialID = pID;
-                        findPair = true;
-                    }
-                }
-                if (!findPair)
-                    throw new IllegalArgumentException("BasicID and PartialID pair is not found");
+        perturbedBasicPath = property.parsePath("perturbedBasicPath", null, true, workPath);
+        originalBasicPath = property.parsePath("originalBasicPath", null, true, workPath);
 
+        for (int i = 1; i <= MAX_PAIR; i++) {
+            String partialKey = "partialPath" + i;
+            String unknownParameterKey = "unknownParameterPath" + i;
+            String xValueKey = "xValue" + i;
+            int defaultXValue = (int) Math.pow(2, (i-1));
+            if (!property.containsKey(partialKey) && !property.containsKey(unknownParameterKey)) {
+                continue;
+            } else if (!property.containsKey(partialKey) || !property.containsKey(unknownParameterKey)) {
+                throw new IllegalArgumentException("Partial path and unknown parameter path must be set in sets.");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
+            partialPaths.add(property.parsePath(partialKey, null, true, workPath));
+            unknownParameterPaths.add(property.parsePath(unknownParameterKey, null, true, workPath));
+            xValues.add(property.parseString(xValueKey, String.valueOf(defaultXValue)));
+        }
+    }
+
+    @Override
+    public void run() throws IOException {
+
+        // Read files
+        List<BasicID> perturbedIDs = BasicIDFile.read(perturbedBasicPath, true);
+        List<BasicID> originalIDs = BasicIDFile.read(originalBasicPath, true);
+        DVectorBuilder perturbedVectorBuilder = new DVectorBuilder(perturbedIDs);
+        DVectorBuilder originalVectorBuilder = new DVectorBuilder(originalIDs);
+
+        for (int i = 0 ; i < partialPaths.size() ; i++) {
+            // Read files
+            List<PartialID> partialIDs = PartialIDFile.read(partialPaths.get(i), true);
+            List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPaths.get(i));
+            AMatrixBuilder aMatrixBuilder = new AMatrixBuilder(partialIDs, parameterList, perturbedVectorBuilder);
         }
     }
 

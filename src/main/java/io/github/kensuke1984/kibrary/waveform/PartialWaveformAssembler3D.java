@@ -75,7 +75,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <p>
  * Time length (tlen) and the number of steps in frequency domain (np) must be same as the values used when running DSM.
  * <p>
- * Source time functions and filters can be applied to the waveforms.
+ * Source time functions and bandpass filters can be applied to the waveforms.
+ * When a number of filters are applied, output partials are made for each filter.
  * The sample rate of the resulting data is {@link #finalSamplingHz}.
  * <p>
  * When using BP catalog, the BP waveforms will be interpolated from waveforms in the catalog
@@ -188,13 +189,13 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private int np;
     /**
-     * lower frequency of bandpass [Hz]
+     * lower frequencies of bandpass [Hz]
      */
-    private double minFreq;
+    private double[] minFreqs;
     /**
-     * upper frequency of bandpass [Hz]
+     * upper frequencies of bandpass [Hz]
      */
-    private double maxFreq;
+    private double[] maxFreqs;
     /**
      * see Saito, n
      */
@@ -294,10 +295,10 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#tlen ");
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
-            pw.println("##(double) Minimum value of passband (0.005)");
-            pw.println("#minFreq ");
-            pw.println("##(double) Maximum value of passband (0.08)");
-            pw.println("#maxFreq ");
+            pw.println("##(double) Minimum values of passband, listed using spaces (0.005)");
+            pw.println("#minFreqs ");
+            pw.println("##(double) Maximum values of passband, listed using spaces (0.08)");
+            pw.println("#maxFreqs ");
             pw.println("##(int) The value of np for the filter (4)");
             pw.println("#filterNp ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
@@ -363,8 +364,10 @@ public class PartialWaveformAssembler3D extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
-        maxFreq = property.parseDouble("maxFreq", "0.08");
-        minFreq = property.parseDouble("minFreq", "0.005");
+        maxFreqs = property.parseDoubleArray("maxFreqs", "0.08");
+        minFreqs = property.parseDoubleArray("minFreqs", "0.005");
+        if (maxFreqs.length != minFreqs.length)
+            throw new IllegalArgumentException("The number of maxFreqs and minFreqs must be same");
         filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
 
@@ -403,11 +406,6 @@ public class PartialWaveformAssembler3D extends Operation {
         // read voxel file
         if (voxelPath != null) voxelPositionSet = new VoxelInformationFile(voxelPath).fullPositionSet();
 
-        // design bandpass filter
-        filter = designBandPassFilter();
-        // to stablize bandpass filtering, extend window at both ends for ext = max period(s) each
-        ext = (int) (1 / minFreq * partialSamplingHz);
-
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
                 sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, eventSet);
@@ -424,20 +422,35 @@ public class PartialWaveformAssembler3D extends Operation {
         nThreads = Runtime.getRuntime().availableProcessors();
         System.err.println(nThreads + " processors available.");
 
-        // loop for each event
-        int num = 0;
-        for (GlobalCMTID event : eventSet.stream().sorted().collect(Collectors.toList())) {
-            System.err.println("Working for " + event.toPaddedString() + " : " + (++num) + "/" + eventSet.size());
+        // loop for each bandpass filter
+        for (int i = 0; i < maxFreqs.length; i++) {
+            // clear the List of partials
+            partialIDs.clear();
 
-            // assemble all partials for this event
-            workForEvent(event);
+            double maxFreq = maxFreqs[i];
+            double minFreq = minFreqs[i];
+
+            // design bandpass filter
+            filter = designBandPassFilter(maxFreq, minFreq);
+            // to stablize bandpass filtering, extend window at both ends for ext = max period(s) each
+            ext = (int) (1 / minFreq * partialSamplingHz);
+
+            // loop for each event
+            int num = 0;
+            for (GlobalCMTID event : eventSet.stream().sorted().collect(Collectors.toList())) {
+                System.err.println("Working for " + event.toPaddedString() + " : " + (++num) + "/" + eventSet.size());
+
+                // assemble all partials for this event
+                workForEvent(event, maxFreq, minFreq);
+            }
+
+            // output in partial folder
+            String outPartialPath = (maxFreqs.length == 1) ? "partial" : "partial_" + maxFreq + "-" + minFreq;
+            PartialIDFile.write(partialIDs, outPath.resolve(outPartialPath));
         }
-
-        // output in partial folder
-        PartialIDFile.write(partialIDs, outPath.resolve("partial"));
     }
 
-    private void workForEvent(GlobalCMTID event) throws IOException {
+    private void workForEvent(GlobalCMTID event, double maxFreq, double minFreq) throws IOException {
         // collect observers paired with this event
         Set<Observer> observersForEvent = timewindowSet.stream()
                 .filter(info -> info.getGlobalCMTID().equals(event)).map(TimewindowData::getObserver)
@@ -470,9 +483,9 @@ public class PartialWaveformAssembler3D extends Operation {
                 for (int i = 0; i < fpNames.size(); i++) {
                     PartialComputation pc = null;
                     if (bpCatalogMode) {
-                        pc = new PartialComputation(fpNames.get(i), correspondingTimewindows, event, observer, variableType);
+                        pc = new PartialComputation(fpNames.get(i), correspondingTimewindows, event, observer, variableType, maxFreq, minFreq);
                     } else {
-                        pc = new PartialComputation(fpNames.get(i), bpNames.get(i), correspondingTimewindows, event, observer, variableType);
+                        pc = new PartialComputation(fpNames.get(i), bpNames.get(i), correspondingTimewindows, event, observer, variableType, maxFreq, minFreq);
                     }
                     execs.execute(pc);
                 }
@@ -532,8 +545,8 @@ public class PartialWaveformAssembler3D extends Operation {
         }
     }
 
-    private ButterworthFilter designBandPassFilter() throws IOException {
-        System.err.println("Designing filter.");
+    private ButterworthFilter designBandPassFilter(double maxFreq, double minFreq) throws IOException {
+        System.err.println("Designing bandpass filter: " + maxFreq + "-" + minFreq);
         double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
         double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
         ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
@@ -554,6 +567,8 @@ public class PartialWaveformAssembler3D extends Operation {
         private GlobalCMTID event;
         private Observer observer;
         private VariableType variableType;
+        private double maxFreq;
+        private double minFreq;
         /**
          * Coefficients for interpolation
          */
@@ -569,13 +584,15 @@ public class PartialWaveformAssembler3D extends Operation {
          * @param variableType
          */
         private PartialComputation(List<SPCFileName> fpNames, List<SPCFileName> bpNames, Set<TimewindowData> timewindows,
-                GlobalCMTID event, Observer observer, VariableType variableType) {
+                GlobalCMTID event, Observer observer, VariableType variableType, double maxFreq, double minFreq) {
             this.fpNames = fpNames;
             this.bpNames = bpNames;
             this.timewindows = timewindows;
             this.event = event;
             this.observer = observer;
             this.variableType = variableType;
+            this.maxFreq = maxFreq;
+            this.minFreq = minFreq;
             if (bpCatalogMode) throw new IllegalStateException("Constructor for non-BPCatalogMode has been called.");
         }
 
@@ -588,12 +605,14 @@ public class PartialWaveformAssembler3D extends Operation {
          * @param variableType
          */
         private PartialComputation(List<SPCFileName> fpNames, Set<TimewindowData> timewindows,
-                GlobalCMTID event, Observer observer, VariableType variableType) {
+                GlobalCMTID event, Observer observer, VariableType variableType, double maxFreq, double minFreq) {
             this.fpNames = fpNames;
             this.timewindows = timewindows;
             this.event = event;
             this.observer = observer;
             this.variableType = variableType;
+            this.maxFreq = maxFreq;
+            this.minFreq = minFreq;
             if (!bpCatalogMode) throw new IllegalStateException("Constructor for BPCatalogMode has been called.");
         }
 
