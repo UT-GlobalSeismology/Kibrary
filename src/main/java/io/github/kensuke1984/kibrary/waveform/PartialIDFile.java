@@ -138,6 +138,7 @@ public final class PartialIDFile {
      * @param dataPath (Path) Data file
      * @return ({@link PartialID}[]) PartialIDs containing waveform data
      * @throws IOException if an I/O error occurs
+     * @deprecated (make this method private)
      */
     public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
         // Read IDs
@@ -173,6 +174,7 @@ public final class PartialIDFile {
      * @param idPath (Path) ID file
      * @return ({@link PartialID}[]) PartialIDs without waveform data
      * @throws IOException if an I/O error occurs
+     * @deprecated (make this method private)
      */
     public static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {

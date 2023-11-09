@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -45,8 +45,8 @@ public class MatrixAssembly {
      * @param weightingType
      */
     public MatrixAssembly(List<BasicID> basicIDs, List<PartialID> partialIDs, List<UnknownParameter> parameterList,
-            WeightingType weightingType) {
-        this(basicIDs, partialIDs, parameterList, weightingType, false);
+            WeightingHandler weightingHandler) {
+        this(basicIDs, partialIDs, parameterList, weightingHandler, false);
     }
 
     /**
@@ -64,15 +64,15 @@ public class MatrixAssembly {
      * @param fillEmptyPartial (boolean)
      */
     public MatrixAssembly(List<BasicID> basicIDs, List<PartialID> partialIDs, List<UnknownParameter> parameterList,
-            WeightingType weightingType, boolean fillEmptyPartial) {
+            WeightingHandler weightingHandler, boolean fillEmptyPartial) {
 
         // set DVector
         System.err.println("Setting data for d vector");
         dVectorBuilder = new DVectorBuilder(basicIDs);
 
         // set weighting
-        System.err.println("Setting weighting of type " + weightingType);
-        Weighting weighting = new Weighting(dVectorBuilder, weightingType, null);
+        System.err.println("Setting weighting");
+        RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
 
         // set AMatrix
         System.err.println("Setting data for A matrix");

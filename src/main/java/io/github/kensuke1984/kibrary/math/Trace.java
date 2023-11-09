@@ -20,6 +20,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Utility for a function y = f(x)
@@ -370,18 +371,6 @@ public final class Trace {
         return subTrace(iStart, iEnd + 1);
     }
 
-    public Trace cutWindowInside(double xStart, double xEnd) {
-        List<Double> xList = new ArrayList<>();
-        List<Double> yList = new ArrayList<>();
-        IntStream.range(0, xArray.length).filter(i -> xStart <= xArray[i] && xArray[i] <= xEnd).forEach(i -> {
-             xList.add(xArray[i]);
-             yList.add(yArray[i]);
-         });
-         if (xList.isEmpty()) throw new IllegalStateException("No data in [" + xStart + ", " + xEnd + "]");
-         return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
-                 yList.stream().mapToDouble(Double::doubleValue).toArray());
-    }
-
     /**
      * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow.
      * The start and end points will each be the points with x values closest to those of the timewindow.
@@ -455,7 +444,7 @@ public final class Trace {
             throw new IllegalArgumentException("Specified time range exceeds x range.");
         int iStart = findNearestXIndex(xStart);
         // Here, npts is rounded down because a point far outside the time range should not be used.
-        int npts = (int) Math.floor((xEnd - xStart) * finalSamplingHz) + 1;
+        int npts = (int) MathAid.floor((xEnd - xStart) * finalSamplingHz) + 1;
         int step = (int) Math.round(originalSamplingHz / finalSamplingHz);
         return resampleByStep(iStart, step, npts);
     }

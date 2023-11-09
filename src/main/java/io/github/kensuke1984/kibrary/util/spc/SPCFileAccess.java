@@ -51,12 +51,14 @@ public interface SPCFileAccess {
 
     /**
      * @return STATION code of the observer
+     * @deprecated
      */
     String getStationCode();
 
     /**
      * @return NETWORK code of the observer
      * @author anselme
+     * @deprecated
      */
     String getNetworkCode();
 
