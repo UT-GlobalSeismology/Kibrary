@@ -26,8 +26,6 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
-import io.github.kensuke1984.kibrary.inversion.addons.Sensitivity;
-import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -89,7 +87,7 @@ public class ObservationEquation_old {
      * @param dVector       for &delta;d
      */
     public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector) {
-        this(partialIDs, parameterList, dVector, false, false, null, null, null, null);
+        this(partialIDs, parameterList, dVector, false, false, null, null, null);
     }
 
     /**
@@ -106,7 +104,7 @@ public class ObservationEquation_old {
      */
     public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector,
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
-            , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath) {
+            , Integer[]> nUnknowns, Path verticalMappingPath) {
         if (verticalMappingPath != null) {
 //            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
@@ -121,8 +119,7 @@ public class ObservationEquation_old {
             bouncingOrders.add(1);
         }
         System.out.println("Using combination type " + combinationType);
-        readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
-                unknownParameterWeightType);
+        readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns);
         atd = computeAtD(dVector.getD());
         ata = a.computeAtA();
         System.out.println("AtA mean trace = " + (ata.getTrace() / ata.getColumnDimension()));
@@ -144,7 +141,7 @@ public class ObservationEquation_old {
      */
     public ObservationEquation_old(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector_old dVector,
             boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
-            , Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath, boolean computeAtA) {
+            , Integer[]> nUnknowns, Path verticalMappingPath, boolean computeAtA) {
         if (verticalMappingPath != null) {
 //            this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
             combinationType = CombinationType.VERTICAL_MAPPING;
@@ -159,8 +156,7 @@ public class ObservationEquation_old {
             bouncingOrders.add(1);
         }
         System.out.println("Using combination type " + combinationType);
-        readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
-                unknownParameterWeightType);
+        readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns);
         if (computeAtA) {
             atd = computeAtD(dVector.getD());
             ata = a.computeAtA();
@@ -200,7 +196,7 @@ public class ObservationEquation_old {
             bouncingOrders = new ArrayList<Integer>();
             bouncingOrders.add(1);
         }
-        readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns, null);
+        readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns);
 
         double AtANormalizedTrace = 0;
         double count = 0;
@@ -258,7 +254,7 @@ public class ObservationEquation_old {
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
 
-        readA(partialIDs, false, false, null, combinationType, null, null);
+        readA(partialIDs, false, false, null, combinationType, null);
 
         double AtANormalizedTrace = 0;
         for (int i = 0; i < PARAMETER_LIST.size(); i++) {
@@ -320,7 +316,7 @@ public class ObservationEquation_old {
         PARAMETER_LIST = parameterList;
         ORIGINAL_PARAMETER_LIST = parameterList;
 
-        readA(partialIDs, false, false, null, null, null, null);
+        readA(partialIDs, false, false, null, null, null);
 
         ata = a.computeAtA().add(ata_prev);
         atd = computeAtD(dVector.getD()).add(atd_prev);
@@ -466,8 +462,7 @@ public class ObservationEquation_old {
      * @param ids source for A
      */
     private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders
-            , CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns,
-            UnknownParameterWeightType unknownParameterWeightType) {
+            , CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns) {
         if (time_source)
             DVECTOR.getUsedGlobalCMTIDset().forEach(id -> PARAMETER_LIST.add(new TimeSourceSideParameter(id)));
         if (time_receiver) {
@@ -947,37 +942,37 @@ public class ObservationEquation_old {
     }
 
     public void outputSensitivity(Path outPath) throws IOException {
-        if (a == null) {
-//			System.out.println("no more A");
-//			return;
-        }
-        if (ata == null) {
-            System.err.println(" No more ata. Computing again");
-                if (cm == null)
-                    ata = a.computeAtA();
-                else {
-                    throw new RuntimeException("No cm");
-//					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
-//					for (int i = 0; i < a.getColumnDimension(); i++)
-//						identity.setEntry(i, i, 1.);
-//					ata = (cm.multiply(a.computeAtA())).add(identity);
-                }
-        }
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-            Map<UnknownParameter, Double> sMap = Sensitivity.sensitivityMap(ata, PARAMETER_LIST);
-            List<UnknownParameter> unknownForStructure = PARAMETER_LIST.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
-                    .collect(Collectors.toList());
-            for (UnknownParameter unknown : unknownForStructure) {
-                double lat = unknown.getPosition().getLatitude();
-                double lon = unknown.getPosition().getLongitude();
-                if (lon < 0)
-                    lon += 360.;
-                double r = unknown.getPosition().getR();
-                pw.println(unknown.getPartialType() + " " + lat + " " + lon + " " + r + " " + sMap.get(unknown));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        if (a == null) {
+////			System.out.println("no more A");
+////			return;
+//        }
+//        if (ata == null) {
+//            System.err.println(" No more ata. Computing again");
+//                if (cm == null)
+//                    ata = a.computeAtA();
+//                else {
+//                    throw new RuntimeException("No cm");
+////					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+////					for (int i = 0; i < a.getColumnDimension(); i++)
+////						identity.setEntry(i, i, 1.);
+////					ata = (cm.multiply(a.computeAtA())).add(identity);
+//                }
+//        }
+//        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+//            Map<UnknownParameter, Double> sMap = Sensitivity.sensitivityMap(ata, PARAMETER_LIST);
+//            List<UnknownParameter> unknownForStructure = PARAMETER_LIST.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
+//                    .collect(Collectors.toList());
+//            for (UnknownParameter unknown : unknownForStructure) {
+//                double lat = unknown.getPosition().getLatitude();
+//                double lon = unknown.getPosition().getLongitude();
+//                if (lon < 0)
+//                    lon += 360.;
+//                double r = unknown.getPosition().getR();
+//                pw.println(unknown.getPartialType() + " " + lat + " " + lon + " " + r + " " + sMap.get(unknown));
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void outputUnkownParameterWeigths(Path outpath) throws IOException {

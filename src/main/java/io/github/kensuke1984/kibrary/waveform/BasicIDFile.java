@@ -147,6 +147,7 @@ public final class BasicIDFile {
      * @param dataPath (Path) Data file
      * @return ({@link BasicID}[]) BasicIDs containing waveform data
      * @throws IOException if an I/O error occurs
+     * @deprecated (make this method private)
      */
     public static BasicID[] read(Path idPath, Path dataPath) throws IOException {
         // Read IDs
@@ -183,6 +184,7 @@ public final class BasicIDFile {
      * @param idPath (Path) ID file
      * @return ({@link BasicID}[]) BasicIDs without waveform data
      * @throws IOException if an I/O error occurs
+     * @deprecated (make this method private)
      */
     public static BasicID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {

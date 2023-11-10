@@ -13,7 +13,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -58,7 +58,7 @@ public class InversionArranger extends Operation {
      */
     private Path unknownParameterPath;
 
-    private WeightingType weightingType;
+    private Path weightingPropertiesPath;
 
     /**
      * @param args  none to create a property file <br>
@@ -85,8 +85,8 @@ public class InversionArranger extends Operation {
             pw.println("#partialPath partial");
             pw.println("##Path of an unknown parameter list file, must be set");
             pw.println("#unknownParameterPath unknowns.lst");
-            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
-            pw.println("#weightingType ");
+            pw.println("##Path of a weighting properties file, must be set.");
+            pw.println("#weightingPropertiesPath ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -104,7 +104,7 @@ public class InversionArranger extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
-        weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
+        weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
     }
 
     @Override
@@ -114,9 +114,10 @@ public class InversionArranger extends Operation {
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingType);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         int dLength = assembler.getD().getDimension();

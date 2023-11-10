@@ -16,7 +16,7 @@ import org.apache.commons.math3.util.FastMath;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -75,7 +75,7 @@ public class AdaptiveGridDesigner extends Operation {
      */
     private List<VariableType> variableTypes;
 
-    private WeightingType weightingType;
+    private Path weightingPropertiesPath;
 
     private double minCorrelation;
     private double minAmpRatio;
@@ -108,8 +108,8 @@ public class AdaptiveGridDesigner extends Operation {
             pw.println("#basicPath actual");
             pw.println("##Path of a partial waveform folder");
             pw.println("#partialPath partial");
-            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
-            pw.println("#weightingType ");
+            pw.println("##Path of a weighting properties file, must be set.");
+            pw.println("#weightingPropertiesPath ");
             pw.println("##########Other settings.");
             pw.println("##Path of an unknown parameter list file, must be set and must match ata file if it is used");
             pw.println("#unknownParameterPath unknowns.lst");
@@ -145,7 +145,7 @@ public class AdaptiveGridDesigner extends Operation {
         if (property.containsKey("variableTypes"))
             variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
                     .collect(Collectors.toList());
-        weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
+        weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
         minCorrelation = property.parseDouble("minCorrelation", "0.8");
         minAmpRatio = property.parseDouble("minAmpRatio", "0.9");
         minDiagonalAmplitude = property.parseDouble("minDiagonalAmplitude", "0");
@@ -166,9 +166,10 @@ public class AdaptiveGridDesigner extends Operation {
             // read input
             List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
             List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+            WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
             // assemble matrices
-            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingType, false);
+            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingHandler, false);
             ata = assembler.getAta();
         }
 

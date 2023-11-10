@@ -46,7 +46,7 @@ public final class AMatrixBuilder {
      * @param fillEmptyPartial (boolean)
      * @return (Matrix) A
      */
-    public ParallelizedMatrix buildWithWeight(Weighting weighting, boolean fillEmptyPartial) {
+    public ParallelizedMatrix buildWithWeight(RealVector[] weighting, boolean fillEmptyPartial) {
 
         ParallelizedMatrix a = new ParallelizedMatrix(dVector.getNpts(), parameterList.size());
         a.scalarMultiply(0);
@@ -87,7 +87,7 @@ public final class AMatrixBuilder {
 
             // set weighting
             // This includes the volumes of voxels.
-            RealVector weightingVector = weighting.get(k);
+            RealVector weightingVector = weighting[k];
             weightingVector = weightingVector.mapMultiply(parameterList.get(column).getSize());
 
             // set A
