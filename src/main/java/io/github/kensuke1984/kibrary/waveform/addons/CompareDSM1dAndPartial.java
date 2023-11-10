@@ -3,15 +3,22 @@ package io.github.kensuke1984.kibrary.waveform.addons;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.setup.AMatrixBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
+import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
@@ -105,19 +112,64 @@ public class CompareDSM1dAndPartial extends Operation {
 
     @Override
     public void run() throws IOException {
-
-        // Read files
+        // Read basic files
         List<BasicID> perturbedIDs = BasicIDFile.read(perturbedBasicPath, true);
         List<BasicID> originalIDs = BasicIDFile.read(originalBasicPath, true);
         DVectorBuilder perturbedVectorBuilder = new DVectorBuilder(perturbedIDs);
         DVectorBuilder originalVectorBuilder = new DVectorBuilder(originalIDs);
+        // Assemble vector of residual waveforms
+        System.err.println("Assembling d vectors");
+        RealVector v = perturbedVectorBuilder.fullSynVec().subtract(originalVectorBuilder.fullSynVec());
 
         for (int i = 0 ; i < partialPaths.size() ; i++) {
-            // Read files
+            // Read partial files & unknown parameter files
             List<PartialID> partialIDs = PartialIDFile.read(partialPaths.get(i), true);
             List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPaths.get(i));
+            // Assemble A
+            System.err.println("Assembling A matrix");
             AMatrixBuilder aMatrixBuilder = new AMatrixBuilder(partialIDs, parameterList, perturbedVectorBuilder);
+            ParallelizedMatrix a = aMatrixBuilder.build();
+            // Sum up each column of A
+            RealVector sumPartial = new ArrayRealVector(v.getDimension());
+            for (int j = 0 ; j < a.getColumnDimension() ; j++)
+                sumPartial = sumPartial.add(a.getColumnVector(j));
+            // Compute relative error
+            sumPartial = sumPartial.subtract(v);
+            double y = sumPartial.getNorm() / v.getNorm();
+            yValues.add(String.valueOf(y));
         }
+        if (xValues.size() == yValues.size())
+                throw new RuntimeException("The numbers of xValues ( " + xValues.size() + " ) and relative errors ( " +
+                        yValues.size() + " ) are different");
+        makeOutput();
+    }
+
+    private void makeOutput(OpenOption... options) throws IOException {
+        String dateStr = GadgetAid.getTemporaryString();
+        Path outPath = workPath.resolve(DatasetAid.generateOutputFileName("relativeError", fileTag, dateStr, ".lst"));
+        Path plotPath = workPath.resolve(DatasetAid.generateOutputFileName("plot", fileTag, dateStr, ".plt"));
+
+        // Make output file
+        System.err.println("List up relative errors in " + outPath);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+            for (int i = 0 ; i < xValues.size() ; i++)
+                pw.println(xValues.get(i) + " " + yValues.get(i));
+        }
+
+        // Make plot file
+        System.err.println("Making plot file");
+        try (PrintWriter pw2 = new PrintWriter(Files.newBufferedWriter(plotPath, options))) {
+            pw2.println("set term pngcairo enhanced font 'Helvetica,14'");
+            pw2.println("set xlabel 'd{/Symbol q}'");
+            pw2.println("set ylabel '#Error(%)'");
+            pw2.println("set logscale");
+            pw2.println("set xtics nomirror");
+            pw2.println("set ytics nomirror");
+            pw2.println("set sample 11");
+            pw2.println("set output 'relativeError_" + dateStr + ".png'");
+            pw2.println("p " + outPath + " u 1:2 w l");
+        }
+        System.err.println("After finish working, please run " + plotPath);
     }
 
 }

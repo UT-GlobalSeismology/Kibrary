@@ -39,6 +39,26 @@ public final class AMatrixBuilder {
 
     /**
      * Builds and returns the A matrix.
+     * The volumes of voxels will be multiplied to the partial waveforms here.
+     * Any weighting matrix is not multiplied.
+     *
+     * @return (Matrix) A
+     */
+    public ParallelizedMatrix build() {
+        //Make dummy weighting vector, of which element is 1.0
+        RealVector[] dummyWeighting = new ArrayRealVector[dVector.getNTimeWindow()];
+        for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+            double[] dw = new double[dVector.getObsVec(i).getDimension()];
+            for (int j = 0; j < dw.length; j++) {
+                dw[j] = 1.0;
+            }
+            dummyWeighting[i] = new ArrayRealVector(dw);
+        }
+        return buildWithWeight(dummyWeighting, false);
+    }
+
+    /**
+     * Builds and returns the A matrix.
      * It will be weighed as WA = [weight diagonal matrix][partial derivatives].
      * The volumes of voxels will be multiplied to the partial waveforms here.
      *
