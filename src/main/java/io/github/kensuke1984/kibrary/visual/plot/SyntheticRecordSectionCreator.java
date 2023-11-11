@@ -13,9 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -23,6 +20,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -649,39 +647,21 @@ public class SyntheticRecordSectionCreator extends Operation {
                 } else {
                     rdTime = reductionSlowness * distance;
                 }
-                RealVector dataVec = new ArrayRealVector(data.getData());
-                double delta = data.getValue(SACHeaderEnum.DELTA);
-                double b = data.getValue(SACHeaderEnum.B);
-                if (!Double.isNaN(upperTime)) {
-                    // cut a waveform from the biginning to upperTime + reduceTime
-                    int endPoint = (int)((upperTime + rdTime - b) / delta);
-                    dataVec = dataVec.getSubVector(0, endPoint + 1);
-                }
-                if (!Double.isNaN(lowerTime)) {
-                    // cut a waveform from lowerTime + reduceTime to the end
-                    int startPoint = (int)((lowerTime + rdTime - b) / delta);
-                    dataVec = dataVec.getSubVector(startPoint, dataVec.getDimension() - startPoint);
-                }
-                synMeanMax = synMeanMax + dataVec.getLInfNorm();
+                Trace trace = data.createTrace();
+                double startTime = (Double.isNaN(lowerTime)) ? trace.getMinX() : lowerTime + rdTime;
+                double endTime = (Double.isNaN(upperTime)) ? trace.getMaxX() : upperTime + rdTime;
+                trace = trace.cutWindow(startTime, endTime);
+                synMeanMax = synMeanMax + trace.getYVector().getLInfNorm();
             }
             synMeanMax = synMeanMax / names.size();
         }
 
-        private double calculateSynMax(SACFileAccess data, double reduceTime) {
-            RealVector dataVec = new ArrayRealVector(data.getData());
-            double delta = data.getValue(SACHeaderEnum.DELTA);
-            double b = data.getValue(SACHeaderEnum.B);
-            if (!Double.isNaN(upperTime)) {
-                // cut a waveform from the biginning to upperTime + reduceTime
-                int endPoint = (int)((upperTime + reduceTime - b) / delta);
-                dataVec = dataVec.getSubVector(0, endPoint + 1);
-            }
-            if (!Double.isNaN(lowerTime)) {
-                // cut a waveform from lowerTime + reduceTime to the end
-                int startPoint = (int)((lowerTime + reduceTime - b) / delta);
-                dataVec = dataVec.getSubVector(startPoint, dataVec.getDimension() - startPoint);
-            }
-            double max = dataVec.getLInfNorm();
+        private double calculateSynMax(SACFileAccess data, double rdTime) {
+            Trace trace = data.createTrace();
+            double startTime = (Double.isNaN(lowerTime)) ? trace.getMinX() : lowerTime + rdTime;
+            double endTime = (Double.isNaN(upperTime)) ? trace.getMaxX() : upperTime + rdTime;
+            trace = trace.cutWindow(startTime, endTime);
+            double max = trace.getYVector().getLInfNorm();
             return max / ampScale;
         }
     }
