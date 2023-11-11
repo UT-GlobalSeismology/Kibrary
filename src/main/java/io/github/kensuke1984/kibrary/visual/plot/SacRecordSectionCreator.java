@@ -48,7 +48,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @author rei
  * @since 2023/06/27
  */
-public class SyntheticRecordSectionCreator extends Operation {
+public class SacRecordSectionCreator extends Operation {
 
     /**
      * The interval of exporting travel times
@@ -240,7 +240,7 @@ public class SyntheticRecordSectionCreator extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public SyntheticRecordSectionCreator(Property property) throws IOException {
+    public SacRecordSectionCreator(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 

@@ -46,7 +46,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @author rei
  * @since 2023/07/07
  */
-public class SyntheticWaveformPlotter extends Operation {
+public class SacWaveformPlotter extends Operation {
 
     /**
      * Number of fields per page on output pdf file
@@ -220,7 +220,7 @@ public class SyntheticWaveformPlotter extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public SyntheticWaveformPlotter(Property property) throws IOException {
+    public SacWaveformPlotter(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
