@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.visual.plot.BasicBinnedStackCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
+import io.github.kensuke1984.kibrary.visual.plot.CompareDSM1dAndPartial;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
@@ -107,6 +108,7 @@ enum Manhattan {
     PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class), //
     PartialsFuser(67, PartialsFuser.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
+    CompareDSM1dAndPartial(69, CompareDSM1dAndPartial.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),

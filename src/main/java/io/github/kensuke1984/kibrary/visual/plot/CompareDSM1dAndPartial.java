@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.waveform.addons;
+package io.github.kensuke1984.kibrary.visual.plot;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -48,10 +48,25 @@ public class CompareDSM1dAndPartial extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Path of the perturbed basic folder (i.e. synthetic is calcurated by using DSMsyn1d)
+     */
     private Path perturbedBasicPath;
+    /**
+     * Path of the original basic folder (i.e. synthetic is calcurated by using DSMsyn)
+     */
     private Path originalBasicPath;
+    /**
+     * List of the path of the partial files
+     */
     private List<Path> partialPaths;
+    /**
+     * List of the path of the unknown parameter files
+     */
     private List<Path> unknownParameterPaths;
+    /**
+     * List of values to be plotted
+     */
     private List<String> xValues;
     private List<String> yValues;
 
@@ -74,9 +89,19 @@ public class CompareDSM1dAndPartial extends Operation {
              pw.println("#workPath ");
              pw.println("##(String) A tag to include in output file name. If no tag is needed, leave this blank.");
              pw.println("#fileTag ");
+             pw.println("##Path of a perturbed basic waveform folder (.)");
+             pw.println("#perturbedBasicPath ");
+             pw.println("##Path of a original (i.e. not perturbed) basic waveform folder (.)");
+             pw.println("#originalBasicPath ");
+             pw.println("##########From here on, list up sets of paths of partial files, unknown parameter files, and x values for plot.");
+             pw.println("##########Must be set partialPath and unknownParameterPath.");
+             pw.println("##########Default values of xValue is 2^(i-1).");
+             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any set may be left blank.");
              for (int i = 1; i <= MAX_PAIR; i++) {
-                 pw.println("##" + MathAid.ordinalNumber(i) + " folder");
-                 pw.println("#basicPath" + i + " actual");
+                 pw.println("##" + MathAid.ordinalNumber(i) + " set");
+                 pw.println("#partialPath" + i + " partial" + i);
+                 pw.println("#unknownParameterPath" + i + " unknown" + i + ".lst");
+                 pw.println("#xValue" + i + " ");
              }
         }
         System.err.println(outPath + " is created.");
