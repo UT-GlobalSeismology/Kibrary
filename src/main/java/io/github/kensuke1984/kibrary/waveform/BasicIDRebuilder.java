@@ -20,11 +20,15 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * An operation to select or resample BasicIDs.
@@ -33,6 +37,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * To select BasicIDs of certain raypaths, supply with a {@link DataEntryListFile} including a list of raypaths to be selected.
  * Timewindows may be also selected by the phases that they must include.
+ * Each waveform can be re-cut depending on the input wimewindow file.
  *
  * @author otsuru
  * @since 2022/7/13
@@ -57,6 +62,10 @@ public class BasicIDRebuilder extends Operation {
      * path of basic waveform folder
      */
     private Path basicPath;
+    /**
+     * Path of a timewindow information file
+     */
+    private Path timewindowPath;
     /**
      * Path of a data entry file for selection
      */
@@ -102,6 +111,8 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#components ");
             pw.println("##Path of a basic waveform folder, must be set");
             pw.println("#basicPath actual");
+            pw.println("##Path of a timewindow file, if you want to re-cut waveforms");
+            pw.println("#timewindowPath ");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
@@ -127,6 +138,9 @@ public class BasicIDRebuilder extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
+        if (property.containsKey("timewindowPath")) {
+            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        }
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
@@ -156,6 +170,11 @@ public class BasicIDRebuilder extends Operation {
             selectByCriteria();
         }
         if (obsIDs.size() == 0) return;
+
+        // cut waveforms based on timewindow file
+        if (timewindowPath != null) {
+            cutWindow();
+        }
 
         // select required number of basicIDs
         if (bootstrap) {
@@ -219,6 +238,43 @@ public class BasicIDRebuilder extends Operation {
         // replace list by selected ones
         obsIDs = selectedObsIDs;
         synIDs = selectedSynIDs;
+    }
+
+    private void cutWindow() throws IOException {
+        List<BasicID> cutObsIDs = new ArrayList<>();
+        List<BasicID> cutSynIDs = new ArrayList<>();
+
+        //read timewindow file and select based on component and entries
+        Set<TimewindowData> timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+
+        for (TimewindowData timewindow : timewindowSet) {
+            // select corresponding basicIDs with timewindow
+            List<BasicID> correspondingObsIDs = obsIDs.stream().filter(id ->
+                timewindow.getGlobalCMTID().equals(id.getGlobalCMTID()) && timewindow.getObserver().equals(id.getObserver()) &&
+                timewindow.getComponent().equals(id.getSacComponent())).collect(Collectors.toList());
+            List<BasicID> correspondingSynIDs = synIDs.stream().filter(id ->
+                timewindow.getGlobalCMTID().equals(id.getGlobalCMTID()) && timewindow.getObserver().equals(id.getObserver()) &&
+                timewindow.getComponent().equals(id.getSacComponent())).collect(Collectors.toList());
+
+            for (int i = 0; i < correspondingObsIDs.size(); i++) {
+                BasicID obsID = correspondingObsIDs.get(i);
+                BasicID synID = correspondingSynIDs.get(i);
+
+                Trace obsTrace = obsID.toTrace().cutWindow(timewindow);
+                Trace synTrace = synID.toTrace().cutWindow(timewindow);
+
+                BasicID cutObsID = new BasicID(WaveformType.OBS, obsID.getSamplingHz(), obsTrace.getMinX(), obsTrace.getLength(),
+                        obsID.getObserver(), obsID.getGlobalCMTID(), obsID.getSacComponent(), obsID.getMinPeriod(),
+                        obsID.getMaxPeriod(), obsID.getPhases(), obsID.isConvolved(), obsTrace.getY());
+                BasicID cutSynID = new BasicID(WaveformType.SYN, synID.getSamplingHz(), synTrace.getMinX(), synTrace.getLength(),
+                        synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(),
+                        synID.getMaxPeriod(), synID.getPhases(), synID.isConvolved(), synTrace.getY());
+                cutObsIDs.add(cutObsID);
+                cutSynIDs.add(cutSynID);
+            }
+        }
+        obsIDs = cutObsIDs;
+        synIDs = cutSynIDs;
     }
 
     private void resample(double percent, boolean duplication) {
