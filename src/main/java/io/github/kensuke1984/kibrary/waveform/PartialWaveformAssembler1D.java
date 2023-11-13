@@ -66,7 +66,8 @@ import io.github.kensuke1984.kibrary.voxel.ParameterType;
  * <p>
  * Time length (tlen) and the number of steps in frequency domain (np) must be same as the values used when running DSM.
  * <p>
- * Source time functions and filters can be applied to the waveforms.
+ * Source time functions and bandpass filters can be applied to the waveforms.
+ * When a number of filters are applied, output partial files are created for each filter.
  * The sample rate of the resulting data is {@link #finalSamplingHz}.
  * <p>
  * Resulting entries can be specified by a (event, observer, component, partialType, perturbationRadius, timeframe)-pair.
@@ -152,12 +153,14 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private int np;
     /**
-     * lower frequency of bandpass [Hz]
+     * lower frequencies of bandpass [Hz]
      */
+    private double[] minFreqs;
     private double minFreq;
     /**
-     * upper frequency of bandpass [Hz]
+     * upper frequencies of bandpass [Hz]
      */
+    private double[] maxFreqs;
     private double maxFreq;
     /**
      * see Saito, n
@@ -239,10 +242,10 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#tlen ");
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
-            pw.println("##(double) Minimum value of passband (0.005)");
-            pw.println("#minFreq ");
-            pw.println("##(double) Maximum value of passband (0.08)");
-            pw.println("#maxFreq ");
+            pw.println("##(double) Minimum values of passband, listed using spaces (0.005)");
+            pw.println("#minFreqs ");
+            pw.println("##(double) Maximum values of passband, listed using spaces (0.08)");
+            pw.println("#maxFreqs ");
             pw.println("##(int) The value of np for the filter (4)");
             pw.println("#filterNp ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
@@ -294,8 +297,10 @@ public class PartialWaveformAssembler1D extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
-        maxFreq = property.parseDouble("maxFreq", "0.08");
-        minFreq = property.parseDouble("minFreq", "0.005");
+        maxFreqs = property.parseDoubleArray("maxFreqs", "0.08");
+        minFreqs = property.parseDoubleArray("minFreqs", "0.005");
+        if (maxFreqs.length != minFreqs.length)
+            throw new IllegalArgumentException("The number of maxFreqs and minFreqs must be same");
         filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
     }
@@ -331,29 +336,38 @@ public class PartialWaveformAssembler1D extends Operation {
                 sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, eventSet);
         sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen, partialSamplingHz);
 
-        // design bandpass filter
-        filter = designBandPassFilter();
-
         // create output folder
         outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        ExecutorService es = ThreadAid.createFixedThreadPool();
-        // for each event, execute run() of class Worker, which is defined at the bottom of this java file
-        eventSet.stream().map(Worker::new).forEach(es::execute);
-        es.shutdown();
-        while (!es.isTerminated()){
-            ThreadAid.sleep(1000);
-        }
-        // this println() is for starting new line after writing "."s
-        System.err.println();
+        for (int i = 0; i < maxFreqs.length; i++) {
+            // clear the List of partials
+            partialIDs.clear();
 
-        // output in partial folder
-        PartialIDFile.write(partialIDs, outPath.resolve("partial"));
+            maxFreq = maxFreqs[i];
+            minFreq = minFreqs[i];
+
+            // design bandpass filter
+            filter = designBandPassFilter();
+
+            ExecutorService es = ThreadAid.createFixedThreadPool();
+            // for each event, execute run() of class Worker, which is defined at the bottom of this java file
+            eventSet.stream().map(Worker::new).forEach(es::execute);
+            es.shutdown();
+            while (!es.isTerminated()){
+                ThreadAid.sleep(1000);
+            }
+            // this println() is for starting new line after writing "."s
+            System.err.println();
+
+            // output in partial folder
+            String outPartialPath = (maxFreqs.length == 1) ? "partial" : "partial_" + maxFreq + "-" + minFreq;
+            PartialIDFile.write(partialIDs, outPath.resolve(outPartialPath));
+        }
     }
 
     private ButterworthFilter designBandPassFilter() throws IOException {
-        System.err.println("Designing filter.");
+        System.err.println("Designing bandpass filter: " + maxFreq + "-" + minFreq);
         double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
         double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
         ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
