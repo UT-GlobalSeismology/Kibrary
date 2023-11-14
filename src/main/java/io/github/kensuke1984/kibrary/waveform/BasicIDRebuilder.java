@@ -260,9 +260,14 @@ public class BasicIDRebuilder extends Operation {
                 BasicID obsID = correspondingObsIDs.get(i);
                 BasicID synID = correspondingSynIDs.get(i);
 
-                Trace obsTrace = obsID.toTrace().cutWindow(timewindow);
-                Trace synTrace = synID.toTrace().cutWindow(timewindow);
+                // cut traces
+                Trace obsTrace = obsID.toTrace();
+                Trace synTrace = synID.toTrace();
+                double shift = synTrace.getMinX() - obsTrace.getMinX();
+                obsTrace = obsTrace.cutWindow(timewindow.getStartTime() - shift, timewindow.getEndTime() - shift);
+                synTrace = synTrace.cutWindow(timewindow);
 
+                // remake basicIDs
                 BasicID cutObsID = new BasicID(WaveformType.OBS, obsID.getSamplingHz(), obsTrace.getMinX(), obsTrace.getLength(),
                         obsID.getObserver(), obsID.getGlobalCMTID(), obsID.getSacComponent(), obsID.getMinPeriod(),
                         obsID.getMaxPeriod(), obsID.getPhases(), obsID.isConvolved(), obsTrace.getY());
