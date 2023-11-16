@@ -200,22 +200,6 @@ public final class MathAid {
     }
 
     /**
-     * Check if two values are equal, within a certain error range.
-     * @param v1
-     * @param v2
-     * @param eps
-     * @return
-     * @author anselme
-     * @deprecated use Precision.equals
-     */
-    public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
-        if (Math.abs(v1 - v2) > eps)
-            return false;
-        else
-            return true;
-    }
-
-    /**
      * Same as Math.floor(), but consider precision, fixing 0.9999... to 1.
      * @param value (double) Input value.
      * @return (double) Rounded result.

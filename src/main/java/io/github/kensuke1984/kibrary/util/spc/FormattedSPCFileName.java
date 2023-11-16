@@ -110,7 +110,7 @@ public class FormattedSPCFileName extends SPCFileName {
     }
 
     /**
-     * (PB, UB) Return observer code (source of back propagate wave)
+     * (PB, UB) Return observer code (source of back propagate wave; STATION_NETWORK)
      * <p>
      * (else) Return source ID
      */
@@ -122,23 +122,11 @@ public class FormattedSPCFileName extends SPCFileName {
     /**
      * (PB, PF, UB, UF) Return perturbation point code
      * <p>
-     * (else) Return obsever code
+     * (else) Return obsever code (STATION_NETWORK)
      */
     @Override
     public String getReceiverID() {
         return receiverID;
-    }
-
-    @Override
-    @Deprecated
-    public String getStationCode() {
-        return null;
-    }
-
-    @Override
-    @Deprecated
-    public String getNetworkCode() {
-        return null;
     }
 
     public String getX() {

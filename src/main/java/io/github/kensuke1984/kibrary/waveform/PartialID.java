@@ -70,19 +70,6 @@ public class PartialID extends BasicID {
      */
     protected final FullPosition voxelPosition;
 
-    /**
-     * @deprecated startByte unneeded
-     */
-    public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
-            double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
-            FullPosition voxelPosition, PartialType partialType, double... waveformData) {
-        super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
-                phases, startByte, isConvolved, waveformData);
-        this.parameterType = partialType.toParameterType();
-        this.variableType = partialType.toVariableType();
-        this.voxelPosition = voxelPosition;
-    }
-
     public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
             double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, boolean isConvolved,
             ParameterType parameterType, VariableType variableType, FullPosition voxelPosition, double... waveformData) {
