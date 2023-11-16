@@ -59,7 +59,7 @@ public class UnknownParameterSetter {
         options.addOptionGroup(inputOption);
 
         // settings
-        options.addOption(Option.builder("p").longOpt("params").hasArg().argName("variableTypes").required()
+        options.addOption(Option.builder("V").longOpt("variables").hasArg().argName("variableTypes").required()
                 .desc("Variable types to make unknown parameters for, listed using commas.").build());
 
         // output
@@ -77,11 +77,12 @@ public class UnknownParameterSetter {
     public static void run(CommandLine cmdLine) throws IOException {
 
         // partial types
-        System.err.println("Working for:");
-        VariableType[] types = Stream.of(cmdLine.getOptionValue("p").split(",")).map(VariableType::valueOf).toArray(VariableType[]::new);
+        System.err.print("Working for:");
+        VariableType[] types = Stream.of(cmdLine.getOptionValue("V").split(",")).map(VariableType::valueOf).toArray(VariableType[]::new);
         for (int i = 0; i < types.length; i++) {
-            System.err.println(" " + types[i]);
+            System.err.print(" " + types[i]);
         }
+        System.err.println();
 
         String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
 
