@@ -108,7 +108,8 @@ public class SPCComponent {
      * @param sourceTimeFunction to be applied
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-        uFreq = sourceTimeFunction.convolve(uFreq);
+        if (sourceTimeFunction != null)
+            uFreq = sourceTimeFunction.convolve(uFreq);
     }
 
     /**
@@ -126,16 +127,16 @@ public class SPCComponent {
             uFreq[i] = new Complex(uFreq[i].getImaginary() * c, -uFreq[i].getReal() * c);
         }
     }
-    
-	/**
-	 * Multiply self by double
-	 * @param factor
-	 * @author anselme
-	 */
-	public void mapMultiply(double factor) {
-		for (int i = 0; i < NP + 1; i++)
-			uFreq[i] = uFreq[i].multiply(factor);
-	}
+
+    /**
+     * Multiply self by double
+     * @param factor
+     * @author anselme
+     */
+    public void mapMultiply(double factor) {
+        for (int i = 0; i < NP + 1; i++)
+            uFreq[i] = uFreq[i].multiply(factor);
+    }
 
     /**
      * @return 周波数領域のデータ
