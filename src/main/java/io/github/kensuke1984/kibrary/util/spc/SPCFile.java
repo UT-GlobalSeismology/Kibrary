@@ -385,18 +385,6 @@ public class SPCFile implements SPCFileAccess {
         return receiverID;
     }
 
-    @Override
-    @Deprecated
-    public String getStationCode() {
-        return null;
-    }
-
-    @Override
-    @Deprecated
-    public String getNetworkCode() {
-        return null;
-    }
-
     /**
      * (PB, UB) Return observer code (source of back propagate wave)
      * <p>
