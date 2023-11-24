@@ -7,6 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -59,16 +60,16 @@ public class CompareDSM1dAndPartial extends Operation {
     /**
      * List of the path of the partial files
      */
-    private List<Path> partialPaths;
+    private List<Path> partialPaths = new ArrayList<>();;
     /**
      * List of the path of the unknown parameter files
      */
-    private List<Path> unknownParameterPaths;
+    private List<Path> unknownParameterPaths = new ArrayList<>();;
     /**
      * List of values to be plotted
      */
-    private List<String> xValues;
-    private List<String> yValues;
+    private List<String> xValues = new ArrayList<>();;
+    private List<String> yValues = new ArrayList<>();;
 
     /**
      * @param args  none to create a property file <br>
@@ -163,7 +164,7 @@ public class CompareDSM1dAndPartial extends Operation {
             double y = sumPartial.getNorm() / v.getNorm();
             yValues.add(String.valueOf(y));
         }
-        if (xValues.size() == yValues.size())
+        if (xValues.size() != yValues.size())
                 throw new RuntimeException("The numbers of xValues ( " + xValues.size() + " ) and relative errors ( " +
                         yValues.size() + " ) are different");
         makeOutput();
