@@ -96,7 +96,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
      * @return (boolean) true if the timewindow is the correct one
      */
     public boolean isForTimewindow(TimewindowData t) {
-        return (t.getObserver().equals(observer) && t.getGlobalCMTID().equals(eventID) && t.getComponent() == component
+        return (t.getObserver().equals(observer) && t.getGlobalCMTID().equals(eventID) //&& t.getComponent() == component
                 && Math.abs(t.getStartTime() - synStartTime) < TimewindowData.TIME_EPSILON);
     }
 
