@@ -22,7 +22,10 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.BandStopFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.filter.HighPassFilter;
+import io.github.kensuke1984.kibrary.filter.LowPassFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
@@ -189,6 +192,10 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private int np;
     /**
+     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}
+     */
+    private String filterType;
+    /**
      * lower frequencies of bandpass [Hz]
      */
     private double[] minFreqs;
@@ -295,6 +302,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#tlen ");
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
+            pw.println("##Filter type to be applied, from {none, lowpass, highpass, bandpass, bandstop} (bandpass)");
+            pw.println("#filterType none");
             pw.println("##(double) Minimum values of passband, listed using spaces (0.005)");
             pw.println("#minFreqs ");
             pw.println("##(double) Maximum values of passband, listed using spaces (0.08)");
@@ -364,6 +373,7 @@ public class PartialWaveformAssembler3D extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
+        filterType = property.parseString("filterType", "bandpass");
         maxFreqs = property.parseDoubleArray("maxFreqs", "0.08");
         minFreqs = property.parseDoubleArray("minFreqs", "0.005");
         if (maxFreqs.length != minFreqs.length)
@@ -549,7 +559,26 @@ public class PartialWaveformAssembler3D extends Operation {
         System.err.println("Designing bandpass filter: " + maxFreq + "-" + minFreq);
         double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
         double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
-        ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
+        ButterworthFilter filter;
+        switch (filterType) {
+        case "none":
+            filter = null;
+            break;
+        case "lowpass":
+            filter = new LowPassFilter(omegaL, filterNp);
+            break;
+        case "highpass":
+            filter = new HighPassFilter(omegaH, filterNp);
+            break;
+        case "bandpass":
+            filter = new BandPassFilter(omegaH, omegaL, filterNp);
+            break;
+        case "bandstop":
+            filter = new BandStopFilter(omegaH, omegaL, filterNp);
+            break;
+        default:
+            throw new IllegalArgumentException("No such filter as " + filterType);
+        }
         filter.setCausal(causal);
         return filter;
     }
@@ -724,8 +753,10 @@ public class PartialWaveformAssembler3D extends Operation {
 
                     timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
                         Trace cutTrace = cutAndFilter(partial, window);
+                        double minPeriod = (filterType.equals("none") || filterType.equals("lowpass")) ? 0 : 1 / maxFreq;
+                        double maxPeriod = (filterType.equals("none") || filterType.equals("highpass")) ? 0 : 1 / minFreq;
                         PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, cutTrace.getMinX(),
-                                cutTrace.getLength(), 1 / maxFreq, 1 / minFreq, window.getPhases(),
+                                cutTrace.getLength(), minPeriod, maxPeriod, window.getPhases(),
                                 sourceTimeFunctionType != SourceTimeFunctionType.NONE,
                                 ParameterType.VOXEL, variableType, voxelPosition, cutTrace.getY());
                         partialIDs.add(partialID);
@@ -743,7 +774,7 @@ public class PartialWaveformAssembler3D extends Operation {
             Arrays.parallelSetAll(cutPartial, i -> (i + iStart < 0 ? 0 : partial[i + iStart]));
 
             // filter
-            double[] filteredPartial = filter.applyFilter(cutPartial);
+            double[] filteredPartial = (filter == null) ? cutPartial : filter.applyFilter(cutPartial);
 
             // cut and resample in timewindow
             double[] xs = IntStream.range(0, iEnd - iStart).mapToDouble(i -> (i + iStart) / partialSamplingHz).toArray();

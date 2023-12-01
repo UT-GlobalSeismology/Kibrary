@@ -22,7 +22,10 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
+import io.github.kensuke1984.kibrary.filter.BandStopFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
+import io.github.kensuke1984.kibrary.filter.HighPassFilter;
+import io.github.kensuke1984.kibrary.filter.LowPassFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
@@ -153,6 +156,10 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private int np;
     /**
+     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}
+     */
+    private String filterType;
+    /**
      * lower frequencies of bandpass [Hz]
      */
     private double[] minFreqs;
@@ -242,6 +249,8 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#tlen ");
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
             pw.println("#np ");
+            pw.println("##Filter type to be applied, from {none, lowpass, highpass, bandpass, bandstop} (bandpass)");
+            pw.println("#filterType none");
             pw.println("##(double) Minimum values of passband, listed using spaces (0.005)");
             pw.println("#minFreqs ");
             pw.println("##(double) Maximum values of passband, listed using spaces (0.08)");
@@ -297,6 +306,7 @@ public class PartialWaveformAssembler1D extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
+        filterType = property.parseString("filterType", "bandpass");
         maxFreqs = property.parseDoubleArray("maxFreqs", "0.08");
         minFreqs = property.parseDoubleArray("minFreqs", "0.005");
         if (maxFreqs.length != minFreqs.length)
@@ -367,10 +377,29 @@ public class PartialWaveformAssembler1D extends Operation {
     }
 
     private ButterworthFilter designBandPassFilter() throws IOException {
-        System.err.println("Designing bandpass filter: " + maxFreq + "-" + minFreq);
+        System.err.println("Designing " + filterType + " filter: " + maxFreq + " - " + minFreq);
         double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
         double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
-        ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
+        ButterworthFilter filter;
+        switch (filterType) {
+        case "none":
+            filter = null;
+            break;
+        case "lowpass":
+            filter = new LowPassFilter(omegaL, filterNp);
+            break;
+        case "highpass":
+            filter = new HighPassFilter(omegaH, filterNp);
+            break;
+        case "bandpass":
+            filter = new BandPassFilter(omegaH, omegaL, filterNp);
+            break;
+        case "bandstop":
+            filter = new BandStopFilter(omegaH, omegaL, filterNp);
+            break;
+        default:
+            throw new IllegalArgumentException("No such filter as " + filterType);
+        }
         filter.setCausal(causal);
         return filter;
     }
@@ -467,7 +496,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 double[] ut = spcFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
 
                 // apply filter
-                double[] filteredUt = filter.applyFilter(ut);
+                double[] filteredUt = (filter == null) ? ut : filter.applyFilter(ut);
 
                 cutAndWrite(filteredUt, timewindow, currentBodyR, variableType);
             }
@@ -493,8 +522,8 @@ public class PartialWaveformAssembler1D extends Operation {
                     throw new RuntimeException("sh and psv timeseries do not have the same length " + shUt.length + " " + psvUt.length);
 
                 // apply filter
-                double[] filteredSHUt = filter.applyFilter(shUt);
-                double[] filteredPSVUt = filter.applyFilter(psvUt);
+                double[] filteredSHUt = (filter == null) ? shUt : filter.applyFilter(shUt);
+                double[] filteredPSVUt = (filter == null) ? psvUt : filter.applyFilter(psvUt);
                 double[] summedUt = new double[filteredSHUt.length];
                 for (int it = 0; it < filteredSHUt.length; it++)
                     summedUt[it] = filteredSHUt[it] + filteredPSVUt[it];
@@ -520,8 +549,10 @@ public class PartialWaveformAssembler1D extends Operation {
             Trace filteredTrace = new Trace(xs, filteredUt);
             Trace resampledTrace = filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
 
+            double minPeriod = (filterType.equals("none") || filterType.equals("lowpass")) ? 0 : 1 / maxFreq;
+            double maxPeriod = (filterType.equals("none") || filterType.equals("highpass")) ? 0 : 1 / minFreq;
             PartialID partialID = new PartialID(timewindow.getObserver(), event, timewindow.getComponent(), finalSamplingHz,
-                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / maxFreq, 1 / minFreq,
+                    timewindow.getStartTime(), resampledTrace.getLength(), minPeriod, maxPeriod,
                     timewindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
                     ParameterType.LAYER, variableType, new FullPosition(0, 0, bodyR), resampledTrace.getY());
             partialIDs.add(partialID);
