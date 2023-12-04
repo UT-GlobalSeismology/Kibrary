@@ -437,7 +437,7 @@ public class BasicBinnedStackCreator extends Operation {
 
                 // skip waveform if distance or azimuth is out of bounds
                 if (distance < lowerDistance || upperDistance < distance
-                        || MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                        || MathAid.checkForAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
                     continue;
                 }
 

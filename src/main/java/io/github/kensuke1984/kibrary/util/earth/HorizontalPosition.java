@@ -37,17 +37,20 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Check if latitude and longitude range is valid
-     * (i.e. -90 &lt;= lowerLatitude &lt;= upperLatitude &lt;= 90 and -180 &lt;= lowerLongitude &lt;= upperLongitude &lt;= 360).
-     * @param lowerLatitude
-     * @param upperLatitude
-     * @param lowerLongitude
-     * @param upperLongitude
+     * (i.e. '-90 &lt;= lowerLatitude &lt; upperLatitude &lt;= 90' and '-180 &lt;= lowerLongitude, upperLongitude &lt;= 360').
+     * @param lowerLatitude (double) Value that is supposed to be lower limit of latitude range.
+     * @param upperLatitude (double) Value that is supposed to be upper limit of latitude range.
+     * @param lowerLongitude (double) Value that is supposed to be lower limit of longitude range.
+     * @param upperLongitude (double) Value that is supposed to be upper limit of longitude range.
+     *
+     * @author otsuru
+     * @since 2023/12/4
      */
     public static void checkRangeValidity(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range [" + lowerLatitude + ", " + upperLatitude + "] is invalid.");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range [" + lowerLongitude + ", " + upperLongitude + "] is invalid.");
+        if (lowerLatitude < -90 || lowerLatitude >= upperLatitude || 90 < upperLatitude)
+            throw new IllegalArgumentException("Latitude range [" + lowerLatitude + ":" + upperLatitude + ") is invalid.");
+        if (lowerLongitude < -180 || 360 < lowerLongitude || upperLongitude < -180 || 360 < upperLongitude)
+            throw new IllegalArgumentException("Longitude range [" + lowerLongitude + ":" + upperLongitude + ") is invalid.");
     }
 
     /**
@@ -111,40 +114,37 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Checks whether this position is inside a given coordinate range.
-     * Lower limit is included; upper limit is excluded.
-     * @param minLatitude (double) [-90:maxLatitude)
-     * @param maxLatitude (double) (minLatitude:90]
-     * @param minLongitude (double) [-180:maxLongitude)
-     * @param maxLongitude (double) (minLongitude:360]
+     * Lower limit is included; upper limit is excluded. However, upper latitude limit is included when it is 90.
+     * @param lowerLatitude (double) Lower limit of latitude range [deg]; [-90:upperLatitude).
+     * @param upperLatitude (double) Upper limit of latitude range [deg]; (lowerLatitude:90].
+     * @param lowerLongitude (double) Lower limit of longitude range [deg]; [-180:360].
+     * @param upperLongitude (double) Upper limit of longitude range [deg]; [-180:360].
      * @return (boolean) Whether this position is inside the given range.
      *
      * @author otsuru
      * @since 2021/11/21
      */
-    public boolean isInRange(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude) {
-        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude
-                || minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude) {
-            throw new IllegalArgumentException("The input coordinage range: " + minLatitude + ", " + maxLatitude + ", "
-                    + minLongitude + ", " + maxLongitude + " is invalid.");
-        }
+    public boolean isInRange(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
+        checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
 
-        //latitude
-        if (latitude.getLatitude() < minLatitude || maxLatitude <= latitude.getLatitude()) return false;
+        // latitude
+        // Reject values below lower limit, but include lower limit.
+        if (latitude.getLatitude() < lowerLatitude) return false;
+        // Reject values above or equal to upper limit, but do not reject when upper limit is 90.
+        if (upperLatitude < 90 && upperLatitude <= latitude.getLatitude()) return false;
 
-        // longitude; min [-180, 180) and max [-180, 180)
-        if (maxLongitude < 180) {
-            if (longitude.getLongitude() < minLongitude || maxLongitude <= longitude.getLongitude()) return false;
+        // longitude
+        double lowerLongitudeFixed = Longitude.fix(lowerLongitude);
+        double upperLongitudeFixed = Longitude.fix(upperLongitude);
+        if (upperLongitudeFixed < lowerLongitudeFixed) {
+            // Accept values in [-180:upperLongitude),[lowerLongitude:180].
+            if (longitude.getLongitude() < upperLongitudeFixed || lowerLongitudeFixed <= longitude.getLongitude()) return true;
+            else return false;
+        } else {
+            // Accept values in [lowerLongitude:upperLongitude).
+            if (longitude.getLongitude() < lowerLongitudeFixed || upperLongitudeFixed <= longitude.getLongitude()) return false;
+            else return true;
         }
-        // longitude; min [-180, 180) and max [180, 360]
-        if (minLongitude < 180 && 180 <= maxLongitude) {
-            if (longitude.getLongitude() < minLongitude && maxLongitude - 360 <= longitude.getLongitude()) return false;
-        }
-        // longitude; min [180, 360] and max [180, 360]
-        if (180 <= minLongitude && 180 <= maxLongitude) {
-            if (longitude.getLongitude() < minLongitude - 360 || maxLongitude - 360 <= longitude.getLongitude()) return false;
-        }
-
-        return true;
     }
 
     @Override

@@ -234,7 +234,8 @@ public final class MathAid {
     }
 
     /**
-     * Check if a value range is valid (i.e. first value &lt;= second value).
+     * Check if a value range is valid (i.e. first value &lt; second value).
+     * Note that the value range excludes the upper limit.
      * @param valueName (String) Name of variable that is being checked.
      * @param lowerValue (double) Value that is supposed to be lower limit of range.
      * @param upperValue (double) Value that is supposed to be upper limit of range.
@@ -243,39 +244,46 @@ public final class MathAid {
      * @since 2023/12/4
      */
     public static void checkRangeValidity(String valueName, double lowerValue, double upperValue) {
-        if (lowerValue > upperValue)
-            throw new IllegalArgumentException(valueName + " range [" + lowerValue + ", " + upperValue + "] is invalid.");
+        if (lowerValue >= upperValue)
+            throw new IllegalArgumentException(valueName + " range [" + lowerValue + ":" + upperValue + ") is invalid.");
     }
     /**
      * Check if a date range is valid (i.e. first value &lt;= second value).
-     * @param startDate (LocalDate) Value that is supposed to be lower limit of range.
-     * @param endDate (LocalDate) Value that is supposed to be upper limit of range.
+     * Note that the date range includes the end date.
+     * @param startDate (LocalDate) Date that is supposed to be start of range.
+     * @param endDate (LocalDate) Date that is supposed to be end of range.
      *
      * @author otsuru
      * @since 2023/12/4
      */
     public static void checkDateRangeValidity(LocalDate startDate, LocalDate endDate) {
         if (startDate.isAfter(endDate))
-            throw new IllegalArgumentException("Date range [" + startDate + ", " + endDate + "] is invalid.");
+            throw new IllegalArgumentException("Date range [" + startDate + ":" + endDate + "] is invalid.");
     }
 
     /**
      * Check if an angle is within a specified range.
-     * @param angle [0:360)
-     * @param lower [-360:upper)
-     * @param upper (lower:360]
-     * @return (boolean) true if "angle" is within the range set by "lower" and "upper"
+     * Comparison is done after normalizing all angle values into range [0:360).
+     * Lower limit is included; upper limit is excluded.
+     * @param checkAngle (double) Angle to check [deg].
+     * @param lowerAngle (double) Lower limit of angle range [deg].
+     * @param upperAngle (double) Upper limit of angle range [deg].
+     * @return (boolean) Whether the angle to check is within the specified range.
      */
-    public static boolean checkAngleRange(double angle, double lower, double upper) {
-        if (angle < 0 || 360 <= angle || lower < -360 || upper < lower || 360 < upper) {
-            throw new IllegalArgumentException("The input angles " + angle + "," + lower + "," + upper + " are invalid.");
-        }
+    public static boolean checkForAngleRange(double checkAngle, double lowerAngle, double upperAngle) {
+        // convert all angles to range [0:360)
+        double lower = lowerAngle - Math.floor(lowerAngle / 360) * 360;
+        double upper = upperAngle - Math.floor(upperAngle / 360) * 360;
+        double check = checkAngle - Math.floor(checkAngle / 360) * 360;
 
-        // In the following, the third part is for the case of angle==0
-        if ((lower <= angle && angle <= upper) || (lower+360 <= angle && angle <= upper+360) || (lower-360 <= angle && angle <= upper-360)) {
-            return true;
+        if (upper < lower) {
+            // Accept values in [0:upper),[lower:360].
+            if (check < upper || lower <= check) return true;
+            else return false;
         } else {
-            return false;
+            // Accept values in [lower:upper).
+            if (check < lower || upper <= check) return false;
+            else return true;
         }
     }
 

@@ -330,9 +330,9 @@ public class RaypathSelection extends Operation {
             double distance = eventPosition.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
             boolean distanceCheck = (lowerDistance <= distance && distance <= upperDistance);
             double azimuth = eventPosition.computeAzimuthRad(observerPosition) * 180. / Math.PI;
-            boolean azimuthCheck = MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth);
+            boolean azimuthCheck = MathAid.checkForAngleRange(azimuth, lowerAzimuth, upperAzimuth);
             double backAzimuth = eventPosition.computeBackAzimuthRad(observerPosition) * 180. / Math.PI;
-            boolean backAzimuthCheck = MathAid.checkAngleRange(backAzimuth, lowerBackAzimuth, upperBackAzimuth);
+            boolean backAzimuthCheck = MathAid.checkForAngleRange(backAzimuth, lowerBackAzimuth, upperBackAzimuth);
             if ((distanceCheck && azimuthCheck && backAzimuthCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
@@ -352,7 +352,7 @@ public class RaypathSelection extends Operation {
                     FullPosition turningPosition = pierceTool.get(entry, 0).findTurningPoint(0);
                     turningPositionCheck = turningPosition.isInRange(lowerTurningLatitude, upperTurningLatitude, lowerTurningLongitude, upperTurningLongitude);
                     double turningAzimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
-                    turningAzimuthCheck = MathAid.checkAngleRange(turningAzimuth, lowerTurningAzimuth, upperTurningAzimuth);
+                    turningAzimuthCheck = MathAid.checkForAngleRange(turningAzimuth, lowerTurningAzimuth, upperTurningAzimuth);
                 }
                 if ((turningPositionCheck && turningAzimuthCheck) == false) {
                     if (eliminationMode) {

@@ -375,12 +375,10 @@ public class GlobalCMTSearch {
      * <p>
      * if invalid values are input, {@link IllegalArgumentException}
      *
-     * @param lowerLatitude [deg] [-90, upperLatitude)
-     * @param upperLatitude [deg] (lowerLatitude, 90]
+     * @param lowerLatitude (double) Lower limit of latitude range [deg]; [-90:upperLatitude).
+     * @param upperLatitude (double) Upper limit of latitude range [deg]; (lowerLatitude:90].
      */
     public GlobalCMTSearch setLatitudeRange(double lowerLatitude, double upperLatitude) {
-        if (lowerLatitude < -90 || upperLatitude < lowerLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Input latitude range is invalid");
         this.lowerLatitude = lowerLatitude;
         this.upperLatitude = upperLatitude;
         return this;
@@ -390,12 +388,10 @@ public class GlobalCMTSearch {
      * Longitude range<br>
      * Default:[-180:180]<br>
      *
-     * @param lowerLongitude [-180, upperLongitude)
-     * @param upperLongitude (lowerLongitude, 360]
+     * @param lowerLongitude (double) Lower limit of longitude range [deg]; [-180, 360].
+     * @param upperLongitude (double) Upper limit of longitude range [deg]; [-180, 360].
      */
     public GlobalCMTSearch setLongitudeRange(double lowerLongitude, double upperLongitude) {
-        if (lowerLongitude < -180 || upperLongitude < lowerLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Invalid longitude range.");
         this.lowerLongitude = lowerLongitude;
         this.upperLongitude = upperLongitude;
         return this;

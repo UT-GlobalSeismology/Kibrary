@@ -114,10 +114,10 @@ public class DataLobby extends Operation {
             pw.println("##(int) Adjustment at the foot [min], must be set.");
             pw.println("#footAdjustment 120");
             pw.println("##########The following parameters are for seismic events to be searched for.");
-            pw.println("##Start date yyyy-mm-dd, must be set.");
+            pw.println("##Start date in yyyy-mm-dd format, must be set.");
             pw.println("#startDate 1990-01-01");
-            pw.println("##End date yyyy-mm-dd, must be set.");
-            pw.println("#endDate 2019-12-31");
+            pw.println("##End date in yyyy-mm-dd format, must be set.");
+            pw.println("#endDate 2020-12-31");
             pw.println("##Lower limit of Mw; (:upperMw). (5.5)");
             pw.println("#lowerMw ");
             pw.println("##Upper limit of Mw; (lowerMw:). (7.3)");
@@ -130,9 +130,9 @@ public class DataLobby extends Operation {
             pw.println("#lowerLatitude ");
             pw.println("##Upper limit of latitude [deg]; (lowerLatitude:90]. (90)");
             pw.println("#upperLatitude ");
-            pw.println("##Lower limit of longitude [deg]; [-180:upperLongitude). (-180)");
+            pw.println("##Lower limit of longitude [deg]; [-180:360]. (-180)");
             pw.println("#lowerLongitude ");
-            pw.println("##Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
+            pw.println("##Upper limit of longitude [deg]; [-180:360]. (180)");
             pw.println("#upperLongitude ");
         }
         System.err.println(outPath + " is created.");
