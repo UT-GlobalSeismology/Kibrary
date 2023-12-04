@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTListup;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.visual.map.ColorBinInformationFile;
@@ -58,6 +59,7 @@ enum Brooklyn {
     ColorBinInformationFile(9, ColorBinInformationFile.class),
     // Data download 10
     GlobalCMTID(10, GlobalCMTID.class),
+    GlobalCMTListup(11, GlobalCMTListup.class),
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),
     LobbyCleanup(19, LobbyCleanup.class),

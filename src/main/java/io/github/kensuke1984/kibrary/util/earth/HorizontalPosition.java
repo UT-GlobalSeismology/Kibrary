@@ -36,6 +36,21 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     private final Longitude longitude;
 
     /**
+     * Check if latitude and longitude range is valid
+     * (i.e. -90 &lt;= lowerLatitude &lt;= upperLatitude &lt;= 90 and -180 &lt;= lowerLongitude &lt;= upperLongitude &lt;= 360).
+     * @param lowerLatitude
+     * @param upperLatitude
+     * @param lowerLongitude
+     * @param upperLongitude
+     */
+    public static void checkRangeValidity(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
+        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
+            throw new IllegalArgumentException("Latitude range [" + lowerLatitude + ", " + upperLatitude + "] is invalid.");
+        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
+            throw new IllegalArgumentException("Longitude range [" + lowerLongitude + ", " + upperLongitude + "] is invalid.");
+    }
+
+    /**
      * Find the latitude interval of a given set of positions.
      * The latitudes must be equally spaced.
      * @param positions (Collection of {@link HorizontalPosition}) Input positions

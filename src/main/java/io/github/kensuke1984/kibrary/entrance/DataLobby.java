@@ -16,7 +16,9 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -153,28 +155,21 @@ public class DataLobby extends Operation {
 
         startDate = LocalDate.parse(property.parseString("startDate", null));
         endDate = LocalDate.parse(property.parseString("endDate", null));
-        if (startDate.isAfter(endDate))
-            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
+        MathAid.checkDateRangeValidity(startDate, endDate);
 
         lowerMw = property.parseDouble("lowerMw", "5.5");
         upperMw = property.parseDouble("upperMw", "7.3");
-        if (lowerMw > upperMw)
-            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
+        MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
 
         lowerDepth = property.parseDouble("lowerDepth", "100");
         upperDepth = property.parseDouble("upperDepth", "700");
-        if (lowerDepth > upperDepth)
-            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
+        MathAid.checkRangeValidity("Depth", lowerDepth, upperDepth);
 
         lowerLatitude = property.parseDouble("lowerLatitude", "-90");
         upperLatitude = property.parseDouble("upperLatitude", "90");
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
-
         lowerLongitude = property.parseDouble("lowerLongitude", "-180");
         upperLongitude = property.parseDouble("upperLongitude", "180");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+        HorizontalPosition.checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
     }
 
     @Override

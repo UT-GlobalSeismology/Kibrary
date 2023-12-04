@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.time.LocalDate;
+
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
@@ -229,6 +231,32 @@ public final class MathAid {
         } else {
             return n + " " + pluralCase;
         }
+    }
+
+    /**
+     * Check if a value range is valid (i.e. first value &lt;= second value).
+     * @param valueName (String) Name of variable that is being checked.
+     * @param lowerValue (double) Value that is supposed to be lower limit of range.
+     * @param upperValue (double) Value that is supposed to be upper limit of range.
+     *
+     * @author otsuru
+     * @since 2023/12/4
+     */
+    public static void checkRangeValidity(String valueName, double lowerValue, double upperValue) {
+        if (lowerValue > upperValue)
+            throw new IllegalArgumentException(valueName + " range [" + lowerValue + ", " + upperValue + "] is invalid.");
+    }
+    /**
+     * Check if a date range is valid (i.e. first value &lt;= second value).
+     * @param startDate (LocalDate) Value that is supposed to be lower limit of range.
+     * @param endDate (LocalDate) Value that is supposed to be upper limit of range.
+     *
+     * @author otsuru
+     * @since 2023/12/4
+     */
+    public static void checkDateRangeValidity(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate))
+            throw new IllegalArgumentException("Date range [" + startDate + ", " + endDate + "] is invalid.");
     }
 
     /**
