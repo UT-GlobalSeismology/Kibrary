@@ -68,7 +68,7 @@ public class GlobalCMTListup {
         options.addOption(Option.builder("m").longOpt("lowerMw").hasArg().argName("magnitude")
                 .desc("Lower limit of Mw; (:upperMw). (5.5)").build());
         options.addOption(Option.builder("M").longOpt("upperMw").hasArg().argName("magnitude")
-                .desc("Upper limit of Mw; (lowerMw:). (7.3)").build());
+                .desc("Upper limit of Mw; (lowerMw:). (7.31)").build());
 
         // option
         options.addOption(Option.builder("f").longOpt("full")
@@ -106,7 +106,7 @@ public class GlobalCMTListup {
         MathAid.checkDateRangeValidity(startDate, endDate);
 
         double lowerMw = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 5.5;
-        double upperMw = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 7.3;
+        double upperMw = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 7.31;
         MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
 
         // search events

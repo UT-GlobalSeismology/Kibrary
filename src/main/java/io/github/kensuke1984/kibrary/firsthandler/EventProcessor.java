@@ -283,7 +283,7 @@ class EventProcessor implements Runnable {
                 HorizontalPosition position = new HorizontalPosition(latitude, longitude);
 
                 // check epicentral distance
-                if (distance < minDistance || maxDistance < distance) {
+                if (distance < minDistance || maxDistance <= distance) {
                     // this is not written in standard error because it is too noisy
                     eliminatedWriter.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet

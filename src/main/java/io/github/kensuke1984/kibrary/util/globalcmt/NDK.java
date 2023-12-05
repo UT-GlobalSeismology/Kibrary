@@ -396,27 +396,24 @@ public final class NDK implements GlobalCMTAccess {
         HorizontalPosition position = new HorizontalPosition(centroidPosition.getLatitude(), centroidPosition.getLongitude());
         if (!position.isInRange(search.getLowerLatitude(), search.getUpperLatitude(), search.getLowerLongitude(), search.getUpperLongitude()))
             return false;
-
         // depth
-        double depth = 6371 - centroidPosition.getR();
-        if (depth < search.getLowerDepth() || search.getUpperDepth() < depth) return false;
+        if (centroidPosition.getDepth() < search.getLowerDepth() || search.getUpperDepth() <= centroidPosition.getDepth()) return false;
 
         // timeshift
-        if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() < timeDifference)
-            return false;
+        if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() <= timeDifference) return false;
         // body wave magnitude
-        if (mb < search.getLowerMb() || search.getUpperMb() < mb) return false;
+        if (mb < search.getLowerMb() || search.getUpperMb() <= mb) return false;
         // surface wave magnitude
-        if (ms < search.getLowerMs() || search.getUpperMs() < ms) return false;
+        if (ms < search.getLowerMs() || search.getUpperMs() <= ms) return false;
         // moment magnitude
-        if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() < momentTensor.getMw()) return false;
+        if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() <= momentTensor.getMw()) return false;
         // half duration
-        if (halfDuration < search.getLowerHalfDuration() ||
-                search.getUpperHalfDuration() < halfDuration) return false;
+        if (halfDuration < search.getLowerHalfDuration() || search.getUpperHalfDuration() <= halfDuration) return false;
         // tension axis plunge
-        if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0) return false;
+        if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() <= plunge0) return false;
         // null axis plunge
-        return !(plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1);
+        if (plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() <= plunge1) return false;
+        return true;
     }
 
     @Override

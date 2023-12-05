@@ -34,7 +34,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * <p>
  * Events are downloaded in chronological order, so if processing fails at a certain event,
  * you can restart downloading from that event onward.
- * TODO this is only true for 2005 or later
  * <p>
  * See also {@link EventDataPreparer}.
  *
@@ -120,7 +119,7 @@ public class DataLobby extends Operation {
             pw.println("#endDate 2020-12-31");
             pw.println("##Lower limit of Mw; (:upperMw). (5.5)");
             pw.println("#lowerMw ");
-            pw.println("##Upper limit of Mw; (lowerMw:). (7.3)");
+            pw.println("##Upper limit of Mw; (lowerMw:). (7.31)");
             pw.println("#upperMw ");
             pw.println("##Shallower limit of DEPTH [km]; (:upperDepth). (100)");
             pw.println("#lowerDepth ");
@@ -158,7 +157,7 @@ public class DataLobby extends Operation {
         MathAid.checkDateRangeValidity(startDate, endDate);
 
         lowerMw = property.parseDouble("lowerMw", "5.5");
-        upperMw = property.parseDouble("upperMw", "7.3");
+        upperMw = property.parseDouble("upperMw", "7.31");
         MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
 
         lowerDepth = property.parseDouble("lowerDepth", "100");
@@ -201,9 +200,9 @@ public class DataLobby extends Operation {
                     return;
                 }
 
-                // wait 2 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                System.err.println(" ~ Resting for 2 minutes ...");
-                ThreadAid.sleep(1000 * 60 * 2);
+                // wait 20 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+                System.err.println(" ~ Resting for 20 minutes ...");
+                ThreadAid.sleep(1000 * 60 * 20);
 
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.

@@ -16,7 +16,9 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
@@ -152,18 +154,13 @@ public class DataKitchen extends Operation {
 
         minDistance = property.parseDouble("minDistance", "0");
         maxDistance = property.parseDouble("maxDistance", "180");
-        if (minDistance < 0 || minDistance > maxDistance || 180 < maxDistance)
-            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
+        MathAid.checkRangeValidity("Distance", minDistance, maxDistance, 0, 180);
 
         minLatitude = property.parseDouble("minLatitude", "-90");
         maxLatitude = property.parseDouble("maxLatitude", "90");
-        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude)
-            throw new IllegalArgumentException("Latitude range " + minLatitude + " , " + maxLatitude + " is invalid.");
-
         minLongitude = property.parseDouble("minLongitude", "-180");
         maxLongitude = property.parseDouble("maxLongitude", "180");
-        if (minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude)
-            throw new IllegalArgumentException("Longitude range " + minLongitude + " , " + maxLongitude + " is invalid.");
+        HorizontalPosition.checkRangeValidity(minLatitude, maxLatitude, minLongitude, maxLongitude);
 
         coordinateGrid = property.parseDouble("coordinateGrid", "0.01");
         if (coordinateGrid < 0)

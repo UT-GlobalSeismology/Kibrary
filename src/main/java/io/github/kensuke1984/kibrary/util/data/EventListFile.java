@@ -59,15 +59,14 @@ public class EventListFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# GCMTID latitude longitude radius depth");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition()
+                pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition().toString()
                          + " " + event.getEventData().getCmtPosition().getDepth());
             });
         }
     }
 
     /**
-     * Writes an event list file given a set of {@link GlobalCMTID}s.
-     * Each line: Date, latitude, longitude, depth, Mw, Half duration
+     * Writes an event list file with full information, given a set of {@link GlobalCMTID}s.
      * @param eventSet (Set of {@link GlobalCMTID}) Events.
      * @param outputPath (Path) Output file.
      * @param options (OpenOption...) Options for write.
@@ -79,11 +78,11 @@ public class EventListFile {
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            pw.println("# yyyy/mm/dd latitude longitude depth Mw HalfDuration");
+            pw.println("# GCMTID date time latitude longitude radius depth Mw HalfDuration");
             eventSet.stream().sorted().forEach(event -> {
-                pw.println(event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
-                        + " " + event.getEventData().getCmtPosition().getLatitude()
-                        + " " + event.getEventData().getCmtPosition().getLongitude()
+                pw.println(event.toPaddedString()
+                        + " " + event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SS"))
+                        + " " + event.getEventData().getCmtPosition().toString()
                         + " " + event.getEventData().getCmtPosition().getDepth()
                         + " " + event.getEventData().getCmt().getMw() + " " + event.getEventData().getHalfDuration());
             });

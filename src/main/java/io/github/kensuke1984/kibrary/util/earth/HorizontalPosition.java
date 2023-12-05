@@ -136,8 +136,9 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         // longitude
         double lowerLongitudeFixed = Longitude.fix(lowerLongitude);
         double upperLongitudeFixed = Longitude.fix(upperLongitude);
-        if (upperLongitudeFixed < lowerLongitudeFixed) {
+        if (upperLongitudeFixed <= lowerLongitudeFixed) {
             // Accept values in [-180:upperLongitude),[lowerLongitude:180].
+            // When lowerLongitude == upperLongitude (this happens for -180 & 180 or 0 & 360), everything is accepted.
             if (longitude.getLongitude() < upperLongitudeFixed || lowerLongitudeFixed <= longitude.getLongitude()) return true;
             else return false;
         } else {

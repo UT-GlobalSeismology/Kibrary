@@ -15,6 +15,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -99,13 +101,13 @@ public class DataRequestor extends Operation {
             pw.println("##(int) Adjustment at the foot [min], must be set.");
             pw.println("#footAdjustment 120");
             pw.println("##########The following parameters are for seismic events to be searched for.");
-            pw.println("##Start date yyyy-mm-dd, must be set.");
+            pw.println("##Start date in yyyy-mm-dd format, must be set.");
             pw.println("#startDate 1990-01-01");
-            pw.println("##End date yyyy-mm-dd, must be set.");
-            pw.println("#endDate 2019-12-31");
+            pw.println("##End date in yyyy-mm-dd format, must be set.");
+            pw.println("#endDate 2020-12-31");
             pw.println("##Lower limit of Mw; (:upperMw). (5.5)");
             pw.println("#lowerMw ");
-            pw.println("##Upper limit of Mw; (lowerMw:). (7.3)");
+            pw.println("##Upper limit of Mw; (lowerMw:). (7.31)");
             pw.println("#upperMw ");
             pw.println("##Shallower limit of DEPTH [km]; (:upperDepth). (100)");
             pw.println("#lowerDepth ");
@@ -115,9 +117,9 @@ public class DataRequestor extends Operation {
             pw.println("#lowerLatitude ");
             pw.println("##Upper limit of latitude [deg]; (lowerLatitude:90]. (90)");
             pw.println("#upperLatitude ");
-            pw.println("##Lower limit of longitude [deg]; [-180:upperLongitude). (-180)");
+            pw.println("##Lower limit of longitude [deg]; [-180:360]. (-180)");
             pw.println("#lowerLongitude ");
-            pw.println("##Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
+            pw.println("##Upper limit of longitude [deg]; [-180:360]. (180)");
             pw.println("#upperLongitude ");
             pw.println("##(boolean) Whether to actually send the emails. (false)");
             pw.println("#send ");
@@ -141,28 +143,21 @@ public class DataRequestor extends Operation {
 
         startDate = LocalDate.parse(property.parseString("startDate", null));
         endDate = LocalDate.parse(property.parseString("endDate", null));
-        if (startDate.isAfter(endDate))
-            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
+        MathAid.checkDateRangeValidity(startDate, endDate);
 
         lowerMw = property.parseDouble("lowerMw", "5.5");
-        upperMw = property.parseDouble("upperMw", "7.3");
-        if (lowerMw > upperMw)
-            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
+        upperMw = property.parseDouble("upperMw", "7.31");
+        MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
 
         lowerDepth = property.parseDouble("lowerDepth", "100");
         upperDepth = property.parseDouble("upperDepth", "700");
-        if (lowerDepth > upperDepth)
-            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
+        MathAid.checkRangeValidity("Depth", lowerDepth, upperDepth);
 
         lowerLatitude = property.parseDouble("lowerLatitude", "-90");
         upperLatitude = property.parseDouble("upperLatitude", "90");
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
-
         lowerLongitude = property.parseDouble("lowerLongitude", "-180");
         upperLongitude = property.parseDouble("upperLongitude", "180");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+        HorizontalPosition.checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
 
         send = property.parseBoolean("send", "false");
     }
