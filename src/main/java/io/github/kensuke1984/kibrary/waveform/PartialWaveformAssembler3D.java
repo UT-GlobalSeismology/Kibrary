@@ -579,7 +579,8 @@ public class PartialWaveformAssembler3D extends Operation {
         default:
             throw new IllegalArgumentException("No such filter as " + filterType);
         }
-        filter.setCausal(causal);
+        if(filter != null)
+            filter.setCausal(causal);
         return filter;
     }
 
