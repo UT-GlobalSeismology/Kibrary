@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
+ * TODO CHECK ACURACY
  * Compute mantle correction value at each raypath.
  * Different from MantleCorrection, this class uses single phase to compute correction value.
  * Raypath informations are referred from {@link TimewindowData}.
