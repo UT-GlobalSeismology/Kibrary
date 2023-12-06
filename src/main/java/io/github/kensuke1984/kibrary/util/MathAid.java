@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Some calculation Utilities.
@@ -10,6 +11,11 @@ import org.apache.commons.math3.util.FastMath;
  */
 public final class MathAid {
     private MathAid() {}
+
+    /**
+     * The number of decimal places to decide if 0.9999... = 1.
+     */
+    private static final int PRECISION_DIGIT = 10;
 
     /**
      * @param variance variance
@@ -229,6 +235,18 @@ public final class MathAid {
         } else {
             return n + " " + pluralCase;
         }
+    }
+
+    /**
+     * Same as Math.floor(), but consider precision, fixing 0.9999... to 1.
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2023/11/8
+     */
+    public static double floor(double value) {
+        return Math.floor(Precision.round(value, PRECISION_DIGIT));
     }
 
     /**

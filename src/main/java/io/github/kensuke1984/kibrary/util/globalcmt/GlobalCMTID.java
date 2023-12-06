@@ -53,19 +53,21 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     private volatile NDK ndk;
 
     /**
-     * Create an instance for an input
-     * If no ID exists for the input, throw {@link RuntimeException}
+     * Create an instance for an input.
+     * If input does not match the GlobalCMTID pattern, throw {@link IllegalArgumentException}.
+     * Existence in catalog is not checked here.
      *
-     * @param idString (String) global cmt id
+     * @param idString (String) Global CMT ID.
      */
     public GlobalCMTID(String idString) {
         if (isGlobalCMTID(idString)) this.idString = idString;
-        else throw new IllegalArgumentException(idString + " does not exist.");
+        else throw new IllegalArgumentException(idString + " does not match GlobalCMTID pattern.");
     }
 
     /**
-     * @param sacHeaderData ({@link SACHeaderAccess}) A SAC header. Must contain a valid ID in KEVNM
-     * @return GlobalCMTID of the input sacHeaderData
+     * Construct ID from {@link SACHeaderAccess}.
+     * @param sacHeaderData ({@link SACHeaderAccess}) A SAC header. Must contain a valid ID in KEVNM.
+     * @return ({@link GlobalCMTID}) Created instance.
      */
     public static GlobalCMTID of(SACHeaderAccess sacHeaderData) {
         return new GlobalCMTID(sacHeaderData.getSACString(SACHeaderEnum.KEVNM));
@@ -73,12 +75,23 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     /**
      * Checks whether a String matches the GlobalCMT ID pattern.
-     * @param string (String) String to check
-     * @return (boolean) Whether the String matches the GlobalCMT ID pattern
+     * @param string (String) String to check.
+     * @return (boolean) Whether the String matches the GlobalCMT ID pattern.
      */
     public static boolean isGlobalCMTID(String string) {
         return RECENT_GLOBALCMTID_PATTERN.matcher(string).matches() ||
                 PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
+    }
+
+    /**
+     * Checks whether this ID exists in the GlobalCMT catalog.
+     * @return (boolean) Whether this ID exists in catalog.
+     *
+     * @author otsuru
+     * @since 2023/12/6
+     */
+    public boolean exists() {
+        return GlobalCMTCatalog.contains(this);
     }
 
     @Override
