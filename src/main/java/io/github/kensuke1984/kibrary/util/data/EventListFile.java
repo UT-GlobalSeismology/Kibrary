@@ -45,10 +45,10 @@ public class EventListFile {
     private EventListFile() {}
 
     /**
-     * Writes an event list file given a set of GlobalCMTIDs.
-     * @param eventSet Set of events
-     * @param outputPath  of write file
-     * @param options  for write
+     * Writes an event list file given a set of {@link GlobalCMTID}s.
+     * @param eventSet (Set of {@link GlobalCMTID}) Events.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
@@ -60,17 +60,17 @@ public class EventListFile {
             pw.println("# GCMTID latitude longitude radius depth Mw");
             eventSet.stream().sorted().forEach(event -> {
                 pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition()
-                         + " " + event.getEventData().getCmtPosition().getDepth() + " " + event.getEventData().getCmt().getMw());
+                         + " " + event.getEventData().getCmtPosition().getDepth());
             });
         }
     }
 
     /**
-     * Writes an event list file given a set of GlobalCMTIDs.
+     * Writes an event list file given a set of {@link GlobalCMTID}s.
      * Each line: Date, latitude, longitude, depth, Mw, Half duration
-     * @param eventSet Set of events
-     * @param outputPath  of write file
-     * @param options  for write
+     * @param eventSet (Set of {@link GlobalCMTID}) Events.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */
     public static void writeFullInfo(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
@@ -83,16 +83,17 @@ public class EventListFile {
             eventSet.stream().sorted().forEach(event -> {
                 pw.println(event.getEventData().getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
                         + " " + event.getEventData().getCmtPosition().getLatitude()
-                        + " " + event.getEventData().getCmtPosition().getLongitude() + " " + event.getEventData().getCmtPosition().getDepth()
+                        + " " + event.getEventData().getCmtPosition().getLongitude()
+                        + " " + event.getEventData().getCmtPosition().getDepth()
                         + " " + event.getEventData().getCmt().getMw() + " " + event.getEventData().getHalfDuration());
             });
         }
     }
 
     /**
-     * Reads an event lsit file. Only the GlobalCMTID is read in; other information are ignored.
-     * @param inputPath of event information file
-     * @return (<b>unmodifiable</b>) Set of events
+     * Reads an event list file. Only the GlobalCMTID is read in; other information is ignored.
+     * @param inputPath (Path) Event information file.
+     * @return (<b>unmodifiable</b> Set of {@link GlobalCMTID}) Events.
      * @throws IOException if an I/O error occurs
      *
      * @author otsuru

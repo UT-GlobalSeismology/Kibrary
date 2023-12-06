@@ -90,11 +90,11 @@ public class TriangleRadialSpline {
 					perturbationR = orderLM / 4. * dz + 3480.;
 				}
 				switch (type) {
-				case PAR2:
-					tmpUnknown = new Physical1DParameter(PartialType.PAR2, perturbationR, weighting);
+				case MU1D:
+					tmpUnknown = new Physical1DParameter(PartialType.MU1D, perturbationR, weighting);
 					break;
-				case PARQ:
-					tmpUnknown = new Physical1DParameter(PartialType.PARQ, perturbationR, weighting);
+				case Q1D:
+					tmpUnknown = new Physical1DParameter(PartialType.Q1D, perturbationR, weighting);
 				default:
 					break;
 				}
@@ -114,11 +114,11 @@ public class TriangleRadialSpline {
 					perturbationR = orderUM / 4. * dz + 5720.;
 				}
 				switch (type) {
-				case PAR2:
-					tmpUnknown = new Physical1DParameter(PartialType.PAR2, perturbationR, weighting);
+				case MU1D:
+					tmpUnknown = new Physical1DParameter(PartialType.MU1D, perturbationR, weighting);
 					break;
-				case PARQ:
-					tmpUnknown = new Physical1DParameter(PartialType.PARQ, perturbationR, weighting);
+				case Q1D:
+					tmpUnknown = new Physical1DParameter(PartialType.Q1D, perturbationR, weighting);
 				default:
 					break;
 				}

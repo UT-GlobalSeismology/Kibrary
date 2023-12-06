@@ -116,7 +116,7 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#longitudeOffset ");
             pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
             pw.println("#crossDateLine ");
-            pw.println("##(double) Radii of layer borders, listed using spaces [km] (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
+            pw.println("##(double[]) Radii of layer borders, listed using spaces [km] (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
             pw.println("#borderRadii ");
         }
         System.err.println(outPath + " is created.");

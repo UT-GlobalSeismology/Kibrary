@@ -60,10 +60,9 @@ public class LookAtBPspc {
     }
 
     public static void print(SPCFileAccess dsmOutput, CommandLine cmdLine) throws IOException{
-        String obsName = dsmOutput.getStationCode();
-        String netwkName = dsmOutput.getNetworkCode();
+        String obsName = dsmOutput.getReceiverID();
         String sourceID = dsmOutput.getSourceID();
-        HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
+        HorizontalPosition observerPosition = dsmOutput.getReceiverPosition();
         FullPosition sourceLocation = dsmOutput.getSourcePosition();
 
         double distance = sourceLocation.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
@@ -150,12 +149,11 @@ public class LookAtBPspc {
     }
 
     public static void printHeader(SPCFileAccess dsmOutput) {
-        String obsName = dsmOutput.getStationCode();
-        String netwkName = dsmOutput.getNetworkCode();
+        String obsName = dsmOutput.getReceiverID();
         String sourceID = dsmOutput.getSourceID();
-        HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
+        HorizontalPosition observerPosition = dsmOutput.getReceiverPosition();
         FullPosition sourceLocation = dsmOutput.getSourcePosition();
 
-        System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
+        System.out.println("#Observer: " + obsName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
     }
 }

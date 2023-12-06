@@ -150,7 +150,7 @@ public class PartialsFuser extends Operation {
                 List<PartialID> originalPartialIDs = new ArrayList<>();
                 for (PartialID id : inputPartialIDs) {
                     for (UnknownParameter originalParam : originalParams) {
-                        if (id.getPartialType().equals(originalParam.getPartialType()) && id.getVoxelPosition().equals(originalParam.getPosition())) {
+                        if (id.isForParameter(originalParam)) {
                             originalPartialIDs.add(id);
                             break;
                         }
@@ -192,9 +192,7 @@ public class PartialsFuser extends Operation {
         List<List<UnknownParameter>> originalParamsList = fusionDesign.getOriginalParameters();
         for (List<UnknownParameter> originalParams : originalParamsList) {
             for (UnknownParameter originalParam : originalParams) {
-                if (id.getPartialType().equals(originalParam.getPartialType()) && id.getVoxelPosition().equals(originalParam.getPosition())) {
-                    return true;
-                }
+                if (id.isForParameter(originalParam)) return true;
             }
         }
         return false;
@@ -214,10 +212,9 @@ public class PartialsFuser extends Operation {
         double volumeTotal = 0;
         for (PartialID id : ids) {
             // find volume of corresponding voxel
-            UnknownParameter originalParam = originalParams.stream()
-                    .filter(param -> id.getPartialType().equals(param.getPartialType()) && id.getVoxelPosition().equals(param.getPosition()))
+            UnknownParameter originalParam = originalParams.stream().filter(param -> id.isForParameter(param))
                     .findFirst().get();
-            double volume = originalParam.getWeighting();
+            double volume = originalParam.getSize();
             volumeTotal += volume;
             // add the waveform, multiplied by volume
             RealVector vector = new ArrayRealVector(id.getData());
@@ -231,7 +228,7 @@ public class PartialsFuser extends Operation {
         PartialID fusedID = new PartialID(id0.getObserver(), id0.getGlobalCMTID(), id0.getSacComponent(),
                 id0.getSamplingHz(), id0.getStartTime(), id0.getNpts(), id0.getMinPeriod(), id0.getMaxPeriod(),
                 id0.getPhases(), id0.isConvolved(),
-                fusedParam.getPosition(), fusedParam.getPartialType(), averageWaveform);
+                fusedParam.getParameterType(), fusedParam.getVariableType(), fusedParam.getPosition(), averageWaveform);
         return fusedID;
     }
 }

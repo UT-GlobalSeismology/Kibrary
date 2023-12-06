@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 
 /**
  * Operation that plots polynomial structures.
@@ -82,15 +81,8 @@ public class PolynomialStructurePlotter extends Operation {
    @Override
    public void run() throws IOException {
        // set structure
-       PolynomialStructure structure = null;
-       String fileNameRoot = null;
-       if (structurePath != null) {
-           structure = PolynomialStructureFile.read(structurePath);
-           fileNameRoot = FileAid.extractNameRoot(structurePath);
-       } else {
-           structure = PolynomialStructure.of(structureName);
-           fileNameRoot = structureName;
-       }
+       PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
+       String fileNameRoot = (structurePath != null) ? FileAid.extractNameRoot(structurePath) : structureName;
 
        createScript(workPath, fileNameRoot, structure);
    }

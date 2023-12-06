@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
@@ -147,7 +147,7 @@ public class PseudoWaveformGenerator extends Operation {
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
         // assemble matrices (they should not be weighted)
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingType.IDENTITY, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingHandler.IDENTITY, fillEmptyPartial);
         ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 

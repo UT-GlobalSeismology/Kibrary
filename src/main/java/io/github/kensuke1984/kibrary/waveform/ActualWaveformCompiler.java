@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,9 +39,8 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -216,7 +214,7 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a timewindow file, must be defined");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath selectedTimewindow.dat");
             pw.println("##Path of a timewindow file for a reference phase used to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a root folder containing observed dataset (.)");
@@ -224,14 +222,14 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved ");
+            pw.println("#convolved false");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file");
             pw.println("## If the following correctTime is true or amplitudeCorrectionType > 0, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(boolean) Whether time should be corrected (false)");
-            pw.println("#correctTime ");
+            pw.println("#correctTime true");
             pw.println("##(int) Type of amplitude correction to apply, from {0: none, 1: each trace, 2: event average} (0)");
             pw.println("#amplitudeCorrectionType ");
             pw.println("##Path of a mantle correction file");
@@ -302,20 +300,8 @@ public class ActualWaveformCompiler extends Operation {
 
    @Override
    public void run() throws IOException {
-       if (dataEntryPath != null) {
-           // read entry set to be used for selection
-           Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-
-           // read timewindows and select based on component and entries
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                   .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
-                   .collect(Collectors.toSet());
-       } else {
-           // read timewindows and select based on component
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                   .filter(window -> components.contains(window.getComponent()))
-                   .collect(Collectors.toSet());
-       }
+       // read timewindow file and select based on component and entries
+       sourceTimewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
        // read static correction data
        if (correctTime || amplitudeCorrectionType > 0) {
@@ -388,12 +374,15 @@ public class ActualWaveformCompiler extends Operation {
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 static correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no static correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
+
     /**
      * @param window
      * @author anselme
@@ -401,11 +390,13 @@ public class ActualWaveformCompiler extends Operation {
      */
     private StaticCorrectionData getMantleCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 mantle correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no mantle correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
 
     private double[] cutDataSac(SACFileAccess sac, Timewindow window) {
@@ -620,32 +611,33 @@ public class ActualWaveformCompiler extends Operation {
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-            int npts = (int) Math.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
+            //TODO delete following line by using Trace.resampleInWindow()
+            int npts = (int) MathAid.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
+
             double startTime = timewindow.getStartTime();
             double shift = 0;
             double ratio = 1;
             if (correctTime || amplitudeCorrectionType > 0) {
-                try {
-                    StaticCorrectionData sc = getStaticCorrection(timewindow);
-                    if (correctTime) shift = sc.getTimeshift();
-                    switch (amplitudeCorrectionType) {
-                    case 1: ratio = sc.getAmplitudeRatio(); break;
-                    case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
-                    }
-                } catch (NoSuchElementException e) {
-                    System.err.println("!! No static correction information, skipping: " + timewindow);
+                StaticCorrectionData sc = getStaticCorrection(timewindow);
+                if (sc == null) {
+                    System.err.println();
+                    System.err.println("!! No static correction data, skipping: " + timewindow);
                     return;
+                }
+                if (correctTime) shift = sc.getTimeshift();
+                switch (amplitudeCorrectionType) {
+                case 1: ratio = sc.getAmplitudeRatio(); break;
+                case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
                 }
             }
             if (correctMantle) {
-                try {
-                    StaticCorrectionData sc = getMantleCorrection(timewindow);
-                    shift += sc.getTimeshift();
-                } catch (NoSuchElementException e) {
+                StaticCorrectionData sc = getMantleCorrection(timewindow);
+                if (sc == null) {
                     System.err.println();
-                    System.err.println("!! No mantle correction information, skipping: " + timewindow);
+                    System.err.println("!! No mantle correction data, skipping: " + timewindow);
                     return;
                 }
+                shift += sc.getTimeshift();
             }
 
             TimewindowData windowRef = null;

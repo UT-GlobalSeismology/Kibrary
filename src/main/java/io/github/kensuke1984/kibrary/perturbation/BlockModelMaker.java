@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
@@ -69,8 +68,8 @@ public class BlockModelMaker extends Operation {
      */
     private String structureName;
 
-    private List<VariableType> variableTypes;
-    private List<PartialType> partialTypes;
+    private List<VariableType> perturbVariableTypes;
+    private List<VariableType> outputVariableTypes;
 
     private List<Box> boxes = new ArrayList<>();
 
@@ -100,9 +99,9 @@ public class BlockModelMaker extends Operation {
             pw.println("##Name of a structure model you want to use (PREM)");
             pw.println("#structureName ");
             pw.println("##Variable types to perturb, listed using spaces (Vs)");
-            pw.println("#variableTypes ");
-            pw.println("##Partial types to set in model, listed using spaces (MU)");
-            pw.println("#partialTypes ");
+            pw.println("#perturbVariableTypes ");
+            pw.println("##Variable types to set in model, listed using spaces (MU)");
+            pw.println("#outputVariableTypes ");
             pw.println("##########From here on, set percentages of perturbations and the borders of boxes to place them.");
             pw.println("########## Percentages of perturbations must be listed using spaces in the order of variableTypes.");
             pw.println("########## Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
@@ -138,15 +137,15 @@ public class BlockModelMaker extends Operation {
             structureName = property.parseString("structureName", "PREM");
         }
 
-        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
+        perturbVariableTypes = Arrays.stream(property.parseStringArray("perturbVariableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU")).map(PartialType::valueOf)
+        outputVariableTypes = Arrays.stream(property.parseStringArray("outputVariableTypes", "MU")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
 
         for (int i = 1; i <= MAX_BOX; i++) {
             if (property.containsKey("percents" + i)) {
                 double[] percents = property.parseDoubleArray("percents" + i, null);
-                if (percents.length != variableTypes.size())
+                if (percents.length != perturbVariableTypes.size())
                     throw new IllegalArgumentException("Number of percents" + i + " does not match number of variableTypes.");
                 boxes.add(new Box(
                         percents,
@@ -165,12 +164,7 @@ public class BlockModelMaker extends Operation {
     public void run() throws IOException {
 
         // set structure to use
-        PolynomialStructure initialStructure = null;
-        if (structurePath != null) {
-            initialStructure = PolynomialStructureFile.read(structurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(structureName);
-        }
+        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
@@ -193,9 +187,9 @@ public class BlockModelMaker extends Operation {
                 // construct voxel
                 double volume = Earth.computeVolume(position, layerThicknesses[i], dLatitude, dLongitude);
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
-                for (int k = 0; k < variableTypes.size(); k++) {
+                for (int k = 0; k < perturbVariableTypes.size(); k++) {
                     double percent = findPercentage(position, k);
-                    voxel.setPercent(variableTypes.get(k), percent);
+                    voxel.setPercent(perturbVariableTypes.get(k), percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
@@ -207,18 +201,18 @@ public class BlockModelMaker extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation list files.");
-        for (VariableType variable : variableTypes) {
-            Path paramPath = outPath.resolve(variable.toString().toLowerCase() + "Percent.lst");
-            PerturbationListFile.writePercentForType(variable, model, paramPath);
+        for (VariableType perturbVariableType : perturbVariableTypes) {
+            Path paramPath = outPath.resolve(perturbVariableType.toString().toLowerCase() + "Percent.lst");
+            PerturbationListFile.writePercentForType(perturbVariableType, model, paramPath);
         }
 
         // set known parameters
         System.err.println("Setting model parameters.");
         List<KnownParameter> knowns = new ArrayList<>();
-        for (PartialType partial : partialTypes) {
+        for (VariableType outputVariableType : outputVariableTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
-                UnknownParameter unknown = new Physical3DParameter(partial, voxel.getPosition(), voxel.getVolume());
-                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(VariableType.of(partial)));
+                UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getVolume());
+                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(outputVariableType));
                 knowns.add(known);
             }
         }

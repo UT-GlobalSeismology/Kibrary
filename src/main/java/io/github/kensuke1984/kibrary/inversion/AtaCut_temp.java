@@ -7,8 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.inv_old.Dvector_old;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -56,7 +57,7 @@ public class AtaCut_temp {
             for (int i = 0; i < parameterList.size(); i++) {
                 UnknownParameter unknown = parameterList.get(i);
 
-                if (MathAid.equalWithinEpsilon(unknown.getPosition().getR(), 3505, 1)) {
+                if (Precision.equals(unknown.getPosition().getR(), 3505, 1)) {
                     iAccu++;
                     String[] entries = lines.get(i).split("\\s+");
 
@@ -64,7 +65,7 @@ public class AtaCut_temp {
                     for (int j = 0; j < parameterList.size(); j++) {
                         UnknownParameter unknownJ = parameterList.get(j);
 
-                        if (MathAid.equalWithinEpsilon(unknownJ.getPosition().getR(), 3505, 1)) {
+                        if (Precision.equals(unknownJ.getPosition().getR(), 3505, 1)) {
                             jAccu++;
                             int base = 5;
                             if (iAccu > base && jAccu > base) {

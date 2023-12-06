@@ -129,11 +129,11 @@ public class CrossSectionCreator extends Operation {
             pw.println("#afterPos1Deg ");
             pw.println("##########Radius display settings");
             pw.println("##(double) Radius of zero point of vertical axis (0)");
-            pw.println("#zeroPointRadius ");
+            pw.println("#zeroPointRadius 3480");
             pw.println("##Name of zero point of vertical axis (0)");
-            pw.println("#zeroPointName ");
+            pw.println("#zeroPointName CMB");
             pw.println("##(boolean) Whether to flip vertical axis (false)");
-            pw.println("#flipVerticalAxis ");
+            pw.println("#flipVerticalAxis true");
             pw.println("##########The following should be set to half of dLatitude, dLongitude, and dRadius used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends of region [km]. If this is unset, the following marginLatitudeDeg will be used.");
             pw.println("#marginLatitudeKm ");
@@ -149,7 +149,7 @@ public class CrossSectionCreator extends Operation {
             pw.println("##(double) Range of percent scale (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
-            pw.println("#mosaic ");
+            pw.println("#mosaic true");
             pw.println("##(double) Threshold for mask (0.3)");
             pw.println("#maskThreshold ");
         }

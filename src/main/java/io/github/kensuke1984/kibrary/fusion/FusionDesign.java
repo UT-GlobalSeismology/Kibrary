@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -34,10 +35,14 @@ public class FusionDesign {
     public void addFusion(List<UnknownParameter> params) {
         if (params.size() < 1) throw new IllegalStateException("No parameters for fusion are given.");
 
-        PartialType type = params.get(0).getPartialType();
+        VariableType type = params.get(0).getVariableType();
         for (UnknownParameter param : params) {
-            if (param.getPartialType() != type) {
-                System.err.println("Cannot fuse parameters due to partial type mismatch.");
+            if (param.getParameterType() != ParameterType.VOXEL) {
+                System.err.println("Cannot fuse parameters that are not 3D.");
+                return;
+            }
+            if (param.getVariableType() != type) {
+                System.err.println("Cannot fuse parameters due to variable type mismatch.");
                 return;
             }
             if (fuses(param)) {
@@ -57,18 +62,22 @@ public class FusionDesign {
         double longitude = positions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).average().getAsDouble();
         double radius = positions.stream().mapToDouble(pos -> pos.getR()).average().getAsDouble();
         FullPosition position = new FullPosition(latitude, longitude, radius);
-        double weight = params.stream().mapToDouble(param -> param.getWeighting()).sum();
-        UnknownParameter fusedParam = new Physical3DParameter(type, position, weight);
+        double size = params.stream().mapToDouble(param -> param.getSize()).sum();
+        UnknownParameter fusedParam = new Physical3DParameter(type, position, size);
         fusedParameters.add(fusedParam);
     }
 
     public void add(List<UnknownParameter> originalParams, UnknownParameter fusedParam) {
         if (originalParams.size() < 1) throw new IllegalStateException("No parameters for fusion are given.");
 
-        PartialType type = fusedParam.getPartialType();
+        VariableType type = fusedParam.getVariableType();
         for (UnknownParameter param : originalParams) {
-            if (param.getPartialType() != type) {
-                System.err.println("Cannot fuse parameters due to partial type mismatch.");
+            if (param.getParameterType() != ParameterType.VOXEL) {
+                System.err.println("Cannot fuse parameters that are not 3D.");
+                return;
+            }
+            if (param.getVariableType() != type) {
+                System.err.println("Cannot fuse parameters due to variable type mismatch.");
                 return;
             }
         }

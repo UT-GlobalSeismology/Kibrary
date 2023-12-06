@@ -5,6 +5,7 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -154,7 +155,8 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + synStartTime + " " + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
+                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
     }
 
 }

@@ -27,13 +27,13 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Maps the sensitivity kernel.
- *
+ * <p>
  * NOTE: the voxel volume is NOT multiplied.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
@@ -56,9 +56,9 @@ public class SensitivityKernelMapper extends Operation {
      */
     private Set<SACComponent> components;
     /**
-     * partial types to make maps for
+     * variable types to make maps for
      */
-    private Set<PartialType> partialTypes;
+    private Set<VariableType> variableTypes;
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
@@ -114,8 +114,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#components ");
             pw.println("##Path of a partial waveform folder, must be set");
             pw.println("#partialPath partial");
-            pw.println("##PartialTypes to be used, listed using spaces (MU)");
-            pw.println("#partialTypes ");
+            pw.println("##VariableTypes to be used, listed using spaces (MU)");
+            pw.println("#variableTypes ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set");
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set");
@@ -161,8 +161,8 @@ public class SensitivityKernelMapper extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU"))
-                .map(PartialType::valueOf).collect(Collectors.toSet());
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "MU"))
+                .map(VariableType::valueOf).collect(Collectors.toSet());
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                 .collect(Collectors.toSet());
         tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
@@ -197,7 +197,13 @@ public class SensitivityKernelMapper extends Operation {
     @Override
     public void run() throws IOException {
 
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+        // read input
+        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream()
+                .filter(id -> id.getParameterType().equals(ParameterType.VOXEL)).collect(Collectors.toList());
+        if (partialIDs.size() == 0) {
+            System.err.println("No 3-D partials.");
+            return;
+        }
         Set<FullPosition> positions = partialIDs.stream().map(partial -> partial.getVoxelPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
@@ -211,17 +217,17 @@ public class SensitivityKernelMapper extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (SACComponent component : components) {
-            for (PartialType partialType : partialTypes) {
+            for (VariableType variableType : variableTypes) {
                 for (GlobalCMTID event : tendEvents) {
                     for (String observerName : tendObservers) {
                         List<PartialID> partialsForEntry = partialIDs.stream().filter(partial ->
                                 partial.getSacComponent().equals(component)
-                                && partial.getPartialType().equals(partialType)
+                                && partial.getVariableType().equals(variableType)
                                 && partial.getGlobalCMTID().equals(event)
                                 && partial.getObserver().toString().equals(observerName))
                                 .collect(Collectors.toList());
                         if (partialsForEntry.size() == 0) continue;
-                        System.err.println("Working for " + component  + " " + partialType + " " + event + " " + observerName);
+                        System.err.println("Working for " + component  + " " + variableType + " " + event + " " + observerName);
 
                         Path eventPath = outPath.resolve(event.toString());
                         Path observerPath = eventPath.resolve(observerName.toString());
@@ -249,7 +255,7 @@ public class SensitivityKernelMapper extends Operation {
                             }
 
                             // output discrete perturbation file
-                            String fileNameRoot = "kernel_" + phaselist + "_" + component+ "_" + partialType + String.format("_t0%d", (int) startTime);
+                            String fileNameRoot = "kernel_" + phaselist + "_" + component+ "_" + variableType + String.format("_t0%d", (int) startTime);
                             Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
                             PerturbationListFile.write(discreteMap, outputDiscretePath);
                             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
@@ -258,8 +264,8 @@ public class SensitivityKernelMapper extends Operation {
                             Path outputInterpolatedPath = observerPath.resolve(fileNameRoot + "XY.lst");
                             PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
-                            PerturbationMapShellscript script = new PerturbationMapShellscript(VariableType.Vs, radii,
-                                    boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow); //TODO parameter type not correct
+                            PerturbationMapShellscript script = new PerturbationMapShellscript(variableType, radii,
+                                    boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow); //TODO unit in scale is not correct
                             if (displayLayers != null) script.setDisplayLayers(displayLayers);
                             script.write(observerPath);
                         }

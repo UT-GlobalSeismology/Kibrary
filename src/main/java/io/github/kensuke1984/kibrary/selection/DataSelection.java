@@ -295,11 +295,13 @@ public class DataSelection extends Operation {
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 static correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no static correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
 
     private boolean check(DataFeature feature) throws IOException {
@@ -422,12 +424,17 @@ public class DataSelection extends Operation {
                 double shift = 0.;
                 if (!staticCorrectionSet.isEmpty()) {
                     StaticCorrectionData correction = getStaticCorrection(timewindow);
+                    if (correction == null) {
+                        System.err.println();
+                        System.err.println("!! No static correction data, skipping: " + timewindow);
+                        return;
+                    }
                     shift = correction.getTimeshift();
-                }
-                if (Math.abs(shift) > maxStaticShift) {
-                    System.err.println();
-                    System.err.println("!! Time shift too large, skipping: " + timewindow);
-                    return;
+                    if (Math.abs(shift) > maxStaticShift) {
+                        System.err.println();
+                        System.err.println("!! Time shift too large, skipping: " + timewindow);
+                        return;
+                    }
                 }
                 TimewindowData shiftedWindow = new TimewindowData(timewindow.getStartTime() - shift
                         , timewindow.getEndTime() - shift, timewindow.getObserver()

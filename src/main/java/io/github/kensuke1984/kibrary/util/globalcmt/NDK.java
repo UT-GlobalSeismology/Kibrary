@@ -3,8 +3,11 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -59,27 +62,26 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * ============================================================================
  *
  * @author Kensuke Konishi
- * @version 0.0.6.5
- * @see <a href=
- * http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
- * guide</a>
+ * @since version 0.0.6.5
+ * @see <a href=http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official guide</a>
  */
 public final class NDK implements GlobalCMTAccess {
 
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
+
     /**
-     * Hypocenter reference catalog [1-4] (e.g., PDE for USGS location, ISC for ISC
+     * [1-4] Hypocenter reference catalog (e.g., PDE for USGS location, ISC for ISC
      * catalog, SWE for surface-wave location, [Ekstrom, BSSA, 2006])
      */
     private String hypocenterReferenceCatalog;
     /**
-     * [6-15] Date of reference event [17-26] Time of reference event
+     * reference date and time [6-15] Date of reference event [17-26] Time of reference event
      */
     private LocalDateTime referenceDateTime;
     /**
-     * hypocenter location [28-33] Latitude [35-41] Longitude [43-47] Depth
+     * hypocenter position [28-33] Latitude [35-41] Longitude [43-47] Depth
      */
-    private FullPosition hypocenterLocation;
+    private FullPosition hypocenterPosition;
     /**
      * [49-55] Reported magnitudes, usually mb and MS
      */
@@ -92,6 +94,7 @@ public final class NDK implements GlobalCMTAccess {
      * [57-80] Geographical location (24 characters)
      */
     private String geographicalLocation;
+
     /**
      * [1-16] CMT event name.
      * This string is a unique CMT-event identifier. Older events have
@@ -99,7 +102,6 @@ public final class NDK implements GlobalCMTAccess {
      * below for the naming conventions used. (The first letter is ignored.)
      */
     private GlobalCMTID id;
-
     /**
      * [18-61] Data used in the CMT inversion. Three data types may be used:
      * Long-period body waves (B), Intermediate-period surface waves (S), and
@@ -128,7 +130,8 @@ public final class NDK implements GlobalCMTAccess {
     /**
      * half duration of the moment rate function
      */
-    private double halfDurationMomentRateFunction;
+    private double halfDuration;
+
     /**
      * Third line: CMT info (2) <br>
      * [1-58] Centroid parameters determined in the inversion. Centroid time,
@@ -138,8 +141,7 @@ public final class NDK implements GlobalCMTAccess {
      * hypocentral coordinates are held fixed. Centroidとreference Timeとの違い
      */
     private double timeDifference;
-
-    private FullPosition centroidLocation;
+    private FullPosition centroidPosition;
     /**
      * [60-63] Type of depth. "FREE" indicates that the depth was a result of
      * the inversion; "FIX " that the depth was fixed and not inverted for;
@@ -156,44 +158,44 @@ public final class NDK implements GlobalCMTAccess {
      * considered fixed.
      */
     private String timeStamp;
+
     /**
+     * Fourth line: CMT info (3)
      * [1-2] The exponent for all following moment values. For example, if the
      * exponent is given as 24, the moment values that follow, expressed in
-     * dyne-cm, should be multiplied by 10**24. [3-80] The six moment-tensor
+     * dyne-cm, should be multiplied by 10**24.
+     * [3-80] The six moment-tensor
      * elements: Mrr, Mtt, Mpp, Mrt, Mrp, Mtp, where r is up, t is south, and p
      * is east. See Aki and Richards for conversions to other coordinate
      * systems. The value of each moment-tensor element is followed by its
      * estimated standard error. See note (4) below for cases in which some
      * elements are constrained in the inversion.
+     *
+     * Fifth line: CMT info (4)
+     * [50-56] Scalar moment, to be multiplied by 10**(exponent) as given on
+     * line four. dyne*cm
      */
-    private int momentExponent;
-
     private MomentTensor momentTensor;
+
     /**
      * [1-3] Version code. This three-character string is used to track the
      * version of the program that generates the "ndk" file.
      */
     private String versionCode;
-
     /**
      * [4-48] Moment tensor expressed in its principal-axis system: eigenvalue,
      * plunge, and azimuth of the three eigenvectors. The eigenvalue should be
      * multiplied by 10**(exponent) as given on line four.
      */
     private double eigenValue0;
-    private double eigenValue1;
-    private double eigenValue2;
     private double plunge0;
-    private double plunge1;
-    private double plunge2;
     private double azimuth0;
+    private double eigenValue1;
+    private double plunge1;
     private double azimuth1;
+    private double eigenValue2;
+    private double plunge2;
     private double azimuth2;
-    /**
-     * [50-56] Scalar moment, to be multiplied by 10**(exponent) as given on
-     * line four. dyne*cm
-     */
-    private double scalarMoment;
     /**
      * [58-80] Strike, dip, and rake for first nodal plane of the
      * best-double-couple mechanism, repeated for the second nodal plane. The
@@ -206,15 +208,58 @@ public final class NDK implements GlobalCMTAccess {
     private int dip1;
     private int rake1;
 
+    NDK(String hypocenterReferenceCatalog, LocalDateTime referenceDateTime, FullPosition hypocenterPosition, double mb,
+            double ms, String geographicalLocation, GlobalCMTID id, int[] b, int[] s, int[] m, int cmtType,
+            SourceTimeFunctionType momentRateFunctionType, double halfDuration, double timeDifference,
+            FullPosition centroidPosition, String depthType, String timeStamp,
+            MomentTensor momentTensor, String versionCode, double eigenValue0, double plunge0, double azimuth0,
+            double eigenValue1, double plunge1, double azimuth1, double eigenValue2, double plunge2, double azimuth2,
+            int strike0, int dip0, int rake0, int strike1, int dip1, int rake1) {
+        this.hypocenterReferenceCatalog = hypocenterReferenceCatalog;
+        this.referenceDateTime = referenceDateTime;
+        this.hypocenterPosition = hypocenterPosition;
+        this.mb = mb;
+        this.ms = ms;
+        this.geographicalLocation = geographicalLocation;
+        this.id = id;
+        this.b = b;
+        this.s = s;
+        this.m = m;
+        this.cmtType = cmtType;
+        this.momentRateFunctionType = momentRateFunctionType;
+        this.halfDuration = halfDuration;
+        this.timeDifference = timeDifference;
+        this.centroidPosition = centroidPosition;
+        this.depthType = depthType;
+        this.timeStamp = timeStamp;
+        this.momentTensor = momentTensor;
+        this.versionCode = versionCode;
+        this.eigenValue0 = eigenValue0;
+        this.plunge0 = plunge0;
+        this.azimuth0 = azimuth0;
+        this.eigenValue1 = eigenValue1;
+        this.plunge1 = plunge1;
+        this.azimuth1 = azimuth1;
+        this.eigenValue2 = eigenValue2;
+        this.plunge2 = plunge2;
+        this.azimuth2 = azimuth2;
+        this.strike0 = strike0;
+        this.dip0 = dip0;
+        this.rake0 = rake0;
+        this.strike1 = strike1;
+        this.dip1 = dip1;
+        this.rake1 = rake1;
+    }
+
     private NDK() {
     }
 
     /**
-     * creates an NDK from 5 lines
+     * Creates an NDK from 5 lines of the catalog.
      *
      * @param lines Lines expressing one NDK
      */
-    static NDK read(String... lines) {
+    static NDK constructFromLines(String... lines) {
         if (lines.length != 5) throw new IllegalArgumentException("Invalid input for an NDK");
 
         NDK ndk = new NDK();
@@ -222,9 +267,9 @@ public final class NDK implements GlobalCMTAccess {
         // line 1
         parts = lines[0].split("\\s+");
         ndk.hypocenterReferenceCatalog = parts[0];
-        ndk.referenceDateTime = parseDateTime(parts[1], parts[2]);
-        ndk.hypocenterLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
-                6371 - Double.parseDouble(parts[5]));
+        ndk.referenceDateTime = LocalDateTime.parse(parts[1] + " " + parts[2], DATE_FORMAT);
+        ndk.hypocenterPosition = FullPosition.constructByDepth(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
+                Double.parseDouble(parts[5]));
         ndk.mb = Double.parseDouble(parts[6]);
         ndk.ms = Double.parseDouble(parts[7]);
         ndk.geographicalLocation = lines[0].substring(56).trim();
@@ -249,19 +294,19 @@ public final class NDK implements GlobalCMTAccess {
         String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
         ndk.cmtType = Integer.parseInt(cmtParts[1]);
         ndk.momentRateFunctionType = SourceTimeFunctionType.ofCode(cmtParts[2].substring(0, 5));
-        ndk.halfDurationMomentRateFunction = Double.parseDouble(cmtParts[3]);
+        ndk.halfDuration = Double.parseDouble(cmtParts[3]);
 
         // line3
         parts = lines[2].split("\\s+");
         ndk.timeDifference = Double.parseDouble(parts[1]);
-        ndk.centroidLocation = new FullPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
-                6371 - Double.parseDouble(parts[7])); //TODO: regard elliptical shape of earth
+        ndk.centroidPosition = FullPosition.constructByDepth(Double.parseDouble(parts[3]), Double.parseDouble(parts[5]),
+                Double.parseDouble(parts[7]));
         ndk.depthType = parts[9];
         ndk.timeStamp = parts[10];
 
         // line 4
         parts = lines[3].split("\\s+");
-        ndk.momentExponent = Integer.parseInt(parts[0]);
+        int momentExponent = Integer.parseInt(parts[0]);
         double mrrCoeff = Double.parseDouble(parts[1]);
         double mttCoeff = Double.parseDouble(parts[3]);
         double mppCoeff = Double.parseDouble(parts[5]);
@@ -272,10 +317,8 @@ public final class NDK implements GlobalCMTAccess {
         // line5
         parts = lines[4].split("\\s+");
         ndk.versionCode = parts[0];
-        ndk.scalarMoment = Double.parseDouble(parts[10]) * Math.pow(10, ndk.momentExponent);
-        double m0 = MomentTensor.convertToNm(ndk.scalarMoment);
-        double mw = MomentTensor.toMw(m0);
-        ndk.momentTensor = new MomentTensor(mrrCoeff, mttCoeff, mppCoeff, mrtCoeff, mrpCoeff, mtpCoeff, ndk.momentExponent, mw);
+        double m0Coeff = Double.parseDouble(parts[10]);
+        ndk.momentTensor = new MomentTensor(m0Coeff, mrrCoeff, mttCoeff, mppCoeff, mrtCoeff, mrpCoeff, mtpCoeff, momentExponent);
         ndk.eigenValue0 = Double.parseDouble(parts[1]);
         ndk.eigenValue1 = Double.parseDouble(parts[4]);
         ndk.eigenValue2 = Double.parseDouble(parts[7]);
@@ -295,11 +338,85 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     /**
-     * @param date YYYY/MM/DD
-     * @param time HH:MM:SS.MS
+     * Produce lines to be output in catalog.
+     * @return
+     *
+     * @author otsuru
+     * @since 2023/5/31
      */
-    private static LocalDateTime parseDateTime(String date, String time) {
-        return LocalDateTime.parse(date + " " + time, dateFormat);
+    String[] toLines() {
+        String[] lines = new String[5];
+
+        lines[0] = StringUtils.rightPad(hypocenterReferenceCatalog, 4) + " " + referenceDateTime.format(DATE_FORMAT) + " "
+                + MathAid.padToString(hypocenterPosition.getLatitude(), 3, 2, " ") + " "
+                + MathAid.padToString(hypocenterPosition.getLongitude(), 4, 2, " ") + " "
+                + MathAid.padToString(hypocenterPosition.getDepth(), 3, 1, " ") + " "
+                + MathAid.padToString(mb, 1, 1, " ") + " " + MathAid.padToString(ms, 1, 1, " ") + " " + geographicalLocation;
+        lines[1] = "C" + id.toPaddedString() + "  "
+                + " B:" + MathAid.padToString(b[0], 3, " ") + " " + MathAid.padToString(b[1], 4, " ") + " " + MathAid.padToString(b[2], 3, " ")
+                + " S:" + MathAid.padToString(s[0], 3, " ") + " " + MathAid.padToString(s[1], 4, " ") + " " + MathAid.padToString(s[2], 3, " ")
+                + " M:" + MathAid.padToString(m[0], 3, " ") + " " + MathAid.padToString(m[1], 4, " ") + " " + MathAid.padToString(m[2], 3, " ")
+                + " CMT: " + cmtType + " " + momentRateFunctionType.toCode() + ":" + MathAid.padToString(halfDuration, 3, 1, " ");
+        lines[2] = "CENTROID:" + MathAid.padToString(timeDifference, 7, 1, " ") + " 0.0 "
+                + MathAid.padToString(centroidPosition.getLatitude(), 3, 2, " ") + " 0.00 "
+                + MathAid.padToString(centroidPosition.getLongitude(), 4, 2, " ") + " 0.00 "
+                + MathAid.padToString(centroidPosition.getDepth(), 3, 1, " ") + "  0.0 "
+                + StringUtils.rightPad(depthType, 4) + " " + timeStamp;
+        lines[3] = MathAid.padToString(momentTensor.getMtExponent(), 2, " ") + " "
+                + MathAid.padToString(momentTensor.getMrrCoefficient(), 2, 3, " ") + " 0.000 "
+                + MathAid.padToString(momentTensor.getMttCoefficient(), 2, 3, " ") + " 0.000 "
+                + MathAid.padToString(momentTensor.getMppCoefficient(), 2, 3, " ") + " 0.000 "
+                + MathAid.padToString(momentTensor.getMrtCoefficient(), 2, 3, " ") + " 0.000 "
+                + MathAid.padToString(momentTensor.getMrpCoefficient(), 2, 3, " ") + " 0.000 "
+                + MathAid.padToString(momentTensor.getMtpCoefficient(), 2, 3, " ") + " 0.000";
+        lines[4] = StringUtils.rightPad(versionCode, 3) + " "
+                + MathAid.padToString(eigenValue0, 3, 3, " ") + " "
+                + MathAid.padToString((int) plunge0, 2, " ") + " " + MathAid.padToString((int) azimuth0, 3, " ") + " "
+                + MathAid.padToString(eigenValue1, 3, 3, " ") + " "
+                + MathAid.padToString((int) plunge1, 2, " ") + " " + MathAid.padToString((int) azimuth1, 3, " ") + " "
+                + MathAid.padToString(eigenValue2, 3, 3, " ") + " "
+                + MathAid.padToString((int) plunge2, 2, " ") + " " + MathAid.padToString((int) azimuth2, 3, " ") + " "
+                + MathAid.padToString(momentTensor.getM0Coefficient(), 3, 3, " ") + " "
+                + MathAid.padToString(strike0, 3, " ") + " " + MathAid.padToString(dip0, 2, " ") + " " + MathAid.padToString(rake0, 4, " ") + " "
+                + MathAid.padToString(strike1, 3, " ") + " " + MathAid.padToString(dip1, 2, " ") + " " + MathAid.padToString(rake1, 4, " ");
+
+        return lines;
+    }
+
+    /**
+     * @param search conditions for NDK
+     * @return if this fulfills "search"
+     */
+    boolean fulfill(GlobalCMTSearch search) {
+        LocalDateTime cmtDate = getCMTTime();
+        if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate)) return false;
+        if (!search.getPredicateSet().stream().allMatch(p -> p.test(this))) return false;
+
+        // latitude & longitude
+        HorizontalPosition position = new HorizontalPosition(centroidPosition.getLatitude(), centroidPosition.getLongitude());
+        if (!position.isInRange(search.getLowerLatitude(), search.getUpperLatitude(), search.getLowerLongitude(), search.getUpperLongitude()))
+            return false;
+
+        // depth
+        double depth = 6371 - centroidPosition.getR();
+        if (depth < search.getLowerDepth() || search.getUpperDepth() < depth) return false;
+
+        // timeshift
+        if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() < timeDifference)
+            return false;
+        // body wave magnitude
+        if (mb < search.getLowerMb() || search.getUpperMb() < mb) return false;
+        // surface wave magnitude
+        if (ms < search.getLowerMs() || search.getUpperMs() < ms) return false;
+        // moment magnitude
+        if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() < momentTensor.getMw()) return false;
+        // half duration
+        if (halfDuration < search.getLowerHalfDuration() ||
+                search.getUpperHalfDuration() < halfDuration) return false;
+        // tension axis plunge
+        if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0) return false;
+        // null axis plunge
+        return !(plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1);
     }
 
     @Override
@@ -325,42 +442,6 @@ public final class NDK implements GlobalCMTAccess {
         return id;
     }
 
-    /**
-     * @param search conditions for NDK
-     * @return if this fulfills "search"
-     */
-    boolean fulfill(GlobalCMTSearch search) {
-        LocalDateTime cmtDate = getCMTTime();
-        if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate)) return false;
-        if (!search.getPredicateSet().stream().allMatch(p -> p.test(this))) return false;
-
-        // latitude & longitude
-        HorizontalPosition position = new HorizontalPosition(centroidLocation.getLatitude(), centroidLocation.getLongitude());
-        if (!position.isInRange(search.getLowerLatitude(), search.getUpperLatitude(), search.getLowerLongitude(), search.getUpperLongitude()))
-            return false;
-
-        // depth
-        double depth = 6371 - centroidLocation.getR();
-        if (depth < search.getLowerDepth() || search.getUpperDepth() < depth) return false;
-
-        // timeshift
-        if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() < timeDifference)
-            return false;
-        // body wave magnitude
-        if (mb < search.getLowerMb() || search.getUpperMb() < mb) return false;
-        // surface wave magnitude
-        if (ms < search.getLowerMs() || search.getUpperMs() < ms) return false;
-        // moment magnitude
-        if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() < momentTensor.getMw()) return false;
-        // half duration
-        if (halfDurationMomentRateFunction < search.getLowerHalfDuration() ||
-                search.getUpperHalfDuration() < halfDurationMomentRateFunction) return false;
-        // tension axis plunge
-        if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0) return false;
-        // null axis plunge
-        return !(plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1);
-    }
-
     @Override
     public double getMb() {
         return mb;
@@ -377,8 +458,18 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
+    public GlobalCMTAccess withCMT(MomentTensor mt) {
+        return new NDK(hypocenterReferenceCatalog, referenceDateTime, hypocenterPosition, mb, ms, geographicalLocation,
+                id, b, s, m, cmtType, momentRateFunctionType, halfDuration,
+                timeDifference, centroidPosition, depthType, timeStamp,
+                mt, versionCode, eigenValue0, plunge0, azimuth0,
+                eigenValue1, plunge1, azimuth1, eigenValue2, plunge2, azimuth2,
+                strike0, dip0, rake0, strike1, dip1, rake1);
+    }
+
+    @Override
     public FullPosition getCmtPosition() {
-        return centroidLocation;
+        return centroidPosition;
     }
 
     @Override
@@ -390,18 +481,8 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public SourceTimeFunctionType getSTFType() {
-        return momentRateFunctionType;
-    }
-
-    @Override
-    public double getHalfDuration() {
-        return halfDurationMomentRateFunction;
-    }
-
-    @Override
     public FullPosition getPDEPosition() {
-        return hypocenterLocation;
+        return hypocenterPosition;
     }
 
     @Override
@@ -410,18 +491,18 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
-    public String toString() {
-        return id.toString();
-    }
-
-    @Override
-    public void setCMT(MomentTensor mt) {
-        momentTensor = mt;
-    }
-
-    @Override
     public double getTimeDifference() {
         return timeDifference;
+    }
+
+    @Override
+    public SourceTimeFunctionType getSTFType() {
+        return momentRateFunctionType;
+    }
+
+    @Override
+    public double getHalfDuration() {
+        return halfDuration;
     }
 
     @Override
@@ -432,6 +513,11 @@ public final class NDK implements GlobalCMTAccess {
     @Override
     public String getGeographicalLocationName() {
         return geographicalLocation;
+    }
+
+    @Override
+    public String toString() {
+        return id.toString();
     }
 
 }

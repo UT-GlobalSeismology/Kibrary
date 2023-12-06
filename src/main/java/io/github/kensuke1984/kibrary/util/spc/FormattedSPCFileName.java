@@ -12,8 +12,8 @@ import java.nio.file.Path;
  * <p>
  * The names take the form:
  * <ul>
- * <li> Synthetic: "ObserverID.GlobalCMTID_(PSV, SV).spc" </li>
- * <li> Partial derivatives: "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc" </li>
+ * <li> Synthetic: "ObserverID.GlobalCMTID.(PSV,SV).spc" </li>
+ * <li> Partial derivatives: "ReceiverID.SourceID.type(MU1D,PF,UB,etc.).x.y.(PSV,SH).spc" </li>
  * </ul>
  * where ObserverID is "station_network".
  * 'PSV', 'SH' must be upper case. 'station' and 'network' must be 8 or less letters.
@@ -25,16 +25,15 @@ public class FormattedSPCFileName extends SPCFileName {
     private static final long serialVersionUID = -6340811322023603513L;
 
     /**
-     * spheroidal mode PSV, toroidal mode SH
+     * toroidal mode: SH, spheroidal mode: PSV
      */
     private SPCMode mode;
     /**
-     * PB: backward or PF: forward, PAR2: mu
+     * MU1D: mu, PF: forward u'(t), UB: backward u(t), etc.
      */
     private SPCType fileType;
     private String x, y;
-    private String stationCode;
-    private String networkCode;
+    private String receiverID;
     private String sourceID;
 
     //-------------------- create instance and read name --------------------//
@@ -83,69 +82,21 @@ public class FormattedSPCFileName extends SPCFileName {
      */
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid SPC file name.");
-//        observerID = fileName.split("\\.")[0];
-        fileType = getFileType(fileName);
-        mode = getMode(fileName);
-        sourceID = getEventID(fileName);
-        stationCode = fileName.split("\\.")[0].split("_")[0];
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
-            networkCode = null;
-        else
-            networkCode = fileName.split("\\.")[0].split("_")[1];
-        x = getX(fileName);
-        y = getY(fileName);
-    }
-
-    /**
-     * @param fileName name of SPC file
-     * @return which par or syn...なんのスペクトルファイルか
-     */
-    private static SPCType getFileType(String fileName) {
-        if (fileName.split("\\.").length != 7) return SPCType.SYNTHETIC;
-        return SPCType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
-    }
-
-    /**
-     * @param fileName name of SPC file
-     * @return PSV or SH
-     */
-    private static SPCMode getMode(String fileName) {
-        return fileName.endsWith("PSV.spc") ? SPCMode.PSV : SPCMode.SH;
-    }
-
-    /**
-     * @param fileName name of spc file
-     * @return event ID
-     */
-    private static String getEventID(String fileName) {
-        switch (fileName.split("\\.").length) {
-            case 3:
-                return fileName.split("\\.")[1].split("_")[0];
-//                return fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
-            case 7:
-                return fileName.split("\\.")[1];
-            default:
-                throw new RuntimeException("Unexpected");
-        }
-    }
-
-    private static String getX(String fileName) {
         String[] parts = fileName.split("\\.");
-        return parts.length != 7 ? null : parts[3];
+
+        receiverID = parts[0];
+        sourceID = parts[1];
+        fileType = (parts.length == SYN_FILE_PARTS ? SPCType.SYNTHETIC : SPCType.valueOf(fileName.split("\\.")[2]));
+        x = (parts.length == SYN_FILE_PARTS ? null : parts[3]);
+        y = (parts.length == SYN_FILE_PARTS ? null : parts[4]);
+        mode = SPCMode.valueOf(parts[parts.length - 2]);
     }
 
-    private static String getY(String fileName) {
-        String[] parts = fileName.split("\\.");
-        return parts.length != 7 ? null : parts[4];
-    }
-
-
-    //-------------------- get info of a certain instance --------------------//
+    //-------------------- get info of this certain instance --------------------//
 
     @Override
     public boolean isSynthetic() {
-        return isSynthetic(getName());
+        return fileType == SPCType.SYNTHETIC;
     }
 
     @Override
@@ -159,7 +110,7 @@ public class FormattedSPCFileName extends SPCFileName {
     }
 
     /**
-     * (PB, UB) Return observer code (source of back propagate wave)
+     * (PB, UB) Return observer code (source of back propagate wave; STATION_NETWORK)
      * <p>
      * (else) Return source ID
      */
@@ -171,33 +122,11 @@ public class FormattedSPCFileName extends SPCFileName {
     /**
      * (PB, PF, UB, UF) Return perturbation point code
      * <p>
-     * (else) Return obsever code
+     * (else) Return obsever code (STATION_NETWORK)
      */
     @Override
-    public String getObserverID() {
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
-            return stationCode;
-        else
-            return stationCode + "_" + networkCode;
-    }
-
-    /**
-     * (PB, PF, UB, UF) Return perturbation point code
-     * <p>
-     * (else) Return station code
-     */
-    @Override
-    public String getStationCode() {
-        return stationCode;
-    }
-
-    @Override
-    public String getNetworkCode() {
-        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF)
-                || fileType.equals(SPCType.UB) || fileType.equals(SPCType.UF))
-            throw new RuntimeException("PB, PF, UB, and UF waveforms have no network");
-        return networkCode;
+    public String getReceiverID() {
+        return receiverID;
     }
 
     public String getX() {

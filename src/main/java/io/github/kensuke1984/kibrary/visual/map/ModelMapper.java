@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -208,20 +207,10 @@ public class ModelMapper extends Operation {
 
         // read initial structure
         System.err.print("Initial structure: ");
-        PolynomialStructure initialStructure = null;
-        if (initialStructurePath != null) {
-            initialStructure = PolynomialStructureFile.read(initialStructurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(initialStructureName);
-        }
+        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
         // read reference structure
         System.err.print("Reference structure: ");
-        PolynomialStructure referenceStructure = null;
-        if (referenceStructurePath != null) {
-            referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
-        } else {
-            referenceStructure = PolynomialStructure.of(referenceStructureName);
-        }
+        PolynomialStructure referenceStructure = PolynomialStructure.setupFromFileOrName(referenceStructurePath, referenceStructureName);
 
         // read knowns
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);

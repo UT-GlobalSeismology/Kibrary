@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.abandon.ThreeDPartialCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.quick.LookAtBPspc;
 import io.github.kensuke1984.kibrary.quick.LookAtFPspc;
@@ -26,6 +27,7 @@ import io.github.kensuke1984.kibrary.visual.map.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.visual.map.VoxelMapper;
 import io.github.kensuke1984.kibrary.visual.plot.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.DistanceHistogram;
+import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
@@ -72,10 +74,12 @@ enum Brooklyn {
     // Voxel 50
     UnknownParameterSetter(51, UnknownParameterSetter.class),
     VoxelMapper(52, VoxelMapper.class),
+    LayerInformationFile(53, LayerInformationFile.class),
     // Partial 60
     PartialIDFile(65, PartialIDFile.class),
     ThreeDPartialCleanup(69, ThreeDPartialCleanup.class),
     // Inversion 70
+    WeightingHandler(70, WeightingHandler.class),
     PerturbationComparison(71, PerturbationComparison.class),
     // Temporal 100
     LookAtFPspc(101,LookAtFPspc.class),

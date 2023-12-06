@@ -158,11 +158,11 @@ public final class DVectorBuilder {
      * @param weighting (Weighting)
      * @return (RealVector) Wd
      */
-    public RealVector buildWithWeight(Weighting weighting) {
+    public RealVector buildWithWeight(RealVector[] weighting) {
         RealVector v = new ArrayRealVector(npts);
         for (int i = 0; i < nTimeWindow; i++) {
             // [(obs - syn) * weight] for each element point inside timewindow i
-            RealVector vi = obsVecs[i].subtract(synVecs[i]).ebeMultiply(weighting.get(i));
+            RealVector vi = obsVecs[i].subtract(synVecs[i]).ebeMultiply(weighting[i]);
             v.setSubVector(startPoints[i], vi);
         }
         return v;
@@ -185,10 +185,10 @@ public final class DVectorBuilder {
      * @param weighting (Weighting)
      * @return (RealVector) W * syn
      */
-    public RealVector fullSynVecWithWeight(Weighting weighting) {
+    public RealVector fullSynVecWithWeight(RealVector[] weighting) {
         RealVector v = new ArrayRealVector(npts);
         for (int i = 0; i < nTimeWindow; i++) {
-            v.setSubVector(startPoints[i], synVecs[i].ebeMultiply(weighting.get(i)));
+            v.setSubVector(startPoints[i], synVecs[i].ebeMultiply(weighting[i]));
         }
         return v;
     }
@@ -210,10 +210,10 @@ public final class DVectorBuilder {
      * @param weighting (Weighting)
      * @return (RealVector) W * obs
      */
-    public RealVector fullObsVecWithWeight(Weighting weighting) {
+    public RealVector fullObsVecWithWeight(RealVector[] weighting) {
         RealVector v = new ArrayRealVector(npts);
         for (int i = 0; i < nTimeWindow; i++) {
-            v.setSubVector(startPoints[i], obsVecs[i].ebeMultiply(weighting.get(i)));
+            v.setSubVector(startPoints[i], obsVecs[i].ebeMultiply(weighting[i]));
         }
         return v;
     }

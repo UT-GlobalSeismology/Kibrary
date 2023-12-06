@@ -26,7 +26,9 @@ import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
+import io.github.kensuke1984.kibrary.util.data.VirtualDatasetMaker;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
+import io.github.kensuke1984.kibrary.util.globalcmt.VirtualEventRegistration;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.visual.map.CrossSectionCreator;
 import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
@@ -48,6 +50,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
 import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
+import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
@@ -62,6 +65,7 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  */
 enum Manhattan {
     // Environment & General 00
+    VirtualEventRegistration(0, VirtualEventRegistration.class),
     DatasetMerge(1, DatasetMerge.class),
     PolynomialStructurePerturber(2, PolynomialStructurePerturber.class),
     PolynomialStructurePlotter(3, PolynomialStructurePlotter.class),
@@ -75,6 +79,7 @@ enum Manhattan {
     // Synthetic  20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
+    VirtualDatasetMaker(25, VirtualDatasetMaker.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),
     TimewindowMaker(31, TimewindowMaker.class),
@@ -101,6 +106,7 @@ enum Manhattan {
     SensitivityKernelMapper(63, SensitivityKernelMapper.class),
     PartialWaveformPlotter(64, PartialWaveformPlotter.class),
     OneDPartialDSMSetup(65, OneDPartialDSMSetup.class), //
+    PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class), //
     PartialsFuser(67, PartialsFuser.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     // Inversion 70

@@ -142,7 +142,7 @@ public class SPECFEMSetup {
         double latitude = event.getCmtPosition().getLatitude();
         double longitude = event.getCmtPosition().getLongitude();
         double depth = event.getCmtPosition().getDepth();
-        double[] mt = event.getCmt().getDSMmt();
+        double[] mt = event.getCmt().toDSMStyle();
 
         String cmtLine = "PDE " + event.getCMTTime().format(DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss.SSS"))
                 + " " + latitude + " " + longitude + " " + depth

@@ -1,13 +1,28 @@
 package io.github.kensuke1984.kibrary.waveform;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
+import io.github.kensuke1984.kibrary.voxel.Physical1DParameter;
+import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
+import io.github.kensuke1984.kibrary.voxel.TimeReceiverSideParameter;
+import io.github.kensuke1984.kibrary.voxel.TimeSourceSideParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /***
  * <p>
@@ -43,32 +58,25 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 public class PartialID extends BasicID {
 
     /**
+     * type of parameter
+     */
+    protected final ParameterType parameterType;
+    /**
+     * type of variable
+     */
+    protected final VariableType variableType;
+    /**
      * position of perturbation
      */
     protected final FullPosition voxelPosition;
-    /**
-     * type of parameter
-     */
-    protected final PartialType partialType;
-
-    /**
-     * @deprecated startByte unneeded
-     */
-    public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
-            double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
-            FullPosition voxelPosition, PartialType partialType, double... waveformData) {
-        super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
-                phases, startByte, isConvolved, waveformData);
-        this.partialType = partialType;
-        this.voxelPosition = voxelPosition;
-    }
 
     public PartialID(Observer observer, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
             double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, boolean isConvolved,
-            FullPosition voxelPosition, PartialType partialType, double... waveformData) {
+            ParameterType parameterType, VariableType variableType, FullPosition voxelPosition, double... waveformData) {
         super(WaveformType.PARTIAL, samplingHz, startTime, npts, observer, eventID, sacComponent, minPeriod, maxPeriod,
                 phases, isConvolved, waveformData);
-        this.partialType = partialType;
+        this.parameterType = parameterType;
+        this.variableType = variableType;
         this.voxelPosition = voxelPosition;
     }
 
@@ -79,28 +87,73 @@ public class PartialID extends BasicID {
     @Override
     public PartialID withData(double[] data) {
         return new PartialID(observer, eventID, component, samplingHz, startTime, data.length, minPeriod, maxPeriod,
-                phases, convolved, voxelPosition, partialType, data);
+                phases, convolved, parameterType, variableType, voxelPosition, data);
+    }
+
+    /**
+     * Whether this {@link PartialID} is for the given {@link UnknownParameter}.
+     * @param parameter ({@link UnknownParameter}) The parameter to compare with.
+     * @return (boolean) Whether this {@link PartialID} is for the given {@link UnknownParameter}.
+     *
+     * @author otsuru
+     * @since 2023/4/16
+     */
+    public boolean isForParameter(UnknownParameter parameter) {
+        if (!parameterType.equals(parameter.getParameterType())) return false;
+        if (!variableType.equals(parameter.getVariableType())) return false;
+
+        switch(parameterType) {
+        case SOURCE:
+            if (eventID.equals(((TimeSourceSideParameter) parameter).getGlobalCMTID())) return true;
+            else return false;
+        case RECEIVER:
+            //TODO
+            List<Integer> bouncingOrders = new ArrayList<Integer>();
+            bouncingOrders.add(1);
+            Collections.sort(bouncingOrders);
+            int lowestBouncingOrder = bouncingOrders.get(0);
+            if (observer.equals( ((TimeReceiverSideParameter) parameter).getObserver() ) &&
+                    ((TimeReceiverSideParameter) parameter).getBouncingOrder() == lowestBouncingOrder) return true;
+            else return false;
+        case LAYER:
+            if (Precision.equals(voxelPosition.getR(), ((Physical1DParameter) parameter).getRadius(), FullPosition.RADIUS_EPSILON)) return true;
+            else return false;
+        case VOXEL:
+            if (voxelPosition.equals(((Physical3DParameter) parameter).getPosition())) return true;
+            else return false;
+        default:
+            throw new RuntimeException("Unknown ParameterType.");
+        }
     }
 
     @Override
     public int hashCode() {
-        int prime = 31;
+        final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
+        result = prime * result + ((parameterType == null) ? 0 : parameterType.hashCode());
+        result = prime * result + ((variableType == null) ? 0 : variableType.hashCode());
         result = prime * result + ((voxelPosition == null) ? 0 : voxelPosition.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!super.equals(obj)) return false;
-        if (getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
         PartialID other = (PartialID) obj;
-        if (partialType != other.partialType) return false;
+        if (parameterType != other.parameterType)
+            return false;
+        if (variableType != other.variableType)
+            return false;
         if (voxelPosition == null) {
-            if (other.voxelPosition != null) return false;
-        } else if (!voxelPosition.equals(other.voxelPosition)) return false;
+            if (other.voxelPosition != null)
+                return false;
+        } else if (!voxelPosition.equals(other.voxelPosition))
+            return false;
         return true;
     }
 
@@ -108,16 +161,27 @@ public class PartialID extends BasicID {
         return voxelPosition;
     }
 
+    //TODO erase
+    @Deprecated
     public PartialType getPartialType() {
-        return partialType;
+        return PartialType.of(parameterType, variableType);
+    }
+
+    public ParameterType getParameterType() {
+        return parameterType;
+    }
+
+    public VariableType getVariableType() {
+        return variableType;
     }
 
     @Override
     public String toString() {
         String partialString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + startTime + " " + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved + " "
-                + voxelPosition + " " + partialType;
+                + parameterType + " " + variableType + " " + voxelPosition;
         return partialString;
     }
 

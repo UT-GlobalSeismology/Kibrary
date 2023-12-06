@@ -46,7 +46,7 @@ public final class VSConversion {
     }
 
     public SPCFileAccess convert(SPCFileAccess spectrum) {
-        if (spectrum.getSpcFileType() != SPCType.PAR2)
+        if (spectrum.getSpcFileType() != SPCType.MU1D)
             throw new RuntimeException();
 
         final int nbody = spectrum.nbody();
@@ -57,9 +57,8 @@ public final class VSConversion {
 
         // data part
         double omegai = spectrum.omegai();
-        HorizontalPosition observerPosition = spectrum.getObserverPosition();
-        String observerID = spectrum.getStationCode();
-        String observerNetwork = spectrum.getNetworkCode();
+        HorizontalPosition observerPosition = spectrum.getReceiverPosition();
+        String observerID = spectrum.getReceiverID();
         FullPosition sourceLocation = spectrum.getSourcePosition();
         String sourceID = spectrum.getSourceID();
         double[] bodyR = spectrum.getBodyR();
@@ -104,7 +103,7 @@ public final class VSConversion {
 
             @Override
             public SPCType getSpcFileType() {
-                return SPCType.PARVS;
+                return SPCType.VS1D;
             }
 
             @Override
@@ -123,23 +122,13 @@ public final class VSConversion {
             }
 
             @Override
-            public HorizontalPosition getObserverPosition() {
+            public HorizontalPosition getReceiverPosition() {
                 return observerPosition;
             }
 
             @Override
-            public String getObserverID() {
-                return observerID + "_" + observerNetwork;
-            }
-
-            @Override
-            public String getStationCode() {
+            public String getReceiverID() {
                 return observerID;
-            }
-
-            @Override
-            public String getNetworkCode() {
-                return observerNetwork;
             }
 
             @Override

@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 
 /**
  * Class for creating input files for TIPSV and TISH
@@ -74,24 +75,23 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // source
             FullPosition eventLocation = event.getCmtPosition();
             pw.println("c parameter for the source");
-            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
-                    " r0(km), lat, lon (deg)");
-            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString)
-                    .collect(Collectors.joining(" ")) + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
+                    + " r0(km), lat, lon (deg)");
+            pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
 
-            // station
+            // receiver
             pw.println("c parameter for the station");
             pw.println("c the number of stations");
             pw.println(observers.size() + " nsta");
             pw.println("c latitude longitude (deg)");
-
             observers.stream().sorted().map(Observer::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
             // write
             pw.println("c parameter for the write file");
             observers.stream().sorted()
-                    .forEach(s -> pw.println(output + "/" + SPCFileName.generate(s, event.getGlobalCMTID(), "PSV")));
+                    .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.PSV)));
             pw.println("end");
 
         }
@@ -119,12 +119,12 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // source
             FullPosition eventLocation = event.getCmtPosition();
             pw.println("c parameter for the source");
-            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude() +
-                    " r0(km), lat, lon (deg)");
-            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString)
-                    .collect(Collectors.joining(" ")) + " Moment Tensor (1.e25 dyne cm)");
+            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
+                    + " r0(km), lat, lon (deg)");
+            pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+                    + " Moment Tensor (1.e25 dyne cm)");
 
-            // station
+            // receiver
             pw.println("c parameter for the station");
             pw.println("c the number of stations");
             pw.println(observers.size() + " nsta");
@@ -135,7 +135,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             // write
             pw.println("c parameter for the write file");
             observers.stream().sorted()
-                    .forEach(s -> pw.println(output + "/" + SPCFileName.generate(s, event.getGlobalCMTID(), "SH")));
+                    .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.SH)));
             pw.println("end");
         }
     }
