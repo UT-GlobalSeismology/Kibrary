@@ -32,4 +32,12 @@ public enum SourceTimeFunctionType {
         default: throw new IllegalArgumentException("Unrecognizable source time function type.");
         }
     }
+
+    public String toCode() {
+        switch(this) {
+        case BOXCAR: return "BOXHD";
+        case TRIANGLE: return "TRIHD";
+        default: throw new IllegalArgumentException("No code for this source time function type.");
+        }
+    }
 }
