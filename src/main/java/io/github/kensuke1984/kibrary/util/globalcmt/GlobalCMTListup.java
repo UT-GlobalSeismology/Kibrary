@@ -50,33 +50,33 @@ public class GlobalCMTListup {
 
         // criteria
         options.addOption(Option.builder("x").longOpt("lowerLongitude").hasArg().argName("longitude")
-                .desc("Lower limit of longitude [deg]; [-180:360]. (-180)").build());
+                .desc("Lower limit of longitude [deg], inclusive; [-180:360]. (-180)").build());
         options.addOption(Option.builder("X").longOpt("upperLongitude").hasArg().argName("longitude")
-                .desc("Upper limit of longitude [deg]; [-180:360]. (180)").build());
+                .desc("Upper limit of longitude [deg], exclusive; [-180:360]. (180)").build());
         options.addOption(Option.builder("y").longOpt("lowerLatitude").hasArg().argName("latitude")
-                .desc("Lower limit of latitude [deg]; [-90:upperLatitude). (-90)").build());
+                .desc("Lower limit of latitude [deg], inclusive; [-90:upperLatitude). (-90)").build());
         options.addOption(Option.builder("Y").longOpt("upperLatitude").hasArg().argName("latitude")
-                .desc("Upper limit of latitude [deg]; (lowerLatitude:90]. (90)").build());
+                .desc("Upper limit of latitude [deg], exclusive; (lowerLatitude:90]. (90)").build());
         options.addOption(Option.builder("z").longOpt("lowerDepth").hasArg().argName("depth")
-                .desc("Shallower limit of DEPTH [km]; (:upperDepth). (100)").build());
+                .desc("SHALLOWER limit of DEPTH [km], inclusive; (:upperDepth). (100)").build());
         options.addOption(Option.builder("Z").longOpt("upperDepth").hasArg().argName("depth")
-                .desc("Deeper limit of DEPTH [km]; (lowerDepth:). (700)").build());
+                .desc("DEEPER limit of DEPTH [km], exclusive; (lowerDepth:). (700)").build());
         options.addOption(Option.builder("t").longOpt("startDate").hasArg().argName("date")
-                .desc("Start date in yyyy-mm-dd format. (1990-01-01)").build());
+                .desc("Start date in yyyy-mm-dd format, inclusive. (1990-01-01)").build());
         options.addOption(Option.builder("T").longOpt("endDate").hasArg().argName("date")
-                .desc("End date in yyyy-mm-dd format. (2020-12-31)").build());
+                .desc("End date in yyyy-mm-dd format, INCLUSIVE. (2020-12-31)").build());
         options.addOption(Option.builder("m").longOpt("lowerMw").hasArg().argName("magnitude")
-                .desc("Lower limit of Mw; (:upperMw). (5.5)").build());
+                .desc("Lower limit of Mw; (:upperMw), inclusive. (5.5)").build());
         options.addOption(Option.builder("M").longOpt("upperMw").hasArg().argName("magnitude")
-                .desc("Upper limit of Mw; (lowerMw:). (7.31)").build());
+                .desc("Upper limit of Mw; (lowerMw:), exclusive. (7.31)").build());
 
         // option
         options.addOption(Option.builder("f").longOpt("full")
-                .desc("Output full information (Date, Latitude, Longitude, Depth, Mw, Half dur)").build());
+                .desc("Whether to write full information of events in output file.").build());
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file.").build());
 
         return options;
     }

@@ -101,25 +101,25 @@ public class DataRequestor extends Operation {
             pw.println("##(int) Adjustment at the foot [min], must be set.");
             pw.println("#footAdjustment 120");
             pw.println("##########The following parameters are for seismic events to be searched for.");
-            pw.println("##Start date in yyyy-mm-dd format, must be set.");
+            pw.println("##Start date in yyyy-mm-dd format, inclusive, must be set.");
             pw.println("#startDate 1990-01-01");
-            pw.println("##End date in yyyy-mm-dd format, must be set.");
+            pw.println("##End date in yyyy-mm-dd format, INCLUSIVE, must be set.");
             pw.println("#endDate 2020-12-31");
-            pw.println("##Lower limit of Mw; (:upperMw). (5.5)");
+            pw.println("##Lower limit of Mw, inclusive; (:upperMw). (5.5)");
             pw.println("#lowerMw ");
-            pw.println("##Upper limit of Mw; (lowerMw:). (7.31)");
+            pw.println("##Upper limit of Mw, exclusive; (lowerMw:). (7.31)");
             pw.println("#upperMw ");
-            pw.println("##Shallower limit of DEPTH [km]; (:upperDepth). (100)");
+            pw.println("##SHALLOWER limit of DEPTH [km], inclusive; (:upperDepth). (100)");
             pw.println("#lowerDepth ");
-            pw.println("##Deeper limit of DEPTH [km]; (lowerDepth:). (700)");
+            pw.println("##DEEPER limit of DEPTH [km], exclusive; (lowerDepth:). (700)");
             pw.println("#upperDepth ");
-            pw.println("#Lower limit of latitude [deg]; [-90:upperLatitude). (-90)");
+            pw.println("##Lower limit of latitude [deg], inclusive; [-90:upperLatitude). (-90)");
             pw.println("#lowerLatitude ");
-            pw.println("##Upper limit of latitude [deg]; (lowerLatitude:90]. (90)");
+            pw.println("##Upper limit of latitude [deg], exclusive; (lowerLatitude:90]. (90)");
             pw.println("#upperLatitude ");
-            pw.println("##Lower limit of longitude [deg]; [-180:360]. (-180)");
+            pw.println("##Lower limit of longitude [deg], inclusive; [-180:360]. (-180)");
             pw.println("#lowerLongitude ");
-            pw.println("##Upper limit of longitude [deg]; [-180:360]. (180)");
+            pw.println("##Upper limit of longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperLongitude ");
             pw.println("##(boolean) Whether to actually send the emails. (false)");
             pw.println("#send ");
@@ -161,63 +161,6 @@ public class DataRequestor extends Operation {
 
         send = property.parseBoolean("send", "false");
     }
-/*
-    private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("networks"))
-            throw new IllegalArgumentException("No information about networks");
-        if (!property.containsKey("headAdjustment"))
-            throw new IllegalArgumentException("No information about the head adjustment");
-        if (!property.containsKey("footAdjustment"))
-            throw new IllegalArgumentException("No information about the foot adjustment");
-        if (!property.containsKey("startDate"))
-            throw new IllegalArgumentException("No information about the start date");
-        if (!property.containsKey("endDate"))
-            throw new IllegalArgumentException("No information about the end date");
-        if (!property.containsKey("lowerMw")) property.setProperty("lowerMw", "5.5");
-        if (!property.containsKey("upperMw")) property.setProperty("upperMw", "7.3");
-        if (!property.containsKey("lowerDepth")) property.setProperty("lowerDepth", "100");
-        if (!property.containsKey("upperDepth")) property.setProperty("upperDepth", "700");
-        if (!property.containsKey("lowerLatitude")) property.setProperty("lowerLatitude", "-90");
-        if (!property.containsKey("upperLatitude")) property.setProperty("upperLatitude", "90");
-        if (!property.containsKey("lowerLongitude")) property.setProperty("lowerLongitude", "-180");
-        if (!property.containsKey("upperLongitude")) property.setProperty("upperLongitude", "180");
-        if (!property.containsKey("send")) property.setProperty("send", "false");
-    }
-
-    private void set() throws IOException {
-        checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath " + workPath + " does not exist");
-
-        networks = property.getProperty("networks").split("\\s+");
-        headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
-        footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
-
-        startDate = LocalDate.parse(property.getProperty("startDate"));
-        endDate = LocalDate.parse(property.getProperty("endDate"));
-        if (startDate.isAfter(endDate))
-            throw new IllegalArgumentException("Date range " + startDate + " , " + endDate + " is invalid.");
-        lowerMw = Double.parseDouble(property.getProperty("lowerMw"));
-        upperMw = Double.parseDouble(property.getProperty("upperMw"));
-        if (lowerMw > upperMw)
-            throw new IllegalArgumentException("Magnitude range " + lowerMw + " , " + upperMw + " is invalid.");
-        lowerDepth = Double.parseDouble(property.getProperty("lowerDepth"));
-        upperDepth = Double.parseDouble(property.getProperty("upperDepth"));
-        if (lowerDepth > upperDepth)
-            throw new IllegalArgumentException("Depth range " + lowerDepth + " , " + upperDepth + " is invalid.");
-        lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
-        upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
-        lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
-        upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
-
-        send = Boolean.parseBoolean(property.getProperty("send"));
-    }
-*/
 
     @Override
     public void run() throws IOException {

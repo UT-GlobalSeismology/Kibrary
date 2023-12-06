@@ -145,9 +145,9 @@ public class DataEntryListFile {
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file.").build());
+                .desc("Specify path of output file.").build());
         options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
-                .desc("To convert entries to certain components, list then using commas.").build());
+                .desc("To convert entries to certain components, list them using commas.").build());
 
         return options;
     }

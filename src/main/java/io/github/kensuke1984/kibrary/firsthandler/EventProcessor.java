@@ -163,13 +163,13 @@ class EventProcessor implements Runnable {
     /**
      * Sets parameters.
      *
-     * @param minD (double) lower limit of epicentral distance
-     * @param maxD (double) upper limit of epicentral distance
-     * @param minLa (double) lower limit of latitude
-     * @param maxLa (double) upper limit of latitude
-     * @param minLo (double) lower limit of longitude
-     * @param maxLo (double) upper limit of longitude
-     * @param grid (double) threshold to judge which stations are in the same position
+     * @param minD (double) Lower limit of epicentral distance, inclusive.
+     * @param maxD (double) Upper limit of epicentral distance, exclusive.
+     * @param minLa (double) Lower limit of latitude, inclusive.
+     * @param maxLa (double) Upper limit of latitude, exclusive.
+     * @param minLo (double) Lower limit of longitude, inclusive.
+     * @param maxLo (double) Upper limit of longitude, exclusive.
+     * @param grid (double) Threshold to judge which stations are in the same position.
      * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
     void setParameters(double minD, double maxD, double minLa, double maxLa, double minLo, double maxLo, double grid, double maxT, boolean remove) {

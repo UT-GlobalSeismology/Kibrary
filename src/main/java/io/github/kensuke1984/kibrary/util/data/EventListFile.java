@@ -153,11 +153,11 @@ public class EventListFile {
 
         // option
         options.addOption(Option.builder("f").longOpt("full")
-                .desc("Select output full information (Date, Latitude, Longitude, Depth, Mw, Half dur)").build());
+                .desc("Whether to write full information of events in output file.").build());
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file.").build());
 
         return options;
     }

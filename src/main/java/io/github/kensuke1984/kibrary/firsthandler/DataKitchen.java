@@ -104,17 +104,17 @@ public class DataKitchen extends Operation {
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
-            pw.println("##Lower limit of epicentral distance range [deg]; [0:maxDistance). (0)");
+            pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:maxDistance). (0)");
             pw.println("#minDistance 70");
-            pw.println("##Upper limit of epicentral distance range [deg]; (minDistance:180]. (180)");
+            pw.println("##Upper limit of epicentral distance range [deg], exclusive; (minDistance:180]. (180)"); //TODO 180 is never included in range
             pw.println("#maxDistance 100");
-            pw.println("##Lower limit of station latitude [deg]; [-90:maxLatitude). (-90)");
+            pw.println("##Lower limit of station latitude [deg], inclusive; [-90:maxLatitude). (-90)");
             pw.println("#minLatitude ");
-            pw.println("##Upper limit of station latitude [deg]; (minLatitude:90]. (90)");
+            pw.println("##Upper limit of station latitude [deg], exclusive; (minLatitude:90]. (90)");
             pw.println("#maxLatitude ");
-            pw.println("##Lower limit of station longitude [deg]; [-180:maxLongitude). (-180)");
+            pw.println("##Lower limit of station longitude [deg], inclusive; [-180:maxLongitude). (-180)");
             pw.println("#minLongitude ");
-            pw.println("##Upper limit of station longitude [deg]; (minLongitude:360]. (180)");
+            pw.println("##Upper limit of station longitude [deg], exclusive; (minLongitude:360]. (180)");
             pw.println("#maxLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
             pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
