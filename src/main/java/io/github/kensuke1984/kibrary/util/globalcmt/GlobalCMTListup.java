@@ -12,11 +12,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.ValueRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * List up {@link GlobalCMTID}s that satisfy certain criteria.
@@ -49,6 +50,10 @@ public class GlobalCMTListup {
         Options options = Summon.defaultOptions();
 
         // criteria
+        options.addOption(Option.builder("t").longOpt("startDate").hasArg().argName("date")
+                .desc("Start date in yyyy-mm-dd format, inclusive. (1990-01-01)").build());
+        options.addOption(Option.builder("T").longOpt("endDate").hasArg().argName("date")
+                .desc("End date in yyyy-mm-dd format, INCLUSIVE. (2020-12-31)").build());
         options.addOption(Option.builder("x").longOpt("lowerLongitude").hasArg().argName("longitude")
                 .desc("Lower limit of longitude [deg], inclusive; [-180:360]. (-180)").build());
         options.addOption(Option.builder("X").longOpt("upperLongitude").hasArg().argName("longitude")
@@ -61,10 +66,6 @@ public class GlobalCMTListup {
                 .desc("SHALLOWER limit of DEPTH [km], inclusive; (:upperDepth). (100)").build());
         options.addOption(Option.builder("Z").longOpt("upperDepth").hasArg().argName("depth")
                 .desc("DEEPER limit of DEPTH [km], exclusive; (lowerDepth:). (700)").build());
-        options.addOption(Option.builder("t").longOpt("startDate").hasArg().argName("date")
-                .desc("Start date in yyyy-mm-dd format, inclusive. (1990-01-01)").build());
-        options.addOption(Option.builder("T").longOpt("endDate").hasArg().argName("date")
-                .desc("End date in yyyy-mm-dd format, INCLUSIVE. (2020-12-31)").build());
         options.addOption(Option.builder("m").longOpt("lowerMw").hasArg().argName("magnitude")
                 .desc("Lower limit of Mw; (:upperMw), inclusive. (5.5)").build());
         options.addOption(Option.builder("M").longOpt("upperMw").hasArg().argName("magnitude")
@@ -91,30 +92,32 @@ public class GlobalCMTListup {
                 : Paths.get("event" + GadgetAid.getTemporaryString() + ".lst");
 
         //~set search ranges
-        double lowerLongitude = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : -180.0;
-        double upperLongitude = cmdLine.hasOption("X") ? Double.parseDouble(cmdLine.getOptionValue("X")) : 180.0;
-        double lowerLatitude = cmdLine.hasOption("y") ? Double.parseDouble(cmdLine.getOptionValue("y")) : -90.0;
-        double upperLatitude = cmdLine.hasOption("Y") ? Double.parseDouble(cmdLine.getOptionValue("Y")) : 90.0;
-        HorizontalPosition.checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
-
-        double lowerDepth = cmdLine.hasOption("z") ? Double.parseDouble(cmdLine.getOptionValue("z")) : 100.0;
-        double upperDepth = cmdLine.hasOption("Z") ? Double.parseDouble(cmdLine.getOptionValue("Z")) : 700.0;
-        MathAid.checkRangeValidity("Depth", lowerDepth, upperDepth);
-
         LocalDate startDate = LocalDate.parse(cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : "1990-01-01");
         LocalDate endDate = LocalDate.parse(cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : "2020-12-31");
         MathAid.checkDateRangeValidity(startDate, endDate);
 
+        double lowerLongitude = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : -180.0;
+        double upperLongitude = cmdLine.hasOption("X") ? Double.parseDouble(cmdLine.getOptionValue("X")) : 180.0;
+        CircularRange longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
+
+        double lowerLatitude = cmdLine.hasOption("y") ? Double.parseDouble(cmdLine.getOptionValue("y")) : -90.0;
+        double upperLatitude = cmdLine.hasOption("Y") ? Double.parseDouble(cmdLine.getOptionValue("Y")) : 90.0;
+        ValueRange latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+
+        double lowerDepth = cmdLine.hasOption("z") ? Double.parseDouble(cmdLine.getOptionValue("z")) : 100.0;
+        double upperDepth = cmdLine.hasOption("Z") ? Double.parseDouble(cmdLine.getOptionValue("Z")) : 700.0;
+        ValueRange depthRange = new ValueRange("Depth", lowerDepth, upperDepth);
+
         double lowerMw = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 5.5;
         double upperMw = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 7.31;
-        MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
+        ValueRange mwRange = new ValueRange("Magnitude", lowerMw, upperMw);
 
         // search events
         GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);
-        search.setLatitudeRange(lowerLatitude, upperLatitude);
-        search.setLongitudeRange(lowerLongitude, upperLongitude);
-        search.setMwRange(lowerMw, upperMw);
-        search.setDepthRange(lowerDepth, upperDepth);
+        search.setMwRange(mwRange);
+        search.setDepthRange(depthRange);
+        search.setLatitudeRange(latitudeRange);
+        search.setLongitudeRange(longitudeRange);
         Set<GlobalCMTID> eventSet = search.search();
 
         // output

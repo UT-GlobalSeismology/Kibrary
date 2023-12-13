@@ -13,10 +13,11 @@ import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.ValueRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
@@ -54,20 +55,15 @@ public class DataRequestor extends Operation {
      * including the date
      */
     private LocalDate endDate;
-    private double lowerMw;
-    private double upperMw;
+
+    private ValueRange mwRange;
     /**
-     * not radius but distance from the surface
+     * DEPTH range [km].
      */
-    private double lowerDepth;
-    /**
-     * not radius but distance from the surface
-     */
-    private double upperDepth;
-    private double lowerLatitude;
-    private double upperLatitude;
-    private double lowerLongitude;
-    private double upperLongitude;
+    private ValueRange depthRange;
+    private ValueRange latitudeRange;
+    private CircularRange longitudeRange;
+
     private boolean send;
 
     private Set<GlobalCMTID> requestedEvents;
@@ -145,19 +141,21 @@ public class DataRequestor extends Operation {
         endDate = LocalDate.parse(property.parseString("endDate", null));
         MathAid.checkDateRangeValidity(startDate, endDate);
 
-        lowerMw = property.parseDouble("lowerMw", "5.5");
-        upperMw = property.parseDouble("upperMw", "7.31");
-        MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
+        double lowerMw = property.parseDouble("lowerMw", "5.5");
+        double upperMw = property.parseDouble("upperMw", "7.31");
+        mwRange = new ValueRange("Magnitude", lowerMw, upperMw);
 
-        lowerDepth = property.parseDouble("lowerDepth", "100");
-        upperDepth = property.parseDouble("upperDepth", "700");
-        MathAid.checkRangeValidity("Depth", lowerDepth, upperDepth);
+        double lowerDepth = property.parseDouble("lowerDepth", "100");
+        double upperDepth = property.parseDouble("upperDepth", "700");
+        depthRange = new ValueRange("Depth", lowerDepth, upperDepth);
 
-        lowerLatitude = property.parseDouble("lowerLatitude", "-90");
-        upperLatitude = property.parseDouble("upperLatitude", "90");
-        lowerLongitude = property.parseDouble("lowerLongitude", "-180");
-        upperLongitude = property.parseDouble("upperLongitude", "180");
-        HorizontalPosition.checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
+        double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        double upperLatitude = property.parseDouble("upperLatitude", "90");
+        latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+
+        double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        double upperLongitude = property.parseDouble("upperLongitude", "180");
+        longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
         send = property.parseBoolean("send", "false");
     }
@@ -222,10 +220,10 @@ public class DataRequestor extends Operation {
 
     private Set<GlobalCMTID> listEvents() {
         GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);
-        search.setLatitudeRange(lowerLatitude, upperLatitude);
-        search.setLongitudeRange(lowerLongitude, upperLongitude);
-        search.setMwRange(lowerMw, upperMw);
-        search.setDepthRange(lowerDepth, upperDepth);
+        search.setMwRange(mwRange);
+        search.setDepthRange(depthRange);
+        search.setLatitudeRange(latitudeRange);
+        search.setLongitudeRange(longitudeRange);
         return search.search();
     }
 

@@ -5,6 +5,8 @@ import java.util.Collection;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.ValueRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
@@ -34,24 +36,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     private final Latitude latitude;
     private final Longitude longitude;
-
-    /**
-     * Check if latitude and longitude range is valid
-     * (i.e. '-90 &lt;= lowerLatitude &lt; upperLatitude &lt;= 90' and '-180 &lt;= lowerLongitude, upperLongitude &lt;= 360').
-     * @param lowerLatitude (double) Value that is supposed to be lower limit of latitude range.
-     * @param upperLatitude (double) Value that is supposed to be upper limit of latitude range.
-     * @param lowerLongitude (double) Value that is supposed to be lower limit of longitude range.
-     * @param upperLongitude (double) Value that is supposed to be upper limit of longitude range.
-     *
-     * @author otsuru
-     * @since 2023/12/4
-     */
-    public static void checkRangeValidity(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
-        if (lowerLatitude < -90 || lowerLatitude >= upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range [" + lowerLatitude + ":" + upperLatitude + ") is invalid.");
-        if (lowerLongitude < -180 || 360 < lowerLongitude || upperLongitude < -180 || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range [" + lowerLongitude + ":" + upperLongitude + ") is invalid.");
-    }
 
     /**
      * Find the latitude interval of a given set of positions.
@@ -123,9 +107,9 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      *
      * @author otsuru
      * @since 2021/11/21
+     * @deprecated
      */
     public boolean isInRange(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
-        checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
 
         // latitude
         // Reject values below lower limit, but include lower limit.
@@ -146,6 +130,22 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
             if (longitude.getLongitude() < lowerLongitudeFixed || upperLongitudeFixed <= longitude.getLongitude()) return false;
             else return true;
         }
+    }
+
+    /**
+     * Checks whether this position is inside a given coordinate range.
+     * Lower limit is included; upper limit is excluded.
+     * However, upper latitude limit is included when it is 90 (if maximum latitude is correctly set as 90).
+     * @param latitudeRange ({@link ValueRange}) Latitude range [deg].
+     * @param longitudeRange ({@link CircularRange}) Longitude range [deg].
+     * @return (boolean) Whether this position is inside the given range.
+     *
+     * @author otsuru
+     * @since 2021/11/21
+     */
+    public boolean isInRange(ValueRange latitudeRange, CircularRange longitudeRange) {
+        if (latitudeRange.check(latitude.getLatitude()) && longitudeRange.check(longitude.getLongitude())) return true;
+        else return false;
     }
 
     @Override

@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.ValueRange;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -71,6 +73,7 @@ public final class FullPosition extends HorizontalPosition {
      *
      * @author otsuru
      * @since 2022/10/11
+     * @deprecated
      */
     public boolean isInRange(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude,
             double minRadius, double maxRadius) {
@@ -85,6 +88,22 @@ public final class FullPosition extends HorizontalPosition {
         if (isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude) == false) return false;
 
         return true;
+    }
+    /**
+     * Checks whether this position is inside a given coordinate range.
+     * Lower limit is included; upper limit is excluded.
+     * However, upper latitude limit is included when it is 90 (if maximum latitude is correctly set as 90).
+     * @param latitudeRange ({@link ValueRange}) Latitude range [deg].
+     * @param longitudeRange ({@link CircularRange}) Longitude range [deg].
+     * @param radiusRange ({@link ValueRange}) Radius range [km].
+     * @return (boolean) Whether this position is inside the given range.
+     *
+     * @author otsuru
+     * @since 2022/10/11
+     */
+    public boolean isInRange(ValueRange latitudeRange, CircularRange longitudeRange, ValueRange radiusRange) {
+        if (isInRange(latitudeRange, longitudeRange) && radiusRange.check(radius)) return true;
+        else return false;
     }
 
     @Override

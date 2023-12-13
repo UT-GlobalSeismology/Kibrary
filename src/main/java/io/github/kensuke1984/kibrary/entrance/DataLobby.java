@@ -7,18 +7,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.ValueRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -63,20 +66,14 @@ public class DataLobby extends Operation {
      * including the date
      */
     private LocalDate endDate;
-    private double lowerMw;
-    private double upperMw;
+
+    private ValueRange mwRange;
     /**
-     * not radius but distance from the surface
+     * DEPTH range [km].
      */
-    private double lowerDepth;
-    /**
-     * not radius but distance from the surface
-     */
-    private double upperDepth;
-    private double lowerLatitude;
-    private double upperLatitude;
-    private double lowerLongitude;
-    private double upperLongitude;
+    private ValueRange depthRange;
+    private ValueRange latitudeRange;
+    private CircularRange longitudeRange;
 
     private Set<GlobalCMTID> requestedEvents;
 
@@ -156,19 +153,21 @@ public class DataLobby extends Operation {
         endDate = LocalDate.parse(property.parseString("endDate", null));
         MathAid.checkDateRangeValidity(startDate, endDate);
 
-        lowerMw = property.parseDouble("lowerMw", "5.5");
-        upperMw = property.parseDouble("upperMw", "7.31");
-        MathAid.checkRangeValidity("Magnitude", lowerMw, upperMw);
+        double lowerMw = property.parseDouble("lowerMw", "5.5");
+        double upperMw = property.parseDouble("upperMw", "7.31");
+        mwRange = new ValueRange("Magnitude", lowerMw, upperMw);
 
-        lowerDepth = property.parseDouble("lowerDepth", "100");
-        upperDepth = property.parseDouble("upperDepth", "700");
-        MathAid.checkRangeValidity("Depth", lowerDepth, upperDepth);
+        double lowerDepth = property.parseDouble("lowerDepth", "100");
+        double upperDepth = property.parseDouble("upperDepth", "700");
+        depthRange = new ValueRange("Depth", lowerDepth, upperDepth);
 
-        lowerLatitude = property.parseDouble("lowerLatitude", "-90");
-        upperLatitude = property.parseDouble("upperLatitude", "90");
-        lowerLongitude = property.parseDouble("lowerLongitude", "-180");
-        upperLongitude = property.parseDouble("upperLongitude", "180");
-        HorizontalPosition.checkRangeValidity(lowerLatitude, upperLatitude, lowerLongitude, upperLongitude);
+        double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        double upperLatitude = property.parseDouble("upperLatitude", "90");
+        latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+
+        double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        double upperLongitude = property.parseDouble("upperLongitude", "180");
+        longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
     }
 
     @Override
@@ -186,7 +185,8 @@ public class DataLobby extends Operation {
         requestedEvents.stream().map(GlobalCMTID::getEventData).sorted(Comparator.comparing(GlobalCMTAccess::getCMTTime)).forEach(event -> {
             try {
                 n.incrementAndGet();
-                System.err.println(event + " (# " + n + " of " + n_total + ")");
+                System.err.println(event + " (# " + n + " of " + n_total + ")  "
+                        + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
 
                 // create event folder
                 EventFolder ef = new EventFolder(outPath.resolve(event.toString()));
@@ -200,9 +200,9 @@ public class DataLobby extends Operation {
                     return;
                 }
 
-                // wait 20 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                System.err.println(" ~ Resting for 20 minutes ...");
-                ThreadAid.sleep(1000 * 60 * 20);
+                // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+                System.err.println(" ~ Resting for 15 minutes ...");
+                ThreadAid.sleep(1000 * 60 * 15);
 
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
@@ -215,10 +215,10 @@ public class DataLobby extends Operation {
 
     private Set<GlobalCMTID> listEvents() {
         GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);
-        search.setLatitudeRange(lowerLatitude, upperLatitude);
-        search.setLongitudeRange(lowerLongitude, upperLongitude);
-        search.setMwRange(lowerMw, upperMw);
-        search.setDepthRange(lowerDepth, upperDepth);
+        search.setMwRange(mwRange);
+        search.setDepthRange(depthRange);
+        search.setLatitudeRange(latitudeRange);
+        search.setLongitudeRange(longitudeRange);
         return search.search();
     }
 

@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.ValueRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
@@ -62,12 +62,10 @@ public class DataKitchen extends Operation {
     private int catalog;
     private double samplingHz;
 
-    private double minDistance;
-    private double maxDistance;
-    private double minLatitude;
-    private double maxLatitude;
-    private double minLongitude;
-    private double maxLongitude;
+    private ValueRange distanceRange;
+    private ValueRange latitudeRange;
+    private CircularRange longitudeRange;
+
     /**
      * threshold to judge which stations are in the same position [deg]
      */
@@ -105,17 +103,17 @@ public class DataKitchen extends Operation {
             pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
             pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:maxDistance). (0)");
-            pw.println("#minDistance 70");
-            pw.println("##Upper limit of epicentral distance range [deg], exclusive; (minDistance:180]. (180)"); //TODO 180 is never included in range
-            pw.println("#maxDistance 100");
+            pw.println("#lowerDistance 70");
+            pw.println("##Upper limit of epicentral distance range [deg], exclusive; (minDistance:180]. (180)");
+            pw.println("#upperDistance 100");
             pw.println("##Lower limit of station latitude [deg], inclusive; [-90:maxLatitude). (-90)");
-            pw.println("#minLatitude ");
+            pw.println("#lowerLatitude ");
             pw.println("##Upper limit of station latitude [deg], exclusive; (minLatitude:90]. (90)");
-            pw.println("#maxLatitude ");
+            pw.println("#upperLatitude ");
             pw.println("##Lower limit of station longitude [deg], inclusive; [-180:maxLongitude). (-180)");
-            pw.println("#minLongitude ");
+            pw.println("#lowerLongitude ");
             pw.println("##Upper limit of station longitude [deg], exclusive; (minLongitude:360]. (180)");
-            pw.println("#maxLongitude ");
+            pw.println("#upperLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
             pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid ");
@@ -152,15 +150,17 @@ public class DataKitchen extends Operation {
         }
         samplingHz = property.parseDouble("samplingHz", "20"); // TODO
 
-        minDistance = property.parseDouble("minDistance", "0");
-        maxDistance = property.parseDouble("maxDistance", "180");
-        MathAid.checkRangeValidity("Distance", minDistance, maxDistance, 0, 180);
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new ValueRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
-        minLatitude = property.parseDouble("minLatitude", "-90");
-        maxLatitude = property.parseDouble("maxLatitude", "90");
-        minLongitude = property.parseDouble("minLongitude", "-180");
-        maxLongitude = property.parseDouble("maxLongitude", "180");
-        HorizontalPosition.checkRangeValidity(minLatitude, maxLatitude, minLongitude, maxLongitude);
+        double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        double upperLatitude = property.parseDouble("upperLatitude", "90");
+        latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+
+        double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        double upperLongitude = property.parseDouble("upperLongitude", "180");
+        longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
         coordinateGrid = property.parseDouble("coordinateGrid", "0.01");
         if (coordinateGrid < 0)
@@ -197,8 +197,7 @@ public class DataKitchen extends Operation {
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
         // set parameters
-        eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
-                minLongitude, maxLongitude, coordinateGrid, maxTlen, removeIntermediateFile));
+        eps.forEach(p -> p.setParameters(distanceRange, latitudeRange, longitudeRange, coordinateGrid, maxTlen, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);

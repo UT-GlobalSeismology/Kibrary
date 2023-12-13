@@ -234,36 +234,6 @@ public final class MathAid {
     }
 
     /**
-     * Check if a value range is valid (i.e. first value &lt; second value).
-     * Note that the value range excludes the upper limit.
-     * @param valueName (String) Name of variable that is being checked. First letter should be capitalized.
-     * @param lowerValue (double) Value that is supposed to be lower limit of range.
-     * @param upperValue (double) Value that is supposed to be upper limit of range.
-     *
-     * @author otsuru
-     * @since 2023/12/4
-     */
-    public static void checkRangeValidity(String valueName, double lowerValue, double upperValue) {
-        if (lowerValue >= upperValue)
-            throw new IllegalArgumentException(valueName + " range [" + lowerValue + ":" + upperValue + ") is invalid.");
-    }
-    /**
-     * Check if a value range is valid (i.e. first value &lt; second value).
-     * Note that the value range excludes the upper limit.
-     * @param valueName (String) Name of variable that is being checked. First letter should be capitalized.
-     * @param lowerValue (double) Value that is supposed to be lower limit of range.
-     * @param upperValue (double) Value that is supposed to be upper limit of range.
-     * @param minValue (double) Minimum value acceptable.
-     * @param maxValue (double) Maximum value acceptable.
-     *
-     * @author otsuru
-     * @since 2023/12/5
-     */
-    public static void checkRangeValidity(String valueName, double lowerValue, double upperValue, double minValue, double maxValue) {
-        if (lowerValue < minValue || lowerValue >= upperValue || maxValue < upperValue)
-            throw new IllegalArgumentException(valueName + " range [" + lowerValue + ":" + upperValue + ") is invalid.");
-    }
-    /**
      * Check if a date range is valid (i.e. first value &lt;= second value).
      * Note that the date range includes the end date.
      * @param startDate (LocalDate) Date that is supposed to be start of range.
