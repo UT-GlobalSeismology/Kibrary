@@ -247,6 +247,18 @@ public final class MathAid {
     }
 
     /**
+     * Same as Math.ceil(), but consider precision, fixing 1.00...01 to 1.
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2023/12/14
+     */
+    public static double ceil(double value) {
+        return Math.ceil(Precision.round(value, PRECISION_DIGIT));
+    }
+
+    /**
      * Check if an angle is within a specified range.
      * @param angle [0:360)
      * @param lower [-360:upper)
