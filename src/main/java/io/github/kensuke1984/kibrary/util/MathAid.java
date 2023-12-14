@@ -137,14 +137,11 @@ public final class MathAid {
         if (nInteger <= 0) throw new IllegalArgumentException("nInteger must be positive.");
         if (nDecimal < 0) throw new IllegalArgumentException("nDecimal must be non-negative.");
 
-        if (nDecimal == 0) {
-            int intValue = (int) Math.round(value);
-            return padToString(intValue, nInteger, leftZeroPad);
+        // total number of digits: (integer digits) + (1 for decimal) + (decimal digits)
+        int digits = nInteger + (nDecimal == 0 ? 0 : 1 + nDecimal);
 
-        } else {
-            String format = (leftZeroPad ? "%0" : "%") + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
-            return String.format(format, value);
-        }
+        String format = (leftZeroPad ? "%0" : "%") + digits + "." + nDecimal + "f";
+        return String.format(format, value);
     }
 
     /**
