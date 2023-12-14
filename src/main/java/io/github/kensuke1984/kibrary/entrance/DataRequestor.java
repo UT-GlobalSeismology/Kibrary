@@ -50,12 +50,18 @@ public class DataRequestor extends Operation {
     private int headAdjustment;
     private int footAdjustment;
 
+    /**
+     * Start of date range, inclusive.
+     */
     private LocalDate startDate;
     /**
-     * including the date
+     * End of date range, INCLUSIVE.
      */
     private LocalDate endDate;
 
+    /**
+     * Moment magnitude range.
+     */
     private LinearRange mwRange;
     /**
      * DEPTH range [km].

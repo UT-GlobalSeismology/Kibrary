@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -110,35 +111,24 @@ public class DataSelection extends Operation {
     private Path staticCorrectionPath;
 
     /**
-     * Maximum of static correction shift
+     * Maximum of static correction shift.
      */
     private double maxStaticShift;
+
     /**
-     * Minimum correlation coefficient
+     * Correlation coefficient range.
      */
-    private double minCorrelation;
+    private LinearRange correlationRange;
     /**
-     * Maximum correlation coefficient
+     * Normalized variance range.
      */
-    private double maxCorrelation;
+    private LinearRange varianceRange;
     /**
-     * Minimum normalized variance
+     * Amplitude ratio range.
      */
-    private double minVariance;
+    private LinearRange ratioRange;
     /**
-     * Maximum normalized variance
-     */
-    private double maxVariance;
-    /**
-     * Minimum amplitude ratio
-     */
-    private double minRatio;
-    /**
-     * Maximum of amplitude ratio
-     */
-    private double maxRatio;
-    /**
-     * Threshold of S/N ratio that is selected
+     * Threshold of S/N ratio that is to be selected.
      */
     private double minSNratio;
     private boolean requirePhase;
@@ -184,19 +174,19 @@ public class DataSelection extends Operation {
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
             pw.println("#maxStaticShift ");
-            pw.println("##(double) Lower threshold of correlation; [-1:maxCorrelation]. (0)");
+            pw.println("##(double) Lower threshold of correlation, inclusive; [-1:maxCorrelation). (0)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) Upper threshold of correlation; [minCorrelation:1]. (1)");
+            pw.println("##(double) Upper threshold of correlation, exclusive; (minCorrelation:1]. (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) Lower threshold of normalized variance ;[0:maxVariance]. (0)");
+            pw.println("##(double) Lower threshold of normalized variance, inclusive; [0:maxVariance). (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) Upper threshold of normalized variance; [minVariance:). (2)");
+            pw.println("##(double) Upper threshold of normalized variance, exclusive; (minVariance:). (2)");
             pw.println("#maxVariance ");
-            pw.println("##(double) Lower threshold of amplitude ratio; [0:maxRatio]. (0.5)");
+            pw.println("##(double) Lower threshold of amplitude ratio, inclusive; [0:maxRatio). (0.5)");
             pw.println("#minRatio ");
-            pw.println("##(double) Upper threshold of amplitude ratio; [minRatio:). (2)");
+            pw.println("##(double) Upper threshold of amplitude ratio, exclusive; (minRatio:). (2)");
             pw.println("#maxRatio ");
-            pw.println("##(double) Threshold of S/N ratio (lower limit); [0:). (0)");
+            pw.println("##(double) Threshold of S/N ratio (lower limit), inclusive; [0:). (0)");
             pw.println("#minSNratio ");
             pw.println("##(boolean) Whether to require phases to be included in timewindow. (true)");
             pw.println("#requirePhase ");
@@ -229,18 +219,15 @@ public class DataSelection extends Operation {
         maxStaticShift = property.parseDouble("maxStaticShift", "10.");
         if (maxStaticShift < 0)
             throw new IllegalArgumentException("Static shift threshold " + maxStaticShift + " is invalid, must be >= 0.");
-        minCorrelation = property.parseDouble("minCorrelation", "0");
-        maxCorrelation = property.parseDouble("maxCorrelation", "1");
-        if (minCorrelation < -1 || minCorrelation > maxCorrelation || 1 < maxCorrelation)
-            throw new IllegalArgumentException("Correlation range " + minCorrelation + " , " + maxCorrelation + " is invalid.");
-        minVariance = property.parseDouble("minVariance", "0");
-        maxVariance = property.parseDouble("maxVariance", "2");
-        if (minVariance < 0 || minVariance > maxVariance)
-            throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
-        minRatio = property.parseDouble("minRatio", "0.5");
-        maxRatio = property.parseDouble("maxRatio", "2");
-        if (minRatio < 0 || minRatio > maxRatio)
-            throw new IllegalArgumentException("Amplitude ratio range " + minRatio + " , " + maxRatio + " is invalid.");
+        double minCorrelation = property.parseDouble("minCorrelation", "0");
+        double maxCorrelation = property.parseDouble("maxCorrelation", "1");
+        correlationRange = new LinearRange("Correlation", minCorrelation, maxCorrelation, -1.0, 1.0);
+        double minVariance = property.parseDouble("minVariance", "0");
+        double maxVariance = property.parseDouble("maxVariance", "2");
+        varianceRange = new LinearRange("Variance", minVariance, maxVariance, 0.0);
+        double minRatio = property.parseDouble("minRatio", "0.5");
+        double maxRatio = property.parseDouble("maxRatio", "2");
+        ratioRange = new LinearRange("Ratio", minRatio, maxRatio, 0.0);
         minSNratio = property.parseDouble("minSNratio", "0");
         if (minSNratio < 0)
             throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
@@ -307,14 +294,12 @@ public class DataSelection extends Operation {
         double posSideRatio = feature.getNegSideRatio();
         double negSideRatio = feature.getPosSideRatio();
         double absRatio = feature.getAbsRatio();
-        double cor = feature.getCorrelation();
-        double var = feature.getVariance();
-        double sn = feature.getSNRatio();
+        double correlation = feature.getCorrelation();
+        double variance = feature.getVariance();
+        double snRatio = feature.getSNRatio();
 
-        boolean isok = (minRatio <= posSideRatio && posSideRatio <= maxRatio)
-                && (minRatio <= negSideRatio && negSideRatio <= maxRatio)
-                && (minRatio <= absRatio && absRatio <= maxRatio) && (minCorrelation <= cor &&  cor <= maxCorrelation)
-                && (minVariance <= var && var <= maxVariance) && (minSNratio <= sn);
+        boolean isok = ratioRange.check(posSideRatio) && ratioRange.check(negSideRatio) && ratioRange.check(absRatio) &&
+                correlationRange.check(correlation) && varianceRange.check(variance) && (minSNratio <= snRatio);
         return isok;
     }
 

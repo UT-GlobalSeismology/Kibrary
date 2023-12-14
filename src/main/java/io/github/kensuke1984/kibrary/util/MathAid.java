@@ -247,30 +247,4 @@ public final class MathAid {
             throw new IllegalArgumentException("Date range [" + startDate + ":" + endDate + "] is invalid.");
     }
 
-    /**
-     * Check if an angle is within a specified range.
-     * Comparison is done after normalizing all angle values into range [0:360).
-     * Lower limit is included; upper limit is excluded.
-     * @param checkAngle (double) Angle to check [deg].
-     * @param lowerAngle (double) Lower limit of angle range [deg].
-     * @param upperAngle (double) Upper limit of angle range [deg].
-     * @return (boolean) Whether the angle to check is within the specified range.
-     */
-    public static boolean checkForAngleRange(double checkAngle, double lowerAngle, double upperAngle) {
-        // convert all angles to range [0:360)
-        double lower = lowerAngle - Math.floor(lowerAngle / 360) * 360;
-        double upper = upperAngle - Math.floor(upperAngle / 360) * 360;
-        double check = checkAngle - Math.floor(checkAngle / 360) * 360;
-
-        if (upper < lower) {
-            // Accept values in [0:upper),[lower:360].
-            if (check < upper || lower <= check) return true;
-            else return false;
-        } else {
-            // Accept values in [lower:upper).
-            if (check < lower || upper <= check) return false;
-            else return true;
-        }
-    }
-
 }

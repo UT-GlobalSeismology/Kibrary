@@ -24,6 +24,42 @@ public class LinearRange {
     private boolean hasMaximum = false;
 
     /**
+     * Check if a value range is valid, i.e. lowerLimit &lt; upperLimit.
+     * @param valueName (String) Name of variable that is being checked. First letter should be capitalized.
+     * @param lowerLimit (double) Value that is to be lower limit of range.
+     * @param upperLimit (double) Value that is to be upper limit of range.
+     */
+    public static void checkValidity(String valueName, double lowerLimit, double upperLimit) {
+        if (lowerLimit >= upperLimit)
+            throw new IllegalArgumentException(valueName + " range [" + lowerLimit + ":" + upperLimit + ") is invalid.");
+    }
+
+    /**
+     * Check if a value range is valid, i.e. lowerLimit &lt; upperLimit.
+     * @param valueName (String) Name of variable that is being checked. First letter should be capitalized.
+     * @param lowerLimit (double) Value that is to be lower limit of range.
+     * @param upperLimit (double) Value that is to be upper limit of range.
+     * @param minimum (double) Minimum value acceptable.
+     */
+    public static void checkValidity(String valueName, double lowerLimit, double upperLimit, double minimum) {
+        if (lowerLimit < minimum || lowerLimit >= upperLimit)
+            throw new IllegalArgumentException(valueName + " range [" + lowerLimit + ":" + upperLimit + ") is invalid.");
+    }
+
+    /**
+     * Check if a value range is valid, i.e. lowerLimit &lt; upperLimit.
+     * @param valueName (String) Name of variable that is being checked. First letter should be capitalized.
+     * @param lowerLimit (double) Value that is to be lower limit of range.
+     * @param upperLimit (double) Value that is to be upper limit of range.
+     * @param minimum (double) Minimum value acceptable.
+     * @param maximum (double) Maximum value acceptable.
+     */
+    public static void checkValidity(String valueName, double lowerLimit, double upperLimit, double minimum, double maximum) {
+        if (lowerLimit < minimum || lowerLimit >= upperLimit || maximum < upperLimit)
+            throw new IllegalArgumentException(valueName + " range [" + lowerLimit + ":" + upperLimit + ") is invalid.");
+    }
+
+    /**
      * Construct a value range. Must satisfy lowerLimit &lt; upperLimit.
      * Note that the value range excludes the upper limit.
      * @param valueName (String) Name of variable that is being checked. First letter should be capitalized.

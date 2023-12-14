@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -142,12 +143,10 @@ public class PolynomialStructurePlotter extends Operation {
 
         lowerRadius = property.parseDouble("lowerRadius", "0");
         upperRadius = property.parseDouble("upperRadius", "6371");
-        if (lowerRadius < 0 || lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+        LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
         lowerValue = property.parseDouble("lowerValue", "0");
         upperValue = property.parseDouble("upperValue", "15");
-        if (lowerValue > upperValue)
-            throw new IllegalArgumentException("Value range " + lowerValue + " , " + upperValue + " is invalid.");
+        LinearRange.checkValidity("Value", lowerValue, upperValue);
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String pathKey = "structurePath" + i;
