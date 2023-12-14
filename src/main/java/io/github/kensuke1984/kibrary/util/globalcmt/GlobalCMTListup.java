@@ -13,7 +13,7 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.ValueRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -102,15 +102,15 @@ public class GlobalCMTListup {
 
         double lowerLatitude = cmdLine.hasOption("y") ? Double.parseDouble(cmdLine.getOptionValue("y")) : -90.0;
         double upperLatitude = cmdLine.hasOption("Y") ? Double.parseDouble(cmdLine.getOptionValue("Y")) : 90.0;
-        ValueRange latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+        LinearRange latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
         double lowerDepth = cmdLine.hasOption("z") ? Double.parseDouble(cmdLine.getOptionValue("z")) : 100.0;
         double upperDepth = cmdLine.hasOption("Z") ? Double.parseDouble(cmdLine.getOptionValue("Z")) : 700.0;
-        ValueRange depthRange = new ValueRange("Depth", lowerDepth, upperDepth);
+        LinearRange depthRange = new LinearRange("Depth", lowerDepth, upperDepth);
 
         double lowerMw = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 5.5;
         double upperMw = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 7.31;
-        ValueRange mwRange = new ValueRange("Magnitude", lowerMw, upperMw);
+        LinearRange mwRange = new LinearRange("Magnitude", lowerMw, upperMw);
 
         // search events
         GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);

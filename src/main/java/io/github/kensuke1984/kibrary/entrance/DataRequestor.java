@@ -14,7 +14,7 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.ValueRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -56,12 +56,12 @@ public class DataRequestor extends Operation {
      */
     private LocalDate endDate;
 
-    private ValueRange mwRange;
+    private LinearRange mwRange;
     /**
      * DEPTH range [km].
      */
-    private ValueRange depthRange;
-    private ValueRange latitudeRange;
+    private LinearRange depthRange;
+    private LinearRange latitudeRange;
     private CircularRange longitudeRange;
 
     private boolean send;
@@ -143,15 +143,15 @@ public class DataRequestor extends Operation {
 
         double lowerMw = property.parseDouble("lowerMw", "5.5");
         double upperMw = property.parseDouble("upperMw", "7.31");
-        mwRange = new ValueRange("Magnitude", lowerMw, upperMw);
+        mwRange = new LinearRange("Magnitude", lowerMw, upperMw);
 
         double lowerDepth = property.parseDouble("lowerDepth", "100");
         double upperDepth = property.parseDouble("upperDepth", "700");
-        depthRange = new ValueRange("Depth", lowerDepth, upperDepth);
+        depthRange = new LinearRange("Depth", lowerDepth, upperDepth);
 
         double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
         double upperLatitude = property.parseDouble("upperLatitude", "90");
-        latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+        latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
         double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
         double upperLongitude = property.parseDouble("upperLongitude", "180");

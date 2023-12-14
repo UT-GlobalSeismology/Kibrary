@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.ValueRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -62,8 +62,8 @@ public class DataKitchen extends Operation {
     private int catalog;
     private double samplingHz;
 
-    private ValueRange distanceRange;
-    private ValueRange latitudeRange;
+    private LinearRange distanceRange;
+    private LinearRange latitudeRange;
     private CircularRange longitudeRange;
 
     /**
@@ -152,11 +152,11 @@ public class DataKitchen extends Operation {
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
         double upperDistance = property.parseDouble("upperDistance", "180");
-        distanceRange = new ValueRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
         double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
         double upperLatitude = property.parseDouble("upperLatitude", "90");
-        latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+        latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
         double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
         double upperLongitude = property.parseDouble("upperLongitude", "180");

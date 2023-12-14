@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.ValueRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -93,8 +93,8 @@ class EventProcessor implements Runnable {
     /**
      * Epicentral distance range of SAC files to be output.
      */
-    private ValueRange distanceRange = new ValueRange("Distance", 0.0, 180.0);
-    private ValueRange latitudeRange = new ValueRange("Latitude", -90.0, 90.0);
+    private LinearRange distanceRange = new LinearRange("Distance", 0.0, 180.0);
+    private LinearRange latitudeRange = new LinearRange("Latitude", -90.0, 90.0);
     private CircularRange longitudeRange = new CircularRange("Longitude", -180.0, 180.0);
 
     /**
@@ -160,14 +160,14 @@ class EventProcessor implements Runnable {
     /**
      * Sets parameters.
      *
-     * @param distanceRange ({@link ValueRange}) Epicentral distance range.
-     * @param latitudeRange ({@link ValueRange}) Latitude range.
+     * @param distanceRange ({@link LinearRange}) Epicentral distance range.
+     * @param latitudeRange ({@link LinearRange}) Latitude range.
      * @param longitudeRange ({@link CircularRange}) Longitude range.
      * @param grid (double) Threshold to judge which stations are in the same position.
      * @param maxTlen (double) The maximum length of output time series.
      * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
-    void setParameters(ValueRange distanceRange, ValueRange latitudeRange, CircularRange longitudeRange, double grid, double maxTlen, boolean remove) {
+    void setParameters(LinearRange distanceRange, LinearRange latitudeRange, CircularRange longitudeRange, double grid, double maxTlen, boolean remove) {
         this.distanceRange = distanceRange;
         this.latitudeRange = latitudeRange;
         this.longitudeRange = longitudeRange;

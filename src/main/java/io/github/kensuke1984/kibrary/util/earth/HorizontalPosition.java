@@ -6,7 +6,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.ValueRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
@@ -136,14 +136,14 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * Checks whether this position is inside a given coordinate range.
      * Lower limit is included; upper limit is excluded.
      * However, upper latitude limit is included when it is 90 (if maximum latitude is correctly set as 90).
-     * @param latitudeRange ({@link ValueRange}) Latitude range [deg].
+     * @param latitudeRange ({@link LinearRange}) Latitude range [deg].
      * @param longitudeRange ({@link CircularRange}) Longitude range [deg].
      * @return (boolean) Whether this position is inside the given range.
      *
      * @author otsuru
      * @since 2021/11/21
      */
-    public boolean isInRange(ValueRange latitudeRange, CircularRange longitudeRange) {
+    public boolean isInRange(LinearRange latitudeRange, CircularRange longitudeRange) {
         if (latitudeRange.check(latitude.getLatitude()) && longitudeRange.check(longitude.getLongitude())) return true;
         else return false;
     }

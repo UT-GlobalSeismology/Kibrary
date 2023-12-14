@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.ValueRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 /**
  * Query for search of Global CMT
  *
@@ -34,11 +34,11 @@ public class GlobalCMTSearch {
     /**
      * Depth range [km].
      */
-    private ValueRange depthRange = new ValueRange("Depth", 0, 1000);
+    private LinearRange depthRange = new LinearRange("Depth", 0, 1000);
     /**
      * Latitude range [deg].
      */
-    private ValueRange latitudeRange = new ValueRange("Latitude", -90.0, 90.0);
+    private LinearRange latitudeRange = new LinearRange("Latitude", -90.0, 90.0);
     /**
      * Longitude range [deg].
      */
@@ -46,31 +46,31 @@ public class GlobalCMTSearch {
     /**
      * Body wave magnitude range.
      */
-    private ValueRange mbRange = new ValueRange("Mb", 0, 10);
+    private LinearRange mbRange = new LinearRange("Mb", 0, 10);
     /**
      * Surface wave magnitude range.
      */
-    private ValueRange msRange = new ValueRange("Ms", 0, 10);
+    private LinearRange msRange = new LinearRange("Ms", 0, 10);
     /**
      * Moment magnitude range.
      */
-    private ValueRange mwRange = new ValueRange("Mw", 0, 10);
+    private LinearRange mwRange = new LinearRange("Mw", 0, 10);
     /**
      * Centroid time shift range [s].
      */
-    private ValueRange centroidTimeShiftRange = new ValueRange("Centroid time shift", -9999, 9999);
+    private LinearRange centroidTimeShiftRange = new LinearRange("Centroid time shift", -9999, 9999);
     /**
      * Half duration range [s].
      */
-    private ValueRange halfDurationRange = new ValueRange("Half duration", 0, 20);
+    private LinearRange halfDurationRange = new LinearRange("Half duration", 0, 20);
     /**
      * Tension axis plunge range [deg].
      */
-    private ValueRange tensionAxisPlungeRange = new ValueRange("Tension axis plunge", 0, 90);
+    private LinearRange tensionAxisPlungeRange = new LinearRange("Tension axis plunge", 0, 90);
     /**
      * Null axis plunge range [deg].
      */
-    private ValueRange nullAxisPlungeRange = new ValueRange("Null axis plunge", 0, 90);
+    private LinearRange nullAxisPlungeRange = new LinearRange("Null axis plunge", 0, 90);
 
     /**
      * Search on 1 day.
@@ -144,11 +144,11 @@ public class GlobalCMTSearch {
         return endDate;
     }
 
-    public ValueRange getDepthRange() {
+    public LinearRange getDepthRange() {
         return depthRange;
     }
 
-    public ValueRange getLatitudeRange() {
+    public LinearRange getLatitudeRange() {
         return latitudeRange;
     }
 
@@ -156,63 +156,63 @@ public class GlobalCMTSearch {
         return longitudeRange;
     }
 
-    public ValueRange getMbRange() {
+    public LinearRange getMbRange() {
         return mbRange;
     }
 
-    public ValueRange getMsRange() {
+    public LinearRange getMsRange() {
         return msRange;
     }
 
-    public ValueRange getMwRange() {
+    public LinearRange getMwRange() {
         return mwRange;
     }
 
-    public ValueRange getCentroidTimeShiftRange() {
+    public LinearRange getCentroidTimeShiftRange() {
         return centroidTimeShiftRange;
     }
 
-    public ValueRange getHalfDurationRange() {
+    public LinearRange getHalfDurationRange() {
         return halfDurationRange;
     }
 
-    public ValueRange getTensionAxisPlungeRange() {
+    public LinearRange getTensionAxisPlungeRange() {
         return tensionAxisPlungeRange;
     }
 
-    public ValueRange getNullAxisPlungeRange() {
+    public LinearRange getNullAxisPlungeRange() {
         return nullAxisPlungeRange;
     }
 
 
     @Deprecated
     public GlobalCMTSearch setDepthRange(double lowerDepth, double upperDepth) {
-        this.depthRange = new ValueRange("Depth", lowerDepth, upperDepth);
+        this.depthRange = new LinearRange("Depth", lowerDepth, upperDepth);
         return this;
     }
     /**
      * Set DEPTH range [km] (<b>NOT</b> radius). Default: [0:1000].
      *
-     * @param depthRange ({@link ValueRange}) Depth range [km].
+     * @param depthRange ({@link LinearRange}) Depth range [km].
      * @return this
      */
-    public GlobalCMTSearch setDepthRange(ValueRange depthRange) {
+    public GlobalCMTSearch setDepthRange(LinearRange depthRange) {
         this.depthRange = depthRange;
         return this;
     }
 
     @Deprecated
     public GlobalCMTSearch setLatitudeRange(double lowerLatitude, double upperLatitude) {
-        this.latitudeRange = new ValueRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+        this.latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
         return this;
     }
     /**
      * Set latitude range. Default: [-90:90].
      *
-     * @param latitudeRange ({@link ValueRange}) Latitude range [deg].
+     * @param latitudeRange ({@link LinearRange}) Latitude range [deg].
      * @return this
      */
-    public GlobalCMTSearch setLatitudeRange(ValueRange latitudeRange) {
+    public GlobalCMTSearch setLatitudeRange(LinearRange latitudeRange) {
         this.latitudeRange = latitudeRange;
         return this;
     }
@@ -235,30 +235,30 @@ public class GlobalCMTSearch {
 
     /**
      * Set Mb range. Default: [0:10].
-     * @param mbRange ({@link ValueRange}) Mb range.
+     * @param mbRange ({@link LinearRange}) Mb range.
      * @return this
      */
-    public GlobalCMTSearch setMbRange(ValueRange mbRange) {
+    public GlobalCMTSearch setMbRange(LinearRange mbRange) {
         this.mbRange = mbRange;
         return this;
     }
 
     /**
      * Set Ms range. Default: [0:10].
-     * @param msRange ({@link ValueRange}) Ms range.
+     * @param msRange ({@link LinearRange}) Ms range.
      * @return this
      */
-    public GlobalCMTSearch setMsRange(ValueRange msRange) {
+    public GlobalCMTSearch setMsRange(LinearRange msRange) {
         this.msRange = msRange;
         return this;
     }
 
     /**
      * Set Mw Range.  Default: [0:10].
-     * @param mwRange ({@link ValueRange}) Mw range.
+     * @param mwRange ({@link LinearRange}) Mw range.
      * @return this
      */
-    public GlobalCMTSearch setMwRange(ValueRange mwRange) {
+    public GlobalCMTSearch setMwRange(LinearRange mwRange) {
         this.mwRange = mwRange;
         return this;
     }
@@ -266,10 +266,10 @@ public class GlobalCMTSearch {
     /**
      * Set centroid timeshift range. Default: [-9999:9999].
      *
-     * @param centroidTimeShiftRange ({@link ValueRange}) Centroid timeshift range [s].
+     * @param centroidTimeShiftRange ({@link LinearRange}) Centroid timeshift range [s].
      * @return this
      */
-    public GlobalCMTSearch setCentroidTimeShiftRange(ValueRange centroidTimeShiftRange) {
+    public GlobalCMTSearch setCentroidTimeShiftRange(LinearRange centroidTimeShiftRange) {
         this.centroidTimeShiftRange = centroidTimeShiftRange;
         return this;
     }
@@ -277,30 +277,30 @@ public class GlobalCMTSearch {
     /**
      * Set half duration range. Default: [0:20].
      *
-     * @param halfDurationRange ({@link ValueRange}) Half duration range [s].
+     * @param halfDurationRange ({@link LinearRange}) Half duration range [s].
      * @return this
      */
-    public GlobalCMTSearch setHalfDurationRange(ValueRange halfDurationRange) {
+    public GlobalCMTSearch setHalfDurationRange(LinearRange halfDurationRange) {
         this.halfDurationRange = halfDurationRange;
         return this;
     }
 
     /**
      * Set tension axis plunge range. Default: [0:90].
-     * @param tensionAxisPlungeRange ({@link ValueRange}) Tension axis plunge range [deg].
+     * @param tensionAxisPlungeRange ({@link LinearRange}) Tension axis plunge range [deg].
      * @return this
      */
-    public GlobalCMTSearch setTensionAxisPlungeRange(ValueRange tensionAxisPlungeRange) {
+    public GlobalCMTSearch setTensionAxisPlungeRange(LinearRange tensionAxisPlungeRange) {
         this.tensionAxisPlungeRange = tensionAxisPlungeRange;
         return this;
     }
 
     /**
      * Set null axis plunge range. Default: [0:90].
-     * @param nullAxisPlungeRange ({@link ValueRange}) Null axis plunge range [deg].
+     * @param nullAxisPlungeRange ({@link LinearRange}) Null axis plunge range [deg].
      * @return this
      */
-    public GlobalCMTSearch setNullAxisPlungeRange(ValueRange nullAxisPlungeRange) {
+    public GlobalCMTSearch setNullAxisPlungeRange(LinearRange nullAxisPlungeRange) {
         this.nullAxisPlungeRange = nullAxisPlungeRange;
         return this;
     }
