@@ -103,7 +103,7 @@ interface WeightingFactor {
     };
     WeightingFactor LAMBDA = new WeightingFactor() {
         /**
-         * λの係数 i, j, k, l ={0, 1, 2}
+         * Coefficint for &lambda; i, j, k, l ={0, 1, 2}
          */
         @Override
         public double getFactor(int i, int j, int k, int l) {
@@ -123,7 +123,8 @@ interface WeightingFactor {
      */
     static final WeightingFactor KAPPA = new WeightingFactor() {
         /**
-         * λの係数 i, j, k, l ={0, 1, 2}
+         * Coefficint for &kappa;.<br>
+         * This is derived from chain rule; &part;u/&part;&kappa; = &part;u/&part;&lambda; + 1.5 &part;u/&part;&mu;
          */
         @Override
         public double getFactor(int i, int j, int k, int l) {
@@ -131,7 +132,7 @@ interface WeightingFactor {
             case LAMBDA:
                 return 1.;
             case LAMBDA2MU:
-                return 4.;
+                return 4.; // 1 + 1.5 * 2
             case MU:
                 return 1.5;
             default:
@@ -145,15 +146,16 @@ interface WeightingFactor {
      */
     static final WeightingFactor LAMBDA2MU = new WeightingFactor() {
         /**
-         * λの係数 i, j, k, l ={0, 1, 2}
-         */
+         * Coefficint for &lambda;+2&mu;.<br>
+         * This is derived from chain rule; &part;u/&part;(&lambda;+2&mu); = &part;u/&part;&lambda; + 0.5 &part;u/&part;&mu;
+         **/
         @Override
         public double getFactor(int i, int j, int k, int l) {
             switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
             case LAMBDA:
                 return 1.;
             case LAMBDA2MU:
-                return 2.;
+                return 2.; // 1 + 0.5 * 2
             case MU:
                 return .5;
             default:
