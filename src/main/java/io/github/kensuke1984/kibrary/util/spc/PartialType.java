@@ -95,6 +95,8 @@ public enum PartialType {
             case RHO: return PartialType.RHO1D;
             case LAMBDA: return PartialType.LAMBDA1D;
             case MU: return PartialType.MU1D;
+            case KAPPA: return PartialType.KAPPA1D;
+            case LAMBDA2MU: return PartialType.LAMBDA2MU1D;
             case A: return PartialType.A1D;
             case C: return PartialType.C1D;
             case F: return PartialType.F1D;
@@ -107,6 +109,8 @@ public enum PartialType {
             case RHO: return PartialType.RHO3D;
             case LAMBDA: return PartialType.LAMBDA3D;
             case MU: return PartialType.MU3D;
+            case KAPPA: return PartialType.KAPPA3D;
+            case LAMBDA2MU: return PartialType.LAMBDA2MU3D;
             case A: return PartialType.A3D;
             case C: return PartialType.C3D;
             case F: return PartialType.F3D;

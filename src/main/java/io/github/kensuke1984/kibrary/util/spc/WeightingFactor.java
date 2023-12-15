@@ -103,7 +103,7 @@ interface WeightingFactor {
     };
     WeightingFactor LAMBDA = new WeightingFactor() {
         /**
-         * Coefficint for &lambda; i, j, k, l ={0, 1, 2}
+         * Coefficint for &lambda;
          */
         @Override
         public double getFactor(int i, int j, int k, int l) {
