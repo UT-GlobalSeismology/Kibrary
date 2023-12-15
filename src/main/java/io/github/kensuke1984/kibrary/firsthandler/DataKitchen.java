@@ -33,12 +33,12 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * <p>
  * See also {@link EventProcessor}.
  * <p>
- * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
- * <p>
+ *
  * TODO NPTSで合わないものを捨てる？
  *
- * @since 2021/09/14
  * @author otsuru
+ * @since 2021/09/14
+ * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  */
 public class DataKitchen extends Operation {
 
@@ -102,23 +102,23 @@ public class DataKitchen extends Operation {
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
-            pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:maxDistance). (0)");
+            pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance 70");
-            pw.println("##Upper limit of epicentral distance range [deg], exclusive; (minDistance:180]. (180)");
+            pw.println("##Upper limit of epicentral distance range [deg], exclusive; (lowerDistance:180]. (180)");
             pw.println("#upperDistance 100");
-            pw.println("##Lower limit of station latitude [deg], inclusive; [-90:maxLatitude). (-90)");
+            pw.println("##Lower limit of station latitude [deg], inclusive; [-90:upperLatitude). (-90)");
             pw.println("#lowerLatitude ");
-            pw.println("##Upper limit of station latitude [deg], exclusive; (minLatitude:90]. (90)");
+            pw.println("##Upper limit of station latitude [deg], exclusive; (lowerLatitude:90]. (90)");
             pw.println("#upperLatitude ");
-            pw.println("##Lower limit of station longitude [deg], inclusive; [-180:maxLongitude). (-180)");
+            pw.println("##Lower limit of station longitude [deg], inclusive; [-180:360]. (-180)");
             pw.println("#lowerLongitude ");
-            pw.println("##Upper limit of station longitude [deg], exclusive; (minLongitude:360]. (180)");
+            pw.println("##Upper limit of station longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
-            pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
+            pw.println("##  If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid ");
             pw.println("##(double) The maximum length of output time series. (3276.8)");
-            pw.println("## This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
+            pw.println("##  This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
             pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");
             pw.println("##(boolean) Whether to remove intermediate files. (true)");
