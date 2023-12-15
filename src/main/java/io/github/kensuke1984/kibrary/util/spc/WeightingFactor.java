@@ -147,7 +147,7 @@ interface WeightingFactor {
     static final WeightingFactor LAMBDA2MU = new WeightingFactor() {
         /**
          * Coefficint for &lambda;+2&mu;.<br>
-         * This is derived from chain rule; &part;u/&part;(&lambda;+2&mu); = &part;u/&part;&lambda; + 0.5 &part;u/&part;&mu;
+         * This is derived from chain rule; &part;u/&part;(&lambda;+2&mu;) = &part;u/&part;&lambda; + 0.5 &part;u/&part;&mu;
          **/
         @Override
         public double getFactor(int i, int j, int k, int l) {
