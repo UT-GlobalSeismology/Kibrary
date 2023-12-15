@@ -313,7 +313,7 @@ public final class PartialIDFile {
                 .desc("The input partial waveform folder (.)").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file.").build());
         return options;
     }
 

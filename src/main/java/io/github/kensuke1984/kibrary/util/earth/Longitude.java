@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * Longitude [-180, 180).
  * The value is rounded off to the 4th decimal place.
  * <p>
- * The input can be in range [-180, 360).
+ * The input can be in range [-180, 360].
  * If you input 200, then the value is considered to be -160.
  * <p>
  * This class is <b>IMMUTABLE</b>.
@@ -24,38 +24,39 @@ final class Longitude implements Comparable<Longitude> {
     static final int PRECISION = 4;
 
     /**
-     * [-180, 180) geographic longitude [deg]
+     * [-180:180) geographic longitude [deg]
      */
     private final double longitude;
 
     /**
-     * [-&pi;, &pi;) &phi; in spherical coordinates [rad]
+     * [-&pi;:&pi;) &phi; in spherical coordinates [rad]
      */
     private final double phi;
 
     /**
-     * @param longitude [deg] [-180, 360)
+     * @param longitude (double) Longitude [deg]; [-180:360].
      */
     Longitude(double longitude) {
-        if (!withinValidRange(longitude)) throw new IllegalArgumentException(
-                "The input longitude: " + longitude + " is invalid (must be in [-180, 360)).");
-
-        if (180 <= longitude) {
-            this.longitude = Precision.round(longitude - 360, PRECISION);
-        } else {
-            this.longitude = Precision.round(longitude, PRECISION);
-        }
+        // switch to range [-180:180) after rounding
+        double fixedLongitude = fix(Precision.round(longitude, PRECISION));
+        // round again to eliminate computation error
+        this.longitude = Precision.round(fixedLongitude, PRECISION);
+        // [deg] to [rad]
         phi = FastMath.toRadians(this.longitude);
     }
 
     /**
-     * check if the longitude is within [-180, 360)
+     * Fix longitude from range [-180:360] to range [-180:180).
+     * @param longitude (double) Longitude [deg] in [-180:360].
+     * @return (double) Longitude [deg] in [-180:180).
      *
-     * @param longitude [deg]
-     * @return if the longitude is valid
+     * @author otsuru
+     * @since 2023/12/4
      */
-    private static boolean withinValidRange(double longitude) {
-        return -180 <= longitude && longitude < 360;
+    static double fix(double longitude) {
+        if (longitude < -180 || 360 < longitude)
+            throw new IllegalArgumentException("The input longitude " + longitude + " is invalid (must be in [-180:360)).");
+        return (180 <= longitude) ? longitude - 360 : longitude;
     }
 
     @Override

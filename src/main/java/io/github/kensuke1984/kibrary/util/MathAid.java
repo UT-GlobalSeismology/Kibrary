@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.time.LocalDate;
+
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
@@ -232,23 +234,17 @@ public final class MathAid {
     }
 
     /**
-     * Check if an angle is within a specified range.
-     * @param angle [0:360)
-     * @param lower [-360:upper)
-     * @param upper (lower:360]
-     * @return (boolean) true if "angle" is within the range set by "lower" and "upper"
+     * Check if a date range is valid (i.e. first value &lt;= second value).
+     * Note that the date range includes the end date.
+     * @param startDate (LocalDate) Date that is supposed to be start of range.
+     * @param endDate (LocalDate) Date that is supposed to be end of range.
+     *
+     * @author otsuru
+     * @since 2023/12/4
      */
-    public static boolean checkAngleRange(double angle, double lower, double upper) {
-        if (angle < 0 || 360 <= angle || lower < -360 || upper < lower || 360 < upper) {
-            throw new IllegalArgumentException("The input angles " + angle + "," + lower + "," + upper + " are invalid.");
-        }
-
-        // In the following, the third part is for the case of angle==0
-        if ((lower <= angle && angle <= upper) || (lower+360 <= angle && angle <= upper+360) || (lower-360 <= angle && angle <= upper-360)) {
-            return true;
-        } else {
-            return false;
-        }
+    public static void checkDateRangeValidity(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate))
+            throw new IllegalArgumentException("Date range [" + startDate + ":" + endDate + "] is invalid.");
     }
 
 }

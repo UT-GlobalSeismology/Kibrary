@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -107,8 +108,8 @@ public class PolynomialStructurePerturber extends Operation {
 
         lowerRadius = property.parseDouble("lowerRadius", "3480");
         upperRadius = property.parseDouble("upperRadius", "3580");
-        if (lowerRadius < 0 || lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+        LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
+
         variable = VariableType.valueOf(property.parseString("variable", "Vs"));
         percent = property.parseDouble("percent", "2");
     }

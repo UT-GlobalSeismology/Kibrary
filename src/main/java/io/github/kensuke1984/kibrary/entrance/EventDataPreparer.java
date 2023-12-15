@@ -113,11 +113,12 @@ class EventDataPreparer {
         URL url = new URL(urlString);
 
         try {
-            System.err.println(" ~ Downloading mseed file ...");
+            System.err.print(" ~ Downloading mseed file ...");
             Files.createDirectories(mseedSetPath);
             Path mseedPath = mseedSetPath.resolve(mseedFileName);
             double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println(" ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
+            System.err.println("\r ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB  "
+                    + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;

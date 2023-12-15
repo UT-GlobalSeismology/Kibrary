@@ -24,10 +24,11 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -133,10 +134,8 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private String structureName;
 
-    private double lowerDistance;
-    private double upperDistance;
-    private double lowerAzimuth;
-    private double upperAzimuth;
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
 
     private int mainSynStyle;
     private String mainSynName;
@@ -205,13 +204,13 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#reductionSlowness ");
             pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
             pw.println("#structureName ");
-            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg]; [0:upperDistance). (0)");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance ");
-            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg]; (lowerDistance:180] .(180)");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180] .(180)");
             pw.println("#upperDistance ");
-            pw.println("##(double) Lower limit of range of azimuth to be used [deg]; [-360:upperAzimuth). (0)");
+            pw.println("##(double) Lower limit of range of azimuth to be used [deg]; [-180:360], inclusive. (0)");
             pw.println("#lowerAzimuth ");
-            pw.println("##(double) Upper limit of range of azimuth to be used [deg]; (lowerAzimuth:360]. (360)");
+            pw.println("##(double) Upper limit of range of azimuth to be used [deg]; [-180:360], exclusive. (360)");
             pw.println("#upperAzimuth ");
             pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue}. (1)");
             pw.println("#mainSynStyle 2");
@@ -266,15 +265,13 @@ public class BasicBinnedStackCreator extends Operation {
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
         structureName = property.parseString("structureName", "prem").toLowerCase();
 
-        lowerDistance = property.parseDouble("lowerDistance", "0");
-        upperDistance = property.parseDouble("upperDistance", "180");
-        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
-            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
-        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
-        upperAzimuth = property.parseDouble("upperAzimuth", "360");
-        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
-            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
 
         mainSynStyle = property.parseInt("mainSynStyle", "1");
         mainSynName = property.parseString("mainSynName", "synthetic");
@@ -436,8 +433,7 @@ public class BasicBinnedStackCreator extends Operation {
                         .computeAzimuthDeg(obsID.getObserver().getPosition());
 
                 // skip waveform if distance or azimuth is out of bounds
-                if (distance < lowerDistance || upperDistance < distance
-                        || MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                if (distanceRange.check(distance) == false || azimuthRange.check(azimuth) == false) {
                     continue;
                 }
 

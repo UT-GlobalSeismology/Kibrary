@@ -15,9 +15,10 @@ import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -64,50 +65,38 @@ public class RaypathSelection extends Operation {
      */
     private boolean eliminationMode;
 
-    private double lowerEventMw;
-    private double upperEventMw;
     /**
-     * not radius but distance from the surface
+     * Moment magnitude range.
      */
-    private double lowerEventDepth;
+    private LinearRange eventMwRange;
     /**
-     * not radius but distance from the surface
+     * DEPTH range [km].
      */
-    private double upperEventDepth;
-    private double lowerEventLatitude;
-    private double upperEventLatitude;
-    private double lowerEventLongitude;
-    private double upperEventLongitude;
-    private double lowerObserverLatitude;
-    private double upperObserverLatitude;
-    private double lowerObserverLongitude;
-    private double upperObserverLongitude;
-    private double lowerTurningLatitude;
-    private double upperTurningLatitude;
-    private double lowerTurningLongitude;
-    private double upperTurningLongitude;
-    private double lowerDistance;
-    private double upperDistance;
-    private double lowerAzimuth;
-    private double upperAzimuth;
-    private double lowerBackAzimuth;
-    private double upperBackAzimuth;
-    private double lowerTurningAzimuth;
-    private double upperTurningAzimuth;
+    private LinearRange eventDepthRange;
+    private LinearRange eventLatitudeRange;
+    private CircularRange eventLongitudeRange;
+    private LinearRange observerLatitudeRange;
+    private CircularRange observerLongitudeRange;
+    private LinearRange turningLatitudeRange;
+    private CircularRange turningLongitudeRange;
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
+    private CircularRange backAzimuthRange;
+    private CircularRange turningAzimuthRange;
     /**
-     * Whether criteria for turning point position exists
+     * Whether criteria for turning point position exists.
      */
     private boolean selectTurningPosition;
     /**
-     * Whether criteria for turning point azimuth exists
+     * Whether criteria for turning point azimuth exists.
      */
     private boolean selectTurningAzimuth;
     /**
-     * Name of structure to use for calculating turning point
+     * Name of structure to use for calculating turning point.
      */
     private String structureName;
     /**
-     * Phase to use when computing turning point
+     * Phase to use when computing turning point.
      */
     private String turningPointPhase;
 
@@ -138,56 +127,56 @@ public class RaypathSelection extends Operation {
             pw.println("#eliminationMode ");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");
             pw.println("##########Selection criteria of events##########");
-            pw.println("##(double) Lower limit of Mw; (:upperEventMw). (0)");
+            pw.println("##(double) Lower limit of Mw, inclusive; (:upperEventMw). (0)");
             pw.println("#lowerEventMw ");
-            pw.println("##(double) Upper limit of Mw; (lowerEventMw:). (10)");
+            pw.println("##(double) Upper limit of Mw, exclusive; (lowerEventMw:). (10)");
             pw.println("#upperEventMw ");
-            pw.println("##(double) Shallower limit of event DEPTH [km]; (:upperEventDepth). (0)");
+            pw.println("##(double) Shallower limit of event DEPTH [km], inclusive; (:upperEventDepth). (0)");
             pw.println("#lowerEventDepth ");
-            pw.println("##(double) Deeper limit of event DEPTH [km]; (lowerEventDepth:). (1000)");
+            pw.println("##(double) Deeper limit of event DEPTH [km], exclusive; (lowerEventDepth:). (1000)");
             pw.println("#upperEventDepth ");
-            pw.println("##(double) Lower limit of event latitude [deg]; [-90:upperEventLatitude). (-90)");
+            pw.println("##(double) Lower limit of event latitude [deg], inclusive; [-90:upperEventLatitude). (-90)");
             pw.println("#lowerEventLatitude ");
-            pw.println("##(double) Upper limit of event latitude [deg]; (lowerEventLatitude:90]. (90)");
+            pw.println("##(double) Upper limit of event latitude [deg], exclusive; (lowerEventLatitude:90]. (90)");
             pw.println("#upperEventLatitude ");
-            pw.println("##(double) Lower limit of event longitude [deg]; [-180:upperEventLongitude). (-180)");
+            pw.println("##(double) Lower limit of event longitude [deg], inclusive; [-180:360]. (-180)");
             pw.println("#lowerEventLongitude ");
-            pw.println("##(double) Upper limit of event longitude [deg]; (lowerEventLongitude:360]. (180)");
+            pw.println("##(double) Upper limit of event longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperEventLongitude ");
             pw.println("##########Selection criteria of observers##########");
-            pw.println("##(double) Lower limit of observer latitude [deg]; [-90:upperObserverLatitude). (-90)");
+            pw.println("##(double) Lower limit of observer latitude [deg], inclusive; [-90:upperObserverLatitude). (-90)");
             pw.println("#lowerObserverLatitude ");
-            pw.println("##(double) Upper limit of observer latitude [deg]; (lowerObserverLatitude:90]. (90)");
+            pw.println("##(double) Upper limit of observer latitude [deg], exclusive; (lowerObserverLatitude:90]. (90)");
             pw.println("#upperObserverLatitude ");
-            pw.println("##(double) Lower limit of observer longitude [deg]; [-180:upperObserverLongitude). (-180)");
+            pw.println("##(double) Lower limit of observer longitude [deg], inclusive; [-180:360]. (-180)");
             pw.println("#lowerObserverLongitude ");
-            pw.println("##(double) Upper limit of observer longitude [deg]; (lowerObserverLongitude:360]. (180)");
+            pw.println("##(double) Upper limit of observer longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperObserverLongitude ");
             pw.println("##########Selection criteria of turning points##########");
-            pw.println("##(double) Lower limit of turning point latitude [deg]; [-90:upperTurningLatitude). (-90)");
+            pw.println("##(double) Lower limit of turning point latitude [deg], inclusive; [-90:upperTurningLatitude). (-90)");
             pw.println("#lowerTurningLatitude ");
-            pw.println("##(double) Upper limit of turning point latitude [deg]; (lowerTurningLatitude:90]. (90)");
+            pw.println("##(double) Upper limit of turning point latitude [deg], exclusive; (lowerTurningLatitude:90]. (90)");
             pw.println("#upperTurningLatitude ");
-            pw.println("##(double) Lower limit of turning point longitude [deg]; [-180:upperTurningLongitude). (-180)");
+            pw.println("##(double) Lower limit of turning point longitude [deg], inclusive; [-180:360]. (-180)");
             pw.println("#lowerTurningLongitude ");
-            pw.println("##(double) Upper limit of turning point longitude [deg]; (lowerTurningLongitude:360]. (180)");
+            pw.println("##(double) Upper limit of turning point longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperTurningLongitude ");
             pw.println("##########Selection criteria of raypaths##########");
-            pw.println("##(double) Lower limit of epicentral distance range [deg]; [0:upperDistance). (0)");
+            pw.println("##(double) Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance 70");
-            pw.println("##(double) Upper limit of epicentral distance range [deg]; (lowerDistance:180]. (180)");
+            pw.println("##(double) Upper limit of epicentral distance range [deg], exclusive; (lowerDistance:180]. (180)");
             pw.println("#upperDistance 100");
-            pw.println("##(double) Lower limit of azimuth range [deg]; [-360:upperAzimuth). (0)");
+            pw.println("##(double) Lower limit of azimuth range [deg], inclusive; [-180:360]. (0)");
             pw.println("#lowerAzimuth ");
-            pw.println("##(double) Upper limit of azimuth range [deg]; (lowerAzimuth:360]. (360)");
+            pw.println("##(double) Upper limit of azimuth range [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperAzimuth ");
-            pw.println("##(double) Lower limit of back azimuth range [deg]; [-360:upperBackAzimuth). (0)");
+            pw.println("##(double) Lower limit of back azimuth range [deg], inclusive; [-180:360]. (0)");
             pw.println("#lowerBackAzimuth ");
-            pw.println("##(double) Upper limit of back azimuth range [deg]; (lowerBackAzimuth:360]. (360)");
+            pw.println("##(double) Upper limit of back azimuth range [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperBackAzimuth ");
-            pw.println("##(double) Lower limit of turning point azimuth range [deg]; [-360:upperTurningAzimuth). (0)");
+            pw.println("##(double) Lower limit of turning point azimuth range [deg], inclusive; [-180:360]. (0)");
             pw.println("#lowerTurningAzimuth ");
-            pw.println("##(double) Upper limit of turning point azimuth range [deg]; (lowerTurningAzimuth:360]. (360)");
+            pw.println("##(double) Upper limit of turning point azimuth range [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperTurningAzimuth ");
             pw.println("##########When criteria for turning points are set, the following is used:##########");
             pw.println("##(String) Name of structure to use for calculating turning point. (prem)");
@@ -212,65 +201,53 @@ public class RaypathSelection extends Operation {
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         eliminationMode = property.parseBoolean("eliminationMode", "false");
 
-        lowerEventMw = property.parseDouble("lowerMw", "0.");
-        upperEventMw = property.parseDouble("upperMw", "10.");
-        if (lowerEventMw > upperEventMw)
-            throw new IllegalArgumentException("Event magnitude range " + lowerEventMw + " , " + upperEventMw + " is invalid.");
-        lowerEventDepth = property.parseDouble("lowerEventDepth", "0");
-        upperEventDepth = property.parseDouble("upperEventDepth", "1000");
-        if (lowerEventDepth > upperEventDepth)
-            throw new IllegalArgumentException("Event depth range " + lowerEventDepth + " , " + upperEventDepth + " is invalid.");
-        lowerEventLatitude = property.parseDouble("lowerEventLatitude", "-90");
-        upperEventLatitude = property.parseDouble("upperEventLatitude", "90");
-        if (lowerEventLatitude < -90 || lowerEventLatitude > upperEventLatitude || 90 < upperEventLatitude)
-            throw new IllegalArgumentException("Event latitude range " + lowerEventLatitude + " , " + upperEventLatitude + " is invalid.");
-        lowerEventLongitude = property.parseDouble("lowerEventLongitude", "-180");
-        upperEventLongitude = property.parseDouble("upperEventLongitude", "180");
-        if (lowerEventLongitude < -180 || lowerEventLongitude > upperEventLongitude || 360 < upperEventLongitude)
-            throw new IllegalArgumentException("Event longitude range " + lowerEventLongitude + " , " + upperEventLongitude + " is invalid.");
+        double lowerEventMw = property.parseDouble("lowerMw", "0.");
+        double upperEventMw = property.parseDouble("upperMw", "10.");
+        eventMwRange = new LinearRange("Event magnitude", lowerEventMw, upperEventMw);
+        double lowerEventDepth = property.parseDouble("lowerEventDepth", "0");
+        double upperEventDepth = property.parseDouble("upperEventDepth", "1000");
+        eventDepthRange = new LinearRange("Event depth", lowerEventDepth, upperEventDepth);
+        double lowerEventLatitude = property.parseDouble("lowerEventLatitude", "-90");
+        double upperEventLatitude = property.parseDouble("upperEventLatitude", "90");
+        eventLatitudeRange = new LinearRange("Event latitude", lowerEventLatitude, upperEventLatitude, -90.0, 90.0);
+        double lowerEventLongitude = property.parseDouble("lowerEventLongitude", "-180");
+        double upperEventLongitude = property.parseDouble("upperEventLongitude", "180");
+        eventLongitudeRange = new CircularRange("Event longitude", lowerEventLongitude, upperEventLongitude, -180.0, 360.0);
 
-        lowerObserverLatitude = property.parseDouble("lowerObserverLatitude", "-90");
-        upperObserverLatitude = property.parseDouble("upperObserverLatitude", "90");
-        if (lowerObserverLatitude < -90 || lowerObserverLatitude > upperObserverLatitude || 90 < upperObserverLatitude)
-            throw new IllegalArgumentException("Observer latitude range " + lowerObserverLatitude + " , " + upperObserverLatitude + " is invalid.");
-        lowerObserverLongitude = property.parseDouble("lowerObserverLongitude", "-180");
-        upperObserverLongitude = property.parseDouble("upperObserverLongitude", "180");
-        if (lowerObserverLongitude < -180 || lowerObserverLongitude > upperObserverLongitude || 360 < upperObserverLongitude)
-            throw new IllegalArgumentException("Observer longitude range " + lowerObserverLongitude + " , " + upperObserverLongitude + " is invalid.");
+        double lowerObserverLatitude = property.parseDouble("lowerObserverLatitude", "-90");
+        double upperObserverLatitude = property.parseDouble("upperObserverLatitude", "90");
+        observerLatitudeRange = new LinearRange("Observer latitude", lowerObserverLatitude, upperObserverLatitude, -90.0, 90.0);
+        double lowerObserverLongitude = property.parseDouble("lowerObserverLongitude", "-180");
+        double upperObserverLongitude = property.parseDouble("upperObserverLongitude", "180");
+        observerLongitudeRange = new CircularRange("Observer longitude", lowerObserverLongitude, upperObserverLongitude, -180.0, 360.0);
 
         if (property.containsKey("lowerTurningLatitude") || property.containsKey("upperTurningLatitude") ||
                 property.containsKey("lowerTurningLongitude") || property.containsKey("upperTurningLongitude")) {
             selectTurningPosition = true;
         }
-        lowerTurningLatitude = property.parseDouble("lowerTurningLatitude", "-90");
-        upperTurningLatitude = property.parseDouble("upperTurningLatitude", "90");
-        if (lowerTurningLatitude < -90 || lowerTurningLatitude > upperTurningLatitude || 90 < upperTurningLatitude)
-            throw new IllegalArgumentException("Turning point latitude range " + lowerTurningLatitude + " , " + upperTurningLatitude + " is invalid.");
-        lowerTurningLongitude = property.parseDouble("lowerTurningLongitude", "-180");
-        upperTurningLongitude = property.parseDouble("upperTurningLongitude", "180");
-        if (lowerTurningLongitude < -180 || lowerTurningLongitude > upperTurningLongitude || 360 < upperTurningLongitude)
-            throw new IllegalArgumentException("Turning point longitude range " + lowerTurningLongitude + " , " + upperTurningLongitude + " is invalid.");
+        double lowerTurningLatitude = property.parseDouble("lowerTurningLatitude", "-90");
+        double upperTurningLatitude = property.parseDouble("upperTurningLatitude", "90");
+        turningLatitudeRange = new LinearRange("Turning point latitude", lowerTurningLatitude, upperTurningLatitude, -90.0, 90.0);
+        double lowerTurningLongitude = property.parseDouble("lowerTurningLongitude", "-180");
+        double upperTurningLongitude = property.parseDouble("upperTurningLongitude", "180");
+        turningLongitudeRange = new CircularRange("Turning point longitude", lowerTurningLongitude, upperTurningLongitude, -180.0, 360.0);
 
-        lowerDistance = property.parseDouble("lowerDistance", "0");
-        upperDistance = property.parseDouble("upperDistance", "180");
-        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
-            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
-        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
-        upperAzimuth = property.parseDouble("upperAzimuth", "360");
-        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
-            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
-        lowerBackAzimuth = property.parseDouble("lowerBackAzimuth", "0");
-        upperBackAzimuth = property.parseDouble("upperBackAzimuth", "360");
-        if (lowerBackAzimuth < -360 || lowerBackAzimuth > upperBackAzimuth || 360 < upperBackAzimuth)
-            throw new IllegalArgumentException("Back-azimuth range " + lowerBackAzimuth + " , " + upperBackAzimuth + " is invalid.");
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
+        double lowerBackAzimuth = property.parseDouble("lowerBackAzimuth", "0");
+        double upperBackAzimuth = property.parseDouble("upperBackAzimuth", "360");
+        backAzimuthRange = new CircularRange("Back azimuth", lowerBackAzimuth, upperBackAzimuth, -180.0, 360.0);
 
         if (property.containsKey("lowerTurningAzimuth") || property.containsKey("upperTurningAzimuth")) {
             selectTurningAzimuth = true;
         }
-        lowerTurningAzimuth = property.parseDouble("lowerTurningAzimuth", "0");
-        upperTurningAzimuth = property.parseDouble("upperTurningAzimuth", "360");
-        if (lowerTurningAzimuth < -360 || lowerTurningAzimuth > upperTurningAzimuth || 360 < upperTurningAzimuth)
-            throw new IllegalArgumentException("Turning point azimuth range " + lowerTurningAzimuth + " , " + upperTurningAzimuth + " is invalid.");
+        double lowerTurningAzimuth = property.parseDouble("lowerTurningAzimuth", "0");
+        double upperTurningAzimuth = property.parseDouble("upperTurningAzimuth", "360");
+        turningAzimuthRange = new CircularRange("Turning point azimuth", lowerTurningAzimuth, upperTurningAzimuth, -180.0, 360.0);
 
         structureName = property.parseString("structureName", "prem");
         turningPointPhase = property.parseString("turningPointPhase", "ScS");
@@ -304,7 +281,7 @@ public class RaypathSelection extends Operation {
 
             // observer position
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
-            if (observerPosition.isInRange(lowerObserverLatitude, upperObserverLatitude, lowerObserverLongitude, upperObserverLongitude)
+            if (observerPosition.isInRange(observerLatitudeRange, observerLongitudeRange)
                     == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
@@ -314,11 +291,10 @@ public class RaypathSelection extends Operation {
 
             // event magnitude and position
             double eventMw = entry.getEvent().getEventData().getCmt().getMw();
-            boolean magnitudeCheck = (lowerEventMw <= eventMw && eventMw <= upperEventMw);
+            boolean magnitudeCheck = eventMwRange.check(eventMw);
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
-            boolean horizontalCheck = eventPosition.isInRange(lowerEventLatitude, upperEventLatitude, lowerEventLongitude, upperEventLongitude);
-            double depth = eventPosition.getDepth();
-            boolean verticalCheck = (lowerEventDepth <= depth && depth <= upperEventDepth);
+            boolean horizontalCheck = eventPosition.isInRange(eventLatitudeRange, eventLongitudeRange);
+            boolean verticalCheck = eventDepthRange.check(eventPosition.getDepth());
             if ((magnitudeCheck && horizontalCheck && verticalCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
@@ -328,11 +304,11 @@ public class RaypathSelection extends Operation {
 
             // distance, azimuth, back-azimuth
             double distance = eventPosition.computeEpicentralDistanceRad(observerPosition) * 180. / Math.PI;
-            boolean distanceCheck = (lowerDistance <= distance && distance <= upperDistance);
+            boolean distanceCheck = distanceRange.check(distance);
             double azimuth = eventPosition.computeAzimuthRad(observerPosition) * 180. / Math.PI;
-            boolean azimuthCheck = MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth);
+            boolean azimuthCheck = azimuthRange.check(azimuth);
             double backAzimuth = eventPosition.computeBackAzimuthRad(observerPosition) * 180. / Math.PI;
-            boolean backAzimuthCheck = MathAid.checkAngleRange(backAzimuth, lowerBackAzimuth, upperBackAzimuth);
+            boolean backAzimuthCheck = backAzimuthRange.check(backAzimuth);
             if ((distanceCheck && azimuthCheck && backAzimuthCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
@@ -350,9 +326,9 @@ public class RaypathSelection extends Operation {
                     // When there are multiple bottoming points for a raypath, the first one is used.
                     // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
                     FullPosition turningPosition = pierceTool.get(entry, 0).findTurningPoint(0);
-                    turningPositionCheck = turningPosition.isInRange(lowerTurningLatitude, upperTurningLatitude, lowerTurningLongitude, upperTurningLongitude);
+                    turningPositionCheck = turningPosition.isInRange(turningLatitudeRange, turningLongitudeRange);
                     double turningAzimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
-                    turningAzimuthCheck = MathAid.checkAngleRange(turningAzimuth, lowerTurningAzimuth, upperTurningAzimuth);
+                    turningAzimuthCheck = turningAzimuthRange.check(turningAzimuth);
                 }
                 if ((turningPositionCheck && turningAzimuthCheck) == false) {
                     if (eliminationMode) {
