@@ -215,7 +215,7 @@ public class Interpolation {
         throw new IllegalArgumentException("Value not found for x=" + x + " in Trace list.");
     }
 
-    public static List<Trace> splitTraceAtGaps(Trace trace, double margin) {
+    private static List<Trace> splitTraceAtGaps(Trace trace, double margin) {
         List<Trace> traceList = new ArrayList<>();
         int iStart = 0;
         // from i=1, check if [x(i-1),x(i)] is much larger than margin*2

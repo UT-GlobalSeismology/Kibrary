@@ -57,7 +57,7 @@ public class EventListFile {
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            pw.println("# GCMTID latitude longitude radius depth Mw");
+            pw.println("# GCMTID latitude longitude radius depth");
             eventSet.stream().sorted().forEach(event -> {
                 pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition()
                          + " " + event.getEventData().getCmtPosition().getDepth());

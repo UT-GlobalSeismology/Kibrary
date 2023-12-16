@@ -155,7 +155,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
                 + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
     }
 
