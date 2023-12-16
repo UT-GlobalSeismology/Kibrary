@@ -18,6 +18,12 @@ import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
+/**
+ * Operation that creates a cross section from a {@link PerturbationListFile}.
+ *
+ * @author otsuru
+ * @since 2023/3/24
+ */
 public class CrossSectionCreator extends Operation {
 
     private final Property property;
@@ -45,25 +51,61 @@ public class CrossSectionCreator extends Operation {
     private double pos0Longitude;
     private double pos1Latitude;
     private double pos1Longitude;
+    /**
+     * Distance of the starting point along arc before position 0.
+     */
     private double beforePos0Deg;
+    /**
+     * Distance of the ending point along arc after either position 0 or position 1.
+     */
     private double afterPosDeg;
+    /**
+     * Whether the ending point should be decided with respect to position 0 or position 1.
+     */
     private boolean useAfterPos1;
 
+    /**
+     * Radius of zero point of vertical axis.
+     */
     private double zeroPointRadius;
+    /**
+     * Name of zero point of vertical axis. (ex. "CMB")
+     */
     private String zeroPointName;
+    /**
+     * Whether to flip vertical axis.
+     */
     private boolean flipVerticalAxis;
 
+    /**
+     * Latitude margin at both ends of region.
+     */
     private double marginLatitudeRaw;
+    /**
+     * Whether marginLatitudeRaw is set in [km] or [deg].
+     */
     private boolean setMarginLatitudeByKm;
+    /**
+     * Longitude margin at both ends of region.
+     */
     private double marginLongitudeRaw;
+    /**
+     * Whether marginLongitudeRaw is set in [km] or [deg].
+     */
     private boolean setMarginLongitudeByKm;
+    /**
+     * Radius margin at both ends of region [km].
+     */
     private double marginRadius;
 
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    /**
+     * Threshold for mask.
+     */
     private double maskThreshold;
 
     /**

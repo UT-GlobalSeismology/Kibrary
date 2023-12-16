@@ -39,6 +39,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -610,7 +611,9 @@ public class ActualWaveformCompiler extends Operation {
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-            int npts = (int) Math.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
+            //TODO delete following line by using Trace.resampleInWindow()
+            int npts = (int) MathAid.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
+
             double startTime = timewindow.getStartTime();
             double shift = 0;
             double ratio = 1;

@@ -83,21 +83,53 @@ public class PartialsMovieMaker extends Operation {
     private double pos0Longitude;
     private double pos1Latitude;
     private double pos1Longitude;
+    /**
+     * Distance of the starting point along arc before position 0.
+     */
     private double beforePos0Deg;
+    /**
+     * Distance of the ending point along arc after either position 0 or position 1.
+     */
     private double afterPosDeg;
+    /**
+     * Whether the ending point should be decided with respect to position 0 or position 1.
+     */
     private boolean useAfterPos1;
 
+    /**
+     * Radius of zero point of vertical axis.
+     */
     private double zeroPointRadius;
+    /**
+     * Name of zero point of vertical axis. (ex. "CMB")
+     */
     private String zeroPointName;
+    /**
+     * Whether to flip vertical axis.
+     */
     private boolean flipVerticalAxis;
 
+    /**
+     * Latitude margin at both ends of region.
+     */
     private double marginLatitudeRaw;
+    /**
+     * Whether marginLatitudeRaw is set in [km] or [deg].
+     */
     private boolean setMarginLatitudeByKm;
+    /**
+     * Longitude margin at both ends of region.
+     */
     private double marginLongitudeRaw;
+    /**
+     * Whether marginLongitudeRaw is set in [km] or [deg].
+     */
     private boolean setMarginLongitudeByKm;
+    /**
+     * Radius margin at both ends of region [km].
+     */
     private double marginRadius;
 
-//    private double amplification;
     private double scale;
     /**
      * Whether to display map as mosaic without smoothing
@@ -325,7 +357,7 @@ public class PartialsMovieMaker extends Operation {
                             }
 
                             // write shellscript to map each snapshot and convert them to gif movie
-                            String scaleLabel = "dU/d" + variableType + " \\(normalized\\)";
+                            String scaleLabel = "@%12%\\266@%%U/@%12%\\266@%%" + variableType + " (normalized)";
                             worker.writeScripts(scaleLabel, seriesPath);
                             writeParentShellScript(fileNameRoot, seriesPath.resolve(fileNameRoot + "Movie.sh"));
                         }

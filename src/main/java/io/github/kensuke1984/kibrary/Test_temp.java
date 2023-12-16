@@ -14,9 +14,11 @@ public class Test_temp {
         System.err.println(MathAid.padToString(-234, 4, false));
         System.err.println(MathAid.padToString(-234, 6, false));
         System.err.println(MathAid.padToString(-234, 6, true));
+        System.err.println();
         System.err.println(MathAid.padToString(-234.567, 6, 1, true));
         System.err.println(MathAid.padToString(-234.567, 1, 4, true));
         System.err.println(MathAid.padToString(-234.567, 6, 0, false));
+        System.err.println(MathAid.padToString(-234.567, 6, 0, true, "d"));
         System.err.println(MathAid.padToString(-234.567, 6, 2, false, "d"));
         System.err.println(MathAid.roundToString(-234.567, 2, "d"));
         System.err.println(MathAid.roundToString(-234.567, 2));
