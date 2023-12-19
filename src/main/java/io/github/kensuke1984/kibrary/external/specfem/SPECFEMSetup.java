@@ -81,7 +81,7 @@ public class SPECFEMSetup {
         } else {
             int i = 1;
             for (EventFolder eventDir : eventDirs) {
-                Path runPath = outPath.resolve("run" + MathAid.padToString(i++, 4, "0"));
+                Path runPath = outPath.resolve("run" + MathAid.padToString(i++, 4, true));
                 createRunDirectory(runPath, eventDir);
             }
 
@@ -142,7 +142,7 @@ public class SPECFEMSetup {
         double latitude = event.getCmtPosition().getLatitude();
         double longitude = event.getCmtPosition().getLongitude();
         double depth = event.getCmtPosition().getDepth();
-        double[] mt = event.getCmt().getDSMmt();
+        double[] mt = event.getCmt().toDSMStyle();
 
         String cmtLine = "PDE " + event.getCMTTime().format(DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss.SSS"))
                 + " " + latitude + " " + longitude + " " + depth

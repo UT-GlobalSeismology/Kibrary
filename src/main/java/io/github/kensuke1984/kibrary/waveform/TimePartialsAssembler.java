@@ -30,7 +30,6 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -183,7 +182,6 @@ public class TimePartialsAssembler extends Operation {
         final int N_THREADS = Runtime.getRuntime().availableProcessors();
 //      final int N_THREADS = 1;
         writeLog("Running " + N_THREADS + " threads");
-        writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogPath().toString());
         collectTimewindowInformation();
 
         // sacdataを何ポイントおきに取り出すか

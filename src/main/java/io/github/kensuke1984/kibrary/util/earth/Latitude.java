@@ -137,7 +137,7 @@ final class Latitude implements Comparable<Latitude> {
      */
     @Override
     public String toString() {
-        return MathAid.padToString(geographicLatitude, 3, DECIMALS, " ");
+        return MathAid.padToString(geographicLatitude, 3, DECIMALS, false);
     }
 
     /**
@@ -153,6 +153,6 @@ final class Latitude implements Comparable<Latitude> {
         double absolute = Math.abs(geographicLatitude);
         int number = (int) Math.round(absolute * Math.pow(10, DECIMALS));
 
-        return sign + MathAid.padToString(number, 2 + DECIMALS, "0");
+        return sign + MathAid.padToString(number, 2 + DECIMALS, true);
     }
 }

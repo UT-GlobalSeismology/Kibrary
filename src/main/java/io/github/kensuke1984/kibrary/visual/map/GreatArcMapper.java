@@ -13,6 +13,12 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
+/**
+ * Operation that plots a great arc on a map.
+ *
+ * @author otsuru
+ * @since 2023/3/31
+ */
 public class GreatArcMapper extends Operation {
 
     /**
@@ -38,10 +44,22 @@ public class GreatArcMapper extends Operation {
     private double pos0Longitude;
     private double pos1Latitude;
     private double pos1Longitude;
+    /**
+     * Distance of the starting point along arc before position 0.
+     */
     private double beforePos0Deg;
+    /**
+     * Distance of the ending point along arc after either position 0 or position 1.
+     */
     private double afterPosDeg;
+    /**
+     * Whether the ending point should be decided with respect to position 0 or position 1.
+     */
     private boolean useAfterPos1;
 
+    /**
+     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
     private String mapRegion;
 
     /**
@@ -128,6 +146,7 @@ public class GreatArcMapper extends Operation {
 
         outputGMT(startPosition, endPosition, outPath.resolve("arcMap.sh"));
 
+        System.err.println("After this finishes, please enter " + outPath + "/ and run arcMap.sh");
     }
 
     private void outputGMT(HorizontalPosition startPosition, HorizontalPosition endPosition, Path outputPath) throws IOException {

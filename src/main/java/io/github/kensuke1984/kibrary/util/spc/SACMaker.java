@@ -447,7 +447,7 @@ public class SACMaker implements Runnable {
             if (secondarySPC != null)
                 body.addBody(secondarySPC.getSpcBodyList().get(i));
             compute(body);
-            String bodyR = MathAid.roundToStringWithD(primeSPC.getBodyR()[i], 2);
+            String bodyR = MathAid.simplestString(primeSPC.getBodyR()[i], "d");
             for (SACComponent component : components) {
                 // System.out.println(component);
                 SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)

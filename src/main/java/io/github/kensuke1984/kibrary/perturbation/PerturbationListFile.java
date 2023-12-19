@@ -46,7 +46,7 @@ public class PerturbationListFile {
 
     /**
      * Output file from map of position to value.
-     * @param perturbationMap (Map of FullPosition to Double) Values at each position
+     * @param perturbationMap (Map of FullPosition to Double) Values at each position. Should be LinkedHashMap for the lines to be sorted.
      * @param outputPath (Path) Output file path
      * @param options (OpenOption...)
      * @throws IOException
@@ -57,7 +57,7 @@ public class PerturbationListFile {
 
     /**
      * Output file from map of position to value.
-     * @param perturbationMap (Map of FullPosition to Double) Values at each position
+     * @param perturbationMap (Map of FullPosition to Double) Values at each position. Should be LinkedHashMap for the lines to be sorted.
      * @param crossDateLine (boolean) Whether to use longitude range [0:360) instead of [-180:180).
      * @param outputPath (Path) Output file path
      * @param options (OpenOption...)

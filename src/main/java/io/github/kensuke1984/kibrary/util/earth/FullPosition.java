@@ -237,7 +237,7 @@ public final class FullPosition extends HorizontalPosition {
      */
     @Override
     public String toString() {
-        return super.toString() + " " + MathAid.padToString(radius, 4, RADIUS_DECIMALS, " ");
+        return super.toString() + " " + MathAid.padToString(radius, 4, RADIUS_DECIMALS, false);
     }
 
     /**
@@ -251,7 +251,7 @@ public final class FullPosition extends HorizontalPosition {
      * @since 2023/3/10
      */
     public String toString(boolean crossDateLine) {
-        return super.toString(crossDateLine) + " " + MathAid.padToString(radius, 4, RADIUS_DECIMALS, " ");
+        return super.toString(crossDateLine) + " " + MathAid.padToString(radius, 4, RADIUS_DECIMALS, false);
     }
 
 }
