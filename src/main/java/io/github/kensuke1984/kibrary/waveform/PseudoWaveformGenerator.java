@@ -198,15 +198,15 @@ public class PseudoWaveformGenerator extends Operation {
         int finalSamplingHz = 1;
         double delta = 1.0 / sacSamplingHz;
         int step = (int) (sacSamplingHz / finalSamplingHz);
-        double maxFreq = 0.05;
-        double minFreq = 0.01;
+        double maxFreq = 0.2;
+        double minFreq = 0.005;
         int np = 6;
 
         System.err.println("FYI, L2 norm of residual waveform: " + dVectorBuilder.fullObsVec().subtract(dVectorBuilder.fullSynVec()).getNorm());
 
         ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
-            double[] u = RandomNoiseMaker.create(noisePower, sacSamplingHz, 3276.8, 512).getY();
+            double[] u = RandomNoiseMaker.create(noisePower, sacSamplingHz, 3276.8, 1024).getY();
             u = bpf.applyFilter(u);
             int startT = (int) dVectorBuilder.getObsID(i).getStartTime() * sacSamplingHz;
             noiseV[i] = new ArrayRealVector(pts[i]);
