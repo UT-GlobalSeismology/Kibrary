@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -265,13 +266,18 @@ public final class SPC_SAC extends Operation {
             if (psvSPC == null || !psvSPC.exists()) {
                 throw new NoSuchFileException(psvSPC + " does not exist");
             }
-            SPCFile shFile = SPCFile.getInstance(shSPC);
-            SPCFile psvFile = SPCFile.getInstance(psvSPC);
-            // create event folder under outPath
-            Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
-            // operate method createSACMaker() -> instance of an anonymous inner class is returned
-            // -> executes the run() of that class defined in createSACMaker()
-            es.execute(createSACMaker(shFile, psvFile));
+            try {
+                SPCFile shFile = SPCFile.getInstance(shSPC);
+                SPCFile psvFile = SPCFile.getInstance(psvSPC);
+                // create event folder under outPath
+                Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
+                // operate method createSACMaker() -> instance of an anonymous inner class is returned
+                // -> executes the run() of that class defined in createSACMaker()
+                es.execute(createSACMaker(shFile, psvFile));
+            } catch (EOFException e) {
+                System.err.println("error for " + shSPC);
+                return;
+            }
             nSAC++;
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
