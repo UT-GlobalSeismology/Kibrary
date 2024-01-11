@@ -20,8 +20,8 @@ public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
 
-        Path outPath1 = Paths.get("output1ft.txt");
-        Path outPath2 = Paths.get("output2ft.txt");
+        Path outPath1 = Paths.get("output1fsp.txt");
+        Path outPath2 = Paths.get("output2fsp.txt");
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
         double amplitude = 1000;
@@ -34,13 +34,15 @@ public class Test_temp {
         double delta = 1.0 / samplingHz;
         double maxFreq = 0.1;
         double minFreq = 0.005;
-        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
+        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, 6);
 
         // noise of Kensuke
         Complex[] kensukeU = createRandomComplex(amplitude, samplingHz, tlen, np);
         Complex[] kensukeTimeU = fft.transform(kensukeU, TransformType.INVERSE);
         for (int i = 0; i < kensukeTimeU.length; i++)
             noiseKensuke[i] = kensukeTimeU[i].getReal();
+        noiseKensuke[0] = 0;
+        noiseKensuke[nnp-1] = 0;
         noiseKensuke = bpf.applyFilter(noiseKensuke);
         Complex[] specKensuke = fft.transform(noiseKensuke, TransformType.FORWARD);
 
@@ -49,42 +51,48 @@ public class Test_temp {
         timeU[0] = new Complex(0., 0.);
         timeU[nnp-1] = new Complex(0., 0.);
         for (int i = 1; i < nnp -1; i++) {
-            double real = 2. * Math.random() - 1.;
-            if (real > 1.0) real = 1.0;
-            if (real < -1.0) real = -1.0;
-            timeU[i] = new Complex(real, 0.);
+            double argument = 2 * Math.PI * Math.random();
+            timeU[i] = new Complex(Math.cos(argument), Math.sin(argument));
+//            double real = 2. * Math.random() - 1.;
+//            if (real > 1.0) real = 1.0;
+//            if (real < -1.0) real = -1.0;
+//            timeU[i] = new Complex(real, 0.);
         }
 //        Complex[] specU = fft.transform(timeU, TransformType.FORWARD);
         for (int i = 0; i < timeU.length; i++)
             noiseUni[i] = timeU[i].getReal();
         noiseUni = bpf.applyFilter(noiseUni);
+        noiseUni[0] = 0.0;
+        noiseUni[nnp-1] = 0.0;
         Complex[] specUni = fft.transform(noiseUni, TransformType.FORWARD);
 
         // output
-//        Complex[] out1 = specKensuke;
-//        Complex[] out2 = specUni;
-//        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath1))) {
-//            for (int i = 0; i < out1.length; i++) {
-//                pw.println(out1[i].getReal());
-//            }
-//        }
-//        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath2))) {
-//            for (int i = 0; i < out2.length; i++) {
-//                pw.println(out2[i].getReal());
-//            }
-//        }
-        double[] out1 = noiseKensuke;
-        double[] out2 = noiseUni;
+        Complex[] out1 = specKensuke;
+        Complex[] out2 = specUni;
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath1))) {
             for (int i = 0; i < out1.length; i++) {
-                pw.println(out1[i]);
+                //pw.println(out1[i].getReal());
+                pw.println(out1[i].abs());
             }
         }
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath2))) {
             for (int i = 0; i < out2.length; i++) {
-                pw.println(out2[i]);
+                //pw.println(out2[i].getReal());
+                pw.println(out2[i].abs());
             }
         }
+//        double[] out1 = noiseKensuke;
+//        double[] out2 = noiseUni;
+//        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath1))) {
+//            for (int i = 0; i < out1.length; i++) {
+//                pw.println(out1[i]);
+//            }
+//        }
+//        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath2))) {
+//            for (int i = 0; i < out2.length; i++) {
+//                pw.println(out2[i]);
+//            }
+//        }
 
 
 /*        // read knowns
