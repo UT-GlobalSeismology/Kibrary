@@ -167,22 +167,20 @@ public class PseudoWaveformGenerator extends Operation {
         RealVector pseudoWaveform = dVectorBuilder.fullSynVec().add(pseudoD);
 
         // add noise
-        //if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
         if (noise) {
-            RealVector noiseV = createRandomNoise(dVectorBuilder);
-            // debug
+            RealVector noiseV = createRandomNoise(dVectorBuilder, pseudoWaveform);
             pseudoWaveform = pseudoWaveform.add(noiseV);
-            for (int i = 0; i< dVectorBuilder.getNTimeWindow(); i++) {
-                int start = dVectorBuilder.getStartPoint(i);
-                int npts = (i == dVectorBuilder.getNTimeWindow()-1) ? dVectorBuilder.getNpts() - start
-                        : dVectorBuilder.getStartPoint(i+1) - start;
-                RealVector p = pseudoWaveform.getSubVector(start, npts);
-                RealVector n = noiseV.getSubVector(start, npts);
-                double signal = p.getNorm() / p.getDimension();
-                double noise = n.getNorm() / n.getDimension();
-                System.err.println("S/N ratio of " + i + "th timewiondow is" + signal / noise);
-             // debug
-            }
+//            for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
+//                int start = dVectorBuilder.getStartPoint(i);
+////                int npts = (i == dVectorBuilder.getNTimeWindow()-1) ? dVectorBuilder.getNpts() - start
+////                        : dVectorBuilder.getStartPoint(i+1) - start;
+//                int npts = dVectorBuilder.getSynID(i).getNpts();
+//                RealVector p = pseudoWaveform.getSubVector(start, npts);
+//                RealVector n = noiseV.getSubVector(start, npts);
+//                double signal = p.getNorm() / p.getDimension();
+//                double noise = n.getNorm() / n.getDimension();
+//                System.err.println("S/N ratio of " + i + "th timewiondow is " + signal / noise);
+//            }
         }
 
         // prepare output folder
@@ -214,14 +212,18 @@ public class PseudoWaveformGenerator extends Operation {
         BasicIDFile.write(basicIDs, outPath);
     }
 
-    private RealVector createRandomNoise(DVectorBuilder dVectorBuilder) {
-        System.err.println("Adding noise of amplitude " + noisePower);
+    private RealVector createRandomNoise(DVectorBuilder dVectorBuilder, RealVector pseudoWaveform) {
+        //System.err.println("Adding noise of amplitude " + noisePower);
+        System.err.println("Adding noise of S/N ratio " + snRatio);
         RealVector[] noiseV = new RealVector[dVectorBuilder.getNTimeWindow()];
 
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
-            BasicID obsID = dVectorBuilder.getObsID(i);
-            noiseV[i] = RandomNoiseMaker.create(snRatio, dVectorBuilder.getObsVec(i), obsID.getStartTime(),
-                    obsID.getMaxPeriod(), obsID.getMinPeriod(), sacSamplingHz, obsID.getSamplingHz(), noiseType).getYVector();
+            BasicID synID = dVectorBuilder.getSynID(i);
+            int start = dVectorBuilder.getStartPoint(i);
+            int npts = synID.getNpts();
+            RealVector pseudo = pseudoWaveform.getSubVector(start, npts);
+            noiseV[i] = RandomNoiseMaker.create(snRatio, pseudo, synID.getStartTime(),
+                    synID.getMaxPeriod(), synID.getMinPeriod(), sacSamplingHz, synID.getSamplingHz(), noiseType).getYVector();
         }
 //        // settings ; TODO: enable these values to be set
 //        int[] pts = dVectorBuilder.nptsArray();

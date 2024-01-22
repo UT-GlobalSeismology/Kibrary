@@ -211,7 +211,7 @@ public final class RandomNoiseMaker {
             raw[i] = timeU[i].getReal();
         // filtering
         if (minPeriod != 0 && maxPeriod != 0) {
-            ButterworthFilter bpf = new BandPassFilter(2 * Math.PI / minPeriod / sacSamplingHz, 2 * Math.PI / maxPeriod / sacSamplingHz, 6);
+            ButterworthFilter bpf = new BandPassFilter(2 * Math.PI / minPeriod / sacSamplingHz, 2 * Math.PI / maxPeriod / sacSamplingHz, 4);
             raw = bpf.applyFilter(raw);
         }
         else
