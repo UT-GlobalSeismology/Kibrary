@@ -14,8 +14,6 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.filter.BandPassFilter;
-import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
@@ -73,11 +71,17 @@ public class PseudoWaveformGenerator extends Operation {
      */
     private boolean setPseudoAsSyn;
     private boolean noise;
+    private String noiseType;
     private double noisePower;
+    private double snRatio;
     /**
      * Fill 0 to empty partial waveforms or not.
      */
     private boolean fillEmptyPartial;
+    /**
+     * Sampling Hz of sac
+     */
+    private double sacSamplingHz = 20;
 
     /**
      * @param args  none to create a property file <br>
@@ -108,8 +112,12 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("#setPseudoAsSyn ");
             pw.println("##(boolean) Whether to add noise (false)");
             pw.println("#noise ");
+            pw.println("##(String) A type of noise to add [white, gaussian] (white)");
+            pw.println("#noiseType ");
             pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
             pw.println("#noisePower ");
+            pw.println("##(double) S/N ratio (2)");
+            pw.println("#snRatio ");
             pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
             pw.println("#fillEmptyPartial ");
         }
@@ -132,7 +140,9 @@ public class PseudoWaveformGenerator extends Operation {
         setPseudoAsSyn = property.parseBoolean("setPseudoAsSyn", "false");
         noise = property.parseBoolean("noise", "false");
         if (noise) {
-            noisePower = property.parseDouble("noisePower", "1000");
+            snRatio = property.parseDouble("snRatio", "2");
+            //noisePower = property.parseDouble("noisePower", "1000");
+            noiseType = property.parseString("noiseType", "white");
         }
         fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
@@ -157,7 +167,23 @@ public class PseudoWaveformGenerator extends Operation {
         RealVector pseudoWaveform = dVectorBuilder.fullSynVec().add(pseudoD);
 
         // add noise
-        if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
+        //if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
+        if (noise) {
+            RealVector noiseV = createRandomNoise(dVectorBuilder);
+            // debug
+            pseudoWaveform = pseudoWaveform.add(noiseV);
+            for (int i = 0; i< dVectorBuilder.getNTimeWindow(); i++) {
+                int start = dVectorBuilder.getStartPoint(i);
+                int npts = (i == dVectorBuilder.getNTimeWindow()-1) ? dVectorBuilder.getNpts() - start
+                        : dVectorBuilder.getStartPoint(i+1) - start;
+                RealVector p = pseudoWaveform.getSubVector(start, npts);
+                RealVector n = noiseV.getSubVector(start, npts);
+                double signal = p.getNorm() / p.getDimension();
+                double noise = n.getNorm() / n.getDimension();
+                System.err.println("S/N ratio of " + i + "th timewiondow is" + signal / noise);
+             // debug
+            }
+        }
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, GadgetAid.getTemporaryString());
@@ -192,27 +218,32 @@ public class PseudoWaveformGenerator extends Operation {
         System.err.println("Adding noise of amplitude " + noisePower);
         RealVector[] noiseV = new RealVector[dVectorBuilder.getNTimeWindow()];
 
-        // settings ; TODO: enable these values to be set
-        int[] pts = dVectorBuilder.nptsArray();
-        int sacSamplingHz = 20;
-        int finalSamplingHz = 1;
-        double delta = 1.0 / sacSamplingHz;
-        int step = (int) (sacSamplingHz / finalSamplingHz);
-        double maxFreq = 0.05;
-        double minFreq = 0.01;
-        int np = 6;
-
-        System.err.println("FYI, L2 norm of residual waveform: " + dVectorBuilder.fullObsVec().subtract(dVectorBuilder.fullSynVec()).getNorm());
-
-        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
-            double[] u = RandomNoiseMaker.create(noisePower, sacSamplingHz, 3276.8, 512).getY();
-            u = bpf.applyFilter(u);
-            int startT = (int) dVectorBuilder.getObsID(i).getStartTime() * sacSamplingHz;
-            noiseV[i] = new ArrayRealVector(pts[i]);
-            for (int j = 0; j < pts[i]; j++)
-                noiseV[i].setEntry(j, u[j * step + startT]);
+            BasicID obsID = dVectorBuilder.getObsID(i);
+            noiseV[i] = RandomNoiseMaker.create(snRatio, dVectorBuilder.getObsVec(i), obsID.getStartTime(),
+                    obsID.getMaxPeriod(), obsID.getMinPeriod(), sacSamplingHz, obsID.getSamplingHz(), noiseType).getYVector();
         }
+//        // settings ; TODO: enable these values to be set
+//        int[] pts = dVectorBuilder.nptsArray();
+//        int sacSamplingHz = 20;
+//        int finalSamplingHz = 1;
+//        double delta = 1.0 / sacSamplingHz;
+//        int step = (int) (sacSamplingHz / finalSamplingHz);
+//        double maxFreq = 0.05;
+//        double minFreq = 0.01;
+//        int np = 6;
+//
+//        System.err.println("FYI, L2 norm of residual waveform: " + dVectorBuilder.fullObsVec().subtract(dVectorBuilder.fullSynVec()).getNorm());
+//
+//        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
+//        for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
+//            double[] u = RandomNoiseMaker.create(noisePower, sacSamplingHz, 3276.8, 512).getY();
+//            u = bpf.applyFilter(u);
+//            int startT = (int) dVectorBuilder.getObsID(i).getStartTime() * sacSamplingHz;
+//            noiseV[i] = new ArrayRealVector(pts[i]);
+//            for (int j = 0; j < pts[i]; j++)
+//                noiseV[i].setEntry(j, u[j * step + startT]);
+//        }
 
         return dVectorBuilder.compose(noiseV);
     }
