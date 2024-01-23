@@ -47,6 +47,7 @@ public final class RandomNoiseMaker {
      * Create the trace of noise for given waveform.
      *
      * @param snRatio
+     * @param noiseAmp
      * @param waveform {@link RealVector}
      * @param startTime [s] start time ofwaveform
      * @param maxPeriod [s] maximum period of the applied filter if none.
@@ -57,7 +58,7 @@ public final class RandomNoiseMaker {
      * @return Trace of time and noize
      * @author rei
      */
-    public static Trace create(double snRatio, RealVector waveform, double startTime,
+    public static Trace create(double snRatio, double noiseAmp, RealVector waveform, double startTime,
             double maxPeriod, double minPeriod, double sacSamplingHz, double finalSamplingHz, String noiseType) {
         // make time array and ready to noise array
         int npts = waveform.getDimension();
@@ -67,10 +68,10 @@ public final class RandomNoiseMaker {
         // generate noise
         switch(noiseType) {
         case "white":
-            noise = createWhiteNoise(snRatio, waveform, startTime, maxPeriod, minPeriod, sacSamplingHz, finalSamplingHz);
+            noise = createWhiteNoise(snRatio, noiseAmp, waveform, startTime, maxPeriod, minPeriod, sacSamplingHz, finalSamplingHz);
             break;
         case "gaussian":
-            noise = createGaussianNoise(snRatio, waveform);
+            noise = createGaussianNoise(snRatio, noiseAmp, waveform);
             break;
         default:
             throw new IllegalArgumentException("noiseType must be set to white or gaussian");
@@ -84,11 +85,13 @@ public final class RandomNoiseMaker {
      * <p> Note that it is not necessarily Gaussian noise.
      *
      * @param snRatio
+     * @param noiseAmp
      * @param waveform {@link RealVector}
      * @return Array of gaussian noise vector
      * @author rei
      */
-    private static double[] createWhiteNoise(double snRatio, RealVector waveform, double startTime, double maxPeriod, double minPeriod, double sacSamplingHz, double finalSamplingHz) {
+    private static double[] createWhiteNoise(double snRatio, double noiseAmp, RealVector waveform,
+            double startTime, double maxPeriod, double minPeriod, double sacSamplingHz, double finalSamplingHz) {
         // set up parameters
         int npts = waveform.getDimension();
         double endTime = startTime + npts / finalSamplingHz;
@@ -104,7 +107,7 @@ public final class RandomNoiseMaker {
         noise = filterAndResample(timeU, minPeriod, maxPeriod, sacSamplingHz, finalSamplingHz, startTime, npts);
         // adjust noise to given S/N ratio
         RealVector noiseV = new ArrayRealVector(noise, false);
-        double coeff = adjustToSnRatio(snRatio, waveform, noiseV);
+        double coeff = (Double.isNaN(snRatio)) ? adjustToAmplitude(noiseAmp, noiseV) : adjustToSnRatio(snRatio, waveform, noiseV);
         noise = noiseV.mapMultiply(coeff).toArray();
         return noise;
     }
@@ -114,11 +117,12 @@ public final class RandomNoiseMaker {
      * <p> Note that it is not necessarily white noise.
      *
      * @param snRatio
+     * @param noiseAmp
      * @param waveform {@link RealVector}
      * @return Array of gaussian noise vector
      * @author rei
      */
-    private static double[] createGaussianNoise(double snRatio, RealVector waveform) {
+    private static double[] createGaussianNoise(double snRatio, double noiseAmp, RealVector waveform) {
         int npts = waveform.getDimension();
         double[] noise = new double[npts];
         // initialize random generator with a new seed for each set of waveforms
@@ -128,7 +132,7 @@ public final class RandomNoiseMaker {
         }
         // adjust noise to given S/N ratio
         RealVector noiseV = new ArrayRealVector(noise, false);
-        double coeff = adjustToSnRatio(snRatio, waveform, noiseV);
+        double coeff = (Double.isNaN(snRatio)) ? adjustToAmplitude(noiseAmp, noiseV) : adjustToSnRatio(snRatio, waveform, noiseV);
         noise = noiseV.mapMultiply(coeff).toArray();
         return noise;
     }
@@ -156,6 +160,18 @@ public final class RandomNoiseMaker {
         else
             throw new IllegalArgumentException("S/N ratio must be above 1");
         return coeff;
+    }
+
+    /**
+     * Returns the coefficient of noise, so that amplitude matches the given value.
+     *
+     * @param noiseAmp
+     * @param noiseV {@link RealVector}
+     * @return coeff of noise
+     * @author rei
+     */
+    private static double adjustToAmplitude(double noiseAmp, RealVector noiseV) {
+        return noiseAmp / noiseV.getLInfNorm();
     }
 
     private static double findTlen(double endTime) {
@@ -205,7 +221,8 @@ public final class RandomNoiseMaker {
         return spectorU;
     }
 
-    private static double[] filterAndResample(Complex[] timeU, double minPeriod, double maxPeriod,  double sacSamplingHz, double finalSamplingHz, double startTime, int npts) {
+    private static double[] filterAndResample(Complex[] timeU, double minPeriod, double maxPeriod,
+            double sacSamplingHz, double finalSamplingHz, double startTime, int npts) {
         double[] raw = new double[timeU.length];
         for (int i = 0; i < timeU.length; i++)
             raw[i] = timeU[i].getReal();
