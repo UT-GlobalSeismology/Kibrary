@@ -28,8 +28,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.filter.BandPassFilter;
-import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
@@ -162,7 +160,10 @@ public class ActualWaveformCompiler extends Operation {
      * [bool] add white noise to synthetics data (for synthetic tests)
      */
     private boolean addNoise;
-    private double noisePower;
+    private String noiseType;
+    private double noiseAmp;
+    private double snRatio;
+    //private double noisePower;
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<TimewindowData> refTimewindowSet;
@@ -241,8 +242,12 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#highFreq "); // TODO: add explanation
             pw.println("##(boolean) Whether to add noise for synthetic test (false)");
             pw.println("#addNoise ");
-            pw.println("##Power of noise for synthetic test (1)"); //TODO what is the unit?
-            pw.println("#noisePower ");
+            pw.println("##(String) A type of noise to add [white, gaussian] (white)");
+            pw.println("#noiseType ");
+            pw.println("##(double) S/N ratio. If not set, the following noiseAmp will be used.");
+            pw.println("#snRatio ");
+            pw.println("##(double) The amplitude of noise (1)");
+            pw.println("#noiseAmp ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -289,10 +294,19 @@ public class ActualWaveformCompiler extends Operation {
         highFreq = property.parseDouble("highFreq", "0.08");
 
         addNoise = property.parseBoolean("addNoise", "false");
-        noisePower = property.parseDouble("noisePower", "1");
         if (addNoise) {
+            if (property.containsKey("snRatio"))
+                snRatio = property.parseDouble("snRatio", null);
+            else {
+                snRatio = Double.NaN;
+                noiseAmp = property.parseDouble("noiseAmp", "1");
+            }
+            noiseType = property.parseString("noiseType", "white");
             System.err.println("Adding noise.");
-            System.err.println("Noise power: " + noisePower);
+            if (Double.isNaN(snRatio))
+                System.err.println("Adding noise of amplitude " + noiseAmp);
+            else
+                System.err.println("Adding noise of S/N ratio " + snRatio);
         }
 
         finalFreqSamplingHz = 8;
@@ -459,20 +473,22 @@ public class ActualWaveformCompiler extends Operation {
     /**
      * @param sac
      * @param startTime
+     * @param maxPeriod
+     * @param minPeriod
      * @param npts
      * @author anselme
+     * @author rei modified
      * @return
      */
-    private Trace cutSpcAmpSacAddNoise(SACFileAccess sac, double startTime, int npts) {
+    private Trace cutSpcAmpSacAddNoise(SACFileAccess sac, double startTime, double maxPeriod, double minPeriod, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
         int startPoint = trace.findNearestXIndex(startTime);
-        double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
-        Trace tmp = createNoiseTrace(new ArrayRealVector(cutY).getLInfNorm());
-        Trace noiseTrace = new Trace(trace.getX(), Arrays.copyOf(tmp.getY(), trace.getLength()));
-        trace = trace.add(noiseTrace);
-        cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
-        FourierTransform fourier = new FourierTransform(cutY, finalFreqSamplingHz);
+        RealVector waveVec = trace.getYVector().getSubVector(startPoint, npts * step);
+        Trace noiseTrace = RandomNoiseMaker.create(snRatio, noiseAmp, waveVec, startTime, maxPeriod, minPeriod, sacSamplingHz, sacSamplingHz, noiseType);
+        waveVec = waveVec.add(noiseTrace.getYVector());
+        double[] waveData = waveVec.toArray();
+        FourierTransform fourier = new FourierTransform(waveData, finalFreqSamplingHz);
         double df = fourier.getFreqIncrement(sacSamplingHz);
         if (highFreq > sacSamplingHz)
             throw new RuntimeException("f1 must be <= sacSamplingHz");
@@ -533,43 +549,22 @@ public class ActualWaveformCompiler extends Operation {
     /**
      * @param sac
      * @param startTime
+     * @param maxPeriod
+     * @param minPeriod
      * @param npts
      * @author anselme
+     * @author rei modified
      * @return
      */
-    private double[] cutDataSacAddNoise(SACFileAccess sac, double startTime, int npts) {
+    private double[] cutDataSacAddNoise(SACFileAccess sac, double startTime, double maxPeriod, double minPeriod, int npts) {
         Trace trace = sac.createTrace();
         int step = (int) (sacSamplingHz / finalSamplingHz);
         int startPoint = trace.findNearestXIndex(startTime);
         double[] waveData = trace.getY();
-        RealVector vector = new ArrayRealVector(IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray());
-        Trace tmp = createNoiseTrace(vector.getLInfNorm());
-        Trace noiseTrace = new Trace(trace.getX(), Arrays.copyOf(tmp.getY(), trace.getLength()));
-        trace = trace.add(noiseTrace);
-
-        double signal = trace.getYVector().getNorm() / trace.getLength();
-        double noise = noiseTrace.getYVector().getNorm() / noiseTrace.getLength();
-        double snratio = signal / noise;
-        System.err.println("snratio " + snratio + " noise " + noise);
-
-        double[] waveDataNoise = trace.getY();
-        return IntStream.range(0, npts).parallel().mapToDouble(i -> waveDataNoise[i * step + startPoint]).toArray();
-    }
-
-    /**
-     * @param normalize
-     * @author anselme
-     * @return
-     */
-    private Trace createNoiseTrace(double normalize) {
-        double maxFreq = 0.125;
-        double minFreq = 0.005;
-        int np = 4;
-        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * maxFreq, 2 * Math.PI * 0.05 * minFreq, np);
-        Trace tmp = RandomNoiseMaker.create(1., sacSamplingHz, 1638.4, 512);
-        double[] u = tmp.getY();
-        RealVector uvec = new ArrayRealVector(bpf.applyFilter(u));
-        return new Trace(tmp.getX(), uvec.mapMultiply(noisePower * normalize / uvec.getLInfNorm()).toArray());
+        RealVector waveVec = new ArrayRealVector(IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray());
+        Trace noiseTrace = RandomNoiseMaker.create(snRatio, noiseAmp, waveVec, startTime, maxPeriod, minPeriod, sacSamplingHz, finalSamplingHz, noiseType);
+        waveVec = waveVec.add(noiseTrace.getYVector());
+        return waveVec.toArray();
     }
 
     private class Worker extends DatasetAid.FilteredDatasetWorker {
@@ -661,7 +656,7 @@ public class ActualWaveformCompiler extends Operation {
 
             double[] obsData = null;
             if (addNoise)
-                obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
+                obsData = cutDataSacAddNoise(obsSac, startTime - shift, maxPeriod, minPeriod, npts);
             else
                 obsData = cutDataSac(obsSac, timewindow.shift(-shift));
             double[] synData = cutDataSac(synSac, timewindow);
@@ -684,7 +679,7 @@ public class ActualWaveformCompiler extends Operation {
             Trace synSpcAmpTrace = null;
 
             if (addNoise) {
-                obsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, startTime - shift, npts);
+                obsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, startTime - shift, maxPeriod, minPeriod, npts);
                 synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
             }
             else {
@@ -708,7 +703,7 @@ public class ActualWaveformCompiler extends Operation {
             Trace refSynSpcAmpTrace = null;
             if (windowRef != null) {
                 if (addNoise) {
-                    refObsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, windowRef.getStartTime(), nptsRef);
+                    refObsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, windowRef.getStartTime(), maxPeriod, minPeriod, nptsRef);
                     refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
                 }
                 else {

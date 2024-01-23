@@ -70,7 +70,7 @@ public class PseudoWaveformGenerator extends Operation {
      * Which to set the psuedo waveform as. true: synthetic, false: observed
      */
     private boolean setPseudoAsSyn;
-    private boolean noise;
+    private boolean addNoise;
     private String noiseType;
     private double noiseAmp;
     private double snRatio;
@@ -111,7 +111,7 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("##(boolean) Whether to set the psuedo waveform as synthetic. If false, observed. (false)");
             pw.println("#setPseudoAsSyn ");
             pw.println("##(boolean) Whether to add noise (false)");
-            pw.println("#noise ");
+            pw.println("#addNoise ");
             pw.println("##(String) A type of noise to add [white, gaussian] (white)");
             pw.println("#noiseType ");
             pw.println("##(double) S/N ratio. If not set, the following noiseAmp will be used.");
@@ -138,9 +138,10 @@ public class PseudoWaveformGenerator extends Operation {
         modelPath = property.parsePath("modelPath", null, true, workPath);
 
         setPseudoAsSyn = property.parseBoolean("setPseudoAsSyn", "false");
-        noise = property.parseBoolean("noise", "false");
-        if (noise) {
-            if (property.containsKey("snRatio")) snRatio = property.parseDouble("snRatio", null);
+        addNoise = property.parseBoolean("addNoise", "false");
+        if (addNoise) {
+            if (property.containsKey("snRatio"))
+                snRatio = property.parseDouble("snRatio", null);
             else {
                 snRatio = Double.NaN;
                 noiseAmp = property.parseDouble("noiseAmp", "1");
@@ -170,7 +171,7 @@ public class PseudoWaveformGenerator extends Operation {
         RealVector pseudoWaveform = dVectorBuilder.fullSynVec().add(pseudoD);
 
         // add noise
-        if (noise) {
+        if (addNoise) {
             RealVector noiseV = createRandomNoise(dVectorBuilder, pseudoWaveform);
             pseudoWaveform = pseudoWaveform.add(noiseV);
 //            for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
