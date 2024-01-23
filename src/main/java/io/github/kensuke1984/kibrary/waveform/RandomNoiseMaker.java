@@ -30,6 +30,7 @@ public final class RandomNoiseMaker {
      * @param tlen       [s] time length of noize
      * @param np         the number of step in frequency domain. (must be a power of 2)
      * @return Trace of time and noize
+     * @deprecated
      */
     public static Trace create(double amplitude, double samplingHz, double tlen, int np) {
         Complex[] spectorU = createRandomComplex(amplitude, samplingHz, tlen, np);

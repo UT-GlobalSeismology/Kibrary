@@ -174,10 +174,9 @@ public class PseudoWaveformGenerator extends Operation {
         if (addNoise) {
             RealVector noiseV = createRandomNoise(dVectorBuilder, pseudoWaveform);
             pseudoWaveform = pseudoWaveform.add(noiseV);
+//            // check whether the noise value is correct
 //            for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
 //                int start = dVectorBuilder.getStartPoint(i);
-////                int npts = (i == dVectorBuilder.getNTimeWindow()-1) ? dVectorBuilder.getNpts() - start
-////                        : dVectorBuilder.getStartPoint(i+1) - start;
 //                int npts = dVectorBuilder.getSynID(i).getNpts();
 //                RealVector p = pseudoWaveform.getSubVector(start, npts);
 //                RealVector n = noiseV.getSubVector(start, npts);
