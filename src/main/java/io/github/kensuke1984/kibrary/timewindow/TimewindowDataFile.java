@@ -344,7 +344,7 @@ public final class TimewindowDataFile {
                 double azimuth = window.getGlobalCMTID().getEventData().getCmtPosition()
                         .computeAzimuthDeg(window.getObserver().getPosition());
                 pw.println(window.toString() + " "
-                        + MathAid.padToString(distance, 3, 2, " ") + " " + MathAid.padToString(azimuth, 3, 2, " "));
+                        + MathAid.padToString(distance, 3, 2, false) + " " + MathAid.padToString(azimuth, 3, 2, false));
             });
         }
     }

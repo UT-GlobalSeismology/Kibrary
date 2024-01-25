@@ -77,7 +77,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
-            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+            pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
             // receiver
@@ -121,7 +121,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
-            pw.println(Arrays.stream(event.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+            pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
             // receiver

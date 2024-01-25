@@ -134,7 +134,7 @@ final class Latitude implements Comparable<Latitude> {
      */
     @Override
     public String toString() {
-        return MathAid.padToString(geographicLatitude, 3, PRECISION, " ");
+        return MathAid.padToString(geographicLatitude, 3, PRECISION, false);
     }
 
     /**
@@ -150,6 +150,6 @@ final class Latitude implements Comparable<Latitude> {
         double absolute = Math.abs(geographicLatitude);
         int number = (int) Math.round(absolute * Math.pow(10, PRECISION));
 
-        return sign + MathAid.padToString(number, 2 + PRECISION, "0");
+        return sign + MathAid.padToString(number, 2 + PRECISION, true);
     }
 }

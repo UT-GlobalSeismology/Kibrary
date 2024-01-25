@@ -71,52 +71,11 @@ public class BasicID {
      * [s] if the data has not been applied a filter, {@link Double#POSITIVE_INFINITY}
      */
     protected final double maxPeriod;
-    /**
-     * byte where this data starts
-     * @deprecated
-     */
-    protected long startByte;
     protected final boolean convolved;
     /**
      * waveform
      */
     private final double[] data;
-
-    /**
-     * @param waveFormType Type of waveform data.
-     * @param samplingHz   [Hz] Sampling Hz.
-     * @param startTime    [s] start time of the time window.
-     * @param npts         Number of data points
-     * @param observer      Information of observer.
-     * @param globalCMTID  Event ID for the data.
-     * @param sacComponent Component of the data.
-     * @param minPeriod    [s] minimum period of the applied filter if none, 0
-     * @param maxPeriod    [s] minimum period of the applied filter if none, {@link Double#POSITIVE_INFINITY}
-     * @param phases	   Array of phases
-     * @param startByte    [byte] where the waveform data for this ID starts in the file
-     * @param convolved    If the data is convolved.
-     * @param waveformData the waveform data for this ID.
-     * @deprecated startByte unneeded
-     */
-    public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Observer observer,
-            GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases, long startByte,
-            boolean convolved, double... waveformData) {
-        this.type = waveFormType;
-        this.samplingHz = Precision.round(samplingHz, 3);
-        this.startTime = Precision.round(startTime, Timewindow.PRECISION);
-        this.npts = npts;
-        this.observer = observer;
-        this.eventID = globalCMTID;
-        this.component = sacComponent;
-        this.phases = phases;
-        this.minPeriod = Precision.round(minPeriod, 3);
-        this.maxPeriod = Precision.round(maxPeriod, 3);
-        this.startByte = startByte;
-        this.convolved = convolved;
-        if (waveformData.length != 0 && waveformData.length != npts)
-            throw new IllegalArgumentException("Input waveform data length is invalid");
-        this.data = waveformData.clone();
-    }
 
     /**
      * @param waveFormType Type of waveform data.
@@ -311,15 +270,6 @@ public class BasicID {
         return convolved;
     }
 
-    /**
-     * If this is 100, then the data for this ID starts from 100th byte in the waveform file.
-     * @return [byte]
-     * @deprecated
-     */
-    public long getStartByte() {
-        return startByte;
-    }
-
     public boolean containsData() {
         return data != null;
     }
@@ -352,7 +302,7 @@ public class BasicID {
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved;
         return basicString;
