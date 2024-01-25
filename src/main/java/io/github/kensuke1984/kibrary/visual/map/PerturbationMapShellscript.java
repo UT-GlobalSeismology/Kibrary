@@ -48,6 +48,7 @@ public class PerturbationMapShellscript {
      * The displayed value of each layer boundary. This may be radius, depth, or height from a certain discontinuity.
      */
     private final double[] boundaries;
+    private final String mapProjection;
     private final String mapRegion;
     /**
      * Interval of
@@ -71,11 +72,12 @@ public class PerturbationMapShellscript {
     private String maskFileNameRoot;
     private double maskThreshold;
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double positionInterval, double scale,
+    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapProjection, String mapRegion, double positionInterval, double scale,
             String modelFileNameRoot, int nPanelsPerRow) {
         this.variable = variable;
         this.radii = radii;
         this.boundaries = boundaries;
+        this.mapProjection = mapProjection;
         this.mapRegion = mapRegion;
         this.positionInterval = positionInterval;
         this.scale = scale;
@@ -200,7 +202,7 @@ public class PerturbationMapShellscript {
             pw.println("");
             pw.println("# map parameters");
             pw.println("R='-R" + mapRegion + "'");
-            pw.println("J='-JQ15'");
+            pw.println("J='-J" + mapProjection + "15'");
             pw.println("B='-B30f10';");
             pw.println("");
             pw.println("outputps=" + modelFileNameRoot + "Map.eps");
