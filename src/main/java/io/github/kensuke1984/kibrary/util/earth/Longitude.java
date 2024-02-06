@@ -6,10 +6,10 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * Longitude [-180, 180).
+ * Longitude [-180:180).
  * The value is rounded off to the 4th decimal place.
  * <p>
- * The input can be in range [-180, 360].
+ * The input can be in range [-180:360].
  * If you input 200, then the value is considered to be -160.
  * <p>
  * This class is <b>IMMUTABLE</b>.
@@ -71,9 +71,6 @@ final class Longitude implements Comparable<Longitude> {
         return result;
     }
 
-    /**
-     *@author anselme equals within epsilon
-     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
@@ -90,7 +87,7 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * Longitude [deg] in range [-180, 180).
+     * Longitude [deg] in range [-180:180).
      * @return (double) Longitude [deg].
      */
     public double getLongitude() {
@@ -98,8 +95,8 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * Longitude [deg], either in range [0:360) or [-180, 180).
-     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
+     * Longitude [deg], either in range [0:360) or [-180:180).
+     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180:180).
      * @return (double) Longitude [deg].
      *
      * @author otsuru
@@ -110,7 +107,7 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;, &pi;).
+     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;:&pi;).
      * @return (double) Longitude &phi; [rad].
      */
     public double getPhi() {

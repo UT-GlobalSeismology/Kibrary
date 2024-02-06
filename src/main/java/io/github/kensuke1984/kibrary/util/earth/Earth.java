@@ -44,7 +44,7 @@ public final class Earth {
     /**
      * Compute a distance along a meridian between the equator and an input latitude.
      *
-     * @param latitude (double) Geographic latitude [deg]. [-90, 90]
+     * @param latitude (double) Geographic latitude [deg]. [-90:90]
      * @return (double) Distance along the meridian between the equator and latitude [km].
      */
     private static double getMeridionalParts(double latitude) {
@@ -55,8 +55,8 @@ public final class Earth {
 
     /**
      * Compute length between points on lower and upper latitudes in the same meridian.
-     * @param lowerLatitude (double) Lower geographic latitude [deg]. [-90, upperLatitude]
-     * @param upperLatitude (double) Upper geographic latitude [deg]. [lowerLatitude, 90]
+     * @param lowerLatitude (double) Lower geographic latitude [deg]. [-90:upperLatitude]
+     * @param upperLatitude (double) Upper geographic latitude [deg]. [lowerLatitude:90]
      * @return (double) Length of meridional part on the surface [km].
      */
     public static double getMeridionalParts(double lowerLatitude, double upperLatitude) {
@@ -104,7 +104,7 @@ public final class Earth {
      * 第三扁平率を用いて子午線弧の近似値を求める際のべき級数の和（長軸によらない部分）
      * ある長軸aにおける弧の長さを求めるには aをかけなければならない
      *
-     * @param latitude [-90, 90] geographical latitude
+     * @param latitude [-90:90] geographical latitude
      * @return 長軸１ｋｍの時の 赤道から入力された緯度までの子午線弧の長さ
      */
     private static double getSUMforMeridionalParts(double latitude) {
@@ -130,12 +130,12 @@ public final class Earth {
     /**
      * Transform a geographic latitude to geocentric.
      *
-     * @param geographicLatitude [rad] geographic latitude [-&pi;/2, &pi;/2]
-     * @return [rad] geocentric latitude [-&pi;/2, &pi;/2]
+     * @param geographicLatitude [rad] geographic latitude [-&pi;/2:&pi;/2]
+     * @return [rad] geocentric latitude [-&pi;/2:&pi;/2]
      */
     static double toGeocentricLatitude(double geographicLatitude) {
         if (0.5 * Math.PI < Math.abs(geographicLatitude))
-            throw new IllegalArgumentException("geographical latitude: " + geographicLatitude + " must be [-pi/2, pi/2].");
+            throw new IllegalArgumentException("geographical latitude: " + geographicLatitude + " must be [-pi/2:pi/2].");
         double ratio = POLAR_RADIUS / EQUATORIAL_RADIUS;
         return FastMath.atan(ratio * ratio * FastMath.tan(geographicLatitude));
     }
@@ -156,10 +156,10 @@ public final class Earth {
      * There is no limit on the longitude because the borders of voxels may surpass -180 or 360,
      * and even then, there shouldn't be much of a problem.
      *
-     * @param startA         [km] start of major axis [0,endA)
-     * @param endA           [km] end of major axis (startA, ∞]
-     * @param startLatitude  [deg] [-90, endLatitude)
-     * @param endLatitude    [deg] (startLatitude, 90]
+     * @param startA         [km] start of major axis [0:endA)
+     * @param endA           [km] end of major axis (startA:)
+     * @param startLatitude  [deg] [-90:endLatitude)
+     * @param endLatitude    [deg] (startLatitude:90]
      * @param startLongitude [deg]
      * @param endLongitude   [deg]
      * @return 長軸startAからendAまでの楕円弧 緯度 経度 に囲まれた領域の体積
@@ -168,12 +168,12 @@ public final class Earth {
                                    double startLongitude, double endLongitude) {
         // radius
         if (endA <= startA || startA < 0)
-            throw new IllegalArgumentException("startA: " + startA + " must be [0,endA). endA: " + endA + " must be (startA,Infty]");
+            throw new IllegalArgumentException("startA: " + startA + " must be in [0:endA). endA: " + endA + " must be in (startA:)");
 
         // latitude
         if (startLatitude < -90 || startLatitude >= endLatitude || 90 < endLatitude) throw new IllegalArgumentException(
-                "startLatitude: " + startLatitude + " must be [-90,endLatitude). endLatitude: " + endLatitude +
-                        " must be (startLatitude,90].");
+                "startLatitude: " + startLatitude + " must be in [-90:endLatitude). endLatitude: " + endLatitude +
+                        " must be in (startLatitude:90].");
 
         // Longitudes are not required to be in [-180,360) here
         //   because we will not be able to compute for voxels near the edges of the valid longitude range.
@@ -204,7 +204,7 @@ public final class Earth {
 
     /**
      * Compute volume within an input range.
-     * Note that, for instance, the range is [point-0.5*dX, point+0.5*dX]
+     * Note that, for instance, the range is [point-0.5*dX : point+0.5*dX]
      *
      * @param point      center location
      * @param dr         [km] radius
@@ -225,18 +225,18 @@ public final class Earth {
     }
 
     /**
-     * @param startA        geographic latitude [0, endA)
-     * @param endA          geographic latitude (startA, ∞]
-     * @param startLatitude [-90, endLatitude]
-     * @param endLatitude   [startLatitude, 90]
+     * @param startA        geographic latitude [0:endA)
+     * @param endA          geographic latitude (startA:)
+     * @param startLatitude [-90:endLatitude]
+     * @param endLatitude   [startLatitude:90]
      * @return 長径がstartAからendAまでの楕円上のstartLatitudeからendLatitudeまでの断面積
      */
     public static double getCrossSection(double startA, double endA, double startLatitude, double endLatitude) {
         if (endA < startA || startA < 0)
             throw new IllegalArgumentException("endA: " + endA + " must be bigger than startA: " + startA);
         if (endLatitude < startLatitude || startLatitude < -90 || 90 < endLatitude) throw new IllegalArgumentException(
-                "startLatitude: " + startLatitude + " must be [-90, endLatitude]. endLatitude: " + endLatitude +
-                        " must be [startLatitude, 90].");
+                "startLatitude: " + startLatitude + " must be in [-90:endLatitude]. endLatitude: " + endLatitude +
+                        " must be in [startLatitude:90].");
 
         Ellipse el0 = new Ellipse(startA, startA - startA * FLATTENING);
         Ellipse el1 = new Ellipse(endA, endA - endA * FLATTENING);

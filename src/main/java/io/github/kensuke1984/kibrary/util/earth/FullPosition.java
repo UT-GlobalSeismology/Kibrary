@@ -14,9 +14,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * <p>
- * 3D position on Earth.
- * <p>
- * Latitude (-180, 180) Longitude（-90, 90）Radius [0, &infin;)
+ * 3D position on Earth (specified by latitude, longitude, and radius).
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * <p>
@@ -36,15 +34,15 @@ public final class FullPosition extends HorizontalPosition {
      */
     public static final double RADIUS_EPSILON = Math.pow(10, -RADIUS_DECIMALS) / 2;
     /**
-     * Radius [km]. [0, &infin;)
+     * Radius [km]. [0:)
      */
     private final double radius;
 
     /**
      * Construct from geographic latitude, longitude, and radius.
-     * @param latitude (double) Geographic latitude [deg].
-     * @param longitude (double) Longitude [deg].
-     * @param radius (double) Radius [km].
+     * @param latitude (double) Geographic latitude [deg]. [-90:90]
+     * @param longitude (double) Longitude [deg]. [-180:360]
+     * @param radius (double) Radius [km]. [0:)
      */
     public FullPosition(double latitude, double longitude, double radius) {
         super(latitude, longitude);
@@ -53,8 +51,8 @@ public final class FullPosition extends HorizontalPosition {
 
     /**
      * Construct from geographic latitude, longitude, and depth.
-     * @param latitude (double) Geographic latitude [deg].
-     * @param longitude (double) Longitude [deg].
+     * @param latitude (double) Geographic latitude [deg]. [-90:90]
+     * @param longitude (double) Longitude [deg]. [-180:360]
      * @param depth (double) Depth [km].
      * @return new instance
      */
@@ -122,9 +120,8 @@ public final class FullPosition extends HorizontalPosition {
     }
 
     /**
-     *
-     * @author anselme equals within epsilon
-     * @return true only when the other object is also FullPosition and latitude, longitude, radius are all equal
+     * This returns true only when the other object is also a {@link FullPosition},
+     *   and latitude, longitude, and radius are all equal.
      */
     @Override
     public boolean equals(Object obj) {
@@ -133,7 +130,7 @@ public final class FullPosition extends HorizontalPosition {
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         FullPosition other = (FullPosition) obj;
-        return Precision.equals(radius, other.radius, Math.pow(10, -RADIUS_DECIMALS)/2);
+        return Precision.equals(radius, other.radius, RADIUS_EPSILON);
     }
 
     /**

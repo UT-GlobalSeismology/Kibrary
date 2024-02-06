@@ -14,9 +14,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 
 /**
  * <p>
- * 2D Position on Earth.
- * <p>
- * Latitude Longitude
+ * 2D Position on Earth (specified by latitude and longitude).
  * <p>
  * This class is <b>almost IMMUTABLE</b> (expect that it is not a final class).
  * Classes that extend this class must be <b>IMMUTABLE</b>.
@@ -87,8 +85,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Construct from geographic latitude and longitude.
-     * @param latitude (double) Geographic latitude [deg]. [-90, 90]
-     * @param longitude (double) Longitude [deg]. [-180, 360)
+     * @param latitude (double) Geographic latitude [deg]. [-90:90]
+     * @param longitude (double) Longitude [deg]. [-180:360]
      */
     public HorizontalPosition(double latitude, double longitude) {
         this.latitude = new Latitude(latitude);
@@ -166,7 +164,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Sorting order is Latitude &rarr; Longitude.
+     * Sorting order is latitude &rarr; longitude.
      */
     @Override
     public int compareTo(HorizontalPosition o) {
@@ -344,7 +342,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Geographic latitude [deg]. [-90, 90]
+     * Geographic latitude [deg]. [-90:90]
      * @return (double) Geographic latitude [deg].
      */
     public double getLatitude() {
@@ -352,7 +350,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Geocentric latitude [rad]. [-&pi;/2, &pi;/2]
+     * Geocentric latitude [rad]. [-&pi;/2:&pi;/2]
      * @return (double) Geocentric latitude [rad].
      */
     public double getGeocentricLatitude() {
@@ -360,7 +358,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Geocentric colatitude in spherical coordinate &theta; [rad]. [0, &pi;]
+     * Geocentric colatitude in spherical coordinate &theta; [rad]. [0:&pi;]
      * @return (double) Geocentric colatitude &theta; [rad].
      */
     public double getTheta() {
@@ -368,7 +366,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Longitude [deg] in range [-180, 180).
+     * Longitude [deg] in range [-180:180).
      * @return (double) Longitude [deg].
      */
     public double getLongitude() {
@@ -376,8 +374,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Longitude [deg], either in range [0:360) or [-180, 180).
-     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
+     * Longitude [deg], either in range [0:360) or [-180:180).
+     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180:180).
      * @return (double) Longitude [deg].
      *
      * @author otsuru
@@ -388,7 +386,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;, &pi;).
+     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;:&pi;).
      * @return (double) Longitude &phi; [rad].
      */
     public double getPhi() {
