@@ -48,8 +48,8 @@ public class WeightingHandler {
     private double factorForZComponent;
     private double factorForRComponent;
     private double factorForTComponent;
-    private boolean balanceDistance;
-    private boolean balanceAzimuth;
+    private boolean balanceDistance; // TODO apply
+    private boolean balanceAzimuth; // TODO apply
     private boolean balanceGeometry;
 
     private List<DataFeature> dataFeatures; // TODO apply
@@ -103,14 +103,12 @@ public class WeightingHandler {
             pw.println("#factorForRComponent ");
             pw.println("##(double) Factor to multiply to T component. (1.0)");
             pw.println("#factorForTComponent ");
-            pw.println("##(boolean) Whether to balance epicentral distances. (false)");
-            pw.println("#balanceDistance ");
-            pw.println("##(boolean) Whether to balance azimuths. (false)");
-            pw.println("#balanceAzimuth ");
+//            pw.println("##(boolean) Whether to balance epicentral distances. (false)");
+//            pw.println("#balanceDistance ");
+//            pw.println("##(boolean) Whether to balance azimuths. (false)");
+//            pw.println("#balanceAzimuth ");
             pw.println("##(boolean) Whether to balance event & observer positions. (false)");
             pw.println("#balanceGeometry ");
-
-            //TODO
         }
         System.err.println(outPath + " is created.");
     }
@@ -134,8 +132,6 @@ public class WeightingHandler {
         balanceDistance = property.parseBoolean("balanceDistance", "false");
         balanceAzimuth = property.parseBoolean("balanceAzimuth", "false");
         balanceGeometry = property.parseBoolean("balanceGeometry", "false");
-
-        //TODO
     }
 
     /**
@@ -166,19 +162,20 @@ public class WeightingHandler {
             if (amplitudeReciprocal) weighting /= dVector.getObsVec(i).getLInfNorm();
 
             // balance component and multiply factor for each component
+            // Take square root for number of each component because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
             SACComponent component = dVector.getObsID(i).getSacComponent();
             switch (component) {
             case Z:
                 weighting *= factorForZComponent;
-                if (balanceComponent) weighting /= (numZ / (numZ + numR + numT));
+                if (balanceComponent) weighting /= Math.sqrt(numZ / (numZ + numR + numT));
                 break;
             case R:
                 weighting *= factorForRComponent;
-                if (balanceComponent) weighting /= (numR / (numZ + numR + numT));
+                if (balanceComponent) weighting /= Math.sqrt(numR / (numZ + numR + numT));
                 break;
             case T:
                 weighting *= factorForTComponent;
-                if (balanceComponent) weighting /= (numT / (numZ + numR + numT));
+                if (balanceComponent) weighting /= Math.sqrt(numT / (numZ + numR + numT));
                 break;
             }
 
@@ -188,10 +185,10 @@ public class WeightingHandler {
             }
 
             //TODO
-            if (i % 500 == 0) {
-                System.err.println(dVector.getObsID(i));
-                System.err.println(" " + weighting);
-            }
+//            if (i % 500 == 0) {
+//                System.err.println(dVector.getObsID(i));
+//                System.err.println(" " + weighting);
+//            }
 
             //~create vector with the value 'weighting' for the whole timewindow
             double[] ws = new double[dVector.getObsVec(i).getDimension()];
@@ -218,6 +215,7 @@ public class WeightingHandler {
                 numClose++;
             }
         }
-        return numClose;  //Math.sqrt() ??TODO
+        // Take square root here because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
+        return Math.sqrt(numClose);
     }
 }

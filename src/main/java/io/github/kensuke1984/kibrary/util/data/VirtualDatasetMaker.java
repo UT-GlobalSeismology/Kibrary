@@ -100,6 +100,9 @@ public class VirtualDatasetMaker extends Operation {
 
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", "000000A")).map(GlobalCMTID::new)
                 .collect(Collectors.toSet());
+        for (GlobalCMTID event : tendEvents) {
+            if (!event.exists()) throw new IllegalArgumentException(event + " does not exist in catalog.");
+        }
 
         lowerLatitude = property.parseInt("lowerLatitude", "0");
         upperLatitude = property.parseInt("upperLatitude", "0");

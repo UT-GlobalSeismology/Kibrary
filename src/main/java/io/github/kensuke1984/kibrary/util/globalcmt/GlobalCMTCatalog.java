@@ -50,13 +50,13 @@ public final class GlobalCMTCatalog {
         // read the activated catalog and/or custom catalog
         Set<NDK> readNDKSet = new HashSet<>();
         if (Files.exists(CATALOG_PATH)) {
-            readNDKSet.addAll(readCatalog(CATALOG_PATH, false));
+            readNDKSet.addAll(readCatalog(CATALOG_PATH));
         }
         if (Files.exists(CUSTOM_CATALOG_PATH)) {
-            readNDKSet.addAll(readCatalog(CUSTOM_CATALOG_PATH, false));
+            readNDKSet.addAll(readCatalog(CUSTOM_CATALOG_PATH));
         }
         // if the catalogs cannot be read, ask for another catalog
-        if (readNDKSet.size() == 0) readNDKSet = readCatalog(selectCatalogFile(), false);
+        if (readNDKSet.size() == 0) readNDKSet = readCatalog(selectCatalogFile());
 
         // set NDK set
         NDKs = Collections.unmodifiableSet(readNDKSet);
@@ -108,28 +108,17 @@ public final class GlobalCMTCatalog {
      * @param allowNull (boolean) whether null is allowed to be returned
      * @return NDKs in catalogFile
      */
-    static Set<NDK> readCatalog(Path catalogPath, boolean allowNull) {
+    static Set<NDK> readCatalog(Path catalogPath) {
+        List<String> lines;
         try {
-            List<String> lines = Files.readAllLines(catalogPath);
-            if (lines.size() % 5 != 0) throw new IllegalStateException(catalogPath + " is broken or invalid.");
-            return IntStream.range(0, lines.size() / 5).mapToObj(
-                    i -> NDK.constructFromLines(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
-                            lines.get(i * 5 + 4))).collect(Collectors.toSet());
-        } catch (NullPointerException e) {
-            if (allowNull) {
-                return null;
-            }
-            else {
-                throw new RuntimeException(e);
-            }
-        } catch (Exception e) {
-            if (allowNull) {
-                e.printStackTrace();
-                return null;
-            } else {
-                throw new RuntimeException(e);
-            }
+            lines = Files.readAllLines(catalogPath);
+        } catch (IOException e) {
+            throw new IllegalStateException(catalogPath + " is broken or invalid.");
         }
+        if (lines.size() % 5 != 0) throw new IllegalStateException(catalogPath + " is broken or invalid.");
+        return IntStream.range(0, lines.size() / 5).mapToObj(i -> NDK.constructFromLines(
+                lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3), lines.get(i * 5 + 4)))
+                .collect(Collectors.toSet());
     }
 
     /**
