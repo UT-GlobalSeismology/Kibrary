@@ -73,8 +73,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * the input binary-format file is output in ascii format in the standard output.
  *
  * @author Kensuke Konishi
- * @version 0.2.2
- * @author anselme add phase information
+ * @since version 0.2.2
  */
 public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}
@@ -227,10 +226,12 @@ public final class StaticCorrectionDataFile {
         return new StaticCorrectionData(observer, id, comp, start, timeshift, amplitude, usablephases);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Shows all static corrections in a file
-     *
-     * @param args [static correction file name]
+     * Shows all static corrections in a file.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

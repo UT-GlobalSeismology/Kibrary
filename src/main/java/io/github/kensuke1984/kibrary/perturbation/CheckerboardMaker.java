@@ -89,15 +89,15 @@ public class CheckerboardMaker extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a voxel information file, must be set");
+            pw.println("##Path of a voxel information file, must be set.");
             pw.println("#voxelPath voxel.inf");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
             pw.println("##Variable types to perturb, listed using spaces, must be set.");
             pw.println("#perturbVariableTypes ");

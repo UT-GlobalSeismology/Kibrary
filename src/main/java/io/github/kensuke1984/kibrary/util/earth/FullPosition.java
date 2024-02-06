@@ -32,7 +32,7 @@ public final class FullPosition extends HorizontalPosition {
     /**
      * Margin to decide whether two radii are the same value.
      */
-    public static final double RADIUS_EPSILON = Math.pow(10, -RADIUS_DECIMALS)/2;
+    public static final double RADIUS_EPSILON = Math.pow(10, -RADIUS_DECIMALS) / 2;
     /**
      * Radius [km]. [0, &infin;)
      */
@@ -62,13 +62,14 @@ public final class FullPosition extends HorizontalPosition {
 
     /**
      * Checks whether this position is inside a given coordinate range.
+     * Lower limit is included; upper limit is excluded.
      * @param minLatitude (double) [-90:maxLatitude)
      * @param maxLatitude (double) (minLatitude:90]
      * @param minLongitude (double) [-180:maxLongitude)
      * @param maxLongitude (double) (minLongitude:360]
      * @param minRadius (double) [0:maxRadius)
      * @param maxRadius (double) (minRadius:)
-     * @return (boolean) true if position is inside the given range
+     * @return (boolean) Whether this position is inside the given range.
      *
      * @author otsuru
      * @since 2022/10/11
@@ -80,7 +81,7 @@ public final class FullPosition extends HorizontalPosition {
         }
 
         // radius
-        if (radius < minRadius || maxRadius < radius) return false;
+        if (radius < minRadius || maxRadius <= radius) return false;
 
         // latitude and longitude
         if (isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude) == false) return false;

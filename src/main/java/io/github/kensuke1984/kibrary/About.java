@@ -23,7 +23,6 @@ import org.apache.commons.cli.Options;
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  */
 public final class About extends javax.swing.JFrame {
-    public static final String EMAIL_ADDRESS = "kensuke1984@gmail.com";
     public static final String CODENAME = "Shiva";
     public static final String VERSION = "0.4.9.31";
     private static final String LINE = "Kibrary " + VERSION + " (" + CODENAME + ")\n" +
@@ -31,11 +30,9 @@ public final class About extends javax.swing.JFrame {
             "Copyright \u00a9 2015-2020 Kensuke Konishi and Anselme F.E. Borgeaud.\n\n" +
             "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
 
-    // kibrary.jar
-    private static final String KIBRARY_JAR_URL = "https://bit.ly/31FkTrh";
-
     /**
-     * @param args [no option needed]
+     * Shows information about this package.
+     * @param args will be ignored
      */
     public static void main(String[] args) {
         run(null);

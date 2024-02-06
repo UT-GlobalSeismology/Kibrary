@@ -288,11 +288,12 @@ public final class BasicIDFile {
                 usablephases, isConvolved);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Exports binary files in ascii format.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

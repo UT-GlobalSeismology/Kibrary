@@ -38,8 +38,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * Only the globalCMTID is the part used to convey data;
  * the rest of the information is just for the users to see.
  *
- * @author ???
  * @since a long time ago
+ * @version 2022/4/22 Renamed from statistics.EventInformationFile to util.data.EventListFile.
  */
 public class EventListFile {
     private EventListFile() {}
@@ -113,13 +113,15 @@ public class EventListFile {
         return Collections.unmodifiableSet(eventSet);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Reads event information from an input source
      * and creates an event list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic ID file.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

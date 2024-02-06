@@ -12,6 +12,12 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
+/**
+ * Class that computes and writes variance and AIC for inversion results.
+ *
+ * @author otsuru
+ * @since 2022/9/2
+ */
 public class ResultEvaluation {
 
     private final RealMatrix ata;
@@ -28,13 +34,24 @@ public class ResultEvaluation {
         this.obsNorm = obsNorm;
     }
 
+    /**
+     * Computes and writes variance and AIC for inversion results.
+     * @param ans (RealMatrix) The matrix containing the answers of the inversion. Each column is one answer.
+     * @param maxNum (int) The maximum number of vectors to output variance for.
+     * @param alphas (double[]) Array of empirical redundancy parameter alpha to compute AIC for.
+     * @param outPath (Path) Path of output directory.
+     * @throws IOException
+     */
     public void evaluate(RealMatrix ans, int maxNum, double[] alphas, Path outPath) throws IOException {
         System.err.println("Computing variance and AIC ...");
 
+        // number of vectors to output the variance
+        int numOutput = (maxNum < ans.getColumnDimension()) ? maxNum : ans.getColumnDimension();
+
         // compute normalized variance up to basis vector maxNum
-        double[] variances = new double[maxNum + 1];
+        double[] variances = new double[numOutput + 1];
         variances[0] = dNorm * dNorm / (obsNorm * obsNorm);
-        for (int i = 0; i < maxNum; i++) {
+        for (int i = 0; i < numOutput; i++) {
             variances[i + 1] = varianceOf(ans.getColumnVector(i));
         }
         writeVariance(variances, outPath.resolve("variance.txt"));

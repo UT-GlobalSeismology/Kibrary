@@ -40,8 +40,7 @@ public class AzimuthHistogram {
 
     /**
      * Creates histogram of azimuth based on a dataEntryFile.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

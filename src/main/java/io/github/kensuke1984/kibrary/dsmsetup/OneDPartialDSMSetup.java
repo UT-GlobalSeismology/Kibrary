@@ -124,17 +124,17 @@ public class OneDPartialDSMSetup extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
             pw.println("#header ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a layer information file. If this is unset, the following layerRadii will be used.");
             pw.println("#layerPath layer.inf");
@@ -144,13 +144,13 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#forTIParameters true");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10 (3276.8)");
+            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
+            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
             pw.println("#np ");
-            pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
+            pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations. (true)");
             pw.println("#mpi false");
         }
         System.err.println(outPath + " is created.");

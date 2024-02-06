@@ -19,10 +19,17 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
+/**
+ * Computes variance of {@link BasicIDFile}s.
+ *
+ * @author otsuru
+ * @since 2022/7/22
+ */
 public class VarianceComputer {
 
     /**
      * Computes normalized variance of residual waveforms in a basic waveform folder.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

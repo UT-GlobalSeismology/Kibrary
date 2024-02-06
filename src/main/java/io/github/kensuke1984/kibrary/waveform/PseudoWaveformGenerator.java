@@ -94,23 +94,23 @@ public class PseudoWaveformGenerator extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of a model file, must be set");
+            pw.println("##Path of a model file, must be set.");
             pw.println("#modelPath model.lst");
             pw.println("##(boolean) Whether to set the psuedo waveform as synthetic. If false, observed. (false)");
             pw.println("#setPseudoAsSyn ");
-            pw.println("##(boolean) Whether to add noise (false)");
+            pw.println("##(boolean) Whether to add noise. (false)");
             pw.println("#noise ");
-            pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
+            pw.println("##(double) Noise power [ ]. (1000)"); // TODO what is the unit?
             pw.println("#noisePower ");
-            pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");

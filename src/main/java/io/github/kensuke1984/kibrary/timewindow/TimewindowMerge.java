@@ -60,14 +60,14 @@ public class TimewindowMerge extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##########From here on, list up paths of timewindow files.");
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " file");
+                pw.println("##" + MathAid.ordinalNumber(i) + " file.");
                 pw.println("#timewindowPath" + i + " timewindow.dat");
             }
         }
@@ -95,10 +95,10 @@ public class TimewindowMerge extends Operation {
     public void run() throws IOException {
         int fileNum = timewindowPaths.size();
         if (fileNum == 0) {
-            System.err.println("No input files found.");
+            System.err.println("!! No input files found.");
             return;
         } else if (fileNum == 1) {
-            System.err.println("Only 1 input file found. Merging will not be done.");
+            System.err.println("!! Only 1 input file found. Merging will not be done.");
             return;
         }
 

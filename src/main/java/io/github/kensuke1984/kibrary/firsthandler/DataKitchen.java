@@ -98,30 +98,30 @@ public class DataKitchen extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##The name of catalog to use from {cmt, pde}  (cmt)");
+            pw.println("##The name of catalog to use from {cmt, pde}. (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
-            pw.println("##(double) Sampling Hz, can not be changed now (20)");
+            pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
-            pw.println("##Lower limit of epicentral distance range [deg] [0:maxDistance) (0)");
+            pw.println("##Lower limit of epicentral distance range [deg]; [0:maxDistance). (0)");
             pw.println("#minDistance 70");
-            pw.println("##Upper limit of epicentral distance range [deg] (minDistance:180] (180)");
+            pw.println("##Upper limit of epicentral distance range [deg]; (minDistance:180]. (180)");
             pw.println("#maxDistance 100");
-            pw.println("##Lower limit of station latitude [deg] [-90:maxLatitude) (-90)");
+            pw.println("##Lower limit of station latitude [deg]; [-90:maxLatitude). (-90)");
             pw.println("#minLatitude ");
-            pw.println("##Upper limit of station latitude [deg] (minLatitude:90] (90)");
+            pw.println("##Upper limit of station latitude [deg]; (minLatitude:90]. (90)");
             pw.println("#maxLatitude ");
-            pw.println("##Lower limit of station longitude [deg] [-180:maxLongitude) (-180)");
+            pw.println("##Lower limit of station longitude [deg]; [-180:maxLongitude). (-180)");
             pw.println("#minLongitude ");
-            pw.println("##Upper limit of station longitude [deg] (minLongitude:360] (180)");
+            pw.println("##Upper limit of station longitude [deg]; (minLongitude:360]. (180)");
             pw.println("#maxLongitude ");
-            pw.println("##Threshold to judge which stations are in the same position, non-negative [deg] (0.01)"); // = about 1 km
+            pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
             pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid ");
-            pw.println("##(double) The maximum length of output time series (3276.8)");
+            pw.println("##(double) The maximum length of output time series. (3276.8)");
             pw.println("## This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
-            pw.println("## The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
+            pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");
-            pw.println("##(boolean) If this is true, remove intermediate files (true)");
+            pw.println("##(boolean) Whether to remove intermediate files. (true)");
             pw.println("#removeIntermediateFile ");
         }
         System.err.println(outPath + " is created.");

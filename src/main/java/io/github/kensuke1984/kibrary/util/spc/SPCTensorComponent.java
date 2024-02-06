@@ -5,7 +5,9 @@ import java.util.Arrays;
 /**
  * Tensor components of a spc file
  * <p>
- * R:Z, T(theta):R, P(phi): T <br>
+ * R(radius): Z,
+ * T(theta): R,
+ * P(phi): T
  * <p>
  * <p>
  * ij &rarr; U<sub>ij</sub><br>
@@ -33,14 +35,14 @@ public enum SPCTensorComponent {
     }
 
     /**
-     * back propagate のETAri,sのコンポーネントを返す it returns rtp when i=1 r=2 s=3
+     * Returns component of ETAri,s for back propagate (ex. rtp when i=1, r=2, s=3).
      *
      * @param i 1, 2, 3
      * @param r 1, 2, 3
      * @param s 1, 2, 3
      * @return SPCTensorComponent for the input i r s
      */
-    public static SPCTensorComponent valueOf27Conmponent(int i, int r, int s) {
+    public static SPCTensorComponent valueOf27Component(int i, int r, int s) {
         if (i < 1 || 3 < i || r < 1 || 3 < r || s < 1 || 3 < s) throw new IllegalArgumentException(
                 "Input (i, r, s) = (" + i + ", " + r + ", " + s + ") must be 1, 2 or 3.");
         return Arrays.stream(values())
@@ -50,11 +52,11 @@ public enum SPCTensorComponent {
     }
 
     /**
-     * forward propagate のUp,qのコンポーネントを返す p=1, q=2の時 rtを返す
+     * Returns component of Up,q for forward propagate (ex. rt when p=1, q=2).
      * <p>
-     * or
+     * OR
      * <p>
-     * back propagate のETAjiのコンポーネントを返す i=1, j=2の時 rtを返す
+     * Returns component of ETAji for back propagate (ex. rt when i=1, j=2).
      *
      * @param p 1, 2, 3
      * @param q 1, 2, 3

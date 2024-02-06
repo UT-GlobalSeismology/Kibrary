@@ -84,7 +84,7 @@ public class DataEntryListFile {
         Set<DataEntry> entrySet = new HashSet<>();
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
-        while(reader.hasNext()) {
+        while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             GlobalCMTID event = new GlobalCMTID(parts[0]);
             HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]));
@@ -100,13 +100,15 @@ public class DataEntryListFile {
         return Collections.unmodifiableSet(entrySet);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Reads dataset information from an input source
      * and creates a data entry list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic waveform folder.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -127,21 +129,25 @@ public class DataEntryListFile {
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
-                .desc("Components to use, listed using commas").build());
+                .desc("Components to use, listed using commas.").build());
 
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
-                .desc("Use dataset folder containing event folders as input").build());
+                .desc("Use dataset folder containing event folders as input.").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input").build());
+                .desc("Use timewindow file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("Use basic waveform folder as input").build());
+                .desc("Use basic waveform folder as input.").build());
+        inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
+                .desc("Use data entry file as input.").build());
         options.addOptionGroup(inputOption);
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Set path of output file.").build());
+        options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
+                .desc("To convert entries to certain components, list then using commas.").build());
 
         return options;
     }
@@ -160,19 +166,23 @@ public class DataEntryListFile {
         Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
                 : Paths.get("dataEntry" + GadgetAid.getTemporaryString() + ".lst");
 
+        // read input
         Set<DataEntry> entrySet;
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            Set<TimewindowData> timewindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             entrySet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
                     .map(timewindow -> new DataEntry(timewindow.getGlobalCMTID(), timewindow.getObserver(), timewindow.getComponent()))
                     .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
-            List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
+            List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             entrySet = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))
                     .map(id -> new DataEntry(id.getGlobalCMTID(), id.getObserver(), id.getSacComponent()))
                     .collect(Collectors.toSet());
+        } else if (cmdLine.hasOption("e")) {
+            entrySet = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")))
+                    .stream().filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
         } else {
             String pathString = "";
             Path inPath;
@@ -188,6 +198,19 @@ public class DataEntryListFile {
             System.err.println("No data entries created.");
             return;
         }
+
+        // convert components
+        if (cmdLine.hasOption("x")) {
+            Set<DataEntry> newEntrySet = new HashSet<>();
+            Set<SACComponent> xComponents = Arrays.stream(cmdLine.getOptionValue("x").split(","))
+                    .map(SACComponent::valueOf).collect(Collectors.toSet());
+            for (SACComponent component : xComponents) {
+                entrySet.stream().map(entry -> new DataEntry(entry.getEvent(), entry.getObserver(), component)).forEach(newEntrySet::add);
+            }
+            entrySet = newEntrySet;
+        }
+
+        // output
         writeFromSet(entrySet, outputPath);
     }
 
@@ -198,6 +221,5 @@ public class DataEntryListFile {
                 .map(header -> new DataEntry(header.getGlobalCMTID(), header.getObserver(), header.getComponent()))
                 .collect(Collectors.toSet());
     }
-
 
 }

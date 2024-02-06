@@ -14,6 +14,8 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
+import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -75,18 +77,18 @@ public class InversionArranger extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of an unknown parameter list file, must be set");
+            pw.println("##Path of an unknown parameter list file, must be set.");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Path of a weighting properties file, must be set.");
-            pw.println("#weightingPropertiesPath ");
+            pw.println("#weightingPropertiesPath weighting.properties");
         }
         System.err.println(outPath + " is created.");
     }
@@ -129,9 +131,9 @@ public class InversionArranger extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
-        AtAFile.write(ata, outPath.resolve("ata.lst"));
-        AtdFile.write(atd, outPath.resolve("atd.lst"));
-        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        MatrixFile.write(ata, outPath.resolve("ata.lst"));
+        VectorFile.write(atd, outPath.resolve("atd.lst"));
+        MatrixAssembly.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
     }
 

@@ -19,8 +19,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.2
- * @author anselme add information files for psv/sh fpcat (catalog)
+ * @since version 0.0.6.2
  */
 public class FPInputFile extends DSMInputHeader {
 

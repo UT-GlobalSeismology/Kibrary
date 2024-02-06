@@ -58,15 +58,15 @@ public class ModelSmoothener extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
             pw.println("##Path of perturbation file, must be set.");
             pw.println("#perturbationPath vsPercent.lst");
-            pw.println("##Lower limit of radius range [0:upperRadius) (0)");
+            pw.println("##Lower limit of radius range [km]; [0:upperRadius). (0)");
             pw.println("#lowerRadius ");
-            pw.println("##Upper limit of radius range (lowerRadius:) (6371)");
+            pw.println("##Upper limit of radius range [km]; (lowerRadius:). (6371)");
             pw.println("#upperRadius ");
         }
         System.err.println(outPath + " is created.");
@@ -85,9 +85,8 @@ public class ModelSmoothener extends Operation {
 
         lowerRadius = property.parseDouble("lowerRadius", "0");
         upperRadius = property.parseDouble("upperRadius", "6371");
-        if (lowerRadius > upperRadius)
+        if (lowerRadius < 0 || lowerRadius > upperRadius)
             throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
-
     }
 
     @Override

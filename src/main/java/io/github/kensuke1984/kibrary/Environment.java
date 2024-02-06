@@ -16,7 +16,7 @@ import org.apache.commons.cli.Options;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.5
+ * @since version 0.1.5
  */
 public class Environment {
     private Environment() {}
@@ -113,9 +113,11 @@ public class Environment {
         return PROPERTY.getProperty("institute");
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Shows environment information
-     *
+     * Shows environment information.
      * @param args will be ignored
      */
     public static void main(String[] args) {

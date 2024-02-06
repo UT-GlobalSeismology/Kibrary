@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  *
  * @author Kensuke Konishi
  * @since version 0.1.1.2
- * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
+ * @see <a href=http://www.globalcmt.org/>Global CMT project official page</a>
  */
 public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
@@ -147,12 +147,13 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
         return ndk;
     }
 
-    /*-------------------------------------------------------*/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Displays information of input event IDs.
      * Results are written in the standard output.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {

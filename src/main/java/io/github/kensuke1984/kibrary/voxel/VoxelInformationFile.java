@@ -7,6 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +31,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * .<br>
  * .<br>
  * latm lonm dLatm dLonm
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author otsuru
  * @since 2022/2/11
@@ -39,15 +42,15 @@ public class VoxelInformationFile {
     /**
      * thickness of each layer
      */
-    private double[] layerThicknesses;
+    private final double[] layerThicknesses;
     /**
      * Radii of voxel center points, sorted, no duplication
      */
-    private double[] layerRadii;
+    private final double[] layerRadii;
     /**
      * Horizontal distribution of voxels
      */
-    private List<HorizontalPixel> horizontalPixels = new ArrayList<>();
+    private final List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
 
     /**
@@ -117,7 +120,7 @@ public class VoxelInformationFile {
      * @return (double[])
      */
     public double[] getThicknesses() {
-        return layerThicknesses;
+        return layerThicknesses.clone();
     }
 
     /**
@@ -125,7 +128,7 @@ public class VoxelInformationFile {
      * @return (double[])
      */
     public double[] getRadii() {
-        return layerRadii;
+        return layerRadii.clone();
     }
 
     /**
@@ -141,7 +144,7 @@ public class VoxelInformationFile {
      * @return
      */
     public List<HorizontalPixel> getHorizontalPixels() {
-        return horizontalPixels;
+        return Collections.unmodifiableList(horizontalPixels);
     }
 
     /**
