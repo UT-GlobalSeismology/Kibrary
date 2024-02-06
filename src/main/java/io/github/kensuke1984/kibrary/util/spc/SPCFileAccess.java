@@ -144,13 +144,13 @@ public interface SPCFileAccess {
             dsmOutput = spcName.read();
         }
 
-        Path outputIdsPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o")) : null;
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o")) : null;
         boolean onlyHeader = cmdLine.hasOption("h");
 
-        print(dsmOutput, phi, onlyHeader, outputIdsPath);
+        print(dsmOutput, phi, onlyHeader, outputPath);
     }
 
-    public static void print(SPCFileAccess dsmOutput, double phi, boolean onlyHeader, Path outputIdsPath) throws IOException {
+    public static void print(SPCFileAccess dsmOutput, double phi, boolean onlyHeader, Path outputPath) throws IOException {
         String sourceID = dsmOutput.getSourceID();
         String receiverID = dsmOutput.getReceiverID();
         FullPosition sourcePosition = dsmOutput.getSourcePosition();
@@ -164,8 +164,8 @@ public interface SPCFileAccess {
             spcs[i] = dsmOutput.getSpcBodyList().get(0).getSpcComponent(i).getValueInFrequencyDomain();
         }
 
-        if (outputIdsPath != null) {
-            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputIdsPath))) {
+        if (outputPath != null) {
+            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
                 pw.println("SPCType: " + spcType);
                 pw.println("Source: " + sourceID + " " + sourcePosition);
                 pw.println("Receiver: " + receiverID + " " + receiverPosition);
