@@ -157,6 +157,29 @@ public class PartialID extends BasicID {
         return true;
     }
 
+    /**
+     *
+     * @param obj
+     * @return (boolean) The obj is the same instance except {@link VariableType}
+     */
+    public boolean isPair(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        PartialID other = (PartialID) obj;
+        if (parameterType != other.parameterType)
+            return false;
+        if (voxelPosition == null) {
+            if (other.voxelPosition != null)
+                return false;
+        } else if (!voxelPosition.equals(other.voxelPosition))
+            return false;
+        return true;
+    }
+
     public FullPosition getVoxelPosition() {
         return voxelPosition;
     }
