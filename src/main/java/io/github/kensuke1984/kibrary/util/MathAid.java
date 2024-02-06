@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Some calculation Utilities.
@@ -14,10 +15,20 @@ public final class MathAid {
     private MathAid() {}
 
     /**
-     * @param variance variance
-     * @param n        Number of independent data
-     * @param k        Degree of freedom
-     * @return aic
+     * The number of decimal places to decide if 0.00...01 = 0, 0.9999... = 1, etc.
+     */
+    public static final int PRECISION_DECIMALS = 10;
+    /**
+     * The margin to decide if 0.00...01 = 0, 0.9999... = 1, etc.
+     */
+    public static final double PRECISION_EPSILON = Math.pow(10, -PRECISION_DECIMALS);
+
+    /**
+     * Compute AIC.
+     * @param variance (double) Variance.
+     * @param n (int) Number of independent data.
+     * @param k (int) Degree of freedom.
+     * @return (double) AIC value.
      */
     public static double computeAIC(double variance, int n, int k) {
         final double log2pi = Math.log(2 * Math.PI);
@@ -25,10 +36,10 @@ public final class MathAid {
     }
 
     /**
-     * Compute the normalized variance of residual waveform
-     * @param d (RealVector) Residual waveform
-     * @param obs (RealVector) Observed waveform
-     * @return (double) normalized variance
+     * Compute the normalized variance of residual waveform.
+     * @param d (RealVector) Residual waveform.
+     * @param obs (RealVector) Observed waveform.
+     * @return (double) Normalized variance.
      */
     public static double computeVariance(RealVector d, RealVector obs) {
         return d.dotProduct(d) / obs.dotProduct(obs);
@@ -36,9 +47,9 @@ public final class MathAid {
 
     /**
      * Division of two integers, but round up when not divisible.
-     * @param dividend (int) a in a/b
-     * @param divisor (int) b in a/b
-     * @return (int) a/b, rounded up
+     * @param dividend (int) a in a/b.
+     * @param divisor (int) b in a/b.
+     * @return (int) a/b, rounded up.
      *
      * @author otsuru
      * @since 2023/1/15
@@ -50,9 +61,9 @@ public final class MathAid {
     /**
      * Rounds value to n effective digits.
      *
-     * @param value (double) The value to be rounded
-     * @param n (int) The number of effective digits
-     * @return (double) The rounded value which has n effective digits
+     * @param value (double) The value to be rounded.
+     * @param n (int) The number of effective digits.
+     * @return (double) The rounded value which has n effective digits.
      */
     public static double roundToEffective(double value, int n) {
         if (n < 1)
@@ -86,7 +97,7 @@ public final class MathAid {
      * This method exports integer values without ".0" (which is always left in integer values when simply changing double to String).
      * The decimal point can be changed to a specified letter.
      *
-     * @param value (int) The value to turn into a String.
+     * @param value (double) The value to turn into a String.
      * @param decimalLetter (String) The letter to use instead of the decimal point.
      * @return (String) Simple String form of the value.
      */
@@ -133,14 +144,11 @@ public final class MathAid {
         if (nInteger <= 0) throw new IllegalArgumentException("nInteger must be positive.");
         if (nDecimal < 0) throw new IllegalArgumentException("nDecimal must be non-negative.");
 
-        if (nDecimal == 0) {
-            int intValue = (int) Math.round(value);
-            return padToString(intValue, nInteger, leftZeroPad);
+        // total number of digits: (integer digits) + (1 for decimal) + (decimal digits)
+        int digits = nInteger + (nDecimal == 0 ? 0 : 1 + nDecimal);
 
-        } else {
-            String format = (leftZeroPad ? "%0" : "%") + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
-            return String.format(format, value);
-        }
+        String format = (leftZeroPad ? "%0" : "%") + digits + "." + nDecimal + "f";
+        return String.format(format, value);
     }
 
     /**
@@ -198,7 +206,7 @@ public final class MathAid {
     /**
      * Turns a positive number into an ordinal number String (i.e. 1st, 2nd, ...)
      * @param n (int) Number to get the ordinal of
-     * @return (String)
+     * @return (String) Ordinal number.
      *
      * @author otsuru
      * @since 2022/4/24
@@ -208,6 +216,7 @@ public final class MathAid {
 
         // always "th" when the digit in the tens place is 1
         if (n % 100 / 10 == 1) return  n + "th";
+        // otherwise, switch by digit in the ones place
         else if (n % 10 == 1) return n + "st";
         else if (n % 10 == 2) return n + "nd";
         else if (n % 10 == 3) return n + "rd";
@@ -217,10 +226,10 @@ public final class MathAid {
     /**
      * Switches the wording to use based on whether a value is singular or plural.
      * For counting objects (file/files) or changing verbs (is/are).
-     * @param n (int) Number
-     * @param singularCase (String) Words to append when the number is singular
-     * @param pluralCase (String) Words to append when the number is plural
-     * @return (String) Number followd by appended words
+     * @param n (int) Number.
+     * @param singularCase (String) Words to append when the number is singular.
+     * @param pluralCase (String) Words to append when the number is plural.
+     * @return (String) Number followd by appended words.
      *
      * @author otsuru
      * @since 2022/4/24
@@ -245,6 +254,30 @@ public final class MathAid {
     public static void checkDateRangeValidity(LocalDate startDate, LocalDate endDate) {
         if (startDate.isAfter(endDate))
             throw new IllegalArgumentException("Date range [" + startDate + ":" + endDate + "] is invalid.");
+    }
+
+    /**
+     * Same as Math.floor(), but consider precision, fixing 0.9999... to 1.
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2023/11/8
+     */
+    public static double floor(double value) {
+        return Math.floor(Precision.round(value, PRECISION_DECIMALS));
+    }
+
+    /**
+     * Same as Math.ceil(), but consider precision, fixing 1.00...01 to 1.
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2023/12/14
+     */
+    public static double ceil(double value) {
+        return Math.ceil(Precision.round(value, PRECISION_DECIMALS));
     }
 
 }

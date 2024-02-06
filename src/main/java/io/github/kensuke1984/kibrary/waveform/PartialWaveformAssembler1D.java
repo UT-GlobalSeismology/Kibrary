@@ -456,7 +456,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 // apply filter
                 double[] filteredUt = filter.applyFilter(ut);
 
-                cutAndWrite(timewindow.getObserver(), filteredUt, timewindow, currentBodyR, variableType);
+                cutAndWrite(filteredUt, timewindow, currentBodyR, variableType);
             }
         }
         private void buildPartialWaveform(SPCFileAccess shSPCFile, SPCFileAccess psvSPCFile, TimewindowData timewindow, VariableType variableType) {
@@ -486,7 +486,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 for (int it = 0; it < filteredSHUt.length; it++)
                     summedUt[it] = filteredSHUt[it] + filteredPSVUt[it];
 
-                cutAndWrite(timewindow.getObserver(), summedUt, timewindow, currentBodyR, variableType);
+                cutAndWrite(summedUt, timewindow, currentBodyR, variableType);
             }
         }
 
@@ -502,12 +502,12 @@ public class PartialWaveformAssembler1D extends Operation {
             }
         }
 
-        private void cutAndWrite(Observer observer, double[] filteredUt, TimewindowData timewindow, double bodyR, VariableType variableType) {
+        private void cutAndWrite(double[] filteredUt, TimewindowData timewindow, double bodyR, VariableType variableType) {
             double[] xs = IntStream.range(0, filteredUt.length).mapToDouble(i -> i / partialSamplingHz).toArray();
             Trace filteredTrace = new Trace(xs, filteredUt);
             Trace resampledTrace = filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
 
-            PartialID partialID = new PartialID(observer, event, timewindow.getComponent(), finalSamplingHz,
+            PartialID partialID = new PartialID(timewindow.getObserver(), event, timewindow.getComponent(), finalSamplingHz,
                     timewindow.getStartTime(), resampledTrace.getLength(), 1 / highFreq, 1 / lowFreq,
                     timewindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
                     ParameterType.LAYER, variableType, new FullPosition(0, 0, bodyR), resampledTrace.getY());

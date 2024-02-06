@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.abandon.ThreeDPartialCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.inversion.DiagATAExtract;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
@@ -89,6 +90,7 @@ enum Brooklyn {
     // Inversion 70
     WeightingHandler(70, WeightingHandler.class),
     PerturbationComparison(71, PerturbationComparison.class),
+    DiagATAExtract(75, DiagATAExtract.class);
     // Temporal 100
     ;
 

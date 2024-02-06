@@ -20,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * Each line:
  * <ul>
- * <li> 1D: ParameterType(LAYER) VariableType r weighting </li>
- * <li> 3D: ParameterType(VOXEL) VariableType lat lon r weighting </li>
+ * <li> 1D: ParameterType(LAYER) variableType r size </li>
+ * <li> 3D: ParameterType(VOXEL) variableType lat lon r size </li>
  * </ul>
  * <p>
  * Duplication is NOT allowed.
@@ -39,7 +39,7 @@ public class UnknownParameterFile {
      * Write {@link UnknownParameter}s into a file.
      * @param parameterList (List of {@link UnknownParameter}) Parameters to write.
      * @param outputPath (Path) Output file.
-     * @param options (OpenOption... options) Options for write.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */
     public static void write(List<UnknownParameter> parameterList, Path outputPath, OpenOption... options)

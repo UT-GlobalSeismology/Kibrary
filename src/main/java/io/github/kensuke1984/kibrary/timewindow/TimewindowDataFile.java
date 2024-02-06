@@ -91,26 +91,26 @@ public final class TimewindowDataFile {
     /**
      * Output {@link TimewindowData} in binary format.
      *
-     * @param infoSet (Set of {@link TimewindowData}) Timewindows to write.
-     * @param outputPath (Path) The output file.
-     * @param options (OpenOptions...) Options for write.
+     * @param timewindowSet (Set of {@link TimewindowData}) Timewindows to write.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs.
      * @author Kensuke Konishi
      */
-    public static void write(Set<TimewindowData> infoSet, Path outputPath, OpenOption... options)
+    public static void write(Set<TimewindowData> timewindowSet, Path outputPath, OpenOption... options)
             throws IOException {
-        if (infoSet.isEmpty())
+        if (timewindowSet.isEmpty())
             throw new RuntimeException("Input information is empty..");
 
         System.err.println("Outputting "
-                + MathAid.switchSingularPlural(infoSet.size(), "timewindow", "timewindows")
+                + MathAid.switchSingularPlural(timewindowSet.size(), "timewindow", "timewindows")
                 + " in " + outputPath);
 
-        Observer[] observers = infoSet.stream().map(TimewindowData::getObserver).distinct().sorted()
+        Observer[] observers = timewindowSet.stream().map(TimewindowData::getObserver).distinct().sorted()
                 .toArray(Observer[]::new);
-        GlobalCMTID[] events = infoSet.stream().map(TimewindowData::getGlobalCMTID).distinct().sorted()
+        GlobalCMTID[] events = timewindowSet.stream().map(TimewindowData::getGlobalCMTID).distinct().sorted()
                 .toArray(GlobalCMTID[]::new);
-        Phase[] phases = infoSet.stream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
+        Phase[] phases = timewindowSet.stream().map(TimewindowData::getPhases).flatMap(p -> Stream.of(p))
             .distinct().toArray(Phase[]::new);
 
         Map<Observer, Integer> observerMap = new HashMap<>();
@@ -139,7 +139,7 @@ public final class TimewindowDataFile {
                     throw new NullPointerException(i + " " + "phase is null");
                 dos.writeBytes(StringUtils.rightPad(phases[i].toString(), 16));
             }
-            for (TimewindowData info : infoSet) {
+            for (TimewindowData info : timewindowSet) {
                 dos.writeShort(observerMap.get(info.getObserver()));
                 dos.writeShort(eventMap.get(info.getGlobalCMTID()));
                 Phase[] infophases = info.getPhases();
@@ -163,7 +163,7 @@ public final class TimewindowDataFile {
      * Read timewindow data from a binary format {@link TimewindowDataFile}
      * and select those to use based on {@link DataEntry}s and {@link SACComponent}s.
      *
-     * @param timewindowPath (Path) The {@link TimewindowDataFile} to read.
+     * @param inputPath (Path) The {@link TimewindowDataFile} to read.
      * @param dataEntryPath (Path) The {@link DataEntryListFile} for selection.
      * @param components (Set of {@link SACComponent}) Components to use.
      * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Timewindows that are read.
@@ -172,19 +172,19 @@ public final class TimewindowDataFile {
      * @author otsuru
      * @since 2023/4/8
      */
-    public static Set<TimewindowData> readAndSelect(Path timewindowPath, Path dataEntryPath, Set<SACComponent> components) throws IOException {
+    public static Set<TimewindowData> readAndSelect(Path inputPath, Path dataEntryPath, Set<SACComponent> components) throws IOException {
         Set<TimewindowData> timewindowSet;
         if (dataEntryPath != null) {
             // read entry set to be used for selection
             Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
             // read timewindows and select based on component and entries
-            timewindowSet = TimewindowDataFile.read(timewindowPath).stream()
+            timewindowSet = TimewindowDataFile.read(inputPath).stream()
                     .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
                     .collect(Collectors.toSet());
         } else {
             // read timewindows and select based on component
-            timewindowSet = TimewindowDataFile.read(timewindowPath).stream()
+            timewindowSet = TimewindowDataFile.read(inputPath).stream()
                     .filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
