@@ -10,19 +10,16 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -516,7 +513,8 @@ public class BasicBinnedStackCreator extends Operation {
 
             // add travel time curves
             if (displayPhases != null) {
-                plotTravelTimeCurve(startDistance, endDistance);
+                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
+                        null, "", eventPath, component, gnuplot);
             }
 
             gnuplot.write();
@@ -655,76 +653,6 @@ public class BasicBinnedStackCreator extends Operation {
                     newY[i] = sum;
                 }
                 return new Trace(newX, newY);
-            }
-        }
-
-        private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
-            int iNum = (int) Math.round((endDistance - startDistance) / TRAVEL_TIME_INTERVAL) + 1;
-
-            // set names of all phases to display, and the phase to align if it is specified
-            timeTool.setPhaseNames(displayPhases);
-            if (alignPhases != null) {
-                for (String phase : alignPhases) timeTool.appendPhaseName(phase);
-            }
-
-            // calculate travel times and store in arrays
-            Double[][] travelTimes = new Double[displayPhases.length][iNum];
-            Double[] alignTimes = new Double[iNum];
-            for (int i = 0; i < iNum; i++) {
-                double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
-                timeTool.calculate(distance);
-                List<Arrival> arrivals = timeTool.getArrivals();
-                for (int p = 0; p < displayPhases.length; p++) {
-                    String phase = displayPhases[p];
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
-                    if (arrivalOpt.isPresent()) {
-                        travelTimes[p][i] = arrivalOpt.get().getTime();
-                    }
-                }
-                if (alignPhases != null) {
-                    List<String> alignPhaseList = Arrays.asList(alignPhases);
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> alignPhaseList.contains(arrival.getPhase().getName())).findFirst();
-                    if (arrivalOpt.isPresent()) {
-                        alignTimes[i] = arrivalOpt.get().getTime();
-                    }
-                }
-            }
-
-            // output file and add curve
-            for (int p = 0; p < displayPhases.length; p++) {
-                String phase = displayPhases[p];
-                String curveFileName = "curve_" + component + "_" + phase + ".txt";
-                Path curvePath = eventPath.resolve(curveFileName);
-                boolean wrotePhaseLabel = false;
-                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
-                    for (int i = 0; i < iNum; i++) {
-                        // write only at distances where travel time exists
-                        if (travelTimes[p][i] != null) {
-                            double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
-                            // reduce time by alignPhase or reductionSlowness
-                            if (alignPhases != null) {
-                                // write only at distances where travel time of alignPhase exists
-                                if (alignTimes[i] != null) {
-                                    pw.println(distance + " " + (travelTimes[p][i] - alignTimes[i]));
-                                }
-                                // add label at first appearance
-                                if (wrotePhaseLabel == false) {
-                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - alignTimes[i], distance, GnuplotColorName.turquoise);
-                                    wrotePhaseLabel = true;
-                                }
-                            } else {
-                                double reduceTime = reductionSlowness * distance;
-                                pw.println(distance + " " + (travelTimes[p][i] - reduceTime));
-                                // add label at first appearance
-                                if (wrotePhaseLabel == false) {
-                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - reduceTime, distance, GnuplotColorName.turquoise);
-                                    wrotePhaseLabel = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
         }
     }

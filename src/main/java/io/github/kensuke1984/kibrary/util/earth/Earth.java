@@ -260,19 +260,14 @@ public final class Earth {
     public static double computeGeographicalAzimuthRad(HorizontalPosition eq, HorizontalPosition station) {
         double e = (90. - eq.getLatitude()) * Math.PI / 180.;
         double s = (90. - station.getLatitude()) * Math.PI / 180.;
-        // System.out.println("eq:"+e+" station: "+s);
         double deltaPhi = -eq.getPhi() + station.getPhi();
         double delta = computeGeographicalDistanceRad(eq, station);
         double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi))
                 / FastMath.sin(delta);
-        if (1 < cos)
-            cos = 1;
-        else if (cos < -1)
-            cos = -1;
+        if (1 < cos) cos = 1;
+        else if (cos < -1) cos = -1;
         double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
         double az = FastMath.acos(cos);
-        // System.out.println(cos+" "+az);
-        // System.out.println(az*180/Math.PI);
         return 0 <= sin ? az : -az + 2 * Math.PI;
     }
 
@@ -287,13 +282,10 @@ public final class Earth {
         double theta2 = (90. - loc2.getLatitude()) * Math.PI / 180.;
         double phi1 = loc1.getPhi();
         double phi2 = loc2.getPhi();
-
-        /*
-         * cos a = a*b/|a|/|b|
-         */
         double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2)
                 + FastMath.cos(theta1) * FastMath.cos(theta2);
-
+        if (1 < cosAlpha) cosAlpha = 1;
+        else if (cosAlpha < -1) cosAlpha = -1;
         return FastMath.acos(cosAlpha);
     }
 
@@ -305,14 +297,14 @@ public final class Earth {
      * @return [rad] Epicentral distance between pos1 and pos2 [0:pi]
      */
     public static double computeEpicentralDistanceRad(HorizontalPosition pos1, HorizontalPosition pos2) {
-
         double theta1 = pos1.getTheta();
         double theta2 = pos2.getTheta();
         double phi1 = pos1.getPhi();
         double phi2 = pos2.getPhi();
-        // cos a = a*b/|a|/|b|
         double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2) +
                 FastMath.cos(theta1) * FastMath.cos(theta2);
+        if (1 < cosAlpha) cosAlpha = 1;
+        else if (cosAlpha < -1) cosAlpha = -1;
         return FastMath.acos(cosAlpha);
     }
 
@@ -325,7 +317,6 @@ public final class Earth {
     public static double computeAzimuthRad(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
         double s = sourcePos.getTheta();
         double r = receiverPos.getTheta();
-        // System.out.println("eq:"+e+" station: "+s);
         double deltaPhi = -sourcePos.getPhi() + receiverPos.getPhi();
         double delta = computeEpicentralDistanceRad(sourcePos, receiverPos);
         double cos = (FastMath.cos(r) * FastMath.sin(s) - FastMath.sin(r) * FastMath.cos(s) * FastMath.cos(deltaPhi)) /

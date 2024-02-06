@@ -14,6 +14,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -36,10 +37,10 @@ public class VoxelFileMaker extends Operation {
      */
     private String fileTag;
 
-    private int lowerLatitude;
-    private int upperLatitude;
-    private int lowerLongitude;
-    private int upperLongitude;
+    private double lowerLatitude;
+    private double upperLatitude;
+    private double lowerLongitude;
+    private double upperLongitude;
 
     private double dLatitudeKm;
     private double dLatitudeDeg;
@@ -81,13 +82,13 @@ public class VoxelFileMaker extends Operation {
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##########Parameters for the CENTER positions of voxels to create.");
-            pw.println("##(int) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
+            pw.println("##(double) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
             pw.println("#lowerLatitude ");
-            pw.println("##(int) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
+            pw.println("##(double) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
             pw.println("#upperLatitude ");
-            pw.println("##(int) Lower limit of longitude [deg]; [-180:upperLongitude). (0)");
+            pw.println("##(double) Lower limit of longitude [deg]; [-180:upperLongitude). (0)");
             pw.println("#lowerLongitude ");
-            pw.println("##(int) Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
+            pw.println("##(double) Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
             pw.println("#upperLongitude ");
             pw.println("##(double) Latitude spacing [km]; (0:). If this is unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
@@ -105,7 +106,7 @@ public class VoxelFileMaker extends Operation {
             pw.println("#longitudeOffset ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
-            pw.println("##  If unset, the following parameters are used.");
+            pw.println("##  If unset, the subsequent parameters are used.");
             pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
             pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (3480)");
             pw.println("#lowerRadius ");
@@ -126,13 +127,13 @@ public class VoxelFileMaker extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
-        lowerLatitude = property.parseInt("lowerLatitude", "0");
-        upperLatitude = property.parseInt("upperLatitude", "0");
+        lowerLatitude = property.parseDouble("lowerLatitude", "0");
+        upperLatitude = property.parseDouble("upperLatitude", "0");
         if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
             throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
 
-        lowerLongitude = property.parseInt("lowerLongitude", "0");
-        upperLongitude = property.parseInt("upperLongitude", "180");
+        lowerLongitude = property.parseDouble("lowerLongitude", "0");
+        upperLongitude = property.parseDouble("upperLongitude", "180");
         if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
             throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
 
@@ -231,7 +232,7 @@ public class VoxelFileMaker extends Operation {
                 // the min and max voxel-centers are set close to the longitude bounds
                 double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
                 double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
-                int nLongitude = (int) Math.ceil((upperLongitude - lowerLongitude) / dLongitudeForRow);
+                int nLongitude = (int) MathAid.ceil((upperLongitude - lowerLongitude) / dLongitudeForRow);
                 double centerLongitude = (lowerLongitude + upperLongitude) / 2;
 
                 double startLongitude;
@@ -268,10 +269,10 @@ public class VoxelFileMaker extends Operation {
     }
 
     private static int getLowerIndex(double lowerValue, double interval, double offset) {
-        return (int) Math.ceil((lowerValue - offset) / interval);
+        return (int) MathAid.ceil((lowerValue - offset) / interval);
     }
     private static int getUpperIndex(double upperValue, double interval, double offset) {
-        return (int) Math.floor((upperValue - offset) / interval);
+        return (int) MathAid.floor((upperValue - offset) / interval);
     }
 
 }

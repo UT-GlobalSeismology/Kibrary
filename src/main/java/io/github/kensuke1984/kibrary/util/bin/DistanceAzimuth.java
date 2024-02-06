@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util.addons;
+package io.github.kensuke1984.kibrary.util.bin;
 
 public class DistanceAzimuth {
 	public double distance;
