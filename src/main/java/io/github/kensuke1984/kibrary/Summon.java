@@ -78,7 +78,7 @@ public final class Summon {
                 cmdLine = parseArgs(options, argsInput);
             } catch (ParseException e) {
                 showUsage(options);
-                System.err.println("-----------------");
+                System.err.println("-------- coffee break ---------");
                 Queens.noJokeNoScience();
                 return;
             }

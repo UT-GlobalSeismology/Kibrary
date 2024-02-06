@@ -87,9 +87,9 @@ public final class StaticCorrectionDataFile {
     /**
      * Output {@link StaticCorrectionData} in binary format.
      *
-     * @param infoSet (Set of {@link StaticCorrectionData}) Static corrections to write.
-     * @param outputPath (Path) The output file.
-     * @param options (OpenOptions...) Options for write.
+     * @param correctionSet (Set of {@link StaticCorrectionData}) Static corrections to write.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs.
      */
     public static void write(Set<StaticCorrectionData> correctionSet, Path outputPath, OpenOption... options)
