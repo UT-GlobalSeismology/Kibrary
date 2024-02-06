@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ import java.time.format.DateTimeFormatter;
 public class RespDataFile {
 
     private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
-    private String url;
+    private URL url;
     private String responseFile;
     private String spectraFile;
 
@@ -59,14 +60,14 @@ public class RespDataFile {
      *      Service Documentation
      * @param time     (LocalDateTime) Find the response for the given time.
      */
-    public void setRequest(LocalDateTime time) {
+    public void setRequest(LocalDateTime time) throws IOException {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23).
-        url = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
+        String urlString = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
                 + channel + "&" + "loc=" + requestLocation + "&" + "time=" + time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-
+        url = new URL(urlString);
     }
 
     /**
@@ -76,15 +77,12 @@ public class RespDataFile {
     public void downloadRespData() {
         Path outPath = Paths.get(responseFile);
 
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+        try (InputStream inputStream = url.openStream()) {
+            long size = Files.copy(inputStream, outPath, StandardCopyOption.REPLACE_EXISTING);
+            System.err.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println(e.toString());
         }
     }
 
@@ -92,18 +90,15 @@ public class RespDataFile {
      * Method downloading the Station information from IRIS/WS.
      * @param outDir (Path) Output directory
      */
-    public void downloadRespData (Path outDir) {
+    public void downloadRespData(Path outDir) {
         Path outPath = outDir.resolve(responseFile);
 
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+        try (InputStream inputStream = url.openStream()) {
+            long size = Files.copy(inputStream, outPath, StandardCopyOption.REPLACE_EXISTING);
+            System.err.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println(e.toString());
         }
     }
 

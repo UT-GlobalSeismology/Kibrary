@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,7 @@ class StationXmlFile {
 
     private static final String STATION_URL_IRIS = "http://service.iris.edu/fdsnws/station/1/query?";
     private static final String STATION_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/station/1/query?";
-    private String url;
+    private URL url;
 
     private final String xmlFileName;
     private final Path xmlPath;
@@ -85,28 +86,30 @@ class StationXmlFile {
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */
-    void setRequest(String datacenter, LocalDateTime startTime, LocalDateTime endTime) {
+    void setRequest(String datacenter, LocalDateTime startTime, LocalDateTime endTime) throws IOException {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23) Requested Level is "response".
         // TODO: virtual networks may not be accepted
+        String urlString;
         switch (datacenter) {
         case "IRIS":
-            url = STATION_URL_IRIS;
+            urlString = STATION_URL_IRIS;
             break;
         case "ORFEUS":
-            url = STATION_URL_ORFEUS;
+            urlString = STATION_URL_ORFEUS;
             break;
         default:
             throw new IllegalStateException("Invalid datacenter name");
         }
-        url = url + "net=" + network + "&" + "sta=" + station
+        urlString = urlString + "net=" + network + "&" + "sta=" + station
                 + "&" + "loc=" + requestLocation + "&" + "cha=" + channel
                 + "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&level=response&format=xml&includecomments=true&nodata=404";
 
+        url = new URL(urlString);
     }
 
     /**
@@ -115,16 +118,12 @@ class StationXmlFile {
      * @return (boolean) true if download succeeded
      */
     boolean downloadStationXml() {
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), xmlPath , StandardCopyOption.REPLACE_EXISTING);
-            //System.out.println("Downloaded : " + xmlFile + " - " + size + " bytes");
-
+        try (InputStream inputStream = url.openStream()) {
+            Files.copy(inputStream, xmlPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
+            // If stationXML file cannot be downloaded, return false.
             System.err.println("!! Failed to download stationXML file.");
-            e.printStackTrace();
+            System.err.println(e.toString());
             return false;
         }
         return true;
@@ -178,15 +177,6 @@ class StationXmlFile {
             }
         }
         return true;
-    }
-
-    String getUrl() {
-        return url;
-    }
-
-
-    void setUrl(String url) {
-        this.url = url;
     }
 
 

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +25,7 @@ import java.time.format.DateTimeFormatter;
 class StationInformationFile {
 
     private static final String STATION_URL = "http://service.iris.edu/fdsnws/station/1/query?";
-    private String url;
+    private URL url;
     private String stationFile;
     private Path stationPath;
 
@@ -76,18 +77,19 @@ class StationInformationFile {
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */
-    void setRequest(LocalDateTime startTime, LocalDateTime endTime) {
+    void setRequest(LocalDateTime startTime, LocalDateTime endTime) throws IOException {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23) Requested Level is "Channel."
         // TODO: virtual networks may not be accepted
-        url = STATION_URL + "net=" + network + "&" + "sta=" + station
+        String urlString = STATION_URL + "net=" + network + "&" + "sta=" + station
                 + "&" + "loc=" + requestLocation + "&" + "cha=" + channel
                 + "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&level=channel&format=text&includecomments=true&nodata=404";
 
+        url = new URL(urlString);
     }
 
     /**
@@ -95,15 +97,12 @@ class StationInformationFile {
      * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
      */
     void downloadStationInformation() {
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), stationPath , StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Downloaded : " + stationFile + " - " + size + " bytes");
+        try (InputStream inputStream = url.openStream()) {
+            long size = Files.copy(inputStream, stationPath, StandardCopyOption.REPLACE_EXISTING);
+            System.err.println("Downloaded : " + stationFile + " - " + size + " bytes");
 
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println(e.toString());
         }
     }
 
@@ -149,15 +148,6 @@ class StationInformationFile {
             else if(head[i].matches("StartTime")) {startTime = LocalDateTime.parse(data[i]);}
 //          else if(head[i].matches("EndTime")) {if(data[i]!=null){endTime = LocalDateTime.parse(data[i]);}} // TODO Some station information not including EndTime
         }
-    }
-
-    String getUrl() {
-        return url;
-    }
-
-
-    void setUrl(String url) {
-        this.url = url;
     }
 
 
