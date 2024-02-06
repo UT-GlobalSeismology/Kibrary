@@ -377,6 +377,8 @@ public class PartialWaveformAssembler3D extends Operation {
     public void run() throws IOException {
         System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
+        // information about output partial types
+        System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         // read timewindow file and select based on component and entries
         timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
@@ -731,7 +733,7 @@ public class PartialWaveformAssembler3D extends Operation {
         }
 
         private boolean forSamePixel(SPCFileAccess spc1, SPCFileAccess spc2) {
-        if (!spc1.getReceiverPosition().equals(spc2.getReceiverPosition())) return false;
+            if (!spc1.getReceiverPosition().equals(spc2.getReceiverPosition())) return false;
             else return true;
         }
 

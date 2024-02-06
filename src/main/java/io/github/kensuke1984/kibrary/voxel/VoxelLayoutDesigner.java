@@ -130,7 +130,7 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#crossDateLine ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
-            pw.println("##  If unset, the following parameters are used.");
+            pw.println("##  If unset, the subsequent parameters are used.");
             pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
             pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (3480)");
             pw.println("#lowerRadius ");

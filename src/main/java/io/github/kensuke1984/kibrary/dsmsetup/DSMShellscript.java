@@ -153,7 +153,7 @@ class DSMShellscript {
             pw.println("end=$(date +'%s')");
             pw.println("echo \"end  : $(date -d \"@${end}\" +'%Y-%m-%d %H:%M:%S (%:z)')\"");
             pw.println("elapsed=$(echo \"$end - $start\" | bc)");
-            pw.println("((sec=elapsed%60, min=(elapsed%3600)/60, hrs=elapsed/3600))");
+            pw.println("sec=$((elapsed%60)) ; min=$(((elapsed%3600)/60)) ; hrs=$((elapsed/3600))");
             pw.println("timestamp=$(printf \"%d:%02d:%02d\" \"$hrs\" \"$min\" \"$sec\")");
             pw.println("echo \"Finished in $timestamp\"");
         }

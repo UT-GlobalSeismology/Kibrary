@@ -75,7 +75,7 @@ public final class BasicIDFile {
 
     /**
      * Write basicIDs into ID file and data file.
-     * @param partialIDs (List of {@link BasicID}) BasicIDs to write.
+     * @param basicIDs (List of {@link BasicID}) BasicIDs to write.
      * @param outPath (Path) The directory where basic ID and data files shall be created. The directory must exist.
      * @throws IOException
      *

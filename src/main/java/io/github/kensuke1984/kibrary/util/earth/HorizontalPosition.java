@@ -26,13 +26,13 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
-     * margin to decide whether two latitudes are the same value
+     * Margin to decide whether two latitudes are the same value.
      */
-    public static double LATITUDE_EPSILON = Math.pow(10, -Latitude.PRECISION) / 2;
+    public static final double LATITUDE_EPSILON = Math.pow(10, -Latitude.DECIMALS) / 2;
     /**
-     * margin to decide whether two longitudes are the same value
+     * Margin to decide whether two longitudes are the same value.
      */
-    public static double LONGITUDE_EPSILON = Math.pow(10, -Longitude.PRECISION) / 2;
+    public static final double LONGITUDE_EPSILON = Math.pow(10, -Longitude.DECIMALS) / 2;
 
     private final Latitude latitude;
     private final Longitude longitude;
@@ -86,10 +86,9 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Creates an instance with geographic latitude and longitude
-     *
-     * @param latitude  [deg] geographic latitude [-90, 90]
-     * @param longitude [deg] [-180, 360)
+     * Construct from geographic latitude and longitude.
+     * @param latitude (double) Geographic latitude [deg]. [-90, 90]
+     * @param longitude (double) Longitude [deg]. [-180, 360)
      */
     public HorizontalPosition(double latitude, double longitude) {
         this.latitude = new Latitude(latitude);
@@ -167,7 +166,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Sorting order is Latitude &rarr; Longitude
+     * Sorting order is Latitude &rarr; Longitude.
      */
     @Override
     public int compareTo(HorizontalPosition o) {
@@ -176,45 +175,45 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute azimuth with
-     * @return (double) Azimuth [rad] from this to the given position [0:2pi)
+     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute azimuth with.
+     * @return (double) Azimuth [rad] from this to the given position [0:2pi).
      */
     public double computeAzimuthRad(HorizontalPosition position) {
         return Earth.computeAzimuthRad(this, position);
     }
     /**
-     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute azimuth with
-     * @return (double) Azimuth [deg] from this to the given position [0:360)
+     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute azimuth with.
+     * @return (double) Azimuth [deg] from this to the given position [0:360).
      */
     public double computeAzimuthDeg(HorizontalPosition position) {
         return Math.toDegrees(Earth.computeAzimuthRad(this, position));
     }
 
     /**
-     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute back azimuth with
-     * @return (double) Back azimuth [rad] from the given position to this position [0:2pi)
+     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute back azimuth with.
+     * @return (double) Back azimuth [rad] from the given position to this position [0:2pi).
      */
     public double computeBackAzimuthRad(HorizontalPosition position) {
         return Earth.computeBackAzimuthRad(this, position);
     }
     /**
-     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute back azimuth with
-     * @return (double) Back azimuth [deg] from the given position to this position [0:360)
+     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute back azimuth with.
+     * @return (double) Back azimuth [deg] from the given position to this position [0:360).
      */
     public double computeBackAzimuthDeg(HorizontalPosition position) {
         return Math.toDegrees(Earth.computeBackAzimuthRad(this, position));
     }
 
     /**
-     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute epicentral distance to
-     * @return (double) Epicentral distance [rad] between this and the given position [0:pi]
+     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute epicentral distance to.
+     * @return (double) Epicentral distance [rad] between this and the given position [0:pi].
      */
     public double computeEpicentralDistanceRad(HorizontalPosition horizontalPosition) {
         return Earth.computeEpicentralDistanceRad(horizontalPosition, this);
     }
     /**
-     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute epicentral distance to
-     * @return (double) Epicentral distance [deg] between this and horizontalPosition [0:180]
+     * @param horizontalPosition ({@link HorizontalPosition}) Position to compute epicentral distance to.
+     * @return (double) Epicentral distance [deg] between this and horizontalPosition [0:180].
      */
     public double computeEpicentralDistanceDeg(HorizontalPosition horizontalPosition) {
         return Math.toDegrees(Earth.computeEpicentralDistanceRad(horizontalPosition, this));
@@ -312,9 +311,9 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Computes the position of a point that can be reached by travelling
      * at a certain azimuth for a certain distance from the current position.
-     * @param azimuthDeg (double) Azimuth of direction to head from this position [deg]
-     * @param distanceDeg (double) Epicentral distance to travel [deg]
-     * @return (HorizontalPosition) Point located at distance from self along azimuth
+     * @param azimuthDeg (double) Azimuth of direction to head from this position [deg].
+     * @param distanceDeg (double) Epicentral distance to travel [deg].
+     * @return (HorizontalPosition) Point located at distance from self along azimuth.
      * @author anselme
      */
     public HorizontalPosition pointAlongAzimuth(double azimuthDeg, double distanceDeg) {
@@ -345,31 +344,41 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @return (double) Geographic latitude [deg] [-90, 90]
+     * Geographic latitude [deg]. [-90, 90]
+     * @return (double) Geographic latitude [deg].
      */
     public double getLatitude() {
         return latitude.getLatitude();
     }
 
     /**
-     * @return (double) Geocentric latitude [rad] [-&pi;/2, &pi;/2]
+     * Geocentric latitude [rad]. [-&pi;/2, &pi;/2]
+     * @return (double) Geocentric latitude [rad].
      */
     public double getGeocentricLatitude() {
         return latitude.getGeocentricLatitudeRad();
     }
 
     /**
-     * Geographic longitude in range [-180, 180).
-     * @return (double) Geographic longitude [deg] [-180:180)
+     * Geocentric colatitude in spherical coordinate &theta; [rad]. [0, &pi;]
+     * @return (double) Geocentric colatitude &theta; [rad].
+     */
+    public double getTheta() {
+        return latitude.getTheta();
+    }
+
+    /**
+     * Longitude [deg] in range [-180, 180).
+     * @return (double) Longitude [deg].
      */
     public double getLongitude() {
         return longitude.getLongitude();
     }
 
     /**
-     * Geographic longitude, either in range [0:360) or [-180, 180).
+     * Longitude [deg], either in range [0:360) or [-180, 180).
      * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
-     * @return (double) Geographic longitude [deg]
+     * @return (double) Longitude [deg].
      *
      * @author otsuru
      * @since 2023/4/30
@@ -379,26 +388,16 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * &theta; in spherical coordinate
-     *
-     * @return &theta; [rad] in spherical coordinate [0, &pi;]
-     */
-    public double getTheta() {
-        return latitude.getTheta();
-    }
-
-    /**
-     * &phi; in spherical coordinate
-     *
-     * @return &phi; [rad] in spherical coordinate [-&pi;, &pi;)
+     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;, &pi;).
+     * @return (double) Longitude &phi; [rad].
      */
     public double getPhi() {
         return longitude.getPhi();
     }
 
     /**
-     * @param r [km] radius
-     * @return (FullPosition) FullPosition newly created with the input r (deep copy)
+     * @param r (double) Radius [km].
+     * @return ({@link FullPosition}) {@link FullPosition} newly created with the input radius (deep copy).
      */
     public FullPosition toFullPosition(double r) {
         return new FullPosition(latitude.getLatitude(), longitude.getLongitude(), r);
@@ -432,7 +431,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * Can be printed in range [0:360) instead of [-180:180).
      *
      * @param crossDateLine (boolean) Whether to use longitude range [0:360) instead of [-180:180).
-     * @return (String) Padded string of longitude
+     * @return (String) Padded string of longitude.
      *
      * @author otsuru
      * @since 2023/3/10
@@ -444,10 +443,10 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Turn the position value into a short String code with 14 letters.
      * Begins with latitude: 1 letter ("P" for positive or "M" for negative)
-     * followed by 2 + {@value Latitude#PRECISION} digits,
+     * followed by 2 + {@value Latitude#DECIMALS} digits,
      * then longitude: 1 letter ("N" for -100 and under, "M" for under 0, "P" for under 100, "Q" for 100 and above)
-     * followed by 2 + {@value Longitude#PRECISION} digits.
-     * @return (String) code
+     * followed by 2 + {@value Longitude#DECIMALS} digits.
+     * @return (String) Code for this position.
      */
     public String toCode() {
         return latitude.toCode() + longitude.toCode();

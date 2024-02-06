@@ -357,7 +357,7 @@ public class PartialsMovieMaker extends Operation {
                             }
 
                             // write shellscript to map each snapshot and convert them to gif movie
-                            String scaleLabel = "dU/d" + variableType + " \\(normalized\\)";
+                            String scaleLabel = "@%12%\\266@%%U/@%12%\\266@%%" + variableType + " (normalized)";
                             worker.writeScripts(scaleLabel, seriesPath);
                             writeParentShellScript(fileNameRoot, seriesPath.resolve(fileNameRoot + "Movie.sh"));
                         }

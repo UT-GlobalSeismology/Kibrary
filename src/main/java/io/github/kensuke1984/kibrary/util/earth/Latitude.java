@@ -16,20 +16,20 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 final class Latitude implements Comparable<Latitude> {
 
     /**
-     * the number of decimal places to round off the latitude value
+     * The number of decimal places to round off the latitude value.
      */
-    static final int PRECISION = 4;
+    static final int DECIMALS = 4;
 
     /**
-     * [-90, 90] geographic latitude [deg]
+     * Geographic latitude [deg]. [-90, 90]
      */
     private final double geographicLatitude;
     /**
-     * [-&pi;/2, &pi;/2] geocentric latitude [rad]
+     * Geocentric latitude [rad]. [-&pi;/2, &pi;/2]
      */
     private final double geocentricLatitudeRad;
     /**
-     * [0, &pi;] &theta; in spherical coordinates [rad]
+     * Geocentric colatitude &theta; in spherical coordinates [rad]. [0, &pi;]
      */
     private final double theta;
 
@@ -49,23 +49,23 @@ final class Latitude implements Comparable<Latitude> {
 
 
     /**
-     * Creates a Latitude instance. The input must be within [-90, 90].
-     * @param geographicLatitude [deg] [-90, 90]
+     * Construct from geographic latitude. The input must be within [-90, 90].
+     * @param geographicLatitude (double) Geographic latitude [deg]. [-90, 90]
      */
     Latitude(double geographicLatitude) {
         if (!withinValidRange(geographicLatitude)) throw new IllegalArgumentException(
                 "The input latitude: " + geographicLatitude + " is invalid (must be in [-90, 90]).");
 
-        this.geographicLatitude = Precision.round(geographicLatitude, PRECISION);
-        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(geographicLatitude));
+        this.geographicLatitude = Precision.round(geographicLatitude, DECIMALS);
+        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(this.geographicLatitude));
         theta = 0.5 * Math.PI - geocentricLatitudeRad;
     }
 
     /**
-     * check if the latitude is within [-90, 90].
+     * Check if input value is within [-90, 90].
      *
-     * @param latitude [deg]
-     * @return if the latitude is valid
+     * @param latitude (double) Input value [deg].
+     * @return (boolean) Whether the latitude is valid.
      */
     private static boolean withinValidRange(double latitude) {
         return -90 <= latitude && latitude <= 90;
@@ -93,7 +93,7 @@ final class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
 
-        return Precision.equals(geographicLatitude, other.geographicLatitude,  Math.pow(10, -PRECISION)/2);
+        return Precision.equals(geographicLatitude, other.geographicLatitude,  Math.pow(10, -DECIMALS)/2);
     }
 
     @Override
@@ -102,21 +102,24 @@ final class Latitude implements Comparable<Latitude> {
     }
 
     /**
-     * @return geographic latitude [deg]
+     * Geographic latitude [deg]. [-90, 90]
+     * @return (double) Geographic latitude [deg].
      */
     double getLatitude() {
         return geographicLatitude;
     }
 
     /**
-     * @return geocentric latitude [rad]
+     * Geocentric latitude [rad]. [-&pi;/2, &pi;/2]
+     * @return (double) Geocentric latitude [rad].
      */
     double getGeocentricLatitudeRad() {
         return geocentricLatitudeRad;
     }
 
     /**
-     * @return theta [rad]
+     * Geocentric colatitude in spherical coordinate &theta; [rad]. [0, &pi;]
+     * @return (double) Geocentric colatitude &theta; [rad].
      */
     double getTheta() {
         return theta;
@@ -129,18 +132,18 @@ final class Latitude implements Comparable<Latitude> {
      * <li>1 (the minus sign)</li>
      * <li>2 (the integer part; 0~90)</li>
      * <li>1 (the period)</li>
-     * <li>{@value #PRECISION} (the decimal part)</li>
+     * <li>{@value #DECIMALS} (the decimal part)</li>
      * <ul>
      */
     @Override
     public String toString() {
-        return MathAid.padToString(geographicLatitude, 3, PRECISION, false);
+        return MathAid.padToString(geographicLatitude, 3, DECIMALS, false);
     }
 
     /**
      * Turn the latitude value into a short String code.
-     * 1 letter ("P" for positive or "M" for negative) followed by 2 + {@value #PRECISION} digits.
-     * @return (String) code
+     * 1 letter ("P" for positive or "M" for negative) followed by 2 + {@value #DECIMALS} digits.
+     * @return (String) Code for this latitude.
      */
     public String toCode() {
         String sign;
@@ -148,8 +151,8 @@ final class Latitude implements Comparable<Latitude> {
         else sign = "M";
 
         double absolute = Math.abs(geographicLatitude);
-        int number = (int) Math.round(absolute * Math.pow(10, PRECISION));
+        int number = (int) Math.round(absolute * Math.pow(10, DECIMALS));
 
-        return sign + MathAid.padToString(number, 2 + PRECISION, true);
+        return sign + MathAid.padToString(number, 2 + DECIMALS, true);
     }
 }

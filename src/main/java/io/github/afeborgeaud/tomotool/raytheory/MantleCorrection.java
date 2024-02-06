@@ -198,7 +198,7 @@ public class MantleCorrection {
     }
 
     /**
-     * Compiute mantle correction value. Coputation is executed by using {@link Traveltime}.
+     * Compute mantle correction value. Computation is executed by using {@link Traveltime}.
      * @param window
      * @throws IOException
      */

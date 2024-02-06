@@ -130,10 +130,11 @@ public class VirtualEventRegistration extends Operation {
 
     @Override
     public void set() throws IOException {
-        try {
-            globalCMTID = new GlobalCMTID(property.parseString("globalCMTID", "000000A"));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Illegal global CMT ID: " + property.parseString("globalCMTID", "000000A"));
+
+        globalCMTID = new GlobalCMTID(property.parseString("globalCMTID", "000000A"));
+        // check that the ID is not used yet
+        if (GlobalCMTCatalog.contains(globalCMTID)) {
+            throw new IllegalArgumentException(globalCMTID + " already exists in catalog.");
         }
 
         centroidDateTime = LocalDateTime.parse(property.parseString("centroidDateTime", "1900/01/01 00:00:00.0"), DATE_FORMAT);
@@ -156,13 +157,6 @@ public class VirtualEventRegistration extends Operation {
 
     @Override
     public void run() throws IOException {
-
-        // check that the ID is not used yet
-        if (GlobalCMTCatalog.contains(globalCMTID)) {
-            System.err.println(globalCMTID + " already exists in catalog. Ending.");
-            return;
-        }
-
         centroidPosition = FullPosition.constructByDepth(centroidLatitude, centroidLongitude, centroidDepth);
         momentTensor = new MomentTensor(m0Coeff, mrrCoeff, mttCoeff, mppCoeff, mrtCoeff, mrpCoeff, mtpCoeff, momentExponent);
 
