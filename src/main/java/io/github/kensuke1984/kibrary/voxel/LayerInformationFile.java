@@ -38,16 +38,16 @@ public class LayerInformationFile {
      */
     private final double[] layerThicknesses;
     /**
-     * Radii of voxel center points, sorted, no duplication
+     * Radii of layer center points, sorted, no duplication
      */
     private final double[] layerRadii;
 
     /**
      * Writes a layer information file given arrays of radii.
-     * @param layerThicknesses (double[]) Must be in the same order as voxelRadii.
-     * @param layerRadii (double[])  The radii should be sorted, and there should be no duplication.
-     * @param outputPath     of write file
-     * @param options     for write
+     * @param layerThicknesses (double[]) Must be in the same order as layerRadii.
+     * @param layerRadii (double[]) Radii of layer center points. They should be sorted, and there should be no duplication.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */
     public static void write(double[] layerThicknesses, double[] layerRadii, Path outputPath, OpenOption... options) throws IOException {

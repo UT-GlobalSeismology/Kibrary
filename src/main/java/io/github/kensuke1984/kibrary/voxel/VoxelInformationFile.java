@@ -58,7 +58,7 @@ public class VoxelInformationFile {
      * @param layerThicknesses (double[]) Must be in the same order as layerRadii.
      * @param layerRadii (double[])  The radii. They should be sorted, and there should be no duplication.
      * @param horizontalPixels (List of {@link HorizontalPixel}) Pixels.
-     * @param outputPath (Path) The output file.
+     * @param outputPath (Path) Output file.
      * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */

@@ -43,8 +43,8 @@ public class KnownParameterFile {
 
     /**
      * @param parameteList (List) List of knwon parameters
-     * @param outPath       for write
-     * @param options       for write
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */
     public static void write(List<KnownParameter> parameterList, Path outputPath, OpenOption... options)

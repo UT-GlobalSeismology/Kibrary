@@ -286,7 +286,8 @@ public class CrossSectionWorker {
 
     /**
      * Writes shellscript, color palette, and annotation file.
-     * @param scaleLabel (String) Label of scale that should be displayed. Special characters must be escaped twice (ex. ")" -> "\\)").
+     * @param scaleLabel (String) Label of scale that should be displayed.
+     *  Special characters in shellscript ($, `, \) must be escaped with a backslash, which itself should be escaped (ex. $ -> \\$, \ -> \\\\).
      * @param outPath (Path) Folder where output files should be created.
      * @throws IOException
      */
