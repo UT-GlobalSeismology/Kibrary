@@ -1,11 +1,12 @@
 package io.github.kensuke1984.kibrary.entrance;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -118,8 +119,9 @@ class StationXmlFile {
      * @return (boolean) true if download succeeded
      */
     boolean downloadStationXml() {
-        try (InputStream inputStream = url.openStream()) {
-            Files.copy(inputStream, xmlPath, StandardCopyOption.REPLACE_EXISTING);
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(xmlPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             // If stationXML file cannot be downloaded, return false.
             System.err.println("!! Failed to download stationXML file.");

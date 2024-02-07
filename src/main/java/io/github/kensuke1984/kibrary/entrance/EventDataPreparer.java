@@ -325,11 +325,12 @@ class EventDataPreparer {
 */
     /**
      * Downloads StationXML files for the event into "eventDir/station/", given a set of SAC files.
-     * The downloads may be skipped if the SAC file name is not in mseed-style.
+     * The downloads might be skipped if the SAC file name is not in mseed-style.
      * @param datacenter (String) The name of the datacenter to download from.
+     * @param redo (boolean) Whether to download existing stationXml files again.
      * @throws IOException
      */
-    void downloadXmlMseed(String datacenter) throws IOException {
+    void downloadXmlMseed(String datacenter, boolean redo) throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
         }
@@ -348,7 +349,7 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                if (!Files.exists(stationInfo.getXmlPath())) {
+                if (!Files.exists(stationInfo.getXmlPath()) || redo) {
                     stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
                     stationInfo.downloadStationXml();
                 }

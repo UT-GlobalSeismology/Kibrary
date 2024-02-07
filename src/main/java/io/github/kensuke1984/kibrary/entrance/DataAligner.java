@@ -148,7 +148,7 @@ public class DataAligner {
                             return;
                         }
                     }
-                    edp.downloadXmlMseed(datacenter);
+                    edp.downloadXmlMseed(datacenter, redo);
                 }
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
