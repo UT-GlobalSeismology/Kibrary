@@ -180,7 +180,7 @@ class SacDeconvolution {
      * @param spectorPath path for the file
      * @param freq        frequency data
      * @param resp        response data
-     * @param isNaN       file contains NAN or file is empty
+     * @param isNaN       file contains NaN or file is empty
      */
     private void readResponseFile(Path spectorPath, double[] freq, Complex[] resp) throws IOException {
         List<String> lines = Files.readAllLines(spectorPath);

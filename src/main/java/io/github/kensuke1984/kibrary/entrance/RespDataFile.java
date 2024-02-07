@@ -1,12 +1,13 @@
 package io.github.kensuke1984.kibrary.entrance;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -77,8 +78,9 @@ public class RespDataFile {
     public void downloadRespData() {
         Path outPath = Paths.get(responseFile);
 
-        try (InputStream inputStream = url.openStream()) {
-            long size = Files.copy(inputStream, outPath, StandardCopyOption.REPLACE_EXISTING);
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
             System.err.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
         } catch (IOException e) {
@@ -93,8 +95,9 @@ public class RespDataFile {
     public void downloadRespData(Path outDir) {
         Path outPath = outDir.resolve(responseFile);
 
-        try (InputStream inputStream = url.openStream()) {
-            long size = Files.copy(inputStream, outPath, StandardCopyOption.REPLACE_EXISTING);
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
             System.err.println("Downloaded : " + responseFile + " - " + size + " bytes");
 
         } catch (IOException e) {

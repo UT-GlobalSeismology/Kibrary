@@ -534,7 +534,7 @@ class EventProcessor implements Runnable {
                 }
 
                 if(sd.isNaN()) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NAN or empty : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NaN or empty : " + event.getGlobalCMTID() + " - " + afterName);
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                     continue;

@@ -3,13 +3,14 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -97,8 +98,9 @@ class StationInformationFile {
      * The downloaded file name will take the form "STATION.II.PFO.00.BHE" or "STATION.IU.INU..BHE"
      */
     void downloadStationInformation() {
-        try (InputStream inputStream = url.openStream()) {
-            long size = Files.copy(inputStream, stationPath, StandardCopyOption.REPLACE_EXISTING);
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(stationPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
             System.err.println("Downloaded : " + stationFile + " - " + size + " bytes");
 
         } catch (IOException e) {
