@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
 public class DataAligner {
     private final boolean forSeed;
     private final String datacenter;
+    private final boolean redo;
 
     /**
      * Number of processed event folders
@@ -71,6 +72,10 @@ public class DataAligner {
                 .desc("Operate for seed files").build());
         options.addOptionGroup(inputOption);
 
+        // option
+        options.addOption(Option.builder("r").longOpt("redo")
+                .desc("Whether to redo from stationXML downloads, without opening mseed. Only for mseed mode.").build());
+
         return options;
     }
 
@@ -91,13 +96,21 @@ public class DataAligner {
             throw new IllegalArgumentException("Invalid arguments.");
         }
 
-        DataAligner aligner = new DataAligner(forSeed, datacenter);
+        // check redo mode
+        boolean redo = false;
+        if (cmdLine.hasOption("r")) {
+            if (forSeed) throw new IllegalArgumentException("The -r option is only for mseed.");
+            else redo = true;
+        }
+
+        DataAligner aligner = new DataAligner(forSeed, datacenter, redo);
         aligner.align();
     }
 
-    private DataAligner(boolean forSeed, String datacenter) {
+    private DataAligner(boolean forSeed, String datacenter, boolean redo) {
         this.forSeed = forSeed;
         this.datacenter = datacenter;
+        this.redo = redo;
     }
 
     private void align() throws IOException {
@@ -129,9 +142,11 @@ public class DataAligner {
                         return;
                     }
                 } else {
-                    if (!edp.openMseeds()) {
-                        // if open fails, skip the event
-                        return;
+                    if (!redo) {
+                        if (!edp.openMseeds()) {
+                            // if open fails, skip the event
+                            return;
+                        }
                     }
                     edp.downloadXmlMseed(datacenter);
                 }
