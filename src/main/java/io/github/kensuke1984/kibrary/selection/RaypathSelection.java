@@ -82,6 +82,8 @@ public class RaypathSelection extends Operation {
     private double upperObserverLatitude;
     private double lowerObserverLongitude;
     private double upperObserverLongitude;
+    private double lowerTurningRadius;
+    private double upperTurningRadius;
     private double lowerTurningLatitude;
     private double upperTurningLatitude;
     private double lowerTurningLongitude;
@@ -164,6 +166,10 @@ public class RaypathSelection extends Operation {
             pw.println("##(double) Upper limit of observer longitude [deg] (lowerObserverLongitude:360] (180)");
             pw.println("#upperObserverLongitude ");
             pw.println("##########Selection criteria of turning points##########");
+            pw.println("##(double) Lower limit of turning point RADIUS [km] (0)");
+            pw.println("#lowerTurningRadius ");
+            pw.println("##(double) Upper limit of turning point RADIUS [km] (6371)");
+            pw.println("#upperTurningRadius ");
             pw.println("##(double) Lower limit of turning point latitude [deg] [-90:upperTurningLatitude) (-90)");
             pw.println("#lowerTurningLatitude ");
             pw.println("##(double) Upper limit of turning point latitude [deg] (lowerTurningLatitude:90] (90)");
@@ -238,10 +244,13 @@ public class RaypathSelection extends Operation {
         if (lowerObserverLongitude < -180 || lowerObserverLongitude > upperObserverLongitude || 360 < upperObserverLongitude)
             throw new IllegalArgumentException("Observer longitude range " + lowerObserverLongitude + " , " + upperObserverLongitude + " is invalid.");
 
-        if (property.containsKey("lowerTurningLatitude") || property.containsKey("upperTurningLatitude") ||
+        if (property.containsKey("lowerTurningRadius") || property.containsKey("lowerTurningRadius") ||
+                property.containsKey("lowerTurningLatitude") || property.containsKey("upperTurningLatitude") ||
                 property.containsKey("lowerTurningLongitude") || property.containsKey("upperTurningLongitude")) {
             selectTurningPosition = true;
         }
+        lowerTurningRadius = property.parseDouble("lowerTurningRadius", "0");
+        upperTurningRadius = property.parseDouble("upperTurningRadius", "6371");
         lowerTurningLatitude = property.parseDouble("lowerTurningLatitude", "-90");
         upperTurningLatitude = property.parseDouble("upperTurningLatitude", "90");
         if (lowerTurningLatitude < -90 || lowerTurningLatitude > upperTurningLatitude || 90 < upperTurningLatitude)
@@ -350,7 +359,7 @@ public class RaypathSelection extends Operation {
                     // When there are multiple bottoming points for a raypath, the first one is used.
                     // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
                     FullPosition turningPosition = pierceTool.get(entry, 0).findTurningPoint(0);
-                    turningPositionCheck = turningPosition.isInRange(lowerTurningLatitude, upperTurningLatitude, lowerTurningLongitude, upperTurningLongitude);
+                    turningPositionCheck = turningPosition.isInRange(lowerTurningLatitude, upperTurningLatitude, lowerTurningLongitude, upperTurningLongitude, lowerTurningRadius, upperTurningRadius);
                     double turningAzimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
                     turningAzimuthCheck = MathAid.checkAngleRange(turningAzimuth, lowerTurningAzimuth, upperTurningAzimuth);
                 }
