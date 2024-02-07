@@ -53,6 +53,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
 import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
+import io.github.kensuke1984.kibrary.waveform.VariableTypeConvert;
 
 /**
  * An enum where all {@link Operation}s in Kibrary should be assigned to.
@@ -125,6 +126,7 @@ enum Manhattan {
     BasicIDRebuilder(86, BasicIDRebuilder.class),
     OrthogonalityTest(88, OrthogonalityTest.class),
     // Temporal 100
+    VariableTypeConvert(100, VariableTypeConvert.class),
     ;
 
     private Class<? extends Operation> c;
