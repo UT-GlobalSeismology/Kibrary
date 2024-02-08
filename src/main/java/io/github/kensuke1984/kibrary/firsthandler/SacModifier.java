@@ -91,11 +91,18 @@ class SacModifier {
     }
 
     /**
-     * If the startTime of this SAC is after the event time and the gap is bigger than taperTime,
-     * zero-padding cannot be done.
-     *
-     * @return (boolean) true if gap between sac starting time and event time is small enough
-     * (smaller than {@link #taperTime})
+     * If SAC length <= {@link #taperTime}, tapering cannot be done.
+     * @return(boolean) Whether SAC length is longer than {@link #taperTime}.
+     */
+    boolean canBeTapered() {
+        return initialSacStartTime.until(initialSacEndTime, ChronoUnit.MILLIS) > taperTime;
+    }
+
+    /**
+     * If the startTime of this SAC is after the event time and the gap >= {@link #taperTime}, zero-padding is not done.
+     * @return (boolean) Whether start time is soon enough.
+     *   This is true if start time is before event time,
+     *     or if gap between sac starting time and event time is smaller than {@link #taperTime}.
      */
     boolean canBeZeroPadded() {
         // Sac start time in millisec - event time in millisec
@@ -104,8 +111,7 @@ class SacModifier {
 
     /**
      * If the endTime of this SAC is before the event time, trimming will fail.
-     *
-     * @return (boolean) true if sac end time is after event time
+     * @return (boolean) Whether sac end time is after event time.
      */
     boolean canBeTrimmed() {
         // Sac end time in millisec - event time in millisec
@@ -171,29 +177,28 @@ class SacModifier {
         long timeGapInMillis = eventTime.until(initialSacStartTime, ChronoUnit.MILLIS);
 
         // if the sac startTime is after the event time, then interpolate the gap.
-        // if the gap is bigger than tapertime then the SAC file is skipped.
-        if (taperTime < timeGapInMillis) {
+        // if the gap >= tapertime then the SAC file is skipped.
+        if (taperTime <= timeGapInMillis) {
             // this shall not happen, because this should be checked in canBeZeroPadded()
             throw new IllegalStateException("Seismogram starts too late : "
                     + event.getGlobalCMTID() + " - " + modifiedPath.getFileName());
-            //return false;
         } else if (0 <= timeGapInMillis) {
             System.err.println("++ seismograms start after the event time, zero-padding : "
                     + event.getGlobalCMTID() + " - " + modifiedPath.getFileName());
             // delta [msec]
             long deltaInMillis = (long) (Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)) * 1000);
 
-            // 時刻差のステップ数
+            // number of points in gap
             int gapPoint = (int) (timeGapInMillis / deltaInMillis);
 
-            // Number of points for the taper
+            // number of points for the taper
             int taperPoint = (int) (taperTime / deltaInMillis);
 
             // taper
             for (int i = 0; i < taperPoint; i++)
                 sacdata[i] *= Math.sin(i * Math.PI / taperPoint / 2.0);
 
-            // 0で補完
+            // zero-pad
             double[] neosacdata = new double[sacdata.length + gapPoint];
             // gapの部分は0で、taperをかけたsacdataをくっつける
             System.arraycopy(sacdata, 0, neosacdata, gapPoint, neosacdata.length - gapPoint);

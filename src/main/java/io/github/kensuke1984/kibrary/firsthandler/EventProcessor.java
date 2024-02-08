@@ -415,14 +415,19 @@ class EventProcessor implements Runnable {
             for (Path sacPath : sacPathStream) {
                 SacModifier sm = new SacModifier(event, sacPath, byPDE);
 
-                // check whether the file can be zero-padded
+                // check whether the file is long enough to be tapered
+                if (!sm.canBeTapered()) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! length is too short : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    FileAid.moveToDirectory(sacPath, unModifiedPath, true);
+                    continue;
+                }
+                // check whether the start time is soon enough to be used as is or to be be zero-padded
                 if (!sm.canBeZeroPadded()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! start time is too late : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
-
-                // check whether the file can be trimmed
+                // check whether the end time is after event time so that the file can be trimmed
                 if (!sm.canBeTrimmed()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! end time is before event time : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
