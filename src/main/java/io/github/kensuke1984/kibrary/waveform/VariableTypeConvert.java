@@ -183,6 +183,8 @@ public class VariableTypeConvert extends Operation {
                 inputPartialMap.get(VariableType.LAMBDA);
             if (partialsMU == null && partialsLAMBDA == null)
                 throw new RuntimeException("To compute partials with respect to KAPPA, MU and/or LAMBDA are required as inputVariableType");
+            if (partialsMU.size() != partialsLAMBDA.size())
+                throw new RuntimeException("The nember of partials with respect to MU & LAMBDA must be same");
             return convertToKAPPA(partialsMU, partialsLAMBDA);
         case XI:
             List<PartialID> partialsN = (allowIncomplete && !inputPartialMap.containsKey(VariableType.N)) ? null :
@@ -191,6 +193,8 @@ public class VariableTypeConvert extends Operation {
                 inputPartialMap.get(VariableType.L);
             if (partialsN == null && partialsL == null)
                 throw new RuntimeException("To compute partials with respect to XI, N and/or L are required as inputVariableType");
+            if (partialsN.size() != partialsL.size())
+                throw new RuntimeException("The nember of partials with respect to N & L must be same");
             return convertToXI(partialsN, partialsL, structure);
         default:
             throw new RuntimeException("VariableType; " + outType + " is NOT utilized yet.");
@@ -250,6 +254,7 @@ public class VariableTypeConvert extends Operation {
                         partialMU.getPhases(), partialMU.isConvolved(), partialMU.getParameterType(), VariableType.KAPPA, partialMU.getVoxelPosition(),
                         traceKAPPA.getY());
                 partialIDs.add(partialID);
+                partialsLAMBDA.remove(partialLAMBDA);
             }
         }
         return partialIDs;
@@ -326,6 +331,7 @@ public class VariableTypeConvert extends Operation {
                         partialN.getPhases(), partialN.isConvolved(), partialN.getParameterType(), VariableType.XI, partialN.getVoxelPosition(),
                         traceXI.getY());
                 partialIDs.add(partialID);
+                partialsL.remove(partialL);
             }
         }
         return partialIDs;
