@@ -142,6 +142,7 @@ public class VariableTypeConvert extends Operation {
 
         // make map for each input varable type
         for (VariableType inType : inputVariableTypes) {
+            System.err.println("Reading partials with respect to " + inType);
             List<PartialID> inPartials = new ArrayList<>();
             for (PartialID partialID : partialIDs) {
                 if (inType.equals(partialID.getVariableType()))
@@ -175,6 +176,7 @@ public class VariableTypeConvert extends Operation {
      */
     private List<PartialID> convertVariableType(VariableType outType, Map<VariableType, List<PartialID>>inputPartialMap,
             PolynomialStructure structure, boolean allowIncomplete) {
+        System.err.println("Convert variable type to " + outType);
         switch(outType) {
         case KAPPA:
             List<PartialID> partialsMU = (allowIncomplete && !inputPartialMap.containsKey(VariableType.MU)) ? null :
