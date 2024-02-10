@@ -162,6 +162,258 @@ interface WeightingFactor {
         }
     };
 
+    static final WeightingFactor C11 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C11:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C12 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C12:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C13 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C13:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C14 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C14:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C15 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C15:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C16 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C16:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C22 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C22:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C23 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C23:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C24 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C24:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C25 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C25:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C26 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C26:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C33 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C33:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C34 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C34:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C35 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C35:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C36 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C36:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C44 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C44:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C45 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C45:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C46 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C46:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C55 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C55:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C56 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C56:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
+    static final WeightingFactor C66 = new WeightingFactor() {
+	@Override
+	public double getFactor(int i, int j, int k, int l) {
+	    switch (ElasticModuli.getElasticModulus(i, j, k, l).getANISO()) {
+	    case C66:
+		return 1;
+	    default:
+		return 0;
+	    }
+	}
+    };
+
     /**
      * デカルト座標
      *

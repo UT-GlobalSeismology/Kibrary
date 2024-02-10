@@ -34,6 +34,7 @@ public class ElasticMedium implements Cloneable {
     private boolean isAddingIsotropicVelocities;
     private boolean isAddingTIModuli;
     private boolean isAddingTIVelocities;
+    private boolean isAddingAnisotropicModuli;
 
     public ElasticMedium() {
     }
@@ -45,6 +46,7 @@ public class ElasticMedium implements Cloneable {
         else if (VariableType.isIsotropicVelocity(type)) isAddingIsotropicVelocities = true;
         else if (VariableType.isTIModulus(type)) isAddingTIModuli = true;
         else if (VariableType.isTIVelocity(type)) isAddingTIVelocities = true;
+	else if (VariableType.isAnisotropicModulus(type)) isAddingAnisotropicModuli = true;
 
         variableMap.put(type, value);
         calculateWhenAdding(type);
@@ -59,7 +61,7 @@ public class ElasticMedium implements Cloneable {
         // not allowed to modify a parameter that is already defined
         if (isDefined(type)) return false;
         // when nothing has been started, anything is OK
-        if (!isAddingIsotropicModuli && !isAddingIsotropicVelocities && !isAddingTIModuli && !isAddingTIVelocities) return true;
+        if (!isAddingIsotropicModuli && !isAddingIsotropicVelocities && !isAddingTIModuli && !isAddingTIVelocities && !isAddingAnisotropicModuli) return true;
         // when some group has been started to be added, only its group can be added
         if (VariableType.isIsotropicModulus(type) && !isAddingIsotropicModuli) return false;
         if (VariableType.isIsotropicVelocity(type) && !isAddingIsotropicVelocities) return false;
@@ -105,6 +107,8 @@ public class ElasticMedium implements Cloneable {
             findIsotropicModuli();
             convertToIsotropicVelocities();
 
+	    convertToAnisotropicModuli();
+
         } else if (VariableType.isIsotropicModulus(type)) {
             findIsotropicModuli();
             convertToIsotropicVelocities();
@@ -124,6 +128,7 @@ public class ElasticMedium implements Cloneable {
             tiToIsotropic();
             findIsotropicModuli();
             convertToIsotropicVelocities();
+	    convertToAnisotropicModuli();
         }
         // else : nothing has to be calculated
     }
@@ -362,6 +367,42 @@ public class ElasticMedium implements Cloneable {
             double kappa = variableMap.get(VariableType.KAPPA);
             double vb = Math.sqrt(kappa/rho);
             variableMap.put(VariableType.Vb, vb);
+        }
+    }
+
+    private void convertToAnisotropicModuli() {
+        if (!isDefined(VariableType.RHO)) return;
+        double rho = variableMap.get(VariableType.RHO);
+
+        if (isDefined(VariableType.Vph) == true && isDefined(VariableType.C11) == false) {
+            double v = variableMap.get(VariableType.Vph);
+            double c11 = rho * v * v;
+            variableMap.put(VariableType.C11, c11);
+        }
+        if (isDefined(VariableType.Vph) == true && isDefined(VariableType.C22) == false) {
+            double v = variableMap.get(VariableType.Vph);
+            double c22 = rho * v * v;
+            variableMap.put(VariableType.C22, c22);
+        }
+        if (isDefined(VariableType.Vpv) == true && isDefined(VariableType.C33) == false) {
+            double v = variableMap.get(VariableType.Vpv);
+            double c33 = rho * v * v;
+            variableMap.put(VariableType.C33, c33);
+        }
+        if (isDefined(VariableType.Vsv) == true && isDefined(VariableType.C44) == false) {
+            double v = variableMap.get(VariableType.Vsv);
+            double c44 = rho * v * v;
+            variableMap.put(VariableType.C44, c44);
+        }
+        if (isDefined(VariableType.Vsv) == true && isDefined(VariableType.C55) == false) {
+            double v = variableMap.get(VariableType.Vsv);
+            double c55 = rho * v * v;
+            variableMap.put(VariableType.C55, c55);
+        }
+        if (isDefined(VariableType.Vsh) == true && isDefined(VariableType.C66) == false) {
+            double v = variableMap.get(VariableType.Vsh);
+            double c66 = rho * v * v;
+            variableMap.put(VariableType.C66, c66);
         }
     }
 

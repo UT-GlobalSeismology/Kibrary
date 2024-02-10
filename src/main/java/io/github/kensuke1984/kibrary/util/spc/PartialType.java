@@ -17,7 +17,8 @@ public enum PartialType {
 
     A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9), PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(14),
     PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23), PAR0(24), PAR00(25), KAPPA(26), LAMBDA2MU(27), R(28), Vs(29),
-    PARVS(30), PARVSIM(31), PARVP(32), PARM(33), PARG(34), RHO(35);
+    PARVS(30), PARVSIM(31), PARVP(32), PARM(33), PARG(34), RHO(35),
+    C11(36), C12(37), C13(38), C14(39), C15(40), C16(41), C22(42), C23(43), C24(44), C25(45), C26(46), C33(47), C34(48), C35(49), C36(50), C44(51), C45(52), C46(53), C55(54), C56(55), C66(56);
 
     private int value;
 
@@ -71,6 +72,48 @@ public enum PartialType {
             return WeightingFactor.KAPPA;
         case LAMBDA2MU:
             return WeightingFactor.LAMBDA2MU;
+        case C11:
+            return WeightingFactor.C11;
+        case C12:
+            return WeightingFactor.C12;
+        case C13:
+            return WeightingFactor.C13;
+        case C14:
+            return WeightingFactor.C14;
+        case C15:
+            return WeightingFactor.C15;
+        case C16:
+            return WeightingFactor.C16;
+        case C22:
+            return WeightingFactor.C22;
+        case C23:
+            return WeightingFactor.C23;
+        case C24:
+            return WeightingFactor.C24;
+        case C25:
+            return WeightingFactor.C25;
+        case C26:
+            return WeightingFactor.C26;
+        case C33:
+            return WeightingFactor.C33;
+        case C34:
+            return WeightingFactor.C34;
+        case C35:
+            return WeightingFactor.C35;
+        case C36:
+            return WeightingFactor.C36;
+        case C44:
+            return WeightingFactor.C44;
+        case C45:
+            return WeightingFactor.C45;
+        case C46:
+            return WeightingFactor.C46;
+        case C55:
+            return WeightingFactor.C55;
+        case C56:
+            return WeightingFactor.C56;
+        case C66:
+            return WeightingFactor.C66;
         default:
             throw new RuntimeException("Unexpected happens");
         }

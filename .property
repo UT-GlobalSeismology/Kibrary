@@ -1,0 +1,8 @@
+#This file is including default values, please check it out.
+#Tue Feb 06 22:36:33 JST 2024
+mail=0-0-0 Hoge, Foo, Tokyo, JP
+phone=01-2345-6789
+institute=University of Hoge
+userName=funahashi
+fax=09-8765-4321
+email=hoge@foo.com

@@ -34,6 +34,7 @@ public class ElasticModulus {
 
     private TIModulusEnum ti;
     private IsotropicModulusEnum iso;
+    private AnisotropicModulusEnum aniso;	
 
     /**
      * C<sub>ijkl</sub> constructor
@@ -53,6 +54,7 @@ public class ElasticModulus {
             mn = ElasticMN.getElasticMN(ijkl);
             ti = TIModulusEnum.getTI(mn);
             iso = IsotropicModulusEnum.getIsotropic(mn);
+	    aniso = AnisotropicModulusEnum.getAnisotropic(mn);
         } else {
             throw new IllegalArgumentException(
                     "Input (i, j, k, l) :" + i + ", " + j + ", " + k + ", " + l + " are invalid.");
@@ -110,6 +112,10 @@ public class ElasticModulus {
 
     public IsotropicModulusEnum getISO() {
         return iso;
+    }
+
+    public AnisotropicModulusEnum getANISO() {
+	return aniso;
     }
 
     private void setIJKL() {

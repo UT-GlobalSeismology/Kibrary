@@ -191,6 +191,27 @@ public final class AMatrixBuilder {
             case KAPPA:
             case LAMBDA2MU:
             case Vs:
+	    case C11:
+	    case C12:
+	    case C13:
+	    case C14:
+	    case C15:
+	    case C16:
+	    case C22:
+	    case C23:
+	    case C24:
+	    case C25:
+	    case C26:
+	    case C33:
+	    case C34:
+	    case C35:
+	    case C36:
+	    case C44:
+	    case C45:
+	    case C46:
+	    case C55:
+	    case C56:
+	    case C66:
                 if (position.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation()))
                     return i;
                 break;
