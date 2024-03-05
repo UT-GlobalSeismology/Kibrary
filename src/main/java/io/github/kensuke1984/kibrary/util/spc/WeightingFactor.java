@@ -87,7 +87,8 @@ interface WeightingFactor {
     };
     WeightingFactor MU = new WeightingFactor() {
         /**
-         * Coefficint for &mu;
+         * Coefficint for Lamé's constants &mu;<br>
+         * (Independent isotropic parameters are &lambda; & &mu;)
          */
         @Override
         public double getFactor(int i, int j, int k, int l) {
@@ -103,7 +104,8 @@ interface WeightingFactor {
     };
     WeightingFactor LAMBDA = new WeightingFactor() {
         /**
-         * Coefficint for &lambda;
+         * Coefficint for Lamé's constants &lambda;<br>
+         * (Independent isotropic parameters are &lambda; & &mu;)
          */
         @Override
         public double getFactor(int i, int j, int k, int l) {
@@ -119,22 +121,19 @@ interface WeightingFactor {
     };
 
     /**
-     * @author anselme
+     * @author anselme, rei
      */
     static final WeightingFactor KAPPA = new WeightingFactor() {
         /**
-         * Coefficint for &kappa;.<br>
-         * This is derived from chain rule; &part;u/&part;&kappa; = &part;u/&part;&lambda; + 1.5 &part;u/&part;&mu;
+         * Coefficint for Bulk modulus &kappa;<br>
+         * (Independent isotropic parameters are &kappa; & G)
          */
         @Override
         public double getFactor(int i, int j, int k, int l) {
             switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
             case LAMBDA:
-                return 1.;
             case LAMBDA2MU:
-                return 4.; // 1 + 1.5 * 2
-            case MU:
-                return 1.5;
+                return 1.;
             default:
                 return 0;
             }
@@ -142,22 +141,22 @@ interface WeightingFactor {
     };
 
     /**
-     * @author anselme
+     * @author rei
      */
-    static final WeightingFactor LAMBDA2MU = new WeightingFactor() {
+    static final WeightingFactor G = new WeightingFactor() {
         /**
-         * Coefficint for &lambda;+2&mu;.<br>
-         * This is derived from chain rule; &part;u/&part;(&lambda;+2&mu;) = &part;u/&part;&lambda; + 0.5 &part;u/&part;&mu;
+         * Coefficint for Shear modulus G<br>
+         * (Independent isotropic parameters are &kappa; & G)
          **/
         @Override
         public double getFactor(int i, int j, int k, int l) {
             switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
             case LAMBDA:
-                return 1.;
+                return  -2./3.;
             case LAMBDA2MU:
-                return 2.; // 1 + 0.5 * 2
+                return 4./3.;
             case MU:
-                return .5;
+                return 1.;
             default:
                 return 0;
             }

@@ -14,7 +14,7 @@ public enum VariableType {
     RHO(0),
     // iso
     Vp(1), Vs(2), Vb(3), R(22),
-    LAMBDA(4), MU(5), LAMBDA2MU(6), KAPPA(7),
+    LAMBDA(4), MU(5), G(6), KAPPA(7),
     // TI
     Vpv(8), Vph(9), Vsv(10), Vsh(11), ETA(12),
     A(13), C(14), F(15), L(16), N(17), XI(18),
@@ -46,10 +46,10 @@ public enum VariableType {
 
     public static boolean isIsotropicModulus(VariableType type) {
         switch (type) {
-        case LAMBDA2MU:
         case LAMBDA:
         case MU:
         case KAPPA:
+        case G:
             return true;
         default:
             return false;

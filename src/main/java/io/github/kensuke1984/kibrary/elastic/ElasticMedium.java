@@ -270,55 +270,51 @@ public class ElasticMedium implements Cloneable {
 
     private void findIsotropicModuli() {
         int numDefined = 0;
-        if (isDefined(VariableType.LAMBDA2MU)) numDefined++;
         if (isDefined(VariableType.LAMBDA)) numDefined++;
         if (isDefined(VariableType.MU)) numDefined++;
         if (isDefined(VariableType.KAPPA)) numDefined++;
+        if (isDefined(VariableType.G)) numDefined++;
         if (numDefined != 2) {
             return;
         }
 
-        if (isDefined(VariableType.LAMBDA2MU) && isDefined(VariableType.LAMBDA)) {
-            double lambdaPlus2Mu = variableMap.get(VariableType.LAMBDA2MU);
+        if (isDefined(VariableType.G) && isDefined(VariableType.MU)) {
+            throw new IllegalArgumentException("Variable types G & MU are insufficient to convert parameters");
+        }
+        else if (isDefined(VariableType.G) && isDefined(VariableType.LAMBDA)) {
+            double g = variableMap.get(VariableType.G);
             double lambda = variableMap.get(VariableType.LAMBDA);
-            double mu = (lambdaPlus2Mu - lambda) / 2.;
-            double kappa = lambda + 2./3. * mu;
+            double mu = g;
+            double kappa = lambda + 2./3. * g;
             variableMap.put(VariableType.MU, mu);
             variableMap.put(VariableType.KAPPA, kappa);
-        } else if (isDefined(VariableType.LAMBDA2MU) && isDefined(VariableType.MU)) {
-            double lambdaPlus2Mu = variableMap.get(VariableType.LAMBDA2MU);
-            double mu = variableMap.get(VariableType.MU);
-            double lambda = lambdaPlus2Mu - 2. * mu;
-            double kappa = lambda + 2./3. * mu;
-            variableMap.put(VariableType.LAMBDA, lambda);
-            variableMap.put(VariableType.KAPPA, kappa);
-        } else if (isDefined(VariableType.LAMBDA2MU) && isDefined(VariableType.KAPPA)) {
-            double lambdaPlus2Mu = variableMap.get(VariableType.LAMBDA2MU);
+        } else if (isDefined(VariableType.G) && isDefined(VariableType.KAPPA)) {
+            double g = variableMap.get(VariableType.G);
             double kappa = variableMap.get(VariableType.KAPPA);
-            double mu = (lambdaPlus2Mu - kappa) * 3./4.;
-            double lambda = lambdaPlus2Mu - 2. * mu;
+            double mu = g;
+            double lambda = kappa - 2./3. * g;
             variableMap.put(VariableType.LAMBDA, lambda);
             variableMap.put(VariableType.MU, mu);
         } else if (isDefined(VariableType.LAMBDA) && isDefined(VariableType.MU)) {
             double lambda = variableMap.get(VariableType.LAMBDA);
             double mu = variableMap.get(VariableType.MU);
-            double lambdaPlus2Mu = lambda + 2. * mu;
+            double g = mu;
             double kappa = lambda + 2./3. * mu;
-            variableMap.put(VariableType.LAMBDA2MU, lambdaPlus2Mu);
+            variableMap.put(VariableType.G, g);
             variableMap.put(VariableType.KAPPA, kappa);
         } else if (isDefined(VariableType.LAMBDA) && isDefined(VariableType.KAPPA)) {
             double lambda = variableMap.get(VariableType.LAMBDA);
             double kappa = variableMap.get(VariableType.KAPPA);
             double mu = (kappa - lambda) * 3./2.;
-            double lambdaPlus2Mu = lambda + 2. * mu;
-            variableMap.put(VariableType.LAMBDA2MU, lambdaPlus2Mu);
+            double g = mu;
+            variableMap.put(VariableType.G, g);
             variableMap.put(VariableType.MU, mu);
         } else if (isDefined(VariableType.MU) && isDefined(VariableType.KAPPA)) {
             double mu = variableMap.get(VariableType.MU);
             double kappa = variableMap.get(VariableType.KAPPA);
             double lambda = kappa - 2./3. * mu;
-            double lambdaPlus2Mu = lambda + 2. * mu;
-            variableMap.put(VariableType.LAMBDA2MU, lambdaPlus2Mu);
+            double g = mu;
+            variableMap.put(VariableType.G, g);
             variableMap.put(VariableType.LAMBDA, lambda);
         }
     }
@@ -327,20 +323,42 @@ public class ElasticMedium implements Cloneable {
         if (!isDefined(VariableType.RHO)) return;
         double rho = variableMap.get(VariableType.RHO);
 
-        if (isDefined(VariableType.Vp) == true && isDefined(VariableType.LAMBDA2MU) == false) {
-            double vp = variableMap.get(VariableType.Vp);
-            double lambdaPlus2Mu = rho * vp * vp;
-            variableMap.put(VariableType.LAMBDA2MU, lambdaPlus2Mu);
-        }
         if (isDefined(VariableType.Vs) == true && isDefined(VariableType.MU) == false) {
             double vs = variableMap.get(VariableType.Vs);
             double mu = rho * vs * vs;
             variableMap.put(VariableType.MU, mu);
         }
+        if (isDefined(VariableType.Vs) == true && isDefined(VariableType.G) == false) {
+            double vs = variableMap.get(VariableType.G);
+            double g = rho * vs * vs;
+            variableMap.put(VariableType.G, g);
+        }
         if (isDefined(VariableType.Vb) == true && isDefined(VariableType.KAPPA) == false) {
             double vb = variableMap.get(VariableType.Vb);
             double kappa = rho * vb * vb;
             variableMap.put(VariableType.KAPPA, kappa);
+        }
+        if (isDefined(VariableType.Vp) == true && isDefined(VariableType.LAMBDA) == false) {
+            if (isDefined(VariableType.MU) == true) {
+                double vp = variableMap.get(VariableType.Vp);
+                double mu = variableMap.get(VariableType.MU);
+                double lambda = rho * vp * vp - 2. * mu;
+                variableMap.put(VariableType.LAMBDA, lambda);
+            }
+            else if (isDefined(VariableType.G) == true) {
+                double vp = variableMap.get(VariableType.Vp);
+                double g = variableMap.get(VariableType.G);
+                double lambda = rho * vp * vp - 2. * g;
+                variableMap.put(VariableType.LAMBDA, lambda);
+            }
+            else if (isDefined(VariableType.KAPPA) == true) {
+                double vp = variableMap.get(VariableType.Vp);
+                double kappa = variableMap.get(VariableType.KAPPA);
+                double lambda = 1.5 * kappa - 0.5 * rho * vp * vp;
+                variableMap.put(VariableType.LAMBDA, lambda);
+            }
+            else
+                throw new IllegalArgumentException("Variable type is insufficient to compute LAMBDA");
         }
     }
 
@@ -348,20 +366,40 @@ public class ElasticMedium implements Cloneable {
         if (!isDefined(VariableType.RHO)) return;
         double rho = variableMap.get(VariableType.RHO);
 
-        if (isDefined(VariableType.LAMBDA2MU) == true && isDefined(VariableType.Vp) == false) {
-            double lambdaPlus2Mu = variableMap.get(VariableType.LAMBDA2MU);
-            double vp = Math.sqrt(lambdaPlus2Mu/rho);
-            variableMap.put(VariableType.Vp, vp);
-        }
         if (isDefined(VariableType.MU) == true && isDefined(VariableType.Vs) == false) {
             double mu = variableMap.get(VariableType.MU);
             double vs = Math.sqrt(mu/rho);
+            variableMap.put(VariableType.Vs, vs);
+        }
+        if (isDefined(VariableType.G) == true && isDefined(VariableType.Vs) == false) {
+            double g = variableMap.get(VariableType.G);
+            double vs = Math.sqrt(g/rho);
             variableMap.put(VariableType.Vs, vs);
         }
         if (isDefined(VariableType.KAPPA) == true && isDefined(VariableType.Vb) == false) {
             double kappa = variableMap.get(VariableType.KAPPA);
             double vb = Math.sqrt(kappa/rho);
             variableMap.put(VariableType.Vb, vb);
+        }
+        if (isDefined(VariableType.LAMBDA) == true && isDefined(VariableType.Vp) == false) {
+            if (isDefined(VariableType.MU) == true) {
+                double lambda = variableMap.get(VariableType.LAMBDA);
+                double mu = variableMap.get(VariableType.MU);
+                double vp = Math.sqrt((lambda  + 2. * mu)/rho);
+                variableMap.put(VariableType.Vp, vp);
+            }
+            else if (isDefined(VariableType.G) == true) {
+                double lambda = variableMap.get(VariableType.LAMBDA);
+                double g = variableMap.get(VariableType.G);
+                double vp = Math.sqrt((lambda  + 2. * g)/rho);
+                variableMap.put(VariableType.Vp, vp);
+            }
+            else if (isDefined(VariableType.KAPPA) == true) {
+                double lambda = variableMap.get(VariableType.LAMBDA);
+                double kappa = variableMap.get(VariableType.KAPPA);
+                double vp = Math.sqrt((3. * kappa - 2. * lambda)/rho);
+                variableMap.put(VariableType.Vp, vp);
+            }
         }
     }
 

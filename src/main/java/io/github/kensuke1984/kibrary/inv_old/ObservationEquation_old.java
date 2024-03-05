@@ -789,7 +789,7 @@ public class ObservationEquation_old {
             case MU3D:
             case LAMBDA3D:
             case KAPPA3D:
-            case LAMBDA2MU3D:
+            case G3D:
             case VS3D:
                 if (location.equals(((Physical3DParameter) PARAMETER_LIST.get(i)).getPosition())) {
                     return i;

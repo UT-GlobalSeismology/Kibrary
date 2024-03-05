@@ -16,11 +16,11 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  */
 public enum PartialType {
 
-    RHO1D(0), LAMBDA1D(1), MU1D(2), KAPPA1D(3), LAMBDA2MU1D(4),
+    RHO1D(0), LAMBDA1D(1), MU1D(2), KAPPA1D(3), G1D(4),
     A1D(11), C1D(12), F1D(13), L1D(14), N1D(15),
     VP1D(21), VS1D(22), R1D(23), Q1D(24),
 
-    RHO3D(30), LAMBDA3D(31), MU3D(32), KAPPA3D(33), LAMBDA2MU3D(34),
+    RHO3D(30), LAMBDA3D(31), MU3D(32), KAPPA3D(33), G3D(34),
     A3D(41), C3D(42), F3D(43), L3D(44), N3D(45),
     VP3D(51), VS3D(52), R3D(53), Q3D(54),
 
@@ -81,8 +81,8 @@ public enum PartialType {
             return WeightingFactor.LAMBDA;
         case KAPPA3D:
             return WeightingFactor.KAPPA;
-        case LAMBDA2MU3D:
-            return WeightingFactor.LAMBDA2MU;
+        case G3D:
+            return WeightingFactor.G;
         default:
             throw new RuntimeException("Unexpected happens");
         }
@@ -96,7 +96,7 @@ public enum PartialType {
             case LAMBDA: return PartialType.LAMBDA1D;
             case MU: return PartialType.MU1D;
             case KAPPA: return PartialType.KAPPA1D;
-            case LAMBDA2MU: return PartialType.LAMBDA2MU1D;
+            case G: return PartialType.G1D;
             case A: return PartialType.A1D;
             case C: return PartialType.C1D;
             case F: return PartialType.F1D;
@@ -110,7 +110,7 @@ public enum PartialType {
             case LAMBDA: return PartialType.LAMBDA3D;
             case MU: return PartialType.MU3D;
             case KAPPA: return PartialType.KAPPA3D;
-            case LAMBDA2MU: return PartialType.LAMBDA2MU3D;
+            case G: return PartialType.G3D;
             case A: return PartialType.A3D;
             case C: return PartialType.C3D;
             case F: return PartialType.F3D;
@@ -143,7 +143,7 @@ public enum PartialType {
         case N1D: case N3D: return VariableType.N;
         case LAMBDA1D: case LAMBDA3D: return VariableType.LAMBDA;
         case MU1D: case MU3D: return VariableType.MU;
-        case LAMBDA2MU3D: return VariableType.LAMBDA2MU;
+        case G3D: return VariableType.G;
         case KAPPA3D: return VariableType.KAPPA;
         default:
             throw new IllegalArgumentException("Illegal partial type");
