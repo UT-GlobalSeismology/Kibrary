@@ -47,7 +47,7 @@ public class BlockModelMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -60,15 +60,15 @@ public class BlockModelMaker extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * Path of voxel information file
+     * Path of voxel information file.
      */
     private Path voxelPath;
     /**
-     * Structure file to use instead of PREM
+     * Structure file to use instead of PREM.
      */
     private Path structurePath;
     /**
-     * Structure to use
+     * Structure to use.
      */
     private String structureName;
 

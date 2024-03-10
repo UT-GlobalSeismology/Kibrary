@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialWaveformPlotter extends Operation {
 
     /**
-     * Number of fields per page on output pdf file
+     * Number of fields per page on output pdf file.
      */
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -53,7 +53,7 @@ public class PartialWaveformPlotter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -65,20 +65,20 @@ public class PartialWaveformPlotter extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * Path of a travel time information file
+     * Path of a travel time information file.
      */
     private Path travelTimePath;
 
@@ -94,16 +94,16 @@ public class PartialWaveformPlotter extends Operation {
     private double[] tendVoxelLongitudes;
     private double[] tendVoxelRadii;
     /**
-     * The time length to plot
+     * The time length to plot.
      */
     private double timeLength;
     /**
-     * How much to scale down the residual waveform
+     * How much to scale down the residual waveform.
      */
     private double residualScale;
 
     /**
-     * Set of information of travel times
+     * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
     private List<BasicID> basicIDs;

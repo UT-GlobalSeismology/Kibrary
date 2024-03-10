@@ -44,7 +44,7 @@ public class VoxelLayoutDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -57,7 +57,7 @@ public class VoxelLayoutDesigner extends Operation {
     private boolean appendFileDate;
 
     /**
-     * Path of the input data entry list file
+     * Path of the input data entry list file.
      */
     private Path dataEntryPath;
     private String[] piercePhases;
@@ -82,7 +82,7 @@ public class VoxelLayoutDesigner extends Operation {
     private double dRadius;
 
     /**
-     * (roughly) median radius of target region
+     * The (roughly) median radius of target region.
      */
     private double centerRadius;
 

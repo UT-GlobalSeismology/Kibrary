@@ -71,7 +71,7 @@ public class DataFeatureHistogram extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -83,101 +83,101 @@ public class DataFeatureHistogram extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * set of {@link SACComponent}
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data feature list file
+     * Path of a data feature list file.
      */
     private Path dataFeaturePath;
     /**
-     * path of basic waveform folder
+     * path of basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * path of basic waveform folder
+     * path of basic waveform folder.
      */
     private Path extraBasicPath;
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Path of a timewindow data file of improvement windows
+     * Path of a timewindow data file of improvement windows.
      */
     private Path improvementWindowPath;
 
     /**
-     * Color of histograms to create
+     * Color of histograms to create.
      */
     private String color;
     /**
-     * Lower bound of correlation coefficient to plot
+     * Lower bound of correlation coefficient to plot.
      */
     private double correlationLowerBound;
     /**
-     * Upper bound of correlation coefficient to plot
+     * Upper bound of correlation coefficient to plot.
      */
     private double correlationUpperBound;
     /**
-     * Upper bound of normalized variance to plot
+     * Upper bound of normalized variance to plot.
      */
     private double varianceUpperBound;
     /**
-     * Upper bound of amplitude ratio to plot
+     * Upper bound of amplitude ratio to plot.
      */
     private double ratioUpperBound;
     /**
-     * Upper bound of S/N ratio to plot
+     * Upper bound of S/N ratio to plot.
      */
     private double snRatioUpperBound;
     /**
-     * Interval of correlation coefficient
+     * Interval of correlation coefficient.
      */
     private double dCorrelation;
     /**
-     * Interval of normalized variance
+     * Interval of normalized variance.
      */
     private double dVariance;
     /**
-     * Interval of amplitude ratio
+     * Interval of amplitude ratio.
      */
     private double dRatio;
     /**
-     * Interval of S/N ratio
+     * Interval of S/N ratio.
      */
     private double dSNRatio;
     /**
-     * Minimum correlation coefficient that is selected
+     * Minimum correlation coefficient that is selected.
      */
     private double minSelectedCorrelation;
     /**
-     * Maximum correlation coefficient that is selected
+     * Maximum correlation coefficient that is selected.
      */
     private double maxSelectedCorrelation;
     /**
-     * Minimum normalized variance that is selected
+     * Minimum normalized variance that is selected.
      */
     private double minSelectedVariance;
     /**
-     * Maximum normalized variance that is selected
+     * Maximum normalized variance that is selected.
      */
     private double maxSelectedVariance;
     /**
-     * Minimum amplitude ratio that is selected
+     * Minimum amplitude ratio that is selected.
      */
     private double minSelectedRatio;
     /**
-     * Maximum amplitude ratio that is selected
+     * Maximum amplitude ratio that is selected.
      */
     private double maxSelectedRatio;
     /**
-     * Threshold of S/N ratio that is selected
+     * Threshold of S/N ratio that is selected.
      */
     private double minSelectedSNRatio;
 

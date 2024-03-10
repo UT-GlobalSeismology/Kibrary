@@ -33,11 +33,11 @@ public class BasicIDMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic folder
+     * The first part of the name of output basic folder.
      */
     private String nameRoot;
     /**

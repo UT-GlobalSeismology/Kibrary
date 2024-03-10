@@ -28,7 +28,7 @@ public class ModelSmoothener extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -41,7 +41,7 @@ public class ModelSmoothener extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file
+     * Path of perturbation file.
      */
     private Path perturbationPath;
     private double lowerRadius;

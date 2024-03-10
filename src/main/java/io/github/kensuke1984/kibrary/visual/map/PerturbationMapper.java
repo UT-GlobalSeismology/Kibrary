@@ -32,7 +32,7 @@ public class PerturbationMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -45,11 +45,11 @@ public class PerturbationMapper extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file
+     * Path of perturbation file.
      */
     private Path perturbationPath;
     /**
-     * Path of perturbation file to be used as mask
+     * Path of perturbation file to be used as mask.
      */
     private Path maskPath;
 
@@ -70,7 +70,7 @@ public class PerturbationMapper extends Operation {
     private boolean setMarginLongitudeByKm;
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
     private double maskThreshold;

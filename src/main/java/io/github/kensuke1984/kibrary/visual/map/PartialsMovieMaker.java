@@ -40,17 +40,17 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialsMovieMaker extends Operation {
 
     /**
-     * How much finer to make the grid
+     * How much finer to make the grid.
      */
     public static final int GRID_SMOOTHING_FACTOR = 5;
     /**
-     * Size of vertical grid with respect to horizontal grid
+     * Size of vertical grid with respect to horizontal grid.
      */
     public static final int VERTICAL_ENLARGE_FACTOR = 2;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -62,11 +62,11 @@ public class PartialsMovieMaker extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * components to make maps for
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * variable types to make maps for
+     * Variable types to use.
      */
     private Set<VariableType> variableTypes;
     /**
@@ -79,7 +79,7 @@ public class PartialsMovieMaker extends Operation {
     private Set<String> tendObservers = new HashSet<>();
 
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
 
@@ -136,7 +136,7 @@ public class PartialsMovieMaker extends Operation {
 
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 

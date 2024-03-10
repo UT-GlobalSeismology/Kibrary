@@ -41,7 +41,7 @@ public class BasicIDRebuilder extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -53,29 +53,29 @@ public class BasicIDRebuilder extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * path of basic waveform folder
+     * Path of basic waveform folder.
      */
     private Path basicPath;
     /**
-     * Path of a data entry file for selection
+     * Path of a data entry file for selection.
      */
     private Path dataEntryPath;
 
     /**
-     * Phases that must be included in timewindows to be selected
+     * Phases that must be included in timewindows to be selected.
      */
     private String[] requiredPhases;
     /**
-     * Whether to choose BasicIDs with duplication
+     * Whether to choose BasicIDs with duplication.
      */
     private boolean bootstrap;
     /**
-     * How many of the BasicIDs to sample [%] (100% is the total number after selection)
+     * How many of the BasicIDs to sample [%]. (100% is the total number after selection)
      */
     private double subsamplingPercent;
 

@@ -90,13 +90,13 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 public class PartialWaveformAssembler3D extends Operation {
 
     /**
-     * Number of SPC files to take from BP catalog for interpolation
+     * Number of SPC files to take from BP catalog for interpolation.
      */
     private static final int NUM_FROM_CATALOG = 3;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -108,11 +108,11 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * output directory Path
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be used
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
@@ -125,31 +125,31 @@ public class PartialWaveformAssembler3D extends Operation {
     private double finalSamplingHz;
 
     /**
-     * Path of a timewindow information file
+     * Path of a timewindow file.
      */
     private Path timewindowPath;
     /**
-     * Path of a data entry list file
+     * Path of a data entry list file.
      */
     private Path dataEntryPath;
     /**
-     * Information file about voxels for perturbations
+     * Information file about voxels for perturbations.
      */
     private Path voxelPath;
     /**
-     * set of partial type for computation
+     * Variable types for compute for.
      */
     private Set<VariableType> variableTypes;
     /**
-     * FPpool folder, containig event folders
+     * FPpool folder, containig event folders.
      */
     private Path fpPath;
     /**
-     * BPpool folder, containig event folders with observers as sources
+     * BPpool folder, containig event folders with observers as sources.
      */
     private Path bpPath;
     /**
-     * BPcat folder, to be used in catalog mode
+     * BPcat folder, to be used in catalog mode.
      */
     private Path bpCatalogPath;
     /**
@@ -158,12 +158,12 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private String modelName;
     /**
-     * The SPC modes that shall be used: SH, PSV, or BOTH
+     * The SPC modes that shall be used, from {SH, PSV, BOTH}.
      */
     private SpcFileAid.UsableSPCMode usableSPCMode;
 
     /**
-     * Whether to use BP catalog
+     * Whether to use BP catalog.
      */
     private boolean bpCatalogMode;
     private double thetamin;
@@ -171,32 +171,32 @@ public class PartialWaveformAssembler3D extends Operation {
     private double dtheta;
 
     /**
-     * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
      */
     private SourceTimeFunctionType sourceTimeFunctionType;
     /**
-     * Folder containing user-defined source time functions
+     * Folder containing user-defined source time functions.
      */
     private Path userSourceTimeFunctionPath;
     /**
-     * Catalog containing source time function durations
+     * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
 
     /**
-     * time length (DSM parameter)
+     * Time length (DSM parameter).
      */
     private double tlen;
     /**
-     * step of frequency domain (DSM parameter)
+     * Number of steps in frequency domain (DSM parameter).
      */
     private int np;
     /**
-     * lower frequency of bandpass [Hz]
+     * Lower frequency of bandpass [Hz].
      */
     private double lowFreq;
     /**
-     * upper frequency of bandpass [Hz]
+     * Upper frequency of bandpass [Hz].
      */
     private double highFreq;
     /**
@@ -204,11 +204,11 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private int filterNp;
     /**
-     * Whether to apply causal filter. true: causal, false: zero-phase
+     * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
     private boolean causal;
     /**
-     * structure file for Q partial
+     * Structure file for Q partial.
      */
     private Path qStructurePath;
 
@@ -226,7 +226,7 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private int ext;
     /**
-     * structure for Q partial
+     * Structure for Q partial.
      */
     private PolynomialStructure qStructure;
     /**

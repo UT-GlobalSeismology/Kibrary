@@ -58,7 +58,7 @@ public final class SPC_SAC extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -70,40 +70,40 @@ public final class SPC_SAC extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be computed
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     private Path shPath;
     private Path psvPath;
     /**
-     * The SPC modes that shall be used: SH, PSV, or BOTH
+     * The SPC modes that shall be used: SH, PSV, or BOTH.
      */
     private SpcFileAid.UsableSPCMode usableSPCMode;
     /**
-     * the name of a folder containing SPC files (e.g. PREM)（""）
+     * Name of folder containing SPC files (e.g. PREM).
      */
     private String modelName;
 
     /**
-     * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
      */
     private SourceTimeFunctionType sourceTimeFunctionType;
     /**
-     * Folder containing user-defined source time functions
+     * Folder containing user-defined source time functions.
      */
     private Path userSourceTimeFunctionPath;
     /**
-     * Catalog containing source time function durations
+     * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
 
     /**
-     * sampling Hz [Hz] must be 20 now.
+     * Sampling Hz [Hz]. must be 20 now.
      */
     private double samplingHz;
     /**
@@ -111,7 +111,7 @@ public final class SPC_SAC extends Operation {
      */
     private boolean computeTimePartial;
     /**
-     * If this is true, the SACExtension of computed files will be that of observed SAC files
+     * If this is true, the SACExtension of computed files will be that of observed SAC files.
      */
     private boolean computeAsObserved;
 
@@ -119,7 +119,7 @@ public final class SPC_SAC extends Operation {
     private Set<SPCFileName> psvSPCs;
     private SourceTimeFunctionHandler stfHandler;
     /**
-     * Number of sac files that are done creating
+     * Number of sac files that are done creating.
      */
     private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
 

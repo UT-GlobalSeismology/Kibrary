@@ -43,7 +43,7 @@ public class PseudoWaveformGenerator extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -55,31 +55,31 @@ public class PseudoWaveformGenerator extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of a {@link KnownParameterFile} file containing psudoM
+     * Path of a {@link KnownParameterFile} file containing psudoM.
      */
     private Path modelPath;
 
     /**
-     * Which to set the psuedo waveform as. true: synthetic, false: observed
+     * Whether to set the psuedo waveform as synthetic. {true: synthetic, false: observed}
      */
     private boolean setPseudoAsSyn;
     private boolean noise;
     private double noisePower;
     /**
-     * Fill 0 to empty partial waveforms or not.
+     * Whether to fill 0 to empty partial waveforms or not.
      */
     private boolean fillEmptyPartial;
 

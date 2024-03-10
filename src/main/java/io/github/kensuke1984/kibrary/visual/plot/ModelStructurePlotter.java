@@ -44,17 +44,17 @@ public class ModelStructurePlotter extends Operation {
             "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
             "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
     /**
-     * Margin in radius direction (y-axis)
+     * Margin in radius direction (y-axis).
      */
     private static final double MARGIN_RAD = 50;
     /**
-     * Margin in value direction (x-axis)
+     * Margin in value direction (x-axis).
      */
     private static final double MARGIN_VAL = 0.5;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -67,24 +67,24 @@ public class ModelStructurePlotter extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * The root folder containing results of inversion
+     * The root folder containing results of inversion.
      */
     private Path resultPath;
     /**
-     * File of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * Name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
 
     /**
-     * Variable types to plot
+     * Variable types to plot.
      */
     private Set<VariableType> variableTypes;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     private int maxNum;

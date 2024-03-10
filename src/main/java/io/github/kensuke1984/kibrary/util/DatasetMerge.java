@@ -27,11 +27,11 @@ public class DatasetMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic ID and waveform files
+     * The first part of the name of output basic ID and waveform files.
      */
     private String nameRoot;
     /**
@@ -43,7 +43,7 @@ public class DatasetMerge extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * List of paths of input dataset folders
+     * List of paths of input dataset folders.
      */
     private List<Path> inPaths = new ArrayList<>();
 

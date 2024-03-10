@@ -44,7 +44,7 @@ public class OrthogonalityTest extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -56,32 +56,32 @@ public class OrthogonalityTest extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * output directory Path
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * partial waveform folder for the target region
+     * Partial waveform folder for the target region.
      */
     private Path mainPartialPath;
     /**
-     * unknown parameter file for the target region
+     * Unknown parameter file for the target region.
      */
     private Path mainUnknownsPath;
     /**
-     * partial waveform folder created for this test
+     * Partial waveform folder created for this test.
      */
     private Path testPartialPath;
     /**
-     * unknown parameter file created for this test
+     * Unknown parameter file created for this test.
      */
     private Path testUnknownsPath;
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      * This is used to align the two sets of partial waveforms in the same order and to compute the weightings.
      */
     private Path basicPath;

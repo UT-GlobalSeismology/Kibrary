@@ -29,7 +29,7 @@ public class StaticCorrectionMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**

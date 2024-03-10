@@ -46,7 +46,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicWaveformPlotter extends Operation {
 
     /**
-     * Number of fields per page on output pdf file
+     * Number of fields per page on output pdf file.
      */
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -56,7 +56,7 @@ public class BasicWaveformPlotter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -64,24 +64,24 @@ public class BasicWaveformPlotter extends Operation {
      */
     private String fileTag;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic waveform folder
+     * Path of a basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * Path of reference waveform folder 1
+     * Path of reference waveform folder 1.
      */
     private Path refBasicPath1;
     /**
-     * Path of reference waveform folder 2
+     * Path of reference waveform folder 2.
      */
     private Path refBasicPath2;
     /**
-     * Path of a travel time information file
+     * Path of a travel time information file.
      */
     private Path travelTimePath;
 
@@ -90,11 +90,11 @@ public class BasicWaveformPlotter extends Operation {
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
     /**
-     * Whether to export individual files for each component
+     * Whether to export individual files for each component.
      */
     private boolean splitComponents;
     /**
-     * The time length to plot
+     * The time length to plot.
      */
     private double timeLength;
 
@@ -112,7 +112,7 @@ public class BasicWaveformPlotter extends Operation {
     private String refSynName2;
 
     /**
-     * Set of information of travel times
+     * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
 

@@ -39,7 +39,7 @@ public class StaticCorrectionForger extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -51,16 +51,16 @@ public class StaticCorrectionForger extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a timewindow information file
+     * Path of a timewindow data file.
      */
     private Path timewindowPath;
     /**
-     * Path of a reference static correction file
+     * Path of a reference static correction file.
      */
     private Path refStaticCorrectionPath;
 

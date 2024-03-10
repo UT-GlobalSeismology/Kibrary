@@ -35,7 +35,7 @@ public class InversionArranger extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -47,20 +47,20 @@ public class InversionArranger extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * unknown parameter file
+     * Unknown parameter file.
      */
     private Path unknownParameterPath;
 

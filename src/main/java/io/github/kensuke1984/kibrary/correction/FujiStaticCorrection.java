@@ -68,7 +68,7 @@ public class FujiStaticCorrection extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -80,28 +80,28 @@ public class FujiStaticCorrection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output file
+     * Path of the output file.
      */
     private Path outputPath;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * sampling Hz [Hz] in sac files
+     * Sampling Hz [Hz] in sac files.
      */
     private double sacSamplingHz;
 
     /**
-     * the timewindow data file to work for
+     * The timewindow data file to work for.
      */
     private Path timewindowPath;
     /**
-     * the directory of observed data
+     * Folder containing observed data.
      */
     private Path obsPath;
     /**
-     * the directory of synthetic data
+     * Folder containing synthetic data.
      */
     private Path synPath;
 
@@ -114,7 +114,7 @@ public class FujiStaticCorrection extends Operation {
      */
     private double threshold;
     /**
-     * range for search [s] ±searchRange
+     * Range for search [s]. ±searchRange
      */
     private double searchRange;
     private boolean mediantime;

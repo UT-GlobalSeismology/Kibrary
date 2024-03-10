@@ -27,11 +27,11 @@ public class PartialIDMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output partial folder
+     * The first part of the name of output partial folder.
      */
     private String nameRoot;
     /**

@@ -51,11 +51,11 @@ public class CatalogueErrorCalculator extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Components to make maps for.
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * Variable types to make maps for.
+     * Variable types to use.
      */
     private Set<VariableType> variableTypes;
     /**

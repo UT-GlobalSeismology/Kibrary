@@ -68,7 +68,7 @@ public class DataSelection extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -80,28 +80,28 @@ public class DataSelection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output information file
+     * Path of the output information file.
      */
     private Path outputFeaturePath;
     /**
-     * Path of the output timewindow file
+     * Path of the output timewindow file.
      */
     private Path outputSelectedPath;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * sampling Hz [Hz] in sac files
+     * Sampling Hz [Hz] in sac files.
      */
     private double sacSamplingHz;
 
     /**
-     * the directory of observed data
+     * Folder containing observed data.
      */
     private Path obsPath;
     /**
-     * the directory of synthetic data
+     * Folder containing synthetic data.
      */
     private Path synPath;
     /**
@@ -109,7 +109,7 @@ public class DataSelection extends Operation {
      */
     private boolean convolved;
     /**
-     * Path of the input timewindow file
+     * Path of the input timewindow file.
      */
     private Path timewindowPath;
     private Path staticCorrectionPath;

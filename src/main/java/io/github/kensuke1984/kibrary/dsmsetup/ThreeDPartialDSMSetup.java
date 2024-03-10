@@ -63,11 +63,11 @@ public class ThreeDPartialDSMSetup extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * Path of an output foler to reuse, if reusing any
+     * Path of an output foler to reuse, if reusing any.
      */
     private Path reusePath;
     /**
@@ -87,11 +87,11 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * Information file name is header_[sh,psv].inf
+     * Name root of input file for DSM (header_[sh,psv].inf).
      */
     private String header;
 
@@ -108,42 +108,39 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private Path voxelPath;
     /**
-     * Path of structure file to use instead of PREM
+     * Path of structure file to use instead of PREM.
      */
     private Path structurePath;
     private String structureName;
 
     /**
-     * Time length [s].
-     * It must be a power of 2 divided by 10.(2<sup>n</sup>/10)
+     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain.
-     * It must be a power of 2.
+     * Number of steps in frequency domain, must be a power of 2.
      */
     private int np;
     /**
-     * Whether to use MPI-version of DSM in shellscript file
+     * Whether to use MPI-version of DSM in shellscript file.
      */
     private boolean mpi;
     private boolean jointCMT;
     private boolean catalogMode;
     /**
-     * epicentral distances for catalog
+     * Epicentral distances for catalog.
      */
     private double thetamin;
     private double thetamax;
     private double dtheta;
 
     /**
-     * locations of perturbation points
+     * Locations of perturbation points.
      *
      */
     private HorizontalPosition[] voxelPositions;
     /**
-     * Radii of perturbation points default values are double[]{3505, 3555,
-     * 3605, 3655, 3705, 3755, 3805, 3855} Sorted. No duplication.
+     * Radii of center points of voxels.
      */
     private double[] voxelRadii;
 

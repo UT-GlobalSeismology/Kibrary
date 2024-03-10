@@ -32,7 +32,7 @@ public class DataRequestor extends Operation {
 
     private final Property property;
     /**
-     * Path for the work folder
+     * Path for the work folder.
      */
     private Path workPath;
     /**
@@ -44,12 +44,10 @@ public class DataRequestor extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
-    // private String label;
-    // private String[] alternateMedia;
     private String[] networks;
     private int headAdjustment;
     private int footAdjustment;

@@ -22,17 +22,17 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public class GreatArcMapper extends Operation {
 
     /**
-     * The interval of deciding map size
+     * The interval of deciding map size.
      */
     private static final int INTERVAL = 5;
     /**
-     * How much space to provide at the rim of the map
+     * How much space to provide at the rim of the map.
      */
     private static final int MAP_RIM = 5;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**

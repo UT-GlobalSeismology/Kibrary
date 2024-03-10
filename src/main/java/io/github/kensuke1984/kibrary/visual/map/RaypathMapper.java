@@ -61,11 +61,11 @@ public class RaypathMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * Path of an output foler to reuse, if reusing any
+     * Path of an output foler to reuse, if reusing any.
      */
     private Path reusePath;
     /**
@@ -81,11 +81,11 @@ public class RaypathMapper extends Operation {
      */
     private String fileTag;
     /**
-     * components for path
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 

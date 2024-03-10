@@ -48,7 +48,7 @@ public class FilterDivider extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -60,22 +60,20 @@ public class FilterDivider extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be applied the filter
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * The root folder containing event folders which have observed SAC files to
-     * be filtered
+     * The root folder containing event folders which have observed SAC files to be filtered.
      */
     private Path obsPath;
     /**
-     * The root folder containing event folders which have synthetic SAC files
-     * to be filtered
+     * The root folder containing event folders which have synthetic SAC files to be filtered.
      */
     private Path synPath;
 
@@ -86,15 +84,15 @@ public class FilterDivider extends Operation {
      */
     private double delta;
     /**
-     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}
+     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}.
      */
     private String filterType;
     /**
-     * lower cut-off frequency [Hz]
+     * Lower cut-off frequency [Hz].
      */
     private double lowFreq;
     /**
-     * upper cut-off frequency [Hz]
+     * Upper cut-off frequency [Hz].
      */
     private double highFreq;
     /**
@@ -102,7 +100,7 @@ public class FilterDivider extends Operation {
      */
     private int np;
     /**
-     * Whether to apply causal filter. true: causal, false: zero-phase
+     * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
     private boolean causal;
     /**

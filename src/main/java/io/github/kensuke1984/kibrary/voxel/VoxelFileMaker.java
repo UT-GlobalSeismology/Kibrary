@@ -30,7 +30,7 @@ public class VoxelFileMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -63,7 +63,7 @@ public class VoxelFileMaker extends Operation {
     private double dRadius;
 
     /**
-     * (roughly) median radius of target region
+     * The (roughly) median radius of target region.
      */
     private double centerRadius;
 

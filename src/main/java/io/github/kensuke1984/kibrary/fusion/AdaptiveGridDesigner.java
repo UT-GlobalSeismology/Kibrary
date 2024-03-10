@@ -42,7 +42,7 @@ public class AdaptiveGridDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -54,28 +54,28 @@ public class AdaptiveGridDesigner extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * path of ata file
+     * Path of ata file.
      */
     private Path ataPath;
     /**
-     * path of basic waveform folder
+     * Path of basic waveform folder.
      */
     private Path basicPath;
     /**
-     * path of partial waveform folder
+     * Path of partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of unknown parameter file
+     * Path of unknown parameter file.
      */
     private Path unknownParameterPath;
     /**
-     * Partial types of parameters to be fused
+     * Partial types of parameters to be fused.
      */
     private List<VariableType> variableTypes;
 

@@ -75,7 +75,7 @@ public class TimewindowMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -87,77 +87,77 @@ public class TimewindowMaker extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output timewindow file
+     * Path of the output timewindow file.
      */
     private Path outTimewindowPath;
     /**
-     * Path of output file to list up SAC files that could not produce timewindows
+     * Path of output file to list up SAC files that could not produce timewindows.
      */
     private Path outInvalidPath;
     /**
-     * Path of the output travel time file
+     * Path of the output travel time file.
      */
     private Path outTravelTimePath;
     /**
-     * set of {@link SACComponent}
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Path of a root folder containing observed dataset
+     * Path of a root folder containing observed dataset.
      */
     private Path obsPath;
 
     /**
-     * phases to be included in timewindows
+     * Phases to be included in timewindows.
      */
     private Set<Phase> usePhases;
     /**
-     * phases not to be included in timewindows
+     * Phases not to be included in timewindows.
      */
     private Set<Phase> avoidPhases;
     /**
-     * time length that the timewindow shall include before each phase arrival [sec]
+     * Time length that the timewindow shall include before each phase arrival [sec].
      * If the value is 5 (not -5), each timewindow starts 5 sec before the first usePhase arrival.
      */
     private double frontShift;
     /**
-     * time length that the timewindow shall include after each phase arrival [sec]
+     * Time length that the timewindow shall include after each phase arrival [sec].
      * If the value is 10, each timewindow ends 10 secs after the last usephase arrival.
      */
     private double rearShift;
     /**
-     * time length that the timewindow must not include before each arrival of phases to be avoided [sec]
+     * Time length that the timewindow must not include before each arrival of phases to be avoided [sec].
      */
     private double avoidFrontShift;
     /**
-     * time length that the timewindow must not include after each arrival of phases to be avoided [sec]
+     * Time length that the timewindow must not include after each arrival of phases to be avoided [sec].
      */
     private double avoidRearShift;
 
     /**
-     * minimum length of each timewindow
+     * Minimum length of each timewindow.
      */
     private double minLength;
 
     /**
      * Whether to allow split timewindows.
      * If not, timewindows are discarded when avoidPhases arrive between or near usePhases
-     * and blanks are filled when timewindows of usePhases aren't overlapped
+     * and blanks are filled when timewindows of usePhases aren't overlapped.
      */
     private boolean allowSplitWindows;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
 
     private boolean majorArc;
     /**
-     * Whether to use duplicate arrivals of usePhases when deciding timewindows
+     * Whether to use duplicate arrivals of usePhases when deciding timewindows.
      * In case of triplication of usePhases, use only the first arrival.
      */
     private boolean useDuplicatePhases;

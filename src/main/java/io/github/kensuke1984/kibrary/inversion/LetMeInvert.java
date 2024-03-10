@@ -45,7 +45,7 @@ public class LetMeInvert extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -57,34 +57,34 @@ public class LetMeInvert extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * unknown parameter file
+     * Unknown parameter file.
      */
     private Path unknownParameterPath;
 
     private Path weightingPropertiesPath;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     /**
-    * α for AIC 独立データ数:n/α
-    */
+     * &alpha; for AIC. The number of independent data is n/&alpha;.
+     */
     private double[] alpha;
     /**
-     * Maximum number of basis vectors to evaluate variance and AIC
+     * Maximum number of basis vectors to evaluate variance and AIC.
      */
     private int evaluateNum;
     /**

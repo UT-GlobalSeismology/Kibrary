@@ -44,7 +44,7 @@ public class SensitivityKernelMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -56,11 +56,11 @@ public class SensitivityKernelMapper extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * components to make maps for
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * variable types to make maps for
+     * Variable types to make maps for.
      */
     private Set<VariableType> variableTypes;
     /**
@@ -73,7 +73,7 @@ public class SensitivityKernelMapper extends Operation {
     private Set<String> tendObservers = new HashSet<>();
 
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     private double[] boundaries;
@@ -93,7 +93,7 @@ public class SensitivityKernelMapper extends Operation {
     private double amplification;
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 

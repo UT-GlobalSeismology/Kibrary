@@ -38,7 +38,7 @@ public class PartialsFuser extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -51,23 +51,23 @@ public class PartialsFuser extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * path of partial waveform folder
+     * Path of partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of a {@link FusionInformationFile}
+     * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
 
     /**
-     * The design of the fusion of unknown parameters
+     * The design of the fusion of unknown parameters.
      */
     private FusionDesign fusionDesign;
 
     List<PartialID> inputPartialIDs;
     List<PartialID> fusedPartialIDs = Collections.synchronizedList(new ArrayList<>());
     /**
-     * Number of processed parameters
+     * Number of processed parameters.
      */
     private AtomicInteger nProcessedParam = new AtomicInteger();
 

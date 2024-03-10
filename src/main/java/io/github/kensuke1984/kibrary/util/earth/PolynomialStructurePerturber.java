@@ -26,11 +26,11 @@ public class PolynomialStructurePerturber extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output structure file
+     * The first part of the name of output structure file.
      */
     private String nameRoot;
     /**
@@ -43,11 +43,11 @@ public class PolynomialStructurePerturber extends Operation {
     private boolean appendFileDate;
 
     /**
-     * Structure file to use
+     * Structure file to use.
      */
     private Path structurePath;
     /**
-     * Structure to use
+     * Structure to use.
      */
     private String structureName;
 

@@ -33,11 +33,11 @@ public class ModelStructureConverter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output structure file
+     * The first part of the name of output structure file.
      */
     private String nameRoot;
     /**
@@ -50,19 +50,19 @@ public class ModelStructureConverter extends Operation {
     private boolean appendFileDate;
 
     /**
-     * File of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * Name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
     /**
-     * Model file with perturbation information
+     * Model file with perturbation information.
      */
     private Path modelPath;
     /**
-     * Variable types to perturb
+     * Variable types to perturb.
      */
     private Set<VariableType> variableTypes;
     /**

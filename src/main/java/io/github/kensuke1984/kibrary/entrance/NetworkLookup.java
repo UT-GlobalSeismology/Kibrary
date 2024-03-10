@@ -40,7 +40,7 @@ public class NetworkLookup extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -53,11 +53,11 @@ public class NetworkLookup extends Operation {
     private boolean appendFileDate;
 
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Paths of data lobby files to collect network names from
+     * Paths of data lobby folders to collect network names from.
      */
     private List<Path> lobbyPaths = new ArrayList<>();
 

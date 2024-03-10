@@ -51,7 +51,7 @@ public class SyntheticDSMSetup extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -63,39 +63,37 @@ public class SyntheticDSMSetup extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Information file name is header_[sh,psv].inf (default:PREM)
+     * Name root of input file for DSM (header_[sh,psv].inf).
      */
     private String header;
     /**
-     * components to be used
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data entry list file
+     * Path of a data entry list file.
      */
     private Path dataEntryPath;
     /**
-     * The root folder containing event folders which have observed SAC files
+     * The root folder containing event folders which have observed SAC files.
      */
     private Path obsPath;
     /**
-     * Path of structure file to use instead of PREM
+     * Path of structure file to use instead of PREM.
      */
     private Path structurePath;
     /**
-     * Structure to use
+     * Structure to use.
      */
     private String structureName;
 
     /**
-     * Time length [s].
-     * It must be a power of 2 divided by 10. (2<sup>n</sup>/10)
+     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain.
-     * It must be a power of 2.
+     * Number of steps in frequency domain, must be a power of 2.
      */
     private int np;
     /**

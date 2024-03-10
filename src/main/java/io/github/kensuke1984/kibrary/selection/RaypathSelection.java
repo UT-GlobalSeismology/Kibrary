@@ -39,7 +39,7 @@ public class RaypathSelection extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -51,21 +51,21 @@ public class RaypathSelection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output data entry list file
+     * Path of the output data entry list file.
      */
     private Path outputSelectedPath;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of the input data entry list file
+     * Path of the input data entry list file.
      */
     private Path dataEntryPath;
 
     /**
-     * Whether to eliminate certaion raypaths or to extract them
+     * Whether to eliminate certaion raypaths or to extract them.
      */
     private boolean eliminationMode;
 

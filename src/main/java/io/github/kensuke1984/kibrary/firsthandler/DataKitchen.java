@@ -44,7 +44,7 @@ public class DataKitchen extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -56,12 +56,12 @@ public class DataKitchen extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * which catalog to use 0:CMT 1: PDE
+     * Which catalog to use. {0: CMT, 1: PDE}
      */
     private int catalog;
     private double samplingHz;
@@ -71,15 +71,15 @@ public class DataKitchen extends Operation {
     private CircularRange longitudeRange;
 
     /**
-     * threshold to judge which stations are in the same position [deg]
+     * Threshold to judge which stations are in the same position [deg].
      */
     private double coordinateGrid;
     /**
-     * The maximum length of output time series
+     * The maximum length of output time series.
      */
     private double maxTlen;
     /**
-     * if remove intermediate file
+     * Whether to remove intermediate files.
      */
     private boolean removeIntermediateFile;
 

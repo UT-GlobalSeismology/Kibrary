@@ -54,25 +54,25 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicBinnedStackCreator extends Operation {
 
     /**
-     * The interval of exporting travel times
+     * The interval of exporting travel times.
      */
     private static final double TRAVEL_TIME_INTERVAL = 1;
     /**
-     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
+     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
     /**
-     * How much space to provide at the rim of the graph in the y axis
+     * How much space to provide at the rim of the graph in the y axis.
      */
     private static final int Y_AXIS_RIM = 2;
     /**
-     * How much space to provide at the rim of the graph in the time axis
+     * How much space to provide at the rim of the graph in the time axis.
      */
     private static final int TIME_RIM = 10;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -84,20 +84,20 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic waveform folder
+     * Path of a basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * Path of reference waveform folder 1
+     * Path of reference waveform folder 1.
      */
     private Path refBasicPath1;
     /**
-     * Path of reference waveform folder 2
+     * Path of reference waveform folder 2.
      */
     private Path refBasicPath2;
 
@@ -111,15 +111,15 @@ public class BasicBinnedStackCreator extends Operation {
     private double ampScale;
 
     /**
-     * Whether to plot the figure with azimuth as the Y-axis
+     * Whether to plot the figure with azimuth as the Y-axis.
      */
     private boolean byAzimuth;
     /**
-     * Whether to set the azimuth range to [-180:180) instead of [0:360)
+     * Whether to set the azimuth range to [-180:180) instead of [0:360).
      */
     private boolean flipAzimuth;
     /**
-     * Names of phases to plot travel time curves
+     * Names of phases to plot travel time curves.
      */
     private String[] displayPhases;
     /**
@@ -127,11 +127,11 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private String[] alignPhases;
     /**
-     * apparent velocity to use when reducing time [s/deg]
+     * Apparent velocity to use when reducing time [s/deg].
      */
     private double reductionSlowness;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
 
@@ -150,7 +150,7 @@ public class BasicBinnedStackCreator extends Operation {
     private double samplingStep;
 
     /**
-     * Inxtance of tool to use to compute travel times
+     * Instance of tool to use to compute travel times.
      */
     private TauP_Time timeTool;
 

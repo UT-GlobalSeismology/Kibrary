@@ -42,7 +42,7 @@ public class ModelSetMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -55,32 +55,32 @@ public class ModelSetMapper extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * The root folder containing results of inversion
+     * The root folder containing results of inversion.
      */
     private Path resultPath;
     /**
-     * file of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
     /**
-     * file of 1D structure to map perturbations against
+     * File of 1D structure to map perturbations against.
      */
     private Path referenceStructurePath;
     /**
-     * name of 1D structure to map perturbations against
+     * Name of 1D structure to map perturbations against.
      */
     private String referenceStructureName;
     /**
-     * Path of a {@link FusionInformationFile}
+     * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
     private Set<VariableType> variableTypes;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     private int maxNum;
@@ -100,7 +100,7 @@ public class ModelSetMapper extends Operation {
     private boolean setMarginLongitudeByKm;
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 

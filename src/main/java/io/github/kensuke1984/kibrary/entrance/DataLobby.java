@@ -47,7 +47,7 @@ public class DataLobby extends Operation {
 
     private final Property property;
     /**
-     * Path for the work folder
+     * Path for the work folder.
      */
     private Path workPath;
     /**
