@@ -66,6 +66,10 @@ public final class SPC_SAC extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -138,6 +142,8 @@ public final class SPC_SAC extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SACComponents to be exported, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an SH folder. (.)");
@@ -176,6 +182,7 @@ public final class SPC_SAC extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -240,7 +247,7 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

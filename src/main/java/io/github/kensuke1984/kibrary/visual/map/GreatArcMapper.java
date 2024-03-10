@@ -39,6 +39,10 @@ public class GreatArcMapper extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     private double pos0Latitude;
     private double pos0Longitude;
@@ -81,6 +85,8 @@ public class GreatArcMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##########Settings of great circle arc to display in the cross section.");
             pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
@@ -111,6 +117,7 @@ public class GreatArcMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         pos0Latitude = property.parseDouble("pos0Latitude", null);
         pos0Longitude = property.parseDouble("pos0Longitude", null);
@@ -141,7 +148,7 @@ public class GreatArcMapper extends Operation {
             endPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), afterPosDeg);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "greatArc", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "greatArc", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         outputGMT(startPosition, endPosition, outPath.resolve("arcMap.sh"));

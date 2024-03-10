@@ -47,6 +47,10 @@ public class RaypathSelection extends Operation {
      */
     private String fileTag;
     /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
      * Path of the output data entry list file
      */
     private Path outputSelectedPath;
@@ -119,6 +123,8 @@ public class RaypathSelection extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a data entry list file, must be set.");
@@ -195,6 +201,7 @@ public class RaypathSelection extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -253,7 +260,7 @@ public class RaypathSelection extends Operation {
         turningPointPhase = property.parseString("turningPointPhase", "ScS");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedEntry", fileTag, dateStr, ".lst"));
+        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedEntry", fileTag, appendFileDate, dateStr, ".lst");
     }
 
     @Override

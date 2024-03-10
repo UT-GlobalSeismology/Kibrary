@@ -59,6 +59,10 @@ public class SyntheticDSMSetup extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * Information file name is header_[sh,psv].inf (default:PREM)
      */
     private String header;
@@ -118,6 +122,8 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
@@ -148,6 +154,7 @@ public class SyntheticDSMSetup extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         header = property.parseStringSingle("header", "PREM");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -179,7 +186,7 @@ public class SyntheticDSMSetup extends Operation {
         // set structure
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder

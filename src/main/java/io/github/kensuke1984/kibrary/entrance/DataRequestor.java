@@ -40,6 +40,10 @@ public class DataRequestor extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -94,6 +98,8 @@ public class DataRequestor extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Network names for request, listed using spaces, must be set.");
             pw.println("##  Wildcards (*, ?) and virtual networks are allowed.");
             pw.println("##  Note that it will make a request for all stations in the networks.");
@@ -137,6 +143,7 @@ public class DataRequestor extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         networks = property.parseStringArray("networks", null);
 
@@ -174,7 +181,7 @@ public class DataRequestor extends Operation {
         }
         System.out.println("Label contains \"" + dateStr + "\"");
 
-        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, appendFolderDate, dateStr);
 
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
 

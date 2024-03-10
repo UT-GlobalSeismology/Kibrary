@@ -79,6 +79,10 @@ public class DataFeatureHistogram extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -196,6 +200,8 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, set this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##########Either a data feature file or a basicID&waveform file pair must be set.");
@@ -262,6 +268,7 @@ public class DataFeatureHistogram extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -359,7 +366,7 @@ public class DataFeatureHistogram extends Operation {
            }
        }
 
-       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // if input is in BasicID, export their features (for reference)

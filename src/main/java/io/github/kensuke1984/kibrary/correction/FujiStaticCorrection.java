@@ -76,6 +76,10 @@ public class FujiStaticCorrection extends Operation {
      */
     private String fileTag;
     /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
      * Path of the output file
      */
     private Path outputPath;
@@ -137,6 +141,8 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20)");
@@ -167,6 +173,7 @@ public class FujiStaticCorrection extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -181,7 +188,7 @@ public class FujiStaticCorrection extends Operation {
         mediantime = property.parseBoolean("mediantime", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
+        outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
 

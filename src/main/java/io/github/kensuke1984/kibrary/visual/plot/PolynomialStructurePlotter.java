@@ -53,6 +53,10 @@ public class PolynomialStructurePlotter extends Operation {
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     private Set<VariableType> variableTypes;
 
@@ -92,6 +96,8 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Variable types to map, listed using spaces, from {RHO,Vpv,Vph,Vsv,Vsh,ETA}. (RHO Vpv Vph Vsv Vsh ETA)");
             pw.println("#variableTypes ");
             pw.println("##(boolean) Whether to color structures differently. (true)");
@@ -132,6 +138,7 @@ public class PolynomialStructurePlotter extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "RHO Vpv Vph Vsv Vsh ETA")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -176,7 +183,7 @@ public class PolynomialStructurePlotter extends Operation {
        }
 
        // create script
-       Path scriptPath = workPath.resolve(DatasetAid.generateOutputFileName("polynomial", fileTag, GadgetAid.getTemporaryString(), ".plt"));
+       Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".plt");
        createScript(scriptPath, structures);
    }
 

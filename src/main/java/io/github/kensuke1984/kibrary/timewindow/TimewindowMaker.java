@@ -83,6 +83,10 @@ public class TimewindowMaker extends Operation {
      */
     private String fileTag;
     /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
      * Path of the output timewindow file
      */
     private Path outTimewindowPath;
@@ -181,6 +185,8 @@ public class TimewindowMaker extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##########Input: either a data entry list file or a dataset folder will be read.");
@@ -226,6 +232,7 @@ public class TimewindowMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -248,9 +255,9 @@ public class TimewindowMaker extends Operation {
         useDuplicatePhases = property.parseBoolean("useDuplicatePhases","true");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outTimewindowPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", fileTag, dateStr, ".dat"));
-        outInvalidPath = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", fileTag, dateStr, ".txt"));
-        outTravelTimePath = workPath.resolve(DatasetAid.generateOutputFileName("travelTime", fileTag, dateStr, ".inf"));
+        outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateStr, ".dat");
+        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateStr, ".txt");
+        outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateStr, ".inf");
     }
 
     private static Set<Phase> phaseSet(String arg) {

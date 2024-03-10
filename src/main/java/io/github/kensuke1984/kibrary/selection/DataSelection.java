@@ -76,6 +76,10 @@ public class DataSelection extends Operation {
      */
     private String fileTag;
     /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
      * Path of the output information file
      */
     private Path outputFeaturePath;
@@ -158,6 +162,8 @@ public class DataSelection extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20)");
@@ -204,6 +210,7 @@ public class DataSelection extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -235,8 +242,8 @@ public class DataSelection extends Operation {
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", fileTag, dateStr, ".lst"));
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", fileTag, dateStr, ".dat"));
+        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateStr, ".lst");
+        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateStr, ".dat");
         dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }

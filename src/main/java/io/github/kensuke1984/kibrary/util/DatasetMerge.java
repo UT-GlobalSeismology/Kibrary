@@ -39,6 +39,10 @@ public class DatasetMerge extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * List of paths of input dataset folders
      */
     private List<Path> inPaths = new ArrayList<>();
@@ -64,6 +68,8 @@ public class DatasetMerge extends Operation {
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##########From here on, list up paths of dataset folders to merge.");
             pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_IN; i++) {
@@ -83,6 +89,7 @@ public class DatasetMerge extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", null);
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         for (int i = 1; i <= MAX_IN; i++) {
             String inKey = "inPath" + i;
@@ -103,7 +110,7 @@ public class DatasetMerge extends Operation {
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, GadgetAid.getTemporaryString());
 
         // each datset folder
         for (Path inPath : inPaths) {

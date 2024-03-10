@@ -91,6 +91,10 @@ public class ActualWaveformCompiler extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -208,6 +212,8 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
@@ -256,6 +262,7 @@ public class ActualWaveformCompiler extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -341,7 +348,7 @@ public class ActualWaveformCompiler extends Operation {
        Set<Observer> observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
        Set<DataEntry> entrySet = sourceTimewindowSet.stream().map(TimewindowData::toDataEntry).collect(Collectors.toSet());
 
-       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        EventListFile.write(eventSet, outPath.resolve("event.lst"));

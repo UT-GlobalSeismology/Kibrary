@@ -36,6 +36,10 @@ public class StaticCorrectionMerge extends Operation {
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
      * Paths of input static correction files.
@@ -62,6 +66,8 @@ public class StaticCorrectionMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##########From here on, list up paths of static correction files.");
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
@@ -80,6 +86,7 @@ public class StaticCorrectionMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         for (int i = 1; i <= MAX_NUM; i++) {
             String staticCorrectionKey = "staticCorrectionPath" + i;
@@ -109,7 +116,7 @@ public class StaticCorrectionMerge extends Operation {
 
         // output merged file
         String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
         StaticCorrectionDataFile.write(staticCorrections, outputPath);
     }
 

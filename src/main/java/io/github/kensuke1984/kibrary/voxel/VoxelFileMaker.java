@@ -37,6 +37,10 @@ public class VoxelFileMaker extends Operation {
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     private double lowerLatitude;
     private double upperLatitude;
@@ -82,6 +86,8 @@ public class VoxelFileMaker extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##########Parameters for the CENTER positions of voxels to create.");
             pw.println("##(double) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
             pw.println("#lowerLatitude ");
@@ -127,6 +133,7 @@ public class VoxelFileMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         lowerLatitude = property.parseDouble("lowerLatitude", "0");
         upperLatitude = property.parseDouble("upperLatitude", "0");
@@ -209,7 +216,7 @@ public class VoxelFileMaker extends Operation {
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
         VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
