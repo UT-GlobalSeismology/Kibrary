@@ -361,7 +361,7 @@ public class RaypathMapper extends Operation {
 
     /**
      * Creates output line for a raypath segment.
-     * Output line: lat1 lon1 lat2 lon2 dist azimuth backAzimuth (turningAzimuth)
+     * Output line: lat1 lon1 lat2 lon2 iPhase dist azimuth backAzimuth (turningAzimuth)
      *
      * @param raypath (Raypath) The whole raypath
      * @param raypathSegment (Raypath) The raypath segment

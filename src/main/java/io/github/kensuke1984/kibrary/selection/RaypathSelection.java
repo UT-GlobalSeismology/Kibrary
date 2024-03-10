@@ -124,7 +124,7 @@ public class RaypathSelection extends Operation {
             pw.println("##Path of a data entry list file, must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##(boolean) Whether to eliminate the specified raypaths instead of extracting them. (false)");
-            pw.println("#eliminationMode ");
+            pw.println("#eliminationMode true");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");
             pw.println("##########Selection criteria of events##########");
             pw.println("##(double) Lower limit of Mw, inclusive; (:upperEventMw). (0)");
