@@ -75,9 +75,17 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
     /**
      * Path of the output folder
      */
@@ -162,8 +170,12 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#reusePath threeDPartial");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set.");
@@ -202,7 +214,9 @@ public class ThreeDPartialDSMSetup extends Operation {
         if (property.containsKey("reusePath"))
             reusePath = property.parsePath("reusePath", null, true, workPath);
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         header = property.parseStringSingle("header", "PREM");
 
         eventPath = property.parsePath("eventPath", null, true, workPath);
@@ -254,7 +268,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             outPath = reusePath;
             System.err.println("Reusing " + reusePath);
         } else {
-            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, dateStr);
+            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, appendFolderDate, dateStr);
             property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
             FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
             createPointInformationFile();
@@ -337,13 +351,13 @@ public class ThreeDPartialDSMSetup extends Operation {
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
 
         // output list and shellscripts for execution of shfp and psvfp
-        String fpListFileName = DatasetAid.generateOutputFileName("fpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(fpListFileName), fpSourceTreeSet);
-        Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_SH", fileTag, dateStr, ".sh"));
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runFP_PSV", fileTag, dateStr, ".sh"));
+        Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateStr, ".txt");
+        Files.write(fpListPath, fpSourceTreeSet);
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runFP_SH", fileTag, appendFileDate, dateStr, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runFP_PSV", fileTag, appendFileDate, dateStr, ".sh");
         DSMShellscript shellFP = new DSMShellscript(mpi, nCreated, header);
-        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.SH, fpListFileName, outSHPath);
-        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.PSV, fpListFileName, outPSVPath);
+        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.SH, fpListPath.getFileName().toString(), outSHPath);
+        shellFP.write(DSMShellscript.DSMType.FP, SPCMode.PSV, fpListPath.getFileName().toString(), outPSVPath);
         System.err.println("After this finishes, please enter " + outPath + "/ and run "
                 + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }
@@ -392,13 +406,13 @@ public class ThreeDPartialDSMSetup extends Operation {
         }
 
         // output list and shellscripts for execution of shbp and psvbp
-        String bpListFileName = DatasetAid.generateOutputFileName("bpList", fileTag, dateStr, ".txt");
-        Files.write(outPath.resolve(bpListFileName), bpSourceTreeSet);
-        Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_SH", fileTag, dateStr, ".sh"));
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runBP_PSV", fileTag, dateStr, ".sh"));
+        Path bpListPath = DatasetAid.generateOutputFilePath(outPath, "bpList", fileTag, appendFileDate, dateStr, ".txt");
+        Files.write(bpListPath, bpSourceTreeSet);
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runBP_SH", fileTag, appendFileDate, dateStr, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runBP_PSV", fileTag, appendFileDate, dateStr, ".sh");
         DSMShellscript shellBP = new DSMShellscript(mpi, nCreated, header);
-        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.SH, bpListFileName, outSHPath);
-        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.PSV, bpListFileName, outPSVPath);
+        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.SH, bpListPath.getFileName().toString(), outSHPath);
+        shellBP.write(DSMShellscript.DSMType.BP, SPCMode.PSV, bpListPath.getFileName().toString(), outPSVPath);
         System.err.println("After this finishes, please enter " + outPath + "/ and run "
                 + outSHPath.getFileName() + " and " + outPSVPath.getFileName());
     }

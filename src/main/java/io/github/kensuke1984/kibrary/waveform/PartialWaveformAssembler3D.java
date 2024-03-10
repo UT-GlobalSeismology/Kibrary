@@ -104,6 +104,10 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * output directory Path
      */
     private Path outPath;
@@ -253,6 +257,8 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20)");
@@ -316,6 +322,7 @@ public class PartialWaveformAssembler3D extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -418,7 +425,7 @@ public class PartialWaveformAssembler3D extends Operation {
             qStructure = PolynomialStructureFile.read(qStructurePath);
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         nThreads = Runtime.getRuntime().availableProcessors();

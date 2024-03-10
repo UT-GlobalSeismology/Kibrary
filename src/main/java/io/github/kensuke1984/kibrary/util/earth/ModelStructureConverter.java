@@ -44,6 +44,10 @@ public class ModelStructureConverter extends Operation {
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
      * File of 1D structure used in inversion
@@ -91,6 +95,8 @@ public class ModelStructureConverter extends Operation {
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model used in inversion. (PREM)");
@@ -116,6 +122,7 @@ public class ModelStructureConverter extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "PREMp");
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         if (property.containsKey("initialStructurePath")) {
             initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
@@ -144,7 +151,7 @@ public class ModelStructureConverter extends Operation {
        PolynomialStructure perturbedStructure = convertModel(initialStructure, radii, model);
 
        // output structure
-       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, GadgetAid.getTemporaryString(), ".structure"));
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".structure");
        PolynomialStructureFile.write(perturbedStructure, outputPath);
    }
 

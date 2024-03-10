@@ -35,6 +35,10 @@ public class ModelSmoothener extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
      * Path of perturbation file
@@ -62,6 +66,8 @@ public class ModelSmoothener extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of perturbation file, must be set.");
             pw.println("#perturbationPath vsPercent.lst");
             pw.println("##Lower limit of radius range [km]; [0:upperRadius). (0)");
@@ -80,6 +86,7 @@ public class ModelSmoothener extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
 
@@ -111,7 +118,7 @@ public class ModelSmoothener extends Operation {
             smoothedMap.put(horizontalPosition.toFullPosition(averagedRadius), average);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         Path outputPerturbationFile = outPath.resolve(perturbationPath.getFileName());

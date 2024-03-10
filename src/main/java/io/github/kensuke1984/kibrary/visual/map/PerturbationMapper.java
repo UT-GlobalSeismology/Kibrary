@@ -39,6 +39,10 @@ public class PerturbationMapper extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
      * Path of perturbation file
@@ -90,6 +94,8 @@ public class PerturbationMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of perturbation file, must be set.");
             pw.println("#perturbationPath vsPercent.lst");
             pw.println("##Path of perturbation file for mask, when mask is to be applied.");
@@ -133,6 +139,7 @@ public class PerturbationMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
         if (property.containsKey("maskPath")) {
@@ -180,7 +187,7 @@ public class PerturbationMapper extends Operation {
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // copy discrete perturbation file to outPath

@@ -43,6 +43,10 @@ public class InversionArranger extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * Path of the output folder
      */
     private Path outPath;
@@ -81,6 +85,8 @@ public class InversionArranger extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
             pw.println("##Path of a partial waveform folder, must be set.");
@@ -101,6 +107,7 @@ public class InversionArranger extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
@@ -127,7 +134,7 @@ public class InversionArranger extends Operation {
         double obsNorm = assembler.getObs().getNorm();
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

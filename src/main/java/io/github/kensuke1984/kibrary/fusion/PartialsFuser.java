@@ -45,6 +45,10 @@ public class PartialsFuser extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
      * path of partial waveform folder
@@ -86,6 +90,8 @@ public class PartialsFuser extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
             pw.println("##Path of a fusion information file, must be set.");
@@ -102,6 +108,7 @@ public class PartialsFuser extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         fusionPath = property.parsePath("fusionPath", null, true, workPath);
@@ -136,7 +143,7 @@ public class PartialsFuser extends Operation {
         newPartialIDs.addAll(fusedPartialIDs);
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

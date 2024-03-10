@@ -49,6 +49,10 @@ public class ModelSetMapper extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
      * The root folder containing results of inversion
@@ -119,6 +123,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a root folder containing results of inversion. (.)");
             pw.println("#resultPath ");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
@@ -172,6 +178,7 @@ public class ModelSetMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
         if (property.containsKey("initialStructurePath")) {
@@ -247,7 +254,7 @@ public class ModelSetMapper extends Operation {
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // write list files
