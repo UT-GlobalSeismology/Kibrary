@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -447,11 +448,27 @@ public class PartialWaveformAssembler3D extends Operation {
 
         Path fpModelPath = fpPath.resolve(event.toString()).resolve(modelName);
 
-        for (VariableType variableType : variableTypes) {
+        List<Set<VariableType>> variableTypeSetList = new ArrayList<>();
+        List<Boolean> isRHO = new ArrayList<>();
+        if (variableTypes.contains(VariableType.RHO)) {
+            Set<VariableType> tmpSet = new HashSet<>();
+            variableTypes.remove(VariableType.RHO);
+            tmpSet.add(VariableType.RHO);
+            variableTypeSetList.add(variableTypes);
+            isRHO.add(false);
+            variableTypeSetList.add(tmpSet);
+            isRHO.add(true);
+        }
+        else {
+            variableTypeSetList.add(variableTypes);
+            isRHO.add(false);
+        }
 
+        for (int i = 0; i < variableTypeSetList.size(); i++) {
+            Set<VariableType> variableTypeSet = variableTypeSetList.get(i);
             // list of FP spc files, collected for each pixel
             // Up to 2 files (SH and PSV) can exist for each pixel.
-            List<List<SPCFileName>> fpNames = collectSPCFileNames(fpModelPath, variableType);
+            List<List<SPCFileName>> fpNames = collectSPCFileNames(fpModelPath, isRHO.get(i));
 
             for (Observer observer : observersForEvent) {
                 Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
@@ -462,17 +479,17 @@ public class PartialWaveformAssembler3D extends Operation {
                 List<List<SPCFileName>> bpNames = null;
                 if (!bpCatalogMode) {
                     Path bpModelPath = bpPath.resolve(observer.getPosition().toCode()).resolve(modelName);
-                    bpNames = collectSPCFileNames(bpModelPath, variableType);
+                    bpNames = collectSPCFileNames(bpModelPath, isRHO.get(i));
                 }
 
                 // create ThreadPool for each set of corresponding FP and BP files (= for each pixel)
                 ExecutorService execs = Executors.newFixedThreadPool(nThreads);
-                for (int i = 0; i < fpNames.size(); i++) {
+                for (int j = 0; j < fpNames.size(); j++) {
                     PartialComputation pc = null;
                     if (bpCatalogMode) {
-                        pc = new PartialComputation(fpNames.get(i), correspondingTimewindows, event, observer, variableType);
+                        pc = new PartialComputation(fpNames.get(j), correspondingTimewindows, event, observer, variableTypeSet);
                     } else {
-                        pc = new PartialComputation(fpNames.get(i), bpNames.get(i), correspondingTimewindows, event, observer, variableType);
+                        pc = new PartialComputation(fpNames.get(j), bpNames.get(j), correspondingTimewindows, event, observer, variableTypeSet);
                     }
                     execs.execute(pc);
                 }
@@ -488,13 +505,13 @@ public class PartialWaveformAssembler3D extends Operation {
         }
     }
 
-    private List<List<SPCFileName>> collectSPCFileNames(Path spcModelPath, VariableType type) throws IOException {
+    private List<List<SPCFileName>> collectSPCFileNames(Path spcModelPath, boolean isRHO) throws IOException {
         List<List<SPCFileName>> spcNames = new ArrayList<>();
 
         // collect all psv and sh files
         List<SPCFileName> shList = null;
         List<SPCFileName> psvList = null;
-        if (type.equals(VariableType.RHO)) {
+        if (isRHO) {
             if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.SH);
             if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.PSV);
         } else {
@@ -553,7 +570,7 @@ public class PartialWaveformAssembler3D extends Operation {
         private Set<TimewindowData> timewindows;
         private GlobalCMTID event;
         private Observer observer;
-        private VariableType variableType;
+        private Set<VariableType> variableTypeSet;
         /**
          * Coefficients for interpolation
          */
@@ -566,16 +583,16 @@ public class PartialWaveformAssembler3D extends Operation {
          * @param timewindows
          * @param event
          * @param observer
-         * @param variableType
+         * @param variableTypes
          */
         private PartialComputation(List<SPCFileName> fpNames, List<SPCFileName> bpNames, Set<TimewindowData> timewindows,
-                GlobalCMTID event, Observer observer, VariableType variableType) {
+                GlobalCMTID event, Observer observer, Set<VariableType> variableTypeSet) {
             this.fpNames = fpNames;
             this.bpNames = bpNames;
             this.timewindows = timewindows;
             this.event = event;
             this.observer = observer;
-            this.variableType = variableType;
+            this.variableTypeSet = variableTypeSet;
             if (bpCatalogMode) throw new IllegalStateException("Constructor for non-BPCatalogMode has been called.");
         }
 
@@ -585,15 +602,15 @@ public class PartialWaveformAssembler3D extends Operation {
          * @param timewindows
          * @param event
          * @param observer
-         * @param variableType
+         * @param variableTypes
          */
         private PartialComputation(List<SPCFileName> fpNames, Set<TimewindowData> timewindows,
-                GlobalCMTID event, Observer observer, VariableType variableType) {
+                GlobalCMTID event, Observer observer, Set<VariableType> variableTypeSet) {
             this.fpNames = fpNames;
             this.timewindows = timewindows;
             this.event = event;
             this.observer = observer;
-            this.variableType = variableType;
+            this.variableTypeSet = variableTypeSet;
             if (!bpCatalogMode) throw new IllegalStateException("Constructor for BPCatalogMode has been called.");
         }
 
@@ -701,16 +718,18 @@ public class PartialWaveformAssembler3D extends Operation {
                     continue;
 
                 for (SACComponent component : neededComponents) {
-                    double[] partial = threedPartialMaker.createPartialSerial(component, ibody, PartialType.of(ParameterType.VOXEL, variableType));
+                    for (VariableType variableType : variableTypeSet) {
+                        double[] partial = threedPartialMaker.createPartialSerial(component, ibody, PartialType.of(ParameterType.VOXEL, variableType));
 
-                    timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
-                        Trace cutTrace = cutAndFilter(partial, window);
-                        PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, cutTrace.getMinX(),
-                                cutTrace.getLength(), 1 / maxFreq, 1 / minFreq, window.getPhases(),
-                                sourceTimeFunctionType != SourceTimeFunctionType.NONE,
-                                ParameterType.VOXEL, variableType, voxelPosition, cutTrace.getY());
-                        partialIDs.add(partialID);
-                    });
+                        timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
+                            Trace cutTrace = cutAndFilter(partial, window);
+                            PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, cutTrace.getMinX(),
+                                    cutTrace.getLength(), 1 / maxFreq, 1 / minFreq, window.getPhases(),
+                                    sourceTimeFunctionType != SourceTimeFunctionType.NONE,
+                                    ParameterType.VOXEL, variableType, voxelPosition, cutTrace.getY());
+                            partialIDs.add(partialID);
+                        });
+                    }
                 }
             }
         }
