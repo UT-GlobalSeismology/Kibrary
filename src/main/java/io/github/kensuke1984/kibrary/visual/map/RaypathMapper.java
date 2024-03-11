@@ -81,6 +81,10 @@ public class RaypathMapper extends Operation {
      */
     private String fileTag;
     /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
      * Components to use.
      */
     private Set<SACComponent> components;
@@ -157,6 +161,8 @@ public class RaypathMapper extends Operation {
             pw.println("##########Overall settings");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides. (true)");
             pw.println("#forSlides ");
             pw.println("##(boolean) Whether to cut raypaths at piercing points. (true)");
@@ -214,6 +220,7 @@ public class RaypathMapper extends Operation {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         forSlides = property.parseBoolean("forSlides", "true");
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
@@ -273,7 +280,7 @@ public class RaypathMapper extends Operation {
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
-        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, true, dateStr, ".sh");
+        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateStr, ".sh");
         outputGMT();
         System.err.println("After this finishes, please run " + gmtPath);
     }

@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class DistanceHistogram {
 
     /**
-     * Creates histogram of epicentral distance based on a dataEntryFile.
+     * Creates histogram of epicentral distance based on a {@link DataEntryListFile}.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */

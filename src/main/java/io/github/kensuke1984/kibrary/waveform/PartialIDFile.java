@@ -53,7 +53,7 @@ public final class PartialIDFile {
     private PartialIDFile() {}
 
     /**
-     * [byte] File size for an ID
+     * Number of bytes used for one ID.
      */
     public static final int oneIDByte = 50;
 

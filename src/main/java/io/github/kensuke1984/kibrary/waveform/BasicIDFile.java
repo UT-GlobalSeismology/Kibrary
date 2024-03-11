@@ -66,7 +66,7 @@ public final class BasicIDFile {
     private BasicIDFile() {}
 
     /**
-     * [byte] File size for an ID
+     * Number of bytes used for one ID.
      */
     public static final int ONE_ID_BYTE = 48;
 

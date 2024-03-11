@@ -34,11 +34,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 public class LayerInformationFile {
 
     /**
-     * thickness of each layer
+     * Thickness of each layer.
      */
     private final double[] layerThicknesses;
     /**
-     * Radii of layer center points, sorted, no duplication
+     * Radii of layer center points, sorted, no duplication.
      */
     private final double[] layerRadii;
 

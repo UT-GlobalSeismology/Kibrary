@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class AzimuthHistogram {
 
     /**
-     * Creates histogram of azimuth based on a dataEntryFile.
+     * Creates histogram of azimuth based on a {@link DataEntryListFile}.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */

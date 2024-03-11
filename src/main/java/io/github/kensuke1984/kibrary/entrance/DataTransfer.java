@@ -35,7 +35,7 @@ public final class DataTransfer {
     private DataTransfer() {}
 
     /**
-     * user PATH in IRIS
+     * User PATH in IRIS.
      */
     private static final String IRIS_USER_PATH = "/pub/userdata/" + Environment.getUserName() + "/";
     public static final String IRIS_FTP = "ftp.iris.washington.edu";

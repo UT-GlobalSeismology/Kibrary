@@ -41,7 +41,7 @@ public class WeightingHandler {
     /**
      * {@link WeightingHandler} created with default settings, thus complete IDENTITY.
      */
-    public static WeightingHandler IDENTITY = new WeightingHandler(new Property());
+    public static final WeightingHandler IDENTITY = new WeightingHandler(new Property());
 
     private boolean amplitudeReciprocal;
     private boolean balanceComponent;

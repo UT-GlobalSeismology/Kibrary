@@ -79,7 +79,7 @@ public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}
 
     /**
-     * The number of bytes for one time shift data
+     * Number of bytes used for one time shift data.
      */
     public static final int ONE_CORRECTION_BYTE = 37;
 

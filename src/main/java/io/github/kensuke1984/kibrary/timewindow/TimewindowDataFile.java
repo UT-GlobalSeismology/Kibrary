@@ -83,8 +83,7 @@ public final class TimewindowDataFile {
     private TimewindowDataFile() {}
 
     /**
-     * bytes for one time window information
-     * @author anselme increased the byte size of a time window to add phase information
+     * Number of bytes used for information of one time window.
      */
     public static final int ONE_WINDOW_BYTE = 33;
 

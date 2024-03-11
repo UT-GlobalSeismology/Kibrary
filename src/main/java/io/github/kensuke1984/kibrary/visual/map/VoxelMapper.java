@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 public class VoxelMapper {
 
     /**
-     * Maps pixel points of positions included in voxel information file.
+     * Maps pixel points of positions included in a {@link VoxelInformationFile}.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
