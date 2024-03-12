@@ -57,8 +57,10 @@ public class DiagATAExtract {
                 .desc("Path of ATA file").build());
         options.addOption(Option.builder("v").longOpt("variable").hasArg().argName("variableType").required()
                 .desc("Variable type").build());
-        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("tag")
-                .desc("A tag to include in output folder name.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -72,8 +74,9 @@ public class DiagATAExtract {
         Path unknownsPath = Paths.get(cmdLine.getOptionValue("u"));
         Path ataPath = Paths.get(cmdLine.getOptionValue("a"));
         VariableType variable = VariableType.valueOf(cmdLine.getOptionValue("v"));
-        String tag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
-        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("diagATA", tag, GadgetAid.getTemporaryString(), ".lst"));
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "diagATA", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
 
         // read parameter information and ATA
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);

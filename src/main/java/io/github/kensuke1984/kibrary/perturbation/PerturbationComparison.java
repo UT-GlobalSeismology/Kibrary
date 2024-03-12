@@ -58,8 +58,12 @@ public class PerturbationComparison {
                 .desc("Path of perturbation file to compare").build());
         options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("perturbationFile").required()
                 .desc("Path of perturbation file to compare to").build());
-        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("tag")
+
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
                 .desc("A tag to include in output folder name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output folder name.").build());
 
         return options;
     }
@@ -98,8 +102,10 @@ public class PerturbationComparison {
         double l2Average = numeratorVector.add(denominatorVector).mapDivide(2).getNorm();
         double l2Denominator = denominatorVector.getNorm();
 
+        // create output folder
         String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, GadgetAid.getTemporaryString());
+        boolean appendFolderDate = !cmdLine.hasOption("O");
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
 
         // output ratio and difference maps as perturbation list files
         String fileNameRoot = FileAid.extractNameRoot(numeratorPath);

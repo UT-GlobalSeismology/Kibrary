@@ -144,10 +144,12 @@ public class DataEntryListFile {
         options.addOptionGroup(inputOption);
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
         options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
                 .desc("To convert entries to certain components, list them using commas.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -158,13 +160,12 @@ public class DataEntryListFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
         Set<SACComponent> components = cmdLine.hasOption("c")
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
-
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("dataEntry" + GadgetAid.getTemporaryString() + ".lst");
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
 
         // read input
         Set<DataEntry> entrySet;

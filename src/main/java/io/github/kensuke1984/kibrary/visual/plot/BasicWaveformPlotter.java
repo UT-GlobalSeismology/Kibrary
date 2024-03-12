@@ -274,9 +274,9 @@ public class BasicWaveformPlotter extends Operation {
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-                   String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "_" + component.toString());
-                   createPlot(eventPath, useIds, fileNameRoot);
+                   // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, "_" + component.toString() + ".plt");
+                   createPlot(eventPath, plotPath, useIds);
                }
            } else {
                List<BasicID> useIds = mainBasicIDs.stream()
@@ -284,21 +284,20 @@ public class BasicWaveformPlotter extends Operation {
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                        .collect(Collectors.toList());
 
-               // Here, generateOutputFileName() is used in an irregular way, without adding the file extension.
-               String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "");
-               createPlot(eventPath, useIds, fileNameRoot);
+               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, ".plt");
+               createPlot(eventPath, plotPath, useIds);
            }
 
        }
    }
 
     /**
-     * @param eventDir (EventFolder)
+     * @param eventPath (Path) Path of event folder.
+     * @param plotPath (Path) Gnuplot file path.
      * @param ids (BasicID) IDs to be plotted
-     * @param fileNameRoot (String) The root of file names of output plot and graph files
      * @throws IOException
      */
-    private void createPlot(Path eventPath, List<BasicID> ids, String fileNameRoot) throws IOException {
+    private void createPlot(Path eventPath, Path plotPath, List<BasicID> ids) throws IOException {
         if (ids.size() == 0) {
             return;
         }
@@ -307,9 +306,8 @@ public class BasicWaveformPlotter extends Operation {
         List<BasicID> obsList = pairer.getObsList();
         List<BasicID> synList = pairer.getSynList();
 
-        GnuplotFile gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
-
-        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+        GnuplotFile gnuplot = new GnuplotFile(plotPath);
+        gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setCommonKey(true, false, "top right");

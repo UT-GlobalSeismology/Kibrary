@@ -33,29 +33,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 public final class DatasetAid {
 
     /**
-     * @param workPath (Path) Path to create the output folder under
-     * @param nameRoot (String) First part of output folder name
-     * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
-     * @param dateString (String) The date string part of output folder name
-     * @return (Path) Path of created output folder
-     * @throws IOException
-     *
-     * @author otsuru
-     * @since 2022/4/13
-     */
-    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, String dateString) throws IOException {
-        Path outPath;
-        if (tag == null) outPath = workPath.resolve(nameRoot + dateString);
-        else outPath = workPath.resolve(nameRoot + "_" + tag + "_" + dateString);
-
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
-        return outPath;
-    }
-
-    /**
      * Create a new output folder in specified path, with specified name root, tag, and date string.
-     * Fails if a folder with same name already exists.
+     * Fails if a folder with the same name, including the same date string, already exists.
      * @param workPath (Path) Path to create the output folder under.
      * @param nameRoot (String) First part of output folder name.
      * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
@@ -95,6 +74,8 @@ public final class DatasetAid {
     }
 
     /**
+     * Generates the name of a file with specified name root, tag, and date string.
+     * Fails if a file with the same name, including the same date string, already exists.
      * @param workPath (Path) Path to create the output file under.
      * @param nameRoot (String) First part of output file name.
      * @param tag (String) Additional comment to include in file name. If null, this part will be excluded.
@@ -128,22 +109,6 @@ public final class DatasetAid {
         if (Files.exists(outPath)) throw new IllegalStateException(outPath + " already exists!");
 
         return outPath;
-    }
-    /**
-     * @param nameRoot (String) First part of output file name
-     * @param tag (String) Additional comment to include in file name. If null, this part will be excluded.
-     * @param dateStr (String) The date string part of output file name
-     * @param extension (String)
-     * @return (String) Generated name of file
-     *
-     * @author otsuru
-     * @since 2022/4/13
-     */
-    public static String generateOutputFileName(String nameRoot, String tag, String dateStr, String extension) {
-        String fileName;
-        if (tag == null) fileName = nameRoot + dateStr + extension;
-        else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
-        return fileName;
     }
 
     /**

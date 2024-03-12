@@ -466,11 +466,11 @@ public class BasicRecordSectionCreator extends Operation {
         }
 
         private void profilePlotSetup() {
-            // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-            String fileNameRoot = DatasetAid.generateOutputFileName("recordSection", fileTag, dateStr, "_" + component.toString());
+            // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+            Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateStr, "_" + component.toString() + ".plt");
 
-            gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
-            gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            gnuplot = new GnuplotFile(plotPath);
+            gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
             gnuplot.setMarginH(15, 25);
             gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);

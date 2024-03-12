@@ -68,6 +68,10 @@ public class DistanceHistogram {
         options.addOption(Option.builder("M").longOpt("maxDistance").hasArg().argName("maxDistance")
                 .desc("Maximum distance in histogram (180)").build());
 
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+
         return options;
     }
 
@@ -101,7 +105,7 @@ public class DistanceHistogram {
         }
 
         // output
-        String fileNameRoot = "epicentralDistanceHistogram";
+        String fileNameRoot = "epicentralDistanceHistogram" + (cmdLine.hasOption("T") ? "_" + cmdLine.getOptionValue("T") : "");
         Path outPath = Paths.get("");
         writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
         createScript(outPath, fileNameRoot, interval, minimum, maximum, xtics);

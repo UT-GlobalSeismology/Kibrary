@@ -90,6 +90,10 @@ public class AzimuthHistogram {
         options.addOption(Option.builder("p").longOpt("phase").hasArg().argName("phase")
                 .desc("Name of phase to use to compute turning point (ScS)").build());
 
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+
         return options;
     }
 
@@ -168,10 +172,11 @@ public class AzimuthHistogram {
             fileNameRoot = "azimuthHistogram";
             xlabel = "Azimuth";
         }
+        fileNameRoot = fileNameRoot + (cmdLine.hasOption("T") ? "_" + cmdLine.getOptionValue("T") : "");
+
         Path outPath = Paths.get("");
         writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
         createScript(outPath, fileNameRoot, xlabel, interval, minimum, maximum, xtics);
-
     }
 
     private static void writeHistogramData(Path outPath, String fileNameRoot, double interval, int[] numberOfRecords) throws IOException {

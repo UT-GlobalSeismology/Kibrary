@@ -156,8 +156,10 @@ public class EventListFile {
                 .desc("Whether to write full information of events in output file.").build());
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -168,9 +170,9 @@ public class EventListFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("event" + GadgetAid.getTemporaryString() + ".lst");
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "event", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
 
         Set<GlobalCMTID> eventSet;
         if (cmdLine.hasOption("d")) {

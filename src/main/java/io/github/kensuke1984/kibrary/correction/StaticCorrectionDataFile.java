@@ -256,7 +256,7 @@ public final class StaticCorrectionDataFile {
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

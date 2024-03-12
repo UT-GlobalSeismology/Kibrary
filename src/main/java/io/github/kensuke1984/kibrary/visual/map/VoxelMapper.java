@@ -55,6 +55,12 @@ public class VoxelMapper {
         options.addOption(Option.builder("r").longOpt("region").hasArg().argName("region")
                 .desc("Map region in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]").build());
 
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
+                .desc("A tag to include in output folder name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output folder name.").build());
+
         return options;
     }
 
@@ -74,7 +80,9 @@ public class VoxelMapper {
         else mapRegion = PerturbationMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "voxelMap", null, GadgetAid.getTemporaryString());
+        String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFolderDate = !cmdLine.hasOption("O");
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "voxelMap", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
 
         // output pixels
         List<String> pixelLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());

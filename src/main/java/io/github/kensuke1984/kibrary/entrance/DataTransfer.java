@@ -126,7 +126,7 @@ public final class DataTransfer {
             Thread.sleep(10 * 1000);
 
             // create output folder
-            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, GadgetAid.getTemporaryString());
+            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, true, GadgetAid.getTemporaryString());
 
             // download
             for (FTPFile ffile : ffiles) {

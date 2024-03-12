@@ -17,6 +17,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
@@ -102,8 +103,10 @@ public class MatrixFile {
                 .desc("Value to add to all components.").build());
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -114,6 +117,9 @@ public class MatrixFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "matrix", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
 
         // decide matrix dimension
         int rowDimension, columnDimension;
@@ -164,8 +170,6 @@ public class MatrixFile {
         }
 
         // output
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("matrix" + GadgetAid.getTemporaryString() + ".lst");
         write(matrix, outputPath);
     }
 

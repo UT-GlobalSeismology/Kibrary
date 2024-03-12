@@ -50,9 +50,9 @@ public class GlobalCMTListup {
         Options options = Summon.defaultOptions();
 
         // criteria
-        options.addOption(Option.builder("t").longOpt("startDate").hasArg().argName("date")
+        options.addOption(Option.builder("d").longOpt("startDate").hasArg().argName("date")
                 .desc("Start date in yyyy-mm-dd format, inclusive. (1990-01-01)").build());
-        options.addOption(Option.builder("T").longOpt("endDate").hasArg().argName("date")
+        options.addOption(Option.builder("D").longOpt("endDate").hasArg().argName("date")
                 .desc("End date in yyyy-mm-dd format, INCLUSIVE. (2020-12-31)").build());
         options.addOption(Option.builder("x").longOpt("lowerLongitude").hasArg().argName("longitude")
                 .desc("Lower limit of longitude [deg], inclusive; [-180:360]. (-180)").build());
@@ -76,8 +76,10 @@ public class GlobalCMTListup {
                 .desc("Whether to write full information of events in output file.").build());
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -88,12 +90,13 @@ public class GlobalCMTListup {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("event" + GadgetAid.getTemporaryString() + ".lst");
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "event", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
 
         //~set search ranges
-        LocalDate startDate = LocalDate.parse(cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : "1990-01-01");
-        LocalDate endDate = LocalDate.parse(cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : "2020-12-31");
+        LocalDate startDate = LocalDate.parse(cmdLine.hasOption("d") ? cmdLine.getOptionValue("d") : "1990-01-01");
+        LocalDate endDate = LocalDate.parse(cmdLine.hasOption("D") ? cmdLine.getOptionValue("D") : "2020-12-31");
         MathAid.checkDateRangeValidity(startDate, endDate);
 
         double lowerLongitude = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : -180.0;
