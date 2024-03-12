@@ -160,7 +160,7 @@ public class PartialID extends BasicID {
     /**
      *
      * @param obj
-     * @return (boolean) The obj is the same instance except {@link VariableType}
+     * @return (boolean) The obj is the same instance except {@link VariableType} & voxelPosition ({@link FullPosition})
      */
     public boolean isPair(Object obj) {
         if (this == obj)
@@ -171,11 +171,6 @@ public class PartialID extends BasicID {
             return false;
         PartialID other = (PartialID) obj;
         if (parameterType != other.parameterType)
-            return false;
-        if (voxelPosition == null) {
-            if (other.voxelPosition != null)
-                return false;
-        } else if (!voxelPosition.equals(other.voxelPosition))
             return false;
         return true;
     }

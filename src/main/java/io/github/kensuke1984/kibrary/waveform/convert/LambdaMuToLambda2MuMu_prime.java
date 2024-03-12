@@ -116,7 +116,7 @@ public class LambdaMuToLambda2MuMu_prime {
             PartialID parLambda2mu = new PartialID(partialLambda.getObserver(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
                     partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
                     partialLambda.getPhases(), partialLambda.isConvolved(),
-                    ParameterType.VOXEL, VariableType.LAMBDA2MU, partialLambda.getVoxelPosition(), lambdaData);
+                    ParameterType.VOXEL, VariableType.G, partialLambda.getVoxelPosition(), lambdaData);
 
             partialsMUPrime.add(parMuPrime);
             partialsLambda2mu.add(parLambda2mu);

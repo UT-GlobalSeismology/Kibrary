@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -19,16 +20,16 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
- * This class converts variable type of given partial derivative waveforms. <p>
- * In this current version, the conversion is implemented from &mu; & &lambda; to &kappa; and from N & L to &xi;
+ * This class converts variable type of given partial derivative waveforms.
  * <p>
  * Input partial must have pair of each partial with respect to each variable type.
  * Output folder will be made under the working folder, and all output partials will be written in the partilaID file and partialData file.
  * @author Rei
- * @since 2023/12/14
+ * @since 2023/12/14 recreated former waveform.convert.*
  */
 public class VariableTypeConvert extends Operation {
 
@@ -58,11 +59,6 @@ public class VariableTypeConvert extends Operation {
       */
      private List<VariableType> outputVariableTypes;
      /**
-      * Whether allow incomplete input variable types to calculate output variable types.
-      * If this is true, 0 is substituted for empty partials
-      */
-     private boolean allowIncomplete;
-     /**
       * Path of structure file to use instead of PREM
       */
      private Path structurePath;
@@ -70,6 +66,7 @@ public class VariableTypeConvert extends Operation {
       * Structure to use
       */
      private String structureName;
+     private PolynomialStructure structure;
 
     /**
      * @param args  none to create a property file <br>
@@ -94,11 +91,9 @@ public class VariableTypeConvert extends Operation {
             pw.println("#partialPath partial");
             pw.println("##VariableTypes to input, listed using spaces (MU LAMBDA)");
             pw.println("#inputVariableTypes ");
-            pw.println("##VariableTypes to output, listed using spaces (MU KAPPA)");
+            pw.println("##VariableTypes to output, listed using spaces (G KAPPA)");
             pw.println("#outputVariableTypes ");
             pw.println("##(boolean) Whether allow incomplete input variable types to calculate output variable types.");
-            pw.println("##If this is true, 0 is substituted for empty partials (false)");
-            pw.println("#allowIncomplete true");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use (PREM)");
@@ -119,11 +114,10 @@ public class VariableTypeConvert extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         inputVariableTypes = Arrays.stream(property.parseStringArray("inputVariableTypes", "MU LAMBDA")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
-        outputVariableTypes = Arrays.stream(property.parseStringArray("outputVariableTypes", "MU KAPPA")).map(VariableType::valueOf)
+        outputVariableTypes = Arrays.stream(property.parseStringArray("outputVariableTypes", "G KAPPA")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
         if (inputVariableTypes.contains(VariableType.TIME) || outputVariableTypes.contains(VariableType.TIME))
             throw new IllegalArgumentException("This class does not handle time partials.");
-        allowIncomplete = property.parseBoolean("allowIncomplete", "true");
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
@@ -138,7 +132,7 @@ public class VariableTypeConvert extends Operation {
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
         // set structure
-        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
+        structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
         // make map for each input varable type
         for (VariableType inType : inputVariableTypes) {
@@ -151,14 +145,10 @@ public class VariableTypeConvert extends Operation {
             inputPartialMap.put(inType, inPartials);
         }
 
+        Map<VariableType, int[]> indexMap = makeIndexMap(inputPartialMap);
+
         // compute partials with respect to outputVariableTypes
-        List<PartialID> outPartials = new ArrayList<>();
-        for (VariableType outType : outputVariableTypes) {
-            if (inputPartialMap.containsKey(outType))
-                outPartials.addAll(inputPartialMap.get(outType));
-            else
-                outPartials.addAll(convertVariableType(outType, inputPartialMap, structure, allowIncomplete));
-        }
+        List<PartialID> outPartials = convertVariableType(inputPartialMap, indexMap);
 
         // create output folder and files
         outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, GadgetAid.getTemporaryString());
@@ -166,176 +156,330 @@ public class VariableTypeConvert extends Operation {
         PartialIDFile.write(outPartials, outPath);
     }
 
-    /**
-     * Calculate partilas with respect to outType from input partials
-     * @param outType {@link VariableType} Only &kappa; and &xi; are allowed now
-     * @param inputPartialMap {@link Map} of input partials with respect to each input variable type
-     * @param structure {@link PolynomialStructure}
-     * @param allowIncomplete (boolean) If it is true, 0 is substituted for empty partials
-     * @return partialIDs after conversion of variable type.
-     */
-    private List<PartialID> convertVariableType(VariableType outType, Map<VariableType, List<PartialID>>inputPartialMap,
-            PolynomialStructure structure, boolean allowIncomplete) {
-        System.err.println("Convert variable type to " + outType);
-        switch(outType) {
-        case KAPPA:
-            List<PartialID> partialsMU = (allowIncomplete && !inputPartialMap.containsKey(VariableType.MU)) ? null :
-                inputPartialMap.get(VariableType.MU);
-            List<PartialID> partialsLAMBDA = (allowIncomplete && !inputPartialMap.containsKey(VariableType.LAMBDA)) ? null :
-                inputPartialMap.get(VariableType.LAMBDA);
-            if (partialsMU == null && partialsLAMBDA == null)
-                throw new RuntimeException("To compute partials with respect to KAPPA, MU and/or LAMBDA are required as inputVariableType");
-            if (partialsMU.size() != partialsLAMBDA.size())
-                throw new RuntimeException("The nember of partials with respect to MU & LAMBDA must be same");
-            return convertToKAPPA(partialsMU, partialsLAMBDA);
-        case XI:
-            List<PartialID> partialsN = (allowIncomplete && !inputPartialMap.containsKey(VariableType.N)) ? null :
-                inputPartialMap.get(VariableType.N);
-            List<PartialID> partialsL = (allowIncomplete && !inputPartialMap.containsKey(VariableType.L)) ? null :
-                inputPartialMap.get(VariableType.L);
-            if (partialsN == null && partialsL == null)
-                throw new RuntimeException("To compute partials with respect to XI, N and/or L are required as inputVariableType");
-            if (partialsN.size() != partialsL.size())
-                throw new RuntimeException("The nember of partials with respect to N & L must be same");
-            return convertToXI(partialsN, partialsL, structure);
-        default:
-            throw new RuntimeException("VariableType; " + outType + " is NOT utilized yet.");
+    private Map<VariableType, int[]> makeIndexMap(Map<VariableType, List<PartialID>> inputPartialMap) {
+        System.err.println("making index");
+
+        Map<VariableType, int[]> indexMap = new HashMap<>();
+        List<PartialID> partialPrime = inputPartialMap.get(inputVariableTypes.get(0));
+        int[] indexOrder = new int[partialPrime.size()];
+        // index map is made when plural inputVariableTypes are given
+        if (inputVariableTypes.size() != 1) {
+            final FullPosition[] locations = partialPrime.stream().map(p -> p.getVoxelPosition()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
+            final PartialID[] partialsOrder = partialPrime.stream().parallel().filter(p -> p.getVoxelPosition().equals(locations[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
+            for (VariableType inType : inputVariableTypes) {
+                List<PartialID> partialsTmp = inputPartialMap.get(inType);
+                IntStream.range(0, partialsTmp.size()).parallel().forEach(i -> {
+                    int index = whichTimewindow(partialsTmp.get(i), partialsOrder) * locations.length + whichPosition(partialsTmp.get(i), locations);
+                    indexOrder[index] = i;
+                });
+                indexMap.put(inType, indexOrder);
+            }
         }
+        return indexMap;
+    }
+
+    private static int whichTimewindow(PartialID partial, PartialID[] partialsOrder) {
+        for (int i = 0; i < partialsOrder.length; i++)
+            if (partial.isPair(partialsOrder[i]))
+                return i;
+        return -1;
+    }
+
+    private static int whichPosition(PartialID partial, FullPosition[] positions) {
+        for (int i = 0; i < positions.length; i++)
+            if (partial.getVoxelPosition().equals(positions[i]))
+                return i;
+        return -1;
+    }
+
+    private List<PartialID> convertVariableType(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
+        if (outputVariableTypes.contains(VariableType.KAPPA) && outputVariableTypes.contains(VariableType.G))
+            // convert from LAMBDA & MU to KAPPA & G
+            return convertToElasticModuli(inputPartialMap, indexMap);
+        else if (outputVariableTypes.contains(VariableType.LAMBDA) && outputVariableTypes.contains(VariableType.MU))
+            // convert from KAPPA & G to LAMBDA & MU
+            return convertToLameConstants(inputPartialMap, indexMap);
+        else if (outputVariableTypes.contains(VariableType.Vp) && outputVariableTypes.contains(VariableType.Vs))
+            // convert from LAMBDA & MU or from KAPPA & G to Vp & Vs
+            return convertToIsotropicVelocities(inputPartialMap, indexMap);
+        else if (outputVariableTypes.contains(VariableType.MU) && outputVariableTypes.contains(VariableType.XI))
+            // convert from N & L to MU & XI
+            return convertToAnisotropicParameters(inputPartialMap, indexMap);
+        else if ((outputVariableTypes.contains(VariableType.MU) || outputVariableTypes.contains(VariableType.G) || outputVariableTypes.contains(VariableType.Vs)) && outputVariableTypes.size() == 1)
+            // convert between MU, G, & Vs
+            return convertShearModulus(inputPartialMap);
+        else
+            throw new IllegalArgumentException("given outputVariableTypes are not implemented");
     }
 
     /**
-     * Calculate partilas with respect to &kappa; based on the following equation;
-     * <p>
-     * &part;u/&part;&kappa; = &part;u/&part;&lambda; + 1.5 &part;u/&part;&mu;
-     * @param partialsMU with respect to &mu;
-     * @param partialsLAMBDA with respect to &lambda;
-     * @return partialIDs with respect to &kappa;
+     *
+     * @param inputPartialMap
+     * @param indexMap
+     * @return List of outPartials
+     *
+     * Compute partials with respect to &kappa; & G based on;<br>
+     * <ul>
+     * <li> &part;u/&part;&kappa; = &part;u/&part;&lambda;</li>
+     * <li> &part;u/&part;G = &part;u/&part;&mu; - 2/3 &part;u/&part;&lambda;</li>
+     * </ul>
      */
-    private List<PartialID> convertToKAPPA(List<PartialID> partialsMU, List<PartialID> partialsLAMBDA) {
-        List<PartialID> partialIDs = new ArrayList<>();
-        // convert only from LAMBDA
-        if (partialsMU == null) {
-            for (PartialID partialLAMBDA : partialsLAMBDA) {
-                // calculate a partial with respect to KAPPA
-                Trace traceKAPPA = partialLAMBDA.toTrace();
-                PartialID partialID = new PartialID(partialLAMBDA.getObserver(), partialLAMBDA.getGlobalCMTID(), partialLAMBDA.getSacComponent(),
-                        partialLAMBDA.getSamplingHz(), partialLAMBDA.getStartTime(), partialLAMBDA.getNpts(), partialLAMBDA.getMinPeriod(), partialLAMBDA.getMaxPeriod(),
-                        partialLAMBDA.getPhases(), partialLAMBDA.isConvolved(), partialLAMBDA.getParameterType(), VariableType.KAPPA, partialLAMBDA.getVoxelPosition(),
-                        traceKAPPA.getY());
-                partialIDs.add(partialID);
+    private List<PartialID> convertToElasticModuli(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
+        List<PartialID> outPartials = new ArrayList<>();
+        if (outputVariableTypes.contains(VariableType.LAMBDA) && outputVariableTypes.contains(VariableType.MU)) {
+            List<PartialID> partialsLambda = inputPartialMap.get(VariableType.LAMBDA);
+            List<PartialID> partialsMu = inputPartialMap.get(VariableType.MU);
+            int[] indexLambda = indexMap.get(VariableType.LAMBDA);
+            int[] indexMu = indexMap.get(VariableType.MU);
+
+            for (int i = 0; i < partialsMu.size(); i++) {
+                PartialID partialLambda = partialsLambda.get(indexLambda[i]);
+                PartialID partialMu = partialsMu.get(indexMu[i]);
+                Trace traceMu = partialMu.toTrace();
+                Trace traceLambda = partialLambda.toTrace();
+                Trace traceG = traceMu.add(traceLambda.multiply(-2./3.));
+                PartialID partialG = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
+                        partialMu.getSamplingHz(), partialMu.getStartTime(), partialMu.getNpts(), partialMu.getMinPeriod(), partialMu.getMaxPeriod(),
+                        partialMu.getPhases(), partialMu.isConvolved(), partialMu.getParameterType(), VariableType.G, partialMu.getVoxelPosition(),
+                        traceG.getY());
+                PartialID partialKappa = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
+                        partialMu.getSamplingHz(), partialMu.getStartTime(), partialMu.getNpts(), partialMu.getMinPeriod(), partialMu.getMaxPeriod(),
+                        partialMu.getPhases(), partialMu.isConvolved(), partialMu.getParameterType(), VariableType.KAPPA, partialMu.getVoxelPosition(),
+                        traceLambda.getY());
+                outPartials.add(partialG);
+                outPartials.add(partialKappa);
             }
         }
-        // convert only from MU
-        else if (partialsLAMBDA == null) {
-            for (PartialID partialMU : partialsMU) {
-                // calculate a partial with respect to KAPPA
-                Trace traceKAPPA = partialMU.toTrace().multiply(1.5);
-                PartialID partialID = new PartialID(partialMU.getObserver(), partialMU.getGlobalCMTID(), partialMU.getSacComponent(),
-                        partialMU.getSamplingHz(), partialMU.getStartTime(), partialMU.getNpts(), partialMU.getMinPeriod(), partialMU.getMaxPeriod(),
-                        partialMU.getPhases(), partialMU.isConvolved(), partialMU.getParameterType(), VariableType.KAPPA, partialMU.getVoxelPosition(),
-                        traceKAPPA.getY());
-                partialIDs.add(partialID);
-            }
-        }
-        // convert from MU & LAMBDA
-        else {
-            for (PartialID partialMU : partialsMU) {
-                // search the pair of partials
-                PartialID partialLAMBDA = null;
-                for (PartialID tmpPartial : partialsLAMBDA)
-                    if (partialMU.isPair(tmpPartial))
-                        partialLAMBDA = tmpPartial;
-                if (partialLAMBDA == null)
-                    throw new RuntimeException("The partial; " + partialMU.toString() + "; don't have pair");
-                // calculate a partial with respect to KAPPA
-                Trace traceMU = partialMU.toTrace();
-                Trace traceLAMBDA = partialLAMBDA.toTrace();
-                Trace traceKAPPA = traceLAMBDA.add(traceMU.multiply(1.5));
-                PartialID partialID = new PartialID(partialMU.getObserver(), partialMU.getGlobalCMTID(), partialMU.getSacComponent(),
-                        partialMU.getSamplingHz(), partialMU.getStartTime(), partialMU.getNpts(), partialMU.getMinPeriod(), partialMU.getMaxPeriod(),
-                        partialMU.getPhases(), partialMU.isConvolved(), partialMU.getParameterType(), VariableType.KAPPA, partialMU.getVoxelPosition(),
-                        traceKAPPA.getY());
-                partialIDs.add(partialID);
-                partialsLAMBDA.remove(partialLAMBDA);
-            }
-        }
-        return partialIDs;
+        else
+            throw new IllegalArgumentException("given inputVariableTypes are insufficient to compute partials with respect to KAPPA & G");
+        return outPartials;
     }
 
     /**
-     * Calculate partilas with respect to &xi; based on the following equation;
-     * <p>
-     * &xi; &part;u/&part;&xi; = N &part;u/&part;N - L &part;u/&part;L
-     * @param partialsMU with respect to &mu;
-     * @param partialsLAMBDA with respect to &lambda;
-     * @return partialIDs with respect to &kappa;
+     *
+     * @param inputPartialMap
+     * @param indexMap
+     * @return List of outPartials
+     *
+     * Compute partials with respect to &lambda; & &mu; based on;<br>
+     * <ul>
+     * <li> &part;u/&part;&lambda; = &part;u/&part;&kappa;</li>
+     * <li> &part;u/&part;&mu; = &part;u/&part;G + 2/3 &part;u/&part;&kappa;</li>
+     * </ul>
      */
-    private List<PartialID> convertToXI(List<PartialID> partialsN, List<PartialID> partialsL, PolynomialStructure structure) {
-        List<PartialID> partialIDs = new ArrayList<>();
-        // convert only from L
-        if (partialsN == null) {
-            for (PartialID partialL : partialsL) {
-                // compute coefficients
-                double vsh = structure.getAtRadius(VariableType.Vsh, partialL.getVoxelPosition().getR());
-                double vsv = structure.getAtRadius(VariableType.Vsv, partialL.getVoxelPosition().getR());
-                double rho = structure.getAtRadius(VariableType.RHO, partialL.getVoxelPosition().getR());
-                double n = vsh * vsh * rho;
-                double l = vsv * vsv * rho;
-                double coeff = - l * l / n;
-                // calculate a partial with respect to XI
-                Trace traceXI = partialL.toTrace().multiply(coeff);
-                PartialID partialID = new PartialID(partialL.getObserver(), partialL.getGlobalCMTID(), partialL.getSacComponent(),
+    private List<PartialID> convertToLameConstants(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
+        List<PartialID> outPartials = new ArrayList<>();
+        if (outputVariableTypes.contains(VariableType.KAPPA) && outputVariableTypes.contains(VariableType.G)) {
+            List<PartialID> partialsKappa = inputPartialMap.get(VariableType.KAPPA);
+            List<PartialID> partialsG = inputPartialMap.get(VariableType.G);
+            int[] indexKappa = indexMap.get(VariableType.KAPPA);
+            int[] indexG = indexMap.get(VariableType.G);
+
+            for (int i = 0; i < partialsG.size(); i++) {
+                PartialID partialKappa = partialsKappa.get(indexKappa[i]);
+                PartialID partialG = partialsG.get(indexG[i]);
+                Trace traceG = partialG.toTrace();
+                Trace traceKappa = partialKappa.toTrace();
+                Trace traceMu = traceG.add(traceKappa.multiply(2./3.));
+                PartialID partialMu = new PartialID(partialG.getObserver(), partialG.getGlobalCMTID(), partialG.getSacComponent(),
+                        partialG.getSamplingHz(), partialG.getStartTime(), partialG.getNpts(), partialG.getMinPeriod(), partialG.getMaxPeriod(),
+                        partialG.getPhases(), partialG.isConvolved(), partialG.getParameterType(), VariableType.MU, partialG.getVoxelPosition(),
+                        traceMu.getY());
+                PartialID partialLambda = new PartialID(partialG.getObserver(), partialG.getGlobalCMTID(), partialG.getSacComponent(),
+                        partialG.getSamplingHz(), partialG.getStartTime(), partialG.getNpts(), partialG.getMinPeriod(), partialG.getMaxPeriod(),
+                        partialG.getPhases(), partialG.isConvolved(), partialG.getParameterType(), VariableType.LAMBDA, partialG.getVoxelPosition(),
+                        traceKappa.getY());
+                outPartials.add(partialMu);
+                outPartials.add(partialLambda);
+            }
+        }
+        else
+            throw new IllegalArgumentException("given inputVariableTypes are insufficient to compute partials with respect to LAMBDA & MU");
+        return outPartials;
+    }
+
+    /**
+     *
+     * @param inputPartialMap
+     * @param indexMap
+     * @return List of outPartials
+     *
+     * Compute partials with respect to Vp & Vs based on;<br>
+     * <ul>
+     * <li> &part;u/&part;Vp = 2&rho;Vp &part;u/&part;&lambda;</li>
+     * <li> &part;u/&part;Vs = 2&rho;Vs &part;u/&part;&mu; - 4&rho;Vs &part;u/&part;&lambda;</li>
+     * </ul>
+     * or<br>
+     * <ul>
+     * <li> &part;u/&part;Vp = 2&rho;Vp &part;u/&part;&kappa;</li>
+     * <li> &part;u/&part;Vs = 2&rho;Vs &part;u/&part;G - 8/3 &rho;Vs &part;u/&part;&kappa;</li>
+     * </ul>
+     */
+    private List<PartialID> convertToIsotropicVelocities(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
+        List<PartialID> outPartials = new ArrayList<>();
+        if (outputVariableTypes.contains(VariableType.LAMBDA) && outputVariableTypes.contains(VariableType.MU)) {
+            List<PartialID> partialsLambda = inputPartialMap.get(VariableType.LAMBDA);
+            List<PartialID> partialsMu = inputPartialMap.get(VariableType.MU);
+            int[] indexLambda = indexMap.get(VariableType.LAMBDA);
+            int[] indexMu = indexMap.get(VariableType.MU);
+
+            for (int i = 0; i < partialsMu.size(); i++) {
+                PartialID partialLambda = partialsLambda.get(indexLambda[i]);
+                PartialID partialMu = partialsMu.get(indexMu[i]);
+                Trace traceMu = partialMu.toTrace();
+                Trace traceLambda = partialLambda.toTrace();
+                double radius = partialMu.voxelPosition.getR();
+                double rho = structure.getAtRadius(VariableType.RHO, radius);
+                double vs = structure.getAtRadius(VariableType.Vs, radius);
+                double vp = structure.getAtRadius(VariableType.Vp, radius);
+                Trace traceVs = traceLambda.multiply(-4. * rho * vs).add(traceMu.multiply(2. * rho * vs));
+                Trace traceVp = traceLambda.multiply(2. * rho * vp);
+                PartialID partialVs = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
+                        partialMu.getSamplingHz(), partialMu.getStartTime(), partialMu.getNpts(), partialMu.getMinPeriod(), partialMu.getMaxPeriod(),
+                        partialMu.getPhases(), partialMu.isConvolved(), partialMu.getParameterType(), VariableType.Vs, partialMu.getVoxelPosition(),
+                        traceVs.getY());
+                PartialID partialVp = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
+                        partialMu.getSamplingHz(), partialMu.getStartTime(), partialMu.getNpts(), partialMu.getMinPeriod(), partialMu.getMaxPeriod(),
+                        partialMu.getPhases(), partialMu.isConvolved(), partialMu.getParameterType(), VariableType.Vp, partialMu.getVoxelPosition(),
+                        traceVp.getY());
+                outPartials.add(partialVs);
+                outPartials.add(partialVp);
+            }
+        }
+        else if (outputVariableTypes.contains(VariableType.KAPPA) && outputVariableTypes.contains(VariableType.G)) {
+            List<PartialID> partialsKappa = inputPartialMap.get(VariableType.KAPPA);
+            List<PartialID> partialsG = inputPartialMap.get(VariableType.G);
+            int[] indexKappa = indexMap.get(VariableType.KAPPA);
+            int[] indexG = indexMap.get(VariableType.G);
+
+            for (int i = 0; i < partialsG.size(); i++) {
+                PartialID partialKappa = partialsKappa.get(indexKappa[i]);
+                PartialID partialG = partialsG.get(indexG[i]);
+                Trace traceG = partialG.toTrace();
+                Trace traceKappa = partialKappa.toTrace();
+                double radius = partialG.voxelPosition.getR();
+                double rho = structure.getAtRadius(VariableType.RHO, radius);
+                double vs = structure.getAtRadius(VariableType.Vs, radius);
+                double vp = structure.getAtRadius(VariableType.Vp, radius);
+                Trace traceVs = traceKappa.multiply(-8. / 3. * rho * vs).add(traceG.multiply(2. * rho * vs));
+                Trace traceVp = traceKappa.multiply(2. * rho * vp);
+                PartialID partialVs = new PartialID(partialG.getObserver(), partialG.getGlobalCMTID(), partialG.getSacComponent(),
+                        partialG.getSamplingHz(), partialG.getStartTime(), partialG.getNpts(), partialG.getMinPeriod(), partialG.getMaxPeriod(),
+                        partialG.getPhases(), partialG.isConvolved(), partialG.getParameterType(), VariableType.Vs, partialG.getVoxelPosition(),
+                        traceVs.getY());
+                PartialID partialVp = new PartialID(partialG.getObserver(), partialG.getGlobalCMTID(), partialG.getSacComponent(),
+                        partialG.getSamplingHz(), partialG.getStartTime(), partialG.getNpts(), partialG.getMinPeriod(), partialG.getMaxPeriod(),
+                        partialG.getPhases(), partialG.isConvolved(), partialG.getParameterType(), VariableType.Vp, partialG.getVoxelPosition(),
+                        traceVp.getY());
+                outPartials.add(partialVs);
+                outPartials.add(partialVp);
+            }
+        }
+        else
+            throw new IllegalArgumentException("given inputVariableTypes are insufficient to compute partials with respect to Vp & Vs");
+        return outPartials;
+    }
+
+    /**
+    *
+    * @param inputPartialMap
+    * @param indexMap
+    * @return List of outPartials
+    *
+    * Compute partials with respect to &mu; & &xi; based on;<br>
+    * <ul>
+    * <li> &part;u/&part;&mu; = 3/(N+2L) (N &part;u/&part;N + L &part;u/&part;L)</li>
+    * <li> &part;u/&part;&xi; = L<sup>2</sup>/(N+2L) (2 &part;u/&part;N - &part;u/&part;L)</li>
+    * </ul>
+    */
+    private List<PartialID> convertToAnisotropicParameters(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
+        List<PartialID> outPartials = new ArrayList<>();
+        if (outputVariableTypes.contains(VariableType.N) && outputVariableTypes.contains(VariableType.L)) {
+            List<PartialID> partialsN = inputPartialMap.get(VariableType.N);
+            List<PartialID> partialsL = inputPartialMap.get(VariableType.L);
+            int[] indexN = indexMap.get(VariableType.N);
+            int[] indexL = indexMap.get(VariableType.L);
+
+            for (int i = 0; i < partialsL.size(); i++) {
+                PartialID partialN = partialsN.get(indexN[i]);
+                PartialID partialL = partialsL.get(indexL[i]);
+                Trace traceL = partialL.toTrace();
+                Trace traceN = partialN.toTrace();
+                double radius = partialL.voxelPosition.getR();
+                double rho = structure.getAtRadius(VariableType.RHO, radius);
+                double vsh = structure.getAtRadius(VariableType.Vsh, radius);
+                double vsv = structure.getAtRadius(VariableType.Vsv, radius);
+                double n = rho * vsh * vsh;
+                double l = rho * vsv * vsv;
+                double n2l = n + 2. * l;
+                Trace traceMu = traceN.multiply(n).add(traceL.multiply(l)).multiply(3. / n2l);
+                Trace traceXi = traceN.multiply(2.).add(traceL.multiply(-1.)).multiply(l * l / n2l);
+                PartialID partialMu = new PartialID(partialL.getObserver(), partialL.getGlobalCMTID(), partialL.getSacComponent(),
+                        partialL.getSamplingHz(), partialL.getStartTime(), partialL.getNpts(), partialL.getMinPeriod(), partialL.getMaxPeriod(),
+                        partialL.getPhases(), partialL.isConvolved(), partialL.getParameterType(), VariableType.MU, partialL.getVoxelPosition(),
+                        traceMu.getY());
+                PartialID partialXi = new PartialID(partialL.getObserver(), partialL.getGlobalCMTID(), partialL.getSacComponent(),
                         partialL.getSamplingHz(), partialL.getStartTime(), partialL.getNpts(), partialL.getMinPeriod(), partialL.getMaxPeriod(),
                         partialL.getPhases(), partialL.isConvolved(), partialL.getParameterType(), VariableType.XI, partialL.getVoxelPosition(),
-                        traceXI.getY());
-                partialIDs.add(partialID);
+                        traceXi.getY());
+                outPartials.add(partialMu);
+                outPartials.add(partialXi);
             }
         }
-        // convert only from N
-        else if (partialsL == null) {
-            for (PartialID partialN : partialsN) {
-                // compute coefficients
-                double vsv = structure.getAtRadius(VariableType.Vsv, partialN.getVoxelPosition().getR());
-                double rho = structure.getAtRadius(VariableType.RHO, partialN.getVoxelPosition().getR());
-                double l = vsv * vsv * rho;
-                // calculate a partial with respect to XI
-                Trace traceXI = partialN.toTrace().multiply(l);
-                PartialID partialID = new PartialID(partialN.getObserver(), partialN.getGlobalCMTID(), partialN.getSacComponent(),
-                        partialN.getSamplingHz(), partialN.getStartTime(), partialN.getNpts(), partialN.getMinPeriod(), partialN.getMaxPeriod(),
-                        partialN.getPhases(), partialN.isConvolved(), partialN.getParameterType(), VariableType.XI, partialN.getVoxelPosition(),
-                        traceXI.getY());
-                partialIDs.add(partialID);
+        else
+            throw new IllegalArgumentException("given inputVariableTypes are insufficient to compute partials with respect to MU & XI");
+        return outPartials;
+    }
+
+    /**
+    *
+    * @param inputPartialMap
+    * @return List of outPartials
+    *
+    * Convert variable type between &mu;, G, & Vs based on;<br>
+    * <ul>
+    * <li> &part;u/&part;&mu; = &part;u/&part;G = 1/2&rho;Vs &part;u/&part;Vs
+    * </ul>
+    */
+    private List<PartialID> convertShearModulus(Map<VariableType, List<PartialID>> inputPartialMap) {
+        List<PartialID> outPartials = new ArrayList<>();
+        if (outputVariableTypes.get(0).equals(VariableType.G)) {
+            List<PartialID> partialsMu = inputPartialMap.get(VariableType.MU);
+            for (PartialID partialMu : partialsMu) {
+                PartialID partialG = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
+                        partialMu.getSamplingHz(), partialMu.getStartTime(), partialMu.getNpts(), partialMu.getMinPeriod(), partialMu.getMaxPeriod(),
+                        partialMu.getPhases(), partialMu.isConvolved(), partialMu.getParameterType(), VariableType.G, partialMu.getVoxelPosition(),
+                        partialMu.getData());
+                outPartials.add(partialG);
             }
         }
-        // convert from N & L
-        else {
-            for (PartialID partialN : partialsN) {
-                // search the pair of partials
-                PartialID partialL = null;
-                for (PartialID tmpPartial : partialsL)
-                    if (partialN.isPair(tmpPartial))
-                        partialL = tmpPartial;
-                if (partialL == null)
-                    throw new RuntimeException("The partial; " + partialN.toString() + "; don't have pair");
-                // compute coefficients
-                double vsh = structure.getAtRadius(VariableType.Vsh, partialL.getVoxelPosition().getR());
-                double vsv = structure.getAtRadius(VariableType.Vsv, partialL.getVoxelPosition().getR());
-                double rho = structure.getAtRadius(VariableType.RHO, partialL.getVoxelPosition().getR());
-                double n = vsh * vsh * rho;
-                double l = vsv * vsv * rho;
-                double coeff = - l * l / n;
-                // calculate a partial with respect to XI
-                Trace traceN = partialN.toTrace();
-                Trace traceL = partialL.toTrace();
-                Trace traceXI = traceL.multiply(coeff).add(traceN.multiply(l));
-                PartialID partialID = new PartialID(partialN.getObserver(), partialN.getGlobalCMTID(), partialN.getSacComponent(),
-                        partialN.getSamplingHz(), partialN.getStartTime(), partialN.getNpts(), partialN.getMinPeriod(), partialN.getMaxPeriod(),
-                        partialN.getPhases(), partialN.isConvolved(), partialN.getParameterType(), VariableType.XI, partialN.getVoxelPosition(),
-                        traceXI.getY());
-                partialIDs.add(partialID);
-                partialsL.remove(partialL);
+        else if (outputVariableTypes.get(0).equals(VariableType.MU)) {
+            List<PartialID> partialsG = inputPartialMap.get(VariableType.G);
+            for (PartialID partialG : partialsG) {
+                PartialID partialMu = new PartialID(partialG.getObserver(), partialG.getGlobalCMTID(), partialG.getSacComponent(),
+                        partialG.getSamplingHz(), partialG.getStartTime(), partialG.getNpts(), partialG.getMinPeriod(), partialG.getMaxPeriod(),
+                        partialG.getPhases(), partialG.isConvolved(), partialG.getParameterType(), VariableType.MU, partialG.getVoxelPosition(),
+                        partialG.getData());
+                outPartials.add(partialMu);
             }
         }
-        return partialIDs;
+        else if (outputVariableTypes.get(0).equals(VariableType.Vs)) {
+            List<PartialID> partials = inputVariableTypes.contains(VariableType.MU) ? inputPartialMap.get(VariableType.MU) : inputPartialMap.get(VariableType.G);
+            for (PartialID partial : partials) {
+                Trace trace = partial.toTrace();
+                double radius = partial.voxelPosition.getR();
+                double rho = structure.getAtRadius(VariableType.RHO, radius);
+                double vs = structure.getAtRadius(VariableType.Vs, radius);
+                Trace traceVs = trace.multiply(2. * rho * vs);
+                PartialID partialVs = new PartialID(partial.getObserver(), partial.getGlobalCMTID(), partial.getSacComponent(),
+                        partial.getSamplingHz(), partial.getStartTime(), partial.getNpts(), partial.getMinPeriod(), partial.getMaxPeriod(),
+                        partial.getPhases(), partial.isConvolved(), partial.getParameterType(), VariableType.Vs, partial.getVoxelPosition(),
+                        traceVs.getY());
+                outPartials.add(partialVs);
+            }
+        }
+        else
+            throw new IllegalArgumentException("given inputVariableTypes are insufficient to compute partials with respect to " + outputVariableTypes.get(0));
+        return outPartials;
     }
 }
