@@ -58,7 +58,7 @@ public class PerturbationComparison {
                 .desc("Path of perturbation file to compare").build());
         options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("perturbationFile").required()
                 .desc("Path of perturbation file to compare to").build());
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("tag")
                 .desc("A tag to include in output folder name.").build());
 
         return options;
@@ -98,7 +98,7 @@ public class PerturbationComparison {
         double l2Average = numeratorVector.add(denominatorVector).mapDivide(2).getNorm();
         double l2Denominator = denominatorVector.getNorm();
 
-        String folderTag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
+        String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, GadgetAid.getTemporaryString());
 
         // output ratio and difference maps as perturbation list files

@@ -57,7 +57,7 @@ public class DiagATAExtract {
                 .desc("Path of ATA file").build());
         options.addOption(Option.builder("v").longOpt("variable").hasArg().argName("variableType").required()
                 .desc("Variable type").build());
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("tag")
                 .desc("A tag to include in output folder name.").build());
 
         return options;
@@ -72,7 +72,7 @@ public class DiagATAExtract {
         Path unknownsPath = Paths.get(cmdLine.getOptionValue("u"));
         Path ataPath = Paths.get(cmdLine.getOptionValue("a"));
         VariableType variable = VariableType.valueOf(cmdLine.getOptionValue("v"));
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
+        String tag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         Path outputPath = Paths.get(DatasetAid.generateOutputFileName("diagATA", tag, GadgetAid.getTemporaryString(), ".lst"));
 
         // read parameter information and ATA

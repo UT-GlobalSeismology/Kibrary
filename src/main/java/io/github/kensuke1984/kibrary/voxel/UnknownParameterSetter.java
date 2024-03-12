@@ -69,7 +69,7 @@ public class UnknownParameterSetter {
                 .desc("Variable types to make unknown parameters for, listed using commas.").build());
 
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("tag")
                 .desc("A tag to include in output file name.").build());
 
         return options;
@@ -90,7 +90,7 @@ public class UnknownParameterSetter {
         }
         System.err.println();
 
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
+        String tag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
 
         List<UnknownParameter> parameterList;
         if (cmdLine.hasOption("l")) {

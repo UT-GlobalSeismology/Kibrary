@@ -75,7 +75,7 @@ public class WeightingHandler {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("tag")
                 .desc("A tag to include in output file name.").build());
         return options;
     }
@@ -86,7 +86,7 @@ public class WeightingHandler {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
+        String tag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         Path outputPath = Paths.get(DatasetAid.generateOutputFileName("weighting", tag, GadgetAid.getTemporaryString(), ".properties"));
         writeDefaultPropertiesFile(outputPath);
     }

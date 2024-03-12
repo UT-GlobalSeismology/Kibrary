@@ -53,7 +53,7 @@ public class DistanceHistogram {
         Options options = Summon.defaultOptions();
 
         // input
-        options.addOption(Option.builder("d").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
+        options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
                 .desc("Path of data entry list file").build());
 
         // settings
@@ -82,7 +82,7 @@ public class DistanceHistogram {
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
 
-        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("d"));
+        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
         Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
                 .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
 
