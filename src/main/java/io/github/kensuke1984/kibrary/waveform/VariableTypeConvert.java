@@ -160,16 +160,16 @@ public class VariableTypeConvert extends Operation {
         System.err.println("making index");
 
         Map<VariableType, int[]> indexMap = new HashMap<>();
-        List<PartialID> partialPrime = inputPartialMap.get(inputVariableTypes.get(0));
-        int[] indexOrder = new int[partialPrime.size()];
         // index map is made when plural inputVariableTypes are given
         if (inputVariableTypes.size() != 1) {
-            final FullPosition[] locations = partialPrime.stream().map(p -> p.getVoxelPosition()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
-            final PartialID[] partialsOrder = partialPrime.stream().parallel().filter(p -> p.getVoxelPosition().equals(locations[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
+            List<PartialID> partialPrime = inputPartialMap.get(inputVariableTypes.get(0));
+            final FullPosition[] positions = partialPrime.stream().map(p -> p.getVoxelPosition()).distinct().collect(Collectors.toList()).toArray(new FullPosition[0]);
+            final PartialID[] partialsOrder = partialPrime.stream().parallel().filter(p -> p.getVoxelPosition().equals(positions[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
             for (VariableType inType : inputVariableTypes) {
+                int[] indexOrder = new int[partialPrime.size()];
                 List<PartialID> partialsTmp = inputPartialMap.get(inType);
                 IntStream.range(0, partialsTmp.size()).parallel().forEach(i -> {
-                    int index = whichTimewindow(partialsTmp.get(i), partialsOrder) * locations.length + whichPosition(partialsTmp.get(i), locations);
+                    int index = whichTimewindow(partialsTmp.get(i), partialsOrder) * positions.length + whichPosition(partialsTmp.get(i), positions);
                     indexOrder[index] = i;
                 });
                 indexMap.put(inType, indexOrder);
@@ -179,20 +179,35 @@ public class VariableTypeConvert extends Operation {
     }
 
     private static int whichTimewindow(PartialID partial, PartialID[] partialsOrder) {
-        for (int i = 0; i < partialsOrder.length; i++)
-            if (partial.isPair(partialsOrder[i]))
-                return i;
-        return -1;
+        boolean find = false;
+        int num = 0;
+        for (int i = 0; i < partialsOrder.length; i++) {
+            if (partial.isPair(partialsOrder[i])) {
+                num = i;
+                find = true;
+            }
+        }
+        if (!find)
+            throw new RuntimeException("partial; " + partial.toString() + "; cannot find the pair");
+        return num;
     }
 
     private static int whichPosition(PartialID partial, FullPosition[] positions) {
-        for (int i = 0; i < positions.length; i++)
-            if (partial.getVoxelPosition().equals(positions[i]))
-                return i;
-        return -1;
+        boolean find = false;
+        int num = 0;
+        for (int i = 0; i < positions.length; i++) {
+            if (partial.getVoxelPosition().equals(positions[i])) {
+                num = i;
+                find = true;
+            }
+        }
+        if (!find)
+            throw new RuntimeException("partial; " + partial.toString() + "; cannot find the perturbed position");
+        return num;
     }
 
     private List<PartialID> convertVariableType(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
+        System.err.println("converting variable type");
         if (outputVariableTypes.contains(VariableType.KAPPA) && outputVariableTypes.contains(VariableType.G))
             // convert from LAMBDA & MU to KAPPA & G
             return convertToElasticModuli(inputPartialMap, indexMap);
@@ -226,18 +241,23 @@ public class VariableTypeConvert extends Operation {
      */
     private List<PartialID> convertToElasticModuli(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
         List<PartialID> outPartials = new ArrayList<>();
-        if (outputVariableTypes.contains(VariableType.LAMBDA) && outputVariableTypes.contains(VariableType.MU)) {
+        if (inputVariableTypes.contains(VariableType.LAMBDA) && inputVariableTypes.contains(VariableType.MU)) {
             List<PartialID> partialsLambda = inputPartialMap.get(VariableType.LAMBDA);
             List<PartialID> partialsMu = inputPartialMap.get(VariableType.MU);
             int[] indexLambda = indexMap.get(VariableType.LAMBDA);
             int[] indexMu = indexMap.get(VariableType.MU);
 
-            for (int i = 0; i < partialsMu.size(); i++) {
+              for (int i = 0; i < partialsMu.size(); i++) {
                 PartialID partialLambda = partialsLambda.get(indexLambda[i]);
                 PartialID partialMu = partialsMu.get(indexMu[i]);
+                if (!partialLambda.isPair(partialMu) || !partialLambda.getVoxelPosition().equals(partialMu.getVoxelPosition())) {
+                    throw new RuntimeException("Order is different!!!");
+                }
+
                 Trace traceMu = partialMu.toTrace();
                 Trace traceLambda = partialLambda.toTrace();
                 Trace traceG = traceMu.add(traceLambda.multiply(-2./3.));
+
                 PartialID partialG = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
                         partialMu.getSamplingHz(), partialMu.getStartTime(), partialMu.getNpts(), partialMu.getMinPeriod(), partialMu.getMaxPeriod(),
                         partialMu.getPhases(), partialMu.isConvolved(), partialMu.getParameterType(), VariableType.G, partialMu.getVoxelPosition(),
@@ -248,7 +268,7 @@ public class VariableTypeConvert extends Operation {
                         traceLambda.getY());
                 outPartials.add(partialG);
                 outPartials.add(partialKappa);
-            }
+                }
         }
         else
             throw new IllegalArgumentException("given inputVariableTypes are insufficient to compute partials with respect to KAPPA & G");
@@ -269,7 +289,7 @@ public class VariableTypeConvert extends Operation {
      */
     private List<PartialID> convertToLameConstants(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
         List<PartialID> outPartials = new ArrayList<>();
-        if (outputVariableTypes.contains(VariableType.KAPPA) && outputVariableTypes.contains(VariableType.G)) {
+        if (inputVariableTypes.contains(VariableType.KAPPA) && inputVariableTypes.contains(VariableType.G)) {
             List<PartialID> partialsKappa = inputPartialMap.get(VariableType.KAPPA);
             List<PartialID> partialsG = inputPartialMap.get(VariableType.G);
             int[] indexKappa = indexMap.get(VariableType.KAPPA);
@@ -317,7 +337,7 @@ public class VariableTypeConvert extends Operation {
      */
     private List<PartialID> convertToIsotropicVelocities(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
         List<PartialID> outPartials = new ArrayList<>();
-        if (outputVariableTypes.contains(VariableType.LAMBDA) && outputVariableTypes.contains(VariableType.MU)) {
+        if (inputVariableTypes.contains(VariableType.LAMBDA) && inputVariableTypes.contains(VariableType.MU)) {
             List<PartialID> partialsLambda = inputPartialMap.get(VariableType.LAMBDA);
             List<PartialID> partialsMu = inputPartialMap.get(VariableType.MU);
             int[] indexLambda = indexMap.get(VariableType.LAMBDA);
@@ -346,7 +366,7 @@ public class VariableTypeConvert extends Operation {
                 outPartials.add(partialVp);
             }
         }
-        else if (outputVariableTypes.contains(VariableType.KAPPA) && outputVariableTypes.contains(VariableType.G)) {
+        else if (inputVariableTypes.contains(VariableType.KAPPA) && inputVariableTypes.contains(VariableType.G)) {
             List<PartialID> partialsKappa = inputPartialMap.get(VariableType.KAPPA);
             List<PartialID> partialsG = inputPartialMap.get(VariableType.G);
             int[] indexKappa = indexMap.get(VariableType.KAPPA);
@@ -394,7 +414,7 @@ public class VariableTypeConvert extends Operation {
     */
     private List<PartialID> convertToAnisotropicParameters(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
         List<PartialID> outPartials = new ArrayList<>();
-        if (outputVariableTypes.contains(VariableType.N) && outputVariableTypes.contains(VariableType.L)) {
+        if (inputVariableTypes.contains(VariableType.N) && inputVariableTypes.contains(VariableType.L)) {
             List<PartialID> partialsN = inputPartialMap.get(VariableType.N);
             List<PartialID> partialsL = inputPartialMap.get(VariableType.L);
             int[] indexN = indexMap.get(VariableType.N);
