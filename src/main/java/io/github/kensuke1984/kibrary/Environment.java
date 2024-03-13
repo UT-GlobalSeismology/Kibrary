@@ -147,7 +147,7 @@ public class Environment {
         System.out.println("Java version: " + System.getProperty("java.version"));
         System.out.println("Java Virtual version: " + System.getProperty("java.vm.version"));
         System.out.println("Java Runtime version: " + System.getProperty("java.runtime.version"));
-        System.out.println("Available processor: " + Runtime.getRuntime().availableProcessors());
-        System.out.println("Max memory[GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
+        System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
+        System.out.println("Max memory [GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
     }
 }

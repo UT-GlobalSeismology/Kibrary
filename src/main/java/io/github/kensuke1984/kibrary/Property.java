@@ -39,7 +39,11 @@ public class Property extends Properties {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {
             try {
-                manhattan = Manhattan.valueOf(args[0]);
+                if (StringUtils.isNumeric(args[0])) {
+                    manhattan = Manhattan.valueOf(Integer.parseInt(args[0]));
+                } else {
+                    manhattan = Manhattan.valueOf(args[0]);
+                }
             } catch (IllegalArgumentException iae) {
                 System.out.println(args[0] + " is not a Manhattan.");
                 System.out.println("Please choose one in:");
@@ -49,9 +53,9 @@ public class Property extends Properties {
         } else {
             Manhattan.printList();
             System.out.print("For which one do you want to create a property file? [" + Manhattan.numRange() + "] : ");
-            String input = GadgetAid.readInputLine();
-            if (input.isEmpty()) System.exit(9);
-            manhattan = Manhattan.valueOf(Integer.parseInt(input));
+            String valInput = GadgetAid.readInputLine();
+            if (valInput.isEmpty()) System.exit(9);
+            manhattan = Manhattan.valueOf(Integer.parseInt(valInput));
         }
 
         //~output file~//
