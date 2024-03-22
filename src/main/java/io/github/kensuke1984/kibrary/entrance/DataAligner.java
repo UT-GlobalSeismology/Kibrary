@@ -26,15 +26,31 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * <p>
  * The input mseed files must be in "eventDir/mseed/" and seed files in "eventDir/seed/" under the current directory.
  * All mseed files must be for the same datacenter.
- * Output SAC, StationXML, and RESP files will each be placed in "eventDir/sac", "eventDir/station", and "eventDir/resp".
+ * Output SAC, StationXML, and RESP files will each be placed in "eventDir/sa/c", "eventDir/station/", and "eventDir/resp/".
+ * <p>
+ * <ul>
+ * <li>
+ * In normal mode, opening mseed/seed will always be done, regardless of whether they have already been opened before.
+ * Download of stationXML files will be skipped if they already exist.
+ * <li>
+ * In mode with "-d" option (only for mseeds), opening mseed will not be done.
+ * Download of stationXML files will be done for all SAC files left in "eventDir/mseed/", even if they already exist.
+ * Use this mode when configuration has failed for some SACs due to broken stationXML files.
+ * <li>
+ * In mode with "-c" option, opening mseed/seed and download of stationXML files will not be done.
+ * Use this mode when the program stopped after opening & downloading (= the single-thread part)
+ * but before configuring (= the parallelized part).
+ * </ul>
  *
  * @since 2021/11/17
  * @author otsuru
  */
 public class DataAligner {
+
     private final boolean forSeed;
     private final String datacenter;
-    private final boolean redo;
+    private final boolean fromDownload;
+    private final boolean fromConfigure;
 
     /**
      * Number of processed event folders.
@@ -66,15 +82,17 @@ public class DataAligner {
         OptionGroup inputOption = new OptionGroup();
         inputOption.setRequired(true);
         inputOption.addOption(Option.builder("m").longOpt("mseed").hasArg().argName("datacenter")
-                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}")
+                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}.")
                 .build());
         inputOption.addOption(Option.builder("s").longOpt("seed")
-                .desc("Operate for seed files").build());
+                .desc("Operate for seed files.").build());
         options.addOptionGroup(inputOption);
 
         // option
-        options.addOption(Option.builder("r").longOpt("redo")
-                .desc("Whether to redo from stationXML downloads, without opening mseed. Only for mseed mode.").build());
+        options.addOption(Option.builder("d").longOpt("fromDownload")
+                .desc("Whether to redo from stationXML downloads for all unconfigured SACs, without opening mseed. Only for mseed mode.").build());
+        options.addOption(Option.builder("c").longOpt("fromConfigure")
+                .desc("Whether to redo from SAC configuration, without opening seed/mseed or downloading stationXMLs.").build());
 
         return options;
     }
@@ -97,20 +115,22 @@ public class DataAligner {
         }
 
         // check redo mode
-        boolean redo = false;
-        if (cmdLine.hasOption("r")) {
-            if (forSeed) throw new IllegalArgumentException("The -r option is only for mseed.");
-            else redo = true;
+        boolean fromDownload = false;
+        if (cmdLine.hasOption("d")) {
+            if (forSeed) throw new IllegalArgumentException("The -d option is only for mseed.");
+            else fromDownload = true;
         }
+        boolean fromConfigure = cmdLine.hasOption("c");
 
-        DataAligner aligner = new DataAligner(forSeed, datacenter, redo);
+        DataAligner aligner = new DataAligner(forSeed, datacenter, fromDownload, fromConfigure);
         aligner.align();
     }
 
-    private DataAligner(boolean forSeed, String datacenter, boolean redo) {
+    private DataAligner(boolean forSeed, String datacenter, boolean fromDownload, boolean fromConfigure) {
         this.forSeed = forSeed;
         this.datacenter = datacenter;
-        this.redo = redo;
+        this.fromDownload = fromDownload;
+        this.fromConfigure = fromConfigure;
     }
 
     private void align() throws IOException {
@@ -127,35 +147,37 @@ public class DataAligner {
 
         // for each event directory
         // This part is not parallelized because SocketException occurs when many threads download files simultaneously.
-        final AtomicInteger n = new AtomicInteger();
-        eventDirs.stream().sorted().forEach(eventDir -> {
-            try {
-                n.incrementAndGet();
-                System.err.println(eventDir + " (# " + n + " of " + n_total + ")");
+        if (!fromConfigure) {
+            final AtomicInteger n = new AtomicInteger();
+            eventDirs.stream().sorted().forEach(eventDir -> {
+                try {
+                    n.incrementAndGet();
+                    System.err.println(eventDir + " (# " + n + " of " + n_total + ")");
 
-                // create new instance for the event
-                EventDataPreparer edp = new EventDataPreparer(eventDir);
+                    // create new instance for the event
+                    EventDataPreparer edp = new EventDataPreparer(eventDir);
 
-                if (forSeed) {
-                    if (!edp.openSeeds()) {
-                        // if open fails, skip the event
-                        return;
-                    }
-                } else {
-                    if (!redo) {
-                        if (!edp.openMseeds()) {
+                    if (forSeed) {
+                        if (!edp.openSeeds()) {
                             // if open fails, skip the event
                             return;
                         }
+                    } else {
+                        if (!fromDownload) {
+                            if (!edp.openMseeds()) {
+                                // if open fails, skip the event
+                                return;
+                            }
+                        }
+                        edp.downloadXmlMseed(datacenter, fromDownload);
                     }
-                    edp.downloadXmlMseed(datacenter, redo);
+                } catch (IOException e) {
+                    // Here, suppress exceptions for events that failed, and move on to the next event.
+                    System.err.println("!!! Operation for " + eventDir + " failed, skipping.");
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                // Here, suppress exceptions for events that failed, and move on to the next event.
-                System.err.println("!!! Operation for " + eventDir + " failed, skipping.");
-                e.printStackTrace();
-            }
-        });
+            });
+        }
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);

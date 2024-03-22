@@ -16,6 +16,9 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -54,23 +57,29 @@ public class DistanceHistogram {
 
         // input
         options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
-                .desc("Path of data entry list file").build());
+                .desc("Path of data entry list file.").build());
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
-                .desc("Components to use, listed using commas (Z,R,T)").build());
+                .desc("Components to use, listed using commas. (Z,R,T)").build());
+        // histogram visual
         options.addOption(Option.builder("i").longOpt("interval").hasArg().argName("interval")
-                .desc("Interval of distance in histogram (2)").build());
+                .desc("Interval of distance in histogram. (2)").build());
         options.addOption(Option.builder("x").longOpt("xtics").hasArg().argName("xtics")
-                .desc("Interval of x tics (10)").build());
+                .desc("Interval of x tics. (10)").build());
         options.addOption(Option.builder("m").longOpt("minDistance").hasArg().argName("minDistance")
-                .desc("Minimum distance in histogram (0)").build());
+                .desc("Minimum distance in histogram. (0)").build());
         options.addOption(Option.builder("M").longOpt("maxDistance").hasArg().argName("maxDistance")
-                .desc("Maximum distance in histogram (180)").build());
+                .desc("Maximum distance in histogram. (180)").build());
+        // weighting
+        options.addOption(Option.builder("w").longOpt("weigh")
+                .desc("Whether to decide weights.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -81,7 +90,8 @@ public class DistanceHistogram {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
         Set<SACComponent> components = cmdLine.hasOption("c")
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
@@ -94,6 +104,7 @@ public class DistanceHistogram {
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 10;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
+        boolean weigh = cmdLine.hasOption("w");
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
@@ -104,25 +115,42 @@ public class DistanceHistogram {
             numberOfRecords[(int) (epicentralDistance / interval)]++;
         }
 
-        // output
-        String fileNameRoot = "epicentralDistanceHistogram" + (cmdLine.hasOption("T") ? "_" + cmdLine.getOptionValue("T") : "");
-        Path outPath = Paths.get("");
-        writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
-        createScript(outPath, fileNameRoot, interval, minimum, maximum, xtics);
+        // decide weights
+        double[] weights = new double[numberOfRecords.length];
+        if (weigh) {
+            double average = Arrays.stream(numberOfRecords).filter(n -> n > 0).asDoubleStream().average().getAsDouble();
+            for (int i = 0; i < weights.length; i++) {
+                if (numberOfRecords[i] > 0) {
+                    weights[i] = (1 - Math.exp(-2 * numberOfRecords[i] / average)) * average / numberOfRecords[i];
+                } else {
+                    weights[i] = 0.0;
+                }
+            }
+        } else {
+            for (int i = 0; i < weights.length; i++) {
+                weights[i] = 1.0;
+            }
+        }
 
+        // output
+        Path txtPath = DatasetAid.generateOutputFilePath(Paths.get(""), "epicentralDistanceHistogram", fileTag,
+                appendFileDate, GadgetAid.getTemporaryString(), ".txt");
+        Path scriptPath = Paths.get("").resolve(txtPath.getFileName().toString().replace(".txt", ".plt"));
+        writeHistogramData(txtPath, interval, numberOfRecords, weights);
+        createScript(scriptPath, interval, minimum, maximum, xtics, weigh);
     }
 
-    private static void writeHistogramData(Path outPath, String fileNameRoot, double interval, int[] numberOfRecords) throws IOException {
-        Path txtPath = outPath.resolve(fileNameRoot + ".txt");
+    private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weights) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
             for (int i = 0; i < numberOfRecords.length; i++) {
-                pw.println(String.format("%.2f %d", i * interval, numberOfRecords[i]));
+                pw.println(String.format("%.2f %d %.1f", i * interval, numberOfRecords[i], numberOfRecords[i] * weights[i]));
             }
         }
     }
 
-    private static void createScript(Path outPath, String fileNameRoot, double interval, double minimum, double maximum, double xtics) throws IOException {
-        Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
+    private static void createScript(Path scriptPath, double interval, double minimum, double maximum, double xtics,
+            boolean weigh) throws IOException {
+        String fileNameRoot = FileAid.extractNameRoot(scriptPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set term pngcairo enhanced font 'Helvetica,20'");
@@ -134,7 +162,13 @@ public class DistanceHistogram {
             pw.println("set style fill solid border lc rgb 'black'");
             pw.println("set sample 11");
             pw.println("set output '" + fileNameRoot + ".png'");
-            pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'sea-green' notitle");
+            if (weigh) {
+                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'sea-green' title 'raw', \\");
+                pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):3 w boxes fs transparent pattern 4 "
+                        + "lw 1.0 lc 'red' title 'weighted'");
+            } else {
+                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'sea-green' notitle");
+            }
         }
 
         GnuplotFile histogramPlot = new GnuplotFile(scriptPath);
@@ -147,6 +181,21 @@ public class DistanceHistogram {
 //        profilePlot.setYlabel("Number of records");
 //        profilePlot.setXrange(minimum, maximum);
     }
+
+
+    private double getDistanceWeight(double distance, double[][] histogramDistance) {
+
+//      double[][] histogramDistance = new double[][] { {60.0, 1.000}, {100.0, 1.000} };
+
+      double weight = 0.0;
+      for (int i = 0; i < histogramDistance.length - 1; i++) {
+          if (distance >= histogramDistance[i][0] && distance < histogramDistance[i + 1][0]) {
+              weight = 1.0 / histogramDistance[i][1];
+              break;
+          }
+      }
+      return weight;
+  }
 
 
 }
