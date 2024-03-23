@@ -108,9 +108,9 @@ public class WeightingHandler {
     private static void writeDefaultPropertiesFile(Path outPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("##(boolean) Whether to multiply reciprocal of amplitude. (false)");
-            pw.println("#amplitudeReciprocal ");
+            pw.println("#amplitudeReciprocal true");
             pw.println("##(boolean) Whether to weigh the number of timewindows of each component. (false)");
-            pw.println("#balanceComponent ");
+            pw.println("#balanceComponent true");
             pw.println("##(double) Factor to multiply to Z component. (1.0)");
             pw.println("#factorForZComponent ");
             pw.println("##(double) Factor to multiply to R component. (1.0)");
@@ -137,7 +137,10 @@ public class WeightingHandler {
     public WeightingHandler(Path propertyPath) throws IOException {
         Property property = new Property();
         property.load(Files.newBufferedReader(propertyPath));
-        set(property, propertyPath.getParent());
+        // get path of folder including this property file
+        Path parentPath = (propertyPath.getParent() != null) ? propertyPath.getParent() : Paths.get("");
+        // set up parameters
+        set(property, parentPath);
     }
 
     /**
@@ -151,7 +154,7 @@ public class WeightingHandler {
         }
     }
 
-    private void set(Property property, Path workPath) throws IOException {
+    private void set(Property property, Path parentPath) throws IOException {
         amplitudeReciprocal = property.parseBoolean("amplitudeReciprocal", "false");
         balanceComponent = property.parseBoolean("balanceComponent", "false");
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
@@ -162,7 +165,7 @@ public class WeightingHandler {
         for (int i = 1; i <= MAX_INPUT; i++) {
             String weightKey = "weightPath" + i;
             if (property.containsKey(weightKey)) {
-                Path weightPath = property.parsePath(weightKey, null, true, workPath);
+                Path weightPath = property.parsePath(weightKey, null, true, parentPath);
                 Map<DataEntry, Double> weightMap = EntryWeightListFile.read(weightPath);
                 weightMaps.add(weightMap);
             }

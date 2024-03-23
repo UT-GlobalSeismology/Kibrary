@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,11 +16,13 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.math3.util.Precision;
 
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -97,10 +101,10 @@ public class AzimuthHistogram {
                 .desc("Whether to decide weights.").build());
 
         // output
-        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
-                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
+                .desc("A tag to include in output folder name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Whether to omit date string in output folder name.").build());
 
         return options;
     }
@@ -111,8 +115,8 @@ public class AzimuthHistogram {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
-        boolean appendFileDate = !cmdLine.hasOption("O");
+        String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFolderDate = !cmdLine.hasOption("O");
         Set<SACComponent> components = cmdLine.hasOption("c")
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
@@ -145,6 +149,7 @@ public class AzimuthHistogram {
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
+        Map<DataEntry, Double> azimuthMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
@@ -168,43 +173,37 @@ public class AzimuthHistogram {
 
             if (!expand && azimuth > 180) azimuth -= 180;
             numberOfRecords[(int) (azimuth / interval)]++;
+            azimuthMap.put(entry, azimuth);
         }
 
         // decide weights
-        double[] weights = new double[numberOfRecords.length];
-        if (weigh) {
-            double average = Arrays.stream(numberOfRecords).filter(n -> n > 0).asDoubleStream().average().getAsDouble();
-            for (int i = 0; i < weights.length; i++) {
-                if (numberOfRecords[i] > 0) {
-                    weights[i] = (1 - Math.exp(-2 * numberOfRecords[i] / average)) * average / numberOfRecords[i];
-                } else {
-                    weights[i] = 0.0;
-                }
-            }
-        } else {
-            for (int i = 0; i < weights.length; i++) {
-                weights[i] = 1.0;
-            }
+        double[] weights = decideWeights(numberOfRecords, weigh);
+        Map<DataEntry, Double> weightMap = new HashMap<>();
+        for (DataEntry entry : entrySet) {
+            double weight = weights[(int) (azimuthMap.get(entry) / interval)];
+            weightMap.put(entry, weight);
         }
 
         // output
         String typeName;
         String xlabel;
         if (useTurningAzimuth) {
-            typeName = "turningAzimuthHistogram";
+            typeName = "turnAz";
             xlabel = "Turning point azimuth";
         } else if (useBackAzimuth) {
-            typeName = "backAzimuthHistogram";
+            typeName = "backAz";
             xlabel = "Back azimuth";
         } else {
-            typeName = "sourceAzimuthHistogram";
+            typeName = "sourceAz";
             xlabel = "Source azimuth";
         }
-        Path txtPath = DatasetAid.generateOutputFilePath(Paths.get(""), typeName, fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".txt");
-        Path scriptPath = Paths.get("").resolve(txtPath.getFileName().toString().replace(".txt", ".plt"));
-
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), typeName + "Histogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path txtPath = outPath.resolve(typeName + "Histogram.txt");
+        Path scriptPath = outPath.resolve(typeName + "Histogram.plt");
+        Path weightPath = outPath.resolve("entryWeight_" + typeName + ".lst");
         writeHistogramData(txtPath, interval, numberOfRecords, weights);
         createScript(scriptPath, xlabel, interval, minimum, maximum, xtics, weigh);
+        EntryWeightListFile.write(weightMap, weightPath);
     }
 
     private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weights) throws IOException {
@@ -241,14 +240,35 @@ public class AzimuthHistogram {
         GnuplotFile histogramPlot = new GnuplotFile(scriptPath);
         histogramPlot.execute();
 
-//        GnuplotFile profilePlot = new GnuplotFile(scriptPath);
-//
 //        profilePlot.setOutput("png", fileNameRoot + ".png", 640, 480, false);
 //        profilePlot.setFont("Arial", 20, 15, 15, 15, 10);
 //        profilePlot.unsetKey();
 //        profilePlot.setXlabel("Azimuth (deg)");
 //        profilePlot.setYlabel("Number of records");
 //        profilePlot.setXrange(minimum, maximum);
+    }
+
+    private static double[] decideWeights(int[] numberOfRecords, boolean weigh) {
+        double[] weights = new double[numberOfRecords.length];
+        if (weigh) {
+            // average number of records in each bin (only bins with at least 1 record are considered)
+            double average = Arrays.stream(numberOfRecords).filter(n -> n > 0).asDoubleStream().average().getAsDouble();
+            // weight for each bin
+            for (int i = 0; i < weights.length; i++) {
+                if (numberOfRecords[i] > 0) {
+                    double weight = (1 - Math.exp(-2 * numberOfRecords[i] / average)) * average / numberOfRecords[i];
+                    weights[i] = Precision.round(weight, 3);
+                } else {
+                    weights[i] = 0.0;
+                }
+            }
+        } else {
+            // when not weighing, set all weights to 1
+            for (int i = 0; i < weights.length; i++) {
+                weights[i] = 1.0;
+            }
+        }
+        return weights;
     }
 
 }
