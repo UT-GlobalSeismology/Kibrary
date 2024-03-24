@@ -54,6 +54,7 @@ public class WeightingHandler {
     private static final int MAX_INPUT = 5;
 
     private boolean amplitudeReciprocal;
+    private SACComponent standardComponent;
     private boolean balanceComponent;
     private double factorForZComponent;
     private double factorForRComponent;
@@ -109,6 +110,8 @@ public class WeightingHandler {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("##(boolean) Whether to multiply reciprocal of amplitude. (false)");
             pw.println("#amplitudeReciprocal true");
+            pw.println("##Use amplitude of a specific component when multiplying reciprocal, from {Z, R, T}.");
+            pw.println("#standardComponent ");
             pw.println("##(boolean) Whether to weigh the number of timewindows of each component. (false)");
             pw.println("#balanceComponent true");
             pw.println("##(double) Factor to multiply to Z component. (1.0)");
@@ -141,6 +144,17 @@ public class WeightingHandler {
         Path parentPath = (propertyPath.getParent() != null) ? propertyPath.getParent() : Paths.get("");
         // set up parameters
         set(property, parentPath);
+
+        System.err.print("Weighting: ");
+        if (amplitudeReciprocal) {
+            if (standardComponent != null) System.err.print("reciprocal_" + standardComponent + ", ");
+            else System.err.print("reciprocal, ");
+        }
+        if (balanceComponent) System.err.print("balanceComponent, ");
+        System.err.print("factorZ=" + factorForZComponent + ", ");
+        System.err.print("factorR=" + factorForRComponent + ", ");
+        System.err.print("factorT=" + factorForTComponent + ", ");
+        System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.",  "weight files."));
     }
 
     /**
@@ -156,6 +170,8 @@ public class WeightingHandler {
 
     private void set(Property property, Path parentPath) throws IOException {
         amplitudeReciprocal = property.parseBoolean("amplitudeReciprocal", "false");
+        if (property.containsKey("standardComponent"))
+            standardComponent = SACComponent.valueOf(property.parseString("standardComponent", null));
         balanceComponent = property.parseBoolean("balanceComponent", "false");
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
         factorForRComponent = property.parseDouble("factorForRComponent", "1.0");
@@ -198,22 +214,22 @@ public class WeightingHandler {
 
             // multiply reciprocal of amplitude
             // Square root is not taken for this because partial derivatives in A^T should also be weighted.
-            if (amplitudeReciprocal) weighting /= dVector.getObsVec(i).getLInfNorm();
+            if (amplitudeReciprocal) weighting /= findAmplitude(dVector, i, standardComponent);
 
             // balance component and multiply factor for each component
-            // Take square root for number of each component because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
+            // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
             SACComponent component = dVector.getObsID(i).getSacComponent();
             switch (component) {
             case Z:
-                weighting *= factorForZComponent;
+                weighting *= Math.sqrt(factorForZComponent);
                 if (balanceComponent) weighting /= Math.sqrt(numZ / (numZ + numR + numT));
                 break;
             case R:
-                weighting *= factorForRComponent;
+                weighting *= Math.sqrt(factorForRComponent);
                 if (balanceComponent) weighting /= Math.sqrt(numR / (numZ + numR + numT));
                 break;
             case T:
-                weighting *= factorForTComponent;
+                weighting *= Math.sqrt(factorForTComponent);
                 if (balanceComponent) weighting /= Math.sqrt(numT / (numZ + numR + numT));
                 break;
             }
@@ -226,7 +242,7 @@ public class WeightingHandler {
             // multiply values specified in weight files
             for (int k = 0; k < weightMaps.size(); k++) {
                 DataEntry entry = dVector.getObsID(i).toDataEntry();
-                // Take square root for because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
+                // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
                 weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
 
@@ -245,6 +261,21 @@ public class WeightingHandler {
         }
 
         return weightingVectors;
+    }
+
+    private double findAmplitude(DVectorBuilder dVector, int i, SACComponent standardComponent) {
+        BasicID obsID = dVector.getObsID(i);
+        if (standardComponent == null || obsID.getSacComponent().equals(standardComponent)) {
+            return dVector.getObsVec(i).getLInfNorm();
+        } else {
+            DataEntry standardEntry = new DataEntry(obsID.getGlobalCMTID(), obsID.getObserver(), standardComponent);
+            for (int j = 0; j < dVector.getNTimeWindow(); j++) {
+                if (dVector.getObsID(j).toDataEntry().equals(standardEntry)) {
+                    return dVector.getObsVec(j).getLInfNorm();
+                }
+            }
+            throw new IllegalStateException("Pair basicID not found for: " + obsID.toDataEntry());
+        }
     }
 
     private double computeGeometryWeight(BasicID basicID, DVectorBuilder dVector) {

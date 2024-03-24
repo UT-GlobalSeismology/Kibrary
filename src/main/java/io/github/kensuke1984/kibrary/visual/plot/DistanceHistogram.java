@@ -32,6 +32,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Creates histogram of records in a dataset by epicentral distance.
  * A {@link DataEntryListFile} is used as input.
+ * <p>
+ * Weights for each bin can be decided in "weighting" mode. The weights will be exported in {@link EntryWeightListFile}.
  *
  * @since a long time ago
  * @version 2022/8/12 renamed and moved from util.statistics.Histogram to visual.DistanceHistogram
@@ -76,7 +78,7 @@ public class DistanceHistogram {
         options.addOption(Option.builder("M").longOpt("maxDistance").hasArg().argName("maxDistance")
                 .desc("Maximum distance in histogram. (180)").build());
         // weighting
-        options.addOption(Option.builder("w").longOpt("weigh")
+        options.addOption(Option.builder("w").longOpt("weight")
                 .desc("Whether to decide weights.").build());
 
         // output
@@ -108,7 +110,7 @@ public class DistanceHistogram {
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 10;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
-        boolean weigh = cmdLine.hasOption("w");
+        boolean conductWeighting = cmdLine.hasOption("w");
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
@@ -122,7 +124,7 @@ public class DistanceHistogram {
         }
 
         // decide weights
-        double[] weights = decideWeights(numberOfRecords, weigh);
+        double[] weights = decideWeights(numberOfRecords, conductWeighting);
         Map<DataEntry, Double> weightMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             double weight = weights[(int) (distanceMap.get(entry) / interval)];
@@ -135,8 +137,8 @@ public class DistanceHistogram {
         Path scriptPath = outPath.resolve("distHistogram.plt");
         Path weightPath = outPath.resolve("entryWeight_dist.lst");
         writeHistogramData(txtPath, interval, numberOfRecords, weights);
-        createScript(scriptPath, interval, minimum, maximum, xtics, weigh);
-        EntryWeightListFile.write(weightMap, weightPath);
+        createScript(scriptPath, interval, minimum, maximum, xtics, conductWeighting);
+        if (conductWeighting) EntryWeightListFile.write(weightMap, weightPath);
     }
 
     private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weights) throws IOException {
@@ -148,7 +150,7 @@ public class DistanceHistogram {
     }
 
     private static void createScript(Path scriptPath, double interval, double minimum, double maximum, double xtics,
-            boolean weigh) throws IOException {
+            boolean conductWeighting) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
@@ -161,7 +163,7 @@ public class DistanceHistogram {
             pw.println("set style fill solid border lc rgb 'black'");
             pw.println("set sample 11");
             pw.println("set output '" + fileNameRoot + ".png'");
-            if (weigh) {
+            if (conductWeighting) {
                 pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'sea-green' title 'raw', \\");
                 pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):3 w boxes fs transparent pattern 4 "
                         + "lw 1.0 lc 'red' title 'weighted'");
@@ -197,7 +199,7 @@ public class DistanceHistogram {
                 }
             }
         } else {
-            // when not weighing, set all weights to 1
+            // when not weighting, set all weights to 1
             for (int i = 0; i < weights.length; i++) {
                 weights[i] = 1.0;
             }

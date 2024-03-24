@@ -33,8 +33,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Creates histogram of records in a dataset by azimuth.
+ * Creates histogram of records in a dataset by azimuth. Source azimuth, back azimuth, or turning point azimuth can be used.
  * A {@link DataEntryListFile} is used as input.
+ * <p>
+ * Weights for each bin can be decided in "weighting" mode. The weights will be exported in {@link EntryWeightListFile}.
  * <p>
  * By default, the number of records in the range [180:360) are overlapped on range [0:180).
  * (ex. A record with azimuth 240 is counted as having azimuth 60.)
@@ -97,7 +99,7 @@ public class AzimuthHistogram {
         options.addOption(Option.builder("p").longOpt("phase").hasArg().argName("phase")
                 .desc("Name of phase to use to compute turning point. (ScS)").build());
         // weighting
-        options.addOption(Option.builder("w").longOpt("weigh")
+        options.addOption(Option.builder("w").longOpt("weight")
                 .desc("Whether to decide weights.").build());
 
         // output
@@ -134,7 +136,7 @@ public class AzimuthHistogram {
         boolean useTurningAzimuth = cmdLine.hasOption("t");
         String structureName = cmdLine.hasOption("s") ? cmdLine.getOptionValue("s") : "prem";
         String turningPointPhase = cmdLine.hasOption("p") ? cmdLine.getOptionValue("p") : "ScS";
-        boolean weigh = cmdLine.hasOption("w");
+        boolean conductWeighting = cmdLine.hasOption("w");
 
         // if using turning point azimuth, compute using TauPPierce
         TauPPierceWrapper pierceTool = null;
@@ -177,7 +179,7 @@ public class AzimuthHistogram {
         }
 
         // decide weights
-        double[] weights = decideWeights(numberOfRecords, weigh);
+        double[] weights = decideWeights(numberOfRecords, conductWeighting);
         Map<DataEntry, Double> weightMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             double weight = weights[(int) (azimuthMap.get(entry) / interval)];
@@ -202,8 +204,8 @@ public class AzimuthHistogram {
         Path scriptPath = outPath.resolve(typeName + "Histogram.plt");
         Path weightPath = outPath.resolve("entryWeight_" + typeName + ".lst");
         writeHistogramData(txtPath, interval, numberOfRecords, weights);
-        createScript(scriptPath, xlabel, interval, minimum, maximum, xtics, weigh);
-        EntryWeightListFile.write(weightMap, weightPath);
+        createScript(scriptPath, xlabel, interval, minimum, maximum, xtics, conductWeighting);
+        if (conductWeighting) EntryWeightListFile.write(weightMap, weightPath);
     }
 
     private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weights) throws IOException {
@@ -215,7 +217,7 @@ public class AzimuthHistogram {
     }
 
     private static void createScript(Path scriptPath, String xlabel, double interval, double minimum, double maximum, double xtics,
-            boolean weigh) throws IOException {
+            boolean conductWeighting) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
@@ -228,7 +230,7 @@ public class AzimuthHistogram {
             pw.println("set style fill solid border lc rgb 'black'");
             pw.println("set sample 11");
             pw.println("set output '" + fileNameRoot + ".png'");
-            if (weigh) {
+            if (conductWeighting) {
                 pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'purple' title 'raw', \\");
                 pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):3 w boxes fs transparent pattern 4 "
                         + "lw 1.0 lc 'web-blue' title 'weighted'");
@@ -256,14 +258,15 @@ public class AzimuthHistogram {
             // weight for each bin
             for (int i = 0; i < weights.length; i++) {
                 if (numberOfRecords[i] > 0) {
-                    double weight = (1 - Math.exp(-2 * numberOfRecords[i] / average)) * average / numberOfRecords[i];
+                    double x = numberOfRecords[i] / average;
+                    double weight = (1.0 - Math.exp(-2.0 * x)) / (1.0 - Math.exp(-2.0)) / x;
                     weights[i] = Precision.round(weight, 3);
                 } else {
                     weights[i] = 0.0;
                 }
             }
         } else {
-            // when not weighing, set all weights to 1
+            // when not weighting, set all weights to 1
             for (int i = 0; i < weights.length; i++) {
                 weights[i] = 1.0;
             }

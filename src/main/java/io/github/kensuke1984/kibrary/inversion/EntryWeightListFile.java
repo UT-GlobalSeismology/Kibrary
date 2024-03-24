@@ -12,7 +12,6 @@ import java.util.Map;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -32,9 +31,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class EntryWeightListFile {
 
     public static void write(Map<DataEntry, Double> weightMap, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(weightMap.size(), "data entry weight", "data entry weights")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(weightMap.size(), "data entry weight", "data entry weights", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# globalCMTID station network latitude longitude component weight");
@@ -59,7 +56,7 @@ public class EntryWeightListFile {
             weightMap.put(entry, weight);
         }
 
-        DatasetAid.checkNum(weightMap.size(), "data entry weight", "data entry weights");
+        DatasetAid.printNumInput(weightMap.size(), "data entry weight", "data entry weights", inputPath);
         return Collections.unmodifiableMap(weightMap);
     }
 
