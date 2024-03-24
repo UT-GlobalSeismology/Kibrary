@@ -105,9 +105,7 @@ public class TimewindowIntersection  {
             throw new RuntimeException("Falled to make intersections");
 
         // output
-        System.err.println("Outputting " + outWindows1.size() + " timewindows in " + outputPath1);
         TimewindowDataFile.write(outWindows1, outputPath1);
-        System.err.println("Outputting " + outWindows2.size() + " timewindows in " + outputPath2);
         TimewindowDataFile.write(outWindows2, outputPath2);
     }
 

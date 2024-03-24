@@ -19,7 +19,6 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -143,7 +142,7 @@ public class PartialsFuser extends Operation {
         newPartialIDs.addAll(fusedPartialIDs);
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

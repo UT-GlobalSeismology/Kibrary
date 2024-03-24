@@ -225,7 +225,7 @@ public class BasicWaveformPlotter extends Operation {
 
    @Override
    public void run() throws IOException {
-       String dateStr = GadgetAid.getTemporaryString();
+       String dateString = GadgetAid.getTemporaryString();
 
        // read main basic waveform folders and write waveforms to be used into txt files
        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
@@ -275,7 +275,7 @@ public class BasicWaveformPlotter extends Operation {
                            .collect(Collectors.toList());
 
                    // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
-                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, "_" + component.toString() + ".plt");
+                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, "_" + component.toString() + ".plt");
                    createPlot(eventPath, plotPath, useIds);
                }
            } else {
@@ -284,7 +284,7 @@ public class BasicWaveformPlotter extends Operation {
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                        .collect(Collectors.toList());
 
-               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, ".plt");
+               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, ".plt");
                createPlot(eventPath, plotPath, useIds);
            }
 

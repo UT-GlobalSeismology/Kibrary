@@ -14,7 +14,6 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -130,7 +129,7 @@ public class BasicIDMerge extends Operation {
             eventSet.add(id.getGlobalCMTID());
         });
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output merged files

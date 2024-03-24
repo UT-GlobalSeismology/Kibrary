@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.inversion.setup.AMatrixBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -183,7 +182,7 @@ public class OrthogonalityTest extends Operation {
        double[][] correlations;
        Path outputPath;
 
-       outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // one event to one observer

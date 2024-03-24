@@ -157,12 +157,12 @@ enum Manhattan {
     }
 
     /**
-     * Returns a Manhattan given its corresponding number.
-     * Note that {@link #valueOf(String)}, which returns a Manhattan given a String of its name,
+     * Returns a {@link Manhattan} given its corresponding number.
+     * Note that {@link #valueOf(String)}, which returns a {@link Manhattan} given a String of its name,
      * is already defined automatically.
      *
-     * @param n (int)
-     * @return
+     * @param n (int) The value to get a {@link Manhattan} for.
+     * @return ({@link Manhattan}) The {@link Manhattan} corresponding to the value.
      */
     static Manhattan valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();

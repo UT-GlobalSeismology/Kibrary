@@ -22,7 +22,6 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -132,7 +131,7 @@ public class DistanceHistogram {
         }
 
         // output
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "distHistogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "distHistogram", folderTag, appendFolderDate, null);
         Path txtPath = outPath.resolve("distHistogram.txt");
         Path scriptPath = outPath.resolve("distHistogram.plt");
         Path weightPath = outPath.resolve("entryWeight_dist.lst");

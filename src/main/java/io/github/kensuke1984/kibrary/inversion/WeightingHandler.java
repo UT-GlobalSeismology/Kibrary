@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -101,8 +100,7 @@ public class WeightingHandler {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "weighting", fileTag,
-                appendFileDate, GadgetAid.getTemporaryString(), ".properties");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "weighting", fileTag, appendFileDate, null, ".properties");
         writeDefaultPropertiesFile(outputPath);
     }
 

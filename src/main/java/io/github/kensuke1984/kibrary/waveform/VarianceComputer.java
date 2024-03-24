@@ -49,11 +49,11 @@ public class VarianceComputer {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder").required()
-                .desc("Use basic waveform folder as input").build());
+                .desc("Use basic waveform folder as input.").build());
         options.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingFile").required()
-                .desc("Path of a weighting properties file").build());
+                .desc("Path of a weighting properties file.").build());
         options.addOption(Option.builder("p").longOpt("improvement").hasArg().argName("improvementWindowFile")
-                .desc("Input improvement window file, if it is to be used").build());
+                .desc("Input improvement window file, if it is to be used.").build());
         return options;
     }
 

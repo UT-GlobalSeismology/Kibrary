@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -206,7 +205,7 @@ public class PartialWaveformPlotter extends Operation {
        }
 
        // prepare output folder
-       Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        for (GlobalCMTID event : tendEvents) {

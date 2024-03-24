@@ -22,7 +22,6 @@ import io.github.kensuke1984.kibrary.inversion.solve.InversionMethod;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -56,10 +55,6 @@ public class LetMeInvert extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
 
     /**
      * Basic waveform folder.
@@ -202,7 +197,7 @@ public class LetMeInvert extends Operation {
         System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output matrices

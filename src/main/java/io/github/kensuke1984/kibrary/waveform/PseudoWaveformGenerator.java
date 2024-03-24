@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -167,7 +166,7 @@ public class PseudoWaveformGenerator extends Operation {
         if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

@@ -76,7 +76,7 @@ class BasicPlotAid {
 
     static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, String[] alignPhases, double reductionSlowness,
             double startDistance, double endDistance,
-            String fileTag, String dateStr, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
+            String fileTag, String dateString, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
         // set names of all phases to display, and the phase to align if it is specified
         timeTool.setPhaseNames(displayPhases);
         if (alignPhases != null) {
@@ -98,7 +98,7 @@ class BasicPlotAid {
             double[] time = phase.getTime();
 
             String phaseName = phase.getName();
-            Path curvePath = DatasetAid.generateOutputFilePath(eventPath, "curve", fileTag, true, dateStr, "_" + component + "_" + phaseName + ".txt");
+            Path curvePath = DatasetAid.generateOutputFilePath(eventPath, "curve", fileTag, true, dateString, "_" + component + "_" + phaseName + ".txt");
             String curveFileName = curvePath.getFileName().toString();
             boolean wrotePhaseLabel = false;
 

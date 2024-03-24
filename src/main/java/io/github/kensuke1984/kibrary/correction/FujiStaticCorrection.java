@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -80,10 +79,6 @@ public class FujiStaticCorrection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output file.
-     */
-    private Path outputPath;
-    /**
      * Components to use.
      */
     private Set<SACComponent> components;
@@ -120,7 +115,7 @@ public class FujiStaticCorrection extends Operation {
     private boolean mediantime;
 
     private Set<TimewindowData> sourceTimewindowSet;
-    private Set<StaticCorrectionData> staticCorrectionSet;
+    private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * @param args  none to create a property file <br>
@@ -186,10 +181,6 @@ public class FujiStaticCorrection extends Operation {
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");
         mediantime = property.parseBoolean("mediantime", "false");
-
-        String dateStr = GadgetAid.getTemporaryString();
-        outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
-        staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
 
     @Override
@@ -211,6 +202,7 @@ public class FujiStaticCorrection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, null, ".dat");
         StaticCorrectionDataFile.write(staticCorrectionSet, outputPath);
     }
 

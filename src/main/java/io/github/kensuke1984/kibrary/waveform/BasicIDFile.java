@@ -313,12 +313,12 @@ public final class BasicIDFile {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("The input basic waveform folder (.)").build());
+                .desc("The input basic waveform folder. (.)").build());
         options.addOption(Option.builder("w").longOpt("waveform")
-                .desc("Export waveforms in event directories under the input basic waveform folder").build());
+                .desc("Export waveforms in event directories under the input basic waveform folder.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
-                .desc("Just count number without creating output files").build());
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Specify path of output file. If not set, 'basicID.txt'.").build());
         return options;

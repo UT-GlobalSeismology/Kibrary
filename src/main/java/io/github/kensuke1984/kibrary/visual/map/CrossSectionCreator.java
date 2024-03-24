@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -258,7 +257,7 @@ public class CrossSectionCreator extends Operation {
         }
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         String modelFileNameRoot = FileAid.extractNameRoot(perturbationPath);

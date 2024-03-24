@@ -20,7 +20,6 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -162,7 +161,7 @@ public class CatalogueErrorCalculator extends Operation {
 
     @Override
     public void run() throws IOException {
-        Path outPath = DatasetAid.createOutputFolder(workPath, "relativeError", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "relativeError", folderTag, appendFolderDate, null);
 
         // check the number of catalogue partials
         int setNum = dthetas.size();

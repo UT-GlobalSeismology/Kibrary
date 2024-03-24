@@ -15,9 +15,7 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * File of layer information.
@@ -54,9 +52,7 @@ public class LayerInformationFile {
         if (layerThicknesses.length != layerRadii.length)
             throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(layerRadii.length, "layer", "layers")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(layerRadii.length, "layer", "layers", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# thicknesses of each layer [km]");
@@ -86,7 +82,7 @@ public class LayerInformationFile {
         if (layerThicknesses.length != layerRadii.length)
             throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
-        DatasetAid.checkNum(layerRadii.length, "layer", "layers");
+        DatasetAid.printNumInput(layerRadii.length, "layer", "layers", filePath);
     }
 
     /**
@@ -188,7 +184,7 @@ public class LayerInformationFile {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "layer", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "layer", fileTag, appendFileDate, null, ".inf");
 
         // create layer information
         LayerInformationFile layerFile;

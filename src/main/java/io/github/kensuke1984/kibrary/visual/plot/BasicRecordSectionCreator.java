@@ -148,7 +148,7 @@ public class BasicRecordSectionCreator extends Operation {
      * Instance of tool to use to compute travel times.
      */
     private TauP_Time timeTool;
-    private String dateStr;
+    private String dateString;
 
     /**
      * @param args  none to create a property file <br>
@@ -293,7 +293,7 @@ public class BasicRecordSectionCreator extends Operation {
 
    @Override
    public void run() throws IOException {
-       dateStr = GadgetAid.getTemporaryString();
+       dateString = GadgetAid.getTemporaryString();
 
        // read main basic waveform folders and write waveforms to be used into txt files
        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
@@ -457,7 +457,7 @@ public class BasicRecordSectionCreator extends Operation {
             // add travel time curves
             if (displayPhases != null) {
                 BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
-                        fileTag, dateStr, eventPath, component, gnuplot);
+                        fileTag, dateString, eventPath, component, gnuplot);
             }
 
             // plot
@@ -467,7 +467,7 @@ public class BasicRecordSectionCreator extends Operation {
 
         private void profilePlotSetup() {
             // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
-            Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateStr, "_" + component.toString() + ".plt");
+            Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateString, "_" + component.toString() + ".plt");
 
             gnuplot = new GnuplotFile(plotPath);
             gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);

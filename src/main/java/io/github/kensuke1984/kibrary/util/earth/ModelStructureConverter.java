@@ -19,7 +19,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -151,7 +150,7 @@ public class ModelStructureConverter extends Operation {
        PolynomialStructure perturbedStructure = convertModel(initialStructure, radii, model);
 
        // output structure
-       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".structure");
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
        PolynomialStructureFile.write(perturbedStructure, outputPath);
    }
 

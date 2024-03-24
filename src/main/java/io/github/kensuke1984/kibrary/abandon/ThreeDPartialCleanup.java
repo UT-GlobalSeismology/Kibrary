@@ -47,13 +47,13 @@ public class ThreeDPartialCleanup {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("d").longOpt("delete").required()
-                .desc("Delete spc files in FP and BP folders").build());
+                .desc("Delete spc files in FP and BP folders.").build());
         options.addOption(Option.builder("f").hasArg().argName("fpPath")
-                .desc("Path of FP folder (FPpool)").build());
+                .desc("Path of FP folder. (FPpool)").build());
         options.addOption(Option.builder("b").hasArg().argName("bpPath")
-                .desc("Path of BP folder (BPpool)").build());
+                .desc("Path of BP folder. (BPpool)").build());
         options.addOption(Option.builder("h").hasArg().argName("header")
-                .desc("Header of model files (PREM)").build());
+                .desc("Header of model files. (PREM)").build());
 
         return options;
     }

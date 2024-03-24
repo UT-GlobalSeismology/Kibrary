@@ -21,7 +21,6 @@ import org.apache.commons.net.ftp.FTPReply;
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Downloads mseed files prepared after sending breqfast mails. Download is done through FTP access to IRIS server.
@@ -66,11 +65,11 @@ public final class DataTransfer {
         OptionGroup actionOption = new OptionGroup();
         actionOption.setRequired(true);
         actionOption.addOption(Option.builder("c").longOpt("checknum")
-                .desc("Check the number of files prepared at server").build());
+                .desc("Check the number of files prepared at server.").build());
         actionOption.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
-                .desc("Download files that contain the specified string").build());
+                .desc("Download files that contain the specified string.").build());
         actionOption.addOption(Option.builder("a").longOpt("all")
-                .desc("Download all files at server").build());
+                .desc("Download all files at server.").build());
         options.addOptionGroup(actionOption);
 
         return options;
@@ -126,7 +125,7 @@ public final class DataTransfer {
             Thread.sleep(10 * 1000);
 
             // create output folder
-            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, true, GadgetAid.getTemporaryString());
+            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, true, null);
 
             // download
             for (FTPFile ffile : ffiles) {

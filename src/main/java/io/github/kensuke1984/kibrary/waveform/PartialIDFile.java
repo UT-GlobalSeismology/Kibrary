@@ -309,7 +309,7 @@ public final class PartialIDFile {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("p").longOpt("partial").hasArg().argName("partailFolder")
-                .desc("The input partial waveform folder (.)").build());
+                .desc("The input partial waveform folder. (.)").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Specify path of output file. When not set, writes in standard output.").build());

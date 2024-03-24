@@ -14,7 +14,6 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -115,10 +114,8 @@ public class StaticCorrectionMerge extends Operation {
         }
 
         // output merged file
-        String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, null, ".dat");
         StaticCorrectionDataFile.write(staticCorrections, outputPath);
     }
-
 
 }

@@ -14,7 +14,6 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -216,7 +215,7 @@ public class VoxelFileMaker extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
         VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 

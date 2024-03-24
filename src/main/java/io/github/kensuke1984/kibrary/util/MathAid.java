@@ -7,7 +7,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 /**
- * Some calculation Utilities.
+ * Some calculation utilities.
  *
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
@@ -204,15 +204,15 @@ public final class MathAid {
     }
 
     /**
-     * Turns a positive number into an ordinal number String (i.e. 1st, 2nd, ...)
-     * @param n (int) Number to get the ordinal of
+     * Turns a positive number into an ordinal number String (i.e. 1st, 2nd, ...).
+     * @param n (int) Number to get the ordinal of.
      * @return (String) Ordinal number.
      *
      * @author otsuru
      * @since 2022/4/24
      */
     public static String ordinalNumber(int n) {
-        if (n < 0) throw new IllegalArgumentException("Input n must be positive");
+        if (n < 0) throw new IllegalArgumentException("Input n must be positive.");
 
         // always "th" when the digit in the tens place is 1
         if (n % 100 / 10 == 1) return  n + "th";

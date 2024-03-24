@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -118,7 +117,7 @@ public class ModelSmoothener extends Operation {
             smoothedMap.put(horizontalPosition.toFullPosition(averagedRadius), average);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         Path outputPerturbationFile = outPath.resolve(perturbationPath.getFileName());

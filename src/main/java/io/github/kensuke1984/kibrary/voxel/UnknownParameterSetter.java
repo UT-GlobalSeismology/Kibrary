@@ -22,7 +22,6 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -85,7 +84,7 @@ public class UnknownParameterSetter {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "unknowns", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "unknowns", fileTag, appendFileDate, null, ".lst");
 
         // partial types
         System.err.print("Working for:");

@@ -13,7 +13,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Removes timewindows of a timewindow file from those of another.
@@ -45,9 +44,9 @@ public class TimewindowSubtract {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("a").longOpt("original").hasArg().argName("originalTimewindowFile").required()
-                .desc("The original timewindow file").build());
+                .desc("The original timewindow file.").build());
         options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimewindowFile").required()
-                .desc("The timewindow file to be subtracted").build());
+                .desc("The timewindow file to be subtracted.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
@@ -66,7 +65,7 @@ public class TimewindowSubtract {
         Path subtractPath = Paths.get(cmdLine.getOptionValue("b"));
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".dat");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, null, ".dat");
 
         Set<TimewindowData> originalWindows = TimewindowDataFile.read(originalPath);
         Set<TimewindowData> subtractWindows = TimewindowDataFile.read(subtractPath);

@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -245,7 +244,7 @@ public class ModelMapper extends Operation {
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (VariableType variable : variableTypes) {

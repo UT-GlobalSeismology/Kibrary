@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -199,7 +198,7 @@ public class AzimuthHistogram {
             typeName = "sourceAz";
             xlabel = "Source azimuth";
         }
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), typeName + "Histogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), typeName + "Histogram", folderTag, appendFolderDate, null);
         Path txtPath = outPath.resolve(typeName + "Histogram.txt");
         Path scriptPath = outPath.resolve(typeName + "Histogram.plt");
         Path weightPath = outPath.resolve("entryWeight_" + typeName + ".lst");

@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -247,7 +246,7 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

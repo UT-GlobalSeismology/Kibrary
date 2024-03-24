@@ -18,7 +18,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
@@ -255,7 +254,7 @@ public class VoxelLayoutDesigner extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
         VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 

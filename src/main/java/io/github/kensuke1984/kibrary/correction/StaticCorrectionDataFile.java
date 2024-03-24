@@ -32,7 +32,6 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -93,9 +92,7 @@ public final class StaticCorrectionDataFile {
      */
     public static void write(Set<StaticCorrectionData> correctionSet, Path outputPath, OpenOption... options)
             throws IOException {
-        System.err.println("Outputting "
-            + MathAid.switchSingularPlural(correctionSet.size(), "static correction", "static corrections")
-            + " in " + outputPath);
+        DatasetAid.printNumOutput(correctionSet.size(), "static correction", "static corrections", outputPath);
 
         Observer[] observers = correctionSet.stream().map(StaticCorrectionData::getObserver).distinct().sorted()
                 .toArray(Observer[]::new);
@@ -196,7 +193,7 @@ public final class StaticCorrectionDataFile {
 
             Set<StaticCorrectionData> staticCorrectionSet = Arrays.stream(bytes).parallel()
                     .map(b -> createCorrection(b, observers, events, phases)).collect(Collectors.toSet());
-            DatasetAid.checkNum(staticCorrectionSet.size(), "static correction", "static corrections");
+            DatasetAid.printNumInput(staticCorrectionSet.size(), "static correction", "static corrections", inputPath);
             return Collections.unmodifiableSet(staticCorrectionSet);
         }
     }
@@ -251,10 +248,10 @@ public final class StaticCorrectionDataFile {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("c").longOpt("correction").hasArg().argName("staticCorrectionFile")
-                .desc("Set input static correction file").build());
+                .desc("Set input static correction file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
-                .desc("Just count number without creating output files").build());
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;

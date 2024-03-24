@@ -17,7 +17,6 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
@@ -52,11 +51,11 @@ public class DiagATAExtract {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("u").longOpt("unknowns").hasArg().argName("unknownParameterFile").required()
-                .desc("Path of unknown parameter file").build());
+                .desc("Path of unknown parameter file.").build());
         options.addOption(Option.builder("a").longOpt("ata").hasArg().argName("ataFile").required()
-                .desc("Path of ATA file").build());
+                .desc("Path of ATA file.").build());
         options.addOption(Option.builder("v").longOpt("variable").hasArg().argName("variableType").required()
-                .desc("Variable type").build());
+                .desc("Variable type.").build());
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
@@ -76,7 +75,7 @@ public class DiagATAExtract {
         VariableType variable = VariableType.valueOf(cmdLine.getOptionValue("v"));
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "diagATA", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "diagATA", fileTag, appendFileDate, null, ".lst");
 
         // read parameter information and ATA
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);

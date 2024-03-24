@@ -15,7 +15,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
@@ -50,10 +49,10 @@ public class VoxelMapper {
 
         // input
         options.addOption(Option.builder("v").longOpt("voxelFile").hasArg().argName("voxelFile").required()
-                .desc("Path of voxel information file").build());
+                .desc("Path of voxel information file.").build());
         // settings
         options.addOption(Option.builder("r").longOpt("region").hasArg().argName("region")
-                .desc("Map region in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]").build());
+                .desc("Map region in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
@@ -82,7 +81,7 @@ public class VoxelMapper {
         // create output folder
         String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFolderDate = !cmdLine.hasOption("O");
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "voxelMap", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "voxelMap", folderTag, appendFolderDate, null);
 
         // output pixels
         List<String> pixelLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());

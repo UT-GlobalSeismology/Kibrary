@@ -54,10 +54,6 @@ public class TimePartialsAssembler extends Operation {
      */
     private String folderTag;
     /**
-     * output directory Path
-     */
-    private Path outPath;
-    /**
      * components to be used
      */
     private Set<SACComponent> components;
@@ -174,7 +170,7 @@ public class TimePartialsAssembler extends Operation {
     public void run() throws IOException {
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, true, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, true, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
         logPath = outPath.resolve("assembler" + GadgetAid.getTemporaryString() + ".log");
         Files.createFile(logPath);

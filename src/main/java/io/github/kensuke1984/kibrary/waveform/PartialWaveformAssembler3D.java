@@ -31,7 +31,6 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -107,10 +106,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
     /**
      * Components to use.
      */
@@ -425,7 +420,7 @@ public class PartialWaveformAssembler3D extends Operation {
             qStructure = PolynomialStructureFile.read(qStructurePath);
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         nThreads = Runtime.getRuntime().availableProcessors();

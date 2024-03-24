@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -148,7 +147,7 @@ public class GreatArcMapper extends Operation {
             endPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), afterPosDeg);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "greatArc", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "greatArc", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         outputGMT(startPosition, endPosition, outPath.resolve("arcMap.sh"));

@@ -241,9 +241,9 @@ public class DataSelection extends Operation {
         requirePhase = property.parseBoolean("requirePhase", "true");
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
-        String dateStr = GadgetAid.getTemporaryString();
-        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateStr, ".lst");
-        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateStr, ".dat");
+        String dateString = GadgetAid.getTemporaryString();
+        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateString, ".lst");
+        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateString, ".dat");
         dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }

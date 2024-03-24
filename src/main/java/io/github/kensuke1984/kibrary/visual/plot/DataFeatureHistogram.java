@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -366,7 +365,7 @@ public class DataFeatureHistogram extends Operation {
            }
        }
 
-       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // if input is in BasicID, export their features (for reference)

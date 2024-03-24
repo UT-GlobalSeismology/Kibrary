@@ -18,7 +18,6 @@ import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -50,10 +49,6 @@ public class RaypathSelection extends Operation {
      * Whether to append date string at end of output file names.
      */
     private boolean appendFileDate;
-    /**
-     * Path of the output data entry list file.
-     */
-    private Path outputSelectedPath;
     /**
      * Components to use.
      */
@@ -258,9 +253,6 @@ public class RaypathSelection extends Operation {
 
         structureName = property.parseString("structureName", "prem");
         turningPointPhase = property.parseString("turningPointPhase", "ScS");
-
-        String dateStr = GadgetAid.getTemporaryString();
-        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedEntry", fileTag, appendFileDate, dateStr, ".lst");
     }
 
     @Override
@@ -352,7 +344,8 @@ public class RaypathSelection extends Operation {
         }
 
         System.err.println(selectedEntrySet.size() + " data entries are selected.");
-        if (selectedEntrySet.size() > 0) DataEntryListFile.writeFromSet(selectedEntrySet, outputSelectedPath);
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "selectedEntry", fileTag, appendFileDate, null, ".lst");
+        if (selectedEntrySet.size() > 0) DataEntryListFile.writeFromSet(selectedEntrySet, outputPath);
     }
 
 }

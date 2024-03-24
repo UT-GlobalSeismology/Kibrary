@@ -22,9 +22,9 @@ public final class SpcFileAid {
     private SpcFileAid() {}
 
     /**
-     * @param path {@link Path} to look for {@link FormattedSPCFileName} in
-     * @return set of {@link SPCFileName} in the dir
-     * @throws IOException if an I/O error occurs
+     * @param path ({@link Path}) Folder in which to look for {@link FormattedSPCFileName}s.
+     * @return (Set of {@link SPCFileName}) SPC files in the folder.
+     * @throws IOException
      */
     public static Set<SPCFileName> collectSpcFileName(Path path) throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.

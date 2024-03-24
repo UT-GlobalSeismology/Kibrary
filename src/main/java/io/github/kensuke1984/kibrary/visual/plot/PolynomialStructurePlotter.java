@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
@@ -183,7 +182,7 @@ public class PolynomialStructurePlotter extends Operation {
        }
 
        // create script
-       Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".plt");
+       Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, null, ".plt");
        createScript(scriptPath, structures);
    }
 

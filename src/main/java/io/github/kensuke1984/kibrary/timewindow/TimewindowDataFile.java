@@ -101,9 +101,7 @@ public final class TimewindowDataFile {
         if (timewindowSet.isEmpty())
             throw new RuntimeException("Input information is empty..");
 
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(timewindowSet.size(), "timewindow", "timewindows")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(timewindowSet.size(), "timewindow", "timewindows", outputPath);
 
         Observer[] observers = timewindowSet.stream().map(TimewindowData::getObserver).distinct().sorted()
                 .toArray(Observer[]::new);
@@ -187,7 +185,7 @@ public final class TimewindowDataFile {
                     .filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
-        System.err.println("Selected " + timewindowSet.size() + " timewindows.");
+        System.err.println("Selected " + MathAid.switchSingularPlural(timewindowSet.size(), "timewindow.", "timewindows."));
         return Collections.unmodifiableSet(timewindowSet);
     }
 
@@ -237,7 +235,7 @@ public final class TimewindowDataFile {
 
             Set<TimewindowData> timewindowSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
-            DatasetAid.checkNum(timewindowSet.size(), "timewindow", "timewindows");
+            DatasetAid.printNumInput(timewindowSet.size(), "timewindow", "timewindows", inputPath);
             return Collections.unmodifiableSet(timewindowSet);
         }
     }
@@ -294,10 +292,10 @@ public final class TimewindowDataFile {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Set input timewindow file").build());
+                .desc("Set input timewindow file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
-                .desc("Just count number without creating output files").build());
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
                 .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;

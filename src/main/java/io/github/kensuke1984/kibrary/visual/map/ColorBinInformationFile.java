@@ -15,7 +15,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
@@ -109,9 +108,9 @@ public class ColorBinInformationFile {
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("distance")
-                .desc("Bin by epicentral distance").build());
+                .desc("Bin by epicentral distance.").build());
         inputOption.addOption(Option.builder("a").longOpt("azimuth")
-                .desc("Bin by azimuth").build());
+                .desc("Bin by azimuth.").build());
         inputOption.setRequired(true);
         options.addOptionGroup(inputOption);
 
@@ -132,7 +131,7 @@ public class ColorBinInformationFile {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "colorBin", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "colorBin", fileTag, appendFileDate, null, ".inf");
 
         // decide colors
         int values[];

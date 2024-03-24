@@ -112,8 +112,8 @@ public final class GadgetAid {
 
     /**
      * Reads input from standard input.
-     * @return (String) Value read from standard input (System.in)
-     * @throws IOException if any
+     * @return (String) Value read from standard input (System.in).
+     * @throws IOException
      */
     public static String readInputLine() throws IOException {
         String s;
@@ -125,9 +125,9 @@ public final class GadgetAid {
 
     /**
      * Reads input from user. Attempt for input dialog is made first; when it fails, standard input is used.
-     * @param message (String) Message for user
-     * @param initialValue (String) Initial value to show in input field
-     * @return (String) Input from user, trimmed
+     * @param message (String) Message for user.
+     * @param initialValue (String) Initial value to show in input field.
+     * @return (String) Input from user, trimmed.
      * @throws IOException
      *
      * @author otsuru
@@ -146,8 +146,8 @@ public final class GadgetAid {
 
     /**
      * Reads input from user. Attempt for input dialog is made first; when it fails, standard input is used.
-     * @param message (String) Message for user
-     * @return (String) Input from user, trimmed
+     * @param message (String) Message for user.
+     * @return (String) Input from user, trimmed.
      * @throws IOException
      *
      * @author otsuru
@@ -168,8 +168,8 @@ public final class GadgetAid {
 
     /**
      * Print a message into both a file and the standard error.
-     * @param pw (PrintWriter)
-     * @param output (String) message to print
+     * @param pw (PrintWriter) Where to print.
+     * @param output (String) Message to print.
      *
      * @author otsuru
      * @since 2021/12/27
@@ -202,8 +202,8 @@ public final class GadgetAid {
     /**
      * Change the input to an intelligible expression.
      *
-     * @param nanoSeconds [ns] time
-     * @return ?d, ?h, ?min and ?s
+     * @param nanoSeconds (long) Time [ns].
+     * @return (String) "?d, ?h, ?min and ?s".
      */
     public static String toTimeString(long nanoSeconds) {
         long used = 0;
@@ -215,13 +215,12 @@ public final class GadgetAid {
         used += TimeUnit.MINUTES.toNanos(mins);
         double sec = (nanoSeconds - used) / 1000000000.0;
         return (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ")
-                + (mins == 0 ? "" : mins + " min and ") + sec + " s";
+                + (mins == 0 ? "" : mins + " min, and ") + sec + " s";
     }
 
     /**
-     * Create a string for temporary files or w/e
-     *
-     * @return yyyyMMddHHmmss
+     * Generate date string to append to folder or file names.
+     * @return (String) yyyyMMddHHmmss.
      */
     public synchronized static String getTemporaryString() {
         try {

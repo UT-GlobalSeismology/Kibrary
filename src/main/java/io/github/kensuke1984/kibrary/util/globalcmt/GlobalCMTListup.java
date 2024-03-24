@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 
@@ -92,7 +91,7 @@ public class GlobalCMTListup {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "event", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "event", fileTag, appendFileDate, null, ".lst");
 
         //~set search ranges
         LocalDate startDate = LocalDate.parse(cmdLine.hasOption("d") ? cmdLine.getOptionValue("d") : "1990-01-01");

@@ -36,8 +36,8 @@ public final class FileAid {
     /**
      * Given a Path, this method extracts the root of the name of the file.
      * The path of parent folders and the extension of the file is removed.
-     * @param filePath (Path) The file to extract name root
-     * @return (String) File name root
+     * @param filePath (Path) The file to extract name root.
+     * @return (String) File name root.
      *
      * @author otsuru
      * @since 2023/1/16

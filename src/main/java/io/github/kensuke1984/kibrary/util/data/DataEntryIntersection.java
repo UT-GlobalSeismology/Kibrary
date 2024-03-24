@@ -13,7 +13,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Extracts {@link DataEntry}s that exist in all input {@link DataEntryListFile}s.
@@ -66,7 +65,7 @@ public class DataEntryIntersection {
         Path entryPath2 = Paths.get(cmdLine.getOptionValue("b"));
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, null, ".lst");
 
         Set<DataEntry> entrySet1 = DataEntryListFile.readAsSet(entryPath1);
         Set<DataEntry> entrySet2 = DataEntryListFile.readAsSet(entryPath2);

@@ -160,14 +160,15 @@ public class SingleRayCorrection{
      * Set path to output file and bounce point file
      */
     private void setOutput() {
+        String dateString = GadgetAid.getTemporaryString();
         switch (phaseName) {
         case "S" :
-            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_S", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
-            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "singleRayCorrection_S", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_S", threeDmodel, true, dateString, ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "singleRayCorrection_S", threeDmodel, true, dateString, ".dat");
             break;
         case "P" :
-            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_P", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
-            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "singleRayCorrection_P", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_P", threeDmodel, true, dateString, ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "singleRayCorrection_P", threeDmodel, true, dateString, ".dat");
             break;
         default :
             throw new RuntimeException("Error: phase " + phaseName + " not implemented yet");

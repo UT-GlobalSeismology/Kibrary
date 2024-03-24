@@ -254,10 +254,10 @@ public class TimewindowMaker extends Operation {
         majorArc = property.parseBoolean("majorArc", "false");
         useDuplicatePhases = property.parseBoolean("useDuplicatePhases","true");
 
-        String dateStr = GadgetAid.getTemporaryString();
-        outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateStr, ".dat");
-        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateStr, ".txt");
-        outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateStr, ".inf");
+        String dateString = GadgetAid.getTemporaryString();
+        outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateString, ".dat");
+        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateString, ".txt");
+        outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateString, ".inf");
     }
 
     private static Set<Phase> phaseSet(String arg) {

@@ -114,7 +114,7 @@ public class RaypathMapper extends Operation {
     private String mapRegion;
     private String legendJustification;
 
-    private String dateStr;
+    private String dateString;
     private ColorBinInformationFile colorBin;
     private ColorBinInformationFile outsideColorBin;
 
@@ -249,7 +249,7 @@ public class RaypathMapper extends Operation {
     }
 
     private void setName() {
-        dateStr = GadgetAid.getTemporaryString();
+        dateString = GadgetAid.getTemporaryString();
         eventFileName = "event.lst";
         observerFileName = "observer.lst";
         raypathFileName = "raypath.lst";
@@ -280,7 +280,7 @@ public class RaypathMapper extends Operation {
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
-        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateStr, ".sh");
+        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateString, ".sh");
         outputGMT();
         System.err.println("After this finishes, please run " + gmtPath);
     }
@@ -312,7 +312,7 @@ public class RaypathMapper extends Operation {
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));

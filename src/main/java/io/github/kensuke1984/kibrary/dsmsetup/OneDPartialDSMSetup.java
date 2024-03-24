@@ -198,7 +198,7 @@ public class OneDPartialDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
+        String dateString = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
@@ -213,7 +213,7 @@ public class OneDPartialDSMSetup extends Operation {
         }
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -259,13 +259,13 @@ public class OneDPartialDSMSetup extends Operation {
         Path outSHPath;
         Path outPSVPath;
         if (forTIParameters) {
-            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_SH", null, false, dateStr, ".sh");
-            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_PSV", null, false, dateStr, ".sh");
+            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_SH", null, false, dateString, ".sh");
+            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_PSV", null, false, dateString, ".sh");
             shell.write(DSMShellscript.DSMType.TI1D, SPCMode.SH, listFileName, outSHPath);
             shell.write(DSMShellscript.DSMType.TI1D, SPCMode.PSV, listFileName, outPSVPath);
         } else {
-            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_SH", null, false, dateStr, ".sh");
-            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_PSV", null, false, dateStr, ".sh");
+            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_SH", null, false, dateString, ".sh");
+            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_PSV", null, false, dateString, ".sh");
             shell.write(DSMShellscript.DSMType.I1D, SPCMode.SH, listFileName, outSHPath);
             shell.write(DSMShellscript.DSMType.I1D, SPCMode.PSV, listFileName, outPSVPath);
         }

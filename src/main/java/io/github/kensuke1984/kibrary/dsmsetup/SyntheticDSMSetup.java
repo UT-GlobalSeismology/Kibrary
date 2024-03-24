@@ -175,7 +175,7 @@ public class SyntheticDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
+        String dateString = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
@@ -184,7 +184,7 @@ public class SyntheticDSMSetup extends Operation {
         // set structure
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -222,8 +222,8 @@ public class SyntheticDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceTreeSet);
         DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateString, ".sh");
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
         System.err.println("After this finishes, please enter " + outPath + "/ and run "
