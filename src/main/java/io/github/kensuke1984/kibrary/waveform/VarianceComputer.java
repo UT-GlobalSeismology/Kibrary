@@ -80,7 +80,7 @@ public class VarianceComputer {
 
         // set weighting
         System.err.println("Setting weighting");
-        RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
+        RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
 
         // assemble d
         System.err.println("Assembling d vector");

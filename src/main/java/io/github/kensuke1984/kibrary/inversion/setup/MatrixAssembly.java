@@ -79,7 +79,7 @@ public class MatrixAssembly {
 
         // set weighting
         System.err.println("Setting weighting");
-        RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
+        RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
 
         // set AMatrix
         System.err.println("Setting data for A matrix");

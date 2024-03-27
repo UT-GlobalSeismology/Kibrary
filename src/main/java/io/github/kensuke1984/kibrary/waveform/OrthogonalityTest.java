@@ -230,7 +230,7 @@ public class OrthogonalityTest extends Operation {
 
        // set weighting
        System.err.println("Setting weighting");
-       RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
+       RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
 
        // set and assemble main A matrix
        System.err.println("Setting data for main A matrix");

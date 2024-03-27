@@ -193,7 +193,7 @@ public class WeightingHandler {
      * @param dVector
      * @return
      */
-    public RealVector[] weighWaveforms(DVectorBuilder dVector) {
+    public RealVector[] weightWaveforms(DVectorBuilder dVector) {
         RealVector[] weightingVectors = new ArrayRealVector[dVector.getNTimeWindow()];
 
         // count number of timewindows for each component
@@ -244,18 +244,12 @@ public class WeightingHandler {
                 weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
 
-            //TODO
-//            if (i % 500 == 0) {
-//                System.err.println(dVector.getObsID(i));
-//                System.err.println(" " + weighting);
-//            }
-
             //~create vector with the value 'weighting' for the whole timewindow
-            double[] ws = new double[dVector.getObsVec(i).getDimension()];
-            for (int j = 0; j < ws.length; j++) {
-                ws[j] = weighting;
+            double[] weightingArray = new double[dVector.getObsVec(i).getDimension()];
+            for (int j = 0; j < weightingArray.length; j++) {
+                weightingArray[j] = weighting;
             }
-            weightingVectors[i] = new ArrayRealVector(ws);
+            weightingVectors[i] = new ArrayRealVector(weightingArray);
         }
 
         return weightingVectors;
