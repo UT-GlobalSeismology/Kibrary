@@ -266,20 +266,22 @@ public final class SPC_SAC extends Operation {
             }
         }
         // both
-        else for (SPCFileName shSPC : shSPCs) {
-            SPCFileName psvSPC = pairPSVFile(shSPC);
-            if (psvSPC == null || !psvSPC.exists()) {
-                throw new NoSuchFileException(psvSPC + " does not exist");
+        else {
+            for (SPCFileName shSPC : shSPCs) {
+                SPCFileName psvSPC = pairPSVFile(shSPC);
+                if (psvSPC == null || !psvSPC.exists()) {
+                    throw new NoSuchFileException(psvSPC + " does not exist");
+                }
+                SPCFile shFile = SPCFile.getInstance(shSPC);
+                SPCFile psvFile = SPCFile.getInstance(psvSPC);
+                // create event folder under outPath
+                Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
+                // operate method createSACMaker() -> instance of an anonymous inner class is returned
+                // -> executes the run() of that class defined in createSACMaker()
+                es.execute(createSACMaker(shFile, psvFile));
+                nSAC++;
+                if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
             }
-            SPCFile shFile = SPCFile.getInstance(shSPC);
-            SPCFile psvFile = SPCFile.getInstance(psvSPC);
-            // create event folder under outPath
-            Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
-            // operate method createSACMaker() -> instance of an anonymous inner class is returned
-            // -> executes the run() of that class defined in createSACMaker()
-            es.execute(createSACMaker(shFile, psvFile));
-            nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
         System.err.println("\rReading SPC files finished. " + nSAC + " total.");
 
@@ -306,8 +308,14 @@ public final class SPC_SAC extends Operation {
             @Override
             public void run() {
                 // execute run() in SACMaker
-                super.run();
-                numberOfCreatedSAC.incrementAndGet();
+                try {
+                    super.run();
+                    numberOfCreatedSAC.incrementAndGet();
+                } catch (Exception e) {
+                    System.err.println();
+                    System.err.println("!! " + primarySPC.getSpcFileName().toString() + " failed:");
+                    throw e;
+                }
             }
         };
         sm.setComponents(components);

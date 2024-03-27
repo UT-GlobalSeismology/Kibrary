@@ -6,6 +6,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -237,6 +238,7 @@ public final class DatasetAid {
                 Set<Observer> observers = entryMap.get(event).stream()
                         .filter(entry -> components.contains(entry.getComponent()))
                         .map(DataEntry::getObserver).collect(Collectors.toSet());
+                observers = removeObserversWithSameName(event, observers);
                 arcMap.put(event, observers);
             }
         } else if (obsPath != null){
@@ -247,12 +249,38 @@ public final class DatasetAid {
                         .filter(name -> name.isOBS() && components.contains(name.getComponent()))
                         .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
                         .map(Observer::of).collect(Collectors.toSet());
+                observers = removeObserversWithSameName(eventDir.getGlobalCMTID(), observers);
                 arcMap.put(eventDir.getGlobalCMTID(), observers);
             }
         } else {
             throw new IllegalStateException("Either entryPath or obsPath must be specified.");
         }
         return arcMap;
+    }
+
+    /**
+     * For a single event, there should not be multiple observers with same name and different position;
+     * so remove any duplications.
+     * @param event
+     * @param observers
+     * @return
+     *
+     * @author otsuru
+     * @since 2024/3/27
+     */
+    private static Set<Observer> removeObserversWithSameName(GlobalCMTID event, Set<Observer> observers) {
+        Set<String> observerNames = new HashSet<>();
+        Set<String> duplicateNames = new HashSet<>();
+        // For each observer, add its name to Set; if it cannot be added, that name is duplicated.
+        for (Observer observer : observers) {
+            String observerName = observer.toString();
+            if (observerNames.add(observerName) == false) {
+                System.err.println("!! Duplication of " + observerName + " in " + event + ", ignoring.");
+                duplicateNames.add(observerName);
+            }
+        }
+        // remove observers that have duplicated name
+        return observers.stream().filter(observer -> !duplicateNames.contains(observer.toString())).collect(Collectors.toSet());
     }
 
     /**

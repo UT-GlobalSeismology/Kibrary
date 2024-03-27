@@ -230,9 +230,9 @@ public class OneDPartialDSMSetup extends Operation {
                     continue;
 
                 // in the same event folder, observers with the same name should have same position
-                int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
+                int numberOfObserver = (int) observers.stream().map(Observer::toString).distinct().count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different position for " + event);
+                    System.err.println("! Caution: There are observers with the same name and different position for " + event);
 
                 OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, event.getEventData(), observers, header,
                         layerRadii, tlen, np);

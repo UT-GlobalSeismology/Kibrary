@@ -673,10 +673,16 @@ class EventProcessor implements Runnable {
             }
         }
 
-        // triplets should consist of either {RTZ}, {RT}, or {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
+            // triplets should consist of either {RTZ}, {RT}, or {Z}
             if (!oneTriplet.checkValidity()) {
                 throw new IllegalStateException("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+            }
+            // check that all files in each triplet have the same observer position
+            if (!oneTriplet.checkPositionConsistency()) {
+                GadgetAid.dualPrintln(eliminatedWriter, "!! unmatching observer positions : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+                oneTriplet.dismiss();
+                oneTriplet.move(duplicateInstrumentPath);
             }
         }
 
