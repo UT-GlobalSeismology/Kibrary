@@ -18,7 +18,14 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
+/**
+ * Utils for plotting basic waveforms.
+ * @author otsuru
+ * @since 2023/2/12
+ */
 class BasicPlotAid {
+    private BasicPlotAid() {}
+
     static final GnuplotLineAppearance UNSHIFTED_APPEARANCE = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance SHIFTED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
     static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);

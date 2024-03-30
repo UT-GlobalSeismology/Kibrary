@@ -138,7 +138,7 @@ public class ModelSetMapper extends Operation {
             pw.println("#fusionPath fusion.inf");
             pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(int) Maximum number of basis vectors to map. (10)");
             pw.println("#maxNum ");

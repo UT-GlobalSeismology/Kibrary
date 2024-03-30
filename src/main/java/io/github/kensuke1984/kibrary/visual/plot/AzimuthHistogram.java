@@ -258,7 +258,7 @@ public class AzimuthHistogram {
             for (int i = 0; i < weights.length; i++) {
                 if (numberOfRecords[i] > 0) {
                     double x = numberOfRecords[i] / average;
-                    double weight = (1.0 - Math.exp(-2.0 * x)) / (1.0 - Math.exp(-2.0)) / x;
+                    double weight = (1.0 - Math.exp(-3.0 * x)) / (1.0 - Math.exp(-3.0)) / x;
                     weights[i] = Precision.round(weight, 3);
                 } else {
                     weights[i] = 0.0;

@@ -647,8 +647,9 @@ class EventProcessor implements Runnable {
     /**
      * Eliminates duplication in the data.
      * If there are multiple files with the same network and station for a given component,
-     * or the there are files for several stations that are positioned very close to each other with the same component,
+     * or there are files for several stations that are positioned very close to each other with the same component,
      * one is selected and the others are discarded.
+     * Also, observers that have different positions among components will be discarded.
      * If there are invalid triplets, they will be put in "invalidTriplet".
      * Eliminated SAC files will be put in "duplicateInstrument".
      * @throws IOException
