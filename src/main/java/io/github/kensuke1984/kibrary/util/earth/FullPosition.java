@@ -63,35 +63,6 @@ public final class FullPosition extends HorizontalPosition {
     /**
      * Checks whether this position is inside a given coordinate range.
      * Lower limit is included; upper limit is excluded.
-     * @param minLatitude (double) [-90:maxLatitude)
-     * @param maxLatitude (double) (minLatitude:90]
-     * @param minLongitude (double) [-180:maxLongitude)
-     * @param maxLongitude (double) (minLongitude:360]
-     * @param minRadius (double) [0:maxRadius)
-     * @param maxRadius (double) (minRadius:)
-     * @return (boolean) Whether this position is inside the given range.
-     *
-     * @author otsuru
-     * @since 2022/10/11
-     * @deprecated
-     */
-    public boolean isInRange(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude,
-            double minRadius, double maxRadius) {
-        if (minRadius < 0 || minRadius > maxRadius) {
-            throw new IllegalArgumentException("The input radius range: " + minRadius + ", " + maxRadius + " is invalid.");
-        }
-
-        // radius
-        if (radius < minRadius || maxRadius <= radius) return false;
-
-        // latitude and longitude
-        if (isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude) == false) return false;
-
-        return true;
-    }
-    /**
-     * Checks whether this position is inside a given coordinate range.
-     * Lower limit is included; upper limit is excluded.
      * However, upper latitude limit is included when it is 90 (if maximum latitude is correctly set as 90).
      * @param latitudeRange ({@link LinearRange}) Latitude range [deg].
      * @param longitudeRange ({@link CircularRange}) Longitude range [deg].

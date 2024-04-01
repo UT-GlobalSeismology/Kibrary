@@ -16,6 +16,8 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -227,15 +229,16 @@ public class CoarseGridDesigner extends Operation {
 
             // decide number of latitude intervals
             // When latitudeOffset > 0, intervals for that extra part is needed.
-            int nLatitude = (int) MathAid.ceil((180 + latitudeOffset) / dLatitude);
+            int nLatitude = (int) MathAid.ceil((180.0 + latitudeOffset) / dLatitude);
             // loop for each latitude band (from north to south)
             for (int i = 0; i < nLatitude; i++) {
                 double tmp;
-                double maxLatitude = (tmp = 90 - (i * dLatitude - latitudeOffset)) > 90 ? 90 : tmp;
-                double minLatitude = (tmp = maxLatitude - dLatitude) < -90 ? -90 : tmp;
-                double averageLatitude = maxLatitude - dLatitude/2;
-                if (averageLatitude < -90) averageLatitude = -90;
-                if (averageLatitude > 90) averageLatitude = 90;
+                double maxLatitude = (tmp = 90.0 - (i * dLatitude - latitudeOffset)) > 90.0 ? 90.0 : tmp;
+                double minLatitude = (tmp = maxLatitude - dLatitude) < -90.0 ? -90.0 : tmp;
+                LinearRange latitudeRange = new LinearRange("Latitude", minLatitude, maxLatitude, -90.0, 90.0);
+                double averageLatitude = maxLatitude - dLatitude / 2.0;
+                if (averageLatitude < -90.0) averageLatitude = -90.0;
+                if (averageLatitude > 90.0) averageLatitude = 90.0;
 
                 // decide dLongitude for this latitude band
                 double dLongitudeForRow;
@@ -251,17 +254,18 @@ public class CoarseGridDesigner extends Operation {
                 // decide number of longitude intervals
                 // When indivisible, the remaining range is not used so that the longitudes do not exceed 360.
                 // It is not a good idea to include overlapped voxels 2 times (at both ends), anyway.
-                int nLongitude = (int) MathAid.floor(360 / dLongitudeForRow);
+                int nLongitude = (int) MathAid.floor(360.0 / dLongitudeForRow);
                 // loop for each longitude range
                 for (int j = 0; j < nLongitude; j++) {
                     // decide longitude range, depending on crossDateLine
-                    double minLongitude = crossDateLine ? (j * dLongitudeForRow + longitudeOffset)
-                            : (-180 + j * dLongitudeForRow + longitudeOffset);
-                    double maxLongitude = (tmp = minLongitude + dLongitudeForRow) > 360 ? 360 : tmp;
+                    double minLongitude = crossDateLine ? (j * dLongitudeForRow + longitudeOffset) :
+                            (-180.0 + j * dLongitudeForRow + longitudeOffset);
+                    double maxLongitude = (tmp = minLongitude + dLongitudeForRow) > 360.0 ? 360.0 : tmp;
+                    CircularRange longitudeRange = new CircularRange("Longitude", minLongitude, maxLongitude);
 
                     // fuse voxels vertically at this latitude and longitude range
                     List<UnknownParameter> correspondingParameters = parameterList.stream()
-                            .filter(param -> param.getPosition().toHorizontalPosition().isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude))
+                            .filter(param -> param.getPosition().toHorizontalPosition().isInRange(latitudeRange, longitudeRange))
                             .collect(Collectors.toList());
                     if (correspondingParameters.size() == 0) continue;
                     fuseVertically(correspondingParameters);

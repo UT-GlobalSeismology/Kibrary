@@ -95,42 +95,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Checks whether this position is inside a given coordinate range.
-     * Lower limit is included; upper limit is excluded. However, upper latitude limit is included when it is 90.
-     * @param lowerLatitude (double) Lower limit of latitude range [deg]; [-90:upperLatitude).
-     * @param upperLatitude (double) Upper limit of latitude range [deg]; (lowerLatitude:90].
-     * @param lowerLongitude (double) Lower limit of longitude range [deg]; [-180:360].
-     * @param upperLongitude (double) Upper limit of longitude range [deg]; [-180:360].
-     * @return (boolean) Whether this position is inside the given range.
-     *
-     * @author otsuru
-     * @since 2021/11/21
-     * @deprecated
-     */
-    public boolean isInRange(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
-
-        // latitude
-        // Reject values below lower limit, but include lower limit.
-        if (latitude.getLatitude() < lowerLatitude) return false;
-        // Reject values above or equal to upper limit, but do not reject when upper limit is 90.
-        if (upperLatitude < 90 && upperLatitude <= latitude.getLatitude()) return false;
-
-        // longitude
-        double lowerLongitudeFixed = Longitude.fix(lowerLongitude);
-        double upperLongitudeFixed = Longitude.fix(upperLongitude);
-        if (upperLongitudeFixed <= lowerLongitudeFixed) {
-            // Accept values in [-180:upperLongitude),[lowerLongitude:180].
-            // When lowerLongitude == upperLongitude (this happens for -180 & 180 or 0 & 360), everything is accepted.
-            if (longitude.getLongitude() < upperLongitudeFixed || lowerLongitudeFixed <= longitude.getLongitude()) return true;
-            else return false;
-        } else {
-            // Accept values in [lowerLongitude:upperLongitude).
-            if (longitude.getLongitude() < lowerLongitudeFixed || upperLongitudeFixed <= longitude.getLongitude()) return false;
-            else return true;
-        }
-    }
-
-    /**
-     * Checks whether this position is inside a given coordinate range.
      * Lower limit is included; upper limit is excluded.
      * However, upper latitude limit is included when it is 90 (if maximum latitude is correctly set as 90).
      * @param latitudeRange ({@link LinearRange}) Latitude range [deg].
