@@ -80,14 +80,6 @@ public class DataSelection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output information file.
-     */
-    private Path outputFeaturePath;
-    /**
-     * Path of the output timewindow file.
-     */
-    private Path outputSelectedPath;
-    /**
      * Components to use.
      */
     private Set<SACComponent> components;
@@ -117,7 +109,7 @@ public class DataSelection extends Operation {
     /**
      * Maximum of static correction shift.
      */
-    private double maxStaticShift;
+    private double upperStaticShift;
 
     /**
      * Correlation coefficient range.
@@ -134,14 +126,14 @@ public class DataSelection extends Operation {
     /**
      * Threshold of S/N ratio that is to be selected.
      */
-    private double minSNratio;
+    private double lowerSNratio;
     private boolean requirePhase;
     private boolean excludeSurfaceWave;
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private Set<DataFeature> dataFeatureSet;
-    private Set<TimewindowData> goodTimewindowSet;
+    private Set<DataFeature> dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
+    private Set<TimewindowData> goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * @param args  none to create a property file <br>
@@ -179,21 +171,21 @@ public class DataSelection extends Operation {
             pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
-            pw.println("#maxStaticShift ");
+            pw.println("#upperStaticShift ");
             pw.println("##(double) Lower threshold of correlation, inclusive; [-1:maxCorrelation). (0)");
-            pw.println("#minCorrelation ");
+            pw.println("#lowerCorrelation ");
             pw.println("##(double) Upper threshold of correlation, exclusive; (minCorrelation:1]. (1)");
-            pw.println("#maxCorrelation ");
+            pw.println("#upperCorrelation ");
             pw.println("##(double) Lower threshold of normalized variance, inclusive; [0:maxVariance). (0)");
-            pw.println("#minVariance ");
+            pw.println("#lowerVariance ");
             pw.println("##(double) Upper threshold of normalized variance, exclusive; (minVariance:). (2)");
-            pw.println("#maxVariance ");
+            pw.println("#upperVariance ");
             pw.println("##(double) Lower threshold of amplitude ratio, inclusive; [0:maxRatio). (0.5)");
-            pw.println("#minRatio ");
+            pw.println("#lowerRatio ");
             pw.println("##(double) Upper threshold of amplitude ratio, exclusive; (minRatio:). (2)");
-            pw.println("#maxRatio ");
+            pw.println("#upperRatio ");
             pw.println("##(double) Threshold of S/N ratio (lower limit), inclusive; [0:). (0)");
-            pw.println("#minSNratio ");
+            pw.println("#lowerSNratio ");
             pw.println("##(boolean) Whether to require phases to be included in timewindow. (true)");
             pw.println("#requirePhase ");
             pw.println("##(boolean) Whether to exclude surface wave. (false)");
@@ -223,29 +215,23 @@ public class DataSelection extends Operation {
             staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
         }
 
-        maxStaticShift = property.parseDouble("maxStaticShift", "10.");
-        if (maxStaticShift < 0)
-            throw new IllegalArgumentException("Static shift threshold " + maxStaticShift + " is invalid, must be >= 0.");
-        double minCorrelation = property.parseDouble("minCorrelation", "0");
-        double maxCorrelation = property.parseDouble("maxCorrelation", "1");
-        correlationRange = new LinearRange("Correlation", minCorrelation, maxCorrelation, -1.0, 1.0);
-        double minVariance = property.parseDouble("minVariance", "0");
-        double maxVariance = property.parseDouble("maxVariance", "2");
-        varianceRange = new LinearRange("Variance", minVariance, maxVariance, 0.0);
-        double minRatio = property.parseDouble("minRatio", "0.5");
-        double maxRatio = property.parseDouble("maxRatio", "2");
-        ratioRange = new LinearRange("Ratio", minRatio, maxRatio, 0.0);
-        minSNratio = property.parseDouble("minSNratio", "0");
-        if (minSNratio < 0)
-            throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
+        upperStaticShift = property.parseDouble("upperStaticShift", "10.");
+        if (upperStaticShift < 0)
+            throw new IllegalArgumentException("Static shift threshold " + upperStaticShift + " is invalid, must be >= 0.");
+        double lowerCorrelation = property.parseDouble("lowerCorrelation", "0");
+        double upperCorrelation = property.parseDouble("upperCorrelation", "1");
+        correlationRange = new LinearRange("Correlation", lowerCorrelation, upperCorrelation, -1.0, 1.0);
+        double lowerVariance = property.parseDouble("lowerVariance", "0");
+        double upperVariance = property.parseDouble("upperVariance", "2");
+        varianceRange = new LinearRange("Variance", lowerVariance, upperVariance, 0.0);
+        double lowerRatio = property.parseDouble("lowerRatio", "0.5");
+        double upperRatio = property.parseDouble("upperRatio", "2");
+        ratioRange = new LinearRange("Ratio", lowerRatio, upperRatio, 0.0);
+        lowerSNratio = property.parseDouble("lowerSNratio", "0");
+        if (lowerSNratio < 0)
+            throw new IllegalArgumentException("S/N ratio threshold " + lowerSNratio + " is invalid, must be >= 0.");
         requirePhase = property.parseBoolean("requirePhase", "true");
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
-
-        String dateString = GadgetAid.getTemporaryString();
-        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateString, ".lst");
-        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateString, ".dat");
-        dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
-        goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
     @Override
@@ -272,6 +258,11 @@ public class DataSelection extends Operation {
         System.err.println();
 
         System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
+
+        // output
+        String dateString = GadgetAid.getTemporaryString();
+        Path outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateString, ".lst");
+        Path outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateString, ".dat");
         if (goodTimewindowSet.size() > 0) TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
         if (dataFeatureSet.size() > 0) DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
@@ -306,7 +297,7 @@ public class DataSelection extends Operation {
         double snRatio = feature.getSNRatio();
 
         boolean isok = ratioRange.check(posSideRatio) && ratioRange.check(negSideRatio) && ratioRange.check(absRatio) &&
-                correlationRange.check(correlation) && varianceRange.check(variance) && (minSNratio <= snRatio);
+                correlationRange.check(correlation) && varianceRange.check(variance) && (lowerSNratio <= snRatio);
         return isok;
     }
 
@@ -421,7 +412,7 @@ public class DataSelection extends Operation {
                         return;
                     }
                     shift = correction.getTimeshift();
-                    if (Math.abs(shift) > maxStaticShift) {
+                    if (Math.abs(shift) > upperStaticShift) {
                         System.err.println();
                         System.err.println("!! Time shift too large, skipping: " + timewindow);
                         return;

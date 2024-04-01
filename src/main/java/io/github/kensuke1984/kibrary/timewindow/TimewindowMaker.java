@@ -87,17 +87,9 @@ public class TimewindowMaker extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output timewindow file.
-     */
-    private Path outTimewindowPath;
-    /**
      * Path of output file to list up SAC files that could not produce timewindows.
      */
     private Path outInvalidPath;
-    /**
-     * Path of the output travel time file.
-     */
-    private Path outTravelTimePath;
     /**
      * Components to use.
      */
@@ -253,11 +245,6 @@ public class TimewindowMaker extends Operation {
         structureName = property.parseString("structureName", "prem").toLowerCase();
         majorArc = property.parseBoolean("majorArc", "false");
         useDuplicatePhases = property.parseBoolean("useDuplicatePhases","true");
-
-        String dateString = GadgetAid.getTemporaryString();
-        outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateString, ".dat");
-        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateString, ".txt");
-        outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateString, ".inf");
     }
 
     private static Set<Phase> phaseSet(String arg) {
@@ -267,6 +254,10 @@ public class TimewindowMaker extends Operation {
 
     @Override
     public void run() throws IOException {
+        String dateString = GadgetAid.getTemporaryString();
+        Path outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateString, ".dat");
+        Path outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateString, ".inf");
+        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateString, ".txt");
         System.err.println("Invalid files, if any, will be listed in " + outInvalidPath);
 
         // read input file
