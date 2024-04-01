@@ -31,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
- * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}.
- * The files are for observed and synthetic waveforms (NOT partial).
+ * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}
+ * for observed and synthetic waveforms (NOT partial).
  * <p>
  * The file contains
  * <p>(File information)</p>
@@ -59,6 +59,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * the input binary-format files can be exported in ascii format.
  * If desired, waveform data can be exported in txt files under the basic waveform folder.
  *
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2021/11/3 moved from waveformdata to waveform
  */

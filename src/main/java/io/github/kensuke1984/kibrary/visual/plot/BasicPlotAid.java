@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * Utils for plotting basic waveforms.
+ *
  * @author otsuru
  * @since 2023/2/12
  */

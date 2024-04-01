@@ -1,5 +1,19 @@
 package io.github.kensuke1984.kibrary.correction;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.Property_old;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -12,12 +26,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Maker of static correction suggested by Nozomu Takeuchi. It seeks up-and-down
@@ -33,7 +41,7 @@ import java.util.stream.Collectors;
  * networks in an event</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.1.4
+ * @since a long time ago
  * @see StaticCorrectionData
  */
 public class TakeuchiStaticCorrection implements Operation_old {
@@ -171,7 +179,7 @@ public class TakeuchiStaticCorrection implements Operation_old {
         double amplitudeRatio = obsAmp / synAmp;
         StaticCorrectionData sc =
                 new StaticCorrectionData(station, id, component, timeWindow.getStartTime(),
-                		timeShift, amplitudeRatio, timeWindow.getPhases());
+                        timeShift, amplitudeRatio, timeWindow.getPhases());
         outStaticCorrectionSet.add(sc);
     }
 

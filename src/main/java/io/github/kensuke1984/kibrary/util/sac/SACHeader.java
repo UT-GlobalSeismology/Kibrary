@@ -7,7 +7,7 @@ import java.io.IOException;
  * <p>This class is <b>IMMUTABLE</b></p>
  *
  * @author Kensuke Konishi
- * @since version 2.0.1.1.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACHeader implements SACHeaderAccess, Cloneable {

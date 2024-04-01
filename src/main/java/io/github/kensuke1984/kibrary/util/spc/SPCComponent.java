@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
  * Data for one element in one {@link SPCBody} in a {@link SPCFile}
  *
  * @author Kensuke Konishi
- * @since version 0.1.6
+ * @since a long time ago
  * @author anselme add methods for interpolation for BP/FP catalog
  */
 public class SPCComponent {

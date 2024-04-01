@@ -9,6 +9,7 @@ import org.apache.commons.math3.util.Precision;
 /**
  * Some calculation utilities.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class MathAid {

@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 /**
  * Utilities for handling datasets and their corresponding folders and files.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class DatasetAid {

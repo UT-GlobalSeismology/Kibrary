@@ -30,7 +30,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * A data entry list file must be provided as input. A new data entry list file will be created as the output.
  *
- *
  * @author otsuru
  * @since 2022/1/4
  */

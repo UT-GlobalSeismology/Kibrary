@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * White noise can be added to the waveform.
  *
  * @author Kensuke Konishi
- * @since version 0.2.2
+ * @since a long time ago
  * @version 2022/2/23 Moved & renamed from inversion.CheckerBoardTest to waveform.PseudoWaveformGenerator
  */
 public class PseudoWaveformGenerator extends Operation {

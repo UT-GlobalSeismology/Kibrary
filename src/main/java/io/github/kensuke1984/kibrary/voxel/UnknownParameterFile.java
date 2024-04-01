@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * TODO ３次元と１次元の混在をさける
  *
  * @author Kensuke Konishi
- * @since version 0.0.6
+ * @since a long time ago
  */
 public class UnknownParameterFile {
     private UnknownParameterFile() {}

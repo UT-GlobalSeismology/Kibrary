@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.voxel;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
+ * A rectangular pixel on a sphere.
+ *
  * @author otsuru
  * @since 2022/9/12
  */

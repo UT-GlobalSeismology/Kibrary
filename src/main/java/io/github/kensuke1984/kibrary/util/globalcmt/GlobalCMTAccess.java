@@ -10,7 +10,7 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * Data for global CMT data used frequently.
  *
  * @author Kensuke Konishi
- * @since version 0.0.1.0.1
+ * @since a long time ago
  */
 public interface GlobalCMTAccess {
 

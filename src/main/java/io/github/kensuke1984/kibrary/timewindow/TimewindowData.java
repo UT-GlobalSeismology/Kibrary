@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
- * @since version 0.1.3
+ * @since a long time ago
  */
 public class TimewindowData extends Timewindow {
 

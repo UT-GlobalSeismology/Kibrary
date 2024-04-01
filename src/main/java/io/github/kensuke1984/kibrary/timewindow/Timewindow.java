@@ -10,7 +10,7 @@ import org.apache.commons.math3.util.Precision;
  * </p>
  *
  * @author Kensuke Konishi
- * @version 0.1.0.2
+ * @since a long time ago
  */
 public class Timewindow implements Comparable<Timewindow> {
 

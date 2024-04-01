@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * Classes that extend this class must be <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 

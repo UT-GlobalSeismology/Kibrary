@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 /**
  * Removes timewindows of a timewindow file from those of another.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/8/29 moved & renamed from quick.Subtractwindow to timewindow.TimewindowSubtract.
  */

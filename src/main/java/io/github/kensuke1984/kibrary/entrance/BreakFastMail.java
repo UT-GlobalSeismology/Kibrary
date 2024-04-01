@@ -15,6 +15,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * BREQ_FAST request Mail
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class BreakFastMail {
 

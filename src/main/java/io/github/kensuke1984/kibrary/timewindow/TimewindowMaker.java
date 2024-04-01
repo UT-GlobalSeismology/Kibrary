@@ -69,7 +69,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * See {@link TimewindowDataFile}.
  *
  * @author Kensuke Konishi
- * @since version 0.2.4
+ * @since a long time ago
  */
 public class TimewindowMaker extends Operation {
 

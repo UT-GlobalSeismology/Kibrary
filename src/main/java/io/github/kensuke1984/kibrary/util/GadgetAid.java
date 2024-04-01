@@ -35,6 +35,7 @@ import io.github.kensuke1984.kibrary.Environment;
 /**
  * Utilities for handling gadgets such as mail, clipboard, or Strings.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class GadgetAid {

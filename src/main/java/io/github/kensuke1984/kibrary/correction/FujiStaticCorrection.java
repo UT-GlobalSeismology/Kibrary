@@ -61,7 +61,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * See {@link StaticCorrectionDataFile}.
  *
  * @author Kensuke Konishi
- * @since version 0.2.2
+ * @since a long time ago
  */
 public class FujiStaticCorrection extends Operation {
 

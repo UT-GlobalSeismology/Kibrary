@@ -29,8 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * To identify which time window for a waveform, SYNTHETIC_TIME is also used.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
- * @author anselme add phase information
+ * @since a long time ago
  *
  * TODO shouldn't this hold TimewindowData as a field, instead of obs/ev/comp/phases/start ? (2022/12/14 otsuru)
  */

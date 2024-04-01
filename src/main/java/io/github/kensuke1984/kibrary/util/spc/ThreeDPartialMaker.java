@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub>
  *
  * @author Kensuke Konishi
- * @since version 0.0.2.1
+ * @since a long time ago
  */
 public class ThreeDPartialMaker {
 

@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
  * Information of values that represent the difference between observed and synthetic waveforms,
  * such as normalized variance, amplitude ratio, and correlation coefficient.
  *
- * @author otsuru
+ * @author ?
  * @since a long time ago
  * @version 2022/8/27 renamed from selection.DataSelectionInformation to selection.DataFeature
  */

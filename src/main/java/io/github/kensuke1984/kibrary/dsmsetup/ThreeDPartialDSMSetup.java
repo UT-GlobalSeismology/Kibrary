@@ -56,7 +56,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * TODO check that the voxel sets are same
  *
  * @author Kensuke Konishi
- * @since version 0.2.2.1
+ * @since a long time ago
  * @version 2021/12/24 renamed from InformationFileMaker to ThreeDPartialDSMSetup
  */
 public class ThreeDPartialDSMSetup extends Operation {

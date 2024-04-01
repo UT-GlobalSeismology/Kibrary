@@ -62,7 +62,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Timewindows with no phases will be written in standard output.
  *
  * @author Kensuke Konishi
- * @since version 0.1.2.1
+ * @since a long time ago
  */
 public class DataSelection extends Operation {
 

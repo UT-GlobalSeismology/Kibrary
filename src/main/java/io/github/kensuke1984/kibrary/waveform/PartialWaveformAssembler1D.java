@@ -71,7 +71,7 @@ import io.github.kensuke1984.kibrary.voxel.ParameterType;
  * Resulting entries can be specified by a (event, observer, component, partialType, perturbationRadius, timeframe)-pair.
  *
  * @author Kensuke Konishi
- * @since version 0.2.0.3
+ * @since a long time ago
  * @version 2021/12/24 renamed from Partial1DDatasetMaker to PartialWaveformAssembler1D
  */
 public class PartialWaveformAssembler1D extends Operation {

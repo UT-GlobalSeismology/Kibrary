@@ -35,6 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * Weights for each bin can be decided in "weighting" mode. The weights will be exported in {@link EntryWeightListFile}.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/8/12 renamed and moved from util.statistics.Histogram to visual.DistanceHistogram
  */

@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * x, y, z are also String.
  *
  * @author Kensuke Konishi
- * @version 2.0.0.2
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACFileName extends File {

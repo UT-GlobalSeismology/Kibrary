@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, anselme
- * @since version 0.2.10
+ * @since a long time ago
  * @version 2022/2/10 moved from package dsmsetup into util.earth
  * @version 2022/6/15 recreated this file to make this class actually immutable
  */

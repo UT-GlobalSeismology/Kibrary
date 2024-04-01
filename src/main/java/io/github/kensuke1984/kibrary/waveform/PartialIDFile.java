@@ -30,8 +30,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
- * Utilities for a pair of an ID file and a waveform file. <br>
- * The files are for partial waveforms.
+ * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}
+ * for partial derivative waveforms.
  * <p>
  * The file contains<br>
  * Numbers of observers, events, period ranges and perturbation points<br>
@@ -47,7 +47,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * - see in {@link #read(Path)}<br>
  *
  * @author Kensuke Konishi
- * @since version 0.3.2
+ * @since a long time ago
  */
 public final class PartialIDFile {
     private PartialIDFile() {}

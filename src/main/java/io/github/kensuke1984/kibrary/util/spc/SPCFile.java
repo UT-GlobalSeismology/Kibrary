@@ -18,9 +18,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Spectrum file written by DSM. Binary format.
  *
- * @since version 0.1.2
  * @author Kensuke Konishi
- * @author anselme add content for BP/FP catalog
+ * @since a long time ago
  */
 public class SPCFile implements SPCFileAccess {
 

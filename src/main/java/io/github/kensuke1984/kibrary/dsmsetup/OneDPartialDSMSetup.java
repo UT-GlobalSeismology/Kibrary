@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
  * SSHSH will work for the parameters PARL and PARN, and SSHPSV will work for PARA, PARC, PARF, PARL, and PARN.
  *
  * @author Kensuke Konishi
- * @since version 0.1.3
+ * @since a long time ago
  * @version 2021/12/24 renamed from SshDSMInformationFileMaker to OneDPartialDSMSetup
  */
 public class OneDPartialDSMSetup extends Operation {

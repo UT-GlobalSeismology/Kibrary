@@ -22,7 +22,6 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * <p>
  * Odd lines: (int) value of limit of interval.
  * Even lines: name of color.
- * <p>
  *
  * @author otsuru
  * @since 2022/6/24

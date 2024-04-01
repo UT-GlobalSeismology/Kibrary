@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.math.Trace;
  * １、samplingHzとtlenとnpを設定 ２、周波数空間でランダム波形作成 ３、実空間に戻す
  *
  * @author Kensuke Konishi
- * @since version 0.1.0 ランダム波形作成を並列化
+ * @since a long time ago
  */
 public final class RandomNoiseMaker {
     private RandomNoiseMaker() {}

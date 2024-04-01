@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 /**
  * Utilities for collecting SPC files.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class SpcFileAid {

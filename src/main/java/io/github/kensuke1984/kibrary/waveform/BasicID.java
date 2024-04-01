@@ -19,33 +19,28 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * <p>
- * ID and waveform data for a pair of event and observer of observed and synthetic waveforms.
- * </p>
- * This class is <b>IMMUTABLE</b> <br>
+ * ID and waveform data of observed and synthetic waveforms for a pair of event and observer.
  * <p>
- * Double values will be rounded off to 3rd decimal places. <br>
- * (Those are stored as Float in the file)<br>
+ * This class is <b>IMMUTABLE</b>.
  * <p>
  * Contents of information for one ID:
  * <ul>
- * <li> Whether it is observed(true) or synthetic(false) </li>
- * <li> Name of station </li>
- * <li> Name of network </li>
- * <li> Horizontal position of observer (latitude longitude) </li>
- * <li> Global CMT ID </li>
- * <li> Component (ZRT) </li>
- * <li> Period minimum and maximum </li>
- * <li> Start time </li>
- * <li> Number of points </li>
- * <li> Sampling Hz </li>
- * <li> If it is either convolved or observed, true </li>
- * <li> Position of a waveform for the ID </li>
+ * <li> waveform type (observed or synthetic) </li>
+ * <li> observer </li>
+ * <li> global CMT ID </li>
+ * <li> component (Z, R, or T) </li>
+ * <li> minimum and maximum period </li>
+ * <li> start time </li>
+ * <li> number of points </li>
+ * <li> sampling Hz </li>
+ * <li> whether it is either convolved or observed </li>
+ * <li> phases contained in timewindow </li>
  * </ul>
  * <p>
  * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
- * @since a long time ago
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class BasicID {
 
@@ -54,6 +49,10 @@ public class BasicID {
      * Period value should be around 5~200, so a value around 0.1 for epsilon should be enough.
      */
     public static final double PERIOD_EPSILON = 0.1;
+    /**
+     * The number of decimal places to round off the values.
+     */
+    private static final int DECIMALS = 3;
 
     protected final WaveformType type;
     protected final double samplingHz;
@@ -95,15 +94,15 @@ public class BasicID {
             GlobalCMTID eventID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases,
             boolean convolved, double... waveformData) {
         this.type = waveFormType;
-        this.samplingHz = Precision.round(samplingHz, 3);
+        this.samplingHz = Precision.round(samplingHz, DECIMALS);
         this.startTime = Precision.round(startTime, Timewindow.PRECISION);
         this.npts = npts;
         this.observer = observer;
         this.eventID = eventID;
         this.component = sacComponent;
         this.phases = phases;
-        this.minPeriod = Precision.round(minPeriod, 3);
-        this.maxPeriod = Precision.round(maxPeriod, 3);
+        this.minPeriod = Precision.round(minPeriod, DECIMALS);
+        this.maxPeriod = Precision.round(maxPeriod, DECIMALS);
         this.convolved = convolved;
         if (waveformData.length != 0 && waveformData.length != npts)
             throw new IllegalArgumentException("Input waveform data length is invalid");

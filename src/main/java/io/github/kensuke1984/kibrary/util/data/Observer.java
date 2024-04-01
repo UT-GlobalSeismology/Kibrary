@@ -35,6 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * (because a single event means a single time moment).
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public final class Observer implements Comparable<Observer> {
 

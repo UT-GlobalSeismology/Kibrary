@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Methods concerning interpolation of values on a line or surface.
  *
+ * @author ?
  * @since a long time ago
  */
 public class Interpolation {

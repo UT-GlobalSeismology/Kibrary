@@ -1,19 +1,30 @@
 package io.github.kensuke1984.kibrary.util;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
 
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+
 /**
  * This class is based on a class provided as a Sample by Oracle. The copyright
  * is stated in the Kibrary License statement.
  *
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @since a long time ago
  */
 class PasswordInput extends JPanel implements ActionListener {
     /**

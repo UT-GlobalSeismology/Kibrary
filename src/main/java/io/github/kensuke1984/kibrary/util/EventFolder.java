@@ -19,7 +19,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * @author Kensuke Konishi
  * @since a long time ago
  */
-
 public class EventFolder extends File {
 
     private static final long serialVersionUID = 8698976273645876402L;

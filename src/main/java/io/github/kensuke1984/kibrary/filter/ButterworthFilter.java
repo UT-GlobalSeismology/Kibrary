@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * true.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.0.2
+ * @since a long time ago
  */
 public abstract class ButterworthFilter {
 

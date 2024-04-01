@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * The radius is rounded off to the 6th decimal place.
  *
  * @author Kensuke Konishi
- * @author anselme add methods used for BP/FP catalog
+ * @since a long time ago
  */
 public final class FullPosition extends HorizontalPosition {
 

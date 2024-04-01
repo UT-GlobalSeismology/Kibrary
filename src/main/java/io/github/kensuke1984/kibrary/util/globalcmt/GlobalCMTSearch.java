@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.math.LinearRange;
  * Query for search of Global CMT
  *
  * @author Kensuke Konishi
- * @version 0.1.12
+ * @since a long time ago
  * TODO thread safe (immutable)
  */
 public class GlobalCMTSearch {

@@ -11,6 +11,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
  * Utils for plotting 1-D structure.
+ *
  * @author otsuru
  * @since 2024/3/30
  */

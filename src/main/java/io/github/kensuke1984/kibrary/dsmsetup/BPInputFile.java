@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @since version 0.0.6
+ * @since a long time ago
  */
 public class BPInputFile extends DSMInputHeader {
 

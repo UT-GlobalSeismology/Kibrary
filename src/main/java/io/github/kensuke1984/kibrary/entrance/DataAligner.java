@@ -43,8 +43,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * but before configuring (= the parallelized part).
  * </ul>
  *
- * @since 2021/11/17
  * @author otsuru
+ * @since 2021/11/17
  */
 public class DataAligner {
 

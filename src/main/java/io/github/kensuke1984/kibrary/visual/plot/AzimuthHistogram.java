@@ -42,6 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * (ex. A record with azimuth 240 is counted as having azimuth 60.)
  * This can be suppressed by setting the "expand" option.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/8/12 renamed and moved from util.statistics.HistogramAzimuth to visual.AzimuthHistogram
  */

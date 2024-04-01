@@ -83,7 +83,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * Resulting entries can be specified by a (event, observer, component, partialType, voxelPosition, timeframe)-pair.
  *
  * @author Kensuke Konishi
- * @since version 2.3.0.5
+ * @since a long time ago
  * @version 2021/12/24 renamed from waveformdata.PartialDatasetMaker_v2 to waveform.PartialWaveformAssembler3D
  */
 public class PartialWaveformAssembler3D extends Operation {

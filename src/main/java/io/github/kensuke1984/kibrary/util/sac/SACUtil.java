@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.math.Trace;
  * Read/Write of a SAC file. (SAC: seismic analysis code)
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SACUtil {

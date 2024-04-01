@@ -17,12 +17,15 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
+ * File with perturbation values for each voxel position.
+ *
  * @author otsuru
  * @since 2022/4/9
  */
 public class PerturbationListFile {
+
     /**
-     * The number of decimal places to round off the percent value.
+     * The number of decimal places to round off the values.
      */
     private static final int DECIMALS = 10;
 

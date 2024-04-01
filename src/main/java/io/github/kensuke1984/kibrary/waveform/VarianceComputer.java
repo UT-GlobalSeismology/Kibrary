@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * Computes variance of {@link BasicIDFile}s.
+ * Computes variance of {@link BasicIDFile}s, with the specified weighting.
  *
  * @author otsuru
  * @since 2022/7/22

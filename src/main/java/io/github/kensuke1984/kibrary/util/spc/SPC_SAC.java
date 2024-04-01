@@ -52,6 +52,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * so the number of data points will become [time length x samplingHz].
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SPC_SAC extends Operation {

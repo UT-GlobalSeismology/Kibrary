@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * A gmail account is needed. The address must be set in the .property file in KIBRARY_HOME.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class DataRequestor extends Operation {
 

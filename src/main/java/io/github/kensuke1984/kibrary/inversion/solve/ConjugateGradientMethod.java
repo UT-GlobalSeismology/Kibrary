@@ -11,7 +11,7 @@ import org.apache.commons.math3.linear.RealVector;
  * See Appendix 3 of Kawai et al. (2014) for further information.
  *
  * @author Kensuke Konishi
- * @since version 0.0.3.2
+ * @since a long time ago
  * @see <a href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>
  */
