@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.fusion.PartialsFuser;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
+import io.github.kensuke1984.kibrary.inversion.solve.InversionSumSolver;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
@@ -92,8 +93,8 @@ enum Manhattan {
     DataSelection(33, DataSelection.class),
     RaypathSelection(34, RaypathSelection.class),
     TimewindowMerge(37, TimewindowMerge.class),
-    StaticCorrectionForger(38, StaticCorrectionForger.class),
-    StaticCorrectionMerge(39, StaticCorrectionMerge.class),
+    StaticCorrectionMerge(38, StaticCorrectionMerge.class),
+    StaticCorrectionForger(39, StaticCorrectionForger.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),
@@ -107,26 +108,27 @@ enum Manhattan {
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     // Partial 60
-    ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
-    PartialWaveformAssembler3D(61, PartialWaveformAssembler3D.class),
-    PartialIDMerge(62, PartialIDMerge.class),
-    SensitivityKernelMapper(63, SensitivityKernelMapper.class),
-    PartialWaveformPlotter(64, PartialWaveformPlotter.class),
-    OneDPartialDSMSetup(65, OneDPartialDSMSetup.class),
-    PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class),
-    PartialsFuser(67, PartialsFuser.class),
+    OneDPartialDSMSetup(60, OneDPartialDSMSetup.class),
+    ThreeDPartialDSMSetup(61, ThreeDPartialDSMSetup.class),
+    PartialWaveformAssembler1D(62, PartialWaveformAssembler1D.class),
+    PartialWaveformAssembler3D(63, PartialWaveformAssembler3D.class),
+    PartialIDMerge(64, PartialIDMerge.class),
+    PartialWaveformPlotter(65, PartialWaveformPlotter.class),
+    SensitivityKernelMapper(66, SensitivityKernelMapper.class),
+    PartialsMovieMaker(67, PartialsMovieMaker.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
-    PartialsMovieMaker(69, PartialsMovieMaker.class),
+    PartialsFuser(69, PartialsFuser.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
-    ModelStructurePlotter(73, ModelStructurePlotter.class),
-    ModelSetMapper(74, ModelSetMapper.class),
-    ModelMapper(75, ModelMapper.class),
-    PerturbationMapper(76, PerturbationMapper.class),
-    CrossSectionCreator(77, CrossSectionCreator.class),
-    ModelStructureConverter(78, ModelStructureConverter.class),
+    InversionSumSolver(73, InversionSumSolver.class),
+    ModelStructurePlotter(74, ModelStructurePlotter.class),
+    ModelSetMapper(75, ModelSetMapper.class),
+    ModelMapper(76, ModelMapper.class),
+    PerturbationMapper(77, PerturbationMapper.class),
+    CrossSectionCreator(78, CrossSectionCreator.class),
+    ModelStructureConverter(79, ModelStructureConverter.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),
