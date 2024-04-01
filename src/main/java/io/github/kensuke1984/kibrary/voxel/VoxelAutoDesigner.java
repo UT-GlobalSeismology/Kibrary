@@ -35,12 +35,12 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
  * <p>
- * Use {@link VoxelFileMaker} to decide the position range of voxels manually.
+ * Use {@link VoxelManualDesigner} to decide the position range of voxels manually.
  *
  * @author otsuru
  * @since 2022/2/11
  */
-public class VoxelLayoutDesigner extends Operation {
+public class VoxelAutoDesigner extends Operation {
 
     private final Property property;
     /**
@@ -148,7 +148,7 @@ public class VoxelLayoutDesigner extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public VoxelLayoutDesigner(Property property) throws IOException {
+    public VoxelAutoDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 

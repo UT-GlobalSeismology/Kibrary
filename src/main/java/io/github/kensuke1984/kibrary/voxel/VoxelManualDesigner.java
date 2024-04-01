@@ -20,12 +20,12 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Operation to create a {@link VoxelInformationFile} by deciding the position range of voxels manually.
  * <p>
- * Use {@link VoxelLayoutDesigner} to decide the positions of voxels based on a dataset.
+ * Use {@link VoxelAutoDesigner} to decide the positions of voxels based on a dataset.
  *
  * @author otsuru
  * @since 2023/6/5
  */
-public class VoxelFileMaker extends Operation {
+public class VoxelManualDesigner extends Operation {
 
     private final Property property;
     /**
@@ -124,7 +124,7 @@ public class VoxelFileMaker extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public VoxelFileMaker(Property property) throws IOException {
+    public VoxelManualDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 

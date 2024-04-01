@@ -48,8 +48,8 @@ import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
-import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
-import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
+import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
+import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
@@ -102,8 +102,8 @@ enum Manhattan {
     BasicBinnedStackCreator(44, BasicBinnedStackCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
-    VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
-    VoxelFileMaker(51,VoxelFileMaker.class),
+    VoxelAutoDesigner(50, VoxelAutoDesigner.class),
+    VoxelManualDesigner(51,VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     // Partial 60
