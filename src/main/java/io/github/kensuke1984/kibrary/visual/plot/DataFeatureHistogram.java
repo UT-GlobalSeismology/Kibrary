@@ -514,16 +514,16 @@ public class DataFeatureHistogram extends Operation {
        // output txt files
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(corrPath))) {
            for (int i = 0; i < nCorr; i++)
-               pw.println(Precision.round(correlationLowerBound + i * dCorrelation, DataFeature.PRECISION)
+               pw.println(Precision.round(correlationLowerBound + i * dCorrelation, DataFeature.DECIMALS)
                        + " " + corrs[i] + " " + extraCorrs[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(varPath))) {
            for (int i = 0; i < nVar; i++)
-               pw.println(Precision.round(i * dVariance, DataFeature.PRECISION) + " " + vars[i] + " " + extraVars[i]);
+               pw.println(Precision.round(i * dVariance, DataFeature.DECIMALS) + " " + vars[i] + " " + extraVars[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(ratioPath))) {
            for (int i = 0; i < nRatio; i++)
-               pw.println(Precision.round(i * dRatio, DataFeature.PRECISION) + " " + ratios[i] + " " + extraRatios[i]);
+               pw.println(Precision.round(i * dRatio, DataFeature.DECIMALS) + " " + ratios[i] + " " + extraRatios[i]);
        }
 
        // plot histograms
@@ -537,7 +537,7 @@ public class DataFeatureHistogram extends Operation {
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
                for (int i = 0; i < nSNRatio; i++)
-                   pw.println(Precision.round(i * dSNRatio, DataFeature.PRECISION)
+                   pw.println(Precision.round(i * dSNRatio, DataFeature.DECIMALS)
                            + " " + snRatios[i] + " " + extraSnRatios[i]);
            }
            createPlot(snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,

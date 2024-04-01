@@ -174,7 +174,7 @@ public class PartialID extends BasicID {
     @Override
     public String toString() {
         String partialString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved + " "
                 + parameterType + " " + variableType + " " + voxelPosition;

@@ -95,7 +95,7 @@ public class BasicID {
             boolean convolved, double... waveformData) {
         this.type = waveFormType;
         this.samplingHz = Precision.round(samplingHz, DECIMALS);
-        this.startTime = Precision.round(startTime, Timewindow.PRECISION);
+        this.startTime = Precision.round(startTime, Timewindow.DECIMALS);
         this.npts = npts;
         this.observer = observer;
         this.eventID = eventID;
@@ -301,7 +301,7 @@ public class BasicID {
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved;
         return basicString;

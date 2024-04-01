@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
  */
 public class DataFeature {
 
-    public static int PRECISION = 3;
+    public static final int DECIMALS = 3;
 
     private TimewindowData timewindow;
 
@@ -59,17 +59,17 @@ public class DataFeature {
         RealVector resid = obsU.subtract(synU);
         double var = resid.dotProduct(resid) / obsU.dotProduct(obsU);
         // "Math.abs()" is to exclude -Infinity.
-        double variance = Math.abs(Precision.round(var, PRECISION));
+        double variance = Math.abs(Precision.round(var, DECIMALS));
 
         // ratio
-        double posSideRatio = Precision.round(synU.getMaxValue() / obsU.getMaxValue(), PRECISION);
-        double negSideRatio = Precision.round(synU.getMinValue() / obsU.getMinValue(), PRECISION);
+        double posSideRatio = Precision.round(synU.getMaxValue() / obsU.getMaxValue(), DECIMALS);
+        double negSideRatio = Precision.round(synU.getMinValue() / obsU.getMinValue(), DECIMALS);
         // "Math.abs()" is to exclude -Infinity.
-        double absRatio = Math.abs(Precision.round(synU.getLInfNorm() / obsU.getLInfNorm(), PRECISION));
+        double absRatio = Math.abs(Precision.round(synU.getLInfNorm() / obsU.getLInfNorm(), DECIMALS));
 
         // correlation
         double cor = obsU.dotProduct(synU) / (synU.getNorm() * obsU.getNorm());
-        double correlation = Precision.round(cor, PRECISION);
+        double correlation = Precision.round(cor, DECIMALS);
 
         return new DataFeature(timewindow, variance, correlation, posSideRatio, negSideRatio, absRatio, snRatio, selected);
     }

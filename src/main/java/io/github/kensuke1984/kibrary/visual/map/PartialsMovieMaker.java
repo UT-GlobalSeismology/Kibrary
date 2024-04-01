@@ -315,7 +315,7 @@ public class PartialsMovieMaker extends Operation {
 
                             // create folder
                             String seriesName = event + "_" + observerName + "_" + component + "_" + variableType + "_w"
-                                    + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, true, "d");
+                                    + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, true, "d");
                             Path seriesPath = outPath.resolve(seriesName);
                             Files.createDirectories(seriesPath);
 
@@ -350,7 +350,7 @@ public class PartialsMovieMaker extends Operation {
                                 // create folder for each snapshot
                                 // The number part of output file names has to be padded with 0 for the "convert" command to work.
                                 String snapshotName = "snapshot_t"
-                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, true, "d");
+                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, true, "d");
                                 Path outSnapshotPath = seriesPath.resolve(snapshotName);
                                 Files.createDirectories(outSnapshotPath);
 

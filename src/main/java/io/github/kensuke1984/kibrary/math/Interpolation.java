@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class Interpolation {
 
-    private static final int GRID_PRECISION = 4;
+    private static final int GRID_DECIMALS = 4;
 
     public static double threePointInterpolation(double x, double[] xi, double[] yi) {
         double[] h = new double[3];
@@ -171,7 +171,7 @@ public class Interpolation {
                     .mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
             for (int i = 0; i < nGridLongitudes; i++) {
-                double longitude = Precision.round(minLongitude + i * gridInterval, GRID_PRECISION);
+                double longitude = Precision.round(minLongitude + i * gridInterval, GRID_DECIMALS);
 
                 // extract indices of latitudes with values defined on this longitude
                 int[] indicesWithValue = IntStream.range(0, latitudes.length)
@@ -274,7 +274,7 @@ public class Interpolation {
         // array of sample points at which to interpolate
         double[] xs = new double[nGridXs];
         for (int i = 0; i < nGridXs; i++) {
-            xs[i] = Precision.round(startX + i * gridInterval, GRID_PRECISION);
+            xs[i] = Precision.round(startX + i * gridInterval, GRID_DECIMALS);
         }
         return interpolateTraceAtPoints(originalTrace, xs, margin, mosaic);
     }

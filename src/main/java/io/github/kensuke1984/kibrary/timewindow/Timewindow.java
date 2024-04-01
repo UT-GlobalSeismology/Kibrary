@@ -17,7 +17,7 @@ public class Timewindow implements Comparable<Timewindow> {
     /**
      * the number of decimal places to round off the time values
      */
-    public static final int PRECISION = 2;
+    public static final int DECIMALS = 2;
     /**
      * The maximum number of digits of the integer part of a typical startTime or endTime.
      */
@@ -49,8 +49,8 @@ public class Timewindow implements Comparable<Timewindow> {
     public Timewindow(double startTime, double endTime) {
         if (endTime < startTime)
             throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
-        this.startTime = Precision.round(startTime, PRECISION);
-        this.endTime = Precision.round(endTime, PRECISION);
+        this.startTime = Precision.round(startTime, DECIMALS);
+        this.endTime = Precision.round(endTime, DECIMALS);
     }
 
     /**
