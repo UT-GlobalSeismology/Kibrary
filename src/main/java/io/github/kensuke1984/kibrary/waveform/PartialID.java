@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * <li> start time </li>
  * <li> number of points </li>
  * <li> sampling Hz </li>
- * <li> whether it is either convolved or observed </li>
+ * <li> whether waveform is either convolved or observed </li>
  * <li> phases contained in timewindow </li>
  * </ul>
  * <p>
@@ -54,15 +54,15 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 public class PartialID extends BasicID {
 
     /**
-     * type of parameter
+     * Type of parameter.
      */
     protected final ParameterType parameterType;
     /**
-     * type of variable
+     * Type of variable.
      */
     protected final VariableType variableType;
     /**
-     * position of perturbation
+     * Position of perturbation.
      */
     protected final FullPosition voxelPosition;
 
@@ -77,8 +77,10 @@ public class PartialID extends BasicID {
     }
 
     /**
-     * @param data to be set
-     * @return {@link PartialID} with the input data
+     * Create new ID with the provided waveform data.
+     *
+     * @param data (double[]) Waveform data to be set.
+     * @return ({@link PartialID}) ID with the given waveform data.
      */
     @Override
     public PartialID withData(double[] data) {

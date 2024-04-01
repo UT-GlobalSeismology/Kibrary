@@ -33,18 +33,39 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}
  * for partial derivative waveforms.
  * <p>
- * The file contains<br>
- * Numbers of observers, events, period ranges and perturbation points<br>
- * Each observer information <br>
- * - station, network, position <br>
- * Each event <br>
- * - Global CMT ID Each period<br>
- * Each period range<br>
- * - min period, max period<br>
- * Each perturbation points<br>
- * - latitude, longitude, radius<br>
- * Each PartialID information<br>
- * - see in {@link #read(Path)}<br>
+ * The file contains:
+ * <ul>
+ * <li> (file information)
+ *   <ul>
+ *   <li> numbers of observers, events, period ranges, phases, and voxels
+ *   </ul>
+ * <li> (all waveforms information)
+ *   <ul>
+ *   <li> each observer information: station, network, position
+ *   <li> each event information: Global CMT ID
+ *   <li> each period range: min, max
+ *   <li> each phase information: phase name
+ *   <li> each voxel information: position
+ *   </ul>
+ * <li> (each waveform information)
+ *   <ul>
+ *   <li> (50 bytes) each PartialID information
+ *     <ul>
+ *     <li> (2 bytes) observer # </li>
+ *     <li> (2 bytes) event # </li>
+ *     <li> (1 byte) component (Z, R, or T) </li>
+ *     <li> (1 byte) period range # </li>
+ *     <li> (2*10 bytes) phase #s </li>
+ *     <li> (4 bytes) start time </li>
+ *     <li> (4 bytes) number of points </li>
+ *     <li> (4 bytes) sampling Hz </li>
+ *     <li> (1 byte) whether waveform is either convolved or observed </li>
+ *     <li> (8 bytes) address of starting byte </li>
+ *     <li> (1 byte) partial type </li>
+ *     <li> (2 bytes) voxel # </li>
+ *     </ul>
+ *   </ul>
+ * </ul>
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -118,9 +139,9 @@ public final class PartialIDFile {
 
     /**
      * Reads partialIDs from a partial folder.
-     * @param inPath (Path) The directory containing partial ID and data files
-     * @param withData (boolean) Whether to read waveform data
-     * @return (List of PartialID) The partialIDs read in. Not sorted.
+     * @param inPath (Path) The directory containing partial ID and data files.
+     * @param withData (boolean) Whether to read waveform data.
+     * @return (List of {@link PartialID}) The partialIDs read in. Not sorted.
      * @throws IOException
      *
      * @author otsuru
@@ -134,10 +155,10 @@ public final class PartialIDFile {
 
     /**
      * Reads both the ID file and the waveform file.
-     * @param idPath (Path) ID file
-     * @param dataPath (Path) Data file
-     * @return ({@link PartialID}[]) PartialIDs containing waveform data
-     * @throws IOException if an I/O error occurs
+     * @param idPath (Path) ID file.
+     * @param dataPath (Path) Data file.
+     * @return ({@link PartialID}[]) PartialIDs containing waveform data.
+     * @throws IOException
      * @deprecated (make this method private)
      */
     public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
@@ -171,9 +192,9 @@ public final class PartialIDFile {
     }
     /**
      * Reads only the ID file (and not the data file).
-     * @param idPath (Path) ID file
-     * @return ({@link PartialID}[]) PartialIDs without waveform data
-     * @throws IOException if an I/O error occurs
+     * @param idPath (Path) ID file.
+     * @return ({@link PartialID}[]) PartialIDs without waveform data.
+     * @throws IOException
      */
     private static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
@@ -234,28 +255,14 @@ public final class PartialIDFile {
 
     /**
      * Method for reading the actual ID part.
-     * <p>
-     * An ID information contains<br>
-     * observer number(2)<br>
-     * event number(2)<br>
-     * component(1)<br>
-     * period range(1) <br>
-     * phases numbers (10*2)<br>
-     * start time(4)<br>
-     * number of points(4)<br>
-     * sampling hz(4) <br>
-     * convolved (or observed) or not(1)<br>
-     * position of a waveform for the ID in the data file(8)<br>
-     * type of partial(1)<br>
-     * voxel number(2)
      *
-     * @param bytes (byte[]) Input data for one ID
-     * @param observers ({@link Observer}[]) Set of observers contained in dataset
-     * @param events ({@link GlobalCMTID}[]) Set of events contained in dataset
-     * @param periodRanges (double[][]) Set of period ranges contained in dataset
-     * @param phases ({@link Phase}[]) Set of phases contained in dataset
-     * @param voxelPositions ({@link FullPosition}[]) Set of voxels contained in dataset
-     * @return ({@link PartialID}) Created ID
+     * @param bytes (byte[]) Input data for one ID.
+     * @param observers ({@link Observer}[]) Set of observers contained in dataset.
+     * @param events ({@link GlobalCMTID}[]) Set of events contained in dataset.
+     * @param periodRanges (double[][]) Set of period ranges contained in dataset.
+     * @param phases ({@link Phase}[]) Set of phases contained in dataset.
+     * @param voxelPositions ({@link FullPosition}[]) Set of voxels contained in dataset.
+     * @return ({@link PartialID}) Created ID.
      */
     private static PartialID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] events, double[][] periodRanges,
              Phase[] phases, FullPosition[] voxelPositions) {
