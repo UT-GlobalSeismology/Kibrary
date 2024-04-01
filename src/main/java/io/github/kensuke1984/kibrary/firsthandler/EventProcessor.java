@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -450,7 +451,7 @@ class EventProcessor implements Runnable {
                 sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
-                sm.trim((int) Math.ceil(maxTlen * SAMPLING_HZ));
+                sm.trim((int) MathAid.ceil(maxTlen * SAMPLING_HZ));
 
                 // move SAC files after treatment into the merged folder
                 FileAid.moveToDirectory(sacPath, doneModifyPath, true);

@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -266,8 +267,8 @@ public class Interpolation {
      */
     public static Trace interpolateTraceOnGrid(Trace originalTrace, double gridInterval, double margin, boolean mosaic) {
         // set the x range so that the margin is added to either end
-        double startX = Math.ceil((originalTrace.getMinX() - margin) / gridInterval) * gridInterval;
-        double endX = Math.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
+        double startX = MathAid.ceil((originalTrace.getMinX() - margin) / gridInterval) * gridInterval;
+        double endX = MathAid.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
         int nGridXs = (int) Math.round((endX - startX) / gridInterval) + 1;
         // array of sample points at which to interpolate
         double[] xs = new double[nGridXs];

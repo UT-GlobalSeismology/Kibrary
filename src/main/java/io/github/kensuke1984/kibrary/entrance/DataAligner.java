@@ -16,6 +16,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
@@ -184,7 +185,7 @@ public class DataAligner {
         es.shutdown();
         System.err.println("Straightening SAC files ...");
         while (!es.isTerminated()) {
-            System.err.print("\r " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
+            System.err.print("\r " + MathAid.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all events.");

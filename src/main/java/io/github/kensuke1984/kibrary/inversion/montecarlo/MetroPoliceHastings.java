@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Waveform inversion with Metropolis–Hastings algorithm.
@@ -91,7 +92,7 @@ public class MetroPoliceHastings<M, D> {
                 }
                 writer.println(iRun + " " + lastAdoptedPath.getFileName());
                 if (100 < nRun && iRun % (nRun / 100) == 0)
-                    System.err.print("\rWorking " + Math.ceil(100.0 * iRun / nRun) + "%");
+                    System.err.print("\rWorking " + MathAid.ceil(100.0 * iRun / nRun) + "%");
             }
             System.err.println("\rWorking " + 100.0 + "%");
         }

@@ -16,6 +16,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * File of layer information.
@@ -105,7 +106,7 @@ public class LayerInformationFile {
      * @param dRadius (double) Radius spacing [km]; (0:).
      */
     public LayerInformationFile(double lowerRadius, double upperRadius, double dRadius) {
-        int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+        int nRadius = (int) MathAid.floor((upperRadius - lowerRadius) / dRadius);
         layerThicknesses = new double[nRadius];
         layerRadii = new double[nRadius];
         for (int i = 0; i < nRadius; i++) {

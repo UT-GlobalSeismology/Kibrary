@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
@@ -244,7 +245,7 @@ public class VoxelLayoutDesigner extends Operation {
                 layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
-            int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+            int nRadius = (int) MathAid.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
             layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {
@@ -267,7 +268,7 @@ public class VoxelLayoutDesigner extends Operation {
         // decide number of colatitude intervals
         // Colatitude is used because its range is [0:180] and is easier to decide intervals.
         // When latitudeOffset > 0, intervals for that extra part is needed.
-        int nLatitude = (int) Math.ceil((180.0 + latitudeOffset) / dLatitude);
+        int nLatitude = (int) MathAid.ceil((180.0 + latitudeOffset) / dLatitude);
         double minLongitudes[] = new double[nLatitude];
         double maxLongitudes[] = new double[nLatitude];
         for (int i = 0; i < nLatitude; i++) {
@@ -298,7 +299,7 @@ public class VoxelLayoutDesigner extends Operation {
                 // decide which colatitude interval the sample point is in
                 // latitudeOffset moves border latitudes to positive side, so moves border colatitudes to negative side.
                 // This way, sampleInterval will never become negative.
-                int colatitudeIndex = (int) Math.floor((sampleColatitude + latitudeOffset) / dLatitude);
+                int colatitudeIndex = (int) MathAid.floor((sampleColatitude + latitudeOffset) / dLatitude);
                 // reflect this sample point on longitude ranges
                 if (sampleLongitude < minLongitudes[colatitudeIndex]) minLongitudes[colatitudeIndex] = sampleLongitude;
                 if (sampleLongitude > maxLongitudes[colatitudeIndex]) maxLongitudes[colatitudeIndex] = sampleLongitude;
@@ -341,8 +342,8 @@ public class VoxelLayoutDesigner extends Operation {
             } else {
                 // all longitudes are set on ((n + 0.5) * dLongitudeDeg + longitudeOffset)
                 // the min and max borders of longitude are set so that all sample points are included
-                double minLongitude = Math.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                double maxLongitude = Math.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
+                double minLongitude = MathAid.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
+                double maxLongitude = MathAid.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
                 int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
                 for (int j = 0; j < nLongitude; j++) {
                     // center longitude of each horizontal pixel

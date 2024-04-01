@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
@@ -387,13 +388,13 @@ public class RaypathMapper extends Operation {
         String line = raypathSegment.getSource().toHorizontalPosition() + " "
                 + raypathSegment.getReceiver().toHorizontalPosition() + " "
                 + Arrays.asList(piercePhases).indexOf(raypathSegment.getPhaseName()) + " "
-                + (int) Math.floor(raypath.getEpicentralDistanceDeg()) + " "
-                + (int) Math.floor(raypath.getAzimuthDeg()) + " "
-                + (int) Math.floor(raypath.getBackAzimuthDeg());
+                + (int) MathAid.floor(raypath.getEpicentralDistanceDeg()) + " "
+                + (int) MathAid.floor(raypath.getAzimuthDeg()) + " "
+                + (int) MathAid.floor(raypath.getBackAzimuthDeg());
         // Turning point azimuth can be obtained only when turning point has been computed for.
         // The first turning point on the raypath is used.
         if (raypath.findTurningPoint(0) != null) {
-            line = line + " " + (int) Math.floor(raypath.computeTurningAzimuthDeg(0));
+            line = line + " " + (int) MathAid.floor(raypath.computeTurningAzimuthDeg(0));
         }
         return line;
     }

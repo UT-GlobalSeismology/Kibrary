@@ -141,7 +141,7 @@ public class NetworkLookup extends Operation {
 
            nEventsDone++;
            if (nEventsDone % 100 == 0)
-               System.err.print("\r " + Math.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
+               System.err.print("\r " + MathAid.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
        }
        System.err.println("\r Finished handling all events.");
 

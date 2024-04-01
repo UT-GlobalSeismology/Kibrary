@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -205,10 +206,10 @@ public class GreatArcMapper extends Operation {
             double lonMax = (startPosition.getLongitude() > endPosition.getLongitude()) ? startPosition.getLongitude() : endPosition.getLongitude();
 
             // expand the region a bit more
-            latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
-            latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
-            lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
-            lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
+            latMin = MathAid.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
+            latMax = MathAid.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
+            lonMin = MathAid.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
+            lonMax = MathAid.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
 
             return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }

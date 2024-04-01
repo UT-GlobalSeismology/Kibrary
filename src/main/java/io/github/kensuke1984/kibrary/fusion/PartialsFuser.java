@@ -19,6 +19,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -132,7 +133,7 @@ public class PartialsFuser extends Operation {
         es.shutdown();
         System.err.println("Fusing parameters ...");
         while (!es.isTerminated()) {
-            System.err.print("\r " + Math.ceil(100.0 * nProcessedParam.get() / nTotalParam) + "% of parameters done");
+            System.err.print("\r " + MathAid.ceil(100.0 * nProcessedParam.get() / nTotalParam) + "% of parameters done");
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all parameters.");

@@ -69,7 +69,7 @@ public final class MathAid {
         if (n < 1)
             throw new IllegalArgumentException("invalid input n");
 
-        final long log10 = (long) Math.floor(Math.log10(Math.abs(value)));
+        final long log10 = (long) MathAid.floor(Math.log10(Math.abs(value)));
         final double power10 = FastMath.pow(10, log10 - n + 1);
         return Math.round(value / power10) * power10;
     }

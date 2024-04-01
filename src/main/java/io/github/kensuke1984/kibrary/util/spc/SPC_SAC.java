@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -287,7 +288,7 @@ public final class SPC_SAC extends Operation {
 
         es.shutdown();
         while (!es.isTerminated()) {
-            System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
+            System.err.print("\rConverting " + MathAid.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
             ThreadAid.sleep(100);
         }
         System.err.println("\rConverting finished.");

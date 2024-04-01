@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -226,7 +227,7 @@ public class CoarseGridDesigner extends Operation {
 
             // decide number of latitude intervals
             // When latitudeOffset > 0, intervals for that extra part is needed.
-            int nLatitude = (int) Math.ceil((180 + latitudeOffset) / dLatitude);
+            int nLatitude = (int) MathAid.ceil((180 + latitudeOffset) / dLatitude);
             // loop for each latitude band (from north to south)
             for (int i = 0; i < nLatitude; i++) {
                 double tmp;
@@ -250,7 +251,7 @@ public class CoarseGridDesigner extends Operation {
                 // decide number of longitude intervals
                 // When indivisible, the remaining range is not used so that the longitudes do not exceed 360.
                 // It is not a good idea to include overlapped voxels 2 times (at both ends), anyway.
-                int nLongitude = (int) Math.floor(360 / dLongitudeForRow);
+                int nLongitude = (int) MathAid.floor(360 / dLongitudeForRow);
                 // loop for each longitude range
                 for (int j = 0; j < nLongitude; j++) {
                     // decide longitude range, depending on crossDateLine

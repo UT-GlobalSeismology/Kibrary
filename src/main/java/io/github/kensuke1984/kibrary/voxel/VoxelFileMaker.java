@@ -205,7 +205,7 @@ public class VoxelFileMaker extends Operation {
                 layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
-            int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+            int nRadius = (int) MathAid.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
             layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {

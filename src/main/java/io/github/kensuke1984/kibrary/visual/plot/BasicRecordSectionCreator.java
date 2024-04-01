@@ -54,10 +54,6 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicRecordSectionCreator extends Operation {
 
     /**
-     * The interval of exporting travel times.
-     */
-    private static final double TRAVEL_TIME_INTERVAL = 1;
-    /**
      * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
@@ -449,8 +445,8 @@ public class BasicRecordSectionCreator extends Operation {
 
             // set ranges
             if (minDistance > maxDistance || minTime > maxTime) return;
-            int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
-            int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
+            int startDistance = (int) MathAid.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
+            int endDistance = (int) MathAid.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
             gnuplot.setCommonYrange(startDistance, endDistance);
             gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 

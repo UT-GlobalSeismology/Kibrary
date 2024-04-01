@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -440,10 +441,10 @@ public class DataFeatureHistogram extends Operation {
      * @throws IOException
      */
     private void createHistograms(Set<DataFeature> featureList, Set<DataFeature> extraFeatureList) throws IOException {
-       int nCorr = (int) Math.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
-       int nVar = (int) Math.ceil(varianceUpperBound / dVariance);
-       int nRatio = (int) Math.ceil(ratioUpperBound / dRatio);
-       int nSNRatio = (int) Math.ceil(snRatioUpperBound / dSNRatio);
+       int nCorr = (int) MathAid.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
+       int nVar = (int) MathAid.ceil(varianceUpperBound / dVariance);
+       int nRatio = (int) MathAid.ceil(ratioUpperBound / dRatio);
+       int nSNRatio = (int) MathAid.ceil(snRatioUpperBound / dSNRatio);
        int[] corrs = new int[nCorr];
        int[] vars = new int[nVar];
        int[] ratios = new int[nRatio];

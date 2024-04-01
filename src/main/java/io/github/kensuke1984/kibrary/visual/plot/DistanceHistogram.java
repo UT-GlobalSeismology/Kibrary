@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -112,7 +113,7 @@ public class DistanceHistogram {
         boolean conductWeighting = cmdLine.hasOption("w");
 
         // count number of records in each interval
-        int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
+        int[] numberOfRecords = new int[(int) MathAid.ceil(360 / interval)];
         Map<DataEntry, Double> distanceMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
