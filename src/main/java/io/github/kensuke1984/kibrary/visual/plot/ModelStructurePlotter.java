@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -190,9 +191,10 @@ public class ModelStructurePlotter extends Operation {
         if (property.containsKey("upperRadius")) {
             upperRadius = property.parseDouble("upperRadius", null);
             setUpperRadius = true;
+            if (upperRadius < 0)
+                throw new IllegalArgumentException("Upper radius " + upperRadius + " is invalid; must be positive.");
         }
-        if (setLowerRadius && setUpperRadius && lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+        if (setLowerRadius && setUpperRadius) LinearRange.checkValidity("Radius", lowerRadius, upperRadius);
         if (property.containsKey("lowerValue")) {
             lowerValue = property.parseDouble("lowerValue", null);
             setLowerValue = true;
@@ -201,8 +203,7 @@ public class ModelStructurePlotter extends Operation {
             upperValue = property.parseDouble("upperValue", null);
             setUpperValue = true;
         }
-        if (setLowerValue && setUpperValue && lowerValue > upperValue)
-            throw new IllegalArgumentException("Value range " + lowerValue + " , " + upperValue + " is invalid.");
+        if (setLowerValue && setUpperValue) LinearRange.checkValidity("Value", lowerValue, upperValue);
     }
 
     @Override
