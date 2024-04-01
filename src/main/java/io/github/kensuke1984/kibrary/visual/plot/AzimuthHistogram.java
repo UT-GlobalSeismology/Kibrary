@@ -100,13 +100,13 @@ public class AzimuthHistogram {
                 .desc("Name of phase to use to compute turning point. (ScS)").build());
         // weighting
         options.addOption(Option.builder("w").longOpt("weight")
-                .desc("Whether to decide weights.").build());
+                .desc("Decide weights.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
                 .desc("A tag to include in output folder name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output folder name.").build());
+                .desc("Omit date string in output folder name.").build());
 
         return options;
     }

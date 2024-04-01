@@ -132,7 +132,7 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#dLongitudeDeg ");
             pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg]; [0:dLongitudeDeg). (2.5)");
             pw.println("#longitudeOffset ");
-            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180)? (false)");
+            pw.println("##(boolean) Whether to use longitude range [0:360) instead of [-180:180). (false)");
             pw.println("#crossDateLine ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");

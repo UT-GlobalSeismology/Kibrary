@@ -284,7 +284,7 @@ public interface SACFileAccess extends SACHeaderAccess {
                 .desc("Path of input SAC file.").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
+                .desc("Path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

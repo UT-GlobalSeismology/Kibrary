@@ -62,7 +62,7 @@ public class PerturbationComparison {
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
                 .desc("A tag to include in output folder name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output folder name.").build());
+                .desc("Omit date string in output folder name.").build());
 
         return options;
     }

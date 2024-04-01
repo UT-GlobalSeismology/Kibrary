@@ -217,7 +217,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows.");
             pw.println("##  This is only used when basic ID and waveform files are used, not a data feature file.");
             pw.println("#improvementWindowPath timewindow.dat");
-            pw.println("##########Common settings");
+            pw.println("##########Common settings.");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Color of histograms to create, from {red, green, blue}. (red)");

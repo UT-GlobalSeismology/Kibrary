@@ -149,7 +149,7 @@ public class ModelMapper extends Operation {
             pw.println("#marginLongitudeKm ");
             pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
-            pw.println("##########Parameters for perturbation values");
+            pw.println("##########Parameters for perturbation values.");
             pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");

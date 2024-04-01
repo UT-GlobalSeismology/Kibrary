@@ -223,7 +223,7 @@ public class PolynomialStructureFile {
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+                .desc("Path of output file.").build());
 
         return options;
     }

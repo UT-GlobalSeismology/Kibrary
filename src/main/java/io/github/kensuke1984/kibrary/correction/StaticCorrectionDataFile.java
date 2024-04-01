@@ -248,12 +248,12 @@ public final class StaticCorrectionDataFile {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("c").longOpt("correction").hasArg().argName("staticCorrectionFile")
-                .desc("Set input static correction file.").build());
+                .desc("Path of static correction file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
+                .desc("Path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

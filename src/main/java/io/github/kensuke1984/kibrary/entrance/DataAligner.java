@@ -83,17 +83,16 @@ public class DataAligner {
         OptionGroup inputOption = new OptionGroup();
         inputOption.setRequired(true);
         inputOption.addOption(Option.builder("m").longOpt("mseed").hasArg().argName("datacenter")
-                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}.")
-                .build());
+                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}.").build());
         inputOption.addOption(Option.builder("s").longOpt("seed")
                 .desc("Operate for seed files.").build());
         options.addOptionGroup(inputOption);
 
         // option
         options.addOption(Option.builder("d").longOpt("fromDownload")
-                .desc("Whether to redo from stationXML downloads for all unconfigured SACs, without opening mseed. Only for mseed mode.").build());
+                .desc("Redo from stationXML downloads for all unconfigured SACs, without opening mseed. Only for mseed mode.").build());
         options.addOption(Option.builder("c").longOpt("fromConfigure")
-                .desc("Whether to redo from SAC configuration, without opening seed/mseed or downloading stationXMLs.").build());
+                .desc("Redo from SAC configuration, without opening seed/mseed or downloading stationXMLs.").build());
 
         return options;
     }

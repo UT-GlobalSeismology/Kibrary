@@ -110,10 +110,10 @@ public class BlockModelMaker extends Operation {
             pw.println("##Variable types to set in model, listed using spaces. (MU)");
             pw.println("#outputVariableTypes ");
             pw.println("##########From here on, set percentages of perturbations and the borders of boxes to place them.");
-            pw.println("########## Percentages of perturbations must be listed using spaces in the order of variableTypes.");
-            pw.println("########## Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
-            pw.println("########## A box is recongized if the percentage values are properly set.");
-            pw.println("########## Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
+            pw.println("##########  Percentages of perturbations must be listed using spaces in the order of variableTypes.");
+            pw.println("##########  Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
+            pw.println("##########  A box is recongized if the percentage values are properly set.");
+            pw.println("##########  Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
             for (int i = 1; i <= MAX_BOX; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " box.");
                 pw.println("#percents" + i + " ");

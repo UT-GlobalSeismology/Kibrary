@@ -44,14 +44,14 @@ public class DataEntryIntersection {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("a").longOpt("entry1").hasArg().argName("dataEntryFile").required()
-                .desc("First data entry list file.").build());
+                .desc("Path of first data entry list file.").build());
         options.addOption(Option.builder("b").longOpt("entry2").hasArg().argName("dataEntryFile").required()
-                .desc("Second data entry list file.").build());
+                .desc("Path of second data entry list file.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
         return options;
     }
 

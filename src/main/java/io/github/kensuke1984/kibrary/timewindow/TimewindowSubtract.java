@@ -44,14 +44,14 @@ public class TimewindowSubtract {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("a").longOpt("original").hasArg().argName("originalTimewindowFile").required()
-                .desc("The original timewindow file.").build());
+                .desc("Path of original timewindow file.").build());
         options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimewindowFile").required()
-                .desc("The timewindow file to be subtracted.").build());
+                .desc("Path of timewindow file to be subtracted.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
         return options;
     }
 

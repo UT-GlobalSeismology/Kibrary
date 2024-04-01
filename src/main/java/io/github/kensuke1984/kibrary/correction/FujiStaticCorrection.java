@@ -112,7 +112,7 @@ public class FujiStaticCorrection extends Operation {
      * Range for search [s]. ±searchRange
      */
     private double searchRange;
-    private boolean mediantime;
+    private boolean medianTime;
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
@@ -152,10 +152,10 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#convolved ");
             pw.println("##(double) Threshold for peak finder. (0.2)");
             pw.println("#threshold ");
-            pw.println("##(double) searchRange [s]. (10)");
+            pw.println("##(double) Search range [s]. (10)");
             pw.println("#searchRange ");
-            pw.println("##(boolean) Use median time. (false)");
-            pw.println("#mediantime ");
+            pw.println("##(boolean) Whether to use median time. (false)");
+            pw.println("#medianTime ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -180,7 +180,7 @@ public class FujiStaticCorrection extends Operation {
 
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");
-        mediantime = property.parseBoolean("mediantime", "false");
+        medianTime = property.parseBoolean("medianTime", "false");
     }
 
     @Override
@@ -321,7 +321,7 @@ public class FujiStaticCorrection extends Operation {
         int endPoint = getEndPoint(syn, maxPoint);
         double endtime = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA);
 
-        if (mediantime) {
+        if (medianTime) {
             double medianTime = startSec + (endPoint + maxPoint) / 2. * synSac.getValue(SACHeaderEnum.DELTA);
             endtime = medianTime;
             startSec = endtime - 15;
@@ -460,7 +460,7 @@ public class FujiStaticCorrection extends Operation {
             // compute correction
             try {
                 double shift = 0;
-                if (!mediantime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timewindow);
+                if (!medianTime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timewindow);
                 else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timewindow);
 //                  double ratio = computeMaxRatio(obsSac, synSac, shift, window);
                 double ratio = computeP2PRatio(obsSac, synSac, 0., timewindow);

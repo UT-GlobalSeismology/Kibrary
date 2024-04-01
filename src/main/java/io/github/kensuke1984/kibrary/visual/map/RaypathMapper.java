@@ -159,7 +159,7 @@ public class RaypathMapper extends Operation {
             pw.println("##########To plot perturbation points, set the following.");
             pw.println("##Path of a voxel information file.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##########Overall settings");
+            pw.println("##########Overall settings.");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
@@ -178,8 +178,8 @@ public class RaypathMapper extends Operation {
             pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
             pw.println("#structureName ");
             pw.println("##########Settings for mapping");
-            pw.println("##Mode of coloring of raypaths {0: single color, 1: color by phase, 2: bin by distance, 3: bin by azimuth,");
-            pw.println("##  4: bin by back azimuth, 5: bin by turning-point-azimuth}. (0)");
+            pw.println("##Mode of coloring of raypaths, from {0: single color, 1: color by phase, 2: bin by distance,");
+            pw.println("##  3: bin by source azimuth, 4: bin by back azimuth, 5: bin by turning point azimuth}. (0)");
             pw.println("#colorMode ");
             pw.println("##Path of color bin file, must be set if colorMode is not 0.");
             pw.println("#colorBinPath ");

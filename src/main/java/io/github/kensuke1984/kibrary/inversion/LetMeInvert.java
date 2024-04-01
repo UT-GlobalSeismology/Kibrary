@@ -129,7 +129,7 @@ public class LetMeInvert extends Operation {
             pw.println("#evaluateNum ");
             pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
-            pw.println("##########Settings for Least Squares method");
+            pw.println("##########Settings for Least Squares method.");
             pw.println("##(double) Reguralization parameter. (0)");
             pw.println("#lambda_LS ");
             pw.println("##(Path) Path of matrix for complex regularization patterns, when needed.");

@@ -84,9 +84,9 @@ public class VirtualDatasetMaker extends Operation {
             pw.println("#lowerLongitude ");
             pw.println("##(int) Upper limit of longitude [deg]; (lowerLongitude:360]. (170)");
             pw.println("#upperLongitude ");
-            pw.println("##(int) Latitude spacing [deg], (0:). (5)");
+            pw.println("##(int) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(int) Longitude spacing [deg], (0:). (5)");
+            pw.println("##(int) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
         }
         System.err.println(outPath + " is created.");

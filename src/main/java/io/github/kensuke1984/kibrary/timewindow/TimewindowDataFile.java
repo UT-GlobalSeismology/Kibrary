@@ -292,12 +292,12 @@ public final class TimewindowDataFile {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Set input timewindow file.").build());
+                .desc("Path of timewindow file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
+                .desc("Path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

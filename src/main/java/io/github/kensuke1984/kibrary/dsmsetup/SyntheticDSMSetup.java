@@ -63,7 +63,7 @@ public class SyntheticDSMSetup extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Name root of input file for DSM (header_[sh,psv].inf).
+     * Name root of input file for DSM (header_[SH,PSV].inf).
      */
     private String header;
     /**
@@ -122,7 +122,7 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[SH,PSV].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
