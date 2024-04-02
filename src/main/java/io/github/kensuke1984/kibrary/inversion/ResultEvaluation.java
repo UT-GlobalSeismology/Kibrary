@@ -22,14 +22,14 @@ public class ResultEvaluation {
 
     private final RealMatrix ata;
     private final RealVector atd;
-    private final int dLength;
+    private final double numIndependent;
     private final double dNorm;
     private final double obsNorm;
 
-    public ResultEvaluation(RealMatrix ata, RealVector atd, int dLength, double dNorm, double obsNorm) {
+    public ResultEvaluation(RealMatrix ata, RealVector atd, double numIndependent, double dNorm, double obsNorm) {
         this.ata = ata;
         this.atd = atd;
-        this.dLength = dLength;
+        this.numIndependent = numIndependent;
         this.dNorm = dNorm;
         this.obsNorm = obsNorm;
     }
@@ -67,7 +67,7 @@ public class ResultEvaluation {
     private static void writeVariance(double[] dat, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
-                // #CGVector normalizedVariance normalizedVariancePercent
+                // vector# normalizedVariance normalizedVariancePercent
                 pw.println(i + " " + dat[i] + " " + (dat[i] * 100));
             }
         }
@@ -75,7 +75,7 @@ public class ResultEvaluation {
     private static void writeAIC(double[] dat, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
-                // #CGVector AIC normalizedAIC
+                // vector# AIC normalizedAIC
                 pw.println(i + " " + dat[i] + " " + (dat[i] / dat[0]));
             }
         }
@@ -99,15 +99,16 @@ public class ResultEvaluation {
     }
 
     /**
-     * 自由度iに対してAICを計算する 独立データは n / alpha 各々のAIC群
+     * Compute the Akaike Information criterion (AIC) for each vector, considering the redundancy parameter.
      *
-     * @param variance varianceの列
-     * @param alpha    alpha redundancy
-     * @return array of aic
+     * @param variance (double[]) Variance for each vector.
+     * @param alpha (double) Redundancy parameter. This is the assumed redundancy in data points,
+     *                used as n/a, where n is the number of data points. Note that n/a will be (int)(n/a).
+     * @return (double[]) AIC value for each vector.
      */
     private double[] computeAIC(double[] variance, double alpha) {
         double[] aic = new double[variance.length];
-        int independentN = (int) (dLength / alpha);
+        int independentN = (int) (numIndependent / alpha);
         for (int i = 0; i < aic.length; i++)
             aic[i] = MathAid.computeAIC(variance[i], independentN, i);
         return aic;

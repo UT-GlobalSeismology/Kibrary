@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -20,33 +21,35 @@ import io.github.kensuke1984.kibrary.inversion.ResultEvaluation;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
+/**
+ * Operation to solve inverse problem after adding up AtA and Atd from multiple datasets.
+ *
+ * @author otsuru
+ * @since 2024/4/1 created by duplicating InversionSolver
+ */
 public class InversionSumSolver extends Operation {
+
+    private static final int MAX_INPUT = 10;
 
     private final Property property;
     /**
      * Path of the work folder.
      */
     private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
-    /**
-     * Path of ata file.
-     */
-    private Path ataPath;
-    /**
-     * Path of atd data.
-     */
-    private Path atdPath;
-    /**
-     * Path of d vector info file.
-     */
-    private Path dInfoPath;
-    /**
-     * Path of unknown parameter file.
-     */
-    private Path unknownParameterPath;
     /**
      * Solvers for equation.
      */
@@ -61,6 +64,9 @@ public class InversionSumSolver extends Operation {
     private Path tMatrixPath_LS;
     private Path etaVectorPath_LS;
     private Path m0VectorPath_CG;
+
+    private List<Path> inversionPaths = new ArrayList<>();
+
 
     /**
      * @param args  none to create a property file <br>
@@ -79,14 +85,10 @@ public class InversionSumSolver extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##Path of ata file. (ata.lst)");
-            pw.println("#ataPath ");
-            pw.println("##Path of atd file. (atd.lst)");
-            pw.println("#atdPath ");
-            pw.println("##Path of dInfo file. (dInfo.inf)");
-            pw.println("#dInfoPath ");
-            pw.println("##Path of an unknown parameter list file. (unknowns.lst)");
-            pw.println("#unknownParameterPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
@@ -103,6 +105,12 @@ public class InversionSumSolver extends Operation {
             pw.println("##########Settings for Conjugate Gradient method.");
             pw.println("##(Path) Path of initial vector m_0, when needed.");
             pw.println("#m0VectorPath_CG ");
+            pw.println("##########From here on, list up paths of inversion folders to use.");
+            pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
+            for (int i = 1; i <= MAX_INPUT; i++) {
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder.");
+                pw.println("#inversionPath" + i + " inversion");
+            }
         }
         System.err.println(outPath + " is created.");
     }
@@ -114,11 +122,8 @@ public class InversionSumSolver extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-
-        ataPath = property.parsePath("ataPath", "ata.lst", true, workPath);
-        atdPath = property.parsePath("atdPath", "atd.lst", true, workPath);
-        dInfoPath = property.parsePath("dInfoPath", "dInfo.inf", true, workPath);
-        unknownParameterPath = property.parsePath("unknownParameterPath", "unknowns.lst", true, workPath);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
@@ -132,24 +137,74 @@ public class InversionSumSolver extends Operation {
             etaVectorPath_LS = property.parsePath("etaVectorPath_LS", null, true, workPath);
         if (property.containsKey("m0VectorPath_CG"))
             m0VectorPath_CG = property.parsePath("m0VectorPath_CG", null, true, workPath);
+
+        for (int i = 1; i <= MAX_INPUT; i++) {
+            String inversionKey = "inversionPath" + i;
+            if (property.containsKey(inversionKey)) {
+                inversionPaths.add(property.parsePath(inversionKey, null, true, workPath));
+            }
+        }
     }
 
     @Override
     public void run() throws IOException {
+        int inputNum = inversionPaths.size();
+        if (inputNum == 0) {
+            System.err.println("!! No input folders found.");
+            return;
+        }
 
-        // read input
-        RealMatrix ata = MatrixFile.read(ataPath);
-        RealVector atd = VectorFile.read(atdPath);
-        double[] dInfo = MatrixAssembly.readDInfo(dInfoPath);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        // read input settings
         RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
         RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
         RealVector m0Vector_CG = (m0VectorPath_CG != null) ? VectorFile.read(m0VectorPath_CG) : null;
 
+        // read input of each inversion folder
+        double numIndependent = 0.0;
+        double dSumOfSquares = 0.0;
+        double obsSumOfSquares = 0.0;
+        List<UnknownParameter> unknowns = null;
+        RealMatrix ata = null;
+        RealVector atd = null;
+        for (int i = 0; i < inputNum; i++) {
+            Path inversionPath = inversionPaths.get(i);
+            double[] dInfoEach = MatrixAssembly.readDInfo(inversionPath.resolve("dInfo.inf"));
+            List<UnknownParameter> unknownsEach = UnknownParameterFile.read(inversionPath.resolve("unknowns.lst"));
+            RealMatrix ataEach = MatrixFile.read(inversionPath.resolve("ata.lst"));
+            RealVector atdEach = VectorFile.read(inversionPath.resolve("atd.lst"));
+
+            // check that the unknowns are the same for all inversion folders
+            if (i == 0) {
+                unknowns = unknownsEach;
+            } else {
+                if (!unknownsEach.equals(unknowns))
+                    throw new IllegalStateException("Unknown parameters in input inversion folders do not match.");
+            }
+
+            // accumulate ata and atd
+            ata = (i == 0) ? ataEach : ata.add(ataEach);
+            atd = (i == 0) ? atdEach : atd.add(atdEach);
+            numIndependent += dInfoEach[0];
+            dSumOfSquares += Math.pow(dInfoEach[1], 2);
+            obsSumOfSquares += Math.pow(dInfoEach[2], 2);
+        }
+        double dNorm = Math.sqrt(dSumOfSquares);
+        double obsNorm = Math.sqrt(obsSumOfSquares);
+
+        // prepare output folder
+        Path outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        // output matrices
+        MatrixFile.write(ata, outPath.resolve("ata.lst"));
+        VectorFile.write(atd, outPath.resolve("atd.lst"));
+        MatrixAssembly.writeDInfo(numIndependent, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
+
         // solve inversion and evaluate
-        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, (int) dInfo[0], dInfo[1], dInfo[2]);
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, numIndependent, dNorm, obsNorm);
         for (InverseMethodEnum method : inverseMethods) {
-            Path outMethodPath = workPath.resolve(method.simpleName());
+            Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
             InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);

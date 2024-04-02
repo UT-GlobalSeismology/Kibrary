@@ -144,16 +144,16 @@ public class InversionSolver extends Operation {
     public void run() throws IOException {
 
         // read input
-        RealMatrix ata = MatrixFile.read(ataPath);
-        RealVector atd = VectorFile.read(atdPath);
-        double[] dInfo = MatrixAssembly.readDInfo(dInfoPath);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
         RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
         RealVector m0Vector_CG = (m0VectorPath_CG != null) ? VectorFile.read(m0VectorPath_CG) : null;
+        double[] dInfo = MatrixAssembly.readDInfo(dInfoPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        RealMatrix ata = MatrixFile.read(ataPath);
+        RealVector atd = VectorFile.read(atdPath);
 
         // solve inversion and evaluate
-        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, (int) dInfo[0], dInfo[1], dInfo[2]);
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dInfo[0], dInfo[1], dInfo[2]);
         for (InverseMethodEnum method : inverseMethods) {
             Path outMethodPath = workPath.resolve(method.simpleName());
 
