@@ -63,7 +63,6 @@ public class ResultEvaluation {
 
         createScript(outPath, alphas);
     }
-
     private static void writeVariance(double[] dat, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
@@ -77,6 +76,36 @@ public class ResultEvaluation {
             for (int i = 0; i < dat.length; i++) {
                 // vector# AIC normalizedAIC
                 pw.println(i + " " + dat[i] + " " + (dat[i] / dat[0]));
+            }
+        }
+    }
+
+    /**
+     * Computes and writes variance for inversion results using the least squares method.
+     * @param ans (RealMatrix) The matrix containing the answers of the inversion. Each column is one answer.
+     * @param lambdas (double[]) Values of &lambda; that are computed for.
+     * @param outPath (Path) Path of output directory.
+     * @throws IOException
+     */
+    public void evaluate_LS(RealMatrix ans, double[] lambdas, Path outPath) throws IOException {
+        System.err.println("Computing variance ...");
+
+        // compute normalized variance up to basis vector maxNum
+        double[] variances = new double[lambdas.length + 1];
+        variances[0] = dNorm * dNorm / (obsNorm * obsNorm);
+        for (int i = 0; i < lambdas.length; i++) {
+            variances[i + 1] = varianceOf(ans.getColumnVector(i));
+        }
+        writeVariance_LS(variances, lambdas, outPath.resolve("variance.txt"));
+
+        createScript(outPath, new double[0]);
+    }
+    private static void writeVariance_LS(double[] dat, double[] lambdas, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("infty " + dat[0] + " " + (dat[0] * 100));
+            for (int i = 1; i < dat.length; i++) {
+                // lambda normalizedVariance normalizedVariancePercent
+                pw.println(lambdas[i-1] + " " + dat[i] + " " + (dat[i] * 100));
             }
         }
     }
@@ -120,9 +149,9 @@ public class ResultEvaluation {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set term pngcairo enhanced font 'Helvetica,14'");
             pw.println("set xlabel 'i'");
-            pw.println("set ylabel 'Normalized AIC'");
+            if (alpha.length != 0) pw.println("set ylabel 'Normalized AIC'");
             pw.println("set y2label 'Normalized variance (%)'");
-            pw.println("set ytics nomirror");
+            if (alpha.length != 0) pw.println("set ytics nomirror");
             pw.println("set y2tics nomirror");
             pw.println("set output 'plot.png'");
 

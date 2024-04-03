@@ -49,13 +49,13 @@ public class ConjugateGradientMethod extends InversionMethod {
     public ConjugateGradientMethod(RealMatrix ata, RealVector atd, RealVector m0) {
         this.ata = ata;
         this.atd = atd;
-        int column = ata.getColumnDimension();
+        int dimension = ata.getColumnDimension();
         // when initial vector is not set, set it as zero-vector
-        this.m0 = (m0 != null) ? m0 : new ArrayRealVector(column);
+        this.m0 = (m0 != null) ? m0 : new ArrayRealVector(dimension);
         // set up matrices
-        p = MatrixUtils.createRealMatrix(column, column);
-        answer = MatrixUtils.createRealMatrix(column, column);
-        alpha = new ArrayRealVector(column);
+        p = MatrixUtils.createRealMatrix(dimension, dimension);
+        answer = MatrixUtils.createRealMatrix(dimension, dimension);
+        alpha = new ArrayRealVector(dimension);
     }
 
     /**

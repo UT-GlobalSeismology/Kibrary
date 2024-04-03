@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -85,6 +86,7 @@ public class ModelStructurePlotter extends Operation {
      * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
+    private List<String> indexStrings;
     private int maxNum;
 
     private boolean colorByStructure;
@@ -132,6 +134,8 @@ public class ModelStructurePlotter extends Operation {
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
+            pw.println("##Indices of result models to map. If this is unset, the following maxNum will be referenced.");
+            pw.println("#indexStrings ");
             pw.println("##(int) Maximum number of basis vectors to map. (10)");
             pw.println("#maxNum ");
             pw.println("##(boolean) Whether to color structures differently. (true)");
@@ -175,7 +179,12 @@ public class ModelStructurePlotter extends Operation {
                 .collect(Collectors.toSet());
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        maxNum = property.parseInt("maxNum", "10");
+        if (property.containsKey("indexStrings")) {
+            indexStrings = Arrays.stream(property.parseStringArray("indexStrings", null)).collect(Collectors.toList());
+        } else {
+            int maxNum = property.parseInt("maxNum", "10");
+            indexStrings = IntStream.range(1, maxNum).mapToObj(String::valueOf).collect(Collectors.toList());
+        }
 
         colorByStructure = property.parseBoolean("colorByStructure", "true");
         colorByVariable = property.parseBoolean("colorByVariable", "true");
@@ -230,10 +239,10 @@ public class ModelStructurePlotter extends Operation {
             }
 
             // loop for each vector
-            for (int k = 1; k <= maxNum; k++){
-                Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
+            for (String indexString : indexStrings){
+                Path answerPath = methodPath.resolve(method.simpleName() + indexString + ".lst");
                 if (!Files.exists(answerPath)) {
-                    System.err.println("!! Results for " + method.simpleName() + k + " do not exist, skipping.");
+                    System.err.println("!! Results for " + method.simpleName() + indexString + " do not exist, skipping.");
                     continue;
                 }
 
@@ -242,7 +251,7 @@ public class ModelStructurePlotter extends Operation {
                 PerturbationModel model = new PerturbationModel(knowns, initialStructure);
 
                 // create output folder for this model
-                Path outBasisPath = outPath.resolve(method.simpleName() + k);
+                Path outBasisPath = outPath.resolve(method.simpleName() + indexString);
                 Files.createDirectories(outBasisPath);
 
                 // instance to decide plot range for this model
@@ -361,8 +370,8 @@ public class ModelStructurePlotter extends Operation {
 
             // plot models
             for (InverseMethodEnum method : inverseMethods) {
-                for (int k = 1; k <= maxNum; k++){
-                    String modelName = method.simpleName() + k;
+                for (String indexString : indexStrings){
+                    String modelName = method.simpleName() + indexString;
                     pw.println("  \"../" + modelName + "/" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 1 "
                             + plotAid.lineTypeFor(0, variable) + " title '" + modelName + "', \\");
                 }

@@ -1,8 +1,17 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
  * Least squares method.
@@ -33,15 +42,13 @@ import org.apache.commons.math3.linear.RealVector;
 public class LeastSquaresMethod extends InversionMethod {
 
     /**
-     * &lambda; : reguralization parameter.
+     * Values of &lambda; : reguralization parameter.
      */
-    private final double lambda;
-
+    private final double[] lambdas;
     /**
      * <b>T</b> : matrix that allows for more complex regularization patterns in Tikhonov regularization.
      */
     private final RealMatrix t;
-
     /**
      * &eta; : vector value that <b>T</b>m should approach.
      */
@@ -55,7 +62,8 @@ public class LeastSquaresMethod extends InversionMethod {
      * @param atd (RealVector) A<sup>T</sup>d.
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd) {
-        this(ata, atd, 0, null, null);
+        // Note: by default, new arrays contain the value 0, so here, lambdas={0.0}.
+        this(ata, atd, new double[1], null, null);
     }
 
     /**
@@ -63,21 +71,25 @@ public class LeastSquaresMethod extends InversionMethod {
      *
      * @param ata (RealMatrix) A<sup>T</sup>A.
      * @param atd (RealVector) A<sup>T</sup>d.
-     * @param lambda (double) &lambda;.
+     * @param lambdas (double[]) Values of &lambda; to compute for.
      * @param t (RealMatrix) T. When null, identity matrix is used.
      * @param eta (RealVector) &eta;. When null, it will not be used.
      */
-    public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda, RealMatrix t, RealVector eta) {
+    public LeastSquaresMethod(RealMatrix ata, RealVector atd, double[] lambdas, RealMatrix t, RealVector eta) {
         if (t != null && t.getColumnDimension() != ata.getColumnDimension())
             throw new IllegalArgumentException("Dimension of T is invalid.");
         if (eta != null && t != null && eta.getDimension() != t.getRowDimension())
             throw new IllegalArgumentException("Dimension of eta and T do not match.");
         this.ata = ata;
         this.atd = atd;
-        this.lambda = lambda;
+        this.lambdas = lambdas;
         // when T is not set, set it as identity
         this.t = (t != null) ? t : MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
         this.eta = eta;
+
+        // set up answer matrix
+        int dimension = ata.getColumnDimension();
+        answer = MatrixUtils.createRealMatrix(dimension, lambdas.length);
     }
 
     @Override
@@ -86,14 +98,30 @@ public class LeastSquaresMethod extends InversionMethod {
 
         RealMatrix j = ata;
         RealVector k = atd;
-        if (0 < lambda) {
-            RealMatrix tt = t.transpose();
-            // At A + lambda Tt T
-            j = j.add(tt.multiply(t).scalarMultiply(lambda));
-            // At d - lambda Tt eta
-            if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
+        for (int i = 0; i < lambdas.length; i++) {
+            double lambda = lambdas[i];
+            if (0 < lambda) {
+                RealMatrix tt = t.transpose();
+                // At A + lambda Tt T
+                j = j.add(tt.multiply(t).scalarMultiply(lambda));
+                // At d - lambda Tt eta
+                if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
+            }
+            answer.setColumnVector(i, MatrixUtils.inverse(j).operate(k));
         }
-        answer = MatrixUtils.createColumnRealMatrix(MatrixUtils.inverse(j).operate(k).toArray());
+    }
+
+    @Override
+    public void outputAnswers(List<UnknownParameter> unknowns, Path outPath) throws IOException {
+        if (unknowns.size() != getNParameter()) throw new IllegalArgumentException("Number of unknowns and answer dimension differ.");
+
+        Files.createDirectories(outPath);
+        System.err.println("Outputting the answer files in " + outPath);
+        for (int i = 0; i < lambdas.length; i++) {
+            Path outputPath = outPath.resolve(getEnum().simpleName() + MathAid.simplestString(lambdas[i]) + ".lst");
+            double[] m = answer.getColumn(i);
+            KnownParameterFile.write(unknowns, m, outputPath);
+        }
     }
 
     @Override

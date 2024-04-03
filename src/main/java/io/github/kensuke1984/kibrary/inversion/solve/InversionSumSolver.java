@@ -60,7 +60,7 @@ public class InversionSumSolver extends Operation {
     private double[] alpha;
     private int evaluateNum;
 
-    private double lambda_LS;
+    private double[] lambdas_LS;
     private Path tMatrixPath_LS;
     private Path etaVectorPath_LS;
     private Path m0VectorPath_CG;
@@ -96,8 +96,8 @@ public class InversionSumSolver extends Operation {
             pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (100)");
             pw.println("#evaluateNum ");
             pw.println("##########Settings for Least Squares method.");
-            pw.println("##(double) Reguralization parameter. (0)");
-            pw.println("#lambda_LS ");
+            pw.println("##(double[]) Reguralization parameters, listed using spaces. (0)");
+            pw.println("#lambdas_LS ");
             pw.println("##(Path) Path of matrix for complex regularization patterns, when needed.");
             pw.println("#tMatrixPath_LS ");
             pw.println("##(Path) Path of vector that Tm should approach, when needed.");
@@ -130,7 +130,7 @@ public class InversionSumSolver extends Operation {
         alpha = property.parseDoubleArray("alpha", "1 100 1000");
         evaluateNum = property.parseInt("evaluateNum", "100");
 
-        lambda_LS = property.parseDouble("lambda_LS", "0");
+        lambdas_LS = property.parseDoubleArray("lambdas_LS", "0");
         if (property.containsKey("tMatrixPath_LS"))
             tMatrixPath_LS = property.parsePath("tMatrixPath_LS", null, true, workPath);
         if (property.containsKey("etaVectorPath_LS"))
@@ -207,12 +207,18 @@ public class InversionSumSolver extends Operation {
             Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
-            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
+            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambdas_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
             inversion.compute();
             inversion.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
-            evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
+            switch (method) {
+            case LEAST_SQUARES:
+                evaluation.evaluate_LS(inversion.getAnswers(), lambdas_LS, outMethodPath);
+                break;
+            default:
+                evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
+            }
         }
     }
 
