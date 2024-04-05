@@ -319,8 +319,8 @@ public class PerturbationMapShellscript {
         double lonMin = Arrays.stream(longitudes).min().getAsDouble();
         double lonMax = Arrays.stream(longitudes).max().getAsDouble();
         // decide center point
-        double latCenter = (latMax + latMin) / 2;
-        double lonCenter = (lonMax + lonMin) / 2;
+        double latCenter = (latMin + latMax) / 2;
+        double lonCenter = (lonMin + lonMax) / 2;
         // return as String
         return (int) lonCenter + "/" + (int) latCenter;
     }

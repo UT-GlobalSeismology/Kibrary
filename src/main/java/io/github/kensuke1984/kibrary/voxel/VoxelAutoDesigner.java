@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * Voxels are set along latitude lines, with spacing of either equal longitude angle [deg] or equal distance [km].
  * When using distance [km], it is converted to degrees at the (roughly) median radius of the target region.
  * <p>
- * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
+ * Voxel radii will be decided separately based on given settings. Voxel radii will be set at the center of each radius range.
  * <p>
  * Use {@link VoxelManualDesigner} to decide the position range of voxels manually.
  *
@@ -123,14 +123,14 @@ public class VoxelAutoDesigner extends Operation {
             pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of boundary latitude [deg]; [0:). (2.5)");
+            pw.println("##(double) Offset of voxel-center latitude [deg]; [0:). (0)");
             pw.println("#latitudeOffset ");
-            pw.println("##(double) Longitude spacing [km]; (0:). If this is unset, the following dLongitudeDeg will be used.");
+            pw.println("##(double) Longitude spacing [km]; (0:). If unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg]; [0:dLongitudeDeg). (2.5)");
+            pw.println("##(double) Offset of voxel-center longitude [deg]. (0)");
             pw.println("#longitudeOffset ");
             pw.println("##(boolean) Whether to use longitude range [0:360) instead of [-180:180). (false)");
             pw.println("#crossDateLine true");
@@ -166,33 +166,26 @@ public class VoxelAutoDesigner extends Operation {
 
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
-            if (dLatitudeKm <= 0.0)
-                throw new IllegalArgumentException("dLatitudeKm must be positive.");
+            if (dLatitudeKm <= 0.0) throw new IllegalArgumentException("dLatitudeKm must be positive.");
             setLatitudeByKm = true;
         } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
-            if (dLatitudeDeg <= 0.0)
-                throw new IllegalArgumentException("dLatitudeDeg must be positive.");
+            if (dLatitudeDeg <= 0.0) throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
-        latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
-        if (latitudeOffset < 0.0)
-            throw new IllegalArgumentException("latitudeOffset must be non-negative.");
+        latitudeOffset = property.parseDouble("latitudeOffset", "0");
+        if (latitudeOffset < 0.0) throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
-            if (dLongitudeKm <= 0.0)
-                throw new IllegalArgumentException("dLongitudeKm must be positive.");
+            if (dLongitudeKm <= 0.0) throw new IllegalArgumentException("dLongitudeKm must be positive.");
             setLongitudeByKm = true;
         } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
-            if (dLongitudeDeg <= 0.0)
-                throw new IllegalArgumentException("dLongitudeDeg must be positive.");
-            longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
-            if (longitudeOffset < 0.0 || dLongitudeDeg <= longitudeOffset)
-                throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg).");
+            if (dLongitudeDeg <= 0.0) throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             setLongitudeByKm = false;
         }
+        longitudeOffset = property.parseDouble("longitudeOffset", "0");
         crossDateLine = property.parseBoolean("crossDateLine", "false");
 
         if (property.containsKey("borderRadii")) {
@@ -264,11 +257,12 @@ public class VoxelAutoDesigner extends Operation {
         // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
         double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / centerRadius) : dLatitudeDeg;
 
-        //~decide longitude ranges for each (co)latitude
-        // decide number of colatitude intervals
+        //~decide longitude ranges for each (co)latitude band
+        // decide the number of colatitude bands that sample points can be categorized into
         // Colatitude is used because its range is [0:180] and is easier to decide intervals.
-        // When latitudeOffset > 0, intervals for that extra part is needed.
-        int nLatitude = (int) MathAid.ceil((180.0 + latitudeOffset) / dLatitude);
+        // Note that this is not necessarily the same as the number of voxel-center points that appear on the sphere.
+        // Also, when latitudeOffset > dLatitude/2, intervals for the extra part hidden beyond the pole is also counted.
+        int nLatitude = (int) Math.round((180.0 + latitudeOffset) / dLatitude) + 1;
         double minLongitudes[] = new double[nLatitude];
         double maxLongitudes[] = new double[nLatitude];
         for (int i = 0; i < nLatitude; i++) {
@@ -296,61 +290,56 @@ public class VoxelAutoDesigner extends Operation {
                 double sampleColatitude = switchLatitudeColatitude(samplePosition.getLatitude());
                 double sampleLongitude = samplePosition.getLongitude();
                 if (crossDateLine && sampleLongitude < 0.0) sampleLongitude += 360.0;
-                // decide which colatitude interval the sample point is in
-                // latitudeOffset moves border latitudes to positive side, so moves border colatitudes to negative side.
-                // This way, sampleInterval will never become negative.
-                int colatitudeIndex = (int) MathAid.floor((sampleColatitude + latitudeOffset) / dLatitude);
+                // decide which colatitude band the sample point is in
+                // latitudeOffset moves latitude bands to positive side, so moves colatitude bands to negative side.
+                // This way, sampleInterval will never become negative even after shifting.
+                int colatitudeIndex = (int) Math.round((sampleColatitude + latitudeOffset) / dLatitude);
                 // reflect this sample point on longitude ranges
                 if (sampleLongitude < minLongitudes[colatitudeIndex]) minLongitudes[colatitudeIndex] = sampleLongitude;
                 if (sampleLongitude > maxLongitudes[colatitudeIndex]) maxLongitudes[colatitudeIndex] = sampleLongitude;
             }
         }
 
+        //~decide the longitude at which to align voxels
+        double baseLongitude;
+        if (setLongitudeByKm) {
+            double minLongitude = Arrays.stream(minLongitudes).min().getAsDouble();
+            double maxLongitude = Arrays.stream(maxLongitudes).max().getAsDouble();
+            baseLongitude = (minLongitude + maxLongitude) / 2 + longitudeOffset;
+        } else {
+            baseLongitude = longitudeOffset;
+        }
+
         //~decide horizontal positions of voxels
         List<HorizontalPixel> horizontalPixels = new ArrayList<>();
         for (int i = 0; i < nLatitude; i++) {
             // compute center latitude of the voxel row
-            double latitude = switchLatitudeColatitude((i + 0.5) * dLatitude) + latitudeOffset;
+            double latitude = switchLatitudeColatitude(i * dLatitude) + latitudeOffset;
             // when using latitudeOffset, the center latitude of first or last interval may be out of legal range; in that case, skip
             if (latitude <= -90.0 || 90.0 <= latitude) continue;
-            // if no raypath segments entered this colatitude interval, skip
+            // if no raypath segments entered this colatitude band, skip
             if (minLongitudes[i] > maxLongitudes[i]) continue;
 
+            // decide longitude interval for current latitude
+            double dLongitudeForRow;
             if (setLongitudeByKm) {
-                // voxel points are aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm
-                // the min and max borders are set close to the min and max longitudes of sample points
+                // Voxel points will be aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm.
                 double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
-                double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
-                int nLongitude = (int) Math.round((maxLongitudes[i] - minLongitudes[i]) / dLongitudeForRow);
-                double centerLongitude = (minLongitudes[i] + maxLongitudes[i]) / 2.0;
-
-                double startLongitude;
-                if (nLongitude % 2 == 0) {
-                    // when even number, align evenly on both sides of center longitude
-                    startLongitude = centerLongitude - (nLongitude / 2 - 0.5) * dLongitudeForRow;
-                } else {
-                    // when odd number, set one pixel at center longitude
-                    // This is same equation as above but is rewritten for clarity.
-                    startLongitude = centerLongitude - (nLongitude - 1) / 2.0 * dLongitudeForRow;
-                }
-                for (int j = 0; j < nLongitude; j++) {
-                    double longitude = startLongitude + j * dLongitudeForRow;
-                    // add horizontal pixel to list
-                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
-                }
-
+                dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
             } else {
-                // all longitudes are set on ((n + 0.5) * dLongitudeDeg + longitudeOffset)
-                // the min and max borders of longitude are set so that all sample points are included
-                double minLongitude = MathAid.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                double maxLongitude = MathAid.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
-                for (int j = 0; j < nLongitude; j++) {
-                    // center longitude of each horizontal pixel
-                    double longitude = minLongitude + (j + 0.5) * dLongitudeDeg;
-                    // add horizontal pixel to list
-                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeDeg));
-                }
+                // All longitudes will be set on (j * dLongitudeDeg + longitudeOffset).
+                dLongitudeForRow = dLongitudeDeg;
+            }
+
+            // the min and max longitudes are set so that all sample points are included
+            double minLongitude = Math.round((minLongitudes[i] - baseLongitude) / dLongitudeForRow) * dLongitudeForRow + baseLongitude;
+            double maxLongitude = Math.round((maxLongitudes[i] - baseLongitude) / dLongitudeForRow) * dLongitudeForRow + baseLongitude;
+            int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeForRow) + 1;
+            for (int j = 0; j < nLongitude; j++) {
+                // center longitude of each horizontal pixel
+                double longitude = minLongitude + j * dLongitudeForRow;
+                // add horizontal pixel to list
+                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
             }
         }
 

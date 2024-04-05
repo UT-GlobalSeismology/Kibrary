@@ -96,19 +96,19 @@ public class VoxelManualDesigner extends Operation {
             pw.println("#lowerLongitude ");
             pw.println("##(double) Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
             pw.println("#upperLongitude ");
-            pw.println("##(double) Latitude spacing [km]; (0:). If this is unset, the following dLatitudeDeg will be used.");
+            pw.println("##(double) Latitude spacing [km]; (0:). If unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of voxel-CENTER latitude [deg]; [0:). (0)");
+            pw.println("##(double) Offset of voxel-center latitude [deg]; [0:). (0)");
             pw.println("#latitudeOffset ");
-            pw.println("##(double) Longitude spacing [km]; (0:). If this is unset, the following dLongitudeDeg will be used.");
+            pw.println("##(double) Longitude spacing [km]; (0:). If unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of voxel-CENTER longitude [deg], when dLongitudeDeg is used; [0:). (0)");
+            pw.println("##(double) Offset of voxel-center longitude [deg]. (0)");
             pw.println("#longitudeOffset ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
@@ -144,33 +144,26 @@ public class VoxelManualDesigner extends Operation {
 
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
-            if (dLatitudeKm <= 0.0)
-                throw new IllegalArgumentException("dLatitudeKm must be positive.");
+            if (dLatitudeKm <= 0.0) throw new IllegalArgumentException("dLatitudeKm must be positive.");
             setLatitudeByKm = true;
         } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
-            if (dLatitudeDeg <= 0.0)
-                throw new IllegalArgumentException("dLatitudeDeg must be positive.");
+            if (dLatitudeDeg <= 0.0) throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
         latitudeOffset = property.parseDouble("latitudeOffset", "0");
-        if (latitudeOffset < 0.0)
-            throw new IllegalArgumentException("latitudeOffset must be non-negative.");
+        if (latitudeOffset < 0.0) throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
-            if (dLongitudeKm <= 0.0)
-                throw new IllegalArgumentException("dLongitudeKm must be positive.");
+            if (dLongitudeKm <= 0.0) throw new IllegalArgumentException("dLongitudeKm must be positive.");
             setLongitudeByKm = true;
         } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
-            if (dLongitudeDeg <= 0.0)
-                throw new IllegalArgumentException("dLongitudeDeg must be positive.");
-            longitudeOffset = property.parseDouble("longitudeOffset", "0");
-            if (longitudeOffset < 0.0)
-                throw new IllegalArgumentException("longitudeOffset must be non-negative.");
+            if (dLongitudeDeg <= 0.0) throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             setLongitudeByKm = false;
         }
+        longitudeOffset = property.parseDouble("longitudeOffset", "0");
 
         if (property.containsKey("borderRadii")) {
             borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", null))
@@ -220,7 +213,6 @@ public class VoxelManualDesigner extends Operation {
     }
 
     private List<HorizontalPixel> designHorizontalPixels() {
-        List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
         // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
         double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / centerRadius) : dLatitudeDeg;
@@ -228,45 +220,40 @@ public class VoxelManualDesigner extends Operation {
         int lowerLatitudeIndex = getLowerIndex(lowerLatitude, dLatitude, latitudeOffset);
         int upperLatitudeIndex = getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
 
+        //~decide the longitude at which to align voxels
+        double baseLongitude;
+        if (setLongitudeByKm) {
+            baseLongitude = (lowerLongitude + upperLongitude) / 2 + longitudeOffset;
+        } else {
+            baseLongitude = longitudeOffset;
+        }
+
+        //~decide horizontal positions of voxels
+        List<HorizontalPixel> horizontalPixels = new ArrayList<>();
         for (int i = lowerLatitudeIndex; i <= upperLatitudeIndex; i++) {
             // compute center latitude of the voxel row
             double latitude = i * dLatitude + latitudeOffset;
 
+            // decide longitude interval for current latitude
+            double dLongitudeForRow;
             if (setLongitudeByKm) {
-                // voxel points are aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm
-                // the min and max voxel-centers are set close to the longitude bounds
+                // Voxel points will be aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm.
                 double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
-                double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
-                int nLongitude = (int) MathAid.ceil((upperLongitude - lowerLongitude) / dLongitudeForRow);
-                double centerLongitude = (lowerLongitude + upperLongitude) / 2;
-
-                double startLongitude;
-                if (nLongitude % 2 == 0) {
-                    // when even number, align evenly on both sides of center longitude
-                    startLongitude = centerLongitude - (nLongitude / 2 - 0.5) * dLongitudeForRow;
-                } else {
-                    // when odd number, set one pixel at center longitude
-                    // This is same equation as above but is rewritten for clarity.
-                    startLongitude = centerLongitude - (nLongitude - 1) / 2.0 * dLongitudeForRow;
-                }
-                for (int j = 0; j < nLongitude; j++) {
-                    double longitude = startLongitude + j * dLongitudeForRow;
-                    // add horizontal pixel to list
-                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
-                }
-
+                dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
             } else {
-                // all longitudes are set on (n * dLongitudeDeg + longitudeOffset)
-                // voxel longitudes are set so that all voxel-centers are included in range
-                int lowerLongitudeIndex = getLowerIndex(lowerLongitude, dLongitudeDeg, longitudeOffset);
-                int upperLongitudeIndex = getUpperIndex(upperLongitude, dLongitudeDeg, longitudeOffset);
-                for (int j = lowerLongitudeIndex; j <= upperLongitudeIndex; j++) {
-                    // compute center longitude of the voxel
-                    double longitude = j * dLongitudeDeg + longitudeOffset;
+                // All longitudes will be set on (n * dLongitudeDeg + longitudeOffset).
+                dLongitudeForRow = dLongitudeDeg;
+            }
 
-                    // add horizontal pixel to list
-                    horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeDeg));
-                }
+            // voxel longitudes are set so that all voxel-centers are included in range
+            int lowerLongitudeIndex = getLowerIndex(lowerLongitude, dLongitudeForRow, baseLongitude);
+            int upperLongitudeIndex = getUpperIndex(upperLongitude, dLongitudeForRow, baseLongitude);
+            for (int j = lowerLongitudeIndex; j <= upperLongitudeIndex; j++) {
+                // compute center longitude of the voxel
+                double longitude = baseLongitude + j * dLongitudeForRow;
+
+                // add horizontal pixel to list
+                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
             }
 
         }

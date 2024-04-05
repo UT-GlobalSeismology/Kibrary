@@ -262,7 +262,7 @@ public class RaypathMapper extends Operation {
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         legendJustification = property.parseString("legendJustification", "BR");
         if (property.containsKey("mapCenter")) mapCenter = property.parseString("mapCenter", null);
-        horizon = property.parseInt("horizon", "0");
+        horizon = property.parseInt("horizon", "90");
 
         // error prevention
         if (cutAtPiercePoint == false && colorMode == BIN_TURNING_AZIMUTH)
@@ -438,8 +438,6 @@ public class RaypathMapper extends Operation {
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT " + fontSize);
-//            pw.println("gmt set FONT_LABEL 15p,Helvetica,black");
-//            pw.println("gmt set FONT_ANNOT_PRIMARY " + fontSize);
             pw.println("");
             pw.println("# map parameters");
             pw.println("R='" + createRegionString() + "'");
@@ -666,7 +664,7 @@ public class RaypathMapper extends Operation {
     }
 
     private Set<HorizontalPosition> collectPositions() throws IOException {
-        // collect positions of events, observers, and turning points
+        // collect positions of events, observers, pierce points, and turning points
         Set<HorizontalPosition> positions = new HashSet<>();
         EventListFile.read(outPath.resolve(eventFileName)).stream()
                 .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
@@ -676,8 +674,13 @@ public class RaypathMapper extends Operation {
             List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
             for (String line : turningPointLines) {
                 String[] parts = line.trim().split("\\s+");
-                HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-                positions.add(pos);
+                positions.add(new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1])));
+            }
+            List<String> insideLines = Files.readAllLines(outPath.resolve(insideFileName));
+            for (String line : insideLines) {
+                String[] parts = line.trim().split("\\s+");
+                positions.add(new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1])));
+                positions.add(new HorizontalPosition(Double.parseDouble(parts[2]), Double.parseDouble(parts[3])));
             }
         }
         return positions;
