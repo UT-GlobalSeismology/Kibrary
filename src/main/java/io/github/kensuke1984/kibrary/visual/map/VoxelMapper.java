@@ -52,7 +52,7 @@ public class VoxelMapper {
                 .desc("Path of voxel information file.").build());
         // settings
         options.addOption(Option.builder("r").longOpt("region").hasArg().argName("region")
-                .desc("Map region in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].").build());
+                .desc("Map region in the form lonMin/lonMax/latMin/latMax.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")

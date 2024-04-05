@@ -109,11 +109,21 @@ public class RaypathMapper extends Operation {
     private boolean drawOutsides;
     private Path outsideColorBinPath;
     private double rayTransparency;
+
+    private boolean lambert;
     /**
-     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     * Map region for equidistant cylindrical projection in the form lonMin/lonMax/latMin/latMax, when it is set manually.
      */
     private String mapRegion;
     private String legendJustification;
+    /**
+     * Center of map region for Lambert azimuthal projection in the form lon/lat, when it is set manually.
+     */
+    private String mapCenter;
+    /**
+     * Horizon of the map region for Lambert azimuthal projection.
+     */
+    private int horizon;
 
     private String dateString;
     private ColorBinInformationFile colorBin;
@@ -177,7 +187,7 @@ public class RaypathMapper extends Operation {
             pw.println("#upperPierceRadius ");
             pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
             pw.println("#structureName ");
-            pw.println("##########Settings for mapping");
+            pw.println("##########Settings for mapping.");
             pw.println("##Mode of coloring of raypaths, from {0: single color, 1: color by phase, 2: bin by distance,");
             pw.println("##  3: bin by source azimuth, 4: bin by back azimuth, 5: bin by turning point azimuth}. (0)");
             pw.println("#colorMode ");
@@ -189,10 +199,18 @@ public class RaypathMapper extends Operation {
             pw.println("#outsideColorBinPath ");
             pw.println("##(double) Transparency of raypaths and turning points [%]. (0)");
             pw.println("#rayTransparency ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].");
+            pw.println("##(boolean) Whether to use Lambert azimuthal projection. Otherwise, equidistant cylindrical projection. (false)");
+            pw.println("#lambert true");
+            pw.println("##########The following are settings for the equidistant cylindrical projection.");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none}. (BR)");
             pw.println("#legendJustification ");
+            pw.println("##########The following are settings for the Lambert azimuthal projection.");
+            pw.println("##To specify the center of the map region, set it in the form lon/lat.");
+            pw.println("#mapCenter 0/0");
+            pw.println("##(int) Horizon of the map region [deg]. (90)");
+            pw.println("#horizon ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -239,8 +257,12 @@ public class RaypathMapper extends Operation {
         rayTransparency = property.parseDouble("rayTransparency", "0");
         if (rayTransparency < 0 || 100 < rayTransparency)
             throw new IllegalArgumentException("rayTransparency " + rayTransparency + " is invalid; must be in [0:100]");
+
+        lambert = property.parseBoolean("lambert", "false");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         legendJustification = property.parseString("legendJustification", "BR");
+        if (property.containsKey("mapCenter")) mapCenter = property.parseString("mapCenter", null);
+        horizon = property.parseInt("horizon", "0");
 
         // error prevention
         if (cutAtPiercePoint == false && colorMode == BIN_TURNING_AZIMUTH)
@@ -411,7 +433,7 @@ public class RaypathMapper extends Operation {
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 1100x1100");
+            pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
@@ -420,8 +442,8 @@ public class RaypathMapper extends Operation {
 //            pw.println("gmt set FONT_ANNOT_PRIMARY " + fontSize);
             pw.println("");
             pw.println("# map parameters");
-            pw.println("R='-R" + decideMapRegion() + "'");
-            pw.println("J='-JQ20'");
+            pw.println("R='" + decideMapOption(false) + "'");
+            pw.println("J='" + decideMapOption(true) + "'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
@@ -590,33 +612,56 @@ public class RaypathMapper extends Operation {
         return header;
     }
 
-    private String decideMapRegion() throws IOException {
-        if (mapRegion != null) {
-            return mapRegion;
-        } else {
-            // collect positions of events and observers
-            Set<HorizontalPosition> positions = new HashSet<>();
-            EventListFile.read(outPath.resolve(eventFileName)).stream()
-                    .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
-            ObserverListFile.read(outPath.resolve(observerFileName)).stream()
-                    .map(observer -> observer.getPosition()).forEach(positions::add);
-            if (cutAtPiercePoint) {
-                List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
-                for (String line : turningPointLines) {
-                    String[] parts = line.trim().split("\\s+");
-                    HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-                    positions.add(pos);
-                }
+    private String decideMapOption(boolean perspective) throws IOException {
+        if (lambert == false && perspective == true) {
+            // for equidistant cylindrical
+            return "-Jq1:120000000";
+        } else if (lambert == true && perspective == false) {
+            // for Lambert azimuthal
+            // "-Rg" is the same as "-R-180/180/-90/90"
+            return "-Rg";
+        }
+
+        if (perspective == false && mapRegion != null) {
+            // for equidistant cylindrical
+            return "-R" + mapRegion;
+        } else if (perspective == true && mapCenter != null) {
+            // for Lambert azimuthal
+            return "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
+        }
+
+        // collect positions of events and observers
+        Set<HorizontalPosition> positions = new HashSet<>();
+        EventListFile.read(outPath.resolve(eventFileName)).stream()
+                .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
+        ObserverListFile.read(outPath.resolve(observerFileName)).stream()
+                .map(observer -> observer.getPosition()).forEach(positions::add);
+        if (cutAtPiercePoint) {
+            List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
+            for (String line : turningPointLines) {
+                String[] parts = line.trim().split("\\s+");
+                HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+                positions.add(pos);
             }
+        }
 
-            // decide on a region temporarily, and split up the returned String into coordinates
-            String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
-            double lonMin = Double.parseDouble(coordinateStrings[0]);
-            double lonMax = Double.parseDouble(coordinateStrings[1]);
-            double latMin = Double.parseDouble(coordinateStrings[2]);
-            double latMax = Double.parseDouble(coordinateStrings[3]);
+        // decide on a region temporarily, and split up the returned String into coordinates
+        String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
+        double lonMin = Double.parseDouble(coordinateStrings[0]);
+        double lonMax = Double.parseDouble(coordinateStrings[1]);
+        double latMin = Double.parseDouble(coordinateStrings[2]);
+        double latMax = Double.parseDouble(coordinateStrings[3]);
 
-            // space for legend
+        if (perspective == true) {
+            // for Lambert azimuthal
+            double lonCenter = (lonMax + lonMin) / 2;
+            double latCenter = (latMax + latMin) / 2;
+            return "-Ja" + (int) lonCenter + "/" + (int) latCenter + "/" + horizon + "/1:120000000";
+
+        } else {
+            // for equidistant cylindrical
+
+            // add space for legend
             if (colorMode > 0) {
                 double fix = forSlides ? 60 : 40;
                 if (legendJustification.equals("TL") || legendJustification.equals("BL")) {
@@ -627,7 +672,7 @@ public class RaypathMapper extends Operation {
             }
 
             // recreate the region String
-            return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+            return "-R" + (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }
     }
 
