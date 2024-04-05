@@ -164,7 +164,7 @@ public class GreatArcMapper extends Operation {
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 1100x1100");
+            pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
@@ -172,7 +172,7 @@ public class GreatArcMapper extends Operation {
             pw.println("");
             pw.println("# map parameters");
             pw.println("R='-R" + decideMapRegion(startPosition, endPosition) + "'");
-            pw.println("J='-JQ20'");
+            pw.println("J='-Jq1:120000000'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");

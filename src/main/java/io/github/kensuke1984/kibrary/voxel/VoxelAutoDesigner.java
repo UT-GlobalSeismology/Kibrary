@@ -359,8 +359,8 @@ public class VoxelAutoDesigner extends Operation {
 
     /**
      * Switch between latitude and colatitude.
-     * @param latitude (double) latitude or colatitude to convert
-     * @return (double) converted colatitude or latitude
+     * @param latitude (double) Latitude or colatitude to convert.
+     * @return (double) Converted colatitude or latitude.
      */
     private static double switchLatitudeColatitude(double latitude) {
         return 90.0 - latitude;

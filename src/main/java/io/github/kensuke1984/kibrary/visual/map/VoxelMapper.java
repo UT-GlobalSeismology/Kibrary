@@ -51,8 +51,14 @@ public class VoxelMapper {
         options.addOption(Option.builder("v").longOpt("voxelFile").hasArg().argName("voxelFile").required()
                 .desc("Path of voxel information file.").build());
         // settings
+        options.addOption(Option.builder("l").longOpt("lambert")
+                .desc("Use Lambert azimuthal projection. Otherwise, equidistant cylindrical projection").build());
         options.addOption(Option.builder("r").longOpt("region").hasArg().argName("region")
-                .desc("Map region in the form lonMin/lonMax/latMin/latMax.").build());
+                .desc("Map region in the form 'lonMin/lonMax/latMin/latMax', for equidistant cylindrical projection.").build());
+        options.addOption(Option.builder("c").longOpt("center").hasArg().argName("centerPoint")
+                .desc("Center point in the form 'lon/lat', for Lambert azimuthal projection.").build());
+        options.addOption(Option.builder("h").longOpt("horizon").hasArg().argName("horizon")
+                .desc("(int) Horizon of map, for Lambert azimuthal projection. (90)").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
@@ -74,9 +80,24 @@ public class VoxelMapper {
         List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
 
         // decide map region
-        String mapRegion;
-        if (cmdLine.hasOption("r")) mapRegion = cmdLine.getOptionValue("r");
-        else mapRegion = PerturbationMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
+        String regionString;
+        String projectionString;
+        if (cmdLine.hasOption("l")) {
+            // Lambert azimuthal projection
+            String mapCenter;
+            int horizon = cmdLine.hasOption("h") ? Integer.parseInt(cmdLine.getOptionValue("h")) : 90;
+            if (cmdLine.hasOption("c")) mapCenter = cmdLine.getOptionValue("c");
+            else mapCenter = PerturbationMapShellscript.decideMapCenter(voxelPositions.stream().collect(Collectors.toSet()));
+            regionString = "-Rg";
+            projectionString = "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
+        } else {
+            // equidistant cylindrical projection
+            String mapRegion;
+            if (cmdLine.hasOption("r")) mapRegion = cmdLine.getOptionValue("r");
+            else mapRegion = PerturbationMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
+            regionString = "-R" + mapRegion;
+            projectionString = "-Jq1:120000000";
+        }
 
         // create output folder
         String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
@@ -91,13 +112,12 @@ public class VoxelMapper {
         // output GMT script
         String gmtFileName = "voxelMap.sh";
         Path gmtPath = outPath.resolve(gmtFileName);
-        outputGMT(gmtPath, mapRegion) ;
+        outputGMT(gmtPath, regionString, projectionString) ;
 
         System.err.println("After this finishes, please run " + gmtPath);
     }
 
-    private static void outputGMT(Path gmtPath, String mapRegion) throws IOException {
-
+    private static void outputGMT(Path gmtPath, String regionString, String projectionString) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
@@ -105,15 +125,15 @@ public class VoxelMapper {
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 1100x1100");
+            pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT 25");
             pw.println("");
             pw.println("# map parameters");
-            pw.println("R='-R" + mapRegion + "'");
-            pw.println("J='-JQ20'");
+            pw.println("R='" + regionString + "'");
+            pw.println("J='" + projectionString + "'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");

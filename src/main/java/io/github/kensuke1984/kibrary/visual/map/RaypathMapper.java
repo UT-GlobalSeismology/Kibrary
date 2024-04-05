@@ -398,9 +398,9 @@ public class RaypathMapper extends Operation {
      * Creates output line for a raypath segment.
      * Output line: lat1 lon1 lat2 lon2 iPhase dist azimuth backAzimuth (turningAzimuth)
      *
-     * @param raypath (Raypath) The whole raypath
-     * @param raypathSegment (Raypath) The raypath segment
-     * @return (String) Output line for the raypath segment
+     * @param raypath ({@link Raypath}) The whole raypath.
+     * @param raypathSegment ({@link Raypath}) The raypath segment.
+     * @return (String) Output line for the raypath segment.
      */
     private String lineFor(Raypath raypath, Raypath raypathSegment) {
         // create output line
@@ -442,8 +442,8 @@ public class RaypathMapper extends Operation {
 //            pw.println("gmt set FONT_ANNOT_PRIMARY " + fontSize);
             pw.println("");
             pw.println("# map parameters");
-            pw.println("R='" + decideMapOption(false) + "'");
-            pw.println("J='" + decideMapOption(true) + "'");
+            pw.println("R='" + createRegionString() + "'");
+            pw.println("J='" + createProjectionString() + "'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
@@ -612,54 +612,26 @@ public class RaypathMapper extends Operation {
         return header;
     }
 
-    private String decideMapOption(boolean perspective) throws IOException {
-        if (lambert == false && perspective == true) {
-            // for equidistant cylindrical
-            return "-Jq1:120000000";
-        } else if (lambert == true && perspective == false) {
+    private String createRegionString() throws IOException {
+        if (lambert) {
             // for Lambert azimuthal
             // "-Rg" is the same as "-R-180/180/-90/90"
             return "-Rg";
         }
 
-        if (perspective == false && mapRegion != null) {
-            // for equidistant cylindrical
+        // The rest is for equidistant cylindrical.
+        if (mapRegion != null) {
             return "-R" + mapRegion;
-        } else if (perspective == true && mapCenter != null) {
-            // for Lambert azimuthal
-            return "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
-        }
-
-        // collect positions of events and observers
-        Set<HorizontalPosition> positions = new HashSet<>();
-        EventListFile.read(outPath.resolve(eventFileName)).stream()
-                .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
-        ObserverListFile.read(outPath.resolve(observerFileName)).stream()
-                .map(observer -> observer.getPosition()).forEach(positions::add);
-        if (cutAtPiercePoint) {
-            List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
-            for (String line : turningPointLines) {
-                String[] parts = line.trim().split("\\s+");
-                HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-                positions.add(pos);
-            }
-        }
-
-        // decide on a region temporarily, and split up the returned String into coordinates
-        String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
-        double lonMin = Double.parseDouble(coordinateStrings[0]);
-        double lonMax = Double.parseDouble(coordinateStrings[1]);
-        double latMin = Double.parseDouble(coordinateStrings[2]);
-        double latMax = Double.parseDouble(coordinateStrings[3]);
-
-        if (perspective == true) {
-            // for Lambert azimuthal
-            double lonCenter = (lonMax + lonMin) / 2;
-            double latCenter = (latMax + latMin) / 2;
-            return "-Ja" + (int) lonCenter + "/" + (int) latCenter + "/" + horizon + "/1:120000000";
 
         } else {
-            // for equidistant cylindrical
+            Set<HorizontalPosition> positions = collectPositions();
+
+            // decide on a region temporarily, and split up the returned String into coordinates
+            String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
+            double lonMin = Double.parseDouble(coordinateStrings[0]);
+            double lonMax = Double.parseDouble(coordinateStrings[1]);
+            double latMin = Double.parseDouble(coordinateStrings[2]);
+            double latMax = Double.parseDouble(coordinateStrings[3]);
 
             // add space for legend
             if (colorMode > 0) {
@@ -674,6 +646,41 @@ public class RaypathMapper extends Operation {
             // recreate the region String
             return "-R" + (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }
+    }
+
+    private String createProjectionString() throws IOException {
+        if (!lambert) {
+            // for equidistant cylindrical
+            return "-Jq1:120000000";
+        }
+
+        // The rest is for Lambert azimuthal.
+        if (mapCenter != null) {
+            return "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
+
+        } else {
+            Set<HorizontalPosition> positions = collectPositions();
+            String centerString = PerturbationMapShellscript.decideMapCenter(positions);
+            return "-Ja" + centerString + "/" + horizon + "/1:120000000";
+        }
+    }
+
+    private Set<HorizontalPosition> collectPositions() throws IOException {
+        // collect positions of events, observers, and turning points
+        Set<HorizontalPosition> positions = new HashSet<>();
+        EventListFile.read(outPath.resolve(eventFileName)).stream()
+                .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
+        ObserverListFile.read(outPath.resolve(observerFileName)).stream()
+                .map(observer -> observer.getPosition()).forEach(positions::add);
+        if (cutAtPiercePoint) {
+            List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
+            for (String line : turningPointLines) {
+                String[] parts = line.trim().split("\\s+");
+                HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+                positions.add(pos);
+            }
+        }
+        return positions;
     }
 
 }
