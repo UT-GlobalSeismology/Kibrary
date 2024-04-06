@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * Utility for a function y = f(x)
+ * Utility for a function y = f(x).
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * </p>
@@ -62,8 +62,8 @@ public final class Trace {
 
     /**
      * Create trace from arrays of x and y by deep copy.
-     * @param x (double[]) Array for x
-     * @param y (double[]) Array for y
+     * @param x (double[]) Array for x.
+     * @param y (double[]) Array for y.
      */
     public Trace(double[] x, double[] y) {
         if (x.length != y.length) throw new IllegalArgumentException("Input arrays have different lengths");
@@ -83,10 +83,10 @@ public final class Trace {
 
     /**
      * Read trace from file.
-     * @param path ({@link Path}) The file you want to read
-     * @param xColumn (int) The column containing x (with first column as 0)
-     * @param yColumn (int) The column containing y (with first column as 0)
-     * @return ({@link Trace}) Trace made from the file
+     * @param path ({@link Path}) The file you want to read.
+     * @param xColumn (int) The column containing x (with first column as 0).
+     * @param yColumn (int) The column containing y (with first column as 0).
+     * @return ({@link Trace}) Trace made from the file.
      * @throws IOException if any
      */
     public static Trace read(Path path, int xColumn, int yColumn) throws IOException {
@@ -106,8 +106,8 @@ public final class Trace {
     /**
      * Read trace from file.
      * x is read from the first column and y from the second column.
-     * @param path ({@link Path}) The file you want to read
-     * @return ({@link Trace}) Trace made from the file
+     * @param path ({@link Path}) The file you want to read.
+     * @return ({@link Trace}) Trace made from the file.
      * @throws IOException if any
      */
     public static Trace read(Path path) throws IOException {
@@ -329,9 +329,9 @@ public final class Trace {
 
     /**
      * Cut out the part of this Trace in the specified range.
-     * @param iStart (int) Start index of the range to be copied, inclusive
-     * @param iEnd (int) End index of the range to be copied, EXCLUSIVE
-     * @return ({@link Trace}) Cut out Trace
+     * @param iStart (int) Start index of the range to be copied, inclusive.
+     * @param iEnd (int) End index of the range to be copied, EXCLUSIVE.
+     * @return ({@link Trace}) Cut out Trace.
      *
      * @author otsuru
      * @since 2023/3/11
@@ -342,10 +342,10 @@ public final class Trace {
 
     /**
      * Cut out while resampling the part of this Trace in the specified range.
-     * @param iStart (int) Start index of the range to be copied, inclusive
-     * @param step (int) Interval in which to resample
-     * @param npts (int) Number of points that the resampled trace should include
-     * @return ({@link Trace}) Cut out and resampled Trace
+     * @param iStart (int) Start index of the range to be copied, inclusive.
+     * @param step (int) Interval in which to resample.
+     * @param npts (int) Number of points that the resampled trace should include.
+     * @return ({@link Trace}) Cut out and resampled Trace.
      *
      * @author otsuru
      * @since 2023/3/19
@@ -362,9 +362,9 @@ public final class Trace {
      * The input time range does not have to be completely included in the time range of the Trace;
      * in that case, only the overlapping part will be returned.
      * The original Trace is not changed.
-     * @param xStart (int) Start x of window (closest point will be chosen)
-     * @param xEnd (int) End x of window (closest point will be chosen; inclusive)
-     * @return ({@link Trace}) New trace that is cut out around the time range (deep copy)
+     * @param xStart (int) Start x of window (closest point will be chosen).
+     * @param xEnd (int) End x of window (closest point will be chosen; inclusive).
+     * @return ({@link Trace}) New trace that is cut out around the time range (deep copy).
      */
     public Trace cutWindow(double xStart, double xEnd) {
         int iStart = findNearestXIndex(xStart);
@@ -373,13 +373,13 @@ public final class Trace {
     }
 
     /**
-     * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow.
-     * The start and end points will each be the points with x values closest to those of the timewindow.
-     * The timewindow does not have to be completely included in the time range of the Trace;
+     * Cut out part of the Trace (with x as the time) that corresponds to the given time window.
+     * The start and end points will each be the points with x values closest to those of the time window.
+     * The time window does not have to be completely included in the time range of the Trace;
      * in that case, only the overlapping part will be returned.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) Timewindow of cut range
-     * @return ({@link Trace}) New trace that is cut out around the timewindow (deep copy)
+     * @param timewindow ({@link Timewindow}) Time window of cut range.
+     * @return ({@link Trace}) New trace that is cut out around the time window (deep copy).
      */
     public Trace cutWindow(Timewindow timewindow) {
         return cutWindow(timewindow.getStartTime(), timewindow.getEndTime());
@@ -391,10 +391,10 @@ public final class Trace {
      * The number of points will be decided by rounding (xEnd-xStart)*samplingHz, so that it is not affected by time shifts.
      * The input time range MUST be completely included in the time range of the Trace.
      * The original Trace is not changed.
-     * @param xStart (int) Start x of window (closest point will be chosen)
-     * @param xEnd (int) End x of window (used to decide number of points)
-     * @param samplingHz (double) Sampling rate of this trace (used to decide number of points)
-     * @return ({@link Trace}) New trace that is cut out around the time range (deep copy)
+     * @param xStart (int) Start x of window (closest point will be chosen).
+     * @param xEnd (int) End x of window (used to decide number of points).
+     * @param samplingHz (double) Sampling rate of this trace (used to decide number of points).
+     * @return ({@link Trace}) New trace that is cut out around the time range (deep copy).
      *
      * @author otsuru
      * @since 2023/3/19
@@ -409,14 +409,14 @@ public final class Trace {
     }
 
     /**
-     * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow.
+     * Cut out part of the Trace (with x as the time) that corresponds to the given time window.
      * The start point will be the point with an x value closest to xStart.
      * The number of points will be decided by rounding (xEnd-xStart)*samplingHz+1, so that it is not affected by time shifts.
-     * The input timewindow MUST be completely included in the time range of the Trace.
+     * The input time window MUST be completely included in the time range of the Trace.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) Timewindow of cut range
-     * @param samplingHz (double) Sampling rate of this trace (used to decide number of points)
-     * @return ({@link Trace}) New trace that is cut out around the timewindow (deep copy)
+     * @param timewindow ({@link Timewindow}) Time window of cut range.
+     * @param samplingHz (double) Sampling rate of this trace (used to decide number of points).
+     * @return ({@link Trace}) New trace that is cut out around the time window (deep copy).
      *
      * @author otsuru
      * @since 2023/3/19
@@ -431,10 +431,10 @@ public final class Trace {
      * The number of points will be decided by rounding down (xEnd-xStart)*finalSamplingHz+1, so that it is not affected by time shifts.
      * The input time range MUST be completely included in the time range of the Trace.
      * The original Trace is not changed.
-     * @param xStart (int) Start x of window (closest point will be chosen)
-     * @param xEnd (int) End x of window (used to decide number of points)
-     * @param originalSamplingHz (double) Sampling rate of this trace
-     * @param finalSamplingHz (double) Sampling rate to resample the trace
+     * @param xStart (int) Start x of window (closest point will be chosen).
+     * @param xEnd (int) End x of window (used to decide number of points).
+     * @param originalSamplingHz (double) Sampling rate of this trace.
+     * @param finalSamplingHz (double) Sampling rate to resample the trace. This must be able to divide originalSamplingHz.
      * @return ({@link Trace}) New trace that is cut out around the time range and resampled (deep copy)
      *
      * @author otsuru
@@ -443,6 +443,8 @@ public final class Trace {
     public Trace resampleInWindow(double xStart, double xEnd, double originalSamplingHz, double finalSamplingHz) {
         if (xStart < getMinX() || getMaxX() < xEnd)
             throw new IllegalArgumentException("Specified time range exceeds x range.");
+        if (!MathAid.isDivisible(originalSamplingHz, finalSamplingHz))
+            throw new IllegalArgumentException("originalSamplingHz/finalSamplingHz must be integer: " + originalSamplingHz + ", " + finalSamplingHz);
         int iStart = findNearestXIndex(xStart);
         // Here, npts is rounded down because a point far outside the time range should not be used.
         int npts = (int) MathAid.floor((xEnd - xStart) * finalSamplingHz) + 1;
@@ -451,15 +453,15 @@ public final class Trace {
     }
 
     /**
-     * Cut out part of the Trace (with x as the time) that corresponds to the given timewindow, and resample at a lower sampling rate.
+     * Cut out part of the Trace (with x as the time) that corresponds to the given time window, and resample at a lower sampling rate.
      * The start point will be the point with an x value closest to xStart.
      * The number of points will be decided by rounding (xEnd-xStart)*finalSamplingHz, so that it is not affected by time shifts.
-     * The input timewindow MUST be completely included in the time range of the Trace.
+     * The input time window MUST be completely included in the time range of the Trace.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) Timewindow of cut range
-     * @param originalSamplingHz (double) Sampling rate of this trace
-     * @param finalSamplingHz (double) Sampling rate to resample the trace
-     * @return ({@link Trace}) New trace that is cut out around the timewindow and resampled (deep copy)
+     * @param timewindow ({@link Timewindow}) Time window of cut range.
+     * @param originalSamplingHz (double) Sampling rate of this trace.
+     * @param finalSamplingHz (double) Sampling rate to resample the trace.
+     * @return ({@link Trace}) New trace that is cut out around the time window and resampled (deep copy).
      *
      * @author otsuru
      * @since 2023/3/19
@@ -471,8 +473,8 @@ public final class Trace {
     /**
      * Truncate the trace to a given length.
      * The original Trace is not changed.
-     * @param length (int) Length to truncate the trace
-     * @return ({@link Trace}) New trace that is truncated (deep copy)
+     * @param length (int) Length to truncate the trace.
+     * @return ({@link Trace}) New trace that is truncated (deep copy).
      */
     public Trace truncateToLength(int length) {
         return new Trace(Arrays.copyOfRange(xArray, 0, length), Arrays.copyOfRange(yArray, 0, length));

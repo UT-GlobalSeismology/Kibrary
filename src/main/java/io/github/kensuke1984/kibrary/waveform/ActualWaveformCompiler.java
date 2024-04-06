@@ -55,7 +55,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Operation that exports dataset containing observed and synthetic waveforms. <br>
  * Output is written in the format of {@link BasicIDFile}.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
@@ -98,11 +98,11 @@ public class ActualWaveformCompiler extends Operation {
      */
     private Set<SACComponent> components;
     /**
-     * Sacのサンプリングヘルツ （これと異なるSACはスキップ）
+     * Sampling frequency of input SAC files [Hz].
      */
     private double sacSamplingHz;
     /**
-     * 切り出すサンプリングヘルツ
+     * Sampling frequency of waveform data to create [Hz].
      */
     private double finalSamplingHz;
 
@@ -119,11 +119,11 @@ public class ActualWaveformCompiler extends Operation {
      */
     private boolean convolved;
     /**
-     * Path of a timewindow information file.
+     * Path of a time window information file.
      */
     private Path timewindowPath;
     /**
-     * Path of a timewindow information file for a reference phase use to correct spectral amplitude.
+     * Path of a time window information file for a reference phase use to correct spectral amplitude.
      */
     private Path timewindowRefPath;
     /**
@@ -210,13 +210,13 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
-            pw.println("#sacSamplingHz the value will be ignored");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
             pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
             pw.println("#finalSamplingHz ");
-            pw.println("##Path of a timewindow file, must be set.");
+            pw.println("##Path of a time window file, must be set.");
             pw.println("#timewindowPath selectedTimewindow.dat");
-            pw.println("##Path of a timewindow file for a reference phase used to correct spectral amplitude, can be ignored.");
+            pw.println("##Path of a time window file for a reference phase used to correct spectral amplitude, can be ignored.");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
@@ -259,10 +259,10 @@ public class ActualWaveformCompiler extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
         finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
-        if (sacSamplingHz % finalSamplingHz != 0)
-            throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + sacSamplingHz);
+        if (!MathAid.isDivisible(sacSamplingHz, finalSamplingHz))
+            throw new IllegalArgumentException("sacSamplingHz/finalSamplingHz must be integer.");
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         if (property.containsKey("timewindowRefPath")) {
@@ -589,7 +589,7 @@ public class ActualWaveformCompiler extends Operation {
             SACComponent component = timewindow.getComponent();
 
             // check delta
-            double delta = 1 / sacSamplingHz;
+            double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
             if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
                 System.err.println();
                 System.err.println("!! Deltas are invalid, skipping: " + timewindow);

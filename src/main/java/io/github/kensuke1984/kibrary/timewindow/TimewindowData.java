@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Timewindow data for an (event, observer, component) data pair.
+ * Time window data for an (event, observer, component) data pair.
  * <p>
  * Contains information of {@link GlobalCMTID}, {@link Observer}, {@link SACComponent}, and {@link Phase}s,
  * in addition to the start and end times specified in {@link Timewindow}.
@@ -26,19 +26,19 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class TimewindowData extends Timewindow {
 
     /**
-     * observer
+     * Observer.
      */
     private final Observer observer;
     /**
-     * event ID
+     * Event ID.
      */
     private final GlobalCMTID eventID;
     /**
-     * component
+     * Component.
      */
     private final SACComponent component;
     /**
-     * seismic phases included in the timewindow (e.g. S, ScS)
+     * Seismic phases included in the time window (e.g. S, ScS).
      */
     private final Phase[] phases;
 
@@ -103,7 +103,7 @@ public class TimewindowData extends Timewindow {
     }
 
     /**
-     * @return (Phase array) Phases included in this timewindow
+     * @return (Phase array) Phases included in this timewindow.
      * @author anselme
      */
     public Phase[] getPhases() {
@@ -138,6 +138,7 @@ public class TimewindowData extends Timewindow {
     /**TODO erase
      * @return
      * @author anselme
+     * @deprecated
      */
     public double getAzimuthDegree() {
         return Math.toDegrees(eventID.getEventData().getCmtPosition().computeAzimuthRad(observer.getPosition()));
@@ -146,6 +147,7 @@ public class TimewindowData extends Timewindow {
     /**TODO erase
      * @return
      * @author anselme
+     * @deprecated
      */
     public double getDistanceDegree() {
         return Math.toDegrees(eventID.getEventData().getCmtPosition().computeEpicentralDistanceRad(observer.getPosition()));

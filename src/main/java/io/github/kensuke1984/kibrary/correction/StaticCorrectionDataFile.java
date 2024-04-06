@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 
 /**
- * Information file containing static corrections for each timewindow. See {@link StaticCorrectionData}. Binary-format.
+ * Information file containing static corrections for each time window. See {@link StaticCorrectionData}. Binary-format.
  *
  * <p>
  * The file consists of 5 sections:

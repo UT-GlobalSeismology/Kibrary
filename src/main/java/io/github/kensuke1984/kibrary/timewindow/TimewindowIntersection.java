@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 
 /**
- * Pick up timewindows which have same events and observers of 2 specified timewindow files.
+ * Pick up time windows which have same events and observers of 2 specified time window files.
  *
  * @author Rei
  * @since 2022/10/6
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 public class TimewindowIntersection  {
 
     /**
-     * Removes timewindows of a timewindow file from those of another.
+     * Removes time windows of a time window file from those of another.
      *
      * @param args [information file name]
      * @throws IOException if an I/O error occurs
@@ -46,14 +46,14 @@ public class TimewindowIntersection  {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("i1").longOpt("input1").hasArg().argName("inputTimewindowFile1").required()
-                .desc("The timewindow file to be intersected").build());
+                .desc("The time window file to be intersected").build());
         options.addOption(Option.builder("i2").longOpt("input2").hasArg().argName("inputTimewindowFile2").required()
-                .desc("Another timewindow file to be intersected").build());
+                .desc("Another time window file to be intersected").build());
         // output
         options.addOption(Option.builder("o1").longOpt("output1").hasArg().argName("outputTimewindowFile1")
-                .desc("Set path of output timewindow file1").build());
+                .desc("Set path of output time window file1").build());
         options.addOption(Option.builder("o2").longOpt("output2").hasArg().argName("outputTimewindowFile2")
-                .desc("Set path of output timewindow file2").build());
+                .desc("Set path of output time window file2").build());
 
         options.addOption(Option.builder("ph").longOpt("phase").hasArg().argName("phase")
                 .desc("Pick up same phase").build());

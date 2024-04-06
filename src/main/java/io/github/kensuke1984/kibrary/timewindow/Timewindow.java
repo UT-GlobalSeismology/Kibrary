@@ -3,11 +3,10 @@ package io.github.kensuke1984.kibrary.timewindow;
 import org.apache.commons.math3.util.Precision;
 
 /**
- * Time window starting and ending time.<br>
- * <b>They are round off to the 3rd decimal place.</b>
+ * Time window instance, with starting and ending time.
+ * <b>They are rounded off to {@value #DECIMALS} decimal places.</b>
  * <p>
- * This class is <b>IMMUTABLE</b>
- * </p>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -15,7 +14,7 @@ import org.apache.commons.math3.util.Precision;
 public class Timewindow implements Comparable<Timewindow> {
 
     /**
-     * the number of decimal places to round off the time values
+     * The number of decimal places to round off the time values.
      */
     public static final int DECIMALS = 2;
     /**
@@ -23,28 +22,28 @@ public class Timewindow implements Comparable<Timewindow> {
      */
     public static final int TYPICAL_MAX_INTEGER_DIGITS = 4;
     /**
-     * Margin to decide whether two timewindows have the same startTime and/or endTime
+     * Margin to decide whether two timewindows have the same startTime and/or endTime.
      */
     public static final double TIME_EPSILON = 0.1;
     /**
-     * Margin of startTime to decide whether two timewindows are pairs, taking into account the timeshifts due to corrections
+     * Margin of startTime to decide whether two timewindows are pairs, taking into account the timeshifts due to corrections.
      */
     public static final double TIME_SHIFT_MAX = 20;
 
     /**
-     * starting time round off to the third decimal place
+     * Start time of the window [s].
      */
     protected final double startTime;
     /**
-     * ending time round off to the third decimal place
+     * End time of the window [s].
      */
     protected final double endTime;
 
     /**
-     * startTime must be less than endTime
-     *
-     * @param startTime start time of the window
-     * @param endTime   end time of the window
+     * Construct time window instance.
+     * startTime must be less than endTime.
+     * @param startTime (double) Start time of the window [s].
+     * @param endTime (double) End time of the window [s].
      */
     public Timewindow(double startTime, double endTime) {
         if (endTime < startTime)
@@ -54,19 +53,19 @@ public class Timewindow implements Comparable<Timewindow> {
     }
 
     /**
-     * @param timeWindow to check
-     * @return if timeWindow and this overlap
+     * Check if a given time window overlaps with this time window.
+     * @param timeWindow ({@link Timewindow}) Time window to check.
+     * @return (boolean) Whether the time windows overlap.
      */
-    boolean overlap(Timewindow timeWindow) {
+    boolean overlaps(Timewindow timeWindow) {
         return timeWindow.startTime <= endTime && startTime <= timeWindow.endTime;
     }
 
     /**
-     * Creates a new Timewindow from this and the input timewindow. If the two
-     * windows do not overlap, then the interval between them is also included.
-     *
-     * @param timeWindow ({@link Timewindow}) Timewindow to merge
-     * @return ({@link Timewindow}) Merged timewindow
+     * Creates a new instance with this time window merged with the input time window.
+     * If the two windows do not overlap, then the interval between them is also included.
+     * @param timeWindow ({@link Timewindow}) Time window to merge.
+     * @return ({@link Timewindow}) Merged time window.
      */
     Timewindow merge(Timewindow timeWindow) {
         double newStart = startTime < timeWindow.startTime ? startTime : timeWindow.startTime;
@@ -75,9 +74,9 @@ public class Timewindow implements Comparable<Timewindow> {
     }
 
     /**
-     * Shift timewindow (in positive direction) by specified time.
-     * @param shift (double) Time to shift timewindow
-     * @return ({@link Timewindow}) Shifted timewindow
+     * Shift time window (in positive direction) by specified time.
+     * @param shift (double) Time to shift time window [s].
+     * @return ({@link Timewindow}) Shifted time window.
      */
     public Timewindow shift(double shift) {
         return new Timewindow(startTime + shift, endTime + shift);

@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * File containing a list of timewindows. See {@link TimewindowData}. Binary-format.
+ * File containing a list of time windows. See {@link TimewindowData}. Binary-format.
  *
  * <p>
  * The file consists of 5 sections:
@@ -52,7 +52,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - GlobalCMTID </li>
  * <li>Each phase <br>
  * - phase </li>
- * <li>Each timewindow information, composed of {@value #ONE_WINDOW_BYTE} bytes:
+ * <li>Each time window information, composed of {@value #ONE_WINDOW_BYTE} bytes:
  * <ul>
  * <li>Observer index (2)</li>
  * <li>GlobalCMTID index (2)</li>
@@ -65,15 +65,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  *
  * <p>
  * Observers that satisfy {@link Observer#equals(Object)} are considered to be same observers,
- * and one position (latitude, longitude) is chosen to be output in the timewindow file.
+ * and one position (latitude, longitude) is chosen to be output in the time window file.
  *
  * <p>
  * When the main method of this class is executed,
- * the input binary-format file is output in ascii format, as follows:
- * <ol>
- * <li> In the standard output, information of each timewindow is written.</li>
- * <li> In 'timewindow.observer', information of each observer is written.</li>
- * </ol>
+ * the input binary-format file is output in ascii format.
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -90,7 +86,7 @@ public final class TimewindowDataFile {
     /**
      * Output {@link TimewindowData} in binary format.
      *
-     * @param timewindowSet (Set of {@link TimewindowData}) Timewindows to write.
+     * @param timewindowSet (Set of {@link TimewindowData}) Time windows to write.
      * @param outputPath (Path) Output file.
      * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs.
@@ -101,7 +97,7 @@ public final class TimewindowDataFile {
         if (timewindowSet.isEmpty())
             throw new RuntimeException("Input information is empty..");
 
-        DatasetAid.printNumOutput(timewindowSet.size(), "timewindow", "timewindows", outputPath);
+        DatasetAid.printNumOutput(timewindowSet.size(), "time window", "time windows", outputPath);
 
         Observer[] observers = timewindowSet.stream().map(TimewindowData::getObserver).distinct().sorted()
                 .toArray(Observer[]::new);
@@ -157,13 +153,13 @@ public final class TimewindowDataFile {
     }
 
     /**
-     * Read timewindow data from a binary format {@link TimewindowDataFile}
+     * Read time window data from a binary format {@link TimewindowDataFile}
      * and select those to use based on {@link DataEntry}s and {@link SACComponent}s.
      *
      * @param inputPath (Path) The {@link TimewindowDataFile} to read.
      * @param dataEntryPath (Path) The {@link DataEntryListFile} for selection.
      * @param components (Set of {@link SACComponent}) Components to use.
-     * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Timewindows that are read.
+     * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Time windows that are read.
      * @throws IOException
      *
      * @author otsuru
@@ -175,25 +171,25 @@ public final class TimewindowDataFile {
             // read entry set to be used for selection
             Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
-            // read timewindows and select based on component and entries
+            // read time windows and select based on component and entries
             timewindowSet = TimewindowDataFile.read(inputPath).stream()
                     .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
                     .collect(Collectors.toSet());
         } else {
-            // read timewindows and select based on component
+            // read time windows and select based on component
             timewindowSet = TimewindowDataFile.read(inputPath).stream()
                     .filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
-        System.err.println("Selected " + MathAid.switchSingularPlural(timewindowSet.size(), "timewindow.", "timewindows."));
+        System.err.println("Selected " + MathAid.switchSingularPlural(timewindowSet.size(), "time window.", "time windows."));
         return Collections.unmodifiableSet(timewindowSet);
     }
 
     /**
-     * Read timewindow data from a binary format {@link TimewindowDataFile}.
+     * Read time window data from a binary format {@link TimewindowDataFile}.
      *
      * @param inputPath (Path) The {@link TimewindowDataFile} to read.
-     * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Timewindows that are read.
+     * @return (<b>unmodifiable</b> Set of {@link TimewindowData}) Time windows that are read.
      * @throws IOException if an I/O error occurs
      * @author Kensuke Konishi
      */
@@ -235,13 +231,13 @@ public final class TimewindowDataFile {
 
             Set<TimewindowData> timewindowSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
-            DatasetAid.printNumInput(timewindowSet.size(), "timewindow", "timewindows", inputPath);
+            DatasetAid.printNumInput(timewindowSet.size(), "time window", "time windows", inputPath);
             return Collections.unmodifiableSet(timewindowSet);
         }
     }
 
     /**
-     * Create an instance for 1 timewindow.
+     * Create an instance for 1 time window.
      *
      * @param bytes    byte array
      * @param observers station array
@@ -271,7 +267,7 @@ public final class TimewindowDataFile {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The binary-format timewindow information file is output in ascii format.
+     * The binary-format time window information file is output in ascii format.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -292,7 +288,7 @@ public final class TimewindowDataFile {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Path of timewindow file.").build());
+                .desc("Path of time window file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files.").build());
@@ -324,7 +320,7 @@ public final class TimewindowDataFile {
             } while (!Files.exists(filePath) || Files.isDirectory(filePath));
         }
 
-        // read timewindow file
+        // read time window file
         Set<TimewindowData> windows = TimewindowDataFile.read(filePath);
         if (cmdLine.hasOption("n")) return;
 

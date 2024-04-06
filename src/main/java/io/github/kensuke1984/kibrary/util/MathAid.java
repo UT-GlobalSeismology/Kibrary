@@ -60,6 +60,21 @@ public final class MathAid {
     }
 
     /**
+     * Check if a/b is integer.
+     * @param dividend (double) a in a/b.
+     * @param divisor (double) b in a/b.
+     * @return (boolean) Whether a/b is integer.
+     *
+     * @author otsuru
+     * @since 2024/4/6
+     */
+    public static boolean isDivisible(double dividend, double divisor) {
+        double quotient = dividend / divisor;
+        // compare the integer part of quotient with the quotient rounded to get rid of the error
+        return Math.floor(quotient) == Precision.round(quotient, PRECISION_DECIMALS);
+    }
+
+    /**
      * Rounds value to n effective digits.
      *
      * @param value (double) The value to be rounded.
@@ -279,6 +294,18 @@ public final class MathAid {
      */
     public static double ceil(double value) {
         return Math.ceil(Precision.round(value, PRECISION_DECIMALS));
+    }
+
+    /**
+     * Round a value to git rid of computation error (ex. fixing 0.9999... to 1 or fixing 1.00...01 to 1).
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2024/4/6
+     */
+    public static double roundForPrecision(double value) {
+        return Precision.round(value, PRECISION_DECIMALS);
     }
 
 }
