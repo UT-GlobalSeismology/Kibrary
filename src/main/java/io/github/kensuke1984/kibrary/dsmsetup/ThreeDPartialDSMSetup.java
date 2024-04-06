@@ -239,6 +239,31 @@ public class ThreeDPartialDSMSetup extends Operation {
             thetamax = tmpthetainfo[1];
             dtheta = tmpthetainfo[2];
         }
+
+        // check that settings match with reusePath
+        if (reusePath != null) checkReusePath();
+    }
+
+    private void checkReusePath() throws IOException {
+        Path lastPropertyPath = reusePath.resolve("_" + this.getClass().getSimpleName() + ".properties");
+        Property lastProperty = new Property();
+        lastProperty.readFrom(lastPropertyPath);
+
+        if (!voxelPath.equals(lastProperty.parsePath("voxelPath", null, true, workPath)))
+            throw new IllegalStateException("voxelPath does not match with reused folder.");
+        if (structurePath != null) {
+            if (!lastProperty.containsKey("structurePath") || !structurePath.equals(lastProperty.parsePath("structurePath", null, true, workPath)))
+                throw new IllegalStateException("structurePath does not match with reused folder.");
+        } else {
+            if (!lastProperty.containsKey("structureName") || !structureName.equals(lastProperty.parseString("structureName", null)))
+                throw new IllegalStateException("structureName does not match with reused folder.");
+        }
+        if (tlen != lastProperty.parseDouble("tlen", null)) {
+            throw new IllegalStateException("tlen does not match with reused folder.");
+        }
+        if (np != lastProperty.parseInt("np", null)) {
+            throw new IllegalStateException("np does not match with reused folder.");
+        }
     }
 
     @Override
@@ -346,6 +371,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
+        if (nCreated == 0) return;
 
         // output list and shellscripts for execution of shfp and psvfp
         Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateString, ".txt");
@@ -394,6 +420,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + bpPoolPath);
+        if (nCreated == 0) return;
 
         if (catalogMode) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);

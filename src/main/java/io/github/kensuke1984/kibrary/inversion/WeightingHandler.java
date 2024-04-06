@@ -137,7 +137,7 @@ public class WeightingHandler {
      */
     public WeightingHandler(Path propertyPath) throws IOException {
         Property property = new Property();
-        property.load(Files.newBufferedReader(propertyPath));
+        property.readFrom(propertyPath);
         // get path of folder including this property file
         Path parentPath = (propertyPath.getParent() != null) ? propertyPath.getParent() : Paths.get("");
         // set up parameters

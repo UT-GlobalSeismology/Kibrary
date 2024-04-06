@@ -1,8 +1,9 @@
 package io.github.kensuke1984.kibrary;
 
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,9 +25,45 @@ public class Environment {
     public static final Path KIBRARY_HOME;
     public static final Path KIBRARY_SHARE;
     public static final Path KIBRARY_BIN;
-    public static final Path PROPERTY_FILE;
+    private static final Path PROPERTY_PATH;
     private static final Properties PROPERTY = new Properties();
     private static final Properties DEFAULT_PROPERTY = new Properties();
+
+    static {
+        String home = System.getenv("KIBRARY_HOME");
+        if (Objects.isNull(home)) {
+            if (Objects.nonNull(home = System.getenv("APPDATA"))) {
+                KIBRARY_HOME = Paths.get(home).resolve("Kibrary");
+            } else {
+                KIBRARY_HOME = Paths.get(System.getProperty("user.home")).resolve("Kibrary");
+            }
+        } else {
+            KIBRARY_HOME = Paths.get(home);
+        }
+        KIBRARY_BIN = KIBRARY_HOME.resolve("bin");
+        KIBRARY_SHARE = KIBRARY_HOME.resolve("share");
+        try {
+            Files.createDirectories(KIBRARY_HOME);
+            Files.createDirectories(KIBRARY_BIN);
+            Files.createDirectories(KIBRARY_SHARE);
+        } catch (IOException io) {
+            throw new RuntimeException("Set a proper KIBRARY_HOME.");
+        }
+        PROPERTY_PATH = KIBRARY_HOME.resolve(".property");
+    }
+
+    static {
+        setDefaultProperty();
+        if (Files.exists(PROPERTY_PATH)) {
+            try (BufferedReader br = Files.newBufferedReader(PROPERTY_PATH)) {
+                PROPERTY.load(br);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(100);
+            }
+        }
+        copyDefault();
+    }
 
     private static void setDefaultProperty() {
         DEFAULT_PROPERTY.setProperty("userName", System.getProperty("user.name"));
@@ -37,51 +74,22 @@ public class Environment {
         DEFAULT_PROPERTY.setProperty("fax", "09-8765-4321");
     }
 
-    static {
-        String home = System.getenv("KIBRARY_HOME");
-        if (Objects.isNull(home)) {
-            if (Objects.nonNull(home = System.getenv("APPDATA"))) {
-                KIBRARY_HOME = Paths.get(home).resolve("Kibrary");
-            } else {
-                KIBRARY_HOME = Paths.get(System.getProperty("user.home")).resolve("Kibrary");
-            }
-        } else KIBRARY_HOME = Paths.get(home);
-        KIBRARY_BIN = KIBRARY_HOME.resolve("bin");
-        KIBRARY_SHARE = KIBRARY_HOME.resolve("share");
-        try {
-            Files.createDirectories(KIBRARY_HOME);
-            Files.createDirectories(KIBRARY_BIN);
-            Files.createDirectories(KIBRARY_SHARE);
-        } catch (IOException io) {
-            throw new RuntimeException("Set a proper KIBRARY_HOME.");
-        }
-        PROPERTY_FILE = KIBRARY_HOME.resolve(".property");
-    }
-
     private static void copyDefault() {
         boolean added = false;
-        for (Object o : DEFAULT_PROPERTY.keySet())
+        for (Object o : DEFAULT_PROPERTY.keySet()) {
             if (!PROPERTY.containsKey(o)) {
                 PROPERTY.setProperty((String) o, DEFAULT_PROPERTY.getProperty((String) o));
                 added = true;
             }
-        if (added) try (Writer writer = Files.newBufferedWriter(PROPERTY_FILE)) {
-            PROPERTY.store(writer, "This file is including default values, please check it out.");
-            System.err.println(PROPERTY_FILE + " is newly created.");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-    }
-
-    static {
-        setDefaultProperty();
-        if (Files.exists(PROPERTY_FILE)) try {
-            PROPERTY.load(Files.newBufferedReader(PROPERTY_FILE));
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(100);
+        if (added) {
+            try (BufferedWriter bw = Files.newBufferedWriter(PROPERTY_PATH)) {
+                PROPERTY.store(bw, "This file is including default values, please check it out.");
+                System.err.println(PROPERTY_PATH + " is newly created.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        copyDefault();
     }
 
     public static String getFax() {
@@ -103,7 +111,6 @@ public class Environment {
     public static String getGmail() {
         return PROPERTY.getProperty("gmail");
     }
-    // gkmbqmcxxosngras
 
     public static String getUserName() {
         return PROPERTY.getProperty("userName");
