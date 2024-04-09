@@ -28,6 +28,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -141,6 +142,8 @@ public class DataEntryListFile {
         options.addOptionGroup(inputOption);
 
         // output
+        options.addOption(Option.builder("n").longOpt("number")
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
                 .desc("To convert entries to certain components, list them using commas.").build());
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
@@ -192,10 +195,9 @@ public class DataEntryListFile {
             entrySet = collectFromDataset(inPath, components);
         }
 
-        if (entrySet.size() == 0) {
-            System.err.println("No data entries created.");
-            return;
-        }
+        System.err.println(MathAid.switchSingularPlural(entrySet.size(), "data entry", "data entries") + " created.");
+        if (entrySet.size() == 0) return;
+        if (cmdLine.hasOption("n")) return;
 
         // convert components
         if (cmdLine.hasOption("x")) {
@@ -216,7 +218,7 @@ public class DataEntryListFile {
         Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(datasetPath);
         return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent()))
                 .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                .map(header -> new DataEntry(header.getGlobalCMTID(), header.getObserver(), header.getComponent()))
+                .map(header -> header.toDataEntry())
                 .collect(Collectors.toSet());
     }
 

@@ -31,7 +31,6 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
@@ -270,8 +269,7 @@ public class TimewindowMaker extends Operation {
                 Set<SACFileName> sacFileNames = eventDir.sacFileSet().stream()
                         .filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent())).collect(Collectors.toSet());
                 for (SACFileName sacFileName : sacFileNames) {
-                    SACFileAccess sacFile = sacFileName.read();
-                    entrySet.add(new DataEntry(sacFile.getGlobalCMTID(), sacFile.getObserver(), sacFile.getComponent()));
+                    entrySet.add(sacFileName.readHeader().toDataEntry());
                 }
             }
         }
