@@ -75,6 +75,18 @@ public final class MathAid {
     }
 
     /**
+     * Check if a value is a terminating decimal.
+     * @param value (double) Value to check.
+     * @return (boolean) Whether the value is a terminating decimal.
+     *
+     * @author otsuru
+     * @since 2024/4/10
+     */
+    public static boolean isTerminatingDecimal(double value) {
+        return Precision.round(value, PRECISION_DECIMALS) == Precision.round(value, PRECISION_DECIMALS + 2);
+    }
+
+    /**
      * Rounds value to n effective digits.
      *
      * @param value (double) The value to be rounded.
