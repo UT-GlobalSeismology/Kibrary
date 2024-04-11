@@ -60,6 +60,10 @@ public class InversionArranger extends Operation {
     private Path unknownParameterPath;
 
     private Path weightingPropertiesPath;
+    /**
+     * Path of AtA file, if reusing.
+     */
+    private Path reuseAtaPath;
 
     /**
      * @param args  none to create a property file <br>
@@ -90,6 +94,8 @@ public class InversionArranger extends Operation {
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath weighting.properties");
+            pw.println("##When reusing an AtA file, set its path.");
+            pw.println("#reuseAtaPath ata.lst");
         }
         System.err.println(outPath + " is created.");
     }
@@ -108,6 +114,7 @@ public class InversionArranger extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
+        if (property.containsKey("reuseAtaPath")) reuseAtaPath = property.parsePath("reuseAtaPath", null, true, workPath);
     }
 
     @Override
@@ -118,10 +125,19 @@ public class InversionArranger extends Operation {
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+        // read AtA if reusing
+        RealMatrix ata = null;
+        if (reuseAtaPath != null) {
+            ata = MatrixFile.read(reuseAtaPath);
+            if (ata.getColumnDimension() != ata.getRowDimension())
+                throw new IllegalStateException("Input AtA matrix is not square.");
+            if (ata.getColumnDimension() != unknowns.size())
+                throw new IllegalStateException("Dimensions of input AtA file and unknown parameter file do not match.");
+        }
 
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler);
-        RealMatrix ata = assembler.getAta();
+        if (reuseAtaPath == null) ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();

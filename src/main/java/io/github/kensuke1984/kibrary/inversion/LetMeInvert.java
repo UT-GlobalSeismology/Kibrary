@@ -71,6 +71,10 @@ public class LetMeInvert extends Operation {
 
     private Path weightingPropertiesPath;
     /**
+     * Path of AtA file, if reusing.
+     */
+    private Path reuseAtaPath;
+    /**
      * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
@@ -121,6 +125,8 @@ public class LetMeInvert extends Operation {
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath weighting.properties");
+            pw.println("##When reusing an AtA file, set its path.");
+            pw.println("#reuseAtaPath ata.lst");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
@@ -157,6 +163,7 @@ public class LetMeInvert extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
+        if (property.containsKey("reuseAtaPath")) reuseAtaPath = property.parsePath("reuseAtaPath", null, true, workPath);
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
@@ -185,10 +192,19 @@ public class LetMeInvert extends Operation {
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+        // read AtA if reusing
+        RealMatrix ata = null;
+        if (reuseAtaPath != null) {
+            ata = MatrixFile.read(reuseAtaPath);
+            if (ata.getColumnDimension() != ata.getRowDimension())
+                throw new IllegalStateException("Input AtA matrix is not square.");
+            if (ata.getColumnDimension() != unknowns.size())
+                throw new IllegalStateException("Dimensions of input AtA file and unknown parameter file do not match.");
+        }
 
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
-        RealMatrix ata = assembler.getAta();
+        if (reuseAtaPath == null) ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();
