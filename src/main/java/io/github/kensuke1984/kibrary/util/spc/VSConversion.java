@@ -73,7 +73,7 @@ public final class VSConversion {
                             .getValueInFrequencyDomain()[ip];
                     uIm[iComponent] = u.multiply(fact);
                 }
-                newBody.add(ip, uIm);
+                newBody.setValues(ip, uIm);
             }
             spcBodyList.add(newBody);
         }

@@ -483,7 +483,7 @@ public class ThreeDPartialMaker {
             Complex[] partialT = rotatePartial(partial1, partial2, SACComponent.T);
             SPCBody body = new SPCBody(3, np);
             for (int ip = 0; ip < bp.np() + 1; ip++)
-                body.add(ip, partialZ[ip], partialR[ip], partialT[ip]);
+                body.setValues(ip, partialZ[ip], partialR[ip], partialT[ip]);
             spcBodyList.add(body);
         }
         return new SPCFileAccess() {

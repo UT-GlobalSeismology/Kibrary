@@ -86,7 +86,7 @@ public final class FujiConversion {
 //					partials with respect to small q
                     uQ[iComponent] = u.multiply(dmudq).divide(dmudmu0);
                 }
-                newBody.add(ip, uQ);
+                newBody.setValues(ip, uQ);
             }
             spcBodyList.add(newBody);
         }

@@ -18,11 +18,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public class SPCBody {
 
-    private final int nComponent; // datarealsize
+    /**
+     * Number of steps in frequency domain.
+     */
     private final int np;
-
+    /**
+     * Number of data points in time domain.
+     */
     private int nptsInTimeDomain;
 
+    private final int nComponent;
     private SPCComponent[] spcComponents;
 
     /**
@@ -32,7 +37,18 @@ public class SPCBody {
     SPCBody(int nComponent, int np) {
         this.nComponent = nComponent;
         this.np = np;
-        allocateComponents();
+        spcComponents = IntStream.range(0, nComponent).mapToObj(i -> new SPCComponent(np)).toArray(SPCComponent[]::new);
+    }
+
+    /**
+     * Set spectrum values for all components for a single &omega; value.
+     * @param ip (int) Step number in frequency domain.
+     * @param u (Complex...) Spectrum values for all components. u[i] is for the i-th component.
+     */
+    void setValues(int ip, Complex... u) {
+        if (u.length != nComponent) throw new IllegalStateException("The number of components is wrong.");
+        for (int i = 0; i < nComponent; i++)
+            spcComponents[i].setValue(ip, u[i]);
     }
 
     /**
@@ -44,18 +60,6 @@ public class SPCBody {
         s.spcComponents = new SPCComponent[nComponent];
         Arrays.setAll(s.spcComponents, i -> spcComponents[i].copy());
         return s;
-    }
-
-    /**
-     * ω：ip 番目データを読む
-     *
-     * @param ip step number in frequency domain
-     * @param u  u[i] ith component
-     */
-    void add(int ip, Complex... u) {
-        if (u.length != nComponent) throw new IllegalStateException("The number of components is wrong");
-        for (int i = 0; i < nComponent; i++)
-            spcComponents[i].set(ip, u[i]);
     }
 
     /**
@@ -175,6 +179,73 @@ public class SPCBody {
     }
 
     /**
+     * Add the spectrum values in the frequency domain of another {@link SPCBody}.
+     * @param anotherBody ({@link SPCBody}) The instance to add to this instance.
+     */
+    public void addBody(SPCBody anotherBody) {
+        if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
+        else if (nComponent != anotherBody.getNumberOfComponent())
+            throw new RuntimeException("Error: The numbers of each component are different.");
+
+        for (int j = 0; j < nComponent; j++)
+            spcComponents[j].addComponent(anotherBody.spcComponents[j]);
+    }
+
+    /**
+     * Apply ramped source time function. To be conducted before {@link #toTimeDomain(int)}.
+     * @param sourceTimeFunction will be applied on all components.
+     */
+    public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
+        Arrays.stream(spcComponents).forEach(component -> component.applySourceTimeFunction(sourceTimeFunction));
+    }
+
+    /**
+     * Converts all the components to time domain.
+     * @param lsmooth lsmooth
+     */
+    public void toTimeDomain(int lsmooth) {
+        Arrays.stream(spcComponents).forEach(component -> component.toTimeDomain(lsmooth));
+    }
+
+    /**
+     * To be conducted after {@link #toTimeDomain(int)}.
+     * @param tlen time length
+     */
+    public void amplitudeCorrection(double tlen) {
+        Arrays.stream(spcComponents).forEach(component -> component.amplitudeCorrection(tlen));
+    }
+
+    /**
+     * To be conducted after {@link #toTimeDomain(int)}.
+     * @param omegaI &omega;<sub>i</sub>
+     * @param tlen   time length
+     */
+    public void applyGrowingExponential(double omegaI, double tlen) {
+        Arrays.stream(spcComponents).forEach(component -> component.applyGrowingExponential(omegaI, tlen));
+    }
+
+    /**
+     * すべてのコンポーネントに対し時間微分する。 before toTime
+     *
+     * @param tlen time length
+     */
+    public void differentiate(double tlen) {
+        Arrays.stream(spcComponents).forEach(component -> component.differentiate(tlen));
+    }
+
+    public int getNp() {
+        return np;
+    }
+
+    public int getNPTSinTimeDomain() {
+        return nptsInTimeDomain;
+    }
+
+    public int getNumberOfComponent() {
+        return nComponent;
+    }
+
+    /**
      * @return SPCComponent[] all the {@link SPCComponent} in this
      */
     public SPCComponent[] getSpcComponents() {
@@ -200,95 +271,11 @@ public class SPCBody {
     }
 
     /**
-     * TODO デバッグ用なので、すぐ消す
-     *
-     * @author ryoichi
-     */
-
-    /**
-     * TODO 別を出すようにする anotherBodyを足し合わせる
-     *
-     * @param anotherBody {@link SPCBody} for addition
-     */
-    public void addBody(SPCBody anotherBody) {
-        if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nComponent != anotherBody.getNumberOfComponent())
-            throw new RuntimeException("Error: The numbers of each component are different.");
-
-        for (int j = 0; j < nComponent; j++)
-            spcComponents[j].addComponent(anotherBody.spcComponents[j]);
-
-    }
-
-    private void allocateComponents() {
-        spcComponents =
-                IntStream.range(0, nComponent).mapToObj(i -> new SPCComponent(np)).toArray(SPCComponent[]::new);
-    }
-
-    /**
-     * after toTimeDomain
-     *
-     * @param tlen time length
-     */
-    public void amplitudeCorrection(double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.amplitudeCorrection(tlen));
-    }
-
-    /**
-     * after toTime
-     *
-     * @param omegaI &omega;<sub>i</sub>
-     * @param tlen   time length
-     */
-    public void applyGrowingExponential(double omegaI, double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.applyGrowingExponential(omegaI, tlen));
-    }
-
-    /**
-     * before toTime This method applies ramped source time function.
-     *
-     * @param sourceTimeFunction will be applied on all components.
-     */
-    public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-        Arrays.stream(spcComponents).forEach(component -> component.applySourceTimeFunction(sourceTimeFunction));
-    }
-
-    /**
-     * すべてのコンポーネントに対し時間微分する。 before toTime
-     *
-     * @param tlen time length
-     */
-    public void differentiate(double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.differentiate(tlen));
-    }
-
-    public int getNumberOfComponent() {
-        return nComponent;
-    }
-
-    public int getNp() {
-        return np;
-    }
-
-    public int getNPTSinTimeDomain() {
-        return nptsInTimeDomain;
-    }
-
-    /**
      * @param component {@link SACComponent}
      * @return the data of i th component time_domain
      */
     public double[] getTimeseries(SACComponent component) {
         return spcComponents[component.valueOf() - 1].getTimeseries();
-    }
-
-    /**
-     * Converts all the components to time domain.
-     *
-     * @param lsmooth lsmooth
-     */
-    public void toTimeDomain(int lsmooth) {
-        Arrays.stream(spcComponents).forEach(component -> component.toTimeDomain(lsmooth));
     }
 
 }
