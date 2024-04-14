@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCBody;
-import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCElement;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 
 import java.io.IOException;
@@ -79,7 +79,7 @@ public class BPVisual {
 				int lsmooth = body.findLsmooth(bpSpc.tlen(), samplingHz);
 				body.toTimeDomain(lsmooth);
 				
-				SPCComponent[] spcComponents = body.getSpcComponents();
+				SPCElement[] spcComponents = body.getSpcElements();
 				for (int j = 0; j < spcComponents.length; j++) {
 					double[] bpserie = spcComponents[j].getTimeseries();
 					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();

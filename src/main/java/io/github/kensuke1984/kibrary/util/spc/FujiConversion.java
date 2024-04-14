@@ -59,10 +59,10 @@ public final class FujiConversion {
             SPCBody body = spectrum.getSpcBodyList().get(i);
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {
-                Complex[] uQ = new Complex[body.getNumberOfComponent()];
+                Complex[] uQ = new Complex[body.getNElement()];
                 double omegaOverOmega0 = (ip + 1) * domega / omega0;
-                for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
-                    Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
+                for (int iComponent = 0; iComponent < body.getNElement(); iComponent++) {
+                    Complex u = body.getSpcElement(SACComponent.getComponent(iComponent + 1))
                             .getValueInFrequencyDomain()[ip];
 
 

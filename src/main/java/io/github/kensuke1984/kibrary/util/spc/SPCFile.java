@@ -33,21 +33,21 @@ public class SPCFile implements SPCFileAccess {
 
     private String sourceID;
     /**
-     * 震源の位置
+     * Position of the source.
      */
     private FullPosition sourcePosition;
     private String receiverID;
     /**
-     * 観測点の位置 深さの情報は含まない
+     * Horizontal position of the receiver. Does not include depth information.
      */
     private HorizontalPosition receiverPosition;
     private double tlen;
     private int np;
     private double omegai;
     /**
-     * Number of components in each spcBody.
+     * Number of elements in each spcBody.
      */
-    private int nComponent;
+    private int nElement;
 
     public SPCFile(SPCFileName spcFileName) {
         this.spcFileName = spcFileName;
@@ -110,11 +110,11 @@ public class SPCFile implements SPCFileAccess {
             } else {  // synthetic, FP, or BP
                 specFile.spcFileType = SPCType.ofNumber(typeNumber);
             }
-            specFile.nComponent = specFile.spcFileType.getNComponent();
+            specFile.nElement = specFile.spcFileType.getNElement();
 
             specFile.spcBodies = new ArrayList<>(nbody);
             for (int i = 0; i < nbody; i++)
-                specFile.spcBodies.add(new SPCBody(specFile.nComponent, np));
+                specFile.spcBodies.add(new SPCBody(specFile.nElement, np));
 
             //~data part
             specFile.omegai = dis.readDouble();
@@ -190,11 +190,11 @@ public class SPCFile implements SPCFileAccess {
             // read body
             for (int i = 0; i < np + 1; i++) {
                 for (SPCBody body : specFile.spcBodies) {
-                    Complex[] u = new Complex[specFile.nComponent];
+                    Complex[] u = new Complex[specFile.nElement];
                     int ip = dis.readInt();
 
                     if (specFile.spcFileType.equals(SPCType.PBSHCAT)) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             if (SPCTensorComponent.isBPSHCATzero(k+1))
                                 u[k] = Complex.ZERO;
                             else {
@@ -217,7 +217,7 @@ public class SPCFile implements SPCFileAccess {
                             }
                         }
                     } else if (specFile.spcFileType.equals(SPCType.PBPSVCAT)) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m1 = dis.readDouble();
                             double tmpImag_m1 = dis.readDouble();
                             double tmpReal_m0 = dis.readDouble();
@@ -238,7 +238,7 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
                     } else if (specFile.spcFileType.equals(SPCType.PFSHCAT) ) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m2 = dis.readDouble();
                             double tmpImag_m2 = dis.readDouble();
                             double tmpReal_m1 = dis.readDouble();
@@ -260,7 +260,7 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
                     } else if (specFile.spcFileType.equals(SPCType.PFPSVCAT) ) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m2 = dis.readDouble();
                             double tmpImag_m2 = dis.readDouble();
                             double tmpReal_m1 = dis.readDouble();
@@ -284,7 +284,7 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
                     } else {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
                         }
                     }

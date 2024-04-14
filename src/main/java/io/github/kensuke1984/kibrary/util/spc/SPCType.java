@@ -13,31 +13,31 @@ public enum SPCType {
 
     static SPCType ofNumber(int number) {
         switch(number) {
-        case 3: // normal synthetic
+        case 3: // Normal synthetic
             return SYNTHETIC;
-        case 4:// forward propagation dislocation field. 4 is an identifier. The actual number of component is 3 (3 non-zero component).
+        case 4: // Forward propagation dislocation field. 4 is an identifier. Holds 3 components. (3 non-zero components).
             return SPCType.UF;
-        case 5:// back propagation dialocation filed. 5 is an identifier. The actual number of component is 9 (9 non-zero component).
+        case 5: // Back propagation dislocation filed. 5 is an identifier. Holds 9 components (9 non-zero components).
             return SPCType.UB;
-        case 7: // back propagation PSV catalog. 7 is an identifier. The actual number of component is 27 (27 non-zero component).
+        case 7: // Back propagation PSV catalog. 7 is an identifier. Holds 27 components (27 non-zero components).
             return PBPSVCAT;
-        case 8: // back propagation SH catalog. 8 is an identifier. The actual number of component is 27 (18 non-zero component).
+        case 8: // Back propagation SH catalog. 8 is an identifier. Holds 27 components (18 non-zero components).
             return PBSHCAT;
-        case 9: // forward propagation (strain field)
+        case 9: // Forward propagation strain field.
             return PF;
-        case 10: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
+        case 10: // Forward propagation SH catalog. 10 is an identifier. Holds 9 components.
             return PFSHCAT;
-        case 12: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
+        case 12: // Forward propagation SH catalog. 12 is an identifier. Holds 9 components.
             return PFPSVCAT;
-        case 27: // back propagation (strain field)
+        case 27: // Back propagation strain field.
             return PB;
         default:
-            throw new RuntimeException("component can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), "
+            throw new RuntimeException("SPC type can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), "
                     + "9(fp), 10(fpshcat), 12(fppsvcat), or 27(bp) right now");
         }
     }
 
-    int getNComponent() {
+    int getNElement() {
         switch(this) {
         case PB:
         case PBSHCAT:

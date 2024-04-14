@@ -158,10 +158,10 @@ public interface SPCFileAccess {
         double r = dsmOutput.getBodyR()[0];
 
         SPCType spcType = dsmOutput.getSpcFileType();
-        int nComponent = spcType.getNComponent();
+        int nComponent = spcType.getNElement();
         Complex[][] spcs = new Complex[nComponent][];
         for (int i = 0; i < nComponent; i++) {
-            spcs[i] = dsmOutput.getSpcBodyList().get(0).getSpcComponent(i).getValueInFrequencyDomain();
+            spcs[i] = dsmOutput.getSpcBodyList().get(0).getSpcElement(i).getValueInFrequencyDomain();
         }
 
         if (outputPath != null) {

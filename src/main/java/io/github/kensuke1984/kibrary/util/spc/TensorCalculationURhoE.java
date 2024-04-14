@@ -64,13 +64,13 @@ public class TensorCalculationURhoE {
 
         for (int j = 0; j < 3; j++) {
             SPCTensorComponent irs = SPCTensorComponent.valueOf9Component(i + 1, j + 1);
-            eta[j] = bp.getSpcComponent(irs).getValueInFrequencyDomain();
+            eta[j] = bp.getSpcElement(irs).getValueInFrequencyDomain();
         }
 
         eta = rotateEta(eta);
 
         for (int j = 0; j < 3; j++) {
-            u[j] = fp.getSpcComponent(j).getValueInFrequencyDomain();
+            u[j] = fp.getSpcElement(j).getValueInFrequencyDomain();
             addPartial(partial, calcCrossCorrelation(u[j], eta[j]));
         }
         return partial;

@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
  * @since a long time ago
  * @author anselme add methods for interpolation for BP/FP catalog
  */
-public class SPCComponent {
+public class SPCElement {
 
     /**
      * Number of steps in frequency domain.
@@ -36,7 +36,7 @@ public class SPCComponent {
      */
     private Complex[] uTime;
 
-    SPCComponent(int np) {
+    SPCElement(int np) {
         this.np = np;
         uFreq = new Complex[np + 1];
     }
@@ -54,8 +54,8 @@ public class SPCComponent {
     /**
      * @return DEEP copy of this
      */
-    public SPCComponent copy() {
-        SPCComponent s = new SPCComponent(np);
+    public SPCElement copy() {
+        SPCElement s = new SPCElement(np);
         s.nptsInTimeDomain = nptsInTimeDomain;
         System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
         if (uTime != null) s.uTime = uTime.clone();
@@ -63,13 +63,13 @@ public class SPCComponent {
     }
 
     /**
-     * Add the spectrum values in the frequency domain of another {@link SPCComponent}.
-     * @param anotherComponent ({@link SPCComponent}) The instance to add to this instance.
+     * Add the spectrum values in the frequency domain of another {@link SPCElement}.
+     * @param anotherElement ({@link SPCElement}) The instance to add to this instance.
      */
-    public void addComponent(SPCComponent anotherComponent) {
-        if (np != anotherComponent.getNP()) throw new RuntimeException("Error: Size of body is not equal!");
+    public void addElement(SPCElement anotherElement) {
+        if (np != anotherElement.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
 
-        Complex[] another = anotherComponent.getValueInFrequencyDomain();
+        Complex[] another = anotherElement.getValueInFrequencyDomain();
         for (int i = 0; i < np + 1; i++)
             uFreq[i] = uFreq[i].add(another[i]);
     }
@@ -162,7 +162,7 @@ public class SPCComponent {
             uFreq[i] = uFreq[i].multiply(factor);
     }
 
-    private int getNP() {
+    private int getNp() {
         return np;
     }
 

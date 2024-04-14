@@ -453,7 +453,7 @@ public class PartialWaveformAssembler1D extends Operation {
                     if (!exists)
                         continue;
                 }
-                double[] ut = spcFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
+                double[] ut = spcFile.getSpcBodyList().get(k).getSpcElement(timewindow.getComponent()).getTimeseries();
 
                 // apply filter
                 double[] filteredUt = filter.applyFilter(ut);
@@ -475,8 +475,8 @@ public class PartialWaveformAssembler1D extends Operation {
                     if (!exists)
                         continue;
                 }
-                double[] shUt = shSPCFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
-                double[] psvUt = psvSPCFile.getSpcBodyList().get(k).getSpcComponent(timewindow.getComponent()).getTimeseries();
+                double[] shUt = shSPCFile.getSpcBodyList().get(k).getSpcElement(timewindow.getComponent()).getTimeseries();
+                double[] psvUt = psvSPCFile.getSpcBodyList().get(k).getSpcElement(timewindow.getComponent()).getTimeseries();
 
                 if (shUt.length != psvUt.length)
                     throw new RuntimeException("sh and psv timeseries do not have the same length " + shUt.length + " " + psvUt.length);
@@ -494,12 +494,12 @@ public class PartialWaveformAssembler1D extends Operation {
 
         private void process(SPCFileAccess spcFile) {
             for (SACComponent component : components) {
-                spcFile.getSpcBodyList().stream().map(body -> body.getSpcComponent(component))
-                        .forEach(spcComponent -> {
-                            spcComponent.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            spcComponent.toTimeDomain(lsmooth);
-                            spcComponent.applyGrowingExponential(spcFile.omegai(), tlen);
-                            spcComponent.amplitudeCorrection(tlen);
+                spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
+                        .forEach(spcElement -> {
+                            spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
+                            spcElement.toTimeDomain(lsmooth);
+                            spcElement.applyGrowingExponential(spcFile.omegai(), tlen);
+                            spcElement.amplitudeCorrection(tlen);
                         });
             }
         }

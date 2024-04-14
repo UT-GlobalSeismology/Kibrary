@@ -673,7 +673,7 @@ public class ThreeDPartialMaker {
         if (fujiConversion == null)
             fujiConversion = new FujiConversion(DefaultStructure.PREM);
         SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU3D));
-        return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
+        return qspec.getSpcBodyList().get(iBody).getSpcElement(component).getValueInFrequencyDomain();
 
     }
 

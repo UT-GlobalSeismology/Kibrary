@@ -89,7 +89,7 @@ class TensorCalculationUCE {
         for (int r = 0; r < 3; r++)
             for (int s = 0; s < 3; s++) {
                 SPCTensorComponent irs = SPCTensorComponent.valueOf27Component(i + 1, r + 1, s + 1);
-                eta[r][s] = bp.getSpcComponent(irs).getValueInFrequencyDomain();
+                eta[r][s] = bp.getSpcElement(irs).getValueInFrequencyDomain();
             }
 
         eta = rotateEta(eta);
@@ -97,7 +97,7 @@ class TensorCalculationUCE {
         for (int p = 0; p < 3; p++)
             for (int q = 0; q < 3; q++) {
                 SPCTensorComponent pq = SPCTensorComponent.valueOf9Component(p + 1, q + 1);
-                u[p][q] = fp.getSpcComponent(pq).getValueInFrequencyDomain();
+                u[p][q] = fp.getSpcElement(pq).getValueInFrequencyDomain();
 
                 // u = rotate(u,anglefp);
                 for (int r = 0; r < 3; r++)

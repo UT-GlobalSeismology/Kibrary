@@ -22,43 +22,38 @@ public class SPCBody {
      * Number of steps in frequency domain.
      */
     private final int np;
-    /**
-     * Number of data points in time domain.
-     */
-    private int nptsInTimeDomain;
 
-    private final int nComponent;
-    private SPCComponent[] spcComponents;
+    private final int nElement;
+    private SPCElement[] spcElements;
 
     /**
-     * @param nComponent the number of components
-     * @param np         the number of steps in frequency domain
+     * @param nElement (int) The number of elements.
+     * @param np (int) The number of steps in frequency domain.
      */
-    SPCBody(int nComponent, int np) {
-        this.nComponent = nComponent;
+    SPCBody(int nElement, int np) {
+        this.nElement = nElement;
         this.np = np;
-        spcComponents = IntStream.range(0, nComponent).mapToObj(i -> new SPCComponent(np)).toArray(SPCComponent[]::new);
+        spcElements = IntStream.range(0, nElement).mapToObj(i -> new SPCElement(np)).toArray(SPCElement[]::new);
     }
 
     /**
-     * Set spectrum values for all components for a single &omega; value.
+     * Set spectrum values for all elements for a single &omega; value.
      * @param ip (int) Step number in frequency domain.
-     * @param u (Complex...) Spectrum values for all components. u[i] is for the i-th component.
+     * @param u (Complex...) Spectrum values for all elements. u[i] is for the i-th element.
      */
     void setValues(int ip, Complex... u) {
-        if (u.length != nComponent) throw new IllegalStateException("The number of components is wrong.");
-        for (int i = 0; i < nComponent; i++)
-            spcComponents[i].setValue(ip, u[i]);
+        if (u.length != nElement) throw new IllegalStateException("The number of elements is wrong.");
+        for (int i = 0; i < nElement; i++)
+            spcElements[i].setValue(ip, u[i]);
     }
 
     /**
      * @return DEEP copy of this
      */
     SPCBody copy() {
-        SPCBody s = new SPCBody(nComponent, np);
-        s.nptsInTimeDomain = nptsInTimeDomain;
-        s.spcComponents = new SPCComponent[nComponent];
-        Arrays.setAll(s.spcComponents, i -> spcComponents[i].copy());
+        SPCBody s = new SPCBody(nElement, np);
+        s.spcElements = new SPCElement[nElement];
+        Arrays.setAll(s.spcElements, i -> spcElements[i].copy());
         return s;
     }
 
@@ -73,18 +68,18 @@ public class SPCBody {
         if (unitDistance < 0 || unitDistance > 1)
             throw new RuntimeException("Error: unit distance should be between 0-1 " + unitDistance);
         SPCBody s = this.copy();
-        if (nComponent != anotherBody.getNp())
+        if (nElement != anotherBody.getNp())
             throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nComponent != anotherBody.getNumberOfComponent())
-            throw new RuntimeException("Error: The numbers of each component are different.");
+        else if (nElement != anotherBody.getNElement())
+            throw new RuntimeException("Error: The numbers of each element are different.");
 
-        for (int j = 0; j < nComponent; j++) {
-            SPCComponent comp1 = s.spcComponents[j];
-            SPCComponent comp2 = anotherBody.spcComponents[j];
+        for (int j = 0; j < nElement; j++) {
+            SPCElement comp1 = s.spcElements[j];
+            SPCElement comp2 = anotherBody.spcElements[j];
             comp1.mapMultiply(1. - unitDistance);
             comp2.mapMultiply(unitDistance);
-            comp1.addComponent(comp2);
-            s.spcComponents[j] = comp1;
+            comp1.addElement(comp2);
+            s.spcElements[j] = comp1;
         }
 
         return s;
@@ -109,18 +104,18 @@ public class SPCBody {
         double c2 = -dh[0]*dh[2];
         double c3 = dh[0]*dh[1] / 2.;
 
-        for (int j = 0; j < body1.nComponent; j++) {
-            SPCComponent comp1 = body1.spcComponents[j].copy();
-            SPCComponent comp2 = body2.spcComponents[j].copy();
-            SPCComponent comp3 = body3.spcComponents[j].copy();
+        for (int j = 0; j < body1.nElement; j++) {
+            SPCElement comp1 = body1.spcElements[j].copy();
+            SPCElement comp2 = body2.spcElements[j].copy();
+            SPCElement comp3 = body3.spcElements[j].copy();
 
             comp1.mapMultiply(c1);
             comp2.mapMultiply(c2);
             comp3.mapMultiply(c3);
-            comp1.addComponent(comp2);
-            comp1.addComponent(comp3);
+            comp1.addElement(comp2);
+            comp1.addElement(comp3);
 
-            s.spcComponents[j] = comp1;
+            s.spcElements[j] = comp1;
         }
 
         return s;
@@ -143,18 +138,18 @@ public class SPCBody {
         double c2 = dh[0]*dh[2] / 2.;
         double c3 = dh[0]*dh[1] / 2.;
 
-        for (int j = 0; j < body1.nComponent; j++) {
-            SPCComponent comp1 = body1.spcComponents[j];
-            SPCComponent comp2 = body2.spcComponents[j];
-            SPCComponent comp3 = body3.spcComponents[j];
+        for (int j = 0; j < body1.nElement; j++) {
+            SPCElement element1 = body1.spcElements[j];
+            SPCElement element2 = body2.spcElements[j];
+            SPCElement element3 = body3.spcElements[j];
 
-            comp1.mapMultiply(c1);
-            comp2.mapMultiply(c2);
-            comp3.mapMultiply(c3);
-            comp1.addComponent(comp2);
-            comp1.addComponent(comp3);
+            element1.mapMultiply(c1);
+            element2.mapMultiply(c2);
+            element3.mapMultiply(c3);
+            element1.addElement(element2);
+            element1.addElement(element3);
 
-            s.spcComponents[j] = comp1;
+            s.spcElements[j] = element1;
         }
 
         return s;
@@ -184,98 +179,94 @@ public class SPCBody {
      */
     public void addBody(SPCBody anotherBody) {
         if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nComponent != anotherBody.getNumberOfComponent())
-            throw new RuntimeException("Error: The numbers of each component are different.");
+        else if (nElement != anotherBody.getNElement())
+            throw new RuntimeException("Error: The numbers of each element are different.");
 
-        for (int j = 0; j < nComponent; j++)
-            spcComponents[j].addComponent(anotherBody.spcComponents[j]);
+        for (int j = 0; j < nElement; j++)
+            spcElements[j].addElement(anotherBody.spcElements[j]);
     }
 
     /**
      * Apply ramped source time function. To be conducted before {@link #toTimeDomain(int)}.
-     * @param sourceTimeFunction will be applied on all components.
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied on all elements.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-        Arrays.stream(spcComponents).forEach(component -> component.applySourceTimeFunction(sourceTimeFunction));
+        Arrays.stream(spcElements).forEach(element -> element.applySourceTimeFunction(sourceTimeFunction));
     }
 
     /**
-     * Converts all the components to time domain.
-     * @param lsmooth lsmooth
+     * Converts all the elements to time domain.
+     * @param lsmooth (int) lsmooth.
      */
     public void toTimeDomain(int lsmooth) {
-        Arrays.stream(spcComponents).forEach(component -> component.toTimeDomain(lsmooth));
+        Arrays.stream(spcElements).forEach(element -> element.toTimeDomain(lsmooth));
     }
 
     /**
      * To be conducted after {@link #toTimeDomain(int)}.
-     * @param tlen time length
+     * @param tlen (double) Time length.
      */
     public void amplitudeCorrection(double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.amplitudeCorrection(tlen));
+        Arrays.stream(spcElements).forEach(element -> element.amplitudeCorrection(tlen));
     }
 
     /**
      * To be conducted after {@link #toTimeDomain(int)}.
      * @param omegaI &omega;<sub>i</sub>
-     * @param tlen   time length
+     * @param tlen (double) Time length.
      */
     public void applyGrowingExponential(double omegaI, double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.applyGrowingExponential(omegaI, tlen));
+        Arrays.stream(spcElements).forEach(element -> element.applyGrowingExponential(omegaI, tlen));
     }
 
     /**
      * すべてのコンポーネントに対し時間微分する。 before toTime
      *
-     * @param tlen time length
+     * @param tlen (double) Time length.
      */
     public void differentiate(double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.differentiate(tlen));
+        Arrays.stream(spcElements).forEach(element -> element.differentiate(tlen));
     }
 
     public int getNp() {
         return np;
     }
 
-    public int getNPTSinTimeDomain() {
-        return nptsInTimeDomain;
-    }
-
-    public int getNumberOfComponent() {
-        return nComponent;
+    public int getNElement() {
+        return nElement;
     }
 
     /**
-     * @return SPCComponent[] all the {@link SPCComponent} in this
+     * @return ({@link SPCElement}[]) All the {@link SPCElement}s in this.
      */
-    public SPCComponent[] getSpcComponents() {
-        return spcComponents;
+    public SPCElement[] getSpcElements() {
+        return spcElements;
     }
 
     /**
      * 引数で指定されたテンソル成分に対するコンポーネントを返す
      *
-     * @param tensor SPCTensorComponent
-     * @return SPCComponent for the tensor
+     * @param tensorComponent ({@link SPCTensorComponent})
+     * @return ({@link SPCElement}) Element for the tensor component.
      */
-    public SPCComponent getSpcComponent(SPCTensorComponent tensor) {
-        return spcComponents[tensor.valueOf() - 1];
+    public SPCElement getSpcElement(SPCTensorComponent tensorComponent) {
+        return spcElements[tensorComponent.valueOf() - 1];
     }
 
-    public SPCComponent getSpcComponent(SACComponent sacComponent) {
-        return spcComponents[sacComponent.valueOf() - 1];
+    public SPCElement getSpcElement(SACComponent sacComponent) {
+        return spcElements[sacComponent.valueOf() - 1];
     }
 
-    public SPCComponent getSpcComponent(int n) {
-        return spcComponents[n];
+    public SPCElement getSpcElement(int n) {
+        return spcElements[n];
     }
 
     /**
-     * @param component {@link SACComponent}
-     * @return the data of i th component time_domain
+     * @param component ({@link SACComponent})
+     * @return (double[]) The data of i-th element in time domain.
      */
     public double[] getTimeseries(SACComponent component) {
-        return spcComponents[component.valueOf() - 1].getTimeseries();
+        return spcElements[component.valueOf() - 1].getTimeseries();
     }
 
 }

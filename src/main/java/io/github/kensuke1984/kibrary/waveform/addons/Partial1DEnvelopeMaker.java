@@ -512,7 +512,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
 
         private void process(SPCFileAccess spectrum) {
             for (SACComponent component : components)
-                spectrum.getSpcBodyList().stream().map(body -> body.getSpcComponent(component))
+                spectrum.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcComponent -> {
                             if (sourceTimeFunction != null)
                                 spcComponent.applySourceTimeFunction(sourceTimeFunction);
@@ -572,7 +572,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                             exists = true;
                     if (!exists)
                         continue;
-                    double[] ut = spectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
+                    double[] ut = spectrum.getSpcBodyList().get(k).getSpcElement(component).getTimeseries();
                     // applying the filter
 
                     for (int i = 0; i < periodRanges.length; i++) {
@@ -591,7 +591,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                                 exists = true;
                         if (!exists)
                             continue;
-                        double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
+                        double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcElement(component).getTimeseries();
                         // applying the filter
 
                         for (int i = 0; i < periodRanges.length; i++) {
@@ -671,8 +671,8 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                             exists = true;
                     if (!exists)
                         continue;
-                    double[] ut = spectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
-                    double[] shut = shspectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
+                    double[] ut = spectrum.getSpcBodyList().get(k).getSpcElement(component).getTimeseries();
+                    double[] shut = shspectrum.getSpcBodyList().get(k).getSpcElement(component).getTimeseries();
 
                     if (ut.length != shut.length)
                         throw new RuntimeException("sh and psv timeseries do not have the same length " + shut.length + " " + ut.length);
@@ -699,7 +699,7 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                                 exists = true;
                         if (!exists)
                             continue;
-                        double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
+                        double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcElement(component).getTimeseries();
                         // applying the filter
 
                         for (int i = 0; i < periodRanges.length; i++) {
