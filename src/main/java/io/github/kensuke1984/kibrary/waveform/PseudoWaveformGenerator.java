@@ -149,11 +149,9 @@ public class PseudoWaveformGenerator extends Operation {
         // read input
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
         List<UnknownParameter> params = KnownParameter.extractParameterList(knowns);
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
         // assemble matrices (they should not be weighted)
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingHandler.IDENTITY, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, params, WeightingHandler.IDENTITY, fillEmptyPartial);
         ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 

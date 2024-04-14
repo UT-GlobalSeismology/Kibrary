@@ -23,10 +23,6 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Computes correlation between partial waveforms of each unknown parameter,
@@ -166,12 +162,10 @@ public class AdaptiveGridDesigner extends Operation {
                 throw new IllegalArgumentException("AtA size does not match number of parameters.");
         } else {
             // read input
-            List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-            List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
             WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
             // assemble matrices
-            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingHandler, false);
+            MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, parameterList, weightingHandler, false);
             ata = assembler.getAta();
         }
 

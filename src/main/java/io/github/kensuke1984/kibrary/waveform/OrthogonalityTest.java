@@ -233,16 +233,14 @@ public class OrthogonalityTest extends Operation {
        RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
 
        // set and assemble main A matrix
-       System.err.println("Setting data for main A matrix");
-       AMatrixBuilder mainAMatrixBuilder = new AMatrixBuilder(mainPartialIDs, mainUnknowns, dVectorBuilder);
        System.err.println("Assembling main A matrix");
-       ParallelizedMatrix mainA = mainAMatrixBuilder.buildWithWeight(weighting, false);
+       AMatrixBuilder mainAMatrixBuilder = new AMatrixBuilder(mainUnknowns, dVectorBuilder);
+       ParallelizedMatrix mainA = mainAMatrixBuilder.buildWithWeight(mainPartialIDs, weighting, false);
 
        // set and assemble test A matrix
-       System.err.println("Setting data for test A matrix");
-       AMatrixBuilder testAMatrixBuilder = new AMatrixBuilder(testPartialIDs, testUnknowns, dVectorBuilder);
        System.err.println("Assembling test A matrix");
-       ParallelizedMatrix testA = testAMatrixBuilder.buildWithWeight(weighting, false);
+       AMatrixBuilder testAMatrixBuilder = new AMatrixBuilder(testUnknowns, dVectorBuilder);
+       ParallelizedMatrix testA = testAMatrixBuilder.buildWithWeight(testPartialIDs, weighting, false);
 
        // compute correlations
        double[][] correlations = new double[testUnknowns.size()][mainUnknowns.size()];

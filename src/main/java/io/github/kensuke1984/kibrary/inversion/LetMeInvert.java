@@ -24,10 +24,6 @@ import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Operation for operating inversion.
@@ -75,6 +71,11 @@ public class LetMeInvert extends Operation {
      */
     private Path reuseAtaPath;
     /**
+     * Fill 0 to empty partial waveforms or not.
+     */
+    private boolean fillEmptyPartial;
+
+    /**
      * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
@@ -86,10 +87,6 @@ public class LetMeInvert extends Operation {
      * Maximum number of basis vectors to evaluate variance and AIC.
      */
     private int evaluateNum;
-    /**
-     * Fill 0 to empty partial waveforms or not.
-     */
-    private boolean fillEmptyPartial;
 
     private double[] lambdas_LS;
     private Path tMatrixPath_LS;
@@ -127,14 +124,14 @@ public class LetMeInvert extends Operation {
             pw.println("#weightingPropertiesPath weighting.properties");
             pw.println("##When reusing an AtA file, set its path.");
             pw.println("#reuseAtaPath ata.lst");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
+            pw.println("#fillEmptyPartial ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
             pw.println("#alpha ");
             pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (100)");
             pw.println("#evaluateNum ");
-            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
-            pw.println("#fillEmptyPartial ");
             pw.println("##########Settings for Least Squares method.");
             pw.println("##(double[]) Reguralization parameters, listed using spaces. (0)");
             pw.println("#lambdas_LS ");
@@ -164,13 +161,12 @@ public class LetMeInvert extends Operation {
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
         if (property.containsKey("reuseAtaPath")) reuseAtaPath = property.parsePath("reuseAtaPath", null, true, workPath);
+        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
         alpha = property.parseDoubleArray("alpha", "1 100 1000");
         evaluateNum = property.parseInt("evaluateNum", "100");
-
-        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
 
         lambdas_LS = property.parseDoubleArray("lambdas_LS", "0");
         if (property.containsKey("tMatrixPath_LS"))
@@ -190,8 +186,6 @@ public class LetMeInvert extends Operation {
         RealVector m0Vector_CG = (m0VectorPath_CG != null) ? VectorFile.read(m0VectorPath_CG) : null;
         WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
         // read AtA if reusing
         RealMatrix ata = null;
         if (reuseAtaPath != null) {
@@ -203,7 +197,7 @@ public class LetMeInvert extends Operation {
         }
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, unknowns, weightingHandler, fillEmptyPartial);
         if (reuseAtaPath == null) ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         double numIndependent = assembler.getNumIndependent();
