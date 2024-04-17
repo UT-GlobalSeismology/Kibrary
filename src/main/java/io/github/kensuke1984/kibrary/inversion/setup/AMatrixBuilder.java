@@ -8,7 +8,9 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 
 /**
@@ -68,6 +70,17 @@ public final class AMatrixBuilder {
             // find which timewindow this partialID corresponds to
             int k = dVector.whichTimewindow(id);
             if (k < 0) {
+                //TODO delete
+                if (id.getVoxelPosition().equals(new FullPosition(-12.5, -67.5, 3630.0))) {
+                    for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+                        BasicID synID = dVector.getSynID(i);
+                        if (synID.getGlobalCMTID().equals(id.getGlobalCMTID()) && synID.getObserver().equals(id.getObserver())
+                                && synID.getSacComponent().equals(id.getSacComponent())) {
+                            System.err.println("basic: " + synID.getStartTime() + " " + synID.getNpts() + " / partial: " + id.getStartTime() + " " + id.getNpts());
+                        }
+                    }
+                }
+              //TODO delete
                 return;
             }
             int row = dVector.getStartPoint(k);
