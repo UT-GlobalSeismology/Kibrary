@@ -31,7 +31,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -42,6 +41,7 @@ import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
@@ -124,7 +124,7 @@ public class PartialWaveformAssembler1D extends Operation {
     /**
      * The SPC modes that shall be used, from {SH, PSV, BOTH}.
      */
-    private SpcFileAid.UsableSPCMode usableSPCMode;
+    private SPCFileAid.UsableSPCMode usableSPCMode;
     /**
      * Name of folder containing SPC files (e.g. PREM).
      */
@@ -278,7 +278,7 @@ public class PartialWaveformAssembler1D extends Operation {
 
         shPath = property.parsePath("shPath", ".", true, workPath);
         psvPath = property.parsePath("psvPath", ".", true, workPath);
-        usableSPCMode = SpcFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
+        usableSPCMode = SPCFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
 
         if (property.containsKey("userSourceTimeFunctionPath")) {
@@ -361,11 +361,11 @@ public class PartialWaveformAssembler1D extends Operation {
 
         @Override
         public void run() {
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV && Files.exists(shModelPath) == false) {
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV && Files.exists(shModelPath) == false) {
                 System.err.println(shModelPath + " does not exist...");
                 return;
             }
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH && Files.exists(psvModelPath) == false) {
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.SH && Files.exists(psvModelPath) == false) {
                 System.err.println(psvModelPath + " does not exist...");
                 return;
             }
@@ -391,8 +391,8 @@ public class PartialWaveformAssembler1D extends Operation {
 
         private void convertSPCToPartials(Observer observer, VariableType variableType) throws IOException {
             // collect SPC files
-            SPCFileAccess shSPCFile = (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) ? findSPCFile(observer, variableType, SPCMode.SH) : null;
-            SPCFileAccess psvSPCFile = (usableSPCMode != SpcFileAid.UsableSPCMode.SH) ? findSPCFile(observer, variableType, SPCMode.PSV) : null;
+            SPCFileAccess shSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) ? findSPCFile(observer, variableType, SPCMode.SH) : null;
+            SPCFileAccess psvSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.SH) ? findSPCFile(observer, variableType, SPCMode.PSV) : null;
 
             // collect corresponding timewindows
             Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
@@ -400,9 +400,9 @@ public class PartialWaveformAssembler1D extends Operation {
                     .collect(Collectors.toSet());
 
             for (TimewindowData timewindow : correspondingTimewindows) {
-                if (usableSPCMode == SpcFileAid.UsableSPCMode.SH) {
+                if (usableSPCMode == SPCFileAid.UsableSPCMode.SH) {
                     buildPartialWaveform(shSPCFile, timewindow, variableType);
-                } else if (usableSPCMode == SpcFileAid.UsableSPCMode.PSV) {
+                } else if (usableSPCMode == SPCFileAid.UsableSPCMode.PSV) {
                     buildPartialWaveform(psvSPCFile, timewindow, variableType);
                 } else {
                     buildPartialWaveform(shSPCFile, psvSPCFile, timewindow, variableType);
@@ -480,7 +480,7 @@ public class PartialWaveformAssembler1D extends Operation {
                 spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcElement -> {
                             spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            int npts = SpcFileAid.findNpts(tlen, partialSamplingHz);
+                            int npts = SPCFileAid.findNpts(tlen, partialSamplingHz);
                             spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
                         });
             }

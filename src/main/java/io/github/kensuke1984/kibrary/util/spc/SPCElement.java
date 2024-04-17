@@ -5,7 +5,6 @@ import java.util.Arrays;
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 
 /**
  * Data for one element in one {@link SPCBody} in a {@link SPCFile}.
@@ -91,7 +90,7 @@ public class SPCElement {
      * @param omegaI (double) &omega;<sub>i</sub>.
      */
     public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
-        uTime = SpcFileAid.convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
+        uTime = SPCFileAid.convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
     }
 
     /**

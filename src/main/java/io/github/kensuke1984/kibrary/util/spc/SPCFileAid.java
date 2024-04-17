@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.util;
+package io.github.kensuke1984.kibrary.util.spc;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,9 +16,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
-import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
-import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Utilities for collecting SPC files.
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
  * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
-public final class SpcFileAid {
-    private SpcFileAid() {}
+public final class SPCFileAid {
+    private SPCFileAid() {}
 
     /**
      * @param path ({@link Path}) Folder in which to look for {@link FormattedSPCFileName}s.

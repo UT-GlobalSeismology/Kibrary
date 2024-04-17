@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -24,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCBody;
 import io.github.kensuke1984.kibrary.util.spc.SPCElement;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 public class BPVisual {
 
@@ -67,7 +67,7 @@ public class BPVisual {
         // sacdataを何ポイントおきに取り出すか
         step = (int) (partialSamplingHz / finalSamplingHz);
 
-        for (SPCFileName spcName : SpcFileAid.collectSpcFileName(Paths.get("."))) {
+        for (SPCFileName spcName : SPCFileAid.collectSpcFileName(Paths.get("."))) {
             SPCFileAccess bpSpc = spcName.read();
 
             HorizontalPosition obsPos = bpSpc.getReceiverPosition();
@@ -76,7 +76,7 @@ public class BPVisual {
             for (int i = 0; i < bpSpc.nbody(); i++) {
                 SPCBody body = bpSpc.getSpcBodyList().get(i);
 
-                body.convertToTimeDomain(SpcFileAid.findNpts(bpSpc.tlen(), samplingHz), samplingHz, bpSpc.omegai());
+                body.convertToTimeDomain(SPCFileAid.findNpts(bpSpc.tlen(), samplingHz), samplingHz, bpSpc.omegai());
 
                 SPCElement[] spcComponents = body.getSpcElements();
                 for (int j = 0; j < spcComponents.length; j++) {

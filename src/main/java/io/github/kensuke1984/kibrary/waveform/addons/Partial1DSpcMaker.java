@@ -35,7 +35,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -50,6 +49,7 @@ import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCType;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.util.spc.VSConversion;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -587,7 +587,7 @@ public class Partial1DSpcMaker implements Operation_old {
                 spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcElement -> {
                             if (sourceTimeFunction != null) spcElement.applySourceTimeFunction(sourceTimeFunction);
-                            int npts = SpcFileAid.findNpts(tlen, partialSamplingHz);
+                            int npts = SPCFileAid.findNpts(tlen, partialSamplingHz);
                             spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
                         });
         }
@@ -1326,14 +1326,14 @@ public class Partial1DSpcMaker implements Operation_old {
 
     private Set<SPCFileName> collectSHSPCs(Path spcFolder) throws IOException {
         Set<SPCFileName> shSet = new HashSet<>();
-        SpcFileAid.collectSpcFileName(spcFolder).stream()
+        SPCFileAid.collectSpcFileName(spcFolder).stream()
                 .filter(f -> f.getName().contains("PAR") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
         return shSet;
     }
 
     private Set<SPCFileName> collectPSVSPCs(Path spcFolder) throws IOException {
         Set<SPCFileName> psvSet = new HashSet<>();
-        SpcFileAid.collectSpcFileName(spcFolder).stream()
+        SPCFileAid.collectSpcFileName(spcFolder).stream()
                 .filter(f -> f.getName().contains("PAR") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
         return psvSet;
     }

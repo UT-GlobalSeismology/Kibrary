@@ -10,7 +10,6 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -87,7 +86,7 @@ public class ThreeDPartialMaker {
         this.fp3 = null;
         this.dh = null;
         this.samplingHz = samplingHz;
-        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -117,7 +116,7 @@ public class ThreeDPartialMaker {
         this.bp3 = bp3;
         this.dh = dh;
         this.samplingHz = samplingHz;
-        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -172,7 +171,7 @@ public class ThreeDPartialMaker {
         this.fp3 = null;
         this.dh = dh;
         this.samplingHz = samplingHz;
-        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -207,7 +206,7 @@ public class ThreeDPartialMaker {
         this.dh = dhBP;
         this.dhFP = dhFP;
         this.samplingHz = samplingHz;
-        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -274,7 +273,7 @@ public class ThreeDPartialMaker {
         this.dh = dhBP;
         this.dhFP = dhFP;
         this.samplingHz = samplingHz;
-        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -319,7 +318,7 @@ public class ThreeDPartialMaker {
         this.fp3 = null;
         this.dh = null;
         this.samplingHz = samplingHz;
-        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -579,24 +578,17 @@ public class ThreeDPartialMaker {
         if (fpR != bpR)
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
-        long t1i = System.currentTimeMillis();
         Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
                 : computeTensorCulculus(component, iBody, iBody, type);
-        long t1f = System.currentTimeMillis();
-        System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
 
         if (null != sourceTimeFunction)
             partial_frequency = sourceTimeFunction.convolve(partial_frequency);
+
         //test tapper
 //		partial_frequency = rightTapper(partial_frequency); //TODO
-        long t2i = System.currentTimeMillis();
-        Complex[] partial_time = SpcFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
-        double[] partialdouble = new double[npts];
-        for (int j = 0; j < npts; j++)
-            partialdouble[j] = partial_time[j].getReal();
-        long t2f = System.currentTimeMillis();
-        System.out.println("iFFT finished in " + (t2f - t2i)*1e-3 + " s");
-        return partialdouble;
+
+        Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
+        return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
     }
 
     /**
@@ -615,27 +607,17 @@ public class ThreeDPartialMaker {
         if (fpR != bpR)
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
-//        long t1i = System.currentTimeMillis();
         Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculusSerial(component, iBody, iBody, type);
-//        long t1f = System.currentTimeMillis();
-//		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
+                : computeTensorCulculusSerial(component, iBody, iBody, type);//diff
 
         if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolveSerial(partial_frequency);
+            partial_frequency = sourceTimeFunction.convolveSerial(partial_frequency);//diff
 
         //test tapper
-        partial_frequency = rightTapper(partial_frequency); //TODO
+        partial_frequency = rightTapper(partial_frequency); //diff  TODO
 
-//        long t2i = System.currentTimeMillis();
-        Complex[] partial_time = SpcFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
-        double[] partialdouble = new double[npts];
-        for (int j = 0; j < npts; j++)
-            partialdouble[j] = partial_time[j].getReal();
-//        long t2f = System.currentTimeMillis();
-//		System.out.println("iFFt finished in " + (t2f - t2i)*1e-3 + " s");
-//		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
-        return partialdouble;
+        Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
+        return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
     }
 
     /**

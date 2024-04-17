@@ -14,7 +14,6 @@ import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -219,7 +218,7 @@ public class SACMaker implements Runnable {
         observer = new Observer(primarySPC.getReceiverID(), primarySPC.getReceiverPosition());
         if (globalCMTID != null && beginDateTime == null)
             beginDateTime = pde ? globalCMTID.getEventData().getPDETime() : globalCMTID.getEventData().getCMTTime();
-        npts = SpcFileAid.findNpts(primarySPC.tlen(), samplingHz);
+        npts = SPCFileAid.findNpts(primarySPC.tlen(), samplingHz);
     }
 
     /**

@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -84,7 +83,7 @@ public final class SPC_SAC extends Operation {
     /**
      * The SPC modes that shall be used: SH, PSV, or BOTH.
      */
-    private SpcFileAid.UsableSPCMode usableSPCMode;
+    private SPCFileAid.UsableSPCMode usableSPCMode;
     /**
      * Name of folder containing SPC files (e.g. PREM).
      */
@@ -189,7 +188,7 @@ public final class SPC_SAC extends Operation {
 
         shPath = property.parsePath("shPath", ".", true, workPath);
         psvPath = property.parsePath("psvPath", ".", true, workPath);
-        usableSPCMode = SpcFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
+        usableSPCMode = SPCFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
         if (property.containsKey("modelName")) {
             modelName = property.parseString("modelName", null);
         } else {
@@ -213,8 +212,8 @@ public final class SPC_SAC extends Operation {
     private String searchModelName() throws IOException {
         // gather all names of model folders
         Set<EventFolder> eventFolders = new HashSet<>();
-        if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
-        if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
+        if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) eventFolders.addAll(DatasetAid.eventFolderSet(shPath));
+        if (usableSPCMode != SPCFileAid.UsableSPCMode.SH) eventFolders.addAll(DatasetAid.eventFolderSet(psvPath));
         Set<String> possibleNames =
                 eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
                         .collect(Collectors.toSet());
@@ -238,13 +237,13 @@ public final class SPC_SAC extends Operation {
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
                 sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, DatasetAid.globalCMTIDSet(workPath));
 
-        if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV && (shSPCs = collectSPCsFromAllEvents(SPCMode.SH, shPath)).isEmpty()) {
+        if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV && (shSPCs = collectSPCsFromAllEvents(SPCMode.SH, shPath)).isEmpty()) {
             throw new FileNotFoundException("No SH spectrum files are found.");
         }
-        if (usableSPCMode != SpcFileAid.UsableSPCMode.SH && (psvSPCs = collectSPCsFromAllEvents(SPCMode.PSV, psvPath)).isEmpty()) {
+        if (usableSPCMode != SPCFileAid.UsableSPCMode.SH && (psvSPCs = collectSPCsFromAllEvents(SPCMode.PSV, psvPath)).isEmpty()) {
             throw new FileNotFoundException("No PSV spectrum files are found.");
         }
-        if (usableSPCMode == SpcFileAid.UsableSPCMode.BOTH && psvSPCs.size() != shSPCs.size()) {
+        if (usableSPCMode == SPCFileAid.UsableSPCMode.BOTH && psvSPCs.size() != shSPCs.size()) {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
@@ -255,8 +254,8 @@ public final class SPC_SAC extends Operation {
 
         int nSAC = 0;
         // single
-        if (usableSPCMode != SpcFileAid.UsableSPCMode.BOTH) {
-            for (SPCFileName spc : (usableSPCMode == SpcFileAid.UsableSPCMode.SH ? shSPCs : psvSPCs)) {
+        if (usableSPCMode != SPCFileAid.UsableSPCMode.BOTH) {
+            for (SPCFileName spc : (usableSPCMode == SPCFileAid.UsableSPCMode.SH ? shSPCs : psvSPCs)) {
                 SPCFile spcFile = SPCFile.getInstance(spc);
                 // create event folder under outPath
                 Files.createDirectories(outPath.resolve(spc.getSourceID()));
@@ -332,7 +331,7 @@ public final class SPC_SAC extends Operation {
         Set<EventFolder> eventFolderSet = DatasetAid.eventFolderSet(inPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
-            SpcFileAid.collectSpcFileName(modelFolder).stream()
+            SPCFileAid.collectSpcFileName(modelFolder).stream()
                     .filter(f -> f.getMode() == mode).forEach(spcSet::add);
         }
         return spcSet;
