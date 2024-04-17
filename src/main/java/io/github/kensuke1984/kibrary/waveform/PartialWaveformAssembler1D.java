@@ -480,9 +480,8 @@ public class PartialWaveformAssembler1D extends Operation {
                 spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcElement -> {
                             spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            spcElement.toTimeDomain((int) MathAid.roundForPrecision(tlen * partialSamplingHz));
-                            spcElement.applyGrowingExponential(spcFile.omegai(), partialSamplingHz);
-                            spcElement.amplitudeCorrection(partialSamplingHz);
+                            int npts = SpcFileAid.findNpts(tlen, partialSamplingHz);
+                            spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
                         });
             }
         }

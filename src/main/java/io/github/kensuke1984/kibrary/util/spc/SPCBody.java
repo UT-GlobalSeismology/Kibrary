@@ -166,43 +166,34 @@ public class SPCBody {
     }
 
     /**
-     * Apply ramped source time function. To be conducted before {@link #toTimeDomain(int)}.
-     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied on all elements.
+     * Apply ramped source time function.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied to all elements.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         Arrays.stream(spcElements).forEach(element -> element.applySourceTimeFunction(sourceTimeFunction));
     }
 
     /**
-     * Convert the data in frequency domain to time domain for all elements using FFT.
+     * Convert the data in frequency domain to time domain.
+     * <p>
+     * This method does the following:
+     * <ul>
+     * <li> conduct the inverse fast Fourier transform (FFT).
+     * <li> multiply exp(&omega;<sub>I</sub>t) to account for artificial damping.
+     * <li> correct amplitude to match FFT with the Fourier transform used in DSM and convert from [km] to [m].
+     * </ul>
      * @param npts (int) Number of data points in time domain.
-     */
-    public void toTimeDomain(int npts) {
-        Arrays.stream(spcElements).forEach(element -> element.toTimeDomain(npts));
-    }
-
-    /**
-     * Multiply exp(&omega;<sub>I</sub>t) to all elements to account for the artificial damping introduced in DSM.
-     * To be conducted after {@link #toTimeDomain(int)}.
+     * @param samplingHz (double) Sampling frequency [Hz].
      * @param omegaI (double) &omega;<sub>i</sub>.
-     * @param samplingHz (double) Sampling frequency [Hz].
      */
-    public void applyGrowingExponential(double omegaI, double samplingHz) {
-        Arrays.stream(spcElements).forEach(element -> element.applyGrowingExponential(omegaI, samplingHz));
-    }
-
-    /**
-     * Correct the amplitude of time series, converting the unit from [km] to [m/s].
-     * To be conducted after {@link #toTimeDomain(int)}.
-     * @param samplingHz (double) Sampling frequency [Hz].
-     */
-    public void amplitudeCorrection(double samplingHz) {
-        Arrays.stream(spcElements).forEach(element -> element.amplitudeCorrection(samplingHz));
+    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
+        Arrays.stream(spcElements).forEach(element -> element.convertToTimeDomain(npts, samplingHz, omegaI));
     }
 
     /**
      * Differentiate the data for all elements (in frequency domain) by time.
-     * To be conducted before {@link #toTimeDomain(int)}.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
      * @param tlen (double) Time length [s].
      */
     public void differentiate(double tlen) {

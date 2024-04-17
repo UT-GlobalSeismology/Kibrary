@@ -189,11 +189,14 @@ public class SPCFile implements SPCFileAccess {
             double cos2phi = FastMath.cos(2 * phi);
             double sin2phi = FastMath.sin(2 * phi);
 
-            // read body
-            for (int i = 0; i < np + 1; i++) {
+            //~read body
+            int hasZero = 0;
+            for (int i = 0; i < np + hasZero; i++) {
                 for (SPCBody body : specFile.spcBodies) {
                     Complex[] u = new Complex[specFile.nElement];
                     int ip = dis.readInt();
+                    // Added this to account for SPC files with and without data for ip=0.  2024/4/17 otsuru
+                    if (ip == 0) hasZero = 1;
 
                     if (specFile.spcFileType.equals(SPCType.PBSHCAT)) {
                         for (int k = 0; k < specFile.nElement; k++) {

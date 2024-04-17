@@ -681,15 +681,15 @@ public class PartialWaveformAssembler3D extends Operation {
                 // otherwise, fpFiles=[fp] and bpFiles=[bp0, bp1, bp2]
                 if (fpFiles.size() == 2) {
                     threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1),
-                            bpFiles.get(2), bpFiles.get(3), bpFiles.get(4), bpFiles.get(5), dhBP);
+                            bpFiles.get(2), bpFiles.get(3), bpFiles.get(4), bpFiles.get(5), dhBP, partialSamplingHz);
                 } else {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), bpFiles.get(1), bpFiles.get(2), dhBP);
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), bpFiles.get(1), bpFiles.get(2), dhBP, partialSamplingHz);
                 }
             } else {
                 if (fpFiles.size() == 2) {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1));
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1), partialSamplingHz);
                 } else {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0));
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), partialSamplingHz);
                 }
             }
             threedPartialMaker.setSourceTimeFunction(sourceTimeFunctions.get(event));

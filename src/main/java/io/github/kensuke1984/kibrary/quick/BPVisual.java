@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -77,7 +76,7 @@ public class BPVisual {
             for (int i = 0; i < bpSpc.nbody(); i++) {
                 SPCBody body = bpSpc.getSpcBodyList().get(i);
 
-                body.toTimeDomain((int) MathAid.roundForPrecision(bpSpc.tlen() * samplingHz));
+                body.convertToTimeDomain(SpcFileAid.findNpts(bpSpc.tlen(), samplingHz), samplingHz, bpSpc.omegai());
 
                 SPCElement[] spcComponents = body.getSpcElements();
                 for (int j = 0; j < spcComponents.length; j++) {

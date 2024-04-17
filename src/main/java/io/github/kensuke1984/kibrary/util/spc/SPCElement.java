@@ -3,12 +3,9 @@ package io.github.kensuke1984.kibrary.util.spc;
 import java.util.Arrays;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
 
 /**
  * Data for one element in one {@link SPCBody} in a {@link SPCFile}.
@@ -26,11 +23,6 @@ public class SPCElement {
      * Data in frequency domain [km]. u[i], where i=[0, np]. The length is np+1.
      */
     private Complex[] uFreq;
-
-    /**
-     * Number of data points in time domain.
-     */
-    private int nptsInTimeDomain;
     /**
      * Data in time domain [m/s]. u[i], where i=[0,nptsInTimedomain-1].
      */
@@ -39,6 +31,8 @@ public class SPCElement {
     SPCElement(int np) {
         this.np = np;
         uFreq = new Complex[np + 1];
+        // Set value for ip=0, since it may not exist in SPC file.
+        uFreq[0] = Complex.ZERO;
     }
 
     /**
@@ -56,7 +50,6 @@ public class SPCElement {
      */
     public SPCElement copy() {
         SPCElement s = new SPCElement(np);
-        s.nptsInTimeDomain = nptsInTimeDomain;
         System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
         if (uTime != null) s.uTime = uTime.clone();
         return s;
@@ -77,7 +70,7 @@ public class SPCElement {
     /**
      * Apply ramped source time function.
      * <p>
-     * To be conducted before {@link #toTimeDomain(int)}.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
      * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
@@ -85,66 +78,20 @@ public class SPCElement {
     }
 
     /**
-     * Convert the data in frequency domain to time domain using FFT.
-     * Note that amplitude corrections are not done here, thus the resulting time series still has the unit [km].
-     * @param npts (int) Number of data points in time domain.
-     */
-    public void toTimeDomain(int npts) {
-        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
-        nptsInTimeDomain = npts;
-
-        int nnp = nptsInTimeDomain / 2;
-
-        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-
-        // pack to temporary Complex array
-        Complex[] data = new Complex[nptsInTimeDomain];
-        System.arraycopy(uFreq, 0, data, 0, np + 1);
-
-        // set blank due to lsmooth
-        Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
-
-        // set values for imaginary frequency  F[i] = F[N-i]
-        for (int i = 0; i < nnp - 1; i++)
-            data[nnp + 1 + i] = data[nnp - 1 - i].conjugate();
-
-        // fast fourier transformation
-        uTime = fft.transform(data, TransformType.INVERSE);
-    }
-
-    /**
-     * Multiply exp(&omega;<sub>I</sub>t) to account for the artificial damping
-     * introduced in DSM as &omega; = &omega;<sub>R</sub> - i&omega;<sub>I</sub>.
-     * See section 5.1 of Geller & Ohminato (1994).
+     * Convert the data in frequency domain to time domain.
      * <p>
-     * t = tlen * i / nptsInTimeDomain = i / samplingHz.
-     * <p>
-     * To be conducted after {@link #toTimeDomain(int)}.
-     * @param omegaI (double) &omega;<sub>i</sub>.
-     * @param samplingHz (double) Sampling frequency [Hz].
-     */
-    public void applyGrowingExponential(double omegaI, double samplingHz) {
-        double constant = omegaI / samplingHz;
-        for (int i = 0; i < nptsInTimeDomain; i++)
-            uTime[i] = uTime[i].multiply(FastMath.exp(constant * i));
-    }
-
-    /**
-     * Correct the amplitude of time series.
-     * Here, the following is done:
+     * This method does the following:
      * <ul>
-     * <li> multiply by sampling frequency [Hz] so that DFT matches with the Fourier transform used in DSM.
-     * <li> multiply by 1000 to convert from [km] to [m].
+     * <li> conduct the inverse fast Fourier transform (FFT).
+     * <li> multiply exp(&omega;<sub>I</sub>t) to account for artificial damping.
+     * <li> correct amplitude to match FFT with the Fourier transform used in DSM and convert from [km] to [m].
      * </ul>
-     * Through this method, the unit is changed from [km] to [m/s].
-     * <p>
-     * To be conducted after {@link #toTimeDomain(int)}.
+     * @param npts (int) Number of data points in time domain.
      * @param samplingHz (double) Sampling frequency [Hz].
+     * @param omegaI (double) &omega;<sub>i</sub>.
      */
-    public void amplitudeCorrection(double samplingHz) {
-        double coef = 1000 * samplingHz;
-        for (int i = 0; i < nptsInTimeDomain; i++)
-            uTime[i] = uTime[i].multiply(coef);
+    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
+        uTime = SpcFileAid.convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
     }
 
     /**
@@ -152,7 +99,7 @@ public class SPCElement {
      * <p>
      * -ufreq[i] * 2 i &pi; (ip / tlen).
      * <p>
-     * To be conducted before {@link #toTimeDomain(int)}.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
      * @param tlen (double) Time length [s].
      */
     void differentiate(double tlen) {
@@ -190,6 +137,7 @@ public class SPCElement {
      * @return (double[]) Data in time domain [m/s].
      */
     public double[] getTimeseries() {
+        if (uTime == null) throw new IllegalStateException("Conversion to time series is not done yet!");
         return Arrays.stream(uTime).mapToDouble(Complex::getReal).toArray();
     }
 

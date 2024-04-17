@@ -35,7 +35,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -583,15 +582,13 @@ public class Partial1DSpcMaker implements Operation_old {
                 .findAny().get();
         }
 
-        private void process(SPCFileAccess spectrum) {
+        private void process(SPCFileAccess spcFile) {
             for (SACComponent component : components)
-                spectrum.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
-                        .forEach(spcComponent -> {
-                            if (sourceTimeFunction != null)
-                                spcComponent.applySourceTimeFunction(sourceTimeFunction);
-                            spcComponent.toTimeDomain((int) MathAid.roundForPrecision(tlen * partialSamplingHz));
-                            spcComponent.applyGrowingExponential(spectrum.omegai(), partialSamplingHz);
-                            spcComponent.amplitudeCorrection(partialSamplingHz);
+                spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
+                        .forEach(spcElement -> {
+                            if (sourceTimeFunction != null) spcElement.applySourceTimeFunction(sourceTimeFunction);
+                            int npts = SpcFileAid.findNpts(tlen, partialSamplingHz);
+                            spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
                         });
         }
 

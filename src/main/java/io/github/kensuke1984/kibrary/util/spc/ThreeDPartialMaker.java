@@ -7,12 +7,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -34,25 +32,29 @@ public class ThreeDPartialMaker {
     /**
      * forward propagation
      */
-    private SPCFileAccess fp;
-    private SPCFileAccess fp2;
-    private SPCFileAccess fp3;
+    private final SPCFileAccess fp;
+    private final SPCFileAccess fp2;
+    private final SPCFileAccess fp3;
     /**
      * back propagation
      */
-    private SPCFileAccess bp;
-    private SPCFileAccess bp2;
-    private SPCFileAccess bp3;
+    private final SPCFileAccess bp;
+    private final SPCFileAccess bp2;
+    private final SPCFileAccess bp3;
+    /**
+     * Sampling frequency [Hz].
+     */
+    private final double samplingHz;
+    /**
+     * Number of data points in time domain.
+     */
+    private final int npts;
+
     /**
      * distances for interpolation
      */
     double[] dh;
     double[] dhFP;
-    /**
-     * SACファイルにするときのサンプリング値 デフォルト20Hz
-     */
-    private double samplingFrequency = 20;
-    private int npts;
     /**
      * 摂動点における bpからのテンソルをfpのテンソルに合わせるために回転させる角度
      */
@@ -62,7 +64,6 @@ public class ThreeDPartialMaker {
      * 偏微分波形成分を震源観測点大円上の座標に合わせる角度
      */
     private double angleForVector;
-    private int lsmooth;
     private FujiConversion fujiConversion;
     private SourceTimeFunction sourceTimeFunction;
     Set<Double> ignoreBodyR;
@@ -73,7 +74,7 @@ public class ThreeDPartialMaker {
      * @param fp a spc file for forward propagation
      * @param bp a spc file for back propagation
      */
-    public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp) {
+    public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp, double samplingHz) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp, bp))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -85,7 +86,8 @@ public class ThreeDPartialMaker {
         this.fp2 = null;
         this.fp3 = null;
         this.dh = null;
-        findLsmooth();
+        this.samplingHz = samplingHz;
+        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -98,7 +100,7 @@ public class ThreeDPartialMaker {
      * @param dh
      * @author anselme
      */
-    public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dh) {
+    public ThreeDPartialMaker(SPCFileAccess fp, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dh, double samplingHz) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp, bp1))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -114,7 +116,8 @@ public class ThreeDPartialMaker {
         this.bp2 = bp2;
         this.bp3 = bp3;
         this.dh = dh;
-        findLsmooth();
+        this.samplingHz = samplingHz;
+        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -132,7 +135,7 @@ public class ThreeDPartialMaker {
      * @author anselme
      */
     public ThreeDPartialMaker(SPCFileAccess fpSH, SPCFileAccess fpPSV, SPCFileAccess bp1SH,
-            SPCFileAccess bp1PSV, SPCFileAccess bp2SH, SPCFileAccess bp2PSV, SPCFileAccess bp3SH, SPCFileAccess bp3PSV, double[] dh) {
+            SPCFileAccess bp1PSV, SPCFileAccess bp2SH, SPCFileAccess bp2PSV, SPCFileAccess bp3SH, SPCFileAccess bp3PSV, double[] dh, double samplingHz) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fpSH, bp1SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -168,7 +171,8 @@ public class ThreeDPartialMaker {
         this.fp2 = null;
         this.fp3 = null;
         this.dh = dh;
-        findLsmooth();
+        this.samplingHz = samplingHz;
+        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -185,7 +189,7 @@ public class ThreeDPartialMaker {
      * @param dhFP
      * @author anselme
      */
-    public ThreeDPartialMaker(SPCFileAccess fp1, SPCFileAccess fp2, SPCFileAccess fp3, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dhBP, double[] dhFP) {
+    public ThreeDPartialMaker(SPCFileAccess fp1, SPCFileAccess fp2, SPCFileAccess fp3, SPCFileAccess bp1, SPCFileAccess bp2, SPCFileAccess bp3, double[] dhBP, double[] dhFP, double samplingHz) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp1, bp1))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -202,7 +206,8 @@ public class ThreeDPartialMaker {
         this.bp3 = bp3;
         this.dh = dhBP;
         this.dhFP = dhFP;
-        findLsmooth();
+        this.samplingHz = samplingHz;
+        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -226,7 +231,7 @@ public class ThreeDPartialMaker {
      * @author anselme
      */
     public ThreeDPartialMaker(SPCFileAccess fp1PSV, SPCFileAccess fp1SH, SPCFileAccess fp2PSV,  SPCFileAccess fp2SH, SPCFileAccess fp3PSV, SPCFileAccess fp3SH,
-            SPCFileAccess bp1PSV, SPCFileAccess bp1SH, SPCFileAccess bp2PSV, SPCFileAccess bp2SH, SPCFileAccess bp3PSV, SPCFileAccess bp3SH, double[] dhBP, double[] dhFP) {
+            SPCFileAccess bp1PSV, SPCFileAccess bp1SH, SPCFileAccess bp2PSV, SPCFileAccess bp2SH, SPCFileAccess bp3PSV, SPCFileAccess bp3SH, double[] dhBP, double[] dhFP, double samplingHz) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp1SH, bp1SH))
             throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -268,7 +273,8 @@ public class ThreeDPartialMaker {
 
         this.dh = dhBP;
         this.dhFP = dhFP;
-        findLsmooth();
+        this.samplingHz = samplingHz;
+        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -280,7 +286,7 @@ public class ThreeDPartialMaker {
      * @param bpPSV
      * @author anselme
      */
-    public ThreeDPartialMaker(SPCFileAccess fpSH, SPCFileAccess fpPSV, SPCFileAccess bpSH, SPCFileAccess bpPSV) {
+    public ThreeDPartialMaker(SPCFileAccess fpSH, SPCFileAccess fpPSV, SPCFileAccess bpSH, SPCFileAccess bpPSV, double samplingHz) {
         ignoreBodyR = new HashSet<>();
 
         this.fp = fpPSV;
@@ -312,7 +318,8 @@ public class ThreeDPartialMaker {
         this.fp2 = null;
         this.fp3 = null;
         this.dh = null;
-        findLsmooth();
+        this.samplingHz = samplingHz;
+        npts = SpcFileAid.findNpts(bp.tlen(), samplingHz);
         setAngles();
     }
 
@@ -583,7 +590,7 @@ public class ThreeDPartialMaker {
         //test tapper
 //		partial_frequency = rightTapper(partial_frequency); //TODO
         long t2i = System.currentTimeMillis();
-        Complex[] partial_time = toTimedomain(partial_frequency);
+        Complex[] partial_time = SpcFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
         double[] partialdouble = new double[npts];
         for (int j = 0; j < npts; j++)
             partialdouble[j] = partial_time[j].getReal();
@@ -621,7 +628,7 @@ public class ThreeDPartialMaker {
         partial_frequency = rightTapper(partial_frequency); //TODO
 
 //        long t2i = System.currentTimeMillis();
-        Complex[] partial_time = toTimedomain(partial_frequency);
+        Complex[] partial_time = SpcFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
         double[] partialdouble = new double[npts];
         for (int j = 0; j < npts; j++)
             partialdouble[j] = partial_time[j].getReal();
@@ -849,79 +856,6 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * 時間領域のデータにGrowingExponentialを考慮する
-     *
-     */
-    private void applyGrowingExponential(Complex[] uTime) {
-        final double x = bp.tlen() * fp.omegai() / npts;
-        for (int i = 0; i < npts; i++)
-            uTime[i] = uTime[i].multiply(Math.exp(i * x));
-
-    }
-
-    /**
-     * after toTimeDomain
-     *
-     * @param uTime time series
-     */
-    private void correctAmplitude(Complex[] uTime) {
-        final double tmp = npts * 1e3 / bp.tlen();
-        for (int i = 0; i < npts; i++)
-            uTime[i] = uTime[i].multiply(tmp);
-    }
-
-    /**
-     * compute waveform in time domain from spector in frequency domain. amplitude
-     * correction and growing exponential will be considered.
-     *
-     * @param spector
-     * @return
-     */
-    private Complex[] toTimedomain(Complex[] spector) {
-        Complex[] partial_time = inverseFourierTransform(spector);
-        applyGrowingExponential(partial_time);
-        correctAmplitude(partial_time);
-        return partial_time;
-    }
-
-    /**
-     * input complexを時間領域に
-     *
-     * @param complex waveform in frequency domain
-     * @return 時間領域の複素数列
-     */
-    private Complex[] inverseFourierTransform(Complex[] complex) {
-        // must be tested
-//		System.out.println(lsmooth);
-        int nnp = fp.np() * lsmooth;
-        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-
-        Complex[] data = new Complex[nnp * 2];
-
-        //test tapper
-//		Complex[] tmp = rightTapper(complex);
-//		System.arraycopy(tmp, 0, data, 0, fp.np() + 1);
-
-        // pack to temporary Complex array
-        System.arraycopy(complex, 0, data, 0, fp.np() + 1);
-
-        // set blank due to lsmooth
-        Arrays.fill(data, fp.np() + 1, nnp + 1, Complex.ZERO);
-
-        // set values for imaginary frequency
-        for (int i = 0; i < nnp - 1; i++)
-            data[nnp + i + 1] = data[nnp - i - 1].conjugate();
-//
-//		for (int i = 0; i < nnp; i++)
-//			data[nnp + i] = data[nnp - i - 1].conjugate();
-//
-
-        // fast fourier transformation
-        return fft.transform(data, TransformType.INVERSE); // check
-
-    }
-
-    /**
      * @param complex
      * @return
      * @author anselme
@@ -937,21 +871,6 @@ public class ThreeDPartialMaker {
         }
 
         return tappered;
-    }
-
-    /**
-     * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
-     *
-     */
-    private void findLsmooth() {
-        int np = Integer.highestOneBit(fp.np());
-        if (np < fp.np()) np *= 2;
-
-        lsmooth = (int) (0.5 * bp.tlen() * samplingFrequency / np);
-        int i = Integer.highestOneBit(lsmooth);
-        if (i < lsmooth) i *= 2;
-        lsmooth = i;
-        npts = np * lsmooth * 2;
     }
 
 }
