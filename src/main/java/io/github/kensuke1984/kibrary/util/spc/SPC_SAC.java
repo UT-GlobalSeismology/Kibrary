@@ -104,7 +104,7 @@ public final class SPC_SAC extends Operation {
     private Path sourceTimeFunctionCatalogPath;
 
     /**
-     * Sampling Hz [Hz]. must be 20 now.
+     * Sampling frequency [Hz].
      */
     private double samplingHz;
     /**
@@ -164,7 +164,7 @@ public final class SPC_SAC extends Operation {
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##Sampling frequency [Hz]. (20) !You can not change yet!");
+            pw.println("##(double) Sampling frequency [Hz], must be (a power of 2)/tlen for each SPC file. (20)");
             pw.println("#samplingHz ");
             pw.println("##(boolean) If this is true, temporal partial is computed. (false)");
             pw.println("#computeTimePartial ");
@@ -205,7 +205,7 @@ public final class SPC_SAC extends Operation {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
 
-        samplingHz = 20; // TODO
+        samplingHz = property.parseDouble("samplingHz", "20");
         computeTimePartial = property.parseBoolean("computeTimePartial", "false");
         computeAsObserved = property.parseBoolean("computeAsObserved", "false");
     }
@@ -306,7 +306,7 @@ public final class SPC_SAC extends Operation {
         SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primarySPC.np(), primarySPC.tlen(), samplingHz,
                 new GlobalCMTID(primarySPC.getSourceID()));
         // create instance of an anonymous inner class extending SACMaker with the following run() function
-        SACMaker sm = new SACMaker(primarySPC, secondarySPC, sourceTimeFunction) {
+        SACMaker sm = new SACMaker(primarySPC, secondarySPC, sourceTimeFunction, samplingHz) {
             @Override
             public void run() {
                 // execute run() in SACMaker

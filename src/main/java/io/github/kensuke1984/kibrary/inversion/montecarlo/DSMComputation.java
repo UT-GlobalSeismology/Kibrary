@@ -163,7 +163,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
                 try {
                     SPCFileAccess shSPC = shName.read();
                     SPCFileAccess psvSPC = psvName.read();
-                    SACMaker sm = new SACMaker(psvSPC, shSPC, sourceTimeFunction);
+                    SACMaker sm = new SACMaker(psvSPC, shSPC, sourceTimeFunction, SAMPLING_HZ);
                     sm.setComponents(components);
                     sm.setOutPath(eventDir.toPath());
                     sm.run();

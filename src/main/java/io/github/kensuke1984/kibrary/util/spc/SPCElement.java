@@ -15,7 +15,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
  *
  * @author Kensuke Konishi
  * @since a long time ago
- * @author anselme add methods for interpolation for BP/FP catalog
  */
 public class SPCElement {
 
@@ -24,15 +23,16 @@ public class SPCElement {
      */
     private final int np;
     /**
+     * Data in frequency domain [km]. u[i], where i=[0, np]. The length is np+1.
+     */
+    private Complex[] uFreq;
+
+    /**
      * Number of data points in time domain.
      */
     private int nptsInTimeDomain;
     /**
-     * Data in frequency domain. u[i], i=[0, np]. The length is np+1.
-     */
-    private Complex[] uFreq;
-    /**
-     * Data in time domain. u[i], i=[0,nptsInTimedomain-1].
+     * Data in time domain [m/s]. u[i], where i=[0,nptsInTimedomain-1].
      */
     private Complex[] uTime;
 
@@ -44,10 +44,10 @@ public class SPCElement {
     /**
      * Set spectrum value for a single &omega; value.
      * @param ip (int) Step number in frequency domain.
-     * @param spec ({@link Complex}) Spectrum value.
+     * @param spec ({@link Complex}) Spectrum value [km].
      */
     void setValue(int ip, Complex spec) {
-        if (spec.isNaN()) throw new IllegalStateException("NaN in spectrum");
+        if (spec.isNaN()) throw new IllegalStateException("NaN in spectrum.");
         uFreq[ip] = spec;
     }
 
@@ -67,7 +67,7 @@ public class SPCElement {
      * @param anotherElement ({@link SPCElement}) The instance to add to this instance.
      */
     public void addElement(SPCElement anotherElement) {
-        if (np != anotherElement.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
+        if (np != anotherElement.getNp()) throw new IllegalStateException("np is not equal.");
 
         Complex[] another = anotherElement.getValueInFrequencyDomain();
         for (int i = 0; i < np + 1; i++)
@@ -75,15 +75,23 @@ public class SPCElement {
     }
 
     /**
-     * Apply ramped source time function. To be conducted before {@link #toTimeDomain(int)}.
-     * @param sourceTimeFunction to be applied
+     * Apply ramped source time function.
+     * <p>
+     * To be conducted before {@link #toTimeDomain(int)}.
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         uFreq = sourceTimeFunction.convolve(uFreq);
     }
 
-    public void toTimeDomain(int lsmooth) {
-        nptsInTimeDomain = getNPTS(lsmooth);
+    /**
+     * Convert the data in frequency domain to time domain using FFT.
+     * Note that amplitude corrections are not done here, thus the resulting time series still has the unit [km].
+     * @param npts (int) Number of data points in time domain.
+     */
+    public void toTimeDomain(int npts) {
+        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
+        nptsInTimeDomain = npts;
 
         int nnp = nptsInTimeDomain / 2;
 
@@ -101,48 +109,51 @@ public class SPCElement {
             data[nnp + 1 + i] = data[nnp - 1 - i].conjugate();
 
         // fast fourier transformation
-        data = fft.transform(data, TransformType.INVERSE);
-
-        // put values in time domain into collections
-        uTime = data;
-    }
-
-    private int getNPTS(int lsmooth) {
-        int npts = np * lsmooth * 2;
-        int pow2 = Integer.highestOneBit(npts);
-        return pow2 < npts ? pow2 * 2 : npts;
+        uTime = fft.transform(data, TransformType.INVERSE);
     }
 
     /**
-     * TLEN * (double) (i) / (double) nptsInTimeDomain;
+     * Multiply exp(&omega;<sub>I</sub>t) to account for the artificial damping
+     * introduced in DSM as &omega; = &omega;<sub>R</sub> - i&omega;<sub>I</sub>.
+     * See section 5.1 of Geller & Ohminato (1994).
+     * <p>
+     * t = tlen * i / nptsInTimeDomain = i / samplingHz.
+     * <p>
      * To be conducted after {@link #toTimeDomain(int)}.
-     * @param omegai &omega;<sub>i</sub>
-     * @param tlen   time length
+     * @param omegaI (double) &omega;<sub>i</sub>.
+     * @param samplingHz (double) Sampling frequency [Hz].
      */
-    public void applyGrowingExponential(double omegai, double tlen) {
-        double constant = omegai * tlen / nptsInTimeDomain;
+    public void applyGrowingExponential(double omegaI, double samplingHz) {
+        double constant = omegaI / samplingHz;
         for (int i = 0; i < nptsInTimeDomain; i++)
             uTime[i] = uTime[i].multiply(FastMath.exp(constant * i));
     }
 
     /**
+     * Correct the amplitude of time series.
+     * Here, the following is done:
+     * <ul>
+     * <li> multiply by sampling frequency [Hz] so that DFT matches with the Fourier transform used in DSM.
+     * <li> multiply by 1000 to convert from [km] to [m].
+     * </ul>
+     * Through this method, the unit is changed from [km] to [m/s].
+     * <p>
      * To be conducted after {@link #toTimeDomain(int)}.
-     * @param tlen time length
+     * @param samplingHz (double) Sampling frequency [Hz].
      */
-    public void amplitudeCorrection(double tlen) {
-        double tmp = nptsInTimeDomain * 1e3 / tlen;
+    public void amplitudeCorrection(double samplingHz) {
+        double coef = 1000 * samplingHz;
         for (int i = 0; i < nptsInTimeDomain; i++)
-            uTime[i] = uTime[i].multiply(tmp);
-
+            uTime[i] = uTime[i].multiply(coef);
     }
 
     /**
-     * before toTime
+     * Differentiate the data (in frequency domain) by time.
      * <p>
-     * -ufreq[i] * 2 i &pi; (ip /TLEN)
+     * -ufreq[i] * 2 i &pi; (ip / tlen).
      * <p>
-     *
-     * @param tlen time length
+     * To be conducted before {@link #toTimeDomain(int)}.
+     * @param tlen (double) Time length [s].
      */
     void differentiate(double tlen) {
         double constant = 2 * Math.PI / tlen;
@@ -153,8 +164,8 @@ public class SPCElement {
     }
 
     /**
-     * Multiply self by double
-     * @param factor
+     * Multiply the spectrum by a specified factor.
+     * @param factor (double) Value to multiply.
      * @author anselme
      */
     public void mapMultiply(double factor) {
@@ -167,14 +178,16 @@ public class SPCElement {
     }
 
     /**
-     * @return 周波数領域のデータ
+     * Get the displacement velociy spectrum.
+     * @return (Complex[]) Data in frequency domain [km].
      */
     public Complex[] getValueInFrequencyDomain() {
         return uFreq;
     }
 
     /**
-     * @return the data in time_domain
+     * Get the displacement velociy time series.
+     * @return (double[]) Data in time domain [m/s].
      */
     public double[] getTimeseries() {
         return Arrays.stream(uTime).mapToDouble(Complex::getReal).toArray();

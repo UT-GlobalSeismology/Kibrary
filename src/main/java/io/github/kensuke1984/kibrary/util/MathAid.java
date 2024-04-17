@@ -60,18 +60,16 @@ public final class MathAid {
     }
 
     /**
-     * Check if a/b is integer.
-     * @param dividend (double) a in a/b.
-     * @param divisor (double) b in a/b.
-     * @return (boolean) Whether a/b is integer.
+     * Check if a value is integer.
+     * @param value (double) Value to check.
+     * @return (boolean) Whether the value is integer.
      *
      * @author otsuru
      * @since 2024/4/6
      */
-    public static boolean isDivisible(double dividend, double divisor) {
-        double quotient = dividend / divisor;
-        // compare the integer part of quotient with the quotient rounded to get rid of the error
-        return Math.floor(quotient) == Precision.round(quotient, PRECISION_DECIMALS);
+    public static boolean isInteger(double value) {
+        // compare the integer part with the value rounded to get rid of the error
+        return Math.floor(value) == Precision.round(value, PRECISION_DECIMALS);
     }
 
     /**

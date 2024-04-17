@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 /**
- * Types of {@link SPCFile}.
+ * Types of {@link SPCFile}s.
  *
  * @author Kensuke Konishi
  * @since a long time ago

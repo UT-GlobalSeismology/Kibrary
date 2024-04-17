@@ -18,6 +18,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Spectrum file written by DSM. Binary format.
  * <p>
+ * Note that the data values in spectrum files are displacement velocity in the frequency domain, with unit [km].
+ * <p>
  * Each file can contain information for multiple perturbation radii, but only for a single horizontal pixel.
  *
  * @author Kensuke Konishi
@@ -171,7 +173,7 @@ public class SPCFile implements SPCFileAccess {
                 break;
             case UB:
             case PB:
-                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
+                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO radius is incorrect
                 break;
             default:
                 throw new RuntimeException("Unexpected");

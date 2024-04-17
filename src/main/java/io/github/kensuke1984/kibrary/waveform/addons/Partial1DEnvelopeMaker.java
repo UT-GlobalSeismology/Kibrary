@@ -30,6 +30,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -516,9 +517,9 @@ public class Partial1DEnvelopeMaker implements Operation_old {
                         .forEach(spcComponent -> {
                             if (sourceTimeFunction != null)
                                 spcComponent.applySourceTimeFunction(sourceTimeFunction);
-                            spcComponent.toTimeDomain(lsmooth);
-                            spcComponent.applyGrowingExponential(spectrum.omegai(), tlen);
-                            spcComponent.amplitudeCorrection(tlen);
+                            spcComponent.toTimeDomain((int) MathAid.roundForPrecision(tlen * partialSamplingHz));
+                            spcComponent.applyGrowingExponential(spectrum.omegai(), partialSamplingHz);
+                            spcComponent.amplitudeCorrection(partialSamplingHz);
                         });
         }
 

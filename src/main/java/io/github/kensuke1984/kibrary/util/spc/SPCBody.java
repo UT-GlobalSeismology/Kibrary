@@ -66,12 +66,10 @@ public class SPCBody {
      */
     public SPCBody interpolate(SPCBody anotherBody, double unitDistance) {
         if (unitDistance < 0 || unitDistance > 1)
-            throw new RuntimeException("Error: unit distance should be between 0-1 " + unitDistance);
+            throw new IllegalArgumentException("Unit distance must be between 0-1: " + unitDistance);
         SPCBody s = this.copy();
-        if (nElement != anotherBody.getNp())
-            throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nElement != anotherBody.getNElement())
-            throw new RuntimeException("Error: The numbers of each element are different.");
+        if (np != anotherBody.getNp()) throw new IllegalStateException("np is not equal.");
+        if (nElement != anotherBody.getNElement()) throw new IllegalStateException("Number of elements is different.");
 
         for (int j = 0; j < nElement; j++) {
             SPCElement comp1 = s.spcElements[j];
@@ -156,31 +154,12 @@ public class SPCBody {
     }
 
     /**
-     * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
-     *
-     */
-    public int findLsmooth(double tlen, double samplingFrequency) {
-        int tmpNp = Integer.highestOneBit(np);
-        if (tmpNp < np)
-            tmpNp *= 2;
-
-        int lsmooth = (int) (0.5 * tlen * samplingFrequency / np);
-        int i = Integer.highestOneBit(lsmooth);
-        if (i < lsmooth)
-            i *= 2;
-        lsmooth = i;
-
-        return lsmooth;
-    }
-
-    /**
      * Add the spectrum values in the frequency domain of another {@link SPCBody}.
      * @param anotherBody ({@link SPCBody}) The instance to add to this instance.
      */
     public void addBody(SPCBody anotherBody) {
-        if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nElement != anotherBody.getNElement())
-            throw new RuntimeException("Error: The numbers of each element are different.");
+        if (np != anotherBody.getNp()) throw new IllegalStateException("np is not equal.");
+        if (nElement != anotherBody.getNElement()) throw new IllegalStateException("Number of elements is different.");
 
         for (int j = 0; j < nElement; j++)
             spcElements[j].addElement(anotherBody.spcElements[j]);
@@ -195,34 +174,36 @@ public class SPCBody {
     }
 
     /**
-     * Converts all the elements to time domain.
-     * @param lsmooth (int) lsmooth.
+     * Convert the data in frequency domain to time domain for all elements using FFT.
+     * @param npts (int) Number of data points in time domain.
      */
-    public void toTimeDomain(int lsmooth) {
-        Arrays.stream(spcElements).forEach(element -> element.toTimeDomain(lsmooth));
+    public void toTimeDomain(int npts) {
+        Arrays.stream(spcElements).forEach(element -> element.toTimeDomain(npts));
     }
 
     /**
+     * Multiply exp(&omega;<sub>I</sub>t) to all elements to account for the artificial damping introduced in DSM.
      * To be conducted after {@link #toTimeDomain(int)}.
-     * @param tlen (double) Time length.
+     * @param omegaI (double) &omega;<sub>i</sub>.
+     * @param samplingHz (double) Sampling frequency [Hz].
      */
-    public void amplitudeCorrection(double tlen) {
-        Arrays.stream(spcElements).forEach(element -> element.amplitudeCorrection(tlen));
+    public void applyGrowingExponential(double omegaI, double samplingHz) {
+        Arrays.stream(spcElements).forEach(element -> element.applyGrowingExponential(omegaI, samplingHz));
     }
 
     /**
+     * Correct the amplitude of time series, converting the unit from [km] to [m/s].
      * To be conducted after {@link #toTimeDomain(int)}.
-     * @param omegaI &omega;<sub>i</sub>
-     * @param tlen (double) Time length.
+     * @param samplingHz (double) Sampling frequency [Hz].
      */
-    public void applyGrowingExponential(double omegaI, double tlen) {
-        Arrays.stream(spcElements).forEach(element -> element.applyGrowingExponential(omegaI, tlen));
+    public void amplitudeCorrection(double samplingHz) {
+        Arrays.stream(spcElements).forEach(element -> element.amplitudeCorrection(samplingHz));
     }
 
     /**
-     * すべてのコンポーネントに対し時間微分する。 before toTime
-     *
-     * @param tlen (double) Time length.
+     * Differentiate the data for all elements (in frequency domain) by time.
+     * To be conducted before {@link #toTimeDomain(int)}.
+     * @param tlen (double) Time length [s].
      */
     public void differentiate(double tlen) {
         Arrays.stream(spcElements).forEach(element -> element.differentiate(tlen));
@@ -244,9 +225,8 @@ public class SPCBody {
     }
 
     /**
-     * 引数で指定されたテンソル成分に対するコンポーネントを返す
-     *
-     * @param tensorComponent ({@link SPCTensorComponent})
+     * Get element for specified tensor component.
+     * @param tensorComponent ({@link SPCTensorComponent}) Tensor component.
      * @return ({@link SPCElement}) Element for the tensor component.
      */
     public SPCElement getSpcElement(SPCTensorComponent tensorComponent) {
@@ -262,8 +242,9 @@ public class SPCBody {
     }
 
     /**
-     * @param component ({@link SACComponent})
-     * @return (double[]) The data of i-th element in time domain.
+     * Get the displacement velociy time series for a certain component.
+     * @param component ({@link SACComponent}) Component to retreive data for.
+     * @return (double[]) Data for the specified component in time domain [m/s].
      */
     public double[] getTimeseries(SACComponent component) {
         return spcElements[component.valueOf() - 1].getTimeseries();

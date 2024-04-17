@@ -443,7 +443,7 @@ public final class Trace {
     public Trace resampleInWindow(double xStart, double xEnd, double originalSamplingHz, double finalSamplingHz) {
         if (xStart < getMinX() || getMaxX() < xEnd)
             throw new IllegalArgumentException("Specified time range exceeds x range.");
-        if (!MathAid.isDivisible(originalSamplingHz, finalSamplingHz))
+        if (!MathAid.isInteger(originalSamplingHz / finalSamplingHz))
             throw new IllegalArgumentException("originalSamplingHz/finalSamplingHz must be integer: " + originalSamplingHz + ", " + finalSamplingHz);
         int iStart = findNearestXIndex(xStart);
         // Here, npts is rounded down because a point far outside the time range should not be used.

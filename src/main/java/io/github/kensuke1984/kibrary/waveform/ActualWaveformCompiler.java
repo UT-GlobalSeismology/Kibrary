@@ -261,7 +261,7 @@ public class ActualWaveformCompiler extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
         finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
-        if (!MathAid.isDivisible(sacSamplingHz, finalSamplingHz))
+        if (!MathAid.isInteger(sacSamplingHz / finalSamplingHz))
             throw new IllegalArgumentException("sacSamplingHz/finalSamplingHz must be integer.");
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);

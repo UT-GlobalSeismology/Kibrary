@@ -135,7 +135,7 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
+            pw.println("##Time length to be computed [s], must be (a power of 2)/(desired sampling frequency). (3276.8)");
             pw.println("#tlen ");
             pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
             pw.println("#np ");

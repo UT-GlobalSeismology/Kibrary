@@ -30,6 +30,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -94,11 +95,11 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private Set<SACComponent> components;
     /**
-     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
+     * Sampling frequency for intermediate computations [Hz].
      */
-    private double partialSamplingHz = 20;
+    private double partialSamplingHz;
     /**
-     * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
+     * Sampling frequency in output files [Hz].
      */
     private double finalSamplingHz;
 
@@ -180,11 +181,6 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private List<PartialID> partialIDs = Collections.synchronizedList(new ArrayList<>());
 
-
-
-    private int lsmooth;
-
-
     /**
      * @param args  none to create a property file <br>
      *              [property file] to run
@@ -208,9 +204,9 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
-            pw.println("#partialSamplingHz the value will be ignored");
-            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
+            pw.println("##(double) Sampling frequency for computation [Hz], must be (a power of 2)/tlen. (20)");
+            pw.println("#partialSamplingHz ");
+            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of partialSamplingHz. (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a timewindow data file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
@@ -236,9 +232,9 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
+            pw.println("##Time length to be computed [s], set in spectrum files. (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
+            pw.println("##Number of points to be computed in frequency domain, set in spectrum files. (512)");
             pw.println("#np ");
             pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
             pw.println("#lowFreq ");
@@ -263,10 +259,10 @@ public class PartialWaveformAssembler1D extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
+        partialSamplingHz = property.parseDouble("partialSamplingHz", "20");
         finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
-        if (partialSamplingHz % finalSamplingHz != 0)
-            throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
+        if (!MathAid.isInteger(partialSamplingHz / finalSamplingHz))
+            throw new IllegalArgumentException("partialSamplingHz/finalSamplingHz must be integer.");
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
@@ -302,25 +298,12 @@ public class PartialWaveformAssembler1D extends Operation {
         causal = property.parseBoolean("causal", "false");
     }
 
-    private void setLsmooth() {
-        int pow2np = Integer.highestOneBit(np);
-        if (pow2np < np)
-            pow2np *= 2;
-
-        int lsmooth = (int) (0.5 * tlen * partialSamplingHz / pow2np);
-        int ismooth = Integer.highestOneBit(lsmooth);
-        this.lsmooth = ismooth == lsmooth ? lsmooth : ismooth * 2;
-    }
-
-
     @Override
     public void run() throws IOException {
         System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
         // information about output partial types
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
-
-        setLsmooth();
 
         // read timewindow file and select based on component and entries
         timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
@@ -497,9 +480,9 @@ public class PartialWaveformAssembler1D extends Operation {
                 spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcElement -> {
                             spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            spcElement.toTimeDomain(lsmooth);
-                            spcElement.applyGrowingExponential(spcFile.omegai(), tlen);
-                            spcElement.amplitudeCorrection(tlen);
+                            spcElement.toTimeDomain((int) MathAid.roundForPrecision(tlen * partialSamplingHz));
+                            spcElement.applyGrowingExponential(spcFile.omegai(), partialSamplingHz);
+                            spcElement.amplitudeCorrection(partialSamplingHz);
                         });
             }
         }
