@@ -39,9 +39,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
-import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
@@ -94,14 +94,6 @@ public class PartialWaveformAssembler1D extends Operation {
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling frequency for intermediate computations [Hz].
-     */
-    private double partialSamplingHz;
-    /**
-     * Sampling frequency in output files [Hz].
-     */
-    private double finalSamplingHz;
 
     /**
      * Path of a timewindow file.
@@ -112,37 +104,23 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private Path dataEntryPath;
     /**
-     * Variable types for compute for.
-     */
-    private Set<VariableType> variableTypes;
-    /**
      * Radii of layers, when selecting to work for certain layers.
      */
     private double[] layerRadii;
+    /**
+     * Variable types for compute for.
+     */
+    private Set<VariableType> variableTypes;
     private Path shPath;
     private Path psvPath;
-    /**
-     * The SPC modes that shall be used, from {SH, PSV, BOTH}.
-     */
-    private SPCFileAid.UsableSPCMode usableSPCMode;
     /**
      * Name of folder containing SPC files (e.g. PREM).
      */
     private String modelName;
-
     /**
-     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
+     * The SPC modes that shall be used, from {SH, PSV, BOTH}.
      */
-    private SourceTimeFunctionType sourceTimeFunctionType;
-    /**
-     * Folder containing user-defined source time functions.
-     */
-    private Path userSourceTimeFunctionPath;
-    /**
-     * Catalog containing source time function durations.
-     */
-    private Path sourceTimeFunctionCatalogPath;
-
+    private SPCFileAid.UsableSPCMode usableSPCMode;
     /**
      * Time length (DSM parameter).
      */
@@ -151,6 +129,27 @@ public class PartialWaveformAssembler1D extends Operation {
      * Number of steps in frequency domain (DSM parameter).
      */
     private int np;
+
+    /**
+     * Folder containing user-defined source time functions.
+     */
+    private Path userSourceTimeFunctionPath;
+    /**
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
+     */
+    private SourceTimeFunctionType sourceTimeFunctionType;
+    /**
+     * Catalog containing source time function durations.
+     */
+    private Path sourceTimeFunctionCatalogPath;
+    /**
+     * Sampling frequency for intermediate computations [Hz].
+     */
+    private double partialSamplingHz;
+    /**
+     * Sampling frequency in output files [Hz].
+     */
+    private double finalSamplingHz;
     /**
      * Lower frequency of bandpass [Hz].
      */
@@ -168,13 +167,16 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private boolean causal;
 
-
     /**
      * Timewindows to work for.
      */
     private Set<TimewindowData> timewindowSet;
     private Map<GlobalCMTID, SourceTimeFunction> sourceTimeFunctions;
     private ButterworthFilter filter;
+    /**
+     * Number of data points in time domain.
+     */
+    private int npts;
 
     /**
      * Created {@link PartialID}s.
@@ -204,26 +206,26 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Sampling frequency for computation [Hz], must be (a power of 2)/tlen. (20)");
-            pw.println("#partialSamplingHz ");
-            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of partialSamplingHz. (1)");
-            pw.println("#finalSamplingHz ");
             pw.println("##Path of a timewindow data file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##VariableTypes to compute for at each voxel, listed using spaces. (MU)");
-            pw.println("#variableTypes ");
-            pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to be worked for.");
+            pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to compute for.");
             pw.println("#layerRadii ");
+            pw.println("##VariableTypes to compute for at each layer, listed using spaces. (MU)");
+            pw.println("#variableTypes ");
             pw.println("##Path of an SH folder. (.)");
             pw.println("#shPath ");
             pw.println("##Path of a PSV folder. (.)");
             pw.println("#psvPath ");
-            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH}. (BOTH)");
-            pw.println("#usableSPCMode ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH}. (BOTH)");
+            pw.println("#usableSPCMode ");
+            pw.println("##(double) Time length [s], set in spectrum files. (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##(int) Number of points in frequency domain, set in spectrum files. (512)");
+            pw.println("#np ");
             pw.println("##########Computation settings.");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
@@ -232,10 +234,10 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##Time length to be computed [s], set in spectrum files. (3276.8)");
-            pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, set in spectrum files. (512)");
-            pw.println("#np ");
+            pw.println("##(double) Sampling frequency for computation [Hz], must be (a power of 2)/tlen. (20)");
+            pw.println("#partialSamplingHz ");
+            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of partialSamplingHz. (1)");
+            pw.println("#finalSamplingHz ");
             pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
             pw.println("#lowFreq ");
             pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
@@ -259,27 +261,25 @@ public class PartialWaveformAssembler1D extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        partialSamplingHz = property.parseDouble("partialSamplingHz", "20");
-        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
-        if (!MathAid.isInteger(partialSamplingHz / finalSamplingHz))
-            throw new IllegalArgumentException("partialSamplingHz/finalSamplingHz must be integer.");
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
+        if (property.containsKey("layerRadii")) {
+            layerRadii = property.parseDoubleArray("layerRadii", null);
+        }
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "MU")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
         for (VariableType type : variableTypes)
             if (type.equals(VariableType.TIME)) throw new IllegalArgumentException("This class does not handle time partials.");
-        if (property.containsKey("layerRadii")) {
-            layerRadii = property.parseDoubleArray("layerRadii", null);
-        }
 
         shPath = property.parsePath("shPath", ".", true, workPath);
         psvPath = property.parsePath("psvPath", ".", true, workPath);
-        usableSPCMode = SPCFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
+        usableSPCMode = SPCFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
 
         if (property.containsKey("userSourceTimeFunctionPath")) {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
@@ -290,8 +290,12 @@ public class PartialWaveformAssembler1D extends Operation {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
 
-        tlen = property.parseDouble("tlen", "3276.8");
-        np = property.parseInt("np", "512");
+        partialSamplingHz = property.parseDouble("partialSamplingHz", "20");
+        // check validity and set npts
+        npts = SPCFileAid.findNpts(tlen, partialSamplingHz);
+        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
+        if (!MathAid.isInteger(partialSamplingHz / finalSamplingHz))
+            throw new IllegalArgumentException("partialSamplingHz/finalSamplingHz must be integer.");
         lowFreq = property.parseDouble("lowFreq", "0.005");
         highFreq = property.parseDouble("highFreq", "0.08");
         filterNp = property.parseInt("filterNp", "4");
@@ -480,7 +484,6 @@ public class PartialWaveformAssembler1D extends Operation {
                 spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcElement -> {
                             spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            int npts = SPCFileAid.findNpts(tlen, partialSamplingHz);
                             spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
                         });
             }

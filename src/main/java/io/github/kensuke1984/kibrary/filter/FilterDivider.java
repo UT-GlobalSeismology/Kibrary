@@ -82,9 +82,9 @@ public class FilterDivider extends Operation {
 
     private ButterworthFilter filter;
     /**
-     * The value 'DELTA' in SAC files.
+     * Sampling frequency of input SAC files [Hz].
      */
-    private double delta;
+    private double sacSamplingHz;
     /**
      * Path of a data entry file.
      */
@@ -104,7 +104,7 @@ public class FilterDivider extends Operation {
     /**
      * see Saito, n
      */
-    private int np;
+    private int filterNp;
     /**
      * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
@@ -147,7 +147,7 @@ public class FilterDivider extends Operation {
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
-            pw.println("##(double) Sampling frequency of input SAC files [Hz]. Files with different value will be ignored. (20)");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. Files with a different value will be ignored. (20)");
             pw.println("#sacSamplingHz ");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
@@ -158,7 +158,7 @@ public class FilterDivider extends Operation {
             pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
             pw.println("#highFreq ");
             pw.println("##(int) The value of NP for the filter. (4)");
-            pw.println("#np ");
+            pw.println("#filterNp ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
             pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2.");
@@ -182,20 +182,19 @@ public class FilterDivider extends Operation {
 
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
-        double sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
-        delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
 
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
 
         filterType = property.parseString("filterType", "bandpass");
-        highFreq = property.parseDouble("highFreq", "0.08");
         lowFreq = property.parseDouble("lowFreq", "0.005");
+        highFreq = property.parseDouble("highFreq", "0.08");
+        filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
-        np = property.parseInt("np", "4");
         npts = property.parseInt("npts", String.valueOf(Integer.MAX_VALUE));
-
+        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
     }
 
     @Override
@@ -258,6 +257,7 @@ public class FilterDivider extends Operation {
         try {
             SACHeaderAccess sacHeader = sacName.readHeader();
             if (entrySet != null && entrySet.contains(sacHeader.toDataEntry()) == false) return false;
+            double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
             if (sacHeader.getValue(SACHeaderEnum.DELTA) != delta) return false;
             return true;
         } catch (IOException e) {
@@ -267,24 +267,24 @@ public class FilterDivider extends Operation {
     }
 
     private void setFilter() {
-        double omegaH = highFreq * 2 * Math.PI * delta;
-        double omegaL = lowFreq * 2 * Math.PI * delta;
+        double omegaH = highFreq * 2 * Math.PI / sacSamplingHz;
+        double omegaL = lowFreq * 2 * Math.PI / sacSamplingHz;
         switch (filterType) {
             case "lowpass":
                 System.err.println("Designing filter. - " + highFreq);
-                filter = new LowPassFilter(omegaH, np);
+                filter = new LowPassFilter(omegaH, filterNp);
                 break;
             case "highpass":
                 System.err.println("Designing filter. " + lowFreq + " - ");
-                filter = new HighPassFilter(omegaL, np);
+                filter = new HighPassFilter(omegaL, filterNp);
                 break;
             case "bandpass":
                 System.err.println("Designing filter. " + lowFreq + " - " + highFreq);
-                filter = new BandPassFilter(omegaH, omegaL, np);
+                filter = new BandPassFilter(omegaH, omegaL, filterNp);
                 break;
             case "bandstop":
                 System.err.println("Designing filter. - " + lowFreq + " , " + highFreq + " -");
-                filter = new BandStopFilter(omegaH, omegaL, np);
+                filter = new BandStopFilter(omegaH, omegaL, filterNp);
                 break;
             default:
                 throw new IllegalArgumentException("No such filter as " + filterType);

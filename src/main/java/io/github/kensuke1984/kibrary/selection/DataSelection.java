@@ -83,11 +83,11 @@ public class DataSelection extends Operation {
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling frequency of input SAC files [Hz].
-     */
-    private double sacSamplingHz;
 
+    /**
+     * Path of the input time window file.
+     */
+    private Path timewindowPath;
     /**
      * Folder containing observed data.
      */
@@ -97,20 +97,19 @@ public class DataSelection extends Operation {
      */
     private Path synPath;
     /**
-     * コンボリューションされている波形かそうでないか （両方は無理）
+     * Whether the synthetics have already been convolved.
      */
     private boolean convolved;
     /**
-     * Path of the input time window file.
+     * Sampling frequency of input SAC files [Hz].
      */
-    private Path timewindowPath;
+    private double sacSamplingHz;
     private Path staticCorrectionPath;
 
     /**
      * Maximum of static correction shift.
      */
     private double upperStaticShift;
-
     /**
      * Correlation coefficient range.
      */
@@ -158,16 +157,16 @@ public class DataSelection extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
-            pw.println("#sacSamplingHz ");
+            pw.println("##Path of a time window file, must be set.");
+            pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
-            pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
             pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
@@ -205,12 +204,12 @@ public class DataSelection extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
 
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
         if (property.containsKey("staticCorrectionPath")) {
             staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
         }

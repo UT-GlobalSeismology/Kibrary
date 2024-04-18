@@ -205,6 +205,8 @@ public final class SPC_SAC extends Operation {
         }
 
         samplingHz = property.parseDouble("samplingHz", "20");
+        if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
+            throw new IllegalArgumentException("Reciprocal of samplingHz must be a terminating decimal.");
         computeTimePartial = property.parseBoolean("computeTimePartial", "false");
         computeAsObserved = property.parseBoolean("computeAsObserved", "false");
     }

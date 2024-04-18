@@ -346,10 +346,10 @@ public class SACMaker implements Runnable {
     }
 
     /**
-     * @param (boolean) If set true, the time in SAC is PDE time.
+     * @param setPDE (boolean) If set true, the time in SAC is PDE time.
      */
-    public void setPDE(boolean bool) {
-        pde = bool;
+    public void setPDE(boolean setPDE) {
+        pde = setPDE;
     }
 
     public void setTemporalDifferentiation(boolean temporalDifferentiation) {

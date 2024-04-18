@@ -47,7 +47,7 @@ public class SPCElement {
     /**
      * @return DEEP copy of this
      */
-    public SPCElement copy() {
+    SPCElement copy() {
         SPCElement s = new SPCElement(np);
         System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
         if (uTime != null) s.uTime = uTime.clone();
@@ -58,7 +58,7 @@ public class SPCElement {
      * Add the spectrum values in the frequency domain of another {@link SPCElement}.
      * @param anotherElement ({@link SPCElement}) The instance to add to this instance.
      */
-    public void addElement(SPCElement anotherElement) {
+    void addElement(SPCElement anotherElement) {
         if (np != anotherElement.getNp()) throw new IllegalStateException("np is not equal.");
 
         Complex[] another = anotherElement.getValueInFrequencyDomain();
@@ -74,23 +74,6 @@ public class SPCElement {
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         uFreq = sourceTimeFunction.convolve(uFreq);
-    }
-
-    /**
-     * Convert the data in frequency domain to time domain.
-     * <p>
-     * This method does the following:
-     * <ul>
-     * <li> conduct the inverse fast Fourier transform (FFT).
-     * <li> multiply exp(&omega;<sub>I</sub>t) to account for artificial damping.
-     * <li> correct amplitude to match FFT with the Fourier transform used in DSM and convert from [km] to [m].
-     * </ul>
-     * @param npts (int) Number of data points in time domain.
-     * @param samplingHz (double) Sampling frequency [Hz].
-     * @param omegaI (double) &omega;<sub>i</sub>.
-     */
-    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
-        uTime = SPCFileAid.convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
     }
 
     /**
@@ -114,9 +97,26 @@ public class SPCElement {
      * @param factor (double) Value to multiply.
      * @author anselme
      */
-    public void mapMultiply(double factor) {
+    void mapMultiply(double factor) {
         for (int i = 0; i < np + 1; i++)
             uFreq[i] = uFreq[i].multiply(factor);
+    }
+
+    /**
+     * Convert the data in frequency domain to time domain.
+     * <p>
+     * This method does the following:
+     * <ul>
+     * <li> conduct the inverse fast Fourier transform (FFT).
+     * <li> multiply exp(&omega;<sub>I</sub>t) to account for artificial damping.
+     * <li> correct amplitude to match FFT with the Fourier transform used in DSM and convert from [km] to [m].
+     * </ul>
+     * @param npts (int) Number of data points in time domain.
+     * @param samplingHz (double) Sampling frequency [Hz].
+     * @param omegaI (double) &omega;<sub>i</sub>.
+     */
+    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
+        uTime = SPCFileAid.convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
     }
 
     private int getNp() {

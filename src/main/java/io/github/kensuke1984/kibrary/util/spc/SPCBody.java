@@ -157,7 +157,7 @@ public class SPCBody {
      * Add the spectrum values in the frequency domain of another {@link SPCBody}.
      * @param anotherBody ({@link SPCBody}) The instance to add to this instance.
      */
-    public void addBody(SPCBody anotherBody) {
+    void addBody(SPCBody anotherBody) {
         if (np != anotherBody.getNp()) throw new IllegalStateException("np is not equal.");
         if (nElement != anotherBody.getNElement()) throw new IllegalStateException("Number of elements is different.");
 
@@ -175,6 +175,15 @@ public class SPCBody {
     }
 
     /**
+     * Differentiate the data for all elements (in frequency domain) by time.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * @param tlen (double) Time length [s].
+     */
+    void differentiate(double tlen) {
+        Arrays.stream(spcElements).forEach(element -> element.differentiate(tlen));
+    }
+
+    /**
      * Convert the data in frequency domain to time domain.
      * <p>
      * This method does the following:
@@ -189,15 +198,6 @@ public class SPCBody {
      */
     public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
         Arrays.stream(spcElements).forEach(element -> element.convertToTimeDomain(npts, samplingHz, omegaI));
-    }
-
-    /**
-     * Differentiate the data for all elements (in frequency domain) by time.
-     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
-     * @param tlen (double) Time length [s].
-     */
-    public void differentiate(double tlen) {
-        Arrays.stream(spcElements).forEach(element -> element.differentiate(tlen));
     }
 
     public int getNp() {

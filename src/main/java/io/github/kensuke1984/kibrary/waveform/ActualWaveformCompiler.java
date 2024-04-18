@@ -97,15 +97,15 @@ public class ActualWaveformCompiler extends Operation {
      * Components to be included in the dataset.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling frequency of input SAC files [Hz].
-     */
-    private double sacSamplingHz;
-    /**
-     * Sampling frequency of waveform data to create [Hz].
-     */
-    private double finalSamplingHz;
 
+    /**
+     * Path of a time window information file.
+     */
+    private Path timewindowPath;
+    /**
+     * Path of a time window information file for a reference phase use to correct spectral amplitude.
+     */
+    private Path timewindowRefPath;
     /**
      * Path of a root folder containing observed dataset.
      */
@@ -119,21 +119,13 @@ public class ActualWaveformCompiler extends Operation {
      */
     private boolean convolved;
     /**
-     * Path of a time window information file.
+     * Sampling frequency of input SAC files [Hz].
      */
-    private Path timewindowPath;
+    private double sacSamplingHz;
     /**
-     * Path of a time window information file for a reference phase use to correct spectral amplitude.
+     * Sampling frequency of waveform data to create [Hz].
      */
-    private Path timewindowRefPath;
-    /**
-     * Whether to correct time.
-     */
-    private boolean correctTime;
-    /**
-     * How to correct amplitude ratio. {0: none, 1: each trace, 2: event average}
-     */
-    private int amplitudeCorrectionType;
+    private double finalSamplingHz;
     /**
      * Path of a data entry file.
      */
@@ -143,13 +135,21 @@ public class ActualWaveformCompiler extends Operation {
      */
     private Path staticCorrectionPath;
     /**
-     * Whether to time-shift data to correct for 3-D mantle.
+     * Whether to correct time.
      */
-    private boolean correctMantle;
+    private boolean correctTime;
+    /**
+     * How to correct amplitude ratio. {0: none, 1: each trace, 2: event average}
+     */
+    private int amplitudeCorrectionType;
     /**
      * Path of time shifts due to the 3-D mantle.
      */
     private Path mantleCorrectionPath;
+    /**
+     * Whether to time-shift data to correct for 3-D mantle.
+     */
+    private boolean correctMantle;
 
     /**
      * Low frequency cut-off for spectrum data.
@@ -165,11 +165,11 @@ public class ActualWaveformCompiler extends Operation {
     private boolean addNoise;
     private double noisePower;
 
+    private int finalFreqSamplingHz;
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<TimewindowData> refTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<StaticCorrectionData> mantleCorrectionSet;
-    private int finalFreqSamplingHz;
     /**
      * Event-averaged amplitude corrections, used if amplitudeCorrection is false.
      */
@@ -210,10 +210,6 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
-            pw.println("#sacSamplingHz ");
-            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
-            pw.println("#finalSamplingHz ");
             pw.println("##Path of a time window file, must be set.");
             pw.println("#timewindowPath selectedTimewindow.dat");
             pw.println("##Path of a time window file for a reference phase used to correct spectral amplitude, can be ignored.");
@@ -224,6 +220,10 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved false");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
+            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
+            pw.println("#finalSamplingHz ");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file.");
@@ -259,10 +259,6 @@ public class ActualWaveformCompiler extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
-        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
-        if (!MathAid.isInteger(sacSamplingHz / finalSamplingHz))
-            throw new IllegalArgumentException("sacSamplingHz/finalSamplingHz must be integer.");
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         if (property.containsKey("timewindowRefPath")) {
@@ -271,6 +267,10 @@ public class ActualWaveformCompiler extends Operation {
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
+        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
+        if (!MathAid.isInteger(sacSamplingHz / finalSamplingHz))
+            throw new IllegalArgumentException("sacSamplingHz/finalSamplingHz must be integer.");
 
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);

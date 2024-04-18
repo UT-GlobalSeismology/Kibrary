@@ -114,11 +114,11 @@ public class ThreeDPartialDSMSetup extends Operation {
     private String structureName;
 
     /**
-     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
+     * Time length [s], must be (a power of 2)/samplingHz.
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain, must be a power of 2.
+     * Number of steps in frequency domain, should not exceed tlen*samplingHz/2.
      */
     private int np;
     /**
@@ -181,13 +181,13 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#observerPath observer.lst");
             pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("##Path of structure file to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use. (PREM)");
+            pw.println("##Name of structure model to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed [s], must be (a power of 2)/(desired sampling frequency). (3276.8)");
+            pw.println("##Time length to compute [s], must be (a power of 2)/(desired sampling frequency). (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
+            pw.println("##(int) Number of points to compute in frequency domain, should not exceed tlen*(desired sampling frequency)/2. (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations. (true)");
             pw.println("#mpi false");
