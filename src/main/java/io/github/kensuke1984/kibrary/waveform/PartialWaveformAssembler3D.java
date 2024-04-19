@@ -40,7 +40,6 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
@@ -703,7 +702,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     continue;
 
                 for (SACComponent component : neededComponents) {
-                    double[] partial = threedPartialMaker.createPartialSerial(component, ibody, PartialType.of(ParameterType.VOXEL, variableType));
+                    double[] partial = threedPartialMaker.createPartial(component, ibody, variableType, false);
 
                     timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
                         Trace cutTrace = cutAndFilter(partial, window);

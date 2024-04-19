@@ -1,7 +1,5 @@
 package io.github.kensuke1984.kibrary.elastic;
 
-import io.github.kensuke1984.kibrary.util.spc.SPCType;
-
 /**
  * Parameters of elastic medium.
  *
@@ -29,12 +27,17 @@ public enum VariableType {
         value = n;
     }
 
-    public int valueOf() {
+    public int getValue() {
         return value;
     }
 
-    public static boolean isIsotropicVelocity(VariableType type) {
-        switch (type) {
+    public boolean isDensity() {
+        if (this == RHO) return true;
+        else return false;
+    }
+
+    public boolean isIsotropicVelocity() {
+        switch (this) {
         case Vp:
         case Vs:
         case Vb:
@@ -44,8 +47,8 @@ public enum VariableType {
         }
     }
 
-    public static boolean isIsotropicModulus(VariableType type) {
-        switch (type) {
+    public boolean isIsotropicModulus() {
+        switch (this) {
         case LAMBDA2MU:
         case LAMBDA:
         case MU:
@@ -56,8 +59,8 @@ public enum VariableType {
         }
     }
 
-    public static boolean isTIVelocity(VariableType type) {
-        switch (type) {
+    public boolean isTIVelocity() {
+        switch (this) {
         case Vpv:
         case Vph:
         case Vsv:
@@ -69,8 +72,8 @@ public enum VariableType {
         }
     }
 
-    public static boolean isTIModulus(VariableType type) {
-        switch (type) {
+    public boolean isTIModulus() {
+        switch (this) {
         case A:
         case C:
         case F:
@@ -83,29 +86,34 @@ public enum VariableType {
         }
     }
 
-    // TODO hmm...
-    public SPCType to1DSpcType() {
+    /**
+     * 変微分係数波形を計算するときのCijklの重み A C F L N Mu lambda
+     *
+     * @return ({@link WeightingFactor}) Weighting for this variable when computing partials.
+     */
+    public WeightingFactor getWeightingFactor() {
         switch (this) {
-        case RHO:
-            return SPCType.RHO1D;
-        case LAMBDA:
-            return SPCType.LAMBDA1D;
-        case MU:
-            return SPCType.MU1D;
         case A:
-            return SPCType.A1D;
+            return WeightingFactor.A;
         case C:
-            return SPCType.C1D;
+            return WeightingFactor.C;
         case F:
-            return SPCType.F1D;
+            return WeightingFactor.F;
         case L:
-            return SPCType.L1D;
+            return WeightingFactor.L;
         case N:
-            return SPCType.N1D;
+            return WeightingFactor.N;
+        case MU:
+            return WeightingFactor.MU;
+        case LAMBDA:
+            return WeightingFactor.LAMBDA;
+        case KAPPA:
+            return WeightingFactor.KAPPA;
+        case LAMBDA2MU:
+            return WeightingFactor.LAMBDA2MU;
         default:
-            throw new RuntimeException("unexpected");
+            throw new RuntimeException("Unexpected happens");
         }
-
     }
 
 }

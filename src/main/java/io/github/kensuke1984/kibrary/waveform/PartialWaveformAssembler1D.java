@@ -42,6 +42,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
@@ -416,7 +417,7 @@ public class PartialWaveformAssembler1D extends Operation {
 
         private SPCFileAccess findSPCFile(Observer observer, VariableType variableType, SPCMode mode) throws IOException {
             Path modelPath = (mode == SPCMode.SH) ? shModelPath : psvModelPath;
-            Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + variableType.to1DSpcType() + "..." + mode + ".spc");
+            Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + SPCType.of1D(variableType) + "..." + mode + ".spc");
             if (!SPCFileName.isFormatted(spcPath)) {
                 throw new IllegalStateException(spcPath + " has invalid SPC file name.");
             }

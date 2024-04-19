@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -456,12 +457,128 @@ public class ThreeDPartialMaker {
     }
 
     /**
+     * ibody番目のボディ（深さ）に対する摂動の Partial derivatives のiに対する成分 ETAri,s の i
+     * @param component
+     * @param iBody
+     * @param variable
+     * @return Ui(t) u[t] 時間領域
+     * @author anselme return array of zero for partials whose radius is too close to the BP or FP source
+     */
+    public double[] createPartial(SACComponent component, int iBody, VariableType variable, boolean parallel) {
+        // fp, bp is SPCFileAccess
+        double bpR = bp.getBodyR()[iBody];
+        double fpR = fp.getBodyR()[iBody];
+        if (fpR != bpR) throw new IllegalStateException("rBody of fp and bp differs: " + fpR + " " + bpR);
+
+        Complex[] partial_frequency = (variable == VariableType.Qmu) ? computeQpartial(component, iBody) :
+                computeTensorCulculus(component, iBody, iBody, variable, parallel);
+
+        if (null != sourceTimeFunction)
+            partial_frequency = sourceTimeFunction.convolve(partial_frequency, parallel);
+
+        //test tapper
+        partial_frequency = rightTapper(partial_frequency); // TODO
+
+        Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
+        return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
+    }
+
+    /**
+     * Compute tensor culculus of u Cijkl eta.
+     * Use of BP/FP catalog is supported.
+     * @param component ({@link SACComponent}) Component to compute for.
+     * @param iBodyBp
+     * @param iBodyFp
+     * @param variable ({@link VariableType})
+     * @param parallel (boolean) Whether to conduct parallel computations.
+     * @return
+     * @author anselme
+     */
+    private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, VariableType variable, boolean parallel) {
+        SPCBody bpBody = null;
+        SPCBody fpBody = null;
+        if (bp2 == null) {
+            bpBody = bp.getSpcBodyList().get(iBodyBp);
+            fpBody = fp.getSpcBodyList().get(iBodyFp);
+        } else if (fp2 == null) {
+            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp), bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+            fpBody = fp.getSpcBodyList().get(iBodyFp);
+        } else {
+            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp), bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+            fpBody = SPCBody.interpolate(fp.getSpcBodyList().get(iBodyFp), fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
+        }
+        if (variable.isDensity()) {
+            double tlen = bp.tlen();
+            TensorCalculationURhoE tensorcalc = new TensorCalculationURhoE(fpBody, bpBody, angleForTensor, tlen);
+            return component == SACComponent.Z ? tensorcalc.calc(0) : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+        } else {
+            TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody, bpBody, variable.getWeightingFactor(), angleForTensor, parallel);
+            return component == SACComponent.Z ? tensorcalc.calc(0) : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+        }
+    }
+
+    /**
+     * 周波数領域のデータにしか使えない
+     *
+     * @param partial1  partial in local cartesian
+     * @param partial2  partial in local cartesian
+     * @param component R, T 震源 観測点の乗る大円上
+     * @return 回転させてできたi成分の偏微分波形
+     */
+    private Complex[] rotatePartial(Complex[] partial1, Complex[] partial2, SACComponent component) {
+        Complex[] partial = new Complex[fp.np() + 1];
+
+        double cosine = FastMath.cos(angleForVector);
+        double sine = FastMath.sin(angleForVector);
+
+        switch (component) {
+        case R:
+            for (int j = 0; j < fp.np() + 1; j++)
+                partial[j] = new Complex(cosine * partial1[j].getReal() + sine * partial2[j].getReal(),
+                        cosine * partial1[j].getImaginary() + sine * partial2[j].getImaginary());
+            return partial;
+        case T:
+            for (int j = 0; j < fp.np() + 1; j++)
+                partial[j] = new Complex(-sine * partial1[j].getReal() + cosine * partial2[j].getReal(),
+                        -sine * partial1[j].getImaginary() + cosine * partial2[j].getImaginary());
+            return partial;
+        default:
+            throw new IllegalArgumentException("Invalid component.");
+        }
+    }
+
+    /**
+     * @param complex
+     * @return
+     * @author anselme
+     */
+    private Complex[] rightTapper(Complex[] complex) {
+        Complex[] tappered = complex.clone();
+        int l = complex.length;
+        int n = l / 5;
+
+        for (int i = 0; i < n; i++) {
+//			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * (n - 1)) * i));
+            tappered[i + l - n] = tappered[i + l - n].multiply(1. - (double) i / (n - 1.));
+        }
+
+        return tappered;
+    }
+
+    private Complex[] computeQpartial(SACComponent component, int iBody) {
+        if (fujiConversion == null)
+            fujiConversion = new FujiConversion(DefaultStructure.PREM);
+        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(VariableType.MU));
+        return qspec.getSpcBodyList().get(iBody).getSpcElement(component).getValueInFrequencyDomain();
+    }
+
+    /**
      * Create a {@link SPCFileAccess} from a forward propagation and a backward propagation.
      *
-     * @param type {@link PartialType}
+     * @param variable ({@link VariableType})
      * @return partial spectrum file
      */
-    public SPCFileAccess toSpectrum(PartialType type) {
+    public SPCFileAccess toSpectrum(VariableType variable) {
         SPCFileName spcFileName = bp.getSpcFileName();
         double tlen = bp.tlen();
         int np = bp.np();
@@ -475,7 +592,7 @@ public class ThreeDPartialMaker {
         List<SPCBody> spcBodyList = new ArrayList<>(nbody);
         for (int ibody = 0; ibody < nbody; ibody++) {
             TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(ibody),
-                    bp.getSpcBodyList().get(ibody), type.getWeightingFactor(), angleForTensor, true);
+                    bp.getSpcBodyList().get(ibody), variable.getWeightingFactor(), angleForTensor, true);
             // tensorcalc.setBP(angleBP);
             // tensorcalc.setFP(angleFP);
              System.out.println("angleForTensor " + angleForTensor);
@@ -514,7 +631,7 @@ public class ThreeDPartialMaker {
 
             @Override
             public SPCType getSpcFileType() {
-                return type.toSpcFileType();
+                return SPCType.of1D(variable);
             }
 
             @Override
@@ -554,166 +671,9 @@ public class ThreeDPartialMaker {
 
             @Override
             public void setSpcBody(int i, SPCBody body) {
-//				spcBody.set(i, body); TODO
+//              spcBody.set(i, body); TODO
             }
         };
-    }
-
-    /**
-     * ibody番目のボディ（深さ）に対する摂動の Partial derivatives のiに対する成分 ETAri,s の i
-     *
-     * @param component {@link SACComponent}
-     * @param iBody     index for SacBody
-     * @param type      {@link PartialType}
-     * @return Ui(t) u[t] 時間領域
-     * @author Kensuke Konishi
-     * @author anselme return array of zero for partials whose radius is too close to the BP or FP source
-     */
-    public double[] createPartial(SACComponent component, int iBody, PartialType type) {
-        // return array of zero for partials whose radius is too close to the BP or FP source
-        double bpR = bp.getBodyR()[iBody];
-        double fpR = fp.getBodyR()[iBody];
-        if (fpR != bpR)
-            throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
-
-        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculus(component, iBody, iBody, type, true);
-
-        if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolve(partial_frequency, true);
-
-        //test tapper
-//		partial_frequency = rightTapper(partial_frequency); //TODO
-
-        Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
-        return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
-    }
-
-    /**
-     * return array of zero for partials whose radius is too close to the BP or FP source
-     * @param component
-     * @param iBody
-     * @param type
-     * @return
-     * @author anselme
-     */
-    public double[] createPartialSerial(SACComponent component, int iBody, PartialType type) {
-        // return array of zero for partials whose radius is too close to the BP or FP source
-        // fp, bp is SPCFileAccess
-        double bpR = bp.getBodyR()[iBody];
-        double fpR = fp.getBodyR()[iBody];
-        if (fpR != bpR)
-            throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
-
-        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculus(component, iBody, iBody, type, false);//diff
-
-        if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolve(partial_frequency, false);//diff
-
-        //test tapper
-        partial_frequency = rightTapper(partial_frequency); //diff  TODO
-
-        Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
-        return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
-    }
-
-    private Complex[] computeQpartial(SACComponent component, int iBody) {
-        if (fujiConversion == null)
-            fujiConversion = new FujiConversion(DefaultStructure.PREM);
-        SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU3D));
-        return qspec.getSpcBodyList().get(iBody).getSpcElement(component).getValueInFrequencyDomain();
-    }
-
-    /**
-     * Compute tensor culculus of u Cijkl eta.
-     * Use of BP/FP catalog is supported.
-     * @param component ({@link SACComponent}) Component to compute for.
-     * @param iBodyBp
-     * @param iBodyFp
-     * @param type ({@link PartialType})
-     * @param parallel (boolean) Whether to conduct parallel computations.
-     * @return
-     * @author anselme
-     */
-    private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type, boolean parallel) {
-        SPCBody bpBody = null;
-        SPCBody fpBody = null;
-        if (bp2 == null) {
-            bpBody = bp.getSpcBodyList().get(iBodyBp);
-            fpBody = fp.getSpcBodyList().get(iBodyFp);
-        } else if (fp2 == null) {
-            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp), bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
-            fpBody = fp.getSpcBodyList().get(iBodyFp);
-        } else {
-            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp), bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
-            fpBody = SPCBody.interpolate(fp.getSpcBodyList().get(iBodyFp), fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
-        }
-        if (type.isDensity()) {
-            double tlen = bp.tlen();
-            TensorCalculationURhoE tensorcalc = new TensorCalculationURhoE(fpBody, bpBody, angleForTensor, tlen);
-            return component == SACComponent.Z ? tensorcalc.calc(0) : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
-        } else {
-            TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody, bpBody, type.getWeightingFactor(), angleForTensor, parallel);
-            return component == SACComponent.Z ? tensorcalc.calc(0) : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
-        }
-    }
-
-    /**
-     * 周波数領域のデータにしか使えない
-     *
-     * @param partial1  partial in local cartesian
-     * @param partial2  partial in local cartesian
-     * @param component R, T 震源 観測点の乗る大円上
-     * @return 回転させてできたi成分の偏微分波形
-     */
-    private Complex[] rotatePartial(Complex[] partial1, Complex[] partial2, SACComponent component) {
-        Complex[] partial = new Complex[fp.np() + 1];
-
-        double cosine = FastMath.cos(angleForVector);
-        double sine = FastMath.sin(angleForVector);
-
-        switch (component) {
-        case R:
-            for (int j = 0; j < fp.np() + 1; j++)
-                partial[j] = new Complex(
-                        cosine * partial1[j].getReal()
-                                + sine * partial2[j].getReal(),
-                        cosine * partial1[j].getImaginary()
-                                + sine * partial2[j].getImaginary());
-            return partial;
-        case T:
-            for (int j = 0; j < fp.np() + 1; j++)
-                partial[j] = new Complex(
-                        -sine * partial1[j].getReal()
-                                + cosine * partial2[j].getReal(),
-                        -sine * partial1[j].getImaginary()
-                                + cosine * partial2[j].getImaginary());
-            return partial;
-        default:
-            System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
-            System.out.println("an input component is invalid");
-            return null;
-        }
-
-    }
-
-    /**
-     * @param complex
-     * @return
-     * @author anselme
-     */
-    private Complex[] rightTapper(Complex[] complex) {
-        Complex[] tappered = complex.clone();
-        int l = complex.length;
-        int n = l / 5;
-
-        for (int i = 0; i < n; i++) {
-//			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * (n - 1)) * i));
-            tappered[i + l - n] = tappered[i + l - n].multiply(1. - (double) i / (n - 1.));
-        }
-
-        return tappered;
     }
 
     /**

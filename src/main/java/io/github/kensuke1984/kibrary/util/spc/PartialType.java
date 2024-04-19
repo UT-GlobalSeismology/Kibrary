@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  *
  * @author Kensuke Konishi
  * @since a long time ago
+ * TODO move into waveform
  */
 public enum PartialType {
 
@@ -33,7 +34,11 @@ public enum PartialType {
         value = n;
     }
 
-    public static PartialType getType(int n) {
+    public int getValue() {
+        return value;
+    }
+
+    public static PartialType ofNumber(int n) {
         return Arrays.stream(PartialType.values()).filter(type -> type.value == n).findAny()
                 .orElseThrow(() -> new IllegalArgumentException("Input n " + n + " is invalid."));
     }
@@ -54,41 +59,7 @@ public enum PartialType {
         return value == 0 || value == 30;
     }
 
-    public int getValue() {
-        return value;
-    }
-
-    /**
-     * 変微分係数波形を計算するときのCijklの重み A C F L N Mu lambda
-     *
-     * @return weighting for {@link PartialType} to compute partials
-     */
-    public WeightingFactor getWeightingFactor() {
-        switch (this) {
-        case A3D:
-            return WeightingFactor.A;
-        case C3D:
-            return WeightingFactor.C;
-        case F3D:
-            return WeightingFactor.F;
-        case L3D:
-            return WeightingFactor.L;
-        case N3D:
-            return WeightingFactor.N;
-        case MU3D:
-            return WeightingFactor.MU;
-        case LAMBDA3D:
-            return WeightingFactor.LAMBDA;
-        case KAPPA3D:
-            return WeightingFactor.KAPPA;
-        case LAMBDA2MU3D:
-            return WeightingFactor.LAMBDA2MU;
-        default:
-            throw new RuntimeException("Unexpected happens");
-        }
-    }
-
-    // TODO erase
+    //TODO remove public
     public static PartialType of(ParameterType parameterType, VariableType variableType) {
         if (parameterType.equals(ParameterType.LAYER)) {
             switch (variableType) {
@@ -129,6 +100,7 @@ public enum PartialType {
         }
     }
 
+    //TODO remove public
     public VariableType toVariableType() {
         switch (this) {
         case RHO1D: case RHO3D: return VariableType.RHO;
@@ -146,52 +118,13 @@ public enum PartialType {
         }
     }
 
-    //TODO erase
+    //TODO remove public
     public ParameterType toParameterType() {
         if (is1D()) return ParameterType.LAYER;
         else if (is3D()) return ParameterType.VOXEL;
         else if (this == TIME_SOURCE) return ParameterType.SOURCE;
         else if (this == TIME_RECEIVER) return ParameterType.RECEIVER;
         else throw new RuntimeException("unexpected");
-    }
-
-    // TODO hmm...
-    public SPCType toSpcFileType() {
-        switch (this) {
-        case RHO1D:
-            return SPCType.RHO1D;
-        case LAMBDA3D:
-        case LAMBDA1D:
-            return SPCType.LAMBDA1D;
-        case MU3D:
-        case MU1D:
-            return SPCType.MU1D;
-        case A3D:
-        case A1D:
-            return SPCType.A1D;
-        case C3D:
-        case C1D:
-            return SPCType.C1D;
-        case F3D:
-        case F1D:
-            return SPCType.F1D;
-        case L3D:
-        case L1D:
-            return SPCType.L1D;
-        case N3D:
-        case N1D:
-            return SPCType.N1D;
-        case Q1D:
-        case Q3D:
-            return SPCType.Q1D;
-        case VS1D:
-            return SPCType.VS1D;
-        case VP1D:
-            throw new RuntimeException("Not SpcFileType");
-        default:
-            throw new RuntimeException("unexpected");
-        }
-
     }
 
 }

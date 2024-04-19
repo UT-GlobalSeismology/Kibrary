@@ -285,7 +285,7 @@ public final class PartialIDFile {
         boolean isConvolved = 0 < bb.get();
         // startByte is read, but not used
         long startByte = bb.getLong();
-        PartialType partialType = PartialType.getType(bb.get());
+        PartialType partialType = PartialType.ofNumber(bb.get());
         FullPosition voxelPosition = voxelPositions[bb.getShort()];
         return new PartialID(observer, event, component, samplingHz, startTime, npts, period[0], period[1],
                 usablephases, isConvolved, partialType.toParameterType(), partialType.toVariableType(), voxelPosition);

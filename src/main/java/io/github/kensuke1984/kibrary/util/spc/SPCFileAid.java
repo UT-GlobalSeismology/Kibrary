@@ -107,7 +107,7 @@ public final class SPCFileAid {
      * @param omegaI (double) &omega;<sub>i</sub>.
      * @return (Complex[]) Waveform in time domain.
      */
-    static Complex[] convertToTimeDomain(Complex[] uFreq, int np, int npts, double samplingHz, double omegaI) {
+    public static Complex[] convertToTimeDomain(Complex[] uFreq, int np, int npts, double samplingHz, double omegaI) {
         if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
         int nnp = npts / 2;
         if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");

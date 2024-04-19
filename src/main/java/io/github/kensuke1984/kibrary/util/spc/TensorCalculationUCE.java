@@ -5,6 +5,8 @@ import java.util.Arrays;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
+import io.github.kensuke1984.kibrary.elastic.WeightingFactor;
+
 /**
  * Calculation of U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub> in
  * Geller &amp; Hara (1993)

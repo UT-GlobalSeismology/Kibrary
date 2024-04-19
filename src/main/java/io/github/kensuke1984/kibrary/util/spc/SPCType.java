@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+
 /**
  * Types of {@link SPCFile}s.
  *
@@ -34,6 +36,29 @@ public enum SPCType {
         default:
             throw new RuntimeException("SPC type can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), "
                     + "9(fp), 10(fpshcat), 12(fppsvcat), or 27(bp) right now");
+        }
+    }
+
+    public static SPCType of1D(VariableType variable) {
+        switch (variable) {
+        case RHO:
+            return RHO1D;
+        case LAMBDA:
+            return LAMBDA1D;
+        case MU:
+            return MU1D;
+        case A:
+            return A1D;
+        case C:
+            return C1D;
+        case F:
+            return F1D;
+        case L:
+            return L1D;
+        case N:
+            return N1D;
+        default:
+            throw new RuntimeException("Unexpected variable: " + variable);
         }
     }
 

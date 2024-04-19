@@ -13,7 +13,6 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
@@ -28,8 +27,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  * {@link #convolve(Complex[])}
  *
  * @author Kensuke Konishi
- * @version 0.0.7
- * @author Lina add asymmetric triangle source time function
+ * @since a long time ago
  */
 public class SourceTimeFunction {
 
@@ -72,6 +70,8 @@ public class SourceTimeFunction {
      * @param tlen         [s] time length
      * @param samplingHz   [Hz]
      * @param halfDuration [s] of the source
+     * @return SourceTimeFunction
+     *
      * @author lina
      */
     public static SourceTimeFunction asymmetricTriangleSourceTimeFunction(int np, double tlen, double samplingHz,
@@ -175,38 +175,6 @@ public class SourceTimeFunction {
     }
 
     /**
-     * Source time function is computed simply by division.
-     *
-     * @param obs        waveform of observed
-     * @param syn        waveform of syn
-     * @param np         steps of frequency [should be same as synthetics]
-     * @param tlen       [s] length of waveform [should be same as synthetics]
-     * @param samplingHz [Hz]
-     * @return Source time function F(obs)/F(syn) in <b>frequency domain</b>
-     */
-    public static SourceTimeFunction computeSourceTimeFunction(int np, double tlen, double samplingHz, double[] obs,
-                                                               double[] syn) {
-        int inputLength = obs.length;
-        if (inputLength != syn.length)
-            throw new IllegalArgumentException("Input obs and syn waveform must have same lengths");
-        int npts = SPCFileAid.findNpts(tlen, samplingHz);
-        double[] realObs = new double[npts];
-        double[] realSyn = new double[npts];
-        for (int i = 0; i < inputLength; i++) {
-            realObs[i] = obs[i];
-            realSyn[i] = syn[i];
-        }
-        Complex[] obsInFrequencyDomain = fft.transform(realObs, TransformType.FORWARD);
-        Complex[] synInFrequencyDomain = fft.transform(realSyn, TransformType.FORWARD);
-        Complex[] sourceTimeFunction = new Complex[np];
-        for (int i = 0; i < np; i++)
-            sourceTimeFunction[i] = obsInFrequencyDomain[i + 1].divide(synInFrequencyDomain[i + 1]);
-        SourceTimeFunction stf = new SourceTimeFunction(np, npts, samplingHz);
-        stf.sourceTimeFunction = sourceTimeFunction;
-        return stf;
-    }
-
-    /**
      * @param outPath Path for a file.
      * @param options for writing the file
      * @throws IOException if the source time function is not computed, then an error
@@ -244,44 +212,6 @@ public class SourceTimeFunction {
     }
 
     /**
-     * TODO
-     *
-     * @param dataInFrequency
-     * @return
-     */
-    private double[] inverseFourierTransform(Complex[] dataInFrequency) {
-        // pack to temporary Complex array
-        Complex[] data = new Complex[npts];
-        System.arraycopy(dataInFrequency, 0, data, 0, np + 1);
-
-        // set blank due to lsmooth
-        Arrays.fill(data, np + 1, npts / 2 + 1, Complex.ZERO);
-
-        // set values for imaginary frequency
-        for (int i = 0, nnp = npts / 2; i < nnp - 1; i++)
-            data[nnp + 1 + i] = data[nnp - 1 - i].conjugate();
-
-        // fast fourier transformation
-        data = fft.transform(data, TransformType.INVERSE);
-
-        return Arrays.stream(data).mapToDouble(Complex::getReal).toArray();
-    }
-
-    /**
-     * Operates convolution for data in <b>time</b> domain. The data is convolved after conducting FFT.
-     * @param data (double[]) Data to be convolved in <b>time</b> domain. Length must be {@link #npts}.
-     * @return (double[]) Convolved data in <b>time</b> domain.
-     */
-    public final double[] convolve(double[] data) {
-        if (data.length != npts)
-            throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + npts);
-        Complex[] dataInFrequencyDomain = fft.transform(data, TransformType.FORWARD);
-        dataInFrequencyDomain = Arrays.copyOfRange(dataInFrequencyDomain, 0, np + 1);
-        Complex[] convolvedDataInFrequencyDomain = convolve(dataInFrequencyDomain, true);
-        return inverseFourierTransform(convolvedDataInFrequencyDomain);
-    }
-
-    /**
      * Operates convolution for data in <b>frequency</b> domain.
      * @param data (Complex[]) Data to be convolved in <b>frequency</b> domain. Length must be {@link #np} + 1.
      * @param parallel (boolean) Whether to conduct parallel computations.
@@ -306,17 +236,16 @@ public class SourceTimeFunction {
      * @return trace of Source time function in time domain
      */
     public Trace getSourceTimeFunctionInTimeDomain() {
-        Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
+        Objects.requireNonNull(sourceTimeFunction, "Source time function is not set yet.");
+
         double[] time = new double[npts];
         Arrays.setAll(time, i -> i / samplingHz);
 
-        Complex[] stf = new Complex[npts];
-        Arrays.fill(stf, Complex.ZERO);
-        for (int i = 0 ; i < np; i++) {
-            stf[i] = sourceTimeFunction[i];
-            stf[npts - 1 - i] = stf[i+1].conjugate();
-        }
-        double[] stfInTime = Arrays.stream(inverseFourierTransform(stf)).map(d -> d * samplingHz).toArray();
+        Complex[] stf = new Complex[np + 1];
+        stf[0] = Complex.ZERO;
+        for (int i = 0; i < np; i++) stf[i+1] = sourceTimeFunction[i];
+        double[] stfInTime = Arrays.stream(SPCFileAid.convertToTimeDomain(stf, np, npts, samplingHz, 0.0))
+                .mapToDouble(Complex::getReal).map(d -> d * samplingHz).toArray();
         return new Trace(time, stfInTime);
     }
 
