@@ -35,6 +35,7 @@ import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 /**
  * This class is <b>IMMUTABLE</b>.
@@ -397,8 +398,7 @@ public class SCARDEC {
         Trace momentRateFunction = average ? AVERAGE_MOMENT_RATE_FUNCTION : OPTIMAL_MOMENT_RATE_FUNCTION;
         double start = momentRateFunction.getXAt(0);
         double end = momentRateFunction.getXAt(momentRateFunction.getLength() - 1);
-        if (!SourceTimeFunction.checkValues(np, tlen, samplingHz)) throw new IllegalArgumentException();
-        int nptsInTime = (int) (tlen * samplingHz);
+        int nptsInTime = SPCFileAid.findNpts(tlen, samplingHz);
         double[] stfForFFT = new double[nptsInTime];
         double deltaT = 1 / samplingHz;
 
@@ -423,8 +423,8 @@ public class SCARDEC {
         Complex[] cutSTF = new Complex[np];
         System.arraycopy(stfFreq, 0, cutSTF, 0, 1024);
 
-        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz);
-        stf.sourceTimeFunction = cutSTF;
+        SourceTimeFunction stf = new SourceTimeFunction(np, nptsInTime, samplingHz);
+        stf.setSourceTimeFunction(cutSTF);
         return stf;
     }
 

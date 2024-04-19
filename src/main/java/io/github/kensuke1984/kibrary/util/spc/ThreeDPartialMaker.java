@@ -618,41 +618,11 @@ public class ThreeDPartialMaker {
         return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
     }
 
-    /**
-     * return array of zero for partials whose radius is too close to the BP or FP source
-     * @param component
-     * @param iBody
-     * @param type
-     * @return
-     * @author anselme
-     */
-    public Complex[] createPartialFrequencySerial(SACComponent component, int iBody, PartialType type) {
-        double bpR = bp.getBodyR()[iBody];
-        double fpR = fp.getBodyR()[iBody];
-        if (fpR != bpR)
-            throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
-
-        long t1i = System.currentTimeMillis();
-        Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculus(component, iBody, iBody, type, false);
-        long t1f = System.currentTimeMillis();
-//		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
-
-        if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolve(partial_frequency, false);
-
-        //test tapper
-        partial_frequency = rightTapper(partial_frequency); //TODO
-
-        return partial_frequency;
-    }
-
     private Complex[] computeQpartial(SACComponent component, int iBody) {
         if (fujiConversion == null)
             fujiConversion = new FujiConversion(DefaultStructure.PREM);
         SPCFileAccess qspec = fujiConversion.convert(toSpectrum(PartialType.MU3D));
         return qspec.getSpcBodyList().get(iBody).getSpcElement(component).getValueInFrequencyDomain();
-
     }
 
     /**
