@@ -17,7 +17,6 @@ import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.ArithmeticUtils;
 
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 
 /**
  * Source time function. <br>
@@ -40,11 +39,6 @@ public class SourceTimeFunction {
      * The number of steps in frequency domain. It must be a power of 2.
      */
     protected final int np;
-
-    /**
-     * timeLength [s]. It must be a tenth of a power of 2
-     */
-    protected final double tlen;
     protected final double samplingHz;
     /**
      * The length is NP
@@ -61,9 +55,15 @@ public class SourceTimeFunction {
         if (!checkValues(np, tlen, samplingHz))
             throw new IllegalArgumentException("np: " + np + ", tlen: " + tlen + ", samplingHz: " + samplingHz);
         this.np = np;
-        this.tlen = tlen;
         this.samplingHz = samplingHz;
         nptsInTimeDomain = np * 2 * computeLsmooth(np, tlen, samplingHz);
+    }
+
+    protected SourceTimeFunction(int np, int npts, double samplingHz, boolean tmp) {
+        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
+        this.np = np;
+        this.nptsInTimeDomain = npts;
+        this.samplingHz = samplingHz;
     }
 
     public static void main(String[] args) {
@@ -75,9 +75,6 @@ public class SourceTimeFunction {
         SourceTimeFunction boxcar = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
         SourceTimeFunction triangle = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
         SourceTimeFunction triangleA = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, halfDuration);
-
-        Complex[] c1 = boxcar.getSourceTimeFunctionInFrequencyDomain();
-        Complex[] c2 = triangle.getSourceTimeFunctionInFrequencyDomain();
 
         Trace trace1 = boxcar.getSourceTimeFunctionInTimeDomain();
         Trace trace2 = triangle.getSourceTimeFunctionInTimeDomain();
@@ -97,12 +94,7 @@ public class SourceTimeFunction {
      */
     public static SourceTimeFunction asymmetricTriangleSourceTimeFunction(int np, double tlen, double samplingHz,
                                                                 double halfDuration1, double halfDuration2) {
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return sourceTimeFunction;
-            }
-        };
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
         double deltaF = 1.0 / tlen;
         double h = 2. /(halfDuration1 + halfDuration2);
@@ -133,12 +125,7 @@ public class SourceTimeFunction {
      */
     public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
                                                                       double halfDuration) {
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return sourceTimeFunction;
-            }
-        };
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
@@ -160,12 +147,7 @@ public class SourceTimeFunction {
      */
     public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
             double halfDuration, double amplitudeCorrection) {
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return sourceTimeFunction;
-            }
-        };
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
@@ -193,12 +175,7 @@ public class SourceTimeFunction {
      */
     public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
                                                                     double halfDuration) {
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return sourceTimeFunction;
-            }
-        };
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
         final double deltaF = 1.0 / tlen; // omega
         final double constant = 2 * Math.PI * deltaF * halfDuration;
@@ -226,12 +203,7 @@ public class SourceTimeFunction {
      */
     public static final SourceTimeFunction smoothedRampSourceTimeFunction(int np, double tlen, double samplingHz,
                                                                           double halfDuration) {
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return sourceTimeFunction;
-            }
-        };
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
         final double deltaF = 1.0 / tlen; // omega
         final double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
@@ -276,12 +248,7 @@ public class SourceTimeFunction {
         double samplingHz = Double.parseDouble(parts[2]);
         Complex[] function = IntStream.range(0, np).mapToObj(i -> toComplex(lines.get(i + 2))).toArray(Complex[]::new);
 
-        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return function;
-            }
-        };
+        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz);
         stf.sourceTimeFunction = function;
         return stf;
     }
@@ -325,26 +292,6 @@ public class SourceTimeFunction {
         return stf;
     }
 
-    public int getNp() {
-        return np;
-    }
-
-    public double getTlen() {
-        return tlen;
-    }
-
-    public double getSamplingHz() {
-        return samplingHz;
-    }
-
-    /**
-     * @return source time function in frequency domain. the length is
-     * {@link #np}
-     */
-    public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-        return sourceTimeFunction;
-    }
-
     /**
      * @param outPath Path for a file.
      * @param options for writing the file
@@ -355,12 +302,11 @@ public class SourceTimeFunction {
         Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            pw.println("#np tlen samplingHz");
-            pw.println(np + " " + tlen + " " + samplingHz);
+            pw.println("#np npts samplingHz");
+            pw.println(np + " " + nptsInTimeDomain + " " + samplingHz);
             for (int i = 0; i < sourceTimeFunction.length; i++)
                 pw.println(sourceTimeFunction[i].getReal() + " " + sourceTimeFunction[i].getImaginary());
         }
-
     }
 
     /**
@@ -388,50 +334,35 @@ public class SourceTimeFunction {
     }
 
     /**
-     * Operates convolution for data in <b>time</b> domain.
-     *
-     * @param data to be convolved in <b>time</b> domain. The data is convolved
-     *             after FFTed.
-     * @return convolute data in <b>time</b> domain
+     * Operates convolution for data in <b>time</b> domain. The data is convolved after conducting FFT.
+     * @param data (double[]) Data to be convolved in <b>time</b> domain. Length must be {@link #nptsInTimeDomain}.
+     * @return (double[]) Convolved data in <b>time</b> domain.
      */
     public final double[] convolve(double[] data) {
         if (data.length != nptsInTimeDomain)
-            throw new IllegalArgumentException("Input data is invalid (length): " + data.length + " " + nptsInTimeDomain);
+            throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + nptsInTimeDomain);
         Complex[] dataInFrequencyDomain = fft.transform(data, TransformType.FORWARD);
         dataInFrequencyDomain = Arrays.copyOfRange(dataInFrequencyDomain, 0, np + 1);
-        Complex[] convolvedDataInFrequencyDomain = convolve(dataInFrequencyDomain);
+        Complex[] convolvedDataInFrequencyDomain = convolve(dataInFrequencyDomain, true);
         return inverseFourierTransform(convolvedDataInFrequencyDomain);
     }
 
     /**
      * Operates convolution for data in <b>frequency</b> domain.
-     *
-     * @param data to be convolved in <b>frequency</b> domain. The length must be
-     *             {@link #np} + 1
-     * @return convolute data in <b>frequency</b> domain
+     * @param data (Complex[]) Data to be convolved in <b>frequency</b> domain. Length must be {@link #np} + 1.
+     * @param parallel (boolean) Whether to conduct parallel computations.
+     * @return (Complex[]) Convolved data in <b>frequency</b> domain.
      */
-    public final Complex[] convolve(Complex[] data) {
+    public final Complex[] convolve(Complex[] data, boolean parallel) {
         if (data.length != np + 1)
-            throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np+1));
-        return IntStream.range(0, np + 1).parallel()
-                .mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
-    }
-
-    public final Complex[] convolveSerial(Complex[] data) {
-        if (data.length != np + 1)
-            throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np+1));
-        return IntStream.range(0, np + 1)
-                .mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
-    }
-
-    /**
-     * @param sacData to convolute with this.
-     * @return convoluted SACData
-     */
-    public final SACFileAccess convolve(SACFileAccess sacData) {
-        double[] data = sacData.getData();
-        double[] convolute = convolve(data);
-        return sacData.setSACData(convolute);
+            throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np + 1));
+        if (parallel) {
+            return IntStream.range(0, np + 1).parallel()
+                    .mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
+        } else {
+            return IntStream.range(0, np + 1)
+                    .mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
+        }
     }
 
     /**

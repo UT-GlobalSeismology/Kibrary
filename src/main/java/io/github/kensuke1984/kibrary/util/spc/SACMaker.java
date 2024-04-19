@@ -228,12 +228,16 @@ public class SACMaker implements Runnable {
      * @return (boolean) Whether the 2 spectrum files have the same parameters.
      */
     public static boolean check(SPCFileAccess spc1, SPCFileAccess spc2) {
+        if (spc1.tlen() != spc2.tlen()) {
+            System.err.println("!! tlens are different: " + spc1.tlen() + " , " + spc2.tlen());
+            return false;
+        }
         if (spc1.np() != spc2.np()) {
             System.err.println("!! nps are different: " + spc1.np() + " , " + spc2.np());
             return false;
         }
-        if (spc1.tlen() != spc2.tlen()) {
-            System.err.println("!! tlens are different: " + spc1.tlen() + " , " + spc2.tlen());
+        if (spc1.omegai() != spc2.omegai()) {
+            System.err.println("!! omegais are different: " + spc1.omegai() + " , " + spc2.omegai());
             return false;
         }
         if (spc1.nbody() != spc2.nbody()) {
@@ -273,7 +277,8 @@ public class SACMaker implements Runnable {
         if (secondarySPC != null)
             body.addBody(secondarySPC.getSpcBodyList().get(0));
 
-        compute(body);
+        if (sourceTimeFunction != null) body.applySourceTimeFunction(sourceTimeFunction);
+        body.convertToTimeDomain(npts, samplingHz, primarySPC.omegai());
 
         for (SACComponent component : components) {
             SACExtension ext;
@@ -295,7 +300,9 @@ public class SACMaker implements Runnable {
         if (temporalDifferentiation) {
             SPCBody bodyT = body.copy();
             bodyT.differentiate(primarySPC.tlen());
-            compute(bodyT);
+            if (sourceTimeFunction != null) bodyT.applySourceTimeFunction(sourceTimeFunction);
+            bodyT.convertToTimeDomain(npts, samplingHz, primarySPC.omegai());
+
             for (SACComponent component : components) {
                 SACExtension extT = sourceTimeFunction != null
                         ? SACExtension.valueOfConvolutedTemporalPartial(component)
@@ -330,15 +337,6 @@ public class SACMaker implements Runnable {
         sac.withInt(SACHeaderEnum.NPTS, npts);
         sac.withValue(SACHeaderEnum.E, MathAid.roundForPrecision(npts / samplingHz));
         sac.withValue(SACHeaderEnum.DELTA, MathAid.roundForPrecision(1.0 / samplingHz));
-    }
-
-    /**
-     * Compute {@link SPCBody} for write.
-     * @param body ({@link SPCBody}) SPC body to compute.
-     */
-    private void compute(SPCBody body) {
-        if (sourceTimeFunction != null) body.applySourceTimeFunction(sourceTimeFunction);
-        body.convertToTimeDomain(npts, samplingHz, primarySPC.omegai());
     }
 
     public void setComponents(Set<SACComponent> components) {

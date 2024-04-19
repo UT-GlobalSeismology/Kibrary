@@ -73,7 +73,7 @@ public class SPCElement {
      * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-        uFreq = sourceTimeFunction.convolve(uFreq);
+        uFreq = sourceTimeFunction.convolve(uFreq, false);
     }
 
     /**

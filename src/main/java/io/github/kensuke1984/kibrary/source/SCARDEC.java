@@ -1,16 +1,12 @@
 package io.github.kensuke1984.kibrary.source;
 
-import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-
-import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.TransformType;
-
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -18,12 +14,27 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.TransformType;
+
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
  * This class is <b>IMMUTABLE</b>.
@@ -412,12 +423,7 @@ public class SCARDEC {
         Complex[] cutSTF = new Complex[np];
         System.arraycopy(stfFreq, 0, cutSTF, 0, 1024);
 
-        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
-            @Override
-            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-                return sourceTimeFunction;
-            }
-        };
+        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz);
         stf.sourceTimeFunction = cutSTF;
         return stf;
     }

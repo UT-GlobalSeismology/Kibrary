@@ -104,13 +104,13 @@ public class DataFeatureHistogram extends Operation {
      */
     private Path extraBasicPath;
     /**
-     * Path of a data entry file.
-     */
-    private Path dataEntryPath;
-    /**
      * Path of a timewindow data file of improvement windows.
      */
     private Path improvementWindowPath;
+    /**
+     * Path of a data entry file.
+     */
+    private Path dataEntryPath;
 
     /**
      * Color of histograms to create.

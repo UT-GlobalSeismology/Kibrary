@@ -323,63 +323,62 @@ public class ThreeDPartialMaker {
     }
 
     /**
+     * 座標軸回転に必要な角度の計算 Z軸を中心に angleForTensor：
+     * bpの（ローカル座標）を回してfpのテンソルに合わせる（Zは一致しているため） angleForVector 得られたｆiに対する応答を回転する
+     * （北極に持って行って、東西南北ベースに力を入れているのでそれを大円内に戻す）
+     */
+    private void setAngles() {
+        HorizontalPosition eventPosition = fp.getSourcePosition();
+        HorizontalPosition observerPosition = bp.getSourcePosition();
+        HorizontalPosition pixelPosition = bp.getReceiverPosition();
+        angleForTensor = Earth.computeAzimuthRad(pixelPosition, observerPosition) - Earth.computeAzimuthRad(pixelPosition, eventPosition);
+
+        angleForVector = 2 * Math.PI - Earth.computeAzimuthRad(observerPosition, eventPosition);
+
+//      System.out.println(event + " " + station + " " + point);
+//      System.out.println(angleForTensor*180/Math.PI + " " + angleForVector*180/Math.PI);
+    }
+
+    /**
      * Check whether the pair of fp and bp is valid for making partials.
-     *
-     * @param fp forward propagation
-     * @param bp backward propagation
+     * @param fp ({@link SPCFileAccess}) Forward propagation spectrum file.
+     * @param bp ({@link SPCFileAccess}) Backward propagation spectrum file.
      * @return (boolean) Whether the pair of fp and bp is valid for making partials.
      */
     private static boolean isGoodPair(SPCFileAccess fp, SPCFileAccess bp) {
-        boolean validity = true;
-
-        if (fp.nbody() != bp.nbody()) {
-            System.err.println("nbodies are different. fp, bp: " + fp.nbody() + " ," + bp.nbody());
-            validity = false;
-        }
-        if (validity) {
-            double[] fpR = fp.getBodyR();
-            double[] bpR = bp.getBodyR();
-            validity = Arrays.equals(fpR, bpR);
-            if (!validity) {
-                System.err.println("the depths are invalid(different) as below  fp : bp");
-                for (int i = 0; i < fpR.length; i++)
-                    System.err.println(fpR[i] + " : " + bpR[i]);
-            }
-        }
-        if (fp.omegai() != bp.omegai()) {
-            System.err.println("Omegais are different. fp, bp: " + fp.omegai() + ", " + bp.omegai());
-            validity = false;
+        if (fp.tlen() != bp.tlen()) {
+            System.err.println("!! tlens are different: " + fp.tlen() + " , " + bp.tlen());
+            return false;
         }
         if (fp.np() != bp.np()) {
-            System.err.println("nps are different. fp, bp: " + fp.np() + ", " + bp.np());
-            validity = false;
+            System.err.println("!! nps are different: " + fp.np() + " , " + bp.np());
+            return false;
         }
-        if (fp.tlen() != bp.tlen()) {
-            System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
-            validity = false;
+        if (fp.omegai() != bp.omegai()) {
+            System.err.println("!! omegais are different: " + fp.omegai() + " , " + bp.omegai());
+            return false;
         }
-
-        // check if voxel IDs are same
-//        if (!(fp.getReceiverID().equals(bp.getReceiverID()))) {
-//            System.err.println(
-//                    "Perturbation points are different fp, bp: " + fp.getReceiverID() + " ," + bp.getReceiverID());
-//            validity = false;
-//        }
-
-        // check if voxel positions are same
+        if (fp.nbody() != bp.nbody()) {
+            System.err.println("!! Numbers of bodies (nbody) are different: " + fp.nbody() + " , " + bp.nbody());
+            return false;
+        }
+        if (!Arrays.equals(fp.getBodyR(), bp.getBodyR())) {
+            System.err.println("!! Depths are different as below:");
+            for (int i = 0; i < fp.nbody(); i++)
+                System.err.println("    " + fp.getBodyR()[i] + " , " + bp.getBodyR()[i]);
+            return false;
+        }
+        // check if pixel positions are same
         if (!fp.getReceiverPosition().equals(bp.getReceiverPosition())) {
-            System.err.print("Voxel positions are different: ");
-            System.err.println("(" + fp.getReceiverPosition().getLatitude() + ", "
-                    + fp.getReceiverPosition().getLongitude() + "), (" + bp.getReceiverPosition().getLatitude() + ", "
-                    + bp.getReceiverPosition().getLongitude() + ")");
-            validity = false;
+            System.err.println("!! Pixel positions are different: "
+                    + fp.getReceiverPosition().toString() + " , " + bp.getReceiverPosition().toString());
+            return false;
         }
-
-        return validity;
+        return true;
     }
 
     //TODO what is this for? Is this needed for FP catalog?
-    // If this is unneeded, delete. If this is needed, merge with isGoodPermissive() above. 2023/8/27 otsuru
+    // If this is unneeded, delete. If this is needed, merge with isGoodPair() above. 2023/8/27 otsuru
     /**
      * @param fp
      * @param bp
@@ -457,8 +456,7 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * Create a {@link SPCFileAccess} from a forward propagation and a
-     * backward propagation.
+     * Create a {@link SPCFileAccess} from a forward propagation and a backward propagation.
      *
      * @param type {@link PartialType}
      * @return partial spectrum file
@@ -579,10 +577,10 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
         Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculus(component, iBody, iBody, type);
+                : computeTensorCulculus(component, iBody, iBody, type, true);
 
         if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolve(partial_frequency);
+            partial_frequency = sourceTimeFunction.convolve(partial_frequency, true);
 
         //test tapper
 //		partial_frequency = rightTapper(partial_frequency); //TODO
@@ -608,10 +606,10 @@ public class ThreeDPartialMaker {
             throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
 
         Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculusSerial(component, iBody, iBody, type);//diff
+                : computeTensorCulculus(component, iBody, iBody, type, false);//diff
 
         if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolveSerial(partial_frequency);//diff
+            partial_frequency = sourceTimeFunction.convolve(partial_frequency, false);//diff
 
         //test tapper
         partial_frequency = rightTapper(partial_frequency); //diff  TODO
@@ -636,26 +634,17 @@ public class ThreeDPartialMaker {
 
         long t1i = System.currentTimeMillis();
         Complex[] partial_frequency = type == PartialType.Q3D ? computeQpartial(component, iBody)
-                : computeTensorCulculusSerial(component, iBody, iBody, type);
+                : computeTensorCulculus(component, iBody, iBody, type, false);
         long t1f = System.currentTimeMillis();
 //		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
 
         if (null != sourceTimeFunction)
-            partial_frequency = sourceTimeFunction.convolveSerial(partial_frequency);
+            partial_frequency = sourceTimeFunction.convolve(partial_frequency, false);
 
         //test tapper
         partial_frequency = rightTapper(partial_frequency); //TODO
 
         return partial_frequency;
-    }
-
-    /**
-     * The structure is used for computation Q
-     *
-     * @param structure {@link PolynomialStructure_old}
-     */
-    public void setStructure(PolynomialStructure structure) {
-        fujiConversion = new FujiConversion(structure);
     }
 
     private Complex[] computeQpartial(SACComponent component, int iBody) {
@@ -667,118 +656,37 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * compute tensor culculus of u Cijkl eta
-     *
-     * @param component {@link SACComponent}
-     * @param iBody     index for sacbody
-     * @param type      {@link PartialType}
-     * @return uCe
-     */
-    private Complex[] computeTensorCulculus(SACComponent component, int iBody, PartialType type) {
-        TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBody),
-                bp.getSpcBodyList().get(iBody), type.getWeightingFactor(), angleForTensor, true);
-        return component == SACComponent.Z ? tensorcalc.calc(0)
-                : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
-    }
-
-    /**
-     * Used for BP/FP catalog
-     * @param component
+     * Compute tensor culculus of u Cijkl eta.
+     * Use of BP/FP catalog is supported.
+     * @param component ({@link SACComponent}) Component to compute for.
      * @param iBodyBp
      * @param iBodyFp
-     * @param type
+     * @param type ({@link PartialType})
+     * @param parallel (boolean) Whether to conduct parallel computations.
      * @return
      * @author anselme
      */
-    private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
+    private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type, boolean parallel) {
         SPCBody bpBody = null;
         SPCBody fpBody = null;
         if (bp2 == null) {
             bpBody = bp.getSpcBodyList().get(iBodyBp);
             fpBody = fp.getSpcBodyList().get(iBodyFp);
-//			System.err.println("No interpolation performed");
-//			System.out.println("DEBUG BP noInterp: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
-        }
-        else if (fp2 == null) {
-            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
-                    , bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+        } else if (fp2 == null) {
+            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp), bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
             fpBody = fp.getSpcBodyList().get(iBodyFp);
-//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+        } else {
+            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp), bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+            fpBody = SPCBody.interpolate(fp.getSpcBodyList().get(iBodyFp), fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
         }
-        else {
-            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
-                    , bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
-            fpBody = SPCBody.interpolate(fp.getSpcBodyList().get(iBodyFp)
-                    , fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
-//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
-//			System.out.println("DEBUG FP: " +  fpBody.getSpcComponents()[8].getValueInFrequencyDomain()[10]);
-        }
-//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
-        TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
-                bpBody, type.getWeightingFactor(), angleForTensor, true);
-        return component == SACComponent.Z ? tensorcalc.calc(0)
-                : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
-    }
-
-    /**
-     * @param component
-     * @param iBodyBp
-     * @param iBodyFp
-     * @param type
-     * @return
-     * @author anselme
-     */
-    private Complex[] computeTensorCulculusSerial(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
-        SPCBody bpBody = null;
-        SPCBody fpBody = null;
-        if (bp2 == null) {
-            bpBody = bp.getSpcBodyList().get(iBodyBp);
-            fpBody = fp.getSpcBodyList().get(iBodyFp);
-//			System.err.println("No interpolation performed");
-//			System.out.println("DEBUG BP noInterp: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
-        }
-        else if (fp2 == null) {
-            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
-                    , bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
-            fpBody = fp.getSpcBodyList().get(iBodyFp);
-
-            //TODO
-           // if (fp.getObserverID().equals("XY100") && iBodyBp == 0 && iBodyFp == 0) {
-           //     System.err.println(component + " " + type);
-           //     for (int k = 0; k < bpBody.getNumberOfComponent(); k++)
-           //         System.err.println("DEBUG BP: " +  bpBody.getSpcComponent(k).getValueInFrequencyDomain()[512]);
-           //     System.err.println();
-           // }
-//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
-        }
-        else {
-            bpBody = SPCBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
-                    , bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
-            fpBody = SPCBody.interpolate(fp.getSpcBodyList().get(iBodyFp)
-                    , fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
-//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
-//			System.out.println("DEBUG FP: " +  fpBody.getSpcComponents()[8].getValueInFrequencyDomain()[10]);
-        }
-//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
         if (type.isDensity()) {
             double tlen = bp.tlen();
             TensorCalculationURhoE tensorcalc = new TensorCalculationURhoE(fpBody, bpBody, angleForTensor, tlen);
-            return component == SACComponent.Z ? tensorcalc.calc(0)
-                    : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+            return component == SACComponent.Z ? tensorcalc.calc(0) : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+        } else {
+            TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody, bpBody, type.getWeightingFactor(), angleForTensor, parallel);
+            return component == SACComponent.Z ? tensorcalc.calc(0) : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
         }
-        else {
-            TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
-                    bpBody, type.getWeightingFactor(), angleForTensor, false);
-            return component == SACComponent.Z ? tensorcalc.calc(0)
-                    : rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
-        }
-    }
-
-    /**
-     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to use. Set this null when none is to be applied.
-     */
-    public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-        this.sourceTimeFunction = sourceTimeFunction;
     }
 
     /**
@@ -821,23 +729,6 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * 座標軸回転に必要な角度の計算 Z軸を中心に angleForTensor：
-     * bpの（ローカル座標）を回してfpのテンソルに合わせる（Zは一致しているため） angleForVector 得られたｆiに対する応答を回転する
-     * （北極に持って行って、東西南北ベースに力を入れているのでそれを大円内に戻す）
-     */
-    private void setAngles() {
-        HorizontalPosition event = fp.getSourcePosition();
-        HorizontalPosition station = bp.getSourcePosition();
-        HorizontalPosition point = bp.getReceiverPosition();
-        angleForTensor = Earth.computeAzimuthRad(point, station) - Earth.computeAzimuthRad(point, event);
-
-        angleForVector = 2 * Math.PI - Earth.computeAzimuthRad(station, event);
-
-//		System.out.println(event + " " + station + " " + point);
-//		System.out.println(angleForTensor*180/Math.PI + " " + angleForVector*180/Math.PI);
-    }
-
-    /**
      * @param complex
      * @return
      * @author anselme
@@ -853,6 +744,22 @@ public class ThreeDPartialMaker {
         }
 
         return tappered;
+    }
+
+    /**
+     * The structure is used for computation Q
+     *
+     * @param structure {@link PolynomialStructure_old}
+     */
+    public void setStructure(PolynomialStructure structure) {
+        fujiConversion = new FujiConversion(structure);
+    }
+
+    /**
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to use. Set this null when none is to be applied.
+     */
+    public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
+        this.sourceTimeFunction = sourceTimeFunction;
     }
 
 }
