@@ -143,7 +143,7 @@ public final class TimewindowDataFile {
                     else
                         dos.writeShort(-1);
                 }
-                dos.writeByte(info.getComponent().valueOf());
+                dos.writeByte(info.getComponent().getNumber());
                 float startTime = (float) info.startTime;
                 float endTime = (float) info.endTime;
                 dos.writeFloat(startTime);
@@ -257,7 +257,7 @@ public final class TimewindowDataFile {
         }
         Phase[] usablephases = new Phase[tmpset.size()];
         usablephases = tmpset.toArray(usablephases);
-        SACComponent component = SACComponent.getComponent(bb.get());
+        SACComponent component = SACComponent.ofNumber(bb.get());
         double startTime = bb.getFloat();
         double endTime = bb.getFloat();
         return new TimewindowData(startTime, endTime, observer, event, component, usablephases);

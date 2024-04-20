@@ -62,7 +62,7 @@ public final class FujiConversion {
                 Complex[] uQ = new Complex[body.getNElement()];
                 double omegaOverOmega0 = (ip + 1) * domega / omega0;
                 for (int iComponent = 0; iComponent < body.getNElement(); iComponent++) {
-                    Complex u = body.getSpcElement(SACComponent.getComponent(iComponent + 1))
+                    Complex u = body.getSpcElement(SACComponent.ofNumber(iComponent + 1))
                             .getValueInFrequencyDomain()[ip];
 
 

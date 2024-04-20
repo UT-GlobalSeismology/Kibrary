@@ -69,7 +69,7 @@ public final class VSConversion {
             for (int ip = 0; ip < np + 1; ip++) {
                 Complex[] uIm = new Complex[body.getNElement()];
                 for (int iComponent = 0; iComponent < body.getNElement(); iComponent++) {
-                    Complex u = body.getSpcElement(SACComponent.getComponent(iComponent + 1))
+                    Complex u = body.getSpcElement(SACComponent.ofNumber(iComponent + 1))
                             .getValueInFrequencyDomain()[ip];
                     uIm[iComponent] = u.multiply(fact);
                 }

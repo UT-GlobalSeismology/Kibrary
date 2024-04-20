@@ -221,11 +221,11 @@ public class SPCBody {
      * @return ({@link SPCElement}) Element for the tensor component.
      */
     public SPCElement getSpcElement(SPCTensorComponent tensorComponent) {
-        return spcElements[tensorComponent.valueOf() - 1];
+        return spcElements[tensorComponent.getNumber() - 1];
     }
 
     public SPCElement getSpcElement(SACComponent sacComponent) {
-        return spcElements[sacComponent.valueOf() - 1];
+        return spcElements[sacComponent.getNumber() - 1];
     }
 
     public SPCElement getSpcElement(int n) {
@@ -238,7 +238,7 @@ public class SPCBody {
      * @return (double[]) Data for the specified component in time domain [m/s].
      */
     public double[] getTimeseries(SACComponent component) {
-        return spcElements[component.valueOf() - 1].getTimeseries();
+        return spcElements[component.getNumber() - 1].getTimeseries();
     }
 
 }

@@ -4,7 +4,6 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * 時間シフトに対するパラメタ情報　du/dtに対するm (Am=d)における
@@ -68,12 +67,6 @@ public class TimeReceiverSideParameter implements UnknownParameter {
         if (variableType != other.variableType)
             return false;
         return true;
-    }
-
-    @Override
-    @Deprecated
-    public PartialType getPartialType() {
-        return PartialType.of(PARAMETER_TYPE, variableType);
     }
 
     @Override

@@ -1,10 +1,9 @@
-package io.github.kensuke1984.kibrary.util.spc;
+package io.github.kensuke1984.kibrary.waveform;
 
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
-import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
 
 /**
  * Partial type, which can be specified as a combination of {@link ParameterType} and {@link VariableType}.
@@ -13,9 +12,8 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  *
  * @author Kensuke Konishi
  * @since a long time ago
- * TODO move into waveform
  */
-public enum PartialType {
+enum PartialType {
 
     RHO1D(0), LAMBDA1D(1), MU1D(2), KAPPA1D(3), LAMBDA2MU1D(4),
     A1D(11), C1D(12), F1D(13), L1D(14), N1D(15),
@@ -28,39 +26,34 @@ public enum PartialType {
     TIME_SOURCE(80), TIME_RECEIVER(90);
     // CAUTION: values must be in -128~127 (range of byte)!!
 
-    private int value;
+    private int number;
 
-    PartialType(int n) {
-        value = n;
+    private PartialType(int number) {
+        this.number = number;
     }
 
-    public int getValue() {
-        return value;
+    int getNumber() {
+        return number;
     }
 
-    public static PartialType ofNumber(int n) {
-        return Arrays.stream(PartialType.values()).filter(type -> type.value == n).findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Input n " + n + " is invalid."));
+    static PartialType ofNumber(int n) {
+        return Arrays.stream(PartialType.values()).filter(type -> type.number == n).findAny()
+                .orElseThrow(() -> new IllegalArgumentException("No PartialType for " + n + "."));
     }
 
-    public boolean is1D() {
-        return 0 <= value && value < 30;
+    boolean is1D() {
+        return 0 <= number && number < 30;
     }
 
-    public boolean is3D() {
-        return 30 <= value && value < 60;
+    boolean is3D() {
+        return 30 <= number && number < 60;
     }
 
-    public boolean isTimePartial() {
-        return 80 <= value;
+    boolean isTimePartial() {
+        return 80 <= number;
     }
 
-    public boolean isDensity() {
-        return value == 0 || value == 30;
-    }
-
-    //TODO remove public
-    public static PartialType of(ParameterType parameterType, VariableType variableType) {
+    static PartialType of(ParameterType parameterType, VariableType variableType) {
         if (parameterType.equals(ParameterType.LAYER)) {
             switch (variableType) {
             case RHO: return PartialType.RHO1D;
@@ -71,7 +64,7 @@ public enum PartialType {
             case F: return PartialType.F1D;
             case L: return PartialType.L1D;
             case N: return PartialType.N1D;
-            default: throw new IllegalArgumentException("No corresponding PartialType");
+            default: throw new IllegalArgumentException("No corresponding PartialType.");
             }
         } else if (parameterType.equals(ParameterType.VOXEL)) {
             switch (variableType) {
@@ -83,25 +76,24 @@ public enum PartialType {
             case F: return PartialType.F3D;
             case L: return PartialType.L3D;
             case N: return PartialType.N3D;
-            default: throw new IllegalArgumentException("No corresponding PartialType");
+            default: throw new IllegalArgumentException("No corresponding PartialType.");
             }
         } else if (parameterType.equals(ParameterType.SOURCE)) {
             switch (variableType) {
             case TIME: return PartialType.TIME_SOURCE;
-            default: throw new IllegalArgumentException("No corresponding PartialType");
+            default: throw new IllegalArgumentException("No corresponding PartialType.");
             }
         } else if (parameterType.equals(ParameterType.RECEIVER)) {
             switch (variableType) {
             case TIME: return PartialType.TIME_RECEIVER;
-            default: throw new IllegalArgumentException("No corresponding PartialType");
+            default: throw new IllegalArgumentException("No corresponding PartialType.");
             }
         } else {
-            throw new IllegalArgumentException("No corresponding PartialType");
+            throw new IllegalArgumentException("No corresponding PartialType.");
         }
     }
 
-    //TODO remove public
-    public VariableType toVariableType() {
+    VariableType toVariableType() {
         switch (this) {
         case RHO1D: case RHO3D: return VariableType.RHO;
         case A1D: case A3D: return VariableType.A;
@@ -114,17 +106,16 @@ public enum PartialType {
         case LAMBDA2MU3D: return VariableType.LAMBDA2MU;
         case KAPPA3D: return VariableType.KAPPA;
         default:
-            throw new IllegalArgumentException("Illegal partial type");
+            throw new IllegalArgumentException("Unexpected partial type.");
         }
     }
 
-    //TODO remove public
-    public ParameterType toParameterType() {
+    ParameterType toParameterType() {
         if (is1D()) return ParameterType.LAYER;
         else if (is3D()) return ParameterType.VOXEL;
         else if (this == TIME_SOURCE) return ParameterType.SOURCE;
         else if (this == TIME_RECEIVER) return ParameterType.RECEIVER;
-        else throw new RuntimeException("unexpected");
+        else throw new RuntimeException("Unexpected partial type.");
     }
 
 }

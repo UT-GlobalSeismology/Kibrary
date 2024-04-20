@@ -16,7 +16,6 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 import io.github.kensuke1984.kibrary.voxel.Physical1DParameter;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;

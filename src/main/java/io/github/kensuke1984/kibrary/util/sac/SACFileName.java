@@ -7,7 +7,6 @@ import java.nio.file.Path;
 
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Style of names of SAC files. (SAC: seismic analysis code)
@@ -19,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * The names take the form:
  * <ul>
  * <li> (synthetic) "ObserverID.{@link GlobalCMTID}.{@link SACExtension}" </li>
- * <li> (parital) "ObserverID.{@link GlobalCMTID}.{@link PartialType}.x.y.z.{@link SACExtension}" </li>
+ * <li> (parital) "ObserverID.{@link GlobalCMTID}.partialType.x.y.z.{@link SACExtension}" </li>
  * </ul>
  * ObserverID takes the form "station_network", where station and network are String with 8 or less characters.
  * x, y, z are also String.
@@ -35,7 +34,6 @@ public class SACFileName extends File {
     private String networkCode;
     private GlobalCMTID globalCMTID;
     private SACExtension extension;
-    private PartialType partialType;
     private String x, y, z;
     private WaveformType sacType;
 
@@ -99,155 +97,71 @@ public class SACFileName extends File {
     }
 
     /**
-     * 観測波形か理論波形（偏微分係数波形含まない）
-     *
-     * @param fileName to check
-     * @return if the fileName is observed or synthetic (not partial
-     */
-    private static boolean isOBSorSYN(String fileName) {
-        return isSacFileName(fileName) && fileName.split("\\.").length == 3;
-    }
-
-    public static boolean isOBS(String fileName) {
-        return getSacExtension(fileName).isOBS();
-    }
-
-    /**
-     * @param fileName to check
-     * @return 理論波形かどうか（偏微分係数波形含まない）
-     */
-    public static boolean isSYN(String fileName) {
-        if (!isOBSorSYN(fileName))
-            return false;
-        SACExtension extension = getSacExtension(fileName);
-        return !extension.isOBS() && !extension.isTemporalPartial();
-    }
-
-    /**
-     * @param fileName
-     * @return
-     * @author anselme
-     */
-    public static boolean isTemporalPartial(String fileName) {
-        SACExtension extension = getSacExtension(fileName);
-        return extension.isTemporalPartial();
-    }
-
-    private static SACExtension getSacExtension(String fileName) {
-        String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
-        return SACExtension.valueOf(suffix);
-    }
-
-    private static SACComponent getComponent(String fileName) {
-        return getSacExtension(fileName).getComponent();
-    }
-
-    private static PartialType getSacFileType(String fileName) {
-        String[] parts = fileName.split("\\.");
-        if (parts.length != 7) return null;
-        String typeStr = parts[2].replace("par", "PAR");
-        return PartialType.valueOf(typeStr);
-    }
-
-    private static String getEventID(String fileName) {
-        return fileName.split("\\.")[1];
-    }
-
-    private static String getStationCode(String fileName) {
-        return fileName.split("\\.")[0].split("_")[0];
-    }
-
-    private static String getNetworkCode(String fileName) {
-        return fileName.split("\\.")[0].split("_")[1];
-    }
-
-    private static String getX(String fileName) {
-        String[] parts = fileName.split("\\.");
-        return parts.length != 7 ? null : parts[3];
-    }
-
-    private static String getY(String fileName) {
-        if (fileName.split("\\.").length != 7) return null;
-        return fileName.split("\\.")[4];
-    }
-
-    private static String getZ(String fileName) {
-        if (fileName.split("\\.").length != 7) return null;
-        return fileName.split("\\.")[5];
-    }
-
-    /**
-     * is an input filename sacfile or not?
-     *
-     * @param fileName for check can be a path of a file
-     * @return if the fileName is {@link SACFileName}
+     * Check whether the input file has a valid SAC file name.
+     * @param path (Path) File to check.
+     * @return (boolean) Whether the file is a valid {@link SACFileName}.
      */
     public static boolean isSacFileName(Path path) {
-        return isSacFileName(path.toFile());
+        return isSacFileName(path.getFileName().toString());
     }
 
     /**
-     * is an input filename sacfile or not?
-     *
-     * @param fileName for check can be a path of a file
-     * @return if the fileName is {@link SACFileName}
+     * Check whether the input file name is a valid SAC file name.
+     * @param fileName (String) Name of file to check.
+     * @return (boolean) Whether the name is a valid {@link SACFileName}.
      */
     public static boolean isSacFileName(String fileName) {
-        return isSacFileName(new File(fileName));
-    }
+        String[] parts = fileName.split("\\.");
+        String[] fields = parts[0].split("_");
 
-    /**
-     * is an input filename sacfile or not?
-     *
-     * @param file for check
-     * @return if the file is a valid {@link SACFileName}
-     */
-    public static boolean isSacFileName(File file) {
-        String fileName = file.getName();
-        String[] part = fileName.split("\\.");
-        String[] field = part[0].split("_");
-
-        if (part.length != 7 && part.length != 3)
+        if (parts.length != 7 && parts.length != 3)
             return false;
 
         // must include station and network
-        if (field.length != 2)
+        if (fields.length != 2)
             return false;
 
         // station and network must be 8 letters or shorter.
-        if (8 < field[0].length() || 8 < field[1].length())
+        if (8 < fields[0].length() || 8 < fields[1].length())
             return false;
 
         // test if it is a global cmt id
-        if (!GlobalCMTID.isGlobalCMTID(part[1]))
+        if (!GlobalCMTID.isGlobalCMTID(parts[1]))
             return false;
 
         try {
-            SACExtension.valueOf(part[part.length - 1]);
+            SACExtension.valueOf(parts[parts.length - 1]);
         } catch (Exception e) {
             return false;
         }
+
         return true;
     }
 
     private void readName(String fileName) {
         if (!isSacFileName(fileName))
             throw new IllegalArgumentException(fileName + " is an invalid sac file name");
-        extension = getSacExtension(fileName);
-        String eventID = getEventID(fileName);
+
+        String[] parts = fileName.split("\\.");
+
+        String eventID = parts[1];
         if (!GlobalCMTID.isGlobalCMTID(eventID))
             throw new IllegalArgumentException(fileName + " contains an invalid Global CMT ID");
         globalCMTID = new GlobalCMTID(eventID);
-        stationCode = getStationCode(fileName);
-        networkCode = getNetworkCode(fileName);
-        partialType = getSacFileType(fileName);
-        x = getX(fileName);
-        y = getY(fileName);
-        z = getZ(fileName);
-        if (isOBSorSYN(fileName))
-            sacType = isOBS(fileName) ? WaveformType.OBS : WaveformType.SYN;
-        else
+
+        stationCode = parts[0].split("_")[0];
+        networkCode = parts[0].split("_")[1];
+
+        x = (parts.length != 7) ? null : parts[3];
+        y = (parts.length != 7) ? null : parts[4];
+        z = (parts.length != 7) ? null : parts[5];
+
+        extension = SACExtension.valueOf(parts[parts.length - 1]);
+        if (parts.length == 3) {
+            sacType = extension.isOBS() ? WaveformType.OBS : WaveformType.SYN;
+        } else {
             sacType = WaveformType.PARTIAL;
+        }
     }
 
 
@@ -270,7 +184,7 @@ public class SACFileName extends File {
     }
 
     public SACComponent getComponent() {
-        return getComponent(getName());
+        return extension.getComponent();
     }
 
     public WaveformType getSacType() {
@@ -281,14 +195,14 @@ public class SACFileName extends File {
      * @return if it is observed
      */
     public boolean isOBS() {
-        return isOBS(getName());
+        return extension.isOBS();
     }
 
     /**
      * @return if it is synthetic (no partial included)
      */
     public boolean isSYN() {
-        return isSYN(getName());
+        return !extension.isOBS() && !extension.isTemporalPartial();
     }
 
     /**
@@ -296,11 +210,7 @@ public class SACFileName extends File {
      * @author anselme
      */
     public boolean isTemporalPartial() {
-        return isTemporalPartial(getName());
-    }
-
-    public PartialType getPartialType() {
-        return partialType;
+        return extension.isTemporalPartial();
     }
 
     public GlobalCMTID getGlobalCMTID() {
@@ -311,10 +221,12 @@ public class SACFileName extends File {
         return stationCode + "_" + networkCode;
     }
 
+    @Deprecated
     public String getStationCode() { // TODO: delete
         return stationCode;
     }
 
+    @Deprecated
     public String getNetworkCode() { // TODO: delete
         return networkCode;
     }

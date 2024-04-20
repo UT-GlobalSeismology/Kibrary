@@ -9,27 +9,17 @@ package io.github.kensuke1984.kibrary.elastic;
  */
 
 public enum VariableType {
-    RHO(0),
+    RHO,
     // iso
-    Vp(1), Vs(2), Vb(3), R(22),
-    LAMBDA(4), MU(5), LAMBDA2MU(6), KAPPA(7),
+    Vp, Vs, Vb, R,
+    LAMBDA, MU, LAMBDA2MU, KAPPA,
     // TI
-    Vpv(8), Vph(9), Vsv(10), Vsh(11), ETA(12),
-    A(13), C(14), F(15), L(16), N(17), XI(18),
+    Vpv, Vph, Vsv, Vsh, ETA,
+    A, C, F, L, N, XI,
     // Q
-    Qmu(19), Qkappa(20),
+    Qmu, Qkappa,
     // others
-    TIME(21);
-
-    private int value;
-
-    VariableType(int n) {
-        value = n;
-    }
-
-    public int getValue() {
-        return value;
-    }
+    TIME;
 
     public boolean isDensity() {
         if (this == RHO) return true;
