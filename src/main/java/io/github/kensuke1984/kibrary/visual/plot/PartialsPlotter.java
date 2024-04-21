@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * @author otsuru
  * @since 2022/7/24
  */
-public class PartialWaveformPlotter extends Operation {
+public class PartialsPlotter extends Operation {
 
     /**
      * Number of fields per page on output pdf file.
@@ -155,7 +155,7 @@ public class PartialWaveformPlotter extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public PartialWaveformPlotter(Property property) throws IOException {
+    public PartialsPlotter(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 

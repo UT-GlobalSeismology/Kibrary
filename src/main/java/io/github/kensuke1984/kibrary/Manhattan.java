@@ -47,7 +47,7 @@ import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
-import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
+import io.github.kensuke1984.kibrary.visual.plot.PartialsPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
 import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
@@ -56,8 +56,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
 import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
-import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
-import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
+import io.github.kensuke1984.kibrary.waveform.PartialsAssembler3D;
+import io.github.kensuke1984.kibrary.waveform.PartialsBuilder1D;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
 /**
@@ -77,6 +77,7 @@ enum Manhattan {
     PolynomialStructurePlotter(3, PolynomialStructurePlotter.class),
     GreatArcMapper(5, GreatArcMapper.class),
     RaypathMapper(6, RaypathMapper.class),
+    RaypathSelection(7, RaypathSelection.class),
     // Data download 10
     DataRequestor(13, DataRequestor.class),
     DataLobby(14, DataLobby.class),
@@ -91,7 +92,6 @@ enum Manhattan {
     TimewindowMaker(31, TimewindowMaker.class),
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
-    RaypathSelection(34, RaypathSelection.class),
     TimewindowMerge(37, TimewindowMerge.class),
     StaticCorrectionMerge(38, StaticCorrectionMerge.class),
     StaticCorrectionForger(39, StaticCorrectionForger.class),
@@ -110,10 +110,10 @@ enum Manhattan {
     // Partial 60
     OneDPartialDSMSetup(60, OneDPartialDSMSetup.class),
     ThreeDPartialDSMSetup(61, ThreeDPartialDSMSetup.class),
-    PartialWaveformAssembler1D(62, PartialWaveformAssembler1D.class),
-    PartialWaveformAssembler3D(63, PartialWaveformAssembler3D.class),
+    PartialsBuilder1D(62, PartialsBuilder1D.class),
+    PartialsAssembler3D(63, PartialsAssembler3D.class),
     PartialIDMerge(64, PartialIDMerge.class),
-    PartialWaveformPlotter(65, PartialWaveformPlotter.class),
+    PartialsPlotter(65, PartialsPlotter.class),
     SensitivityKernelMapper(66, SensitivityKernelMapper.class),
     PartialsMovieMaker(67, PartialsMovieMaker.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
@@ -135,26 +135,26 @@ enum Manhattan {
     ModelSmoothener(84, ModelSmoothener.class),
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
-    OrthogonalityTest(88, OrthogonalityTest.class),
+    OrthogonalityTest(87, OrthogonalityTest.class),
     // Temporal 100
     ;
 
-    private Class<? extends Operation> c;
-    private int value;
+    private final Class<? extends Operation> operation;
+    private final int number;
 
-    Manhattan(int n, Class<? extends Operation> c) {
-        value = n;
-        this.c = c;
+    private Manhattan(int number, Class<? extends Operation> operation) {
+        this.number = number;
+        this.operation = operation;
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + "-" + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.number + "-" + m.operation.getSimpleName()));
     }
 
     static String numRange() {
         Manhattan[] all = values();
-        int min = Arrays.stream(all).mapToInt(m -> m.value).min().getAsInt();
-        int max = Arrays.stream(all).mapToInt(m -> m.value).max().getAsInt();
+        int min = Arrays.stream(all).mapToInt(m -> m.number).min().getAsInt();
+        int max = Arrays.stream(all).mapToInt(m -> m.number).max().getAsInt();
         return min + "-" + max;
     }
 
@@ -163,19 +163,19 @@ enum Manhattan {
      * Note that {@link #valueOf(String)}, which returns a {@link Manhattan} given a String of its name,
      * is already defined automatically.
      *
-     * @param n (int) The value to get a {@link Manhattan} for.
+     * @param number (int) The value to get a {@link Manhattan} for.
      * @return ({@link Manhattan}) The {@link Manhattan} corresponding to the value.
      */
-    static Manhattan valueOf(int n) {
-        return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
+    static Manhattan ofNumber(int number) {
+        return Arrays.stream(values()).filter(m -> m.number == number).findAny().get();
     }
 
     Class<? extends Operation> getOperation() {
-        return c;
+        return operation;
     }
 
     void writeDefaultPropertiesFile() throws ReflectiveOperationException {
-        c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
+        operation.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
 }

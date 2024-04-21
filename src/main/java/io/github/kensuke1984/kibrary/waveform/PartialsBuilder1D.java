@@ -76,7 +76,7 @@ import io.github.kensuke1984.kibrary.voxel.ParameterType;
  * @since a long time ago
  * @version 2021/12/24 renamed from Partial1DDatasetMaker to PartialWaveformAssembler1D
  */
-public class PartialWaveformAssembler1D extends Operation {
+public class PartialsBuilder1D extends Operation {
 
     private final Property property;
     /**
@@ -251,7 +251,7 @@ public class PartialWaveformAssembler1D extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public PartialWaveformAssembler1D(Property property) throws IOException {
+    public PartialsBuilder1D(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -325,7 +325,7 @@ public class PartialWaveformAssembler1D extends Operation {
         filter = designBandPassFilter();
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, null);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "built", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
