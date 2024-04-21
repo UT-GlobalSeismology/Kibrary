@@ -193,7 +193,7 @@ public class FilterDivider extends Operation {
         highFreq = property.parseDouble("highFreq", "0.08");
         filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
-        npts = property.parseInt("npts", String.valueOf(Integer.MAX_VALUE));
+        npts = property.parseInt("npts", String.valueOf(Integer.highestOneBit(Integer.MAX_VALUE)));
         if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
     }
 
@@ -258,7 +258,10 @@ public class FilterDivider extends Operation {
             SACHeaderAccess sacHeader = sacName.readHeader();
             if (entrySet != null && entrySet.contains(sacHeader.toDataEntry()) == false) return false;
             double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
-            if (sacHeader.getValue(SACHeaderEnum.DELTA) != delta) return false;
+            if (sacHeader.getValue(SACHeaderEnum.DELTA) != delta) {
+                System.err.println("! Sampling frequency is not " + sacSamplingHz + ", skipping: " + sacName.toString());
+                return false;
+            }
             return true;
         } catch (IOException e) {
             System.err.println("!! Failed to read header of " + sacName.toString() + ", skipping.");

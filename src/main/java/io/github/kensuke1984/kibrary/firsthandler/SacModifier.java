@@ -10,6 +10,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.external.SAC;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
@@ -241,8 +242,9 @@ class SacModifier {
         //  does not surpass the number of points at "E" (the end) of SAC file,
         //  and does not surpass the limit (maxNpts)
         Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modifiedPath);
-        int npts = (int) (Double.parseDouble(headerMap.get(SACHeaderEnum.E)) /
-                Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)));
+        double endTime = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
+        double delta = Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA));
+        int npts = (int) MathAid.roundForPrecision(endTime / delta) + 1;
         if (npts > maxNpts) npts = maxNpts;
         int newNpts = Integer.highestOneBit(npts);
         // cut SAC file to start at 0 (event time) and end at new npts

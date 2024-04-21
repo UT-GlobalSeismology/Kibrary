@@ -208,10 +208,10 @@ public class PartialWaveformPlotter extends Operation {
        Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
+       int num = 0;
        for (GlobalCMTID event : tendEvents) {
            for (String observerName : tendObserverNames) {
                Path eventObserverPath = outPath.resolve(event + "_" + observerName);
-               Files.createDirectories(eventObserverPath);
 
                for (SACComponent component : components) {
                    List<PartialID> useIDs = partialIDs.stream().filter(id ->
@@ -222,11 +222,14 @@ public class PartialWaveformPlotter extends Operation {
                            .collect(Collectors.toList());
                    if (useIDs.size() == 0) continue;
 
+                   Files.createDirectories(eventObserverPath);
                    String fileNameRoot = "plot_" + event + "_" + observerName + "_" + component;
                    createPlot(eventObserverPath, useIDs, fileNameRoot);
+                   num++;
                }
            }
        }
+       System.err.println("Created " + num + " plots.");
    }
 
    private boolean checkPosition(FullPosition position) {

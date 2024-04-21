@@ -30,6 +30,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 public class SACFileName extends File {
 
     private static final long serialVersionUID = 7479212925997274364L;
+
+    private static final int SYN_FILE_PARTS = 3;
+    private static final int PARTIAL_FILE_PARTS = 7;
+
     private String stationCode;
     private String networkCode;
     private GlobalCMTID globalCMTID;
@@ -114,7 +118,7 @@ public class SACFileName extends File {
         String[] parts = fileName.split("\\.");
         String[] fields = parts[0].split("_");
 
-        if (parts.length != 7 && parts.length != 3)
+        if (parts.length != SYN_FILE_PARTS && parts.length != PARTIAL_FILE_PARTS)
             return false;
 
         // must include station and network
@@ -157,7 +161,7 @@ public class SACFileName extends File {
         z = (parts.length != 7) ? null : parts[5];
 
         extension = SACExtension.valueOf(parts[parts.length - 1]);
-        if (parts.length == 3) {
+        if (parts.length == SYN_FILE_PARTS) {
             sacType = extension.isOBS() ? WaveformType.OBS : WaveformType.SYN;
         } else {
             sacType = WaveformType.PARTIAL;

@@ -335,7 +335,7 @@ public class SACMaker implements Runnable {
         sac.withValue(SACHeaderEnum.BAZ, eventPosition.computeBackAzimuthDeg(observer.getPosition()));
 
         sac.withInt(SACHeaderEnum.NPTS, npts);
-        sac.withValue(SACHeaderEnum.E, MathAid.roundForPrecision(npts / samplingHz));
+        sac.withValue(SACHeaderEnum.E, MathAid.roundForPrecision((npts - 1) / samplingHz));
         sac.withValue(SACHeaderEnum.DELTA, MathAid.roundForPrecision(1.0 / samplingHz));
     }
 

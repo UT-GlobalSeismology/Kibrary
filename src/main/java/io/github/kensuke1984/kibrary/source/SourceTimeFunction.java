@@ -137,7 +137,7 @@ public class SourceTimeFunction {
         int npts = SPCFileAid.findNpts(tlen, samplingHz);
         SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, npts, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
-        final double deltaF = 1.0 / tlen; // omega
+        final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
         for (int i = 0; i < np; i++) {
             double omegaTau = (i + 1) * constant;
