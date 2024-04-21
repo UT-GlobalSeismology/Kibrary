@@ -37,9 +37,10 @@ public class Property extends Properties {
 
         //~get manhattan~//
         Manhattan manhattan;
-        if (1 < args.length) {
+        String tag = null;
+        if (2 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
-        } else if (args.length == 1) {
+        } else if (0 < args.length) {
             try {
                 if (StringUtils.isNumeric(args[0])) {
                     manhattan = Manhattan.ofNumber(Integer.parseInt(args[0]));
@@ -52,28 +53,22 @@ public class Property extends Properties {
                 Manhattan.printList();
                 return;
             }
+            // set tag if exists
+            if (1 < args.length) tag = args[1];
         } else {
             Manhattan.printList();
             System.out.print("For which one do you want to create a property file? [" + Manhattan.numRange() + "] : ");
             String valInput = GadgetAid.readInputLine();
             if (valInput.isEmpty()) System.exit(9);
-            manhattan = Manhattan.ofNumber(Integer.parseInt(valInput));
+            String[] parts = valInput.split("\\s+");
+            // set manhattan using first parameter
+            manhattan = Manhattan.ofNumber(Integer.parseInt(parts[0]));
+            // set tag if exists
+            if (1 < parts.length) tag = parts[1];
         }
 
         //~output file~//
-        manhattan.writeDefaultPropertiesFile();
-    }
-
-    /**
-     * Generate a path of a properties file, for a specified class.
-     * @param classInstance (Class) The class to use for the file name.
-     * @return (Path) Generated path for a new properties file.
-     *
-     * @since 2021/12/12
-     * @author otsuru
-     */
-    public static Path generatePath(Class<?> classInstance) {
-        return Paths.get(classInstance.getSimpleName() + GadgetAid.getTemporaryString() + ".properties");
+        manhattan.writeDefaultPropertiesFile(tag);
     }
 
     /**

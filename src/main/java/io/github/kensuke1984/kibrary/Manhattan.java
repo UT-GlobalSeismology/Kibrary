@@ -174,8 +174,10 @@ enum Manhattan {
         return operation;
     }
 
-    void writeDefaultPropertiesFile() throws ReflectiveOperationException {
-        operation.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
+    void writeDefaultPropertiesFile(String tag) throws ReflectiveOperationException {
+        operation.getMethod("writeDefaultPropertiesFile", String.class).invoke(null, tag);
+        // Return this to the following when no parameters are needed:
+        //operation.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
 }
