@@ -89,8 +89,8 @@ enum Brooklyn {
     WeightingHandler(70, WeightingHandler.class),
     VectorFile(71, VectorFile.class),
     MatrixFile(72, MatrixFile.class),
-    PerturbationComparison(73, PerturbationComparison.class),
-    DiagATAExtract(74, DiagATAExtract.class);
+    DiagATAExtract(73, DiagATAExtract.class),
+    PerturbationComparison(74, PerturbationComparison.class),
     // Temporal 100
     ;
 
