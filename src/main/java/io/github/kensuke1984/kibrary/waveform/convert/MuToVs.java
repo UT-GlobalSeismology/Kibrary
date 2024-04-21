@@ -1,34 +1,11 @@
 package io.github.kensuke1984.kibrary.waveform.convert;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
-
-import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
-import io.github.kensuke1984.kibrary.util.addons.Phases;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.voxel.ParameterType;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
-import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
 
 public class MuToVs {
 
     public static void main(String[] args) throws IOException {
+/*
         Path partialIDPath = Paths.get(args[0]);
         Path partialPath = Paths.get(args[1]);
 
@@ -76,29 +53,7 @@ public class MuToVs {
             writer.addPartialID(partial);
 
         writer.close();
-    }
-
-    private static int whichTimewindow(PartialID partial, PartialID[] partialsOrder) {
-        for (int i = 0; i < partialsOrder.length; i++) {
-            PartialID par = partialsOrder[i];
-            if (partial.getGlobalCMTID().equals(par.getGlobalCMTID())
-                    && partial.getObserver().equals(par.getObserver())
-                    && partial.getSacComponent().equals(par.getSacComponent())
-                    && new Phases(partial.getPhases()).equals(new Phases(par.getPhases()))
-                    && Math.abs(partial.getStartTime() - par.getStartTime()) < 1.01) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private static int whichUnknown(PartialID partial, FullPosition[] locations) {
-        for (int i = 0; i < locations.length; i++) {
-            if (partial.getVoxelPosition().equals(locations[i])) {
-                return i;
-            }
-        }
-        return -1;
+*/
     }
 
 }

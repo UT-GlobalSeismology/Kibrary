@@ -28,10 +28,14 @@ public enum SPCTensorComponent {
     TRR(10), TRT(11), TRP(12), TTR(13), TTT(14), TTP(15), TPR(16), TPT(17), TPP(18), //
     PRR(19), PRT(20), PRP(21), PTR(22), PTT(23), PTP(24), PPR(25), PPT(26), PPP(27);
 
-    private int value;
+    private int number;
 
-    SPCTensorComponent(int n) {
-        value = n;
+    private SPCTensorComponent(int number) {
+        this.number = number;
+    }
+
+    public int getNumber() {
+        return number;
     }
 
     /**
@@ -46,7 +50,7 @@ public enum SPCTensorComponent {
         if (i < 1 || 3 < i || r < 1 || 3 < r || s < 1 || 3 < s) throw new IllegalArgumentException(
                 "Input (i, r, s) = (" + i + ", " + r + ", " + s + ") must be 1, 2 or 3.");
         return Arrays.stream(values())
-                .filter(stc -> stc.value == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3).findAny()
+                .filter(stc -> stc.number == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3).findAny()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "input i, r, s: " + i + " " + r + " " + s + " are invalid."));
     }
@@ -65,12 +69,8 @@ public enum SPCTensorComponent {
     public static SPCTensorComponent valueOf9Component(int p, int q) {
         if (p < 1 || 3 < p || q < 1 || 3 < q)
             throw new IllegalArgumentException("Input (p, q) = (" + p + ", " + q + ") must be 1, 2 or 3.");
-        return Arrays.stream(values()).filter(stc -> stc.value == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
+        return Arrays.stream(values()).filter(stc -> stc.number == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
                 .orElseThrow(() -> new IllegalArgumentException("input p, q: " + p + " " + q + " are invalid."));
-    }
-
-    public int valueOf() {
-        return value;
     }
 
     /**

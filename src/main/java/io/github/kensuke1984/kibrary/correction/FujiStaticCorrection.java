@@ -84,10 +84,6 @@ public class FujiStaticCorrection extends Operation {
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling frequency of input SAC files [Hz].
-     */
-    private double sacSamplingHz;
 
     /**
      * The time window data file to work for.
@@ -101,11 +97,15 @@ public class FujiStaticCorrection extends Operation {
      * Folder containing synthetic data.
      */
     private Path synPath;
-
     /**
-     * コンボリューションされている波形かそうでないか （両方は無理）
+     * Whether the synthetics have already been convolved.
      */
     private boolean convolved;
+    /**
+     * Sampling frequency of input SAC files [Hz].
+     */
+    private double sacSamplingHz;
+
     /**
      * シグナルとみなすかどうかの最大振幅から見ての比率
      */
@@ -142,8 +142,6 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
-            pw.println("#sacSamplingHz ");
             pw.println("##Path of a time window file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a root directory containing observed dataset. (.)");
@@ -152,6 +150,8 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
             pw.println("##(double) Threshold for peak finder. (0.2)");
             pw.println("#threshold ");
             pw.println("##(double) Search range [s]. (10)");
@@ -173,12 +173,12 @@ public class FujiStaticCorrection extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
 
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");

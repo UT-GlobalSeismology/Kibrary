@@ -20,7 +20,6 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Writer of BasicDataset and PartialDataset.
@@ -252,7 +251,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         addWaveform(basicID.getData());
         idStream.writeShort(ista); // 2 Byte
         idStream.writeShort(globalCMTIDMap.get(basicID.eventID)); // 2 Byte
-        idStream.writeByte(basicID.component.valueOf()); // 1 Byte
+        idStream.writeByte(basicID.component.getNumber()); // 1 Byte
         idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod)); // 1 Byte
         Phase[] phases = basicID.phases;
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
@@ -294,7 +293,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         addWaveform(partialID.getData());
         idStream.writeShort(observerMap.get(partialID.observer)); // 2 Byte
         idStream.writeShort(globalCMTIDMap.get(partialID.eventID)); // 2 Byte
-        idStream.writeByte(partialID.component.valueOf()); // 1 Byte
+        idStream.writeByte(partialID.component.getNumber()); // 1 Byte
         idStream.writeByte(getIndexOfRange(partialID.minPeriod, partialID.maxPeriod)); // 1 Byte
         Phase[] phases = partialID.phases;
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
@@ -309,7 +308,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeFloat((float) partialID.samplingHz); // sampling Hz; 4 Byte
         idStream.writeBoolean(partialID.convolved); // whether waveform is convolved; 1 Byte
         idStream.writeLong(startByte); // start byte of waveform data; 8 Byte
-        idStream.writeByte(PartialType.of(partialID.getParameterType(), partialID.getVariableType()).getValue()); // partial type; 1 Byte
+        idStream.writeByte(PartialType.of(partialID.getParameterType(), partialID.getVariableType()).getNumber()); // partial type; 1 Byte
         idStream.writeShort(perturbationLocationMap.get(partialID.getVoxelPosition())); // 2 Byte
     }
 }

@@ -57,10 +57,6 @@ public class DataKitchen extends Operation {
      * Which catalog to use. {0: CMT, 1: PDE}
      */
     private int catalog;
-    /**
-     * Sampling frequency [Hz] of SAC files to produce.
-     */
-    private double samplingHz;
 
     private LinearRange distanceRange;
     private LinearRange latitudeRange;
@@ -74,6 +70,10 @@ public class DataKitchen extends Operation {
      * The maximum length of output time series.
      */
     private double maxTlen;
+    /**
+     * Sampling frequency [Hz] of SAC files to produce.
+     */
+    private double samplingHz;
     /**
      * Whether to remove intermediate files.
      */
@@ -102,8 +102,6 @@ public class DataKitchen extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##The catalog to use, from {cmt, pde}. (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
-            pw.println("##(double) Sampling frequency [Hz]. Its reciprocal must be a terminating decimal. (20)");
-            pw.println("#samplingHz ");
             pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance 70");
             pw.println("##Upper limit of epicentral distance range [deg], exclusive; (lowerDistance:180]. (180)");
@@ -123,6 +121,8 @@ public class DataKitchen extends Operation {
             pw.println("##  This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
             pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");
+            pw.println("##(double) Sampling frequency [Hz]. Its reciprocal must be a terminating decimal. (20)");
+            pw.println("#samplingHz ");
             pw.println("##(boolean) Whether to remove intermediate files. (true)");
             pw.println("#removeIntermediateFile ");
         }
@@ -151,9 +151,6 @@ public class DataKitchen extends Operation {
             default:
                 throw new IllegalArgumentException("Invalid catalog name.");
         }
-        samplingHz = property.parseDouble("samplingHz", "20");
-        if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
-            throw new IllegalArgumentException("Reciprical of samplingHz must be terminating decimal.");
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
         double upperDistance = property.parseDouble("upperDistance", "180");
@@ -172,6 +169,9 @@ public class DataKitchen extends Operation {
             throw new IllegalArgumentException("coordinateGrid must be non-negative.");
 
         maxTlen = property.parseDouble("maxTlen", "3276.8");
+        samplingHz = property.parseDouble("samplingHz", "20");
+        if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
+            throw new IllegalArgumentException("Reciprocal of samplingHz must be a terminating decimal.");
         removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
     }
 

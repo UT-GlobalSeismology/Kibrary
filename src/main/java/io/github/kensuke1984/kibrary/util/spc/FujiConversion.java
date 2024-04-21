@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -59,14 +58,14 @@ public final class FujiConversion {
             SPCBody body = spectrum.getSpcBodyList().get(i);
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {
-                Complex[] uQ = new Complex[body.getNumberOfComponent()];
+                Complex[] uQ = new Complex[body.getNElement()];
                 double omegaOverOmega0 = (ip + 1) * domega / omega0;
-                for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
-                    Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
+                for (int iComponent = 0; iComponent < body.getNElement(); iComponent++) {
+                    Complex u = body.getSpcElement(SACComponent.ofNumber(iComponent + 1))
                             .getValueInFrequencyDomain()[ip];
 
 
-//					double log = 2 * FastMath.log(omegaOverOmega0) / Math.PI;
+//					double log = 2 * Math.log(omegaOverOmega0) / Math.PI;
 //					double dmudmu0Real = (1 + q * log);
 //					Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
 //					Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
@@ -75,7 +74,7 @@ public final class FujiConversion {
 //					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
 
 
-                    double log = FastMath.log(omegaOverOmega0);
+                    double log = Math.log(omegaOverOmega0);
                     Complex dmudq = new Complex(2. / Math.PI * log, 1.)
                             .multiply(new Complex(1. + q / Math.PI * log, q / 2.))
                             .multiply(mu0);
@@ -86,7 +85,7 @@ public final class FujiConversion {
 //					partials with respect to small q
                     uQ[iComponent] = u.multiply(dmudq).divide(dmudmu0);
                 }
-                newBody.add(ip, uQ);
+                newBody.setValues(ip, uQ);
             }
             spcBodyList.add(newBody);
         }

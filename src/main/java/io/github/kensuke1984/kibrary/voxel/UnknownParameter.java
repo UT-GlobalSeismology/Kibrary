@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.voxel;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Am = d の中の mのある成分
@@ -15,12 +14,6 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @since a long time ago
  */
 public interface UnknownParameter {
-
-    /**
-     * @return ({@link PartialType}) Type of parameter.
-     * @deprecated
-     */
-    public PartialType getPartialType();
 
     /**
      * @return ({@link ParameterType}) Type of parameter.

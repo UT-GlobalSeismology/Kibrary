@@ -18,44 +18,43 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public class SPCBody {
 
-    private final int nComponent; // datarealsize
+    /**
+     * Number of steps in frequency domain.
+     */
     private final int np;
 
-    private int nptsInTimeDomain;
-
-    private SPCComponent[] spcComponents;
+    private final int nElement;
+    private SPCElement[] spcElements;
 
     /**
-     * @param nComponent the number of components
-     * @param np         the number of steps in frequency domain
+     * @param nElement (int) The number of elements.
+     * @param np (int) The number of steps in frequency domain.
      */
-    SPCBody(int nComponent, int np) {
-        this.nComponent = nComponent;
+    SPCBody(int nElement, int np) {
+        this.nElement = nElement;
         this.np = np;
-        allocateComponents();
+        spcElements = IntStream.range(0, nElement).mapToObj(i -> new SPCElement(np)).toArray(SPCElement[]::new);
+    }
+
+    /**
+     * Set spectrum values for all elements for a single &omega; value.
+     * @param ip (int) Step number in frequency domain.
+     * @param u (Complex...) Spectrum values for all elements. u[i] is for the i-th element.
+     */
+    void setValues(int ip, Complex... u) {
+        if (u.length != nElement) throw new IllegalStateException("The number of elements is wrong.");
+        for (int i = 0; i < nElement; i++)
+            spcElements[i].setValue(ip, u[i]);
     }
 
     /**
      * @return DEEP copy of this
      */
     SPCBody copy() {
-        SPCBody s = new SPCBody(nComponent, np);
-        s.nptsInTimeDomain = nptsInTimeDomain;
-        s.spcComponents = new SPCComponent[nComponent];
-        Arrays.setAll(s.spcComponents, i -> spcComponents[i].copy());
+        SPCBody s = new SPCBody(nElement, np);
+        s.spcElements = new SPCElement[nElement];
+        Arrays.setAll(s.spcElements, i -> spcElements[i].copy());
         return s;
-    }
-
-    /**
-     * ω：ip 番目データを読む
-     *
-     * @param ip step number in frequency domain
-     * @param u  u[i] ith component
-     */
-    void add(int ip, Complex... u) {
-        if (u.length != nComponent) throw new IllegalStateException("The number of components is wrong");
-        for (int i = 0; i < nComponent; i++)
-            spcComponents[i].set(ip, u[i]);
     }
 
     /**
@@ -67,20 +66,18 @@ public class SPCBody {
      */
     public SPCBody interpolate(SPCBody anotherBody, double unitDistance) {
         if (unitDistance < 0 || unitDistance > 1)
-            throw new RuntimeException("Error: unit distance should be between 0-1 " + unitDistance);
+            throw new IllegalArgumentException("Unit distance must be between 0-1: " + unitDistance);
         SPCBody s = this.copy();
-        if (nComponent != anotherBody.getNp())
-            throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nComponent != anotherBody.getNumberOfComponent())
-            throw new RuntimeException("Error: The numbers of each component are different.");
+        if (np != anotherBody.getNp()) throw new IllegalStateException("np is not equal.");
+        if (nElement != anotherBody.getNElement()) throw new IllegalStateException("Number of elements is different.");
 
-        for (int j = 0; j < nComponent; j++) {
-            SPCComponent comp1 = s.spcComponents[j];
-            SPCComponent comp2 = anotherBody.spcComponents[j];
+        for (int j = 0; j < nElement; j++) {
+            SPCElement comp1 = s.spcElements[j];
+            SPCElement comp2 = anotherBody.spcElements[j];
             comp1.mapMultiply(1. - unitDistance);
             comp2.mapMultiply(unitDistance);
-            comp1.addComponent(comp2);
-            s.spcComponents[j] = comp1;
+            comp1.addElement(comp2);
+            s.spcElements[j] = comp1;
         }
 
         return s;
@@ -105,18 +102,18 @@ public class SPCBody {
         double c2 = -dh[0]*dh[2];
         double c3 = dh[0]*dh[1] / 2.;
 
-        for (int j = 0; j < body1.nComponent; j++) {
-            SPCComponent comp1 = body1.spcComponents[j].copy();
-            SPCComponent comp2 = body2.spcComponents[j].copy();
-            SPCComponent comp3 = body3.spcComponents[j].copy();
+        for (int j = 0; j < body1.nElement; j++) {
+            SPCElement comp1 = body1.spcElements[j].copy();
+            SPCElement comp2 = body2.spcElements[j].copy();
+            SPCElement comp3 = body3.spcElements[j].copy();
 
             comp1.mapMultiply(c1);
             comp2.mapMultiply(c2);
             comp3.mapMultiply(c3);
-            comp1.addComponent(comp2);
-            comp1.addComponent(comp3);
+            comp1.addElement(comp2);
+            comp1.addElement(comp3);
 
-            s.spcComponents[j] = comp1;
+            s.spcElements[j] = comp1;
         }
 
         return s;
@@ -139,156 +136,109 @@ public class SPCBody {
         double c2 = dh[0]*dh[2] / 2.;
         double c3 = dh[0]*dh[1] / 2.;
 
-        for (int j = 0; j < body1.nComponent; j++) {
-            SPCComponent comp1 = body1.spcComponents[j];
-            SPCComponent comp2 = body2.spcComponents[j];
-            SPCComponent comp3 = body3.spcComponents[j];
+        for (int j = 0; j < body1.nElement; j++) {
+            SPCElement element1 = body1.spcElements[j];
+            SPCElement element2 = body2.spcElements[j];
+            SPCElement element3 = body3.spcElements[j];
 
-            comp1.mapMultiply(c1);
-            comp2.mapMultiply(c2);
-            comp3.mapMultiply(c3);
-            comp1.addComponent(comp2);
-            comp1.addComponent(comp3);
+            element1.mapMultiply(c1);
+            element2.mapMultiply(c2);
+            element3.mapMultiply(c3);
+            element1.addElement(element2);
+            element1.addElement(element3);
 
-            s.spcComponents[j] = comp1;
+            s.spcElements[j] = element1;
         }
 
         return s;
     }
 
     /**
-     * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
-     *
+     * Add the spectrum values in the frequency domain of another {@link SPCBody}.
+     * @param anotherBody ({@link SPCBody}) The instance to add to this instance.
      */
-    public int findLsmooth(double tlen, double samplingFrequency) {
-        int tmpNp = Integer.highestOneBit(np);
-        if (tmpNp < np)
-            tmpNp *= 2;
+    void addBody(SPCBody anotherBody) {
+        if (np != anotherBody.getNp()) throw new IllegalStateException("np is not equal.");
+        if (nElement != anotherBody.getNElement()) throw new IllegalStateException("Number of elements is different.");
 
-        int lsmooth = (int) (0.5 * tlen * samplingFrequency / np);
-        int i = Integer.highestOneBit(lsmooth);
-        if (i < lsmooth)
-            i *= 2;
-        lsmooth = i;
-
-        return lsmooth;
+        for (int j = 0; j < nElement; j++)
+            spcElements[j].addElement(anotherBody.spcElements[j]);
     }
 
     /**
-     * @return SPCComponent[] all the {@link SPCComponent} in this
-     */
-    public SPCComponent[] getSpcComponents() {
-        return spcComponents;
-    }
-
-    /**
-     * 引数で指定されたテンソル成分に対するコンポーネントを返す
-     *
-     * @param tensor SPCTensorComponent
-     * @return SPCComponent for the tensor
-     */
-    public SPCComponent getSpcComponent(SPCTensorComponent tensor) {
-        return spcComponents[tensor.valueOf() - 1];
-    }
-
-    public SPCComponent getSpcComponent(SACComponent sacComponent) {
-        return spcComponents[sacComponent.valueOf() - 1];
-    }
-
-    public SPCComponent getSpcComponent(int n) {
-        return spcComponents[n];
-    }
-
-    /**
-     * TODO デバッグ用なので、すぐ消す
-     *
-     * @author ryoichi
-     */
-
-    /**
-     * TODO 別を出すようにする anotherBodyを足し合わせる
-     *
-     * @param anotherBody {@link SPCBody} for addition
-     */
-    public void addBody(SPCBody anotherBody) {
-        if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nComponent != anotherBody.getNumberOfComponent())
-            throw new RuntimeException("Error: The numbers of each component are different.");
-
-        for (int j = 0; j < nComponent; j++)
-            spcComponents[j].addComponent(anotherBody.spcComponents[j]);
-
-    }
-
-    private void allocateComponents() {
-        spcComponents =
-                IntStream.range(0, nComponent).mapToObj(i -> new SPCComponent(np)).toArray(SPCComponent[]::new);
-    }
-
-    /**
-     * after toTimeDomain
-     *
-     * @param tlen time length
-     */
-    public void amplitudeCorrection(double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.amplitudeCorrection(tlen));
-    }
-
-    /**
-     * after toTime
-     *
-     * @param omegaI &omega;<sub>i</sub>
-     * @param tlen   time length
-     */
-    public void applyGrowingExponential(double omegaI, double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.applyGrowingExponential(omegaI, tlen));
-    }
-
-    /**
-     * before toTime This method applies ramped source time function.
-     *
-     * @param sourceTimeFunction will be applied on all components.
+     * Apply ramped source time function.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied to all elements.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-        Arrays.stream(spcComponents).forEach(component -> component.applySourceTimeFunction(sourceTimeFunction));
+        Arrays.stream(spcElements).forEach(element -> element.applySourceTimeFunction(sourceTimeFunction));
     }
 
     /**
-     * すべてのコンポーネントに対し時間微分する。 before toTime
-     *
-     * @param tlen time length
+     * Differentiate the data for all elements (in frequency domain) by time.
+     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * @param tlen (double) Time length [s].
      */
-    public void differentiate(double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.differentiate(tlen));
+    void differentiate(double tlen) {
+        Arrays.stream(spcElements).forEach(element -> element.differentiate(tlen));
     }
 
-    public int getNumberOfComponent() {
-        return nComponent;
+    /**
+     * Convert the data in frequency domain to time domain.
+     * <p>
+     * This method does the following:
+     * <ul>
+     * <li> conduct the inverse fast Fourier transform (FFT).
+     * <li> multiply exp(&omega;<sub>I</sub>t) to account for artificial damping.
+     * <li> correct amplitude to match FFT with the Fourier transform used in DSM and convert from [km] to [m].
+     * </ul>
+     * @param npts (int) Number of data points in time domain.
+     * @param samplingHz (double) Sampling frequency [Hz].
+     * @param omegaI (double) &omega;<sub>i</sub>.
+     */
+    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
+        Arrays.stream(spcElements).forEach(element -> element.convertToTimeDomain(npts, samplingHz, omegaI));
     }
 
     public int getNp() {
         return np;
     }
 
-    public int getNPTSinTimeDomain() {
-        return nptsInTimeDomain;
+    public int getNElement() {
+        return nElement;
     }
 
     /**
-     * @param component {@link SACComponent}
-     * @return the data of i th component time_domain
+     * @return ({@link SPCElement}[]) All the {@link SPCElement}s in this.
+     */
+    public SPCElement[] getSpcElements() {
+        return spcElements;
+    }
+
+    /**
+     * Get element for specified tensor component.
+     * @param tensorComponent ({@link SPCTensorComponent}) Tensor component.
+     * @return ({@link SPCElement}) Element for the tensor component.
+     */
+    public SPCElement getSpcElement(SPCTensorComponent tensorComponent) {
+        return spcElements[tensorComponent.getNumber() - 1];
+    }
+
+    public SPCElement getSpcElement(SACComponent sacComponent) {
+        return spcElements[sacComponent.getNumber() - 1];
+    }
+
+    public SPCElement getSpcElement(int n) {
+        return spcElements[n];
+    }
+
+    /**
+     * Get the displacement velociy time series for a certain component.
+     * @param component ({@link SACComponent}) Component to retreive data for.
+     * @return (double[]) Data for the specified component in time domain [m/s].
      */
     public double[] getTimeseries(SACComponent component) {
-        return spcComponents[component.valueOf() - 1].getTimeseries();
-    }
-
-    /**
-     * Converts all the components to time domain.
-     *
-     * @param lsmooth lsmooth
-     */
-    public void toTimeDomain(int lsmooth) {
-        Arrays.stream(spcComponents).forEach(component -> component.toTimeDomain(lsmooth));
+        return spcElements[component.getNumber() - 1].getTimeseries();
     }
 
 }

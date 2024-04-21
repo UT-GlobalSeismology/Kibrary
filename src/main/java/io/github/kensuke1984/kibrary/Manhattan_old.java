@@ -5,10 +5,7 @@ import java.util.Arrays;
 import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
-import io.github.kensuke1984.kibrary.source.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.waveform.addons.ObservedSyntheticDatasetMaker_SpcTest;
-import io.github.kensuke1984.kibrary.waveform.addons.Partial1DEnvelopeMaker;
-import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
 
 /**
  * An enum where all {@link Operation_old}s in Kibrary should be assigned to.
@@ -19,11 +16,7 @@ import io.github.kensuke1984.kibrary.waveform.addons.Partial1DSpcMaker;
 public enum Manhattan_old {
     PhaseEnvelope(12, PhaseEnvelope.class), //
     Result(14, Result.class), //
-    SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
     TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
-//    AtAMaker(22, AtAMaker.class),//
-    Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//
-    Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
     ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
     ;
 

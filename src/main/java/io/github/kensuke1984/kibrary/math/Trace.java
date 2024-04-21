@@ -17,6 +17,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -443,7 +444,7 @@ public final class Trace {
     public Trace resampleInWindow(double xStart, double xEnd, double originalSamplingHz, double finalSamplingHz) {
         if (xStart < getMinX() || getMaxX() < xEnd)
             throw new IllegalArgumentException("Specified time range exceeds x range.");
-        if (!MathAid.isDivisible(originalSamplingHz, finalSamplingHz))
+        if (!MathAid.isInteger(originalSamplingHz / finalSamplingHz))
             throw new IllegalArgumentException("originalSamplingHz/finalSamplingHz must be integer: " + originalSamplingHz + ", " + finalSamplingHz);
         int iStart = findNearestXIndex(xStart);
         // Here, npts is rounded down because a point far outside the time range should not be used.
@@ -575,9 +576,9 @@ public final class Trace {
 //      {a_i}
         RealVector bb = new ArrayRealVector(n + 1);
         for (int i = 0; i < n + 1; i++) {
-            cx.setEntry(i, Math.pow(c, i));
+            cx.setEntry(i, FastMath.pow(c, i));
             for (int k = 0; k < n + 1; k++)
-                matrix.setEntry(i, k, Math.pow(xi[i], k));
+                matrix.setEntry(i, k, FastMath.pow(xi[i], k));
             bb.setEntry(i, yArray[j[i]]);
         }
         return cx.dotProduct(new LUDecomposition(matrix).getSolver().solve(bb));
@@ -753,7 +754,7 @@ public final class Trace {
         RealMatrix a = new Array2DRowRealMatrix(xArray.length, n + 1);
         for (int j = 0; j < xArray.length; j++)
             for (int i = 0; i <= n; i++)
-                a.setEntry(j, i, Math.pow(xArray[j], i));
+                a.setEntry(j, i, FastMath.pow(xArray[j], i));
         RealMatrix at = a.transpose();
         a = at.multiply(a);
         RealVector b = at.operate(yVector);

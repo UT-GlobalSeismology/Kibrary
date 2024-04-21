@@ -82,14 +82,6 @@ public class RaypathSelection extends Operation {
     private CircularRange backAzimuthRange;
     private CircularRange turningAzimuthRange;
     /**
-     * Whether criteria for turning point position exists.
-     */
-    private boolean selectTurningPosition;
-    /**
-     * Whether criteria for turning point azimuth exists.
-     */
-    private boolean selectTurningAzimuth;
-    /**
      * Name of structure to use for calculating turning point.
      */
     private String structureName;
@@ -97,6 +89,15 @@ public class RaypathSelection extends Operation {
      * Phase to use when computing turning point.
      */
     private String turningPointPhase;
+
+    /**
+     * Whether criteria for turning point position exists.
+     */
+    private boolean selectTurningPosition;
+    /**
+     * Whether criteria for turning point azimuth exists.
+     */
+    private boolean selectTurningAzimuth;
 
     /**
      * @param args  none to create a property file <br>

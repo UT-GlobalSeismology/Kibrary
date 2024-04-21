@@ -50,7 +50,7 @@ public class MomentTensor {
      * @return (double) moment magnitude M<sub>w</sub> [no unit]
      */
     public static double toMw(double m0) {
-        double mw = (FastMath.log10(m0) - 9.1) / 1.5;
+        double mw = (Math.log10(m0) - 9.1) / 1.5;
         return Precision.round(mw, 1);
     }
 
@@ -91,7 +91,7 @@ public class MomentTensor {
      * @return (double) Moment magnitude [no unit]
      */
     public double getMw() {
-        double m0 = MomentTensor.convertToNm(m0Coefficient * Math.pow(10, mtExponent));
+        double m0 = MomentTensor.convertToNm(m0Coefficient * FastMath.pow(10, mtExponent));
         return MomentTensor.toMw(m0);
     }
 
