@@ -142,7 +142,7 @@ public class VirtualEventRegistration extends Operation {
         centroidLongitude = property.parseDouble("centroidLongitude", "0");
         centroidDepth = property.parseDouble("centroidDepth", "0");
 
-        momentRateFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("momentRateFunctionType", "2"));
+        momentRateFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("momentRateFunctionType", "2"));
         halfDuration = property.parseDouble("halfDuration", "0");
 
         momentExponent = property.parseInt("momentExponent", "25");

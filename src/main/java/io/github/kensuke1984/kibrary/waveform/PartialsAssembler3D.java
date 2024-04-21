@@ -352,7 +352,7 @@ public class PartialsAssembler3D extends Operation {
         if (property.containsKey("userSourceTimeFunctionPath")) {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
-            sourceTimeFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("sourceTimeFunctionType", "0"));
+            sourceTimeFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("sourceTimeFunctionType", "0"));
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);

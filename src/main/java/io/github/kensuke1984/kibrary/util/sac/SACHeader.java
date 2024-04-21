@@ -325,8 +325,8 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public boolean getBoolean(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialBoolean(sacHeaderEnum);
-        if (sacHeaderEnum.typeOf() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
+        if (sacHeaderEnum.getType() == 99 || sacHeaderEnum.getType() == -1) return getSpecialBoolean(sacHeaderEnum);
+        if (sacHeaderEnum.getType() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
 
         switch (sacHeaderEnum) {
             case LEVEN:
@@ -346,8 +346,8 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public int getInt(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialInt(sacHeaderEnum);
-        if (sacHeaderEnum.typeOf() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
+        if (sacHeaderEnum.getType() == 99 || sacHeaderEnum.getType() == -1) return getSpecialInt(sacHeaderEnum);
+        if (sacHeaderEnum.getType() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
 
         switch (sacHeaderEnum) {
             case NZYEAR:
@@ -387,8 +387,8 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public int getSACEnumerated(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialSacEnumerated(sacHeaderEnum);
-        if (sacHeaderEnum.typeOf() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerated.");
+        if (sacHeaderEnum.getType() == 99 || sacHeaderEnum.getType() == -1) return getSpecialSacEnumerated(sacHeaderEnum);
+        if (sacHeaderEnum.getType() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerated.");
 
         switch (sacHeaderEnum) {
             case IFTYPE:
@@ -438,8 +438,8 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public double getValue(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() == -1 || sacHeaderEnum.typeOf() == 99) return getSpecialValue(sacHeaderEnum);
-        else if (sacHeaderEnum.typeOf() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
+        if (sacHeaderEnum.getType() == -1 || sacHeaderEnum.getType() == 99) return getSpecialValue(sacHeaderEnum);
+        else if (sacHeaderEnum.getType() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
 
         switch (sacHeaderEnum) {
             case DELTA:
@@ -589,7 +589,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public String getSACString(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != 8 && sacHeaderEnum.typeOf() != 16)
+        if (sacHeaderEnum.getType() != 8 && sacHeaderEnum.getType() != 16)
             throw new IllegalArgumentException(sacHeaderEnum + " is not String.");
 
         switch (sacHeaderEnum) {
@@ -650,7 +650,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
      * @return (boolean) Value.
      */
     private boolean getSpecialBoolean(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+        if (sacHeaderEnum.getType() != -1 && sacHeaderEnum.getType() != 99)
             throw new IllegalArgumentException(sacHeaderEnum + " is not Special boolean.");
 
         switch (sacHeaderEnum) {
@@ -667,7 +667,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
      * @return (int) Value.
      */
     private int getSpecialInt(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+        if (sacHeaderEnum.getType() != -1 && sacHeaderEnum.getType() != 99)
             throw new RuntimeException(sacHeaderEnum + " is not Special int.");
 
         switch (sacHeaderEnum) {
@@ -686,7 +686,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
      * @return (int) Value.
      */
     private int getSpecialSacEnumerated(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+        if (sacHeaderEnum.getType() != -1 && sacHeaderEnum.getType() != 99)
             throw new IllegalArgumentException(sacHeaderEnum + " is not Special enumerated.");
 
         switch (sacHeaderEnum) {
@@ -719,7 +719,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
      * @return (double) Value.
      */
     private double getSpecialValue(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+        if (sacHeaderEnum.getType() != -1 && sacHeaderEnum.getType() != 99)
             throw new RuntimeException(sacHeaderEnum + " is not Special value.");
         switch (sacHeaderEnum) {
             case num54:
@@ -749,7 +749,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public SACHeader withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
-        if (sacHeaderEnum.typeOf() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
+        if (sacHeaderEnum.getType() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
@@ -774,7 +774,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public SACHeader withInt(SACHeaderEnum sacHeaderEnum, int value) {
-        if (sacHeaderEnum.typeOf() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
+        if (sacHeaderEnum.getType() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
@@ -824,7 +824,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public SACHeader withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
-        if (sacHeaderEnum.typeOf() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerized.");
+        if (sacHeaderEnum.getType() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerized.");
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
@@ -895,7 +895,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public SACHeader withValue(SACHeaderEnum sacHeaderEnum, double value) {
-        if (sacHeaderEnum.typeOf() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
+        if (sacHeaderEnum.getType() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
@@ -1106,7 +1106,7 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
     @Override
     public SACHeader withSACString(SACHeaderEnum sacHeaderEnum, String string) {
-        int length = sacHeaderEnum.typeOf();
+        int length = sacHeaderEnum.getType();
         if (length != 8 && length != 16) throw new IllegalArgumentException(sacHeaderEnum + " is not String.");
         if (length < string.length()) throw new IllegalArgumentException(string + " is too long for " + sacHeaderEnum);
 

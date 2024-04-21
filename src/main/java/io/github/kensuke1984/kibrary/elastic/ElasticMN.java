@@ -13,8 +13,23 @@ public enum ElasticMN {
 
     private final int value;
 
-    ElasticMN(int n) {
-        value = n;
+    private ElasticMN(int value) {
+        this.value = value;
+    }
+
+    /**
+     * return Cmn for the input Cijkl
+     *
+     * @param ijkl target
+     * @return ElasticMN for input Cijkl
+     */
+    public static ElasticMN getElasticMN(ElasticIJKL ijkl) {
+        int value = ijkl.getValue();
+        int m = value / 100;
+        int n = value % 100;
+        m = toInt(m);
+        n = toInt(n);
+        return valueOf(m, n);
     }
 
     private static int toInt(int i) {
@@ -43,21 +58,6 @@ public enum ElasticMN {
             default:
                 throw new RuntimeException("unanticipated");
         }
-    }
-
-    /**
-     * return Cmn for the input Cijkl
-     *
-     * @param ijkl target
-     * @return ElasticMN for input Cijkl
-     */
-    public static ElasticMN getElasticMN(ElasticIJKL ijkl) {
-        int value = ijkl.getValue();
-        int m = value / 100;
-        int n = value % 100;
-        m = toInt(m);
-        n = toInt(n);
-        return valueOf(m, n);
     }
 
     /**
