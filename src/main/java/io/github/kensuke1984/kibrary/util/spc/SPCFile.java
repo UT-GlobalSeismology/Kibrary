@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -184,10 +183,10 @@ public class SPCFile implements SPCFileAccess {
                 for (int i = 0; i < nbody; i++)
                     specFile.bodyR[i] = dis.readDouble();
 
-            double cosphi = FastMath.cos(phi);
-            double sinphi = FastMath.sin(phi);
-            double cos2phi = FastMath.cos(2 * phi);
-            double sin2phi = FastMath.sin(2 * phi);
+            double cosphi = Math.cos(phi);
+            double sinphi = Math.sin(phi);
+            double cos2phi = Math.cos(2 * phi);
+            double sin2phi = Math.sin(2 * phi);
 
             //~read body
             int hasZero = 0;
@@ -208,11 +207,6 @@ public class SPCFile implements SPCFileAccess {
                                 double tmpReal_p1 = dis.readDouble();
                                 double tmpImag_p1 = dis.readDouble();
 
-//								System.out.println(k + " " + tmpReal_m1 + " " + tmpReal_p1 + " " + tmpImag_m1 + " " + tmpImag_p1);
-
-//								double cosphi = FastMath.cos(phi);
-//								double sinphi = FastMath.sin(phi);
-
                                 double tmpReal = tmpReal_m1*cosphi + tmpImag_m1*sinphi
                                         + tmpReal_p1*cosphi - tmpImag_p1*sinphi;
                                 double tmpImag = -tmpReal_m1*sinphi + tmpImag_m1*cosphi
@@ -229,11 +223,6 @@ public class SPCFile implements SPCFileAccess {
                             double tmpImag_m0 = dis.readDouble();
                             double tmpReal_p1 = dis.readDouble();
                             double tmpImag_p1 = dis.readDouble();
-
-//								System.out.println(k + " " + tmpReal_m1 + " " + tmpReal_p1 + " " + tmpReal_m0 +  " " + tmpImag_m0 + " " + tmpImag_m1 + " " + tmpImag_p1);
-
-//								double cosphi = FastMath.cos(phi);
-//								double sinphi = FastMath.sin(phi);
 
                             double tmpReal = tmpReal_m0 + tmpReal_m1*cosphi + tmpImag_m1*sinphi
                                     + tmpReal_p1*cosphi - tmpImag_p1*sinphi;

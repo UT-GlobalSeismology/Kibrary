@@ -14,7 +14,6 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -128,7 +127,7 @@ public final class SPCFileAid {
         //~apply growing exponential
         double constant = omegaI / samplingHz;
         for (int i = 0; i < npts; i++)
-            uTime[i] = uTime[i].multiply(FastMath.exp(constant * i));
+            uTime[i] = uTime[i].multiply(Math.exp(constant * i));
 
         //~correct amplitude
         double coef = 1000 * samplingHz;

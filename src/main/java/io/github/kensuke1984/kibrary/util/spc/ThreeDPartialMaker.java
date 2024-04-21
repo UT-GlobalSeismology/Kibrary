@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
@@ -528,8 +527,8 @@ public class ThreeDPartialMaker {
     private Complex[] rotatePartial(Complex[] partial1, Complex[] partial2, SACComponent component) {
         Complex[] partial = new Complex[fp.np() + 1];
 
-        double cosine = FastMath.cos(angleForVector);
-        double sine = FastMath.sin(angleForVector);
+        double cosine = Math.cos(angleForVector);
+        double sine = Math.sin(angleForVector);
 
         switch (component) {
         case R:
@@ -558,7 +557,7 @@ public class ThreeDPartialMaker {
         int n = l / 5;
 
         for (int i = 0; i < n; i++) {
-//			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * (n - 1)) * i));
+//			tappered[i + l - n] = tappered[i + l - n].multiply(Math.cos(Math.PI / (2 * (n - 1)) * i));
             tappered[i + l - n] = tappered[i + l - n].multiply(1. - (double) i / (n - 1.));
         }
 

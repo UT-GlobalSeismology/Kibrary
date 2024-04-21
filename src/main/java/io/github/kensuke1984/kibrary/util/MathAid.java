@@ -22,7 +22,7 @@ public final class MathAid {
     /**
      * The margin to decide if 0.00...01 = 0, 0.9999... = 1, etc.
      */
-    public static final double PRECISION_EPSILON = Math.pow(10, -PRECISION_DECIMALS);
+    public static final double PRECISION_EPSILON = FastMath.pow(10, -PRECISION_DECIMALS);
 
     /**
      * Compute AIC.

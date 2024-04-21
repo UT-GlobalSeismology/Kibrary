@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.CircularRange;
@@ -32,7 +33,7 @@ public final class FullPosition extends HorizontalPosition {
     /**
      * Margin to decide whether two radii are the same value.
      */
-    public static final double RADIUS_EPSILON = Math.pow(10, -RADIUS_DECIMALS) / 2;
+    public static final double RADIUS_EPSILON = FastMath.pow(10, -RADIUS_DECIMALS) / 2;
     /**
      * Radius [km]. [0:)
      */

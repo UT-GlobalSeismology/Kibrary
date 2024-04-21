@@ -78,9 +78,9 @@ public final class Earth {
      */
     public static double getR(HorizontalPosition position) {
         double theta = position.getGeocentricLatitude();
-        double r = 1 / (FastMath.cos(theta) * FastMath.cos(theta) / EQUATORIAL_RADIUS / EQUATORIAL_RADIUS +
-                FastMath.sin(theta) * FastMath.sin(theta) / POLAR_RADIUS / POLAR_RADIUS);
-        return FastMath.sqrt(r);
+        double r = 1 / (Math.cos(theta) * Math.cos(theta) / EQUATORIAL_RADIUS / EQUATORIAL_RADIUS +
+                Math.sin(theta) * Math.sin(theta) / POLAR_RADIUS / POLAR_RADIUS);
+        return Math.sqrt(r);
     }
 
     /**
@@ -97,8 +97,8 @@ public final class Earth {
         }
         double r2 = position.getR() * position.getR();
         double theta = position.getGeocentricLatitude();
-        return FastMath.sqrt(r2 * FastMath.cos(theta) * FastMath.cos(theta) +
-                r2 * FastMath.sin(theta) * FastMath.sin(theta) / (1 - E * E));
+        return Math.sqrt(r2 * Math.cos(theta) * Math.cos(theta) +
+                r2 * Math.sin(theta) * Math.sin(theta) / (1 - E * E));
     }
 
     /**
@@ -116,14 +116,14 @@ public final class Earth {
         double n2 = N * N;
         double n3 = N * n2;
         double n4 = n2 * n2;
-        double phi = FastMath.toRadians(latitude);
+        double phi = Math.toRadians(latitude);
         if (phi < 0) phi *= -1;
 
         s += (1 + n2 / 4 + n4 / 64) * phi;
-        s += -1.5 * (N - n3 / 8) * FastMath.sin(phi * 2);
-        s += 15 / 16.0 * (n2 - n4 / 4) * FastMath.sin(4 * phi);
-        s += -35 / 48.0 * n3 * FastMath.sin(6 * phi);
-        s += 315 / 512.0 * n4 * FastMath.sin(8 * phi);
+        s += -1.5 * (N - n3 / 8) * Math.sin(phi * 2);
+        s += 15 / 16.0 * (n2 - n4 / 4) * Math.sin(4 * phi);
+        s += -35 / 48.0 * n3 * Math.sin(6 * phi);
+        s += 315 / 512.0 * n4 * Math.sin(8 * phi);
         s /= 1 + N;
         return s;
     }
@@ -138,7 +138,7 @@ public final class Earth {
         if (0.5 * Math.PI < Math.abs(geographicLatitude))
             throw new IllegalArgumentException("geographical latitude: " + geographicLatitude + " must be [-pi/2:pi/2].");
         double ratio = POLAR_RADIUS / EQUATORIAL_RADIUS;
-        return FastMath.atan(ratio * ratio * FastMath.tan(geographicLatitude));
+        return Math.atan(ratio * ratio * Math.tan(geographicLatitude));
     }
 
     /**
@@ -149,7 +149,7 @@ public final class Earth {
      */
     static double toGeographicLatitude(double geocentricLatitude) {
         double ratio = EQUATORIAL_RADIUS / POLAR_RADIUS;
-        return FastMath.atan(ratio * ratio * FastMath.tan(geocentricLatitude));
+        return Math.atan(ratio * ratio * Math.tan(geocentricLatitude));
     }
 
     /**
@@ -195,10 +195,10 @@ public final class Earth {
         latitudes[nLatitude - 1] = endLatitude;
 
         double v = 0;
-        double dPhi = FastMath.toRadians(endLongitude - startLongitude);
+        double dPhi = Math.toRadians(endLongitude - startLongitude);
         for (int ir = 0; ir < nr - 1; ir++)
             for (int iLatitude = 0; iLatitude < nLatitude - 1; iLatitude++)
-                v += rs[ir] * Math.cos(toGeocentricLatitude(FastMath.toRadians(latitudes[iLatitude]))) * dPhi *
+                v += rs[ir] * Math.cos(toGeocentricLatitude(Math.toRadians(latitudes[iLatitude]))) * dPhi *
                         (getCrossSection(rs[ir], rs[ir + 1], latitudes[iLatitude], latitudes[iLatitude + 1]));
         return v;
     }
@@ -241,8 +241,8 @@ public final class Earth {
 
         Ellipse el0 = new Ellipse(startA, startA - startA * FLATTENING);
         Ellipse el1 = new Ellipse(endA, endA - endA * FLATTENING);
-        double theta0 = toGeocentricLatitude(FastMath.toRadians(startLatitude));
-        double theta1 = toGeocentricLatitude(FastMath.toRadians(endLatitude));
+        double theta0 = toGeocentricLatitude(Math.toRadians(startLatitude));
+        double theta1 = toGeocentricLatitude(Math.toRadians(endLatitude));
         if (theta0 < 0) {
             theta0 += Math.PI;
             theta1 += Math.PI;
@@ -261,8 +261,8 @@ public final class Earth {
      */
     public static double computeGeographicalDistanceRad(HorizontalPosition pos1, HorizontalPosition pos2) {
         // convert to colatitude [rad]
-        double theta1 = FastMath.toRadians(90.0 - pos1.getLatitude());
-        double theta2 = FastMath.toRadians(90.0 - pos2.getLatitude());
+        double theta1 = Math.toRadians(90.0 - pos1.getLatitude());
+        double theta2 = Math.toRadians(90.0 - pos2.getLatitude());
         double deltaPhi = pos1.getPhi() - pos2.getPhi();
         return computeDistance(theta1, theta2, deltaPhi);
     }
@@ -281,8 +281,8 @@ public final class Earth {
     }
 
     private static double computeDistance(double theta1, double theta2, double deltaPhi) {
-        double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(deltaPhi)
-                + FastMath.cos(theta1) * FastMath.cos(theta2);
+        double cosAlpha = Math.sin(theta1) * Math.sin(theta2) * Math.cos(deltaPhi)
+                + Math.cos(theta1) * Math.cos(theta2);
         if (1.0 < cosAlpha) cosAlpha = 1.0;
         else if (cosAlpha < -1.0) cosAlpha = -1.0;
         return FastMath.acos(cosAlpha);
@@ -297,8 +297,8 @@ public final class Earth {
      */
     public static double computeGeographicalAzimuthRad(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
         // convert to colatitude [rad]
-        double thetaS = FastMath.toRadians(90.0 - sourcePos.getLatitude());
-        double thetaR = FastMath.toRadians(90.0 - receiverPos.getLatitude());
+        double thetaS = Math.toRadians(90.0 - sourcePos.getLatitude());
+        double thetaR = Math.toRadians(90.0 - receiverPos.getLatitude());
         double deltaPhi = -sourcePos.getPhi() + receiverPos.getPhi();
         return computeAzimuth(thetaS, thetaR, deltaPhi);
     }
@@ -317,18 +317,18 @@ public final class Earth {
     }
 
     private static double computeAzimuth(double thetaS, double thetaR, double deltaPhi) {
-        double sinDistance = FastMath.sin(computeDistance(thetaS, thetaR, deltaPhi));
+        double sinDistance = Math.sin(computeDistance(thetaS, thetaR, deltaPhi));
 
         if (Precision.equals(sinDistance, 0.0, MathAid.PRECISION_EPSILON)) {
             // Set azimuth as 0 when source and receiver are at same position or at antipodes.
             return 0.0;
 
         } else {
-            double cos = (FastMath.cos(thetaR) * FastMath.sin(thetaS)
-                    - FastMath.sin(thetaR) * FastMath.cos(thetaS) * FastMath.cos(deltaPhi)) / sinDistance;
+            double cos = (Math.cos(thetaR) * Math.sin(thetaS)
+                    - Math.sin(thetaR) * Math.cos(thetaS) * Math.cos(deltaPhi)) / sinDistance;
             if (1.0 < cos) cos = 1.0;
             else if (cos < -1.0) cos = -1.0;
-            double sin = FastMath.sin(thetaR) * FastMath.sin(deltaPhi) / sinDistance;
+            double sin = Math.sin(thetaR) * Math.sin(deltaPhi) / sinDistance;
             double az = FastMath.acos(cos);
             return 0.0 <= sin ? az : -az + 2.0 * Math.PI;
         }

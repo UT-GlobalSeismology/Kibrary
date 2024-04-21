@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.util.spc;
 import java.util.Arrays;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.elastic.WeightingFactor;
 
@@ -147,8 +146,8 @@ class TensorCalculationUCE {
          * reta = neweta backmatrix
          */
         // angle= 0;
-        double cosine = FastMath.cos(angle);
-        double sine = FastMath.sin(angle);
+        double cosine = Math.cos(angle);
+        double sine = Math.sin(angle);
 
         // 回転行列 前から
         double[][] forwardMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, sine }, { 0, -sine, cosine } };

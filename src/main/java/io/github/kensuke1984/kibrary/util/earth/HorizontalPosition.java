@@ -27,11 +27,11 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     /**
      * Margin to decide whether two latitudes are the same value.
      */
-    public static final double LATITUDE_EPSILON = Math.pow(10, -Latitude.DECIMALS) / 2;
+    public static final double LATITUDE_EPSILON = FastMath.pow(10, -Latitude.DECIMALS) / 2;
     /**
      * Margin to decide whether two longitudes are the same value.
      */
-    public static final double LONGITUDE_EPSILON = Math.pow(10, -Longitude.DECIMALS) / 2;
+    public static final double LONGITUDE_EPSILON = FastMath.pow(10, -Longitude.DECIMALS) / 2;
 
     private final Latitude latitude;
     private final Longitude longitude;
@@ -219,7 +219,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         midXYZ = midXYZ.rotateaboutZ(getPhi());
         RThetaPhi midRTP = midXYZ.toSphericalCoordinate();
         // System.out.println(midRTP);
-        return new HorizontalPosition(Latitude.valueForTheta(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
+        return new HorizontalPosition(Latitude.valueForTheta(midRTP.getTheta()), Math.toDegrees(midRTP.getPhi()));
         // System.out.println(midLoc);
     }
 
@@ -258,13 +258,13 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         // System.out.println(xyz0+" \n"+xyz);
         double r = xyz.getDistance(xyz0);
 
-        double n1 = Earth.EQUATORIAL_RADIUS / FastMath.sqrt(1 -
-                Earth.E * Earth.E * FastMath.sin(FastMath.toRadians(getLatitude())) *
-                        FastMath.sin(FastMath.toRadians(getLatitude())));
+        double n1 = Earth.EQUATORIAL_RADIUS / Math.sqrt(1 -
+                Earth.E * Earth.E * Math.sin(Math.toRadians(getLatitude())) *
+                        Math.sin(Math.toRadians(getLatitude())));
         // System.out.println(n1 + " " + N1);
-        double n2 = Earth.EQUATORIAL_RADIUS / FastMath.sqrt(1 -
-                Earth.E * Earth.E * FastMath.sin(FastMath.toRadians(position.getLatitude())) *
-                        FastMath.sin(FastMath.toRadians(position.getLatitude())));
+        double n2 = Earth.EQUATORIAL_RADIUS / Math.sqrt(1 -
+                Earth.E * Earth.E * Math.sin(Math.toRadians(position.getLatitude())) *
+                        Math.sin(Math.toRadians(position.getLatitude())));
         double n = (n1 + n2) / 2;
         double kai = FastMath.asin(r / 2 / n);
         distance = 2 * kai * n;
@@ -289,14 +289,14 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         double cosThetaP = Math.cos(distance) * Math.cos(thetaO)
                 + Math.sin(distance) * Math.sin(thetaO) * Math.cos(azimuth);
         // colatitude of result position
-        double thetaP = Math.acos(cosThetaP);
+        double thetaP = FastMath.acos(cosThetaP);
 
         // cosine of longitude difference, from spherical law of cosines
         double cosDPhi = (Math.cos(distance) - Math.cos(thetaO) * Math.cos(thetaP)) / (Math.sin(thetaO) * Math.sin(thetaP));
         // sine of longitude difference, from spherical law of sines
         double sinDPhi = Math.sin(distance) * Math.sin(azimuth) / Math.sin(thetaP);
         // longitude of result position
-        double phiP = getPhi() + Math.atan2(sinDPhi, cosDPhi);
+        double phiP = getPhi() + FastMath.atan2(sinDPhi, cosDPhi);
 
         // set result position
         double lat = Latitude.valueForTheta(thetaP);

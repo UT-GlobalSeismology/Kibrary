@@ -96,8 +96,8 @@ public class TensorCalculationURhoE {
          * reta = neweta backmatrix
          */
         // angle= 0;
-        double cosine = FastMath.cos(angle);
-        double sine = FastMath.sin(angle);
+        double cosine = Math.cos(angle);
+        double sine = Math.sin(angle);
 
         // 回転行列 前から
         double[][] forwardMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, sine }, { 0, -sine, cosine } };
@@ -136,7 +136,7 @@ public class TensorCalculationURhoE {
     private Complex[] calcCrossCorrelation(Complex[] u, Complex[] eta) {
         Complex[] c = new Complex[np + 1];
         for (int i = 0; i < np +1; i++)
-            c[i] = u[i].multiply(eta[i]).multiply(Math.pow(2.0 * Math.PI * i / tlen, 2));
+            c[i] = u[i].multiply(eta[i]).multiply(FastMath.pow(2.0 * Math.PI * i / tlen, 2));
 //        Arrays.setAll(c, i -> u[i].multiply(eta[i]));
 //        Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
         return c;

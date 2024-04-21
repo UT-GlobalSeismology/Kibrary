@@ -45,7 +45,7 @@ final class Latitude implements Comparable<Latitude> {
                         Thread.currentThread().getStackTrace()[1].getMethodName());
 
         double geocentric = 0.5 * Math.PI - theta;
-        return FastMath.toDegrees(Earth.toGeographicLatitude(geocentric));
+        return Math.toDegrees(Earth.toGeographicLatitude(geocentric));
     }
 
 
@@ -58,7 +58,7 @@ final class Latitude implements Comparable<Latitude> {
                 "The input latitude: " + geographicLatitude + " is invalid (must be in [-90:90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, DECIMALS);
-        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(this.geographicLatitude));
+        geocentricLatitudeRad = Earth.toGeocentricLatitude(Math.toRadians(this.geographicLatitude));
         theta = 0.5 * Math.PI - geocentricLatitudeRad;
     }
 
@@ -91,7 +91,7 @@ final class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
 
-        return Precision.equals(geographicLatitude, other.geographicLatitude,  Math.pow(10, -DECIMALS)/2);
+        return Precision.equals(geographicLatitude, other.geographicLatitude, FastMath.pow(10, -DECIMALS)/2);
     }
 
     @Override
@@ -149,7 +149,7 @@ final class Latitude implements Comparable<Latitude> {
         else sign = "M";
 
         double absolute = Math.abs(geographicLatitude);
-        int number = (int) Math.round(absolute * Math.pow(10, DECIMALS));
+        int number = (int) Math.round(absolute * FastMath.pow(10, DECIMALS));
 
         return sign + MathAid.padToString(number, 2 + DECIMALS, true);
     }
