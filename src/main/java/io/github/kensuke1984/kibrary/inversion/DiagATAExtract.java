@@ -15,7 +15,7 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -99,7 +99,7 @@ public class DiagATAExtract {
             double diagonal = values[i][i];
             diagATAMap.put(unknown.getPosition(), diagonal);
         }
-        PerturbationListFile.write(diagATAMap, outputPath);
+        ScalarListFile.write(diagATAMap, outputPath);
     }
 
 }

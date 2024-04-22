@@ -98,7 +98,7 @@ public class ModelSmoothener extends Operation {
 
         // read input
         // This will be obtained as unmodifiable LinkedHashMap
-        Map<FullPosition, Double> perturbationMap = PerturbationListFile.read(perturbationPath);
+        Map<FullPosition, Double> perturbationMap = ScalarListFile.read(perturbationPath);
 
         List<HorizontalPosition> horizontalPositions = perturbationMap.keySet().stream()
                 .map(pos -> pos.toHorizontalPosition()).distinct().collect(Collectors.toList());
@@ -119,6 +119,6 @@ public class ModelSmoothener extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         Path outputPerturbationFile = outPath.resolve(perturbationPath.getFileName());
-        PerturbationListFile.write(smoothedMap, outputPerturbationFile);
+        ScalarListFile.write(smoothedMap, outputPerturbationFile);
     }
 }

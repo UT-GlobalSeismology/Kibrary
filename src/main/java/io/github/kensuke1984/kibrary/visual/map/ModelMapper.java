@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -239,9 +239,9 @@ public class ModelMapper extends Operation {
         }
 
         // decide map region
-        if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
-        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
+        double gridInterval = ScalarMapShellscript.decideGridSampling(positions);
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -251,14 +251,14 @@ public class ModelMapper extends Operation {
             // output discrete perturbation file
             Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
             Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
-            PerturbationListFile.write(discreteMap, outputDiscretePath);
+            ScalarListFile.write(discreteMap, outputDiscretePath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
             Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXY.lst");
-            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+            ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
             // output shellscripts
-            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
+            ScalarMapShellscript script = new ScalarMapShellscript(variable, radii, boundaries, mapRegion,
                     gridInterval, scale, variableName + "Percent", nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);

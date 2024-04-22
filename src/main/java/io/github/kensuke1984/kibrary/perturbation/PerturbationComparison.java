@@ -78,8 +78,8 @@ public class PerturbationComparison {
 
         // read input files
         // These will be obtained as unmodifiable LinkedHashMap
-        Map<FullPosition, Double> numeratorMap = PerturbationListFile.read(numeratorPath);
-        Map<FullPosition, Double> denominatorMap = PerturbationListFile.read(denominatorPath);
+        Map<FullPosition, Double> numeratorMap = ScalarListFile.read(numeratorPath);
+        Map<FullPosition, Double> denominatorMap = ScalarListFile.read(denominatorPath);
 
         // reconstruct the list of values in each map
         // This is done because the number of voxels and/or their order may be different.
@@ -110,8 +110,8 @@ public class PerturbationComparison {
         String fileNameRoot = FileAid.extractNameRoot(numeratorPath);
         Path ratioMapPath = outPath.resolve(fileNameRoot + "Ratio.lst");
         Path differenceMapPath = outPath.resolve(fileNameRoot + "Difference.lst");
-        PerturbationListFile.write(constructMapFromVector(positions, ratioVector), ratioMapPath);
-        PerturbationListFile.write(constructMapFromVector(positions, differenceVector), differenceMapPath);
+        ScalarListFile.write(constructMapFromVector(positions, ratioVector), ratioMapPath);
+        ScalarListFile.write(constructMapFromVector(positions, differenceVector), differenceMapPath);
 
         // output similarity and distance in a txt file
         Path comparisonPath = outPath.resolve("comparison.txt");

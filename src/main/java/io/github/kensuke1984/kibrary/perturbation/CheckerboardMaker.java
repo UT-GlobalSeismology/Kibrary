@@ -202,8 +202,8 @@ public class CheckerboardMaker extends Operation {
 
         System.err.println("Outputting perturbation list files.");
         for (VariableType perturbVariableType : perturbVariableTypes) {
-            Path paramPath = outPath.resolve(PerturbationListFile.generateFileName(perturbVariableType, ScalarType.PERCENT));
-            PerturbationListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);
+            Path paramPath = outPath.resolve(ScalarListFile.generateFileName(perturbVariableType, ScalarType.PERCENT));
+            ScalarListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);
         }
 
         // set known parameters

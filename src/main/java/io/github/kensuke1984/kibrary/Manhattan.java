@@ -38,8 +38,8 @@ import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
-import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
+import io.github.kensuke1984.kibrary.visual.map.ScalarMapper;
 import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper;
 import io.github.kensuke1984.kibrary.visual.plot.BasicBinnedStackCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
@@ -126,7 +126,7 @@ enum Manhattan {
     ModelStructurePlotter(74, ModelStructurePlotter.class),
     ModelSetMapper(75, ModelSetMapper.class),
     ModelMapper(76, ModelMapper.class),
-    PerturbationMapper(77, PerturbationMapper.class),
+    ScalarMapper(77, ScalarMapper.class),
     CrossSectionCreator(78, CrossSectionCreator.class),
     ModelStructureConverter(79, ModelStructureConverter.class),
     // Tests 80

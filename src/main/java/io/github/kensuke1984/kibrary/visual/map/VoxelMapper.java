@@ -87,14 +87,14 @@ public class VoxelMapper {
             String mapCenter;
             int horizon = cmdLine.hasOption("h") ? Integer.parseInt(cmdLine.getOptionValue("h")) : 90;
             if (cmdLine.hasOption("c")) mapCenter = cmdLine.getOptionValue("c");
-            else mapCenter = PerturbationMapShellscript.decideMapCenter(voxelPositions.stream().collect(Collectors.toSet()));
+            else mapCenter = ScalarMapShellscript.decideMapCenter(voxelPositions.stream().collect(Collectors.toSet()));
             regionString = "-Rg";
             projectionString = "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
         } else {
             // equidistant cylindrical projection
             String mapRegion;
             if (cmdLine.hasOption("r")) mapRegion = cmdLine.getOptionValue("r");
-            else mapRegion = PerturbationMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
+            else mapRegion = ScalarMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
             regionString = "-R" + mapRegion;
             projectionString = "-Jq1:120000000";
         }

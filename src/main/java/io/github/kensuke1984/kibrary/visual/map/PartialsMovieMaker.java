@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -355,7 +355,7 @@ public class PartialsMovieMaker extends Operation {
 
                                 // output discrete perturbation file
                                 Path outputDiscretePath = outSnapshotPath.resolve(fileNameRoot + ".lst");
-                                PerturbationListFile.write(discreteMap, outputDiscretePath);
+                                ScalarListFile.write(discreteMap, outputDiscretePath);
 
                                 // output data for cross section
                                 worker.computeCrossSection(discreteMap, null, outSnapshotPath);

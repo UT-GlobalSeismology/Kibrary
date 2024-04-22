@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * @author otsuru
  * @since 2022/4/9
  */
-public class PerturbationListFile {
+public class ScalarListFile {
 
     private final VariableType variable;
     private final ScalarType scalarType;
@@ -94,7 +94,7 @@ public class PerturbationListFile {
      * @throws IOException
      */
     public static Map<FullPosition, Double> read(Path inputPath, OpenOption... options) throws IOException {
-        return new PerturbationListFile(inputPath, options).getValueMap();
+        return new ScalarListFile(inputPath, options).getValueMap();
     }
 
     /**
@@ -106,7 +106,7 @@ public class PerturbationListFile {
      * @author otsuru
      * @since 2024/4/22
      */
-    public PerturbationListFile(Path inputPath, OpenOption... options) throws IOException {
+    public ScalarListFile(Path inputPath, OpenOption... options) throws IOException {
         String fileName = inputPath.getFileName().toString();
         String[] fileNameParts = fileName.split("\\.");
         if (fileNameParts.length != 4) throw new IllegalArgumentException("Invalid file name: " + fileName);

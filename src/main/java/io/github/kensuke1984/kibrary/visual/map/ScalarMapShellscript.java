@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * @since 2022/4/12
  * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
  */
-public class PerturbationMapShellscript {
+public class ScalarMapShellscript {
 
     /**
      * Width of each panel
@@ -73,7 +73,7 @@ public class PerturbationMapShellscript {
     private String maskFileNameRoot;
     private double maskThreshold;
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double positionInterval, double scale,
+    public ScalarMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double positionInterval, double scale,
             String modelFileNameRoot, int nPanelsPerRow) {
         this.variable = variable;
         this.radii = radii;

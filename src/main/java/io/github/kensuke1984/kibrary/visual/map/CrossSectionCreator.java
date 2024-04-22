@@ -12,13 +12,13 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
- * Operation that creates a cross section from a {@link PerturbationListFile}.
+ * Operation that creates a cross section from a {@link ScalarListFile}.
  *
  * @author otsuru
  * @since 2023/3/24
@@ -244,7 +244,7 @@ public class CrossSectionCreator extends Operation {
     public void run() throws IOException {
 
         // read perturbation file
-        Map<FullPosition, Double> discreteMap = PerturbationListFile.read(perturbationPath);
+        Map<FullPosition, Double> discreteMap = ScalarListFile.read(perturbationPath);
         Set<FullPosition> discretePositions = discreteMap.keySet();
 
         // read mask perturbation file
@@ -252,7 +252,7 @@ public class CrossSectionCreator extends Operation {
         boolean maskExists = false;
         if (maskPath != null) {
             maskExists = true;
-            maskDiscreteMap = PerturbationListFile.read(maskPath);
+            maskDiscreteMap = ScalarListFile.read(maskPath);
         }
 
         // create output folder

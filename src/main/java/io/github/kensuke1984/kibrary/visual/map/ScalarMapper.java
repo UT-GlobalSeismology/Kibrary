@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
@@ -21,14 +21,14 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * Creates shellscripts to map {@link PerturbationListFile}.
+ * Creates shellscripts to map {@link ScalarListFile}.
  * The values of input files should be in percent.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
  * @since 2022/7/18
  */
-public class PerturbationMapper extends Operation {
+public class ScalarMapper extends Operation {
 
     private final Property property;
     /**
@@ -127,7 +127,7 @@ public class PerturbationMapper extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public PerturbationMapper(Property property) throws IOException {
+    public ScalarMapper(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -173,7 +173,7 @@ public class PerturbationMapper extends Operation {
     public void run() throws IOException {
 
         // read input file
-        PerturbationListFile inputFile = new PerturbationListFile(perturbationPath);
+        ScalarListFile inputFile = new ScalarListFile(perturbationPath);
         VariableType variable = inputFile.getVariable();
         ScalarType scalarType = inputFile.getScalarType();
         Map<FullPosition, Double> discreteMap = inputFile.getValueMap();
@@ -181,33 +181,33 @@ public class PerturbationMapper extends Operation {
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region
-        if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
-        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
+        double gridInterval = ScalarMapShellscript.decideGridSampling(positions);
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // copy discrete perturbation file to outPath
-        Path outputDiscretePath = outPath.resolve(PerturbationListFile.generateFileName(variable, scalarType));
+        Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType));
         Files.copy(perturbationPath, outputDiscretePath);
         // output interpolated perturbation file
         Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-        Path outputInterpolatedPath = outPath.resolve(PerturbationListFile.generateFileName(variable, scalarType, "XY"));
-        PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+        Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "XY"));
+        ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
         if (maskPath != null) {
             // copy discrete mask file to outPath
-            Path outMaskPath = outPath.resolve(PerturbationListFile.generateFileName(variable, scalarType, "forMask"));
+            Path outMaskPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "forMask"));
             Files.copy(maskPath, outMaskPath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-            Map<FullPosition, Double> discreteMaskMap = PerturbationListFile.read(maskPath);
+            Map<FullPosition, Double> discreteMaskMap = ScalarListFile.read(maskPath);
             Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-            Path outputInterpolatedMaskPath = outPath.resolve(PerturbationListFile.generateFileName(variable, scalarType, "forMaskXY"));
-            PerturbationListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
+            Path outputInterpolatedMaskPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "forMaskXY"));
+            ScalarListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }
 
         String fileNameRoot = FileAid.extractNameRoot(perturbationPath);
@@ -215,8 +215,8 @@ public class PerturbationMapper extends Operation {
         maskFileNameRoot = FileAid.extractNameRoot(maskPath) + "_forMask";
 
         // output shellscripts
-        PerturbationMapShellscript script;
-        script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow);
+        ScalarMapShellscript script;
+        script = new ScalarMapShellscript(variable, radii, boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow);
         if (displayLayers != null) script.setDisplayLayers(displayLayers);
         if (maskPath != null) script.setMask(maskFileNameRoot, maskThreshold);
         script.write(outPath);

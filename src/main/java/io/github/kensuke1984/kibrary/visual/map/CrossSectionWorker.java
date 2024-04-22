@@ -117,7 +117,7 @@ public class CrossSectionWorker {
         //~decide horizontal positions at which to sample values
         distance = startPosition.computeEpicentralDistanceDeg(endPosition);
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
-        horizontalGridInterval = PerturbationMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
+        horizontalGridInterval = ScalarMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
         int nSamplePosition = (int) Math.round(distance / horizontalGridInterval) + 1;
         for (int i = 0; i < nSamplePosition; i++) {
             HorizontalPosition position = startPosition.pointAlongAzimuth(azimuth, i * horizontalGridInterval);
@@ -297,9 +297,9 @@ public class CrossSectionWorker {
         Path annotationPath = outPath.resolve("rAnnotation.txt");
         Path gmtPath = outPath.resolve(modelFileNameRoot + "Section.sh");
 
-        PerturbationMapShellscript.writeCpMaster(cpMasterPath);
+        ScalarMapShellscript.writeCpMaster(cpMasterPath);
         if (maskExists) {
-            PerturbationMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
+            ScalarMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
         }
 
         double lowerRadius = radii[0] - marginRadius;
